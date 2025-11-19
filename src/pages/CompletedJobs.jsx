@@ -1,0 +1,164 @@
+
+import { useState, useEffect } from "react";
+import { WorkOrder } from "@/entities/WorkOrder";
+import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import DragDropList from "../components/workflow/DragDropList";
+import WorkOrderForm from "../components/workflow/WorkOrderForm";
+
+export default function CompletedJobs() {
+  const [workOrders, setWorkOrders] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingWorkOrder, setEditingWorkOrder] = useState(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadWorkOrders();
+  }, []);
+
+  const loadWorkOrders = async () => {
+    setIsLoading(true);
+    try {
+      const completed = await WorkOrder.filter({ completed: true }, "-updated_date");
+      setWorkOrders(completed);
+    } catch (error) {
+      console.error("Error loading completed work orders:", error);
+      // Optionally, set an error state here to display a message to the user
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReorder = async (reorderedItems) => {
+    // This function typically updates the order in the backend as well.
+    // For this change, we'll just update the local state as per the original.
+    // If backend reordering is needed, it should also have try...catch.
+    setWorkOrders(reorderedItems);
+  };
+
+  const handleEdit = (workOrder) => {
+    setEditingWorkOrder(workOrder);
+    setIsFormOpen(true);
+  };
+
+  const handleSave = async (formData) => {
+    try {
+      if (editingWorkOrder) {
+        await WorkOrder.update(editingWorkOrder.id, formData);
+      }
+      setEditingWorkOrder(null);
+      setIsFormOpen(false); // Close form after successful save
+      loadWorkOrders();
+    } catch (error) {
+      console.error("Error saving work order:", error);
+      // Optionally, display an error message
+    }
+  };
+
+  const handleRestore = async (workOrder, newStage) => {
+    try {
+      // Convert notes to array format before updating
+      let notes = workOrder.notes || [];
+      if (typeof notes === 'string' && notes.trim()) {
+        notes = [{
+          text: notes,
+          timestamp: workOrder.created_date || new Date().toISOString(),
+          created_by: workOrder.created_by || "Unknown"
+        }];
+      }
+      
+      await WorkOrder.update(workOrder.id, { 
+        completed: false, 
+        current_stage: newStage,
+        notes: notes
+      });
+      loadWorkOrders();
+    } catch (error) {
+      console.error("Error restoring work order:", error);
+      // Optionally, display an error message
+    }
+  };
+
+  const handleDelete = async (workOrder) => {
+    try {
+      await WorkOrder.delete(workOrder.id);
+      loadWorkOrders();
+    } catch (error) {
+      console.error("Error deleting work order:", error);
+    }
+  };
+
+  const toggleFullScreen = async () => {
+    try {
+      if (!document.fullscreenElement) { // Check if document is not in fullscreen mode
+        await document.documentElement.requestFullscreen();
+        setIsFullScreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullScreen(false);
+      }
+    } catch (error) {
+      console.error("Fullscreen error:", error);
+      // Optionally, display an error message to the user if fullscreen failed
+    }
+  };
+
+  return (
+    <div className="min-h-screen p-6">
+      <div className="w-full max-w-[95vw] mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">Completed Jobs</h1>
+            <p className="text-gray-600">Archive of finished work orders</p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={loadWorkOrders}
+              className="clay-button border-none text-gray-800"
+              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, rgba(255,255,255,0.9) 100%)' }}
+            >
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Refresh
+            </Button>
+            <Button
+              onClick={toggleFullScreen}
+              className="clay-button border-none text-gray-800"
+              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
+            >
+              {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="clay-card p-6">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Loading...</p>
+            </div>
+          ) : (
+            <DragDropList
+              workOrders={workOrders}
+              onReorder={handleReorder}
+              onEdit={handleEdit}
+              onRestore={handleRestore}
+              onUpdate={loadWorkOrders}
+              onDelete={handleDelete}
+              showMoveOptions={false}
+            />
+          )}
+        </div>
+      </div>
+
+      <WorkOrderForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingWorkOrder(null);
+        }}
+        onSave={handleSave}
+        workOrder={editingWorkOrder}
+      />
+    </div>
+  );
+}
