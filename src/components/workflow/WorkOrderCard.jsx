@@ -1,12 +1,16 @@
-
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   MoreVertical,
   User,
   Calendar,
+  FileText,
+  Ruler,
+  Package,
+  Plus,
   Check,
   X,
   Upload,
@@ -304,51 +308,53 @@ export default function WorkOrderCard({
           #{priorityNumber}
         </div>
 
-        <div className="flex gap-4 items-start">
-          {/* Image Section */}
-          {workOrder.image_url ?
-          <div
-            className="flex-shrink-0 rounded-xl overflow-hidden"
-            style={{
-              width: '320px',
-              height: '240px',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-              boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
-            }}>
+        <div className="space-y-3">
+          {/* Top Section: Image and Details */}
+          <div className="flex gap-4 items-start">
+            {/* Image Section */}
+            {workOrder.image_url ?
+            <div
+              className="flex-shrink-0 rounded-xl overflow-hidden"
+              style={{
+                width: '320px',
+                height: '240px',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
+              }}>
 
-              <img
-              src={workOrder.image_url}
-              alt={workOrder.title}
-              className="w-full h-full object-contain" />
+                <img
+                src={workOrder.image_url}
+                alt={workOrder.title}
+                className="w-full h-full object-contain" />
 
-            </div> :
+              </div> :
 
-          <div className="flex-shrink-0">
-              <label>
-                <div
-                className="w-24 h-24 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                  boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
-                }}>
+            <div className="flex-shrink-0">
+                <label>
+                  <div
+                  className="w-24 h-24 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
+                  }}>
 
-                  <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-500 text-center px-2 leading-tight font-medium">
-                    {uploading ? "..." : "Add Mockup"}
-                  </span>
-                </div>
-                <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                disabled={uploading} />
+                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-500 text-center px-2 leading-tight font-medium">
+                      {uploading ? "..." : "Add Mockup"}
+                    </span>
+                  </div>
+                  <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploading} />
 
-              </label>
-            </div>
-          }
+                </label>
+              </div>
+            }
 
-          <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1 flex-wrap">
@@ -508,15 +514,18 @@ export default function WorkOrderCard({
             {workOrder.description &&
             <p className="text-base text-gray-600 mb-2 leading-relaxed line-clamp-2">{workOrder.description}</p>
             }
+            </div>
+          </div>
 
-            <div
-              className="rounded-xl"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)',
-                boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.08), inset -1px -1px 3px rgba(255,255,255,0.9)'
-              }}>
+          {/* Notes Section - Full Width */}
+          <div
+            className="rounded-xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)',
+              boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.08), inset -1px -1px 3px rgba(255,255,255,0.9)'
+            }}>
 
-              <div className="flex gap-2 p-2">
+            <div className="flex gap-2 p-2">
                 {/* Notes Content Area */}
                 <div className="flex-1 min-w-0">
                   {completedNotes.length > 0 &&
@@ -582,9 +591,6 @@ export default function WorkOrderCard({
                               className="flex-1 cursor-pointer hover:bg-white/70 rounded p-1 transition-colors">
 
                                   <p className="text-gray-700 text-sm leading-snug">{note.text}</p>
-                                  <p className="text-gray-400 text-xs">
-                                    {format(new Date(note.timestamp), "MMM d, h:mm a")} - {note.created_by.split('@')[0]}
-                                  </p>
                                 </div>
                               </>
                           }
@@ -643,9 +649,6 @@ export default function WorkOrderCard({
                               className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded p-1 transition-colors">
 
                                   <p className="text-gray-600 text-sm leading-snug line-through">{note.text}</p>
-                                  <p className="text-gray-400 text-xs">
-                                    {format(new Date(note.timestamp), "MMM d, h:mm a")} - {note.created_by.split('@')[0]}
-                                  </p>
                                 </div>
                               </>
                           }
