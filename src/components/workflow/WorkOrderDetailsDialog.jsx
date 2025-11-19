@@ -287,7 +287,7 @@ export default function WorkOrderDetailsDialog({
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   {editingField === 'title' ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <Input
                         value={editValues.title}
                         onChange={(e) => setEditValues({...editValues, title: e.target.value})}
@@ -302,24 +302,29 @@ export default function WorkOrderDetailsDialog({
                       </Button>
                     </div>
                   ) : (
-                    <h2 
-                      className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                      onClick={() => startEdit('title')}
-                    >
-                      {workOrder.title}
-                      <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
-                    </h2>
-                  )}
-                  {workOrder.is_rider && (
-                    <Badge className="rounded-full" style={{
-                      background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
-                      color: '#7C3AED'
-                    }}>
-                      Rider
-                    </Badge>
-                  )}
-                  {workOrder.asap && (
-                    <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
+                    <>
+                      <h2 
+                        className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                        onClick={() => startEdit('title')}
+                      >
+                        {workOrder.title}
+                        <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
+                      </h2>
+                      {workOrder.is_rider && (
+                        <Badge className="rounded-full" style={{
+                          background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
+                          color: '#7C3AED'
+                        }}>
+                          Rider
+                        </Badge>
+                      )}
+                      {workOrder.asap && (
+                        <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={onClose} className="ml-auto">
+                        <X className="w-5 h-5" />
+                      </Button>
+                    </>
                   )}
                 </div>
                 {editingField === 'client_name' ? (
@@ -346,11 +351,92 @@ export default function WorkOrderDetailsDialog({
                   </p>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-5 h-5" />
-              </Button>
             </div>
           </div>
+
+          {/* Comprehensive Timeline - Full Width */}
+          {timelineData && (
+            <div className="px-6 py-4 border-b border-gray-200">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="cursor-pointer hover:shadow-lg transition-shadow clay-card p-4">
+                    <h3 className="font-semibold text-sm mb-3">Project Timeline</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>{format(timelineData.earliestStart, "MMM d, yyyy")}</span>
+                        <span>{format(timelineData.latestEnd, "MMM d, yyyy")}</span>
+                      </div>
+                      <div className="relative min-h-[80px] rounded-lg p-2" style={{
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                        boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        {timelineData.bars.map((bar) => (
+                          <div key={bar.id} className="mb-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium" style={{
+                                color: bar.type === 'parent' ? '#6B7280' : bar.isCurrent ? '#7C3AED' : '#EC4899'
+                              }}>
+                                {bar.type === 'parent' ? '↑ Parent' : bar.isCurrent ? '● Current' : '↓ Rider'}: {bar.title}
+                              </span>
+                              <Badge className="text-xs" style={{ backgroundColor: stageColors[bar.current_stage] }}>
+                                {stageDisplayNames[bar.current_stage]}
+                              </Badge>
+                            </div>
+                            <div className="relative h-6 rounded-lg" style={{
+                              background: 'rgba(255,255,255,0.5)'
+                            }}>
+                              <div
+                                className="absolute h-full rounded-lg transition-all flex items-center px-2"
+                                style={{
+                                  left: `${bar.startOffset}%`,
+                                  width: `${bar.width}%`,
+                                  background: bar.isCurrent 
+                                    ? `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)`
+                                    : bar.type === 'parent'
+                                    ? 'linear-gradient(135deg, rgba(150,150,150,0.5) 0%, rgba(200,200,200,0.5) 100%)'
+                                    : 'linear-gradient(135deg, rgba(255,182,193,0.7) 0%, rgba(221,160,221,0.7) 100%)',
+                                  border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.2)',
+                                  boxShadow: bar.isCurrent ? '0 0 12px rgba(124,58,237,0.5)' : '0 2px 4px rgba(0,0,0,0.1)'
+                                }}
+                              >
+                                <span className="text-xs font-medium text-gray-800 truncate">
+                                  {format(new Date(bar.start_date), "MMM d")} - {format(new Date(bar.due_date), "MMM d")}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="clay-card w-80">
+                  <Label>Start Date</Label>
+                  <div className="flex gap-2 mt-2 mb-3">
+                    <Input
+                      type="date"
+                      value={editValues.start_date || workOrder.start_date || ''}
+                      onChange={(e) => setEditValues({...editValues, start_date: e.target.value})}
+                    />
+                    <Button size="sm" onClick={() => saveEdit('start_date')}>
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Label>Due Date</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      type="date"
+                      value={editValues.due_date || workOrder.due_date || ''}
+                      onChange={(e) => setEditValues({...editValues, due_date: e.target.value})}
+                    />
+                    <Button size="sm" onClick={() => saveEdit('due_date')}>
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -466,75 +552,6 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </PopoverContent>
                 </Popover>
-
-                {/* Comprehensive Timeline */}
-                {timelineData && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <div className="clay-card p-4 cursor-pointer hover:shadow-lg transition-shadow">
-                        <h3 className="font-semibold text-sm mb-3">Timeline</h3>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>{format(timelineData.earliestStart, "MMM d")}</span>
-                            <span>{format(timelineData.latestEnd, "MMM d")}</span>
-                          </div>
-                          <div className="relative h-16 rounded-lg overflow-visible" style={{
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                            boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
-                          }}>
-                            {timelineData.bars.map((bar, idx) => (
-                              <div
-                                key={bar.id}
-                                className="absolute h-4 rounded transition-all"
-                                style={{
-                                  left: `${bar.startOffset}%`,
-                                  width: `${bar.width}%`,
-                                  top: bar.type === 'parent' ? '4px' : bar.type === 'current' ? '24px' : '44px',
-                                  background: bar.isCurrent 
-                                    ? `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)`
-                                    : bar.type === 'parent'
-                                    ? 'linear-gradient(135deg, rgba(200,200,200,0.5) 0%, rgba(220,220,220,0.5) 100%)'
-                                    : 'linear-gradient(135deg, rgba(255,214,232,0.7) 0%, rgba(224,212,247,0.7) 100%)',
-                                  border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.1)',
-                                  boxShadow: bar.isCurrent ? '0 0 8px rgba(124,58,237,0.4)' : 'none'
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            {parentWorkOrder && <span className="text-gray-400">Parent</span>}
-                            <span className="text-purple-600 font-medium">Current</span>
-                            {riders.length > 0 && <span className="text-pink-500">Riders ({riders.length})</span>}
-                          </div>
-                        </div>
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="clay-card w-80">
-                      <Label>Start Date</Label>
-                      <div className="flex gap-2 mt-2 mb-3">
-                        <Input
-                          type="date"
-                          value={editValues.start_date || workOrder.start_date || ''}
-                          onChange={(e) => setEditValues({...editValues, start_date: e.target.value})}
-                        />
-                        <Button size="sm" onClick={() => saveEdit('start_date')}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <Label>Due Date</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          type="date"
-                          value={editValues.due_date || workOrder.due_date || ''}
-                          onChange={(e) => setEditValues({...editValues, due_date: e.target.value})}
-                        />
-                        <Button size="sm" onClick={() => saveEdit('due_date')}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
 
                 {/* Relationships */}
                 <div className="clay-card p-4">
