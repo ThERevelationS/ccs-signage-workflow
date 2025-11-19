@@ -283,8 +283,7 @@ export default function WorkOrderCard({
   return (
     <>
       <div 
-        className="p-4 clay-card relative cursor-pointer transition-all hover:shadow-2xl"
-        onClick={() => setShowDetailsDialog(true)}
+        className="p-4 clay-card relative transition-all hover:shadow-2xl"
         style={{
           background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
           width: '100%',
@@ -317,7 +316,11 @@ export default function WorkOrderCard({
             {/* Image Section */}
             {workOrder.image_url ?
             <div
-              className="flex-shrink-0 rounded-xl overflow-hidden"
+              className="flex-shrink-0 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(workOrder.image_url, '_blank');
+              }}
               style={{
                 width: '320px',
                 height: '240px',
@@ -333,7 +336,7 @@ export default function WorkOrderCard({
               </div> :
 
             <div className="flex-shrink-0">
-                <label>
+                <label onClick={(e) => e.stopPropagation()}>
                   <div
                   className="w-24 h-24 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
                   style={{
@@ -358,12 +361,15 @@ export default function WorkOrderCard({
             }
 
             <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1 flex-wrap">
-                  <h3 className="font-bold text-gray-800 text-2xl leading-tight">{workOrder.title}</h3>
-                  <span className="text-lg text-gray-500">•</span>
-                  <p className="text-lg text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
+              <div className="flex items-start justify-between mb-2">
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer" 
+                  onClick={() => setShowDetailsDialog(true)}
+                >
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                    <h3 className="font-bold text-gray-800 text-2xl leading-tight">{workOrder.title}</h3>
+                    <span className="text-lg text-gray-500">•</span>
+                    <p className="text-lg text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
                   {workOrder.is_rider &&
                   <Badge
                     className="rounded-full text-sm px-3 py-0.5 leading-none flex-shrink-0"
@@ -437,7 +443,12 @@ export default function WorkOrderCard({
             </div>
 
             {workOrder.description &&
-            <p className="text-base text-gray-600 mb-2 leading-relaxed line-clamp-2">{workOrder.description}</p>
+            <p 
+              className="text-base text-gray-600 mb-2 leading-relaxed line-clamp-2 cursor-pointer"
+              onClick={() => setShowDetailsDialog(true)}
+            >
+              {workOrder.description}
+            </p>
             }
             </div>
           </div>
@@ -478,50 +489,62 @@ export default function WorkOrderCard({
                       return (
                         <div key={actualIndex} className="p-1.5 bg-white/50 rounded-lg flex items-start gap-1.5">
                             {editingNoteIndex === actualIndex ?
-                          <div className="flex-1 space-y-1">
-                                <Input
-                              value={editedNoteText}
-                              onChange={(e) => setEditedNoteText(e.target.value)}
-                              className="text-sm h-8 border-gray-300"
-                              autoFocus />
+                            <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
+                                  <Input
+                                value={editedNoteText}
+                                onChange={(e) => setEditedNoteText(e.target.value)}
+                                className="text-sm h-8 border-gray-300"
+                                autoFocus />
 
-                                <div className="flex gap-1">
-                                  <Button
-                                size="sm"
-                                onClick={() => handleNoteSave(actualIndex)}
-                                className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                                  <div className="flex gap-1">
+                                    <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNoteSave(actualIndex);
+                                  }}
+                                  className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
 
-                                    <Check className="w-3 h-3 mr-1" />
-                                    Save
-                                  </Button>
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Save
+                                    </Button>
+                                    <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleNoteCancel();
+                                  }}
+                                  className="h-6 px-2 text-xs">
+
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div> :
+
+                            <>
                                   <Button
-                                size="sm"
                                 variant="ghost"
-                                onClick={handleNoteCancel}
-                                className="h-6 px-2 text-xs">
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleComplete(index, false);
+                                }}
+                                className="h-5 w-5 rounded-full flex-shrink-0 mt-0.5 hover:bg-green-100 p-0">
 
-                                    <X className="w-3 h-3" />
+                                    <Circle className="w-3.5 h-3.5 text-gray-400" />
                                   </Button>
-                                </div>
-                              </div> :
+                                  <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleNoteEdit(index, false);
+                                }}
+                                className="flex-1 cursor-pointer hover:bg-white/70 rounded p-1 transition-colors">
 
-                          <>
-                                <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleComplete(index, false)}
-                              className="h-5 w-5 rounded-full flex-shrink-0 mt-0.5 hover:bg-green-100 p-0">
-
-                                  <Circle className="w-3.5 h-3.5 text-gray-400" />
-                                </Button>
-                                <div
-                              onClick={() => handleNoteEdit(index, false)}
-                              className="flex-1 cursor-pointer hover:bg-white/70 rounded p-1 transition-colors">
-
-                                  <p className="text-gray-700 text-sm leading-snug">{note.text}</p>
-                                </div>
-                              </>
-                          }
+                                    <p className="text-gray-700 text-sm leading-snug">{note.text}</p>
+                                  </div>
+                                </>
+                            }
                           </div>);
 
                     })}
@@ -536,7 +559,7 @@ export default function WorkOrderCard({
                       return (
                         <div key={actualIndex} className="p-1.5 bg-gray-100/50 rounded-lg flex items-start gap-1.5 opacity-60">
                             {editingNoteIndex === actualIndex ?
-                          <div className="flex-1 space-y-1">
+                          <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                                 <Input
                               value={editedNoteText}
                               onChange={(e) => setEditedNoteText(e.target.value)}
@@ -546,7 +569,10 @@ export default function WorkOrderCard({
                                 <div className="flex gap-1">
                                   <Button
                                 size="sm"
-                                onClick={() => handleNoteSave(actualIndex)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleNoteSave(actualIndex);
+                                }}
                                 className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
 
                                     <Check className="w-3 h-3 mr-1" />
@@ -555,7 +581,10 @@ export default function WorkOrderCard({
                                   <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={handleNoteCancel}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleNoteCancel();
+                                }}
                                 className="h-6 px-2 text-xs">
 
                                     <X className="w-3 h-3" />
@@ -567,13 +596,19 @@ export default function WorkOrderCard({
                                 <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleToggleComplete(index, true)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleComplete(index, true);
+                              }}
                               className="h-5 w-5 rounded-full flex-shrink-0 mt-0.5 hover:bg-gray-200 p-0">
 
                                   <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
                                 </Button>
                                 <div
-                              onClick={() => handleNoteEdit(index, true)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleNoteEdit(index, true);
+                              }}
                               className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded p-1 transition-colors">
 
                                   <p className="text-gray-600 text-sm leading-snug line-through">{note.text}</p>
@@ -588,7 +623,7 @@ export default function WorkOrderCard({
 
                   {/* Add Note Form */}
                   {isAddingNote &&
-                  <div className="space-y-1 p-1.5 bg-white/50 rounded-lg mt-1">
+                  <div className="space-y-1 p-1.5 bg-white/50 rounded-lg mt-1" onClick={(e) => e.stopPropagation()}>
                       <Input
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
@@ -599,7 +634,10 @@ export default function WorkOrderCard({
                       <div className="flex gap-1">
                         <Button
                         size="sm"
-                        onClick={handleAddNote}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddNote();
+                        }}
                         className="h-6 px-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800">
 
                           <Check className="w-3 h-3 mr-1" />
@@ -608,7 +646,8 @@ export default function WorkOrderCard({
                         <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setIsAddingNote(false);
                           setNewNoteText("");
                         }}
