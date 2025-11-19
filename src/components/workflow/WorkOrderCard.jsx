@@ -41,6 +41,7 @@ import { User as UserEntity } from "@/entities/User";
 import { UploadFile } from "@/integrations/Core";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
 
 const stageColors = {
   estimating: "#FFF9C4", // Added Estimating color
@@ -95,6 +96,7 @@ export default function WorkOrderCard({
   const [uploading, setUploading] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showRiderWarning, setShowRiderWarning] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // Added state for delete functionality
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -281,15 +283,17 @@ export default function WorkOrderCard({
 
   return (
     <>
-      <div className="p-4 clay-card relative"
-
-      style={{
-        background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
-        width: '100%',
-        minWidth: '100%',
-        border: `3px solid ${highlight.border}`,
-        boxShadow: `0 0 ${isAsap ? '24px' : isTopPriority ? '20px' : '12px'} ${highlight.shadow}, 8px 8px 20px rgba(0, 0, 0, 0.08), -8px -8px 20px rgba(255, 255, 255, 0.9)`
-      }}>
+      <div 
+        className="p-4 clay-card relative cursor-pointer transition-all hover:shadow-2xl"
+        onClick={() => setShowDetailsDialog(true)}
+        style={{
+          background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
+          width: '100%',
+          minWidth: '100%',
+          border: `3px solid ${highlight.border}`,
+          boxShadow: `0 0 ${isAsap ? '24px' : isTopPriority ? '20px' : '12px'} ${highlight.shadow}, 8px 8px 20px rgba(0, 0, 0, 0.08), -8px -8px 20px rgba(255, 255, 255, 0.9)`
+        }}
+      >
 
         {/* Priority Number Badge */}
         <div
@@ -376,103 +380,25 @@ export default function WorkOrderCard({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2"> {/* New parent div for ASAP button and Dropdown */}
-                <Button
-                  onClick={handleToggleAsap}
-                  size="sm"
-                  className={`h-8 px-3 text-xs font-bold rounded-full transition-all ${
-                  isAsap ?
-                  'bg-red-600 hover:bg-red-700 text-white' :
-                  'bg-transparent hover:bg-gray-100 text-gray-400'}`
-                  }
-                  style={isAsap ? {
-                    boxShadow: '0 0 12px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
-                  } : {
-                    opacity: 0.4
-                  }}>
-
-                  <span className={!isAsap ? 'line-through' : ''}>ASAP</span>
-                </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="clay-button h-10 w-10 rounded-full flex-shrink-0">
-
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="clay-card border-none">
-                    <DropdownMenuItem onClick={() => onEdit(workOrder)}>
-                      Edit Details
-                    </DropdownMenuItem>
-                    {showMoveOptions && !workOrder.is_rider && onMove &&
-                    <>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'estimating')}>
-                          Move to Estimating
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'sales')}>
-                          Move to Sales
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'permitting')}>
-                          Move to Permitting
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'design')}>
-                          Move to Design
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'production')}>
-                          Move to Production
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'fabrication')}>
-                          Move to Fabrication
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMove(workOrder, 'installation')}>
-                          Move to Installation
-                        </DropdownMenuItem>
-                      </>
-                    }
-                    {!workOrder.is_rider && onSplit &&
-                    <DropdownMenuItem onClick={() => onSplit(workOrder)}>
-                        Create Rider
-                      </DropdownMenuItem>
-                    }
-                    {onComplete && !workOrder.completed &&
-                    <DropdownMenuItem onClick={handleCompleteClick}>
-                        Mark Complete
-                      </DropdownMenuItem>
-                    }
-                    {onRestore && workOrder.completed &&
-                    <>
-                        <DropdownMenuItem onClick={() => onRestore(workOrder, 'permitting')}>
-                          Restore to Permitting
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRestore(workOrder, 'design')}>
-                          Restore to Design
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRestore(workOrder, 'production')}>
-                          Restore to Production
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRestore(workOrder, 'fabrication')}>
-                          Restore to Fabrication
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRestore(workOrder, 'installation')}>
-                          Restore to Installation
-                        </DropdownMenuItem>
-                      </>
-                    }
-                    {onDelete &&
-                    <DropdownMenuItem
-                      onClick={handleDeleteClick}
-                      className="text-red-600 focus:text-red-600">
-
-                        Delete {workOrder.is_rider ? 'Rider' : 'Work Order'}
-                      </DropdownMenuItem>
-                    }
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleAsap();
+                }}
+                size="sm"
+                className={`h-8 px-3 text-xs font-bold rounded-full transition-all ${
+                isAsap ?
+                'bg-red-600 hover:bg-red-700 text-white' :
+                'bg-transparent hover:bg-gray-100 text-gray-400'}`
+                }
+                style={isAsap ? {
+                  boxShadow: '0 0 12px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
+                } : {
+                  opacity: 0.4
+                }}
+              >
+                <span className={!isAsap ? 'line-through' : ''}>ASAP</span>
+              </Button>
             </div>
 
             <div className="flex gap-3 mb-2">
@@ -713,6 +639,20 @@ export default function WorkOrderCard({
             </div>
           </div>
         </div>
+
+      {/* Details Dialog */}
+      <WorkOrderDetailsDialog
+        isOpen={showDetailsDialog}
+        onClose={() => setShowDetailsDialog(false)}
+        workOrder={workOrder}
+        onEdit={onEdit}
+        onMove={onMove}
+        onSplit={onSplit}
+        onComplete={onComplete}
+        onRestore={onRestore}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
