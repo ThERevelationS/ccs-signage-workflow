@@ -713,7 +713,6 @@ export default function WorkOrderCard({
             </div>
           </div>
         </div>
-      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
