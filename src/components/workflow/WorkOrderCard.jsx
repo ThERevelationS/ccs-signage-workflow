@@ -204,7 +204,6 @@ export default function WorkOrderCard({
       completed: !updatedNotes[actualIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) onUpdate();
   };
 
   const handleAddNote = async () => {

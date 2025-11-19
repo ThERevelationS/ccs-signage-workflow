@@ -193,24 +193,73 @@ export default function WorkOrderDetailsDialog({
       completed: !updatedTasks[taskIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    if (onUpdate) onUpdate();
+    loadRelatedData();
   };
 
   const handleAddWorkNote = async (noteData) => {
     const newNote = {
       ...noteData,
       timestamp: new Date().toISOString(),
-      id: Date.now()
+      id: Date.now(),
+      sub_tasks: []
     };
     const updatedNotes = [...workNotes, newNote];
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    if (onUpdate) onUpdate();
+    loadRelatedData();
   };
 
   const handleDeleteWorkNote = async (noteId) => {
     const updatedNotes = workNotes.filter(n => n.id !== noteId);
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    if (onUpdate) onUpdate();
+    loadRelatedData();
+  };
+
+  const handleAddSubTask = async (noteId, subTaskText) => {
+    const updatedNotes = workNotes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          sub_tasks: [...(note.sub_tasks || []), {
+            id: Date.now(),
+            text: subTaskText,
+            completed: false
+          }]
+        };
+      }
+      return note;
+    });
+    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    loadRelatedData();
+  };
+
+  const handleToggleSubTask = async (noteId, subTaskId) => {
+    const updatedNotes = workNotes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).map(st => 
+            st.id === subTaskId ? { ...st, completed: !st.completed } : st
+          )
+        };
+      }
+      return note;
+    });
+    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    loadRelatedData();
+  };
+
+  const handleDeleteSubTask = async (noteId, subTaskId) => {
+    const updatedNotes = workNotes.map(note => {
+      if (note.id === noteId) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).filter(st => st.id !== subTaskId)
+        };
+      }
+      return note;
+    });
+    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    loadRelatedData();
   };
 
   const handleDeleteWorkOrder = async () => {
@@ -389,7 +438,7 @@ export default function WorkOrderDetailsDialog({
 
           {/* Comprehensive Timeline - Full Width */}
           {timelineData && (
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="cursor-pointer hover:shadow-lg transition-shadow clay-card p-4">
@@ -470,6 +519,158 @@ export default function WorkOrderDetailsDialog({
               </Popover>
             </div>
           )}
+
+          {/* Work Notes - Full Width */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-lg">Notes</h3>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-3">
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Note
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="clay-card w-96">
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Type</Label>
+                      <Select
+                        onValueChange={(val) => setEditValues({...editValues, noteType: val})}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrative Work</SelectItem>
+                          <SelectItem value="fabrication">Sign Shop Fabrication</SelectItem>
+                          <SelectItem value="vinyl">Vinyl Production</SelectItem>
+                          <SelectItem value="permitting">Permitting Steps</SelectItem>
+                          <SelectItem value="design">Design Work</SelectItem>
+                          <SelectItem value="installation">Installation</SelectItem>
+                          <SelectItem value="client">Client Communication</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Note</Label>
+                      <Textarea
+                        placeholder="Enter note details..."
+                        className="mt-1 min-h-24"
+                        onChange={(e) => setEditValues({...editValues, noteText: e.target.value})}
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        if (editValues.noteType && editValues.noteText) {
+                          handleAddWorkNote({
+                            type: editValues.noteType,
+                            text: editValues.noteText
+                          });
+                          setEditValues({});
+                        }
+                      }}
+                    >
+                      Add Note
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-3">
+              {workNotes.map((note) => (
+                <div key={note.id} className="clay-card p-4">
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline">
+                          {note.type === 'admin' && 'Admin'}
+                          {note.type === 'fabrication' && 'Fabrication'}
+                          {note.type === 'vinyl' && 'Vinyl'}
+                          {note.type === 'permitting' && 'Permitting'}
+                          {note.type === 'design' && 'Design'}
+                          {note.type === 'installation' && 'Installation'}
+                          {note.type === 'client' && 'Client'}
+                          {note.type === 'other' && 'Other'}
+                        </Badge>
+                        <span className="text-xs text-gray-400">
+                          {format(new Date(note.timestamp), "MMM d, h:mm a")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">{note.text}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 flex-shrink-0"
+                      onClick={() => handleDeleteWorkNote(note.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </div>
+
+                  {/* Sub-tasks */}
+                  {note.sub_tasks && note.sub_tasks.length > 0 && (
+                    <div className="ml-4 space-y-1 mb-2">
+                      {note.sub_tasks.map((subTask) => (
+                        <div key={subTask.id} className="flex items-center gap-2 p-2 bg-white/50 rounded">
+                          <Checkbox
+                            checked={subTask.completed}
+                            onCheckedChange={() => handleToggleSubTask(note.id, subTask.id)}
+                          />
+                          <span className={`text-sm flex-1 ${subTask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                            {subTask.text}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleDeleteSubTask(note.id, subTask.id)}
+                          >
+                            <X className="w-3 h-3 text-gray-400" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Sub-task */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs ml-4">
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add Sub-task
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-64">
+                      <Label className="text-xs">Sub-task</Label>
+                      <Input
+                        placeholder="Enter sub-task..."
+                        className="mt-2 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.target.value.trim()) {
+                            handleAddSubTask(note.id, e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-gray-400 mt-2">Press Enter to add</p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              ))}
+              
+              {workNotes.length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <p>No notes yet</p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -688,104 +889,7 @@ export default function WorkOrderDetailsDialog({
                   </div>
                 </div>
 
-                {/* Work Notes - Spreadsheet Style */}
-                <div className="clay-card p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-sm">Notes</h3>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                          <Plus className="w-3 h-3 mr-1" />
-                          Add
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="clay-card w-80">
-                        <div className="space-y-3">
-                          <div>
-                            <Label className="text-xs">Type</Label>
-                            <Select
-                              onValueChange={(val) => setEditValues({...editValues, noteType: val})}
-                            >
-                              <SelectTrigger className="h-8 text-xs mt-1">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin">Administrative Work</SelectItem>
-                                <SelectItem value="fabrication">Sign Shop Fabrication</SelectItem>
-                                <SelectItem value="vinyl">Vinyl Production</SelectItem>
-                                <SelectItem value="permitting">Permitting Steps</SelectItem>
-                                <SelectItem value="design">Design Work</SelectItem>
-                                <SelectItem value="installation">Installation</SelectItem>
-                                <SelectItem value="client">Client Communication</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-xs">Note</Label>
-                            <Textarea
-                              placeholder="Enter note details..."
-                              className="mt-1 text-xs min-h-20"
-                              onChange={(e) => setEditValues({...editValues, noteText: e.target.value})}
-                            />
-                          </div>
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                              if (editValues.noteType && editValues.noteText) {
-                                handleAddWorkNote({
-                                  type: editValues.noteType,
-                                  text: editValues.noteText
-                                });
-                                setEditValues({});
-                              }
-                            }}
-                          >
-                            Add Note
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
 
-                  <div className="space-y-1 max-h-64 overflow-y-auto">
-                    {workNotes.map((note) => (
-                      <div key={note.id} className="p-2 bg-white/50 rounded-lg border border-gray-200 flex items-start gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className="text-xs" variant="outline">
-                              {note.type === 'admin' && 'Admin'}
-                              {note.type === 'fabrication' && 'Fabrication'}
-                              {note.type === 'vinyl' && 'Vinyl'}
-                              {note.type === 'permitting' && 'Permitting'}
-                              {note.type === 'design' && 'Design'}
-                              {note.type === 'installation' && 'Installation'}
-                              {note.type === 'client' && 'Client'}
-                              {note.type === 'other' && 'Other'}
-                            </Badge>
-                            <span className="text-xs text-gray-400">
-                              {format(new Date(note.timestamp), "MMM d, h:mm a")}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-700">{note.text}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 flex-shrink-0"
-                          onClick={() => handleDeleteWorkNote(note.id)}
-                        >
-                          <Trash2 className="w-3 h-3 text-red-600" />
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    {workNotes.length === 0 && (
-                      <p className="text-xs text-gray-400 text-center py-4">No notes yet</p>
-                    )}
-                  </div>
-                </div>
 
                 {/* Dependencies / Automations */}
                 <div className="clay-card p-4">
