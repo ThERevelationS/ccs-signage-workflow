@@ -443,7 +443,7 @@ export default function WorkOrderCard({
             </div>
           </div>
 
-          {/* Notes Section - Full Width */}
+          {/* Tasks Section - Full Width */}
           <div
             className="rounded-xl"
             style={{
@@ -452,14 +452,17 @@ export default function WorkOrderCard({
             }}>
 
             <div className="flex gap-2 p-2">
-                {/* Notes Content Area */}
+                {/* Tasks Content Area */}
                 <div className="flex-1 min-w-0">
                   {completedNotes.length > 0 &&
                   <div className="mb-1">
                       <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowCompleted(!showCompleted)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCompleted(!showCompleted);
+                      }}
                       className="h-6 px-2 text-xs hover:bg-gray-100 rounded-lg font-medium flex items-center gap-1">
 
                         {showCompleted ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -468,7 +471,7 @@ export default function WorkOrderCard({
                     </div>
                   }
 
-                  {/* Active Notes */}
+                  {/* Active Tasks */}
                   {activeNotes.length > 0 &&
                   <div className="space-y-1">
                       {activeNotes.map((note, index) => {
@@ -526,7 +529,7 @@ export default function WorkOrderCard({
                     </div>
                   }
 
-                  {/* Completed Notes */}
+                  {/* Completed Tasks */}
                   {showCompleted && completedNotes.length > 0 &&
                   <div className="space-y-1 mt-1 border-t pt-1">
                       {completedNotes.map((note, index) => {
@@ -619,16 +622,19 @@ export default function WorkOrderCard({
                   }
 
                   {activeNotes.length === 0 && !isAddingNote &&
-                  <p className="text-gray-400 text-center text-xs">No active notes</p>
+                  <p className="text-gray-400 text-center text-xs">No active tasks</p>
                   }
                 </div>
 
-                {/* Vertical Add Note Button */}
+                {/* Vertical Add Task Button */}
                 <div className="flex-shrink-0 flex items-stretch">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsAddingNote(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsAddingNote(true);
+                    }}
                     className="px-1 text-xs hover:bg-gray-100 rounded-lg font-medium flex items-center justify-center"
                     style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}>
 
