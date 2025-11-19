@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -36,12 +37,16 @@ import {
   Link as LinkIcon,
   Zap,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
+  Check,
+  Pencil
 } from "lucide-react";
 import { format } from "date-fns";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { UploadFile } from "@/integrations/Core";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -83,6 +88,11 @@ export default function WorkOrderDetailsDialog({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
   const [isEditingDependency, setIsEditingDependency] = useState(false);
+  
+  // Edit states
+  const [editingField, setEditingField] = useState(null);
+  const [editValues, setEditValues] = useState({});
+  const [uploading, setUploading] = useState(false);
   const [newDependency, setNewDependency] = useState({
     trigger_type: "stage_change",
     trigger_value: "",
@@ -143,6 +153,39 @@ export default function WorkOrderDetailsDialog({
     if (onUpdate) onUpdate();
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const result = await UploadFile({ file });
+    await WorkOrder.update(workOrder.id, { image_url: result.file_url });
+    setUploading(false);
+    if (onUpdate) onUpdate();
+  };
+
+  const startEdit = (field) => {
+    setEditingField(field);
+    setEditValues({
+      title: workOrder.title,
+      client_name: workOrder.client_name,
+      description: workOrder.description,
+      assigned_to: workOrder.assigned_to,
+      due_date: workOrder.due_date,
+      start_date: workOrder.start_date
+    });
+  };
+
+  const saveEdit = async (field) => {
+    await WorkOrder.update(workOrder.id, { [field]: editValues[field] });
+    setEditingField(null);
+    if (onUpdate) onUpdate();
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValues({});
+  };
+
   const handleDeleteWorkOrder = async () => {
     if (riders.length > 0) {
       alert("Cannot delete: This work order has active riders. Delete riders first.");
@@ -172,22 +215,51 @@ export default function WorkOrderDetailsDialog({
     return stagePageMap[stage] || 'Estimating';
   };
 
-  // Calculate Gantt chart dimensions
-  const getGanttData = () => {
-    if (!workOrder.start_date || !workOrder.due_date) return null;
+  // Calculate comprehensive timeline including parent and riders
+  const getTimelineData = () => {
+    const workOrders = [];
     
-    const start = new Date(workOrder.start_date);
-    const end = new Date(workOrder.due_date);
-    const today = new Date();
+    // Add parent if exists
+    if (parentWorkOrder) {
+      workOrders.push({ ...parentWorkOrder, type: 'parent' });
+    }
     
-    const totalDays = Math.max((end - start) / (1000 * 60 * 60 * 24), 1);
-    const daysElapsed = Math.max((today - start) / (1000 * 60 * 60 * 24), 0);
-    const progress = Math.min((daysElapsed / totalDays) * 100, 100);
+    // Add current work order
+    workOrders.push({ ...workOrder, type: 'current' });
     
-    return { start, end, totalDays, progress };
+    // Add riders
+    riders.forEach(rider => {
+      workOrders.push({ ...rider, type: 'rider' });
+    });
+    
+    // Find earliest start and latest end
+    const allDates = workOrders.filter(wo => wo.start_date && wo.due_date);
+    if (allDates.length === 0) return null;
+    
+    const earliestStart = new Date(Math.min(...allDates.map(wo => new Date(wo.start_date))));
+    const latestEnd = new Date(Math.max(...allDates.map(wo => new Date(wo.due_date))));
+    const totalDays = Math.max((latestEnd - earliestStart) / (1000 * 60 * 60 * 24), 1);
+    
+    // Calculate position and width for each work order
+    const bars = workOrders.map(wo => {
+      if (!wo.start_date || !wo.due_date) return null;
+      const woStart = new Date(wo.start_date);
+      const woEnd = new Date(wo.due_date);
+      const startOffset = ((woStart - earliestStart) / (1000 * 60 * 60 * 24)) / totalDays * 100;
+      const duration = ((woEnd - woStart) / (1000 * 60 * 60 * 24)) / totalDays * 100;
+      
+      return {
+        ...wo,
+        startOffset,
+        width: duration,
+        isCurrent: wo.id === workOrder.id
+      };
+    }).filter(Boolean);
+    
+    return { bars, earliestStart, latestEnd, totalDays };
   };
 
-  const ganttData = getGanttData();
+  const timelineData = getTimelineData();
 
   const notes = React.useMemo(() => {
     if (!workOrder?.notes) return [];
@@ -214,7 +286,30 @@ export default function WorkOrderDetailsDialog({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold text-gray-800">{workOrder.title}</h2>
+                  {editingField === 'title' ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editValues.title}
+                        onChange={(e) => setEditValues({...editValues, title: e.target.value})}
+                        className="text-2xl font-bold h-10"
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={() => saveEdit('title')} className="h-8">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <h2 
+                      className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                      onClick={() => startEdit('title')}
+                    >
+                      {workOrder.title}
+                      <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
+                    </h2>
+                  )}
                   {workOrder.is_rider && (
                     <Badge className="rounded-full" style={{
                       background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
@@ -227,7 +322,29 @@ export default function WorkOrderDetailsDialog({
                     <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
                   )}
                 </div>
-                <p className="text-gray-600">{workOrder.client_name}</p>
+                {editingField === 'client_name' ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={editValues.client_name}
+                      onChange={(e) => setEditValues({...editValues, client_name: e.target.value})}
+                      className="h-8"
+                      autoFocus
+                    />
+                    <Button size="sm" onClick={() => saveEdit('client_name')} className="h-7">
+                      <Check className="w-3 h-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7">
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p 
+                    className="text-gray-600 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block"
+                    onClick={() => startEdit('client_name')}
+                  >
+                    {workOrder.client_name}
+                  </p>
+                )}
               </div>
               <Button variant="ghost" size="icon" onClick={onClose}>
                 <X className="w-5 h-5" />
@@ -241,31 +358,86 @@ export default function WorkOrderDetailsDialog({
               
               {/* Left Column - Core Info */}
               <div className="space-y-4">
-                {/* Image */}
-                {workOrder.image_url && (
-                  <div className="rounded-xl overflow-hidden" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
-                  }}>
-                    <img src={workOrder.image_url} alt={workOrder.title} className="w-full h-48 object-contain" />
-                  </div>
-                )}
+                {/* Image - Editable */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="rounded-xl overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" style={{
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                      boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                      {workOrder.image_url ? (
+                        <img src={workOrder.image_url} alt={workOrder.title} className="w-full h-48 object-contain" />
+                      ) : (
+                        <div className="w-full h-48 flex items-center justify-center">
+                          <Upload className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="clay-card w-64">
+                    <Label>Upload New Image</Label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="mt-2 text-sm"
+                      disabled={uploading}
+                    />
+                    {uploading && <p className="text-xs text-gray-500 mt-2">Uploading...</p>}
+                  </PopoverContent>
+                </Popover>
 
-                {/* Basic Info */}
+                {/* Basic Info - Editable */}
                 <div className="clay-card p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium">Assigned:</span>
-                    <span className="text-gray-600">{workOrder.assigned_to || 'Unassigned'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-orange-600" />
-                    <span className="font-medium">Due:</span>
-                    <span className="text-gray-600">
-                      {workOrder.due_date ? format(new Date(workOrder.due_date), "MMM d, yyyy") : 'No due date'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
+                        <User className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium">Assigned:</span>
+                        <span className="text-gray-600">{workOrder.assigned_to || 'Unassigned'}</span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-64">
+                      <Label>Assigned To</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          value={editValues.assigned_to || workOrder.assigned_to || ''}
+                          onChange={(e) => setEditValues({...editValues, assigned_to: e.target.value})}
+                          placeholder="Enter name"
+                        />
+                        <Button size="sm" onClick={() => saveEdit('assigned_to')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
+                        <Calendar className="w-4 h-4 text-orange-600" />
+                        <span className="font-medium">Due:</span>
+                        <span className="text-gray-600">
+                          {workOrder.due_date ? format(new Date(workOrder.due_date), "MMM d, yyyy") : 'No due date'}
+                        </span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-64">
+                      <Label>Due Date</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          type="date"
+                          value={editValues.due_date || workOrder.due_date || ''}
+                          onChange={(e) => setEditValues({...editValues, due_date: e.target.value})}
+                        />
+                        <Button size="sm" onClick={() => saveEdit('due_date')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <div className="flex items-center gap-2 text-sm p-2">
                     <FileText className="w-4 h-4 text-purple-600" />
                     <span className="font-medium">Stage:</span>
                     <Badge style={{ backgroundColor: stageColors[workOrder.current_stage] }}>
@@ -274,40 +446,94 @@ export default function WorkOrderDetailsDialog({
                   </div>
                 </div>
 
-                {/* Description */}
-                {workOrder.description && (
-                  <div className="clay-card p-4">
-                    <h3 className="font-semibold text-sm mb-2">Description</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description}</p>
-                  </div>
-                )}
-
-                {/* Gantt Chart */}
-                {ganttData && (
-                  <div className="clay-card p-4">
-                    <h3 className="font-semibold text-sm mb-3">Timeline</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{format(ganttData.start, "MMM d")}</span>
-                        <span>{format(ganttData.end, "MMM d")}</span>
-                      </div>
-                      <div className="h-8 rounded-full overflow-hidden" style={{
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                        boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
-                      }}>
-                        <div 
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${ganttData.progress}%`,
-                            background: `linear-gradient(135deg, ${stageColors[workOrder.current_stage]} 0%, rgba(255,255,255,0.7) 100%)`
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-center text-gray-500">
-                        {Math.round(ganttData.progress)}% Complete • {Math.max(0, Math.ceil(ganttData.totalDays - (ganttData.totalDays * ganttData.progress / 100)))} days remaining
-                      </p>
+                {/* Description - Editable */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="clay-card p-4 cursor-pointer hover:shadow-lg transition-shadow">
+                      <h3 className="font-semibold text-sm mb-2">Description</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description || 'Click to add description'}</p>
                     </div>
-                  </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="clay-card w-80">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editValues.description || workOrder.description || ''}
+                      onChange={(e) => setEditValues({...editValues, description: e.target.value})}
+                      className="mt-2 min-h-24"
+                    />
+                    <Button size="sm" className="mt-2" onClick={() => saveEdit('description')}>
+                      Save
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Comprehensive Timeline */}
+                {timelineData && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="clay-card p-4 cursor-pointer hover:shadow-lg transition-shadow">
+                        <h3 className="font-semibold text-sm mb-3">Timeline</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>{format(timelineData.earliestStart, "MMM d")}</span>
+                            <span>{format(timelineData.latestEnd, "MMM d")}</span>
+                          </div>
+                          <div className="relative h-16 rounded-lg overflow-visible" style={{
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                            boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
+                          }}>
+                            {timelineData.bars.map((bar, idx) => (
+                              <div
+                                key={bar.id}
+                                className="absolute h-4 rounded transition-all"
+                                style={{
+                                  left: `${bar.startOffset}%`,
+                                  width: `${bar.width}%`,
+                                  top: bar.type === 'parent' ? '4px' : bar.type === 'current' ? '24px' : '44px',
+                                  background: bar.isCurrent 
+                                    ? `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)`
+                                    : bar.type === 'parent'
+                                    ? 'linear-gradient(135deg, rgba(200,200,200,0.5) 0%, rgba(220,220,220,0.5) 100%)'
+                                    : 'linear-gradient(135deg, rgba(255,214,232,0.7) 0%, rgba(224,212,247,0.7) 100%)',
+                                  border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.1)',
+                                  boxShadow: bar.isCurrent ? '0 0 8px rgba(124,58,237,0.4)' : 'none'
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            {parentWorkOrder && <span className="text-gray-400">Parent</span>}
+                            <span className="text-purple-600 font-medium">Current</span>
+                            {riders.length > 0 && <span className="text-pink-500">Riders ({riders.length})</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-80">
+                      <Label>Start Date</Label>
+                      <div className="flex gap-2 mt-2 mb-3">
+                        <Input
+                          type="date"
+                          value={editValues.start_date || workOrder.start_date || ''}
+                          onChange={(e) => setEditValues({...editValues, start_date: e.target.value})}
+                        />
+                        <Button size="sm" onClick={() => saveEdit('start_date')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <Label>Due Date</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          type="date"
+                          value={editValues.due_date || workOrder.due_date || ''}
+                          onChange={(e) => setEditValues({...editValues, due_date: e.target.value})}
+                        />
+                        <Button size="sm" onClick={() => saveEdit('due_date')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
 
                 {/* Relationships */}
@@ -596,15 +822,6 @@ export default function WorkOrderDetailsDialog({
                 <div className="clay-card p-4">
                   <h3 className="font-semibold text-sm mb-3">Quick Actions</h3>
                   <div className="space-y-2">
-                    <Button
-                      className="w-full justify-start clay-button"
-                      variant="ghost"
-                      onClick={() => { onEdit(workOrder); onClose(); }}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Details
-                    </Button>
-
                     {!workOrder.is_rider && onSplit && (
                       <Button
                         className="w-full justify-start clay-button"
