@@ -61,9 +61,8 @@ export default function DragDropList({
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        {...provided.dragHandleProps}
                         style={provided.draggableProps.style}
-                        className={`${snapshot.isDragging ? 'z-50 opacity-90' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                        className={`${snapshot.isDragging ? 'z-50 opacity-90' : ''}`}
                       >
                         <WorkOrderCard
                           workOrder={workOrder}
@@ -76,6 +75,7 @@ export default function DragDropList({
                           onDelete={onDelete}
                           showMoveOptions={showMoveOptions}
                           priorityNumber={originalIndex + 1}
+                          dragHandleProps={workOrder.is_rider ? null : provided.dragHandleProps}
                         />
                       </div>
                     )}
