@@ -476,10 +476,7 @@ export default function WorkOrderCard({
               </div>
 
             {workOrder.description &&
-            <p 
-              className="text-xs text-gray-600 mb-1 leading-snug line-clamp-1 cursor-pointer"
-              onClick={() => setShowDetailsDialog(true)}
-            >
+            <p className="text-xs text-gray-600 mb-1 leading-snug line-clamp-1">
               {workOrder.description}
             </p>
             }
