@@ -290,7 +290,8 @@ export default function WorkOrderCard({
   return (
     <>
       <div 
-        className="clay-card relative transition-all hover:shadow-2xl"
+        className="clay-card relative transition-all hover:shadow-2xl cursor-pointer"
+        onClick={() => setShowDetailsDialog(true)}
         style={{
           background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
           width: '100%',
