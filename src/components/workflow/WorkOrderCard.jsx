@@ -322,8 +322,7 @@ export default function WorkOrderCard({
         )}
 
         <div className="p-3">
-
-        {/* Priority Number Badge */}
+          {/* Priority Number Badge */}
         <div
           className="absolute -top-2 -left-2 rounded-full flex items-center justify-center font-bold z-10"
           style={{
