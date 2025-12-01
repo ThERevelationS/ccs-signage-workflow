@@ -283,7 +283,7 @@ export default function WorkOrderCard({
   return (
     <>
       <div 
-        className="p-4 clay-card relative transition-all hover:shadow-2xl"
+        className="p-3 clay-card relative transition-all hover:shadow-2xl"
         style={{
           background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
           width: '100%',
@@ -295,16 +295,16 @@ export default function WorkOrderCard({
 
         {/* Priority Number Badge */}
         <div
-          className="absolute -top-3 -left-3 rounded-full flex items-center justify-center font-bold z-10"
+          className="absolute -top-2 -left-2 rounded-full flex items-center justify-center font-bold z-10"
           style={{
-            width: '48px',
-            height: '48px',
+            width: '32px',
+            height: '32px',
             background: isTopPriority ?
             'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' :
             'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
             color: isTopPriority ? '#000' : '#6B46C1',
-            fontSize: '20px',
-            boxShadow: '4px 4px 12px rgba(0,0,0,0.2), -2px -2px 8px rgba(255,255,255,0.8)'
+            fontSize: '14px',
+            boxShadow: '3px 3px 8px rgba(0,0,0,0.2), -2px -2px 6px rgba(255,255,255,0.8)'
           }}>
 
           #{priorityNumber}
@@ -316,14 +316,14 @@ export default function WorkOrderCard({
             {/* Image Section */}
             {workOrder.image_url ?
             <div
-              className="flex-shrink-0 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+              className="flex-shrink-0 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 window.open(workOrder.image_url, '_blank');
               }}
               style={{
-                width: '320px',
-                height: '240px',
+                width: '180px',
+                height: '120px',
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
                 boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
               }}>
@@ -338,15 +338,15 @@ export default function WorkOrderCard({
             <div className="flex-shrink-0">
                 <label onClick={(e) => e.stopPropagation()}>
                   <div
-                  className="w-24 h-24 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                  className="w-16 h-16 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
                   style={{
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
                     boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 3px rgba(255,255,255,0.8)'
                   }}>
 
-                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500 text-center px-2 leading-tight font-medium">
-                      {uploading ? "..." : "Add Mockup"}
+                    <Upload className="w-5 h-5 text-gray-400 mb-1" />
+                    <span className="text-xs text-gray-500 text-center px-1 leading-tight font-medium">
+                      {uploading ? "..." : "Add"}
                     </span>
                   </div>
                   <input
@@ -367,15 +367,16 @@ export default function WorkOrderCard({
                   onClick={() => setShowDetailsDialog(true)}
                 >
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h3 className="font-bold text-gray-800 text-2xl leading-tight">{workOrder.title}</h3>
-                    <span className="text-lg text-gray-500">•</span>
-                    <p className="text-lg text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
+                    <h3 className="font-bold text-gray-800 text-base leading-tight">{workOrder.title}</h3>
+                    <span className="text-sm text-gray-500">•</span>
+                    <p className="text-sm text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
                   {workOrder.is_rider &&
                   <Badge
-                    className="rounded-full text-sm px-3 py-0.5 leading-none flex-shrink-0"
+                    className="rounded-full px-1.5 py-0 leading-none flex-shrink-0"
                     style={{
                       background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
                       color: '#7C3AED',
+                      fontSize: '10px',
                       boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(0,0,0,0.1)'
                     }}>
 
@@ -391,14 +392,16 @@ export default function WorkOrderCard({
                   handleToggleAsap();
                 }}
                 size="sm"
-                className={`h-8 px-3 text-xs font-bold rounded-full transition-all ${
+                className={`h-5 px-2 text-xs font-bold rounded-full transition-all ${
                 isAsap ?
                 'bg-red-600 hover:bg-red-700 text-white' :
                 'bg-transparent hover:bg-gray-100 text-gray-400'}`
                 }
                 style={isAsap ? {
-                  boxShadow: '0 0 12px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
+                  fontSize: '10px',
+                  boxShadow: '0 0 8px rgba(220, 38, 38, 0.4), inset 0 1px 2px rgba(255,255,255,0.3)'
                 } : {
+                  fontSize: '10px',
                   opacity: 0.4
                 }}
               >
@@ -406,45 +409,46 @@ export default function WorkOrderCard({
               </Button>
             </div>
 
-            <div className="flex gap-3 mb-2">
+            <div className="flex gap-2 mb-1 flex-wrap">
               {workOrder.assigned_to &&
-              <div className="flex items-center gap-1.5 text-gray-600">
-                  <User className="w-4 h-4 flex-shrink-0 text-blue-600" />
-                  <span className="text-base font-medium">{workOrder.assigned_to.split('@')[0]}</span>
+              <div className="flex items-center gap-1 text-gray-600">
+                  <User className="w-3 h-3 flex-shrink-0 text-blue-600" />
+                  <span className="text-xs font-medium">{workOrder.assigned_to.split('@')[0]}</span>
                 </div>
               }
               {workOrder.due_date &&
-              <div className="flex items-center gap-1.5 text-gray-600">
-                  <Calendar className="w-4 h-4 flex-shrink-0 text-orange-600" />
-                  <span className="text-base font-medium">{format(new Date(workOrder.due_date), "MMM d")}</span>
+              <div className="flex items-center gap-1 text-gray-600">
+                  <Calendar className="w-3 h-3 flex-shrink-0 text-orange-600" />
+                  <span className="text-xs font-medium">{format(new Date(workOrder.due_date), "MMM d")}</span>
                 </div>
               }
               {riders.length > 0 && !workOrder.is_rider &&
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex gap-1 flex-wrap">
                   {riders.map((rider, index) =>
                 <Link
                   key={rider.id}
                   to={createPageUrl(getPageNameForStage(rider.rider_stage || rider.current_stage))}>
 
                       <Badge
-                    className="rounded-full text-xs px-2 py-0.5 leading-none flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="rounded-full text-xs px-1.5 py-0 leading-none flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity"
                     style={{
                       background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
                       color: '#92400E',
+                      fontSize: '10px',
                       boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(0,0,0,0.1)'
                     }}>
 
-                        Rider {riders.length > 1 ? index + 1 : ''}
+                        R{riders.length > 1 ? index + 1 : ''}
                       </Badge>
                     </Link>
                 )}
                 </div>
               }
-            </div>
+              </div>
 
             {workOrder.description &&
             <p 
-              className="text-base text-gray-600 mb-2 leading-relaxed line-clamp-2 cursor-pointer"
+              className="text-xs text-gray-600 mb-1 leading-snug line-clamp-1 cursor-pointer"
               onClick={() => setShowDetailsDialog(true)}
             >
               {workOrder.description}
@@ -455,17 +459,17 @@ export default function WorkOrderCard({
 
           {/* Tasks Section - Full Width */}
           <div
-            className="rounded-xl"
+            className="rounded-lg"
             style={{
               background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 100%)',
               boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.08), inset -1px -1px 3px rgba(255,255,255,0.9)'
             }}>
 
-            <div className="flex gap-2 p-2">
+            <div className="flex gap-1 p-1.5">
                 {/* Tasks Content Area */}
                 <div className="flex-1 min-w-0">
                   {completedNotes.length > 0 &&
-                  <div className="mb-1">
+                  <div className="mb-0.5">
                       <Button
                       variant="ghost"
                       size="sm"
@@ -473,21 +477,22 @@ export default function WorkOrderCard({
                         e.stopPropagation();
                         setShowCompleted(!showCompleted);
                       }}
-                      className="h-6 px-2 text-xs hover:bg-gray-100 rounded-lg font-medium flex items-center gap-1">
+                      className="h-5 px-1.5 text-xs hover:bg-gray-100 rounded font-medium flex items-center gap-0.5"
+                      style={{ fontSize: '10px' }}>
 
-                        {showCompleted ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        {showCompleted ? 'Hide' : 'Show'} ({completedNotes.length})
+                        {showCompleted ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
+                        ({completedNotes.length})
                       </Button>
                     </div>
                   }
 
                   {/* Active Tasks */}
                   {activeNotes.length > 0 &&
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                       {activeNotes.map((note, index) => {
                       const actualIndex = notes.findIndex((n) => n === note);
                       return (
-                        <div key={actualIndex} className="p-1.5 bg-white/50 rounded-lg flex items-start gap-1.5">
+                        <div key={actualIndex} className="p-1 bg-white/50 rounded flex items-start gap-1">
                             {editingNoteIndex === actualIndex ?
                             <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                                   <Input
@@ -530,18 +535,18 @@ export default function WorkOrderCard({
                                   e.stopPropagation();
                                   handleToggleComplete(index, false);
                                 }}
-                                className="h-5 w-5 rounded-full flex-shrink-0 mt-0.5 hover:bg-green-100 p-0">
+                                className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-green-100 p-0">
 
-                                    <Circle className="w-3.5 h-3.5 text-gray-400" />
+                                    <Circle className="w-3 h-3 text-gray-400" />
                                   </Button>
                                   <div
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleNoteEdit(index, false);
                                 }}
-                                className="flex-1 cursor-pointer hover:bg-white/70 rounded p-1 transition-colors">
+                                className="flex-1 cursor-pointer hover:bg-white/70 rounded px-1 transition-colors">
 
-                                    <p className="text-gray-700 text-sm leading-snug">{note.text}</p>
+                                    <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
                                   </div>
                                 </>
                             }
@@ -553,11 +558,11 @@ export default function WorkOrderCard({
 
                   {/* Completed Tasks */}
                   {showCompleted && completedNotes.length > 0 &&
-                  <div className="space-y-1 mt-1 border-t pt-1">
+                  <div className="space-y-0.5 mt-0.5 border-t pt-0.5">
                       {completedNotes.map((note, index) => {
                       const actualIndex = notes.findIndex((n) => n === note);
                       return (
-                        <div key={actualIndex} className="p-1.5 bg-gray-100/50 rounded-lg flex items-start gap-1.5 opacity-60">
+                        <div key={actualIndex} className="p-1 bg-gray-100/50 rounded flex items-start gap-1 opacity-60">
                             {editingNoteIndex === actualIndex ?
                           <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                                 <Input
@@ -600,18 +605,18 @@ export default function WorkOrderCard({
                                 e.stopPropagation();
                                 handleToggleComplete(index, true);
                               }}
-                              className="h-5 w-5 rounded-full flex-shrink-0 mt-0.5 hover:bg-gray-200 p-0">
+                              className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-gray-200 p-0">
 
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                  <CheckCircle2 className="w-3 h-3 text-green-600" />
                                 </Button>
                                 <div
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleNoteEdit(index, true);
                               }}
-                              className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded p-1 transition-colors">
+                              className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded px-1 transition-colors">
 
-                                  <p className="text-gray-600 text-sm leading-snug line-through">{note.text}</p>
+                                  <p className="text-gray-600 text-xs leading-snug line-through">{note.text}</p>
                                 </div>
                               </>
                           }
@@ -660,12 +665,12 @@ export default function WorkOrderCard({
                   }
 
                   {activeNotes.length === 0 && !isAddingNote &&
-                  <p className="text-gray-400 text-center text-xs">No active tasks</p>
+                  <p className="text-gray-400 text-center" style={{ fontSize: '10px' }}>No tasks</p>
                   }
-                </div>
+                  </div>
 
-                {/* Vertical Add Task Button */}
-                <div className="flex-shrink-0 flex items-stretch">
+                  {/* Vertical Add Task Button */}
+                  <div className="flex-shrink-0 flex items-stretch">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -673,16 +678,16 @@ export default function WorkOrderCard({
                       e.stopPropagation();
                       setIsAddingNote(true);
                     }}
-                    className="px-1 text-xs hover:bg-gray-100 rounded-lg font-medium flex items-center justify-center"
-                    style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}>
+                    className="px-0.5 hover:bg-gray-100 rounded font-medium flex items-center justify-center"
+                    style={{ writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '10px' }}>
 
-                    +Add
+                    +
                   </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                  </div>
+                  </div>
+                  </div>
+                  </div>
+                  </div>
 
       {/* Details Dialog */}
       <WorkOrderDetailsDialog
