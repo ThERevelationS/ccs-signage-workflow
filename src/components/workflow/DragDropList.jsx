@@ -36,12 +36,12 @@ export default function DragDropList({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="work-orders-list" direction="vertical">
+      <Droppable droppableId="work-orders-list">
         {(provided) => (
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex flex-col gap-4"
+            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
           >
             {workOrders.map((workOrder, index) => (
               <Draggable 
@@ -55,8 +55,12 @@ export default function DragDropList({
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    style={provided.draggableProps.style}
-                    className={`relative ${snapshot.isDragging ? 'opacity-80 shadow-2xl z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    style={{
+                      ...provided.draggableProps.style,
+                      opacity: snapshot.isDragging ? 0.8 : 1,
+                      transform: provided.draggableProps.style?.transform,
+                    }}
+                    className={`relative ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
                     <WorkOrderCard
                       workOrder={workOrder}
