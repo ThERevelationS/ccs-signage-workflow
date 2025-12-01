@@ -1,7 +1,6 @@
 import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import WorkOrderCard from "./WorkOrderCard";
-import { GripVertical } from "lucide-react";
 
 export default function DragDropList({ 
   workOrders, 
@@ -55,12 +54,8 @@ export default function DragDropList({
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    style={{
-                      ...provided.draggableProps.style,
-                      opacity: snapshot.isDragging ? 0.8 : 1,
-                      transform: provided.draggableProps.style?.transform,
-                    }}
-                    className={`relative ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    style={provided.draggableProps.style}
+                    className={`relative ${snapshot.isDragging ? 'opacity-80 z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
                     <WorkOrderCard
                       workOrder={workOrder}
