@@ -66,9 +66,10 @@ export default function WorkOrderCard({
   onComplete,
   onRestore,
   onUpdate,
-  onDelete, // Added onDelete prop
+  onDelete,
   showMoveOptions = true,
-  priorityNumber
+  priorityNumber,
+  dragHandleProps = null
 }) {
   const stageColor = stageColors[workOrder.current_stage] || "#E0D4F7";
   const isTopPriority = priorityNumber === 1;
@@ -289,7 +290,7 @@ export default function WorkOrderCard({
   return (
     <>
       <div 
-        className="p-3 clay-card relative transition-all hover:shadow-2xl"
+        className="clay-card relative transition-all hover:shadow-2xl"
         style={{
           background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
           width: '100%',
@@ -298,6 +299,29 @@ export default function WorkOrderCard({
           boxShadow: `0 0 ${isAsap ? '24px' : isTopPriority ? '20px' : '12px'} ${highlight.shadow}, 8px 8px 20px rgba(0, 0, 0, 0.08), -8px -8px 20px rgba(255, 255, 255, 0.9)`
         }}
       >
+        {/* Drag handle edges */}
+        {dragHandleProps && (
+          <>
+            <div 
+              {...dragHandleProps}
+              className="absolute top-0 left-0 right-0 h-3 cursor-grab active:cursor-grabbing rounded-t-[17px] hover:bg-black/5 transition-colors z-10"
+            />
+            <div 
+              {...dragHandleProps}
+              className="absolute bottom-0 left-0 right-0 h-3 cursor-grab active:cursor-grabbing rounded-b-[17px] hover:bg-black/5 transition-colors z-10"
+            />
+            <div 
+              {...dragHandleProps}
+              className="absolute top-0 bottom-0 left-0 w-3 cursor-grab active:cursor-grabbing rounded-l-[17px] hover:bg-black/5 transition-colors z-10"
+            />
+            <div 
+              {...dragHandleProps}
+              className="absolute top-0 bottom-0 right-0 w-3 cursor-grab active:cursor-grabbing rounded-r-[17px] hover:bg-black/5 transition-colors z-10"
+            />
+          </>
+        )}
+
+        <div className="p-3">
 
         {/* Priority Number Badge */}
         <div
