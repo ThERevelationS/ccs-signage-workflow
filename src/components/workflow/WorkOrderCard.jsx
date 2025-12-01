@@ -694,12 +694,12 @@ export default function WorkOrderCard({
                   }
 
                   {activeNotes.length === 0 && !isAddingNote &&
-                  <p className="text-gray-400 text-center" style={{ fontSize: '10px' }}>No tasks</p>
+                    <p className="text-gray-400 text-center" style={{ fontSize: '10px' }}>No tasks</p>
                   }
-                  </div>
+                </div>
 
-                  {/* Vertical Add Task Button */}
-                  <div className="flex-shrink-0 flex items-stretch">
+                {/* Vertical Add Task Button */}
+                <div className="flex-shrink-0 flex items-stretch">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -709,14 +709,13 @@ export default function WorkOrderCard({
                     }}
                     className="px-0.5 hover:bg-gray-100 rounded font-medium flex items-center justify-center"
                     style={{ writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '10px' }}>
-
                     +
                   </Button>
-                  </div>
-                  </div>
-                  </div>
-                  </div>
-                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
