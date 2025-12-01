@@ -54,8 +54,14 @@ export default function DragDropList({
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    style={provided.draggableProps.style}
-                    className={`w-full xl:w-[calc(50%-0.5rem)] ${snapshot.isDragging ? 'opacity-80 z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    style={{
+                      ...provided.draggableProps.style,
+                      ...(snapshot.isDragging && { 
+                        transform: provided.draggableProps.style?.transform,
+                        pointerEvents: 'auto'
+                      })
+                    }}
+                    className={`w-full xl:w-[calc(50%-0.5rem)] ${snapshot.isDragging ? 'opacity-90 z-50 !transform-none [&_.clay-card]:!transform-none [&_.clay-card]:!transition-none' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
                     <WorkOrderCard
                       workOrder={workOrder}
