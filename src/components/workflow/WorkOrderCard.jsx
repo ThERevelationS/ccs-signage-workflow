@@ -393,8 +393,7 @@ export default function WorkOrderCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between mb-2">
                 <div 
-                  className="flex-1 min-w-0 cursor-pointer" 
-                  onClick={() => setShowDetailsDialog(true)}
+                  className="flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h3 className="font-bold text-gray-800 text-base leading-tight">{workOrder.title}</h3>
