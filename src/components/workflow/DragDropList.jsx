@@ -40,7 +40,7 @@ export default function DragDropList({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
+            className="flex flex-wrap gap-4"
           >
             {workOrders.map((workOrder, index) => (
               <Draggable 
@@ -55,7 +55,7 @@ export default function DragDropList({
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     style={provided.draggableProps.style}
-                    className={`relative ${snapshot.isDragging ? 'opacity-80 z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                    className={`w-full xl:w-[calc(50%-0.5rem)] ${snapshot.isDragging ? 'opacity-80 z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
                     <WorkOrderCard
                       workOrder={workOrder}
