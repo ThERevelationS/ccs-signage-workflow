@@ -100,6 +100,10 @@ export default function WorkOrderDetailsDialog({
     action_value: "",
     target_work_order_id: ""
   });
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskText, setNewTaskText] = useState("");
+  const [editingTaskIndex, setEditingTaskIndex] = useState(null);
+  const [editedTaskText, setEditedTaskText] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -193,7 +197,41 @@ export default function WorkOrderDetailsDialog({
       completed: !updatedTasks[taskIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    loadRelatedData();
+    if (onUpdate) onUpdate();
+  };
+
+  const handleAddTask = async () => {
+    if (!newTaskText.trim()) return;
+    const newTask = {
+      text: newTaskText,
+      timestamp: new Date().toISOString(),
+      created_by: "Unknown",
+      completed: false
+    };
+    const updatedTasks = [...tasks, newTask];
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    setNewTaskText("");
+    setIsAddingTask(false);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleEditTask = async (taskIndex) => {
+    if (!editedTaskText.trim()) return;
+    const updatedTasks = [...tasks];
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      text: editedTaskText
+    };
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    setEditingTaskIndex(null);
+    setEditedTaskText("");
+    if (onUpdate) onUpdate();
+  };
+
+  const handleDeleteTask = async (taskIndex) => {
+    const updatedTasks = tasks.filter((_, idx) => idx !== taskIndex);
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
   };
 
   const handleAddWorkNote = async (noteData) => {
@@ -831,60 +869,170 @@ export default function WorkOrderDetailsDialog({
               {/* Middle Column - Tasks & Notes */}
               <div className="space-y-4">
                 {/* Tasks (formerly Notes) */}
-                <div className="clay-card p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-sm">Tasks</h3>
-                    {completedTasks.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowCompletedNotes(!showCompletedNotes)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        {showCompletedNotes ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
-                        {showCompletedNotes ? 'Hide' : 'Show'} ({completedTasks.length})
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {activeTasks.map((task, idx) => (
-                      <div key={idx} className="p-2 bg-white/50 rounded-lg flex items-start gap-2">
-                        <Checkbox
-                          checked={false}
-                          onCheckedChange={() => handleToggleTask(tasks.findIndex(t => t === task))}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-700">{task.text}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {showCompletedNotes && completedTasks.map((task, idx) => (
-                      <div key={idx} className="p-2 bg-gray-100/50 rounded-lg opacity-60 flex items-start gap-2">
-                        <Checkbox
-                          checked={true}
-                          onCheckedChange={() => handleToggleTask(tasks.findIndex(t => t === task))}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-600 line-through">{task.text}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {activeTasks.length === 0 && (
-                      <p className="text-xs text-gray-400 text-center py-2">No active tasks</p>
-                    )}
-                  </div>
-                </div>
+                                      <div className="clay-card p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <h3 className="font-semibold text-sm">Tasks</h3>
+                                          <div className="flex items-center gap-2">
+                                            {completedTasks.length > 0 && (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setShowCompletedNotes(!showCompletedNotes)}
+                                                className="h-6 px-2 text-xs"
+                                              >
+                                                {showCompletedNotes ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                                                {showCompletedNotes ? 'Hide' : 'Show'} ({completedTasks.length})
+                                              </Button>
+                                            )}
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setIsAddingTask(true)}
+                                              className="h-6 px-2 text-xs"
+                                            >
+                                              <Plus className="w-3 h-3 mr-1" />
+                                              Add
+                                            </Button>
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                          {/* Add Task Form */}
+                                          {isAddingTask && (
+                                            <div className="p-2 bg-blue-50 rounded-lg space-y-2">
+                                              <Input
+                                                value={newTaskText}
+                                                onChange={(e) => setNewTaskText(e.target.value)}
+                                                placeholder="Enter task..."
+                                                className="text-sm h-8"
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter') handleAddTask();
+                                                  if (e.key === 'Escape') { setIsAddingTask(false); setNewTaskText(""); }
+                                                }}
+                                              />
+                                              <div className="flex gap-1">
+                                                <Button size="sm" onClick={handleAddTask} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                                                  <Check className="w-3 h-3 mr-1" />Save
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => { setIsAddingTask(false); setNewTaskText(""); }} className="h-6 px-2 text-xs">
+                                                  <X className="w-3 h-3" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {activeTasks.map((task, idx) => {
+                                            const actualIndex = tasks.findIndex(t => t === task);
+                                            return (
+                                              <div key={idx} className="p-2 bg-white/50 rounded-lg flex items-start gap-2">
+                                                <Checkbox
+                                                  checked={false}
+                                                  onCheckedChange={() => handleToggleTask(actualIndex)}
+                                                  className="mt-0.5"
+                                                />
+                                                {editingTaskIndex === actualIndex ? (
+                                                  <div className="flex-1 space-y-1">
+                                                    <Input
+                                                      value={editedTaskText}
+                                                      onChange={(e) => setEditedTaskText(e.target.value)}
+                                                      className="text-sm h-8"
+                                                      autoFocus
+                                                      onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleEditTask(actualIndex);
+                                                        if (e.key === 'Escape') { setEditingTaskIndex(null); setEditedTaskText(""); }
+                                                      }}
+                                                    />
+                                                    <div className="flex gap-1">
+                                                      <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                                                        <Check className="w-3 h-3 mr-1" />Save
+                                                      </Button>
+                                                      <Button size="sm" variant="ghost" onClick={() => { setEditingTaskIndex(null); setEditedTaskText(""); }} className="h-6 px-2 text-xs">
+                                                        <X className="w-3 h-3" />
+                                                      </Button>
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    <div 
+                                                      className="flex-1 cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
+                                                      onClick={() => { setEditingTaskIndex(actualIndex); setEditedTaskText(task.text); }}
+                                                    >
+                                                      <p className="text-sm text-gray-700">{task.text}</p>
+                                                      <p className="text-xs text-gray-400 mt-1">
+                                                        {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                                                      </p>
+                                                    </div>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      onClick={() => handleDeleteTask(actualIndex)}
+                                                      className="h-6 w-6 flex-shrink-0"
+                                                    >
+                                                      <Trash2 className="w-3 h-3 text-red-600" />
+                                                    </Button>
+                                                  </>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+
+                                          {showCompletedNotes && completedTasks.map((task, idx) => {
+                                            const actualIndex = tasks.findIndex(t => t === task);
+                                            return (
+                                              <div key={idx} className="p-2 bg-gray-100/50 rounded-lg opacity-60 flex items-start gap-2">
+                                                <Checkbox
+                                                  checked={true}
+                                                  onCheckedChange={() => handleToggleTask(actualIndex)}
+                                                  className="mt-0.5"
+                                                />
+                                                {editingTaskIndex === actualIndex ? (
+                                                  <div className="flex-1 space-y-1">
+                                                    <Input
+                                                      value={editedTaskText}
+                                                      onChange={(e) => setEditedTaskText(e.target.value)}
+                                                      className="text-sm h-8"
+                                                      autoFocus
+                                                    />
+                                                    <div className="flex gap-1">
+                                                      <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                                                        <Check className="w-3 h-3 mr-1" />Save
+                                                      </Button>
+                                                      <Button size="sm" variant="ghost" onClick={() => { setEditingTaskIndex(null); setEditedTaskText(""); }} className="h-6 px-2 text-xs">
+                                                        <X className="w-3 h-3" />
+                                                      </Button>
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    <div 
+                                                      className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded px-1 transition-colors"
+                                                      onClick={() => { setEditingTaskIndex(actualIndex); setEditedTaskText(task.text); }}
+                                                    >
+                                                      <p className="text-sm text-gray-600 line-through">{task.text}</p>
+                                                      <p className="text-xs text-gray-400 mt-1">
+                                                        {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                                                      </p>
+                                                    </div>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      onClick={() => handleDeleteTask(actualIndex)}
+                                                      className="h-6 w-6 flex-shrink-0"
+                                                    >
+                                                      <Trash2 className="w-3 h-3 text-red-600" />
+                                                    </Button>
+                                                  </>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+
+                                          {activeTasks.length === 0 && !isAddingTask && (
+                                            <p className="text-xs text-gray-400 text-center py-2">No active tasks</p>
+                                          )}
+                                        </div>
+                                      </div>
 
 
 
