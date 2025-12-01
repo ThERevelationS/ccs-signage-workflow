@@ -716,7 +716,6 @@ export default function WorkOrderCard({
             </div>
           </div>
         </div>
-        </div>
       </div>
 
       {/* Image Preview Dialog */}
