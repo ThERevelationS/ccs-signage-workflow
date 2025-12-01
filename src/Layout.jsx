@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -70,13 +69,17 @@ export default function Layout({ children }) {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .clay-card:not([role="dialog"]):hover {
+        .clay-card:not([role="dialog"]):not([data-dragging="true"]):hover {
           transform: translateY(-2px);
           box-shadow: 
             10px 10px 24px rgba(0, 0, 0, 0.1),
             -10px -10px 24px rgba(255, 255, 255, 0.9),
             inset 2px 2px 8px rgba(255, 255, 255, 0.6),
             inset -2px -2px 8px rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-rfd-draggable-context-id] .clay-card {
+          transform: none !important;
         }
         
         .clay-button {
