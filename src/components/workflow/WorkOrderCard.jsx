@@ -42,6 +42,10 @@ import { UploadFile } from "@/integrations/Core";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 const stageColors = {
   estimating: "#FFF9C4", // Added Estimating color
@@ -97,6 +101,7 @@ export default function WorkOrderCard({
   const [showCompleted, setShowCompleted] = useState(false);
   const [showRiderWarning, setShowRiderWarning] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
 
   // Added state for delete functionality
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -320,7 +325,7 @@ export default function WorkOrderCard({
               className="flex-shrink-0 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(workOrder.image_url, '_blank');
+                setShowImageDialog(true);
               }}
               style={{
                 width: '180px',
@@ -689,6 +694,17 @@ export default function WorkOrderCard({
                   </div>
                   </div>
                   </div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-2 bg-black/90 border-none">
+          <img
+            src={workOrder.image_url}
+            alt={workOrder.title}
+            className="w-full h-full object-contain max-h-[85vh]"
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Details Dialog */}
       <WorkOrderDetailsDialog
