@@ -718,10 +718,10 @@ export default function WorkOrderCard({
                   </div>
                   </div>
                   </div>
-                  </div>
-                  </div>
+        </div>
+      </div>
 
-                  {/* Image Preview Dialog */}
+      {/* Image Preview Dialog */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-2 bg-black/90 border-none">
           <img
