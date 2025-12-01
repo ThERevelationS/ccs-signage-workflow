@@ -40,7 +40,7 @@ export default function DragDropList({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
+            className="flex flex-col gap-4"
           >
             {workOrders.map((workOrder, index) => (
               <Draggable 
