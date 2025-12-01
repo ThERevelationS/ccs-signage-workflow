@@ -385,29 +385,26 @@ export default function WorkOrderDetailsDialog({
                     </div>
                   ) : (
                     <>
-                      <h2 
-                        className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                        onClick={() => startEdit('title')}
-                      >
-                        {workOrder.title}
-                        <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
-                      </h2>
-                      {workOrder.is_rider && (
-                        <Badge className="rounded-full" style={{
-                          background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
-                          color: '#7C3AED'
-                        }}>
-                          Rider
-                        </Badge>
-                      )}
-                      {workOrder.asap && (
-                        <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={onClose} className="ml-auto">
-                        <X className="w-5 h-5" />
-                      </Button>
-                    </>
-                  )}
+                        <h2 
+                          className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                          onClick={() => startEdit('title')}
+                        >
+                          {workOrder.title}
+                          <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
+                        </h2>
+                        {workOrder.is_rider && (
+                          <Badge className="rounded-full" style={{
+                            background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
+                            color: '#7C3AED'
+                          }}>
+                            Rider
+                          </Badge>
+                        )}
+                        {workOrder.asap && (
+                          <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
+                        )}
+                      </>
+                    )}
                 </div>
                 {editingField === 'client_name' ? (
                   <div className="flex items-center gap-2">
