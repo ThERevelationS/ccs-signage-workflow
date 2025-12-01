@@ -1,3 +1,4 @@
+import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import WorkOrderCard from "./WorkOrderCard";
 import { GripVertical } from "lucide-react";
@@ -35,12 +36,12 @@ export default function DragDropList({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="work-orders-list">
+      <Droppable droppableId="work-orders-list" direction="vertical">
         {(provided) => (
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
+            className="flex flex-col gap-4"
           >
             {workOrders.map((workOrder, index) => (
               <Draggable 
@@ -53,38 +54,22 @@ export default function DragDropList({
                   <div
                     ref={provided.innerRef}
                     {...provided.draggableProps}
-                    style={{
-                      ...provided.draggableProps.style,
-                      opacity: snapshot.isDragging ? 0.5 : 1
-                    }}
-                    className="relative"
+                    {...provided.dragHandleProps}
+                    style={provided.draggableProps.style}
+                    className={`relative ${snapshot.isDragging ? 'opacity-80 shadow-2xl z-50' : ''} ${!workOrder.is_rider ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
-                    {!workOrder.is_rider && (
-                      <div
-                        {...provided.dragHandleProps}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 cursor-grab active:cursor-grabbing clay-button p-2 rounded-lg"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)',
-                          touchAction: 'none'
-                        }}
-                      >
-                        <GripVertical className="w-5 h-5 text-gray-400" />
-                      </div>
-                    )}
-                    <div style={{ paddingLeft: workOrder.is_rider ? '0' : '60px' }}>
-                      <WorkOrderCard
-                        workOrder={workOrder}
-                        onEdit={onEdit}
-                        onMove={onMove}
-                        onSplit={onSplit}
-                        onComplete={onComplete}
-                        onRestore={onRestore}
-                        onUpdate={onUpdate}
-                        onDelete={onDelete}
-                        showMoveOptions={showMoveOptions}
-                        priorityNumber={index + 1}
-                      />
-                    </div>
+                    <WorkOrderCard
+                      workOrder={workOrder}
+                      onEdit={onEdit}
+                      onMove={onMove}
+                      onSplit={onSplit}
+                      onComplete={onComplete}
+                      onRestore={onRestore}
+                      onUpdate={onUpdate}
+                      onDelete={onDelete}
+                      showMoveOptions={showMoveOptions}
+                      priorityNumber={index + 1}
+                    />
                   </div>
                 )}
               </Draggable>
