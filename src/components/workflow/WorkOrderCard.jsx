@@ -42,6 +42,7 @@ import { UploadFile } from "@/integrations/Core";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
+import { ActivityActions } from "./ActivityLogger";
 import {
   Dialog,
   DialogContent,
@@ -171,6 +172,7 @@ export default function WorkOrderCard({
         notes: notes
       };
       await WorkOrder.update(workOrder.id, updateData);
+      await ActivityActions.imageUploaded(workOrder);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -204,12 +206,18 @@ export default function WorkOrderCard({
   const handleToggleComplete = async (index, isCompleted = false) => {
     const notesList = isCompleted ? completedNotes : activeNotes;
     const actualIndex = notes.findIndex((n) => n === notesList[index]);
+    const taskText = notes[actualIndex].text;
     const updatedNotes = [...notes];
     updatedNotes[actualIndex] = {
       ...updatedNotes[actualIndex],
       completed: !updatedNotes[actualIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (isCompleted) {
+      await ActivityActions.taskUncompleted(workOrder, taskText);
+    } else {
+      await ActivityActions.taskCompleted(workOrder, taskText);
+    }
     if (onUpdate) onUpdate();
   };
 
@@ -225,6 +233,7 @@ export default function WorkOrderCard({
 
     const updatedNotes = [...notes, newNote];
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    await ActivityActions.taskAdded(workOrder, newNoteText);
     setNewNoteText("");
     setIsAddingNote(false);
     if (onUpdate) onUpdate();
@@ -232,6 +241,7 @@ export default function WorkOrderCard({
 
   const handleToggleAsap = async () => {
     await WorkOrder.update(workOrder.id, { asap: !isAsap });
+    await ActivityActions.asapToggled(workOrder, !isAsap);
     if (onUpdate) onUpdate();
   };
 
