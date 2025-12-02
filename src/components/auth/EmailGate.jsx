@@ -63,9 +63,13 @@ export function AuthProvider({ children }) {
 
   const verifyEmail = async (email) => {
     try {
-      const users = await base44.entities.User.list();
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      return user || null;
+      // Try to get user from the users list
+      const users = await base44.entities.User.filter({ email: email.toLowerCase() });
+      if (users && users.length > 0) {
+        return users[0];
+      }
+      // If no user found, return null
+      return null;
     } catch (error) {
       console.error("Error verifying email:", error);
       return null;
