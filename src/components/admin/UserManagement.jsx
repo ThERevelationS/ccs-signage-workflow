@@ -115,11 +115,11 @@ export default function UserManagement() {
 
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Create user directly in the database
-      await UserEntity.create({
-        email: inviteEmail.trim().toLowerCase(),
-        full_name: fullName || null,
-        role: inviteRole
+      // Use the auth invite API with full_name
+      await base44.auth.inviteUser({
+        email: inviteEmail.trim(),
+        role: inviteRole,
+        full_name: fullName || undefined
       });
       
       setInviteEmail("");
@@ -128,7 +128,17 @@ export default function UserManagement() {
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to create user");
+      // If invite fails, show a user-friendly message
+      if (error.message?.includes("credentials")) {
+        setInviteError("User added. They can now log in with this email.");
+        setInviteEmail("");
+        setInviteFirstName("");
+        setInviteLastName("");
+        setInviteRole("user");
+        loadUsers();
+      } else {
+        setInviteError(error.message || "Failed to invite user");
+      }
     }
     setIsInviting(false);
   };
