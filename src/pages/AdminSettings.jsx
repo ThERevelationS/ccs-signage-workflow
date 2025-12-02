@@ -118,7 +118,7 @@ const TEMPLATE_VARIABLES = [
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
-const ADMIN_PASSWORD = "cinci2024";
+const ADMIN_PASSWORD = "Cinci2467";
 
 export default function AdminSettings() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
