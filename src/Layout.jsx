@@ -194,9 +194,23 @@ export default function Layout({ children }) {
         </nav>
 
         {/* Main content with top padding */}
-        <main className="flex-1 pt-14">
+        <main className="flex-1 pt-16">
           {children}
         </main>
+
+        {/* Floating Admin Button - hidden in fullscreen */}
+        {!isCollapsed && (
+          <Link
+            to={createPageUrl("AdminSettings")}
+            className="fixed bottom-4 left-4 z-50 clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+            }}
+          >
+            <Settings className="w-4 h-4" />
+            <span className="text-sm font-medium">Admin</span>
+          </Link>
+        )}
       </div>
     </>
   );

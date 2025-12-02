@@ -74,9 +74,9 @@ export default function MainWorkflow() {
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-[1600px] mx-auto">
-        <div className="flex justify-end items-center gap-3 mb-2">
+    <div className="min-h-screen p-4">
+      <div className="w-full max-w-[95vw] mx-auto">
+        <div className="flex justify-end items-center gap-2 mb-2">
           <div className="flex gap-3 items-center">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-gray-500" />
