@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-        const redirectUri = `https://sign-shop-workflow-manager.b44.app/api/functions/gmailAuthCallback`;
+        const redirectUri = `https://68dfcc5e57bbbc35387da97c.b44.app/api/functions/gmailAuthCallback`;
 
         // Exchange the authorization code for tokens
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
