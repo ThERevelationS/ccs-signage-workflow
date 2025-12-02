@@ -103,19 +103,32 @@ export default function UserManagement() {
     setInviteError("");
 
     try {
+      // Check if user already exists
+      const existingUsers = await UserEntity.list();
+      const exists = existingUsers.some(u => u.email.toLowerCase() === inviteEmail.trim().toLowerCase());
+      
+      if (exists) {
+        setInviteError("A user with this email already exists");
+        setIsInviting(false);
+        return;
+      }
+
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
-      await base44.auth.inviteUser({
-        email: inviteEmail.trim(),
-        role: inviteRole,
-        full_name: fullName || undefined
+      
+      // Create user directly in the database
+      await UserEntity.create({
+        email: inviteEmail.trim().toLowerCase(),
+        full_name: fullName || null,
+        role: inviteRole
       });
+      
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to invite user");
+      setInviteError(error.message || "Failed to create user");
     }
     setIsInviting(false);
   };
@@ -152,8 +165,8 @@ export default function UserManagement() {
             <UserPlus className="w-5 h-5 text-teal-700" />
           </div>
           <div>
-            <h4 className="font-medium text-gray-800">Invite New User</h4>
-            <p className="text-sm text-gray-500">Send an invitation email to add a new team member</p>
+            <h4 className="font-medium text-gray-800">Add New User</h4>
+            <p className="text-sm text-gray-500">Add a new team member to the system</p>
           </div>
         </div>
 
@@ -213,8 +226,8 @@ export default function UserManagement() {
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                <Mail className="w-4 h-4 mr-2" />
-                Send Invite
+                <Plus className="w-4 h-4 mr-2" />
+                Add User
               </>
             )}
           </Button>
