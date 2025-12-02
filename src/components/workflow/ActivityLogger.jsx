@@ -1,5 +1,6 @@
 import { ActivityLog } from "@/entities/ActivityLog";
 import { User } from "@/entities/User";
+import { NotificationTriggers } from "./NotificationService";
 
 let cachedUser = null;
 
@@ -37,146 +38,214 @@ export async function logActivity({
   });
 }
 
-// Helper functions for common actions
+// Helper functions for common actions - logs activity AND triggers email notifications
 export const ActivityActions = {
-  workOrderCreated: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "work_order_created",
-    actionDetails: `Created work order "${wo.title}" for ${wo.client_name}`
-  }),
+  workOrderCreated: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_created",
+      actionDetails: `Created work order "${wo.title}" for ${wo.client_name}`
+    });
+    NotificationTriggers.workOrderCreated(wo, user.full_name || user.email);
+  },
 
-  workOrderCompleted: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "work_order_completed",
-    actionDetails: `Marked "${wo.title}" as completed`
-  }),
+  workOrderCompleted: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_completed",
+      actionDetails: `Marked "${wo.title}" as completed`
+    });
+    NotificationTriggers.workOrderCompleted(wo, user.full_name || user.email);
+  },
 
-  workOrderDeleted: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "work_order_deleted",
-    actionDetails: `Deleted work order "${wo.title}"`
-  }),
+  workOrderDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_deleted",
+      actionDetails: `Deleted work order "${wo.title}"`
+    });
+    NotificationTriggers.workOrderDeleted(wo, user.full_name || user.email);
+  },
 
-  riderCreated: (wo, parentTitle) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "rider_created",
-    actionDetails: `Created rider "${wo.title}" for parent "${parentTitle}"`
-  }),
+  riderCreated: async (wo, parentTitle) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "rider_created",
+      actionDetails: `Created rider "${wo.title}" for parent "${parentTitle}"`
+    });
+    NotificationTriggers.riderCreated(wo, parentTitle, user.full_name || user.email);
+  },
 
-  stageChanged: (wo, fromStage, toStage) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "stage_changed",
-    actionDetails: `Moved "${wo.title}" from ${fromStage} to ${toStage}`,
-    previousValue: fromStage,
-    newValue: toStage
-  }),
+  stageChanged: async (wo, fromStage, toStage) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "stage_changed",
+      actionDetails: `Moved "${wo.title}" from ${fromStage} to ${toStage}`,
+      previousValue: fromStage,
+      newValue: toStage
+    });
+    NotificationTriggers.stageChanged(wo, fromStage, toStage, user.full_name || user.email);
+  },
 
-  noteAdded: (wo, noteText, noteType) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "note_added",
-    actionDetails: `Added ${noteType} note to "${wo.title}": "${noteText.substring(0, 50)}${noteText.length > 50 ? '...' : ''}"`
-  }),
+  noteAdded: async (wo, noteText, noteType) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "note_added",
+      actionDetails: `Added ${noteType} note to "${wo.title}": "${noteText.substring(0, 50)}${noteText.length > 50 ? '...' : ''}"`
+    });
+    NotificationTriggers.noteAdded(wo, noteText, noteType, user.full_name || user.email);
+  },
 
-  noteDeleted: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "note_deleted",
-    actionDetails: `Deleted a note from "${wo.title}"`
-  }),
+  noteDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "note_deleted",
+      actionDetails: `Deleted a note from "${wo.title}"`
+    });
+    NotificationTriggers.noteDeleted(wo, user.full_name || user.email);
+  },
 
-  subNoteAdded: (wo, text) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "sub_note_added",
-    actionDetails: `Added sub-note to "${wo.title}": "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`
-  }),
+  subNoteAdded: async (wo, text) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "sub_note_added",
+      actionDetails: `Added sub-note to "${wo.title}": "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`
+    });
+  },
 
-  subNoteDeleted: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "sub_note_deleted",
-    actionDetails: `Deleted a sub-note from "${wo.title}"`
-  }),
+  subNoteDeleted: async (wo) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "sub_note_deleted",
+      actionDetails: `Deleted a sub-note from "${wo.title}"`
+    });
+  },
 
-  taskAdded: (wo, taskText) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "task_added",
-    actionDetails: `Added task to "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
-  }),
+  taskAdded: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_added",
+      actionDetails: `Added task to "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+    NotificationTriggers.taskAdded(wo, taskText, user.full_name || user.email);
+  },
 
-  taskCompleted: (wo, taskText) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "task_completed",
-    actionDetails: `Completed task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
-  }),
+  taskCompleted: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_completed",
+      actionDetails: `Completed task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+    NotificationTriggers.taskCompleted(wo, taskText, user.full_name || user.email);
+  },
 
-  taskUncompleted: (wo, taskText) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "task_uncompleted",
-    actionDetails: `Uncompleted task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
-  }),
+  taskUncompleted: async (wo, taskText) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_uncompleted",
+      actionDetails: `Uncompleted task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
+    });
+  },
 
-  taskDeleted: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "task_deleted",
-    actionDetails: `Deleted a task from "${wo.title}"`
-  }),
+  taskDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_deleted",
+      actionDetails: `Deleted a task from "${wo.title}"`
+    });
+    NotificationTriggers.taskDeleted(wo, user.full_name || user.email);
+  },
 
-  taskEdited: (wo, oldText, newText) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "task_edited",
-    actionDetails: `Edited task on "${wo.title}"`,
-    previousValue: oldText,
-    newValue: newText
-  }),
+  taskEdited: async (wo, oldText, newText) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "task_edited",
+      actionDetails: `Edited task on "${wo.title}"`,
+      previousValue: oldText,
+      newValue: newText
+    });
+  },
 
-  imageUploaded: (wo) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "image_uploaded",
-    actionDetails: `Uploaded image to "${wo.title}"`
-  }),
+  imageUploaded: async (wo) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "image_uploaded",
+      actionDetails: `Uploaded image to "${wo.title}"`
+    });
+    NotificationTriggers.imageUploaded(wo, user.full_name || user.email);
+  },
 
-  asapToggled: (wo, isAsap) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "asap_toggled",
-    actionDetails: `${isAsap ? 'Marked' : 'Unmarked'} "${wo.title}" as ASAP`,
-    newValue: isAsap ? "ASAP" : "Normal"
-  }),
+  asapToggled: async (wo, isAsap) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "asap_toggled",
+      actionDetails: `${isAsap ? 'Marked' : 'Unmarked'} "${wo.title}" as ASAP`,
+      newValue: isAsap ? "ASAP" : "Normal"
+    });
+    NotificationTriggers.asapToggled(wo, isAsap, user.full_name || user.email);
+  },
 
-  priorityChanged: (wo, newPriority) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "priority_changed",
-    actionDetails: `Changed priority of "${wo.title}" to #${newPriority}`
-  }),
+  priorityChanged: async (wo, newPriority) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "priority_changed",
+      actionDetails: `Changed priority of "${wo.title}" to #${newPriority}`
+    });
+    NotificationTriggers.priorityChanged(wo, user.full_name || user.email);
+  },
 
-  restored: (wo, toStage) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "restored",
-    actionDetails: `Restored "${wo.title}" to ${toStage} stage`,
-    newValue: toStage
-  }),
+  restored: async (wo, toStage) => {
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "restored",
+      actionDetails: `Restored "${wo.title}" to ${toStage} stage`,
+      newValue: toStage
+    });
+  },
 
-  fieldUpdated: (wo, fieldName, oldValue, newValue) => logActivity({
-    workOrderId: wo.id,
-    workOrderTitle: wo.title,
-    actionType: "work_order_updated",
-    actionDetails: `Updated ${fieldName} on "${wo.title}"`,
-    previousValue: oldValue,
-    newValue: newValue
-  })
+  fieldUpdated: async (wo, fieldName, oldValue, newValue) => {
+    const user = await getCurrentUser();
+    await logActivity({
+      workOrderId: wo.id,
+      workOrderTitle: wo.title,
+      actionType: "work_order_updated",
+      actionDetails: `Updated ${fieldName} on "${wo.title}"`,
+      previousValue: oldValue,
+      newValue: newValue
+    });
+    if (fieldName === "assigned_to") {
+      NotificationTriggers.assignedToChanged(wo, oldValue, newValue, user.full_name || user.email);
+    }
+  }
 };
