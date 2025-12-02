@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Email is required' }, { status: 400 });
         }
 
-        // Check if user already exists
+        // Check if user already exists using service role
         const existingUsers = await base44.asServiceRole.entities.User.list();
         const exists = existingUsers.some(u => u.email?.toLowerCase() === email.toLowerCase());
         
@@ -18,8 +18,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'A user with this email already exists' }, { status: 400 });
         }
 
-        // Use the built-in invite API with service role
-        await base44.asServiceRole.auth.inviteUser(
+        // Use the auth.inviteUser method (service role provides admin privileges)
+        await base44.auth.inviteUser(
             email.toLowerCase(),
             role || 'user',
             full_name || undefined
@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, email: email.toLowerCase() });
 
     } catch (error) {
+        console.error("Add user error:", error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
