@@ -106,27 +106,20 @@ export default function UserManagement() {
     setInviteSuccess("");
 
     try {
-      // Check if user already exists
-      const existingUsers = await base44.entities.User.list();
-      const exists = existingUsers.some(u => u.email?.toLowerCase() === inviteEmail.trim().toLowerCase());
-      
-      if (exists) {
-        setInviteError("A user with this email already exists");
-        setIsInviting(false);
-        return;
-      }
-
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Send notification email using the Core integration
-      try {
-        await base44.integrations.Core.SendEmail({
-          to: inviteEmail.trim(),
-          subject: "You've been added to Sign Shop Workflow",
-          body: `Hello${fullName ? ` ${fullName}` : ''},\n\nYou have been added to the Sign Shop Workflow Manager.\n\nSimply visit the application and enter this email address (${inviteEmail.trim()}) to access the system.\n\nYour role: ${inviteRole === 'admin' ? 'Administrator' : 'User'}\n\nBest regards,\nSign Shop Team`
-        });
-      } catch (emailError) {
-        console.log("Email notification failed, but user will still be added:", emailError);
+      // Use backend function to add user with service role
+      const { addUser } = await import("@/functions/addUser");
+      const result = await addUser({
+        email: inviteEmail.trim(),
+        full_name: fullName || null,
+        role: inviteRole
+      });
+      
+      if (result.data?.error) {
+        setInviteError(result.data.error);
+        setIsInviting(false);
+        return;
       }
       
       setInviteSuccess(`User added! They can now log in with ${inviteEmail.trim()}`);
@@ -136,7 +129,7 @@ export default function UserManagement() {
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to add user");
+      setInviteError(error.response?.data?.error || error.message || "Failed to add user");
     }
     setIsInviting(false);
   };
