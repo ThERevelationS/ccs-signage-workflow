@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
 
   const loadUsers = async () => {
     try {
-      const users = await base44.entities.User.list();
+      const users = await base44.entities.AuthorizedEmail.list();
       setAllUsers(users);
       return users;
     } catch (error) {
