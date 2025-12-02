@@ -324,51 +324,65 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
 
 // Convenience functions for specific triggers
 export const NotificationTriggers = {
-  workOrderCreated: (workOrder, changedBy) => 
-    triggerNotification("work_order_created", workOrder, { changedBy }),
-  
-  workOrderCompleted: (workOrder, changedBy) => 
-    triggerNotification("work_order_completed", workOrder, { changedBy }),
-  
-  workOrderDeleted: (workOrder, changedBy) => 
-    triggerNotification("work_order_deleted", workOrder, { changedBy }),
-  
-  riderCreated: (workOrder, parentTitle, changedBy) => 
-    triggerNotification("rider_created", workOrder, { parentTitle, changedBy }),
-  
-  stageChanged: (workOrder, previousStage, newStage, changedBy) => {
-    triggerNotification("stage_changed", workOrder, { previousStage, newStage, changedBy });
-    triggerNotification("stage_exited", workOrder, { previousStage, newStage, changedBy });
-    triggerNotification("stage_entered", workOrder, { previousStage, newStage, changedBy });
+  workOrderCreated: async (workOrder, changedBy) => {
+    await triggerNotification("work_order_created", workOrder, { changedBy });
   },
   
-  taskAdded: (workOrder, taskText, changedBy) => 
-    triggerNotification("task_added", workOrder, { taskText, changedBy }),
+  workOrderCompleted: async (workOrder, changedBy) => {
+    await triggerNotification("work_order_completed", workOrder, { changedBy });
+  },
   
-  taskCompleted: (workOrder, taskText, changedBy) => 
-    triggerNotification("task_completed", workOrder, { taskText, changedBy }),
+  workOrderDeleted: async (workOrder, changedBy) => {
+    await triggerNotification("work_order_deleted", workOrder, { changedBy });
+  },
   
-  taskDeleted: (workOrder, changedBy) => 
-    triggerNotification("task_deleted", workOrder, { changedBy }),
+  riderCreated: async (workOrder, parentTitle, changedBy) => {
+    await triggerNotification("rider_created", workOrder, { parentTitle, changedBy });
+  },
   
-  noteAdded: (workOrder, noteText, noteType, changedBy) => 
-    triggerNotification("note_added", workOrder, { noteText, noteType, changedBy }),
+  stageChanged: async (workOrder, previousStage, newStage, changedBy) => {
+    await triggerNotification("stage_changed", workOrder, { previousStage, newStage, changedBy });
+    await triggerNotification("stage_exited", workOrder, { previousStage, newStage, changedBy });
+    await triggerNotification("stage_entered", workOrder, { previousStage, newStage, changedBy });
+  },
   
-  noteDeleted: (workOrder, changedBy) => 
-    triggerNotification("note_deleted", workOrder, { changedBy }),
+  taskAdded: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("task_added", workOrder, { taskText, changedBy });
+  },
   
-  imageUploaded: (workOrder, changedBy) => 
-    triggerNotification("image_uploaded", workOrder, { changedBy }),
+  taskCompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("task_completed", workOrder, { taskText, changedBy });
+  },
   
-  asapToggled: (workOrder, isAsap, changedBy) => 
-    triggerNotification(isAsap ? "asap_toggled_on" : "asap_toggled_off", workOrder, { changedBy }),
+  taskDeleted: async (workOrder, changedBy) => {
+    await triggerNotification("task_deleted", workOrder, { changedBy });
+  },
   
-  assignedToChanged: (workOrder, previousAssignee, newAssignee, changedBy) => 
-    triggerNotification("assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy }),
+  noteAdded: async (workOrder, noteText, noteType, changedBy) => {
+    await triggerNotification("note_added", workOrder, { noteText, noteType, changedBy });
+  },
   
-  priorityChanged: (workOrder, changedBy) => 
-    triggerNotification("priority_changed", workOrder, { changedBy }),
+  noteDeleted: async (workOrder, changedBy) => {
+    await triggerNotification("note_deleted", workOrder, { changedBy });
+  },
   
-  automationTriggered: (workOrder, automationName, changedBy) => 
-    triggerNotification("automation_triggered", workOrder, { automationName, changedBy })
+  imageUploaded: async (workOrder, changedBy) => {
+    await triggerNotification("image_uploaded", workOrder, { changedBy });
+  },
+  
+  asapToggled: async (workOrder, isAsap, changedBy) => {
+    await triggerNotification(isAsap ? "asap_toggled_on" : "asap_toggled_off", workOrder, { changedBy });
+  },
+  
+  assignedToChanged: async (workOrder, previousAssignee, newAssignee, changedBy) => {
+    await triggerNotification("assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy });
+  },
+  
+  priorityChanged: async (workOrder, changedBy) => {
+    await triggerNotification("priority_changed", workOrder, { changedBy });
+  },
+  
+  automationTriggered: async (workOrder, automationName, changedBy) => {
+    await triggerNotification("automation_triggered", workOrder, { automationName, changedBy });
+  }
 };
