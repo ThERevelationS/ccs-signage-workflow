@@ -196,7 +196,14 @@ const matchesTriggerConditions = (conditions, workOrder, extraData = {}, trigger
     return false;
   }
   
+  // Rider filtering - if is_rider is explicitly set, enforce it
+  // is_rider: true means ONLY riders
+  // is_rider: false means ONLY non-riders (full work orders)
   if (conditions.is_rider === true && !workOrder?.is_rider) {
+    return false;
+  }
+  
+  if (conditions.is_rider === false && workOrder?.is_rider) {
     return false;
   }
   
