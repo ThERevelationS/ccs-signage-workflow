@@ -10,20 +10,25 @@ import {
   BarChart3,
   CheckCircle2,
   Home,
-  Calculator, // Added new icon
-  DollarSign  // Added new icon
+  Calculator,
+  DollarSign,
+  Settings
 } from "lucide-react";
 
 const navigationItems = [
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
-  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#FFF9C4" }, // Added new item
-  { title: "Sales", url: createPageUrl("Sales"), icon: DollarSign, color: "#B2DFDB" },         // Added new item
+  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#FFF9C4" },
+  { title: "Sales", url: createPageUrl("Sales"), icon: DollarSign, color: "#B2DFDB" },
   { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, color: "#FFE4D6" },
   { title: "Design", url: createPageUrl("Design"), icon: Pencil, color: "#D4E9F7" },
   { title: "Production", url: createPageUrl("Production"), icon: Hammer, color: "#C8F4E9" },
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#FFD6E8" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#E0D4F7" },
   { title: "Completed Jobs", url: createPageUrl("CompletedJobs"), icon: CheckCircle2, color: "#C8F4E9" },
+];
+
+const adminItems = [
+  { title: "Admin Settings", url: createPageUrl("AdminSettings"), icon: Settings, color: "#FFE4D6" },
 ];
 
 export default function Layout({ children }) {
@@ -162,6 +167,24 @@ export default function Layout({ children }) {
                       <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : 'text-gray-600'}`}>
                         {item.title}
                       </span>
+                    </Link>
+                  );
+                })}
+                <div className="w-px h-6 bg-gray-300 mx-2" />
+                {adminItems.map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <Link
+                      key={item.title}
+                      to={item.url}
+                      className={`px-3 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 ${
+                        isActive ? 'clay-card' : 'hover:clay-card'
+                      }`}
+                      style={isActive ? { 
+                        background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
+                      } : {}}
+                    >
+                      <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
                     </Link>
                   );
                 })}
