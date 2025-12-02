@@ -194,7 +194,7 @@ export default function Layout({ children }) {
         </nav>
 
         {/* Main content with top padding */}
-        <main className="flex-1 pt-20">
+        <main className="flex-1" style={{ paddingTop: '80px' }}>
           {children}
         </main>
 
