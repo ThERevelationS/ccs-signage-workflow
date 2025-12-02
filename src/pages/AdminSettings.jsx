@@ -138,8 +138,7 @@ export default function AdminSettings() {
     priority: 0
   });
   
-  const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {} }]);
-  const [triggerLogic, setTriggerLogic] = useState("or");
+  const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
 
   const loadEmailGroups = async () => {
@@ -220,9 +219,8 @@ export default function AdminSettings() {
   const openNewRule = async () => {
     setEditingRule(null);
     await loadEmailGroups();
-    setTriggers([{ trigger_type: "", trigger_condition: {} }]);
+    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
-    setTriggerLogic("or");
     setFormData({ name: "", enabled: true, priority: 0 });
     setIsDialogOpen(true);
   };
@@ -230,9 +228,8 @@ export default function AdminSettings() {
   const openEditRule = async (rule) => {
     setEditingRule(rule);
     await loadEmailGroups();
-    setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {} }]);
+    setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
-    setTriggerLogic(rule.trigger_logic || "or");
     setFormData({
       name: rule.name || "",
       enabled: rule.enabled !== false,
@@ -244,9 +241,8 @@ export default function AdminSettings() {
   const duplicateRule = async (rule) => {
     setEditingRule(null);
     await loadEmailGroups();
-    setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {} }]);
+    setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
-    setTriggerLogic(rule.trigger_logic || "or");
     setFormData({
       name: `${rule.name} (Copy)`,
       enabled: true,
@@ -259,8 +255,7 @@ export default function AdminSettings() {
     const saveData = {
       ...formData,
       triggers,
-      actions,
-      trigger_logic: triggerLogic
+      actions
     };
     
     if (editingRule) {
@@ -284,12 +279,14 @@ export default function AdminSettings() {
   };
 
   // Trigger helpers
-  const addTrigger = () => setTriggers([...triggers, { trigger_type: "", trigger_condition: {} }]);
+  const addTrigger = () => setTriggers([...triggers, { trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const removeTrigger = (index) => triggers.length > 1 && setTriggers(triggers.filter((_, i) => i !== index));
   const updateTrigger = (index, field, value) => {
     const updated = [...triggers];
     if (field === "trigger_type") {
-      updated[index] = { trigger_type: value, trigger_condition: {} };
+      updated[index] = { trigger_type: value, trigger_condition: {}, logic: updated[index].logic || "or" };
+    } else if (field === "logic") {
+      updated[index] = { ...updated[index], logic: value };
     } else {
       updated[index] = { ...updated[index], trigger_condition: { ...updated[index].trigger_condition, [field]: value } };
     }
@@ -640,16 +637,7 @@ export default function AdminSettings() {
                 <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
-                          <Select value={triggerLogic} onValueChange={setTriggerLogic}>
-                            <SelectTrigger className="w-24 h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="or">ANY (OR)</SelectItem>
-                              <SelectItem value="and">ALL (AND)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <span className="text-gray-600 text-sm">of these happen...</span>
+                          <span className="text-gray-600 text-sm">these conditions are met...</span>
                         </div>
                         <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
                           <Plus className="w-3 h-3 mr-1" /> Add Trigger
@@ -661,7 +649,15 @@ export default function AdminSettings() {
                     <div key={index} className={index > 0 ? 'pt-4 border-t border-orange-200' : ''}>
                       {index > 0 && (
                                                     <div className="flex items-center justify-between mb-2">
-                                                      <span className="text-xs text-orange-600 font-medium">{triggerLogic === "and" ? "AND" : "OR"}</span>
+                                                      <Select value={trigger.logic || "or"} onValueChange={(val) => updateTrigger(index, "logic", val)}>
+                                                        <SelectTrigger className="w-20 h-6 text-xs text-orange-600 font-medium border-orange-200">
+                                                          <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                          <SelectItem value="or">OR</SelectItem>
+                                                          <SelectItem value="and">AND</SelectItem>
+                                                        </SelectContent>
+                                                      </Select>
                                                       <Button variant="ghost" size="icon" onClick={() => removeTrigger(index)} className="h-6 w-6">
                                                         <Trash2 className="w-3 h-3 text-red-600" />
                                                       </Button>
