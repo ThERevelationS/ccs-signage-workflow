@@ -68,7 +68,7 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const allUsers = await base44.entities.User.list();
+      const allUsers = await base44.entities.AuthorizedEmail.list();
       setUsers(allUsers);
     } catch (error) {
       console.error("Error loading users:", error);
