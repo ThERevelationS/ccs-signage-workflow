@@ -34,13 +34,13 @@ import {
   Trash2,
   Mail,
   Shield,
-  User,
+  User as UserIcon,
   UserPlus,
   Crown,
   Loader2
 } from "lucide-react";
 
-const User = base44.entities.User;
+const UserEntity = base44.entities.User;
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
