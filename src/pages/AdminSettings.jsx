@@ -111,7 +111,6 @@ export default function AdminSettings() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [useIftttMode, setUseIftttMode] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -143,7 +142,6 @@ export default function AdminSettings() {
 
   const openNewRule = () => {
     setEditingRule(null);
-    setUseIftttMode(false);
     setFormData({
       name: "",
       enabled: true,
@@ -159,7 +157,6 @@ export default function AdminSettings() {
 
   const openEditRule = (rule) => {
     setEditingRule(rule);
-    setUseIftttMode(false);
     setFormData({
       name: rule.name || "",
       enabled: rule.enabled !== false,
@@ -175,7 +172,6 @@ export default function AdminSettings() {
 
   const duplicateRule = (rule) => {
     setEditingRule(null);
-    setUseIftttMode(false);
     setFormData({
       name: `${rule.name} (Copy)`,
       enabled: true,
@@ -470,243 +466,40 @@ export default function AdminSettings() {
             </DialogHeader>
 
             <div className="space-y-6 mt-4">
-              {/* Mode Toggle */}
-              {!editingRule && (
-                <div className="clay-card p-3 bg-purple-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm font-medium">Use IFTTT-style builder</span>
-                  </div>
-                  <Switch
-                    checked={useIftttMode}
-                    onCheckedChange={setUseIftttMode}
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Rule Name *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Notify admin on completion"
+                    className="mt-1"
                   />
                 </div>
-              )}
-
-              {/* IFTTT Mode */}
-              {useIftttMode && !editingRule ? (
-                <div className="space-y-4">
-                  <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
-                      <span className="text-gray-600 text-sm">this happens...</span>
-                    </div>
-                    <Select
-                      value={formData.trigger_type}
-                      onValueChange={(val) => setFormData({ ...formData, trigger_type: val, trigger_condition: {} })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a trigger event" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(groupedTriggers).map(([category, triggers]) => (
-                          <div key={category}>
-                            <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100">
-                              {category}
-                            </div>
-                            {triggers.map((trigger) => (
-                              <SelectItem key={trigger.value} value={trigger.value}>
-                                {trigger.label}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Stage conditions for IFTTT */}
-                    {needsStageCondition && (
-                      <div className="mt-3">
-                        <Select
-                          value={formData.trigger_condition.stage || ""}
-                          onValueChange={(val) => updateCondition("stage", val)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select specific stage" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STAGES.map((stage) => (
-                              <SelectItem key={stage.value} value={stage.value}>
-                                {stage.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-center">
-                    <ArrowRight className="w-6 h-6 text-gray-400" />
-                  </div>
-
-                  <div className="clay-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm">THEN</div>
-                      <span className="text-gray-600 text-sm">send email to...</span>
-                    </div>
-                    <div className="space-y-2">
-                      {formData.recipients.map((recipient, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Select
-                            value={recipient.type}
-                            onValueChange={(val) => updateRecipient(index, "type", val)}
-                          >
-                            <SelectTrigger className="w-48">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {RECIPIENT_TYPES.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
-                                  {type.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {recipient.type === "email" && (
-                            <Input
-                              placeholder="email@example.com"
-                              value={recipient.value || ""}
-                              onChange={(e) => updateRecipient(index, "value", e.target.value)}
-                              className="flex-1"
-                            />
-                          )}
-                          {recipient.type === "email_group" && (
-                            <Select
-                              value={recipient.value || ""}
-                              onValueChange={(val) => updateRecipient(index, "value", val)}
-                            >
-                              <SelectTrigger className="flex-1">
-                                <SelectValue placeholder="Select group" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {emailGroups.map((group) => (
-                                  <SelectItem key={group.id} value={group.id}>
-                                    {group.name} ({group.emails?.length || 0} emails)
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {recipient.type === "custom_list" && (
-                            <Input
-                              placeholder="email1@example.com, email2@example.com"
-                              value={recipient.value || ""}
-                              onChange={(e) => updateRecipient(index, "value", e.target.value)}
-                              className="flex-1"
-                            />
-                          )}
-                          {formData.recipients.length > 1 && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeRecipient(index)}
-                              className="h-10 w-10"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button variant="ghost" size="sm" onClick={addRecipient} className="h-7 text-xs">
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Recipient
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Rule Name *</Label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Notify admin on completion"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label>Priority (lower = first)</Label>
-                      <Input
-                        type="number"
-                        value={formData.priority}
-                        onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Email Subject *</Label>
-                    <Input
-                      value={formData.email_subject}
-                      onChange={(e) => setFormData({ ...formData, email_subject: e.target.value })}
-                      placeholder="e.g., Work Order {{title}} has been completed"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Email Body *</Label>
-                    <Textarea
-                      value={formData.email_body}
-                      onChange={(e) => setFormData({ ...formData, email_body: e.target.value })}
-                      placeholder="Enter the email body content..."
-                      className="mt-1 min-h-24"
-                    />
-                  </div>
-
-                  <div className="clay-card p-3 bg-blue-50">
-                    <Label className="text-xs font-medium mb-2 block">Variables (click to insert)</Label>
-                    <div className="flex flex-wrap gap-1">
-                      {TEMPLATE_VARIABLES.slice(0, 8).map((variable) => (
-                        <Button
-                          key={variable}
-                          variant="outline"
-                          size="sm"
-                          className="h-6 text-xs px-2"
-                          onClick={() => insertVariable(variable, "email_body")}
-                        >
-                          {variable}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+                <div>
+                  <Label>Priority (lower = first)</Label>
+                  <Input
+                    type="number"
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
                 </div>
-              ) : (
-                <>
-                  {/* Standard Mode - Basic Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Rule Name *</Label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Notify admin on completion"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label>Priority (lower = first)</Label>
-                      <Input
-                        type="number"
-                        value={formData.priority}
-                        onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
+              </div>
 
-              {/* Trigger Type */}
-              <div>
-                <Label>Trigger Type *</Label>
+              {/* IFTTT Style Trigger */}
+              <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
+                  <span className="text-gray-600 text-sm">this happens...</span>
+                </div>
                 <Select
                   value={formData.trigger_type}
                   onValueChange={(val) => setFormData({ ...formData, trigger_type: val, trigger_condition: {} })}
                 >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select when to send notification" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a trigger event" />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(groupedTriggers).map(([category, triggers]) => (
@@ -723,43 +516,19 @@ export default function AdminSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
 
-              {/* Conditional Fields based on trigger type */}
-              {needsStageCondition && (
-                <div>
-                  <Label>Specific Stage</Label>
-                  <Select
-                    value={formData.trigger_condition.stage || ""}
-                    onValueChange={(val) => updateCondition("stage", val)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select stage" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STAGES.map((stage) => (
-                        <SelectItem key={stage.value} value={stage.value}>
-                          {stage.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {needsFromToStage && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>From Stage (optional)</Label>
+                {/* Stage conditions */}
+                {needsStageCondition && (
+                  <div className="mt-3">
+                    <Label className="text-sm text-gray-600">Specific Stage</Label>
                     <Select
-                      value={formData.trigger_condition.from_stage || ""}
-                      onValueChange={(val) => updateCondition("from_stage", val)}
+                      value={formData.trigger_condition.stage || ""}
+                      onValueChange={(val) => updateCondition("stage", val)}
                     >
                       <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Any stage" />
+                        <SelectValue placeholder="Select stage" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={null}>Any Stage</SelectItem>
                         {STAGES.map((stage) => (
                           <SelectItem key={stage.value} value={stage.value}>
                             {stage.label}
@@ -768,65 +537,92 @@ export default function AdminSettings() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>To Stage (optional)</Label>
-                    <Select
-                      value={formData.trigger_condition.to_stage || ""}
-                      onValueChange={(val) => updateCondition("to_stage", val)}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Any stage" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>Any Stage</SelectItem>
-                        {STAGES.map((stage) => (
-                          <SelectItem key={stage.value} value={stage.value}>
-                            {stage.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Additional Filters */}
-              <div className="clay-card p-4 bg-gray-50">
-                <Label className="text-sm font-medium mb-3 block">Additional Filters (Optional)</Label>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={formData.trigger_condition.is_asap === true}
-                      onCheckedChange={(checked) => updateCondition("is_asap", checked ? true : undefined)}
-                    />
-                    <Label className="text-sm">ASAP Only</Label>
+                {needsFromToStage && (
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                      <Label className="text-sm text-gray-600">From Stage (optional)</Label>
+                      <Select
+                        value={formData.trigger_condition.from_stage || ""}
+                        onValueChange={(val) => updateCondition("from_stage", val)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Any stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Any Stage</SelectItem>
+                          {STAGES.map((stage) => (
+                            <SelectItem key={stage.value} value={stage.value}>
+                              {stage.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">To Stage (optional)</Label>
+                      <Select
+                        value={formData.trigger_condition.to_stage || ""}
+                        onValueChange={(val) => updateCondition("to_stage", val)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Any stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Any Stage</SelectItem>
+                          {STAGES.map((stage) => (
+                            <SelectItem key={stage.value} value={stage.value}>
+                              {stage.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={formData.trigger_condition.is_rider === true}
-                      onCheckedChange={(checked) => updateCondition("is_rider", checked ? true : undefined)}
-                    />
-                    <Label className="text-sm">Riders Only</Label>
+                )}
+
+                {/* Additional Filters */}
+                {formData.trigger_type && (
+                  <div className="mt-4 pt-3 border-t border-orange-200">
+                    <Label className="text-xs text-gray-500 mb-2 block">Additional Filters (Optional)</Label>
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={formData.trigger_condition.is_asap === true}
+                          onCheckedChange={(checked) => updateCondition("is_asap", checked ? true : undefined)}
+                        />
+                        <Label className="text-sm">ASAP Only</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={formData.trigger_condition.is_rider === true}
+                          onCheckedChange={(checked) => updateCondition("is_rider", checked ? true : undefined)}
+                        />
+                        <Label className="text-sm">Riders Only</Label>
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Filter by assignee"
+                          value={formData.trigger_condition.assigned_to || ""}
+                          onChange={(e) => updateCondition("assigned_to", e.target.value || undefined)}
+                          className="text-sm h-8 w-40"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Input
-                      placeholder="Filter by assignee"
-                      value={formData.trigger_condition.assigned_to || ""}
-                      onChange={(e) => updateCondition("assigned_to", e.target.value || undefined)}
-                      className="text-sm h-8"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Recipients */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Recipients *</Label>
-                  <Button variant="ghost" size="sm" onClick={addRecipient} className="h-7 text-xs">
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add Recipient
-                  </Button>
+              <div className="flex justify-center">
+                <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
+              </div>
+
+              {/* IFTTT Style Recipients */}
+              <div className="clay-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm">THEN</div>
+                  <span className="text-gray-600 text-sm">send email to...</span>
                 </div>
                 <div className="space-y-2">
                   {formData.recipients.map((recipient, index) => (
@@ -891,6 +687,10 @@ export default function AdminSettings() {
                       )}
                     </div>
                   ))}
+                  <Button variant="ghost" size="sm" onClick={addRecipient} className="h-7 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Recipient
+                  </Button>
                 </div>
               </div>
 
@@ -932,9 +732,6 @@ export default function AdminSettings() {
                   ))}
                 </div>
               </div>
-
-                </>
-              )}
 
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t">
