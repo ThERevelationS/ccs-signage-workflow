@@ -76,11 +76,7 @@ export default function MainWorkflow() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-[1600px] mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Main Workflow</h1>
-            <p className="text-gray-600">Visual timeline of all active work orders</p>
-          </div>
+        <div className="flex justify-end items-center gap-3 mb-2">
           <div className="flex gap-3 items-center">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-gray-500" />
@@ -112,7 +108,6 @@ export default function MainWorkflow() {
             </Button>
           </div>
         </div>
-
         <div className="clay-card p-4">
           {isLoading ? (
             <div className="text-center py-12">
