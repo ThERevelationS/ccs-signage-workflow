@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
+import { ActivityActions } from "../components/workflow/ActivityLogger";
 
 export default function CompletedJobs() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -58,7 +59,6 @@ export default function CompletedJobs() {
 
   const handleRestore = async (workOrder, newStage) => {
     try {
-      // Convert notes to array format before updating
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
@@ -73,15 +73,16 @@ export default function CompletedJobs() {
         current_stage: newStage,
         notes: notes
       });
+      await ActivityActions.restored(workOrder, newStage);
       loadWorkOrders();
     } catch (error) {
       console.error("Error restoring work order:", error);
-      // Optionally, display an error message
     }
   };
 
   const handleDelete = async (workOrder) => {
     try {
+      await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);
       loadWorkOrders();
     } catch (error) {
