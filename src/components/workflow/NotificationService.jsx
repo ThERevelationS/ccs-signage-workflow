@@ -325,12 +325,15 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
     // Process old-style rules
     for (const rule of matchingRules) {
       const recipients = await getRecipients(rule, workOrder);
-      
+
       if (recipients.length === 0) continue;
-      
-      const subject = replaceVariables(rule.email_subject, workOrder, extraData);
-      const body = replaceVariables(rule.email_body, workOrder, extraData);
-      
+
+      const templateSubject = replaceVariables(rule.email_subject, workOrder, extraData);
+      const templateBody = replaceVariables(rule.email_body, workOrder, extraData);
+
+      // Generate AI-enhanced email
+      const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
+
       for (const email of recipients) {
         try {
           await base44.functions.invoke('sendGmail', {
