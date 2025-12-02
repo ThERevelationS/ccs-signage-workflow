@@ -106,9 +106,9 @@ export default function CompletedJobs() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
-        <div className="flex justify-end items-center gap-3 mb-2">
+        <div className="flex justify-end items-center gap-2 mb-2">
           <div className="flex gap-3">
             <Button
               onClick={loadWorkOrders}
