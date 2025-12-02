@@ -47,6 +47,7 @@ import { WorkOrder } from "@/entities/WorkOrder";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
+import { ActivityActions } from "./ActivityLogger";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -163,6 +164,7 @@ export default function WorkOrderDetailsDialog({
     setUploading(true);
     const result = await UploadFile({ file });
     await WorkOrder.update(workOrder.id, { image_url: result.file_url });
+    await ActivityActions.imageUploaded(workOrder);
     setUploading(false);
     if (onUpdate) onUpdate();
   };
@@ -180,7 +182,10 @@ export default function WorkOrderDetailsDialog({
   };
 
   const saveEdit = async (field) => {
-    await WorkOrder.update(workOrder.id, { [field]: editValues[field] });
+    const oldValue = workOrder[field];
+    const newValue = editValues[field];
+    await WorkOrder.update(workOrder.id, { [field]: newValue });
+    await ActivityActions.fieldUpdated(workOrder, field, oldValue, newValue);
     setEditingField(null);
     if (onUpdate) onUpdate();
   };
@@ -191,12 +196,19 @@ export default function WorkOrderDetailsDialog({
   };
 
   const handleToggleTask = async (taskIndex) => {
+    const taskText = tasks[taskIndex].text;
+    const wasCompleted = tasks[taskIndex].completed;
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex] = {
       ...updatedTasks[taskIndex],
       completed: !updatedTasks[taskIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (wasCompleted) {
+      await ActivityActions.taskUncompleted(workOrder, taskText);
+    } else {
+      await ActivityActions.taskCompleted(workOrder, taskText);
+    }
     if (onUpdate) onUpdate();
   };
 
@@ -210,6 +222,7 @@ export default function WorkOrderDetailsDialog({
     };
     const updatedTasks = [...tasks, newTask];
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    await ActivityActions.taskAdded(workOrder, newTaskText);
     setNewTaskText("");
     setIsAddingTask(false);
     if (onUpdate) onUpdate();
@@ -217,12 +230,14 @@ export default function WorkOrderDetailsDialog({
 
   const handleEditTask = async (taskIndex) => {
     if (!editedTaskText.trim()) return;
+    const oldText = tasks[taskIndex].text;
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex] = {
       ...updatedTasks[taskIndex],
       text: editedTaskText
     };
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    await ActivityActions.taskEdited(workOrder, oldText, editedTaskText);
     setEditingTaskIndex(null);
     setEditedTaskText("");
     if (onUpdate) onUpdate();
@@ -231,6 +246,7 @@ export default function WorkOrderDetailsDialog({
   const handleDeleteTask = async (taskIndex) => {
     const updatedTasks = tasks.filter((_, idx) => idx !== taskIndex);
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    await ActivityActions.taskDeleted(workOrder);
     if (onUpdate) onUpdate();
   };
 
@@ -243,13 +259,15 @@ export default function WorkOrderDetailsDialog({
     };
     const updatedNotes = [...workNotes, newNote];
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    await ActivityActions.noteAdded(workOrder, noteData.text, noteData.type);
     if (onUpdate) onUpdate();
   };
 
   const handleDeleteWorkNote = async (noteId) => {
     const updatedNotes = workNotes.filter((n) => n.id !== noteId);
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    loadRelatedData();
+    await ActivityActions.noteDeleted(workOrder);
+    if (onUpdate) onUpdate();
   };
 
   const handleAddSubTask = async (noteId, subTaskText) => {
@@ -267,7 +285,8 @@ export default function WorkOrderDetailsDialog({
       return note;
     });
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    loadRelatedData();
+    await ActivityActions.subNoteAdded(workOrder, subTaskText);
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleSubTask = async (noteId, subTaskId) => {
@@ -297,7 +316,8 @@ export default function WorkOrderDetailsDialog({
       return note;
     });
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    loadRelatedData();
+    await ActivityActions.subNoteDeleted(workOrder);
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteWorkOrder = async () => {
