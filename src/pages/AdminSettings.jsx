@@ -696,14 +696,30 @@ export default function AdminSettings() {
                       )}
 
                       {trigger.trigger_type && (
-                        <div className="flex flex-wrap gap-3 mt-2 pt-2 border-t border-orange-100">
+                        <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-orange-100">
                           <div className="flex items-center gap-1">
                             <Switch checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
                             <Label className="text-xs">ASAP Only</Label>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Switch checked={trigger.trigger_condition.is_rider === true} onCheckedChange={(v) => updateTrigger(index, "is_rider", v || undefined)} />
-                            <Label className="text-xs">Riders Only</Label>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-gray-500">Apply to:</Label>
+                            <Select 
+                              value={trigger.trigger_condition.is_rider === true ? "riders" : trigger.trigger_condition.is_rider === false ? "workorders" : "all"} 
+                              onValueChange={(val) => {
+                                if (val === "all") updateTrigger(index, "is_rider", undefined);
+                                else if (val === "riders") updateTrigger(index, "is_rider", true);
+                                else updateTrigger(index, "is_rider", false);
+                              }}
+                            >
+                              <SelectTrigger className="h-6 w-36 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="workorders">Work Orders Only</SelectItem>
+                                <SelectItem value="riders">Riders Only</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       )}
