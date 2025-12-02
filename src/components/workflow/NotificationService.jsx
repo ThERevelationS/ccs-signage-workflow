@@ -138,7 +138,7 @@ const checkAutomationTriggers = (automation, triggerType, workOrder, extraData =
   if (triggers.length === 1) {
     const trigger = triggers[0];
     return trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData);
+      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
   }
   
   // For multiple triggers, evaluate with AND/OR logic
@@ -147,7 +147,7 @@ const checkAutomationTriggers = (automation, triggerType, workOrder, extraData =
   for (let i = 0; i < triggers.length; i++) {
     const trigger = triggers[i];
     const triggerMatches = trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData);
+      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
     
     if (i === 0) {
       result = triggerMatches;
@@ -165,11 +165,19 @@ const checkAutomationTriggers = (automation, triggerType, workOrder, extraData =
 };
 
 // Check trigger conditions for a single trigger
-const matchesTriggerConditions = (conditions, workOrder, extraData = {}) => {
+const matchesTriggerConditions = (conditions, workOrder, extraData = {}, triggerType = "") => {
   if (!conditions) return true;
   
-  if (conditions.stage && workOrder?.current_stage !== conditions.stage) {
-    return false;
+  // For stage_entered, check against the NEW stage (to_stage)
+  // For stage_exited, check against the OLD stage (from_stage)
+  if (conditions.stage) {
+    if (triggerType === "stage_entered" && extraData.newStage !== conditions.stage) {
+      return false;
+    } else if (triggerType === "stage_exited" && extraData.previousStage !== conditions.stage) {
+      return false;
+    } else if (triggerType !== "stage_entered" && triggerType !== "stage_exited" && workOrder?.current_stage !== conditions.stage) {
+      return false;
+    }
   }
   
   if (conditions.from_stage && extraData.previousStage !== conditions.from_stage) {
