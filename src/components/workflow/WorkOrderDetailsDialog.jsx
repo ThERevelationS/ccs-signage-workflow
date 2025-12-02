@@ -675,18 +675,18 @@ export default function WorkOrderDetailsDialog({
                     </div>
                 }
 
-                  {/* Add Sub-task */}
+                  {/* Add Sub-note */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-7 text-xs ml-4">
                         <Plus className="w-3 h-3 mr-1" />
-                        Add Sub-task
+                        Add Sub-note
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="clay-card w-64">
-                      <Label className="text-xs">Sub-task</Label>
+                      <Label className="text-xs">Sub-note</Label>
                       <Input
-                      placeholder="Enter sub-task..."
+                      placeholder="Enter sub-note..."
                       className="mt-2 text-sm"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.target.value.trim()) {
