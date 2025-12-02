@@ -106,30 +106,33 @@ export default function UserManagement() {
     setInviteSuccess("");
 
     try {
-      const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
+      const email = inviteEmail.trim().toLowerCase();
       
-      // Use backend function to add user with service role
-      const { addUser } = await import("@/functions/addUser");
-      const result = await addUser({
-        email: inviteEmail.trim(),
-        full_name: fullName || null,
-        role: inviteRole
-      });
-      
-      if (result.data?.error) {
-        setInviteError(result.data.error);
+      // Check if already authorized
+      const existing = await base44.entities.AuthorizedEmail.filter({ email });
+      if (existing.length > 0) {
+        setInviteError("This email is already authorized");
         setIsInviting(false);
         return;
       }
       
-      setInviteSuccess(`User added! They can now log in with ${inviteEmail.trim()}`);
+      const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
+      
+      // Add to authorized emails list
+      await base44.entities.AuthorizedEmail.create({
+        email,
+        full_name: fullName || null,
+        role: inviteRole
+      });
+      
+      setInviteSuccess(`User authorized! They can now log in with ${email}`);
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.response?.data?.error || error.message || "Failed to add user");
+      setInviteError(error.message || "Failed to add user");
     }
     setIsInviting(false);
   };
