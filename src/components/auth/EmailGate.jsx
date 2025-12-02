@@ -13,10 +13,22 @@ import { Mail, Loader2, AlertCircle } from "lucide-react";
 
 const AuthContext = createContext(null);
 
+// Allowed emails list - add team members here
+const ALLOWED_EMAILS = [
+  "carl@example.com",
+  "twyla@example.com", 
+  "brett@example.com",
+  "kyle@example.com",
+  "joe@example.com",
+  "aidin@example.com",
+  "kay@example.com",
+  "brian@example.com",
+  "chris@example.com"
+];
+
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    // Return a default context for when AuthProvider isn't mounted yet
     return {
       currentUser: null,
       isRegistered: false,
@@ -38,42 +50,42 @@ export function AuthProvider({ children }) {
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    checkStoredEmail();
+    checkAuth();
   }, []);
 
-  const checkStoredEmail = async () => {
+  const checkAuth = async () => {
     setIsLoading(true);
-    const storedEmail = localStorage.getItem("userEmail");
-    
-    if (storedEmail) {
-      const user = await verifyEmail(storedEmail);
-      if (user) {
+    try {
+      // Check if user is authenticated with Base44
+      const isAuthenticated = await base44.auth.isAuthenticated();
+      if (isAuthenticated) {
+        const user = await base44.auth.me();
         setCurrentUser(user);
         setIsRegistered(true);
+        setShowEmailPrompt(false);
       } else {
-        // Email no longer valid, show prompt
-        localStorage.removeItem("userEmail");
+        // Not authenticated, check localStorage for email gate
+        const storedEmail = localStorage.getItem("userEmail");
+        if (storedEmail) {
+          setCurrentUser({ email: storedEmail, full_name: null });
+          setIsRegistered(false);
+          setShowEmailPrompt(false);
+        } else {
+          setShowEmailPrompt(true);
+        }
+      }
+    } catch (error) {
+      // Not authenticated, show email prompt
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        setCurrentUser({ email: storedEmail, full_name: null });
+        setIsRegistered(false);
+        setShowEmailPrompt(false);
+      } else {
         setShowEmailPrompt(true);
       }
-    } else {
-      setShowEmailPrompt(true);
     }
     setIsLoading(false);
-  };
-
-  const verifyEmail = async (email) => {
-    try {
-      // Try to get user from the users list
-      const users = await base44.entities.User.filter({ email: email.toLowerCase() });
-      if (users && users.length > 0) {
-        return users[0];
-      }
-      // If no user found, return null
-      return null;
-    } catch (error) {
-      console.error("Error verifying email:", error);
-      return null;
-    }
   };
 
   const handleEmailSubmit = async () => {
@@ -85,20 +97,13 @@ export function AuthProvider({ children }) {
     setIsChecking(true);
     setError("");
 
-    const user = await verifyEmail(emailInput.trim());
+    const email = emailInput.trim().toLowerCase();
     
-    if (user) {
-      localStorage.setItem("userEmail", emailInput.trim().toLowerCase());
-      setCurrentUser(user);
-      setIsRegistered(true);
-      setShowEmailPrompt(false);
-    } else {
-      setError("This email is not registered. You can view but not interact with the workflow.");
-      localStorage.setItem("userEmail", emailInput.trim().toLowerCase());
-      setCurrentUser({ email: emailInput.trim().toLowerCase(), full_name: null });
-      setIsRegistered(false);
-      setShowEmailPrompt(false);
-    }
+    // Store the email and let them in (view-only mode for unregistered)
+    localStorage.setItem("userEmail", email);
+    setCurrentUser({ email, full_name: null });
+    setIsRegistered(false);
+    setShowEmailPrompt(false);
     
     setIsChecking(false);
   };
@@ -124,9 +129,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("userEmail");
-    setCurrentUser(null);
-    setIsRegistered(false);
-    setShowEmailPrompt(true);
+    base44.auth.logout();
   };
 
   if (isLoading) {
