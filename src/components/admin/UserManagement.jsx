@@ -116,11 +116,11 @@ export default function UserManagement() {
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
       // Use the auth invite API
-      await base44.auth.inviteUser({
-        email: inviteEmail.trim(),
-        role: inviteRole,
-        fullName: fullName || undefined
-      });
+      await base44.auth.inviteUser(
+        inviteEmail.trim(),
+        inviteRole,
+        fullName || undefined
+      );
       
       setInviteEmail("");
       setInviteFirstName("");
