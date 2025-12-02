@@ -34,6 +34,10 @@ const adminItems = [
   { title: "Admin Settings", url: createPageUrl("AdminSettings"), icon: Settings, color: "#FFE4D6" },
 ];
 
+const isUserAdmin = (user) => {
+  return user?.role === "admin";
+};
+
 function LayoutContent({ children }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -174,24 +178,28 @@ function LayoutContent({ children }) {
                     </Link>
                   );
                 })}
-                <div className="w-px h-6 bg-gray-300 mx-2" />
-                {adminItems.map((item) => {
-                  const isActive = location.pathname === item.url;
-                  return (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      className={`px-3 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 ${
-                        isActive ? 'clay-card' : 'hover:clay-card'
-                      }`}
-                      style={isActive ? { 
-                        background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
-                      } : {}}
-                    >
-                      <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                    </Link>
-                  );
-                })}
+                {isUserAdmin(currentUser) && (
+                                      <>
+                                        <div className="w-px h-6 bg-gray-300 mx-2" />
+                                        {adminItems.map((item) => {
+                                          const isActive = location.pathname === item.url;
+                                          return (
+                                            <Link
+                                              key={item.title}
+                                              to={item.url}
+                                              className={`px-3 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 ${
+                                                isActive ? 'clay-card' : 'hover:clay-card'
+                                              }`}
+                                              style={isActive ? { 
+                                                background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
+                                              } : {}}
+                                            >
+                                              <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
+                                            </Link>
+                                          );
+                                        })}
+                                      </>
+                                    )}
                 
                 {/* User Info */}
                 <div className="w-px h-6 bg-gray-300 mx-2" />
@@ -223,19 +231,19 @@ function LayoutContent({ children }) {
           {children}
         </main>
 
-        {/* Floating Admin Button - hidden in fullscreen */}
-        {!isCollapsed && (
-          <Link
-            to={createPageUrl("AdminSettings")}
-            className="fixed bottom-4 left-4 z-50 clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
-            style={{ 
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
-            }}
-          >
-            <Settings className="w-4 h-4" />
-            <span className="text-sm font-medium">Admin</span>
-          </Link>
-        )}
+        {/* Floating Admin Button - hidden in fullscreen, only for admins */}
+                    {!isCollapsed && isUserAdmin(currentUser) && (
+                      <Link
+                        to={createPageUrl("AdminSettings")}
+                        className="fixed bottom-4 left-4 z-50 clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                        }}
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm font-medium">Admin</span>
+                      </Link>
+                    )}
       </div>
     </>
   );

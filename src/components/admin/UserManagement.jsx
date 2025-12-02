@@ -51,6 +51,8 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteFirstName, setInviteFirstName] = useState("");
+  const [inviteLastName, setInviteLastName] = useState("");
   const [inviteRole, setInviteRole] = useState("user");
   const [isInviting, setIsInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
@@ -101,11 +103,15 @@ export default function UserManagement() {
     setInviteError("");
 
     try {
+      const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       await base44.auth.inviteUser({
         email: inviteEmail.trim(),
-        role: inviteRole
+        role: inviteRole,
+        full_name: fullName || undefined
       });
       setInviteEmail("");
+      setInviteFirstName("");
+      setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
@@ -151,6 +157,26 @@ export default function UserManagement() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <Label className="text-xs text-gray-500">First Name</Label>
+            <Input
+              placeholder="John"
+              value={inviteFirstName}
+              onChange={(e) => setInviteFirstName(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Last Name</Label>
+            <Input
+              placeholder="Doe"
+              value={inviteLastName}
+              onChange={(e) => setInviteLastName(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+        </div>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <Label className="text-xs text-gray-500">Email Address</Label>
