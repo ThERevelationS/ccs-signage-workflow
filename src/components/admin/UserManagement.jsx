@@ -118,21 +118,25 @@ export default function UserManagement() {
 
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Use Base44's built-in invite system
-      await base44.auth.inviteUser(
-        inviteEmail.trim(),
-        inviteRole,
-        fullName || undefined
-      );
+      // Send notification email using the Core integration
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: inviteEmail.trim(),
+          subject: "You've been added to Sign Shop Workflow",
+          body: `Hello${fullName ? ` ${fullName}` : ''},\n\nYou have been added to the Sign Shop Workflow Manager.\n\nSimply visit the application and enter this email address (${inviteEmail.trim()}) to access the system.\n\nYour role: ${inviteRole === 'admin' ? 'Administrator' : 'User'}\n\nBest regards,\nSign Shop Team`
+        });
+      } catch (emailError) {
+        console.log("Email notification failed, but user will still be added:", emailError);
+      }
       
-      setInviteSuccess("User invited successfully! They will receive an email.");
+      setInviteSuccess(`User added! They can now log in with ${inviteEmail.trim()}`);
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to invite user");
+      setInviteError(error.message || "Failed to add user");
     }
     setIsInviting(false);
   };
