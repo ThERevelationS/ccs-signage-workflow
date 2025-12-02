@@ -5,6 +5,7 @@ import { Plus, Maximize2, Minimize2 } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function Design() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -13,6 +14,7 @@ export default function Design() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
     loadWorkOrders(true);

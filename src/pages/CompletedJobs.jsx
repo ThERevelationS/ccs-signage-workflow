@@ -5,6 +5,7 @@ import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function CompletedJobs() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -12,6 +13,7 @@ export default function CompletedJobs() {
   const [editingWorkOrder, setEditingWorkOrder] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
     loadWorkOrders(true);
