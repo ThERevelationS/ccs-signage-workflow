@@ -4,6 +4,54 @@ const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
 const User = base44.entities.User;
 
+// Generate AI-enhanced email content
+const generateAIEmail = async (subject, body, workOrder, extraData = {}) => {
+  try {
+    const context = `
+Work Order Details:
+- Title: ${workOrder?.title || "Unknown"}
+- Client: ${workOrder?.client_name || "Unknown"}
+- Current Stage: ${formatStageName(workOrder?.current_stage)}
+- Assigned To: ${workOrder?.assigned_to || "Unassigned"}
+- Due Date: ${workOrder?.due_date || "Not set"}
+- Is ASAP: ${workOrder?.asap ? "Yes" : "No"}
+- Is Rider: ${workOrder?.is_rider ? "Yes" : "No"}
+${extraData.previousStage ? `- Previous Stage: ${formatStageName(extraData.previousStage)}` : ""}
+${extraData.newStage ? `- New Stage: ${formatStageName(extraData.newStage)}` : ""}
+${extraData.taskText ? `- Task: ${extraData.taskText}` : ""}
+${extraData.noteText ? `- Note: ${extraData.noteText}` : ""}
+${extraData.changedBy ? `- Changed By: ${extraData.changedBy}` : ""}
+    `.trim();
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `You are writing a professional but friendly internal notification email for a sign shop workflow system.
+
+Based on this template and context, write a natural, professional email that conveys the same information but sounds more human and engaging. Keep it concise but warm.
+
+Original Subject Template: ${subject}
+Original Body Template: ${body}
+
+${context}
+
+Write the email with a subject line and body. Make it sound professional but personable - like a helpful colleague sending an update. Don't be overly formal or stiff. Keep the key information but make it read naturally.`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          subject: { type: "string", description: "The email subject line" },
+          body: { type: "string", description: "The email body in plain text" }
+        },
+        required: ["subject", "body"]
+      }
+    });
+
+    return { subject: result.subject, body: result.body };
+  } catch (error) {
+    console.error("AI email generation failed, using template:", error);
+    // Fallback to original template
+    return { subject, body };
+  }
+};
+
 // Variable replacements for email templates
 const replaceVariables = (template, workOrder, extraData = {}) => {
   if (!template) return "";
