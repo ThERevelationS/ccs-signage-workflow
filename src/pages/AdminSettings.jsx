@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
+import UserManagement from "../components/admin/UserManagement";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -492,22 +493,30 @@ export default function AdminSettings() {
 
         <Tabs defaultValue="automations" className="space-y-6">
           <TabsList className="clay-card border-none p-1">
-            <TabsTrigger value="automations" className="data-[state=active]:bg-white/80">
-              <Zap className="w-4 h-4 mr-2" />
-              Automations
-            </TabsTrigger>
-            <TabsTrigger value="groups" className="data-[state=active]:bg-white/80">
-              <Users className="w-4 h-4 mr-2" />
-              Email Groups
-            </TabsTrigger>
-          </TabsList>
+                          <TabsTrigger value="automations" className="data-[state=active]:bg-white/80">
+                            <Zap className="w-4 h-4 mr-2" />
+                            Automations
+                          </TabsTrigger>
+                          <TabsTrigger value="groups" className="data-[state=active]:bg-white/80">
+                            <Mail className="w-4 h-4 mr-2" />
+                            Email Groups
+                          </TabsTrigger>
+                          <TabsTrigger value="users" className="data-[state=active]:bg-white/80">
+                            <Users className="w-4 h-4 mr-2" />
+                            Users
+                          </TabsTrigger>
+                        </TabsList>
 
           <TabsContent value="groups">
-                            <div className="space-y-6">
-                              <GmailConnector />
-                              <EmailGroupsManager />
-                            </div>
-                          </TabsContent>
+                          <div className="space-y-6">
+                            <GmailConnector />
+                            <EmailGroupsManager />
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="users">
+                          <UserManagement />
+                        </TabsContent>
 
           <TabsContent value="automations">
             <div className="flex justify-end mb-4">
