@@ -243,7 +243,7 @@ export default function WorkOrderDetailsDialog({
     };
     const updatedNotes = [...workNotes, newNote];
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
-    loadRelatedData();
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteWorkNote = async (noteId) => {
