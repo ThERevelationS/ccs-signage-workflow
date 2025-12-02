@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
 import { Plus, Maximize2, Minimize2 } from "lucide-react";
@@ -14,11 +14,13 @@ export default function Fabrication() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadWorkOrders();
+    loadWorkOrders(true);
+    const interval = setInterval(() => loadWorkOrders(false), 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const loadWorkOrders = async () => {
-    setIsLoading(true);
+  const loadWorkOrders = async (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
     try {
       // Changed sort order from "-priority" to "priority" to align with reordering logic
       const allWorkOrders = await WorkOrder.filter({ completed: false }, "priority");
@@ -28,9 +30,8 @@ export default function Fabrication() {
       setWorkOrders(filtered);
     } catch (error) {
       console.error("Error loading work orders:", error);
-      // Optionally, handle error state for the user
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 

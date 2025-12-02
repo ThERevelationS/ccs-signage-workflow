@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
@@ -14,19 +13,20 @@ export default function CompletedJobs() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadWorkOrders();
+    loadWorkOrders(true);
+    const interval = setInterval(() => loadWorkOrders(false), 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const loadWorkOrders = async () => {
-    setIsLoading(true);
+  const loadWorkOrders = async (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
     try {
       const completed = await WorkOrder.filter({ completed: true }, "-updated_date");
       setWorkOrders(completed);
     } catch (error) {
       console.error("Error loading completed work orders:", error);
-      // Optionally, set an error state here to display a message to the user
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 

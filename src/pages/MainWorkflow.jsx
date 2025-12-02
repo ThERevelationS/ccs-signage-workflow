@@ -20,11 +20,13 @@ export default function MainWorkflow() {
   const [sortBy, setSortBy] = useState("due_date");
 
   useEffect(() => {
-    loadWorkOrders();
+    loadWorkOrders(true);
+    const interval = setInterval(() => loadWorkOrders(false), 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const loadWorkOrders = async () => {
-    setIsLoading(true);
+  const loadWorkOrders = async (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
     const allWorkOrders = await WorkOrder.filter({ completed: false }, "-priority");
     const withDates = allWorkOrders.filter(wo => wo.start_date && wo.due_date);
     
@@ -41,7 +43,7 @@ export default function MainWorkflow() {
     }));
     
     setWorkOrders(groupedWorkOrders);
-    setIsLoading(false);
+    if (showLoading) setIsLoading(false);
   };
 
   const getSortedWorkOrders = () => {
