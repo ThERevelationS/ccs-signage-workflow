@@ -13,19 +13,6 @@ import { Mail, Loader2, AlertCircle } from "lucide-react";
 
 const AuthContext = createContext(null);
 
-// Allowed emails list - add team members here
-const ALLOWED_EMAILS = [
-  "carl@example.com",
-  "twyla@example.com", 
-  "brett@example.com",
-  "kyle@example.com",
-  "joe@example.com",
-  "aidin@example.com",
-  "kay@example.com",
-  "brian@example.com",
-  "chris@example.com"
-];
-
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
@@ -48,42 +35,40 @@ export function AuthProvider({ children }) {
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
 
   useEffect(() => {
-    checkAuth();
+    checkStoredEmail();
   }, []);
 
-  const checkAuth = async () => {
-    setIsLoading(true);
+  const loadUsers = async () => {
     try {
-      // Check if user is authenticated with Base44
-      const isAuthenticated = await base44.auth.isAuthenticated();
-      if (isAuthenticated) {
-        const user = await base44.auth.me();
+      const users = await base44.entities.User.list();
+      setAllUsers(users);
+      return users;
+    } catch (error) {
+      console.error("Error loading users:", error);
+      return [];
+    }
+  };
+
+  const checkStoredEmail = async () => {
+    setIsLoading(true);
+    const users = await loadUsers();
+    const storedEmail = localStorage.getItem("userEmail");
+    
+    if (storedEmail) {
+      const user = users.find(u => u.email?.toLowerCase() === storedEmail.toLowerCase());
+      if (user) {
         setCurrentUser(user);
         setIsRegistered(true);
-        setShowEmailPrompt(false);
       } else {
-        // Not authenticated, check localStorage for email gate
-        const storedEmail = localStorage.getItem("userEmail");
-        if (storedEmail) {
-          setCurrentUser({ email: storedEmail, full_name: null });
-          setIsRegistered(false);
-          setShowEmailPrompt(false);
-        } else {
-          setShowEmailPrompt(true);
-        }
-      }
-    } catch (error) {
-      // Not authenticated, show email prompt
-      const storedEmail = localStorage.getItem("userEmail");
-      if (storedEmail) {
         setCurrentUser({ email: storedEmail, full_name: null });
         setIsRegistered(false);
-        setShowEmailPrompt(false);
-      } else {
-        setShowEmailPrompt(true);
       }
+      setShowEmailPrompt(false);
+    } else {
+      setShowEmailPrompt(true);
     }
     setIsLoading(false);
   };
@@ -98,13 +83,20 @@ export function AuthProvider({ children }) {
     setError("");
 
     const email = emailInput.trim().toLowerCase();
+    const users = allUsers.length > 0 ? allUsers : await loadUsers();
+    const user = users.find(u => u.email?.toLowerCase() === email);
     
-    // Store the email and let them in (view-only mode for unregistered)
     localStorage.setItem("userEmail", email);
-    setCurrentUser({ email, full_name: null });
-    setIsRegistered(false);
-    setShowEmailPrompt(false);
     
+    if (user) {
+      setCurrentUser(user);
+      setIsRegistered(true);
+    } else {
+      setError("This email is not registered. You can view but not interact with the workflow.");
+      setCurrentUser({ email, full_name: null });
+      setIsRegistered(false);
+    }
+    setShowEmailPrompt(false);
     setIsChecking(false);
   };
 
@@ -129,7 +121,9 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("userEmail");
-    base44.auth.logout();
+    setCurrentUser(null);
+    setIsRegistered(false);
+    setShowEmailPrompt(true);
   };
 
   if (isLoading) {
