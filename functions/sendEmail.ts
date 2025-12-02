@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import { Resend } from 'npm:resend';
+import { EmailClient } from 'npm:@azure/communication-email';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const connectionString = Deno.env.get("AZURE_EMAIL_CONNECTION_STRING");
+const emailClient = new EmailClient(connectionString);
 
 Deno.serve(async (req) => {
   try {
@@ -12,27 +13,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { to, subject, body, from_name } = await req.json();
+    const { to, subject, body, from_email, from_name } = await req.json();
 
-    if (!to || !subject || !body) {
-      return Response.json({ error: 'Missing required fields: to, subject, body' }, { status: 400 });
+    if (!to || !subject || !body || !from_email) {
+      return Response.json({ error: 'Missing required fields: to, subject, body, from_email' }, { status: 400 });
     }
 
     // Handle multiple recipients
     const recipients = Array.isArray(to) ? to : [to];
+    const toRecipients = recipients.map(email => ({ address: email }));
 
-    const { data, error } = await resend.emails.send({
-      from: `${from_name || 'Sign Shop'} <onboarding@resend.dev>`,
-      to: recipients,
-      subject: subject,
-      html: body.replace(/\n/g, '<br>')
-    });
+    const message = {
+      senderAddress: from_email,
+      content: {
+        subject: subject,
+        html: body.replace(/\n/g, '<br>')
+      },
+      recipients: {
+        to: toRecipients
+      }
+    };
 
-    if (error) {
-      return Response.json({ error: error.message }, { status: 500 });
-    }
+    const poller = await emailClient.beginSend(message);
+    const result = await poller.pollUntilDone();
 
-    return Response.json({ success: true, id: data.id });
+    return Response.json({ success: true, id: result.id, status: result.status });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
