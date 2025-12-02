@@ -8,9 +8,7 @@ const User = base44.entities.User;
 const generateAIEmail = async (templateSubject, templateBody, workOrder, extraData = {}) => {
   try {
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are writing a professional internal notification email for a sign shop called Cincinnati Signs.
-
-Write a clear, professional email based on these details:
+      prompt: `You are an automated workflow notification system for Cincinnati Signs. Generate a brief, impersonal notification email.
 
 EVENT: ${extraData.eventDescription || "Work order update"}
 WORK ORDER: "${workOrder?.title || "Unknown"}" for client "${workOrder?.client_name || "Unknown"}"
@@ -23,20 +21,20 @@ ${workOrder?.asap ? "PRIORITY: ASAP - URGENT" : ""}
 ${workOrder?.is_rider ? "TYPE: This is a RIDER task" : ""}
 ${extraData.taskText ? `TASK: ${extraData.taskText}` : ""}
 ${extraData.noteText ? `NOTE: ${extraData.noteText}` : ""}
-${extraData.changedBy ? `ACTION BY: ${extraData.changedBy}` : ""}
 
 USER'S TEMPLATE TO BASE THIS ON:
 Subject: ${templateSubject}
 Body: ${templateBody}
 
 INSTRUCTIONS:
-- Write a SHORT, professional email (2-4 sentences max for body)
-- Use the user's template as a guide for tone and what info to include
-- Format the body as clean HTML with proper <p> tags for paragraphs
-- Include a brief greeting and sign-off
-- Be direct and informative, not overly casual
-- Do NOT use markdown formatting like ** or - lists
-- Use <br> for line breaks within paragraphs if needed`,
+- This is an AUTOMATED SYSTEM notification, NOT from a person
+- Do NOT include any personal sign-offs, names, or contact info
+- Do NOT say "Best regards", "Thanks", or any personal closings
+- Keep it SHORT and factual (1-3 sentences max)
+- Format as clean HTML with <p> tags
+- Just state what happened and relevant details
+- End with something like "This is an automated notification." if needed
+- Do NOT use markdown formatting like ** or - lists`,
       response_json_schema: {
         type: "object",
         properties: {
