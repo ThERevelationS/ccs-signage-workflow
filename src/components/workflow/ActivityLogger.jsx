@@ -8,8 +8,8 @@ export async function getCurrentUser() {
   const storedEmail = localStorage.getItem("userEmail");
   if (storedEmail) {
     try {
-      const users = await base44.entities.User.list();
-      const user = users.find(u => u.email.toLowerCase() === storedEmail.toLowerCase());
+      const users = await base44.entities.AuthorizedEmail.list();
+      const user = users.find(u => u.email?.toLowerCase() === storedEmail.toLowerCase());
       if (user) {
         return user;
       }
