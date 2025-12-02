@@ -118,7 +118,13 @@ const TEMPLATE_VARIABLES = [
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
+const ADMIN_PASSWORD = "cinci2024";
+
 export default function AdminSettings() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+  
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,9 +142,67 @@ export default function AdminSettings() {
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
 
   useEffect(() => {
-    loadAutomations();
-    loadEmailGroups();
+    // Check if already authenticated this session
+    const authenticated = sessionStorage.getItem("adminAuthenticated") === "true";
+    setIsAuthenticated(authenticated);
+    if (authenticated) {
+      loadAutomations();
+      loadEmailGroups();
+    }
   }, []);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("adminAuthenticated", "true");
+      setPasswordError(false);
+      loadAutomations();
+      loadEmailGroups();
+    } else {
+      setPasswordError(true);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="clay-card p-8 max-w-md w-full">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="clay-card p-3">
+              <Settings className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">Admin Access</h1>
+              <p className="text-gray-500 text-sm">Enter password to continue</p>
+            </div>
+          </div>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter admin password"
+              value={passwordInput}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                setPasswordError(false);
+              }}
+              className={`clay-button border-none ${passwordError ? 'ring-2 ring-red-500' : ''}`}
+            />
+            {passwordError && (
+              <p className="text-red-500 text-sm">Incorrect password</p>
+            )}
+            <Button 
+              type="submit" 
+              className="w-full clay-button border-none"
+              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+            >
+              Access Admin Settings
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const loadEmailGroups = async () => {
     const groups = await EmailGroup.list();
