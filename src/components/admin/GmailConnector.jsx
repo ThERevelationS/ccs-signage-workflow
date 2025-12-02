@@ -64,13 +64,12 @@ export default function GmailConnector() {
   const handleTestEmail = async () => {
     setIsTesting(true);
     try {
-      const user = await base44.auth.me();
       await base44.functions.invoke('sendGmail', {
-        to: user.email,
+        to: 'brett@cincisigns.com',
         subject: 'Test Email from Sign Shop Workflow',
         body: 'This is a test email to confirm your Gmail integration is working correctly.'
       });
-      alert('Test email sent! Check your inbox.');
+      alert('Test email sent to brett@cincisigns.com!');
     } catch (error) {
       alert('Failed to send test email: ' + error.message);
     }
