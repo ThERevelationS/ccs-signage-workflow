@@ -491,99 +491,15 @@ export default function WorkOrderDetailsDialog({
             </div>
           </div>
 
-          {/* Comprehensive Timeline - Full Width */}
-          {timelineData &&
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          {/* Work Notes - Compact, Full Width, Fixed */}
+          <div className="px-6 py-2 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-sm">Notes</h3>
               <Popover>
                 <PopoverTrigger asChild>
-                  <div className="px-4 cursor-pointer hover:shadow-lg transition-shadow clay-card">
-                    <h3 className="font-semibold text-sm mb-3">Project Timeline</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{format(timelineData.earliestStart, "MMM d, yyyy")}</span>
-                        <span>{format(timelineData.latestEnd, "MMM d, yyyy")}</span>
-                      </div>
-                      <div className="relative min-h-[80px] rounded-lg p-2" style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                      boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                        {timelineData.bars.map((bar) =>
-                      <div key={bar.id} className="mb-2">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-medium" style={{
-                            color: bar.type === 'parent' ? '#6B7280' : bar.isCurrent ? '#7C3AED' : '#EC4899'
-                          }}>
-                                {bar.type === 'parent' ? '↑ Parent' : bar.isCurrent ? '● Current' : '↓ Rider'}: {bar.title}
-                              </span>
-                              <Badge className="text-xs" style={{ backgroundColor: stageColors[bar.current_stage] }}>
-                                {stageDisplayNames[bar.current_stage]}
-                              </Badge>
-                            </div>
-                            <div className="relative h-6 rounded-lg" style={{
-                          background: 'rgba(255,255,255,0.5)'
-                        }}>
-                              <div
-                            className="absolute h-full rounded-lg transition-all flex items-center px-2"
-                            style={{
-                              left: `${bar.startOffset}%`,
-                              width: `${bar.width}%`,
-                              background: bar.isCurrent ?
-                              `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)` :
-                              bar.type === 'parent' ?
-                              'linear-gradient(135deg, rgba(150,150,150,0.5) 0%, rgba(200,200,200,0.5) 100%)' :
-                              'linear-gradient(135deg, rgba(255,182,193,0.7) 0%, rgba(221,160,221,0.7) 100%)',
-                              border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.2)',
-                              boxShadow: bar.isCurrent ? '0 0 12px rgba(124,58,237,0.5)' : '0 2px 4px rgba(0,0,0,0.1)'
-                            }}>
-
-                                <span className="text-xs font-medium text-gray-800 truncate">
-                                  {format(new Date(bar.start_date), "MMM d")} - {format(new Date(bar.due_date), "MMM d")}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                      )}
-                      </div>
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="clay-card w-80">
-                  <Label>Start Date</Label>
-                  <div className="flex gap-2 mt-2 mb-3">
-                    <Input
-                    type="date"
-                    value={editValues.start_date || workOrder.start_date || ''}
-                    onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
-
-                    <Button size="sm" onClick={() => saveEdit('start_date')}>
-                      <Check className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <Label>Due Date</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                    type="date"
-                    value={editValues.due_date || workOrder.due_date || ''}
-                    onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
-
-                    <Button size="sm" onClick={() => saveEdit('due_date')}>
-                      <Check className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          }
-
-          {/* Work Notes - Full Width */}
-          <div className="px-6 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-lg">Notes</h3>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 px-3">
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Note
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="clay-card w-96">
@@ -593,7 +509,6 @@ export default function WorkOrderDetailsDialog({
                       <Select
                         value={editValues.noteType || ""}
                         onValueChange={(val) => setEditValues({ ...editValues, noteType: val })}>
-
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -616,7 +531,6 @@ export default function WorkOrderDetailsDialog({
                         className="mt-1 min-h-24"
                         value={editValues.noteText || ""}
                         onChange={(e) => setEditValues({ ...editValues, noteText: e.target.value })} />
-
                     </div>
                     <Button
                       size="sm"
@@ -630,7 +544,6 @@ export default function WorkOrderDetailsDialog({
                           setEditValues({});
                         }
                       }}>
-
                       Add Note
                     </Button>
                   </div>
@@ -638,95 +551,128 @@ export default function WorkOrderDetailsDialog({
               </Popover>
             </div>
 
-            <div className="space-y-3">
+            <div className="flex gap-2 overflow-x-auto pb-1 max-h-24">
               {workNotes.map((note) =>
-              <div key={note.id} className="clay-card p-4">
-                  <div className="flex items-start gap-3 mb-2">
+              <div key={note.id} className="clay-card p-2 flex-shrink-0 min-w-48 max-w-64">
+                  <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <Badge variant="outline" className="text-xs px-1 py-0">
                           {note.type === 'admin' && 'Admin'}
-                          {note.type === 'fabrication' && 'Fabrication'}
+                          {note.type === 'fabrication' && 'Fab'}
                           {note.type === 'vinyl' && 'Vinyl'}
-                          {note.type === 'permitting' && 'Permitting'}
+                          {note.type === 'permitting' && 'Permit'}
                           {note.type === 'design' && 'Design'}
-                          {note.type === 'installation' && 'Installation'}
+                          {note.type === 'installation' && 'Install'}
                           {note.type === 'client' && 'Client'}
                           {note.type === 'other' && 'Other'}
                         </Badge>
                         <span className="text-xs text-gray-400">
-                          {format(new Date(note.timestamp), "MMM d, h:mm a")}
+                          {format(new Date(note.timestamp), "M/d")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{note.text}</p>
+                      <p className="text-xs text-gray-700 line-clamp-2">{note.text}</p>
+                      {note.sub_tasks && note.sub_tasks.length > 0 &&
+                        <p className="text-xs text-gray-400 mt-0.5">+{note.sub_tasks.length} sub-notes</p>
+                      }
                     </div>
                     <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 flex-shrink-0"
-                    onClick={() => handleDeleteWorkNote(note.id)}>
-
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
-                  </div>
-
-                  {/* Sub-notes */}
-                  {note.sub_tasks && note.sub_tasks.length > 0 &&
-                <div className="ml-4 space-y-1 mb-2">
-                      {note.sub_tasks.map((subNote) =>
-                  <div key={subNote.id} className="flex items-center gap-2 p-2 bg-white/50 rounded">
-                          <span className="text-sm flex-1 text-gray-700">
-                            • {subNote.text}
-                          </span>
-                          <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleDeleteSubTask(note.id, subNote.id)}>
-
-                            <X className="w-3 h-3 text-gray-400" />
-                          </Button>
-                        </div>
-                  )}
-                    </div>
-                }
-
-                  {/* Add Sub-note */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs ml-4">
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Sub-note
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="clay-card w-64">
-                      <Label className="text-xs">Sub-note</Label>
-                      <Input
-                      placeholder="Enter sub-note..."
-                      className="mt-2 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          handleAddSubTask(note.id, e.target.value);
-                          e.target.value = '';
-                        }
-                      }} />
-
-                      <p className="text-xs text-gray-400 mt-2">Press Enter to add</p>
-                    </PopoverContent>
-                  </Popover>
+                      className="h-5 w-5 flex-shrink-0"
+                      onClick={() => handleDeleteWorkNote(note.id)}>
+                      <X className="w-3 h-3 text-gray-400" />
+                    </Button>
+                  </div>
                 </div>
               )}
               
               {workNotes.length === 0 &&
-              <div className="text-center py-8 text-gray-400">
-                  <p>No notes yet</p>
-                </div>
+                <p className="text-xs text-gray-400 py-2">No notes yet</p>
               }
             </div>
           </div>
 
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Timeline inside scrollable area */}
+            {timelineData &&
+            <div className="mb-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="px-4 cursor-pointer hover:shadow-lg transition-shadow clay-card">
+                    <h3 className="font-semibold text-sm mb-3">Project Timeline</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>{format(timelineData.earliestStart, "MMM d, yyyy")}</span>
+                        <span>{format(timelineData.latestEnd, "MMM d, yyyy")}</span>
+                      </div>
+                      <div className="relative min-h-[80px] rounded-lg p-2" style={{
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                        boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        {timelineData.bars.map((bar) =>
+                          <div key={bar.id} className="mb-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium" style={{
+                                color: bar.type === 'parent' ? '#6B7280' : bar.isCurrent ? '#7C3AED' : '#EC4899'
+                              }}>
+                                {bar.type === 'parent' ? '↑ Parent' : bar.isCurrent ? '● Current' : '↓ Rider'}: {bar.title}
+                              </span>
+                              <Badge className="text-xs" style={{ backgroundColor: stageColors[bar.current_stage] }}>
+                                {stageDisplayNames[bar.current_stage]}
+                              </Badge>
+                            </div>
+                            <div className="relative h-6 rounded-lg" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                              <div
+                                className="absolute h-full rounded-lg transition-all flex items-center px-2"
+                                style={{
+                                  left: `${bar.startOffset}%`,
+                                  width: `${bar.width}%`,
+                                  background: bar.isCurrent ?
+                                    `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)` :
+                                    bar.type === 'parent' ?
+                                    'linear-gradient(135deg, rgba(150,150,150,0.5) 0%, rgba(200,200,200,0.5) 100%)' :
+                                    'linear-gradient(135deg, rgba(255,182,193,0.7) 0%, rgba(221,160,221,0.7) 100%)',
+                                  border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.2)',
+                                  boxShadow: bar.isCurrent ? '0 0 12px rgba(124,58,237,0.5)' : '0 2px 4px rgba(0,0,0,0.1)'
+                                }}>
+                                <span className="text-xs font-medium text-gray-800 truncate">
+                                  {format(new Date(bar.start_date), "MMM d")} - {format(new Date(bar.due_date), "MMM d")}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="clay-card w-80">
+                  <Label>Start Date</Label>
+                  <div className="flex gap-2 mt-2 mb-3">
+                    <Input
+                      type="date"
+                      value={editValues.start_date || workOrder.start_date || ''}
+                      onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
+                    <Button size="sm" onClick={() => saveEdit('start_date')}>
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Label>Due Date</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      type="date"
+                      value={editValues.due_date || workOrder.due_date || ''}
+                      onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
+                    <Button size="sm" onClick={() => saveEdit('due_date')}>
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            }
             <div className="grid grid-cols-3 gap-6">
               
               {/* Left Column - Core Info */}
