@@ -14,7 +14,18 @@ import { Mail, Loader2, AlertCircle } from "lucide-react";
 const AuthContext = createContext(null);
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    // Return a default context for when AuthProvider isn't mounted yet
+    return {
+      currentUser: null,
+      isRegistered: false,
+      promptForEmail: () => {},
+      getUserFirstName: () => null,
+      logout: () => {}
+    };
+  }
+  return context;
 }
 
 export function AuthProvider({ children }) {

@@ -1,19 +1,33 @@
-import { ActivityLog } from "@/entities/ActivityLog";
-import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "./NotificationService";
 
-let cachedUser = null;
+const ActivityLog = base44.entities.ActivityLog;
 
 export async function getCurrentUser() {
-  if (!cachedUser) {
+  // Get user from localStorage (set by EmailGate)
+  const storedEmail = localStorage.getItem("userEmail");
+  if (storedEmail) {
     try {
-      cachedUser = await User.me();
+      const users = await base44.entities.User.list();
+      const user = users.find(u => u.email.toLowerCase() === storedEmail.toLowerCase());
+      if (user) {
+        return user;
+      }
     } catch (error) {
       console.error("Error getting current user:", error);
-      cachedUser = { email: "unknown", full_name: "Unknown User" };
     }
   }
-  return cachedUser;
+  return { email: "unknown", full_name: "Unknown User" };
+}
+
+export function getUserDisplayName(user) {
+  if (user?.full_name) {
+    return user.full_name.split(" ")[0]; // First name only
+  }
+  if (user?.email) {
+    return user.email.split("@")[0];
+  }
+  return "Unknown";
 }
 
 export async function logActivity({
@@ -25,6 +39,7 @@ export async function logActivity({
   newValue = null
 }) {
   const user = await getCurrentUser();
+  const displayName = getUserDisplayName(user);
   
   await ActivityLog.create({
     work_order_id: workOrderId,
@@ -34,7 +49,7 @@ export async function logActivity({
     previous_value: previousValue,
     new_value: newValue,
     performed_by_email: user.email,
-    performed_by_name: user.full_name || user.email.split("@")[0]
+    performed_by_name: displayName
   });
 }
 
@@ -42,50 +57,55 @@ export async function logActivity({
 export const ActivityActions = {
   workOrderCreated: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "work_order_created",
       actionDetails: `Created work order "${wo.title}" for ${wo.client_name}`
     });
-    await NotificationTriggers.workOrderCreated(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderCreated(wo, displayName);
   },
 
   workOrderCompleted: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "work_order_completed",
       actionDetails: `Marked "${wo.title}" as completed`
     });
-    await NotificationTriggers.workOrderCompleted(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderCompleted(wo, displayName);
   },
 
   workOrderDeleted: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "work_order_deleted",
       actionDetails: `Deleted work order "${wo.title}"`
     });
-    await NotificationTriggers.workOrderDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderDeleted(wo, displayName);
   },
 
   riderCreated: async (wo, parentTitle) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "rider_created",
       actionDetails: `Created rider "${wo.title}" for parent "${parentTitle}"`
     });
-    await NotificationTriggers.riderCreated(wo, parentTitle, user.full_name || user.email);
+    await NotificationTriggers.riderCreated(wo, parentTitle, displayName);
   },
 
   stageChanged: async (wo, fromStage, toStage) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
@@ -94,29 +114,31 @@ export const ActivityActions = {
       previousValue: fromStage,
       newValue: toStage
     });
-    await NotificationTriggers.stageChanged(wo, fromStage, toStage, user.full_name || user.email);
+    await NotificationTriggers.stageChanged(wo, fromStage, toStage, displayName);
   },
 
   noteAdded: async (wo, noteText, noteType) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "note_added",
       actionDetails: `Added ${noteType} note to "${wo.title}": "${noteText.substring(0, 50)}${noteText.length > 50 ? '...' : ''}"`
     });
-    await NotificationTriggers.noteAdded(wo, noteText, noteType, user.full_name || user.email);
+    await NotificationTriggers.noteAdded(wo, noteText, noteType, displayName);
   },
 
   noteDeleted: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "note_deleted",
       actionDetails: `Deleted a note from "${wo.title}"`
     });
-    await NotificationTriggers.noteDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.noteDeleted(wo, displayName);
   },
 
   subNoteAdded: async (wo, text) => {
@@ -139,24 +161,26 @@ export const ActivityActions = {
 
   taskAdded: async (wo, taskText) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "task_added",
       actionDetails: `Added task to "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
     });
-    await NotificationTriggers.taskAdded(wo, taskText, user.full_name || user.email);
+    await NotificationTriggers.taskAdded(wo, taskText, displayName);
   },
 
   taskCompleted: async (wo, taskText) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "task_completed",
       actionDetails: `Completed task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
     });
-    await NotificationTriggers.taskCompleted(wo, taskText, user.full_name || user.email);
+    await NotificationTriggers.taskCompleted(wo, taskText, displayName);
   },
 
   taskUncompleted: async (wo, taskText) => {
@@ -170,13 +194,14 @@ export const ActivityActions = {
 
   taskDeleted: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "task_deleted",
       actionDetails: `Deleted a task from "${wo.title}"`
     });
-    await NotificationTriggers.taskDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.taskDeleted(wo, displayName);
   },
 
   taskEdited: async (wo, oldText, newText) => {
@@ -192,17 +217,19 @@ export const ActivityActions = {
 
   imageUploaded: async (wo) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "image_uploaded",
       actionDetails: `Uploaded image to "${wo.title}"`
     });
-    await NotificationTriggers.imageUploaded(wo, user.full_name || user.email);
+    await NotificationTriggers.imageUploaded(wo, displayName);
   },
 
   asapToggled: async (wo, isAsap) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
@@ -210,18 +237,19 @@ export const ActivityActions = {
       actionDetails: `${isAsap ? 'Marked' : 'Unmarked'} "${wo.title}" as ASAP`,
       newValue: isAsap ? "ASAP" : "Normal"
     });
-    await NotificationTriggers.asapToggled(wo, isAsap, user.full_name || user.email);
+    await NotificationTriggers.asapToggled(wo, isAsap, displayName);
   },
 
   priorityChanged: async (wo, newPriority) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "priority_changed",
       actionDetails: `Changed priority of "${wo.title}" to #${newPriority}`
     });
-    await NotificationTriggers.priorityChanged(wo, user.full_name || user.email);
+    await NotificationTriggers.priorityChanged(wo, displayName);
   },
 
   restored: async (wo, toStage) => {
@@ -236,6 +264,7 @@ export const ActivityActions = {
 
   fieldUpdated: async (wo, fieldName, oldValue, newValue) => {
     const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
@@ -245,7 +274,7 @@ export const ActivityActions = {
       newValue: newValue
     });
     if (fieldName === "assigned_to") {
-      await NotificationTriggers.assignedToChanged(wo, oldValue, newValue, user.full_name || user.email);
+      await NotificationTriggers.assignedToChanged(wo, oldValue, newValue, displayName);
     }
   }
 };
