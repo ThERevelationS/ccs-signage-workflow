@@ -9,7 +9,7 @@ export async function getCurrentUser() {
   if (storedEmail) {
     try {
       const users = await base44.entities.AuthorizedEmail.list();
-      const user = users.find(u => u.email?.toLowerCase() === storedEmail.toLowerCase());
+      const user = users.find(u => u.email.toLowerCase() === storedEmail.toLowerCase());
       if (user) {
         return user;
       }
