@@ -15,14 +15,15 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Missing required fields: to, subject, body' }, { status: 400 });
         }
 
-        // Get the user's refresh token
-        const users = await base44.asServiceRole.entities.User.filter({ email: user.email });
+        // Get any user with Gmail connected (use as the sender account)
+        const allUsers = await base44.asServiceRole.entities.User.list();
+        const gmailUser = allUsers.find(u => u.gmail_connected && u.gmail_refresh_token);
         
-        if (!users || users.length === 0 || !users[0].gmail_refresh_token) {
-            return Response.json({ error: 'Gmail not connected. Please connect your Gmail account first.' }, { status: 400 });
+        if (!gmailUser) {
+            return Response.json({ error: 'No Gmail account connected. Please connect a Gmail account in Admin Settings.' }, { status: 400 });
         }
 
-        const refreshToken = users[0].gmail_refresh_token;
+        const refreshToken = gmailUser.gmail_refresh_token;
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
 
         if (tokens.error) {
             // If refresh token is invalid, mark Gmail as disconnected
-            await base44.asServiceRole.entities.User.update(users[0].id, {
+            await base44.asServiceRole.entities.User.update(gmailUser.id, {
                 gmail_connected: false,
                 gmail_refresh_token: null
             });
