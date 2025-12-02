@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Maximize2, Minimize2 } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
+import { ActivityActions } from "../components/workflow/ActivityLogger";
 
 export default function Estimating() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -56,7 +57,12 @@ export default function Estimating() {
         const maxPriority = workOrders.length > 0 
           ? Math.max(...workOrders.map(wo => wo.priority || 0)) 
           : -1;
-        await WorkOrder.create({ ...formData, priority: maxPriority + 1 });
+        const created = await WorkOrder.create({ ...formData, priority: maxPriority + 1 });
+        if (riderConfig) {
+          await ActivityActions.riderCreated(created, riderConfig.parentWorkOrder.title);
+        } else {
+          await ActivityActions.workOrderCreated(created);
+        }
       }
       setEditingWorkOrder(null);
       setRiderConfig(null);
@@ -68,6 +74,7 @@ export default function Estimating() {
 
   const handleMove = async (workOrder, newStage) => {
     try {
+      const oldStage = workOrder.current_stage;
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
         notes = [{
@@ -81,6 +88,7 @@ export default function Estimating() {
         current_stage: newStage,
         notes: notes
       });
+      await ActivityActions.stageChanged(workOrder, oldStage, newStage);
       loadWorkOrders();
     } catch (error) {
       console.error("Error moving:", error);
@@ -115,6 +123,7 @@ export default function Estimating() {
         current_stage: 'completed',
         notes: notes
       });
+      await ActivityActions.workOrderCompleted(workOrder);
       loadWorkOrders();
     } catch (error) {
       console.error("Error completing work order:", error);
@@ -123,6 +132,7 @@ export default function Estimating() {
 
   const handleDelete = async (workOrder) => {
     try {
+      await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);
       loadWorkOrders();
     } catch (error) {
