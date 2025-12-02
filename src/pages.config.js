@@ -7,7 +7,6 @@ import MainWorkflow from './pages/MainWorkflow';
 import CompletedJobs from './pages/CompletedJobs';
 import Estimating from './pages/Estimating';
 import Sales from './pages/Sales';
-import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -21,7 +20,6 @@ export const PAGES = {
     "CompletedJobs": CompletedJobs,
     "Estimating": Estimating,
     "Sales": Sales,
-    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {
