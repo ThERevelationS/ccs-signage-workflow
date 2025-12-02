@@ -19,6 +19,7 @@ import {
   Eye,
   EyeOff } from
 "lucide-react";
+import { useAuth } from "@/components/auth/EmailGate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +76,20 @@ export default function WorkOrderCard({
   const stageColor = stageColors[workOrder.current_stage] || "#E0D4F7";
   const isTopPriority = priorityNumber === 1;
   const isAsap = workOrder.asap || false;
+  
+  const { isRegistered, promptForEmail } = useAuth();
+  
+  const requireAuth = (callback) => {
+    return (e) => {
+      if (!isRegistered) {
+        e?.preventDefault();
+        e?.stopPropagation();
+        promptForEmail();
+        return;
+      }
+      callback(e);
+    };
+  };
 
   // Calculate yellow shade based on priority (fades from bright to light)
   const getYellowShade = (priority) => {
@@ -161,6 +176,10 @@ export default function WorkOrderCard({
   };
 
   const handleImageUpload = async (e) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     const file = e.target.files[0];
     if (!file) return;
 
@@ -181,6 +200,10 @@ export default function WorkOrderCard({
   };
 
   const handleNoteEdit = (index, isCompleted = false) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     const notesList = isCompleted ? completedNotes : activeNotes;
     const actualIndex = notes.findIndex((n) => n === notesList[index]);
     setEditingNoteIndex(actualIndex);
@@ -188,6 +211,10 @@ export default function WorkOrderCard({
   };
 
   const handleNoteSave = async (index) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     const updatedNotes = [...notes];
     updatedNotes[index] = {
       ...updatedNotes[index],
@@ -204,6 +231,10 @@ export default function WorkOrderCard({
   };
 
   const handleToggleComplete = async (index, isCompleted = false) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     const notesList = isCompleted ? completedNotes : activeNotes;
     const actualIndex = notes.findIndex((n) => n === notesList[index]);
     const taskText = notes[actualIndex].text;
@@ -222,6 +253,10 @@ export default function WorkOrderCard({
   };
 
   const handleAddNote = async () => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     if (!newNoteText.trim()) return;
 
     const newNote = {
@@ -240,6 +275,10 @@ export default function WorkOrderCard({
   };
 
   const handleToggleAsap = async () => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     await WorkOrder.update(workOrder.id, { asap: !isAsap });
     await ActivityActions.asapToggled(workOrder, !isAsap);
     if (onUpdate) onUpdate();
@@ -712,6 +751,10 @@ export default function WorkOrderCard({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!isRegistered) {
+                        promptForEmail();
+                        return;
+                      }
                       setIsAddingNote(true);
                     }}
                     className="px-0.5 hover:bg-gray-100 rounded font-medium flex items-center justify-center"
