@@ -48,7 +48,7 @@ export const ActivityActions = {
       actionType: "work_order_created",
       actionDetails: `Created work order "${wo.title}" for ${wo.client_name}`
     });
-    NotificationTriggers.workOrderCreated(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderCreated(wo, user.full_name || user.email);
   },
 
   workOrderCompleted: async (wo) => {
@@ -59,7 +59,7 @@ export const ActivityActions = {
       actionType: "work_order_completed",
       actionDetails: `Marked "${wo.title}" as completed`
     });
-    NotificationTriggers.workOrderCompleted(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderCompleted(wo, user.full_name || user.email);
   },
 
   workOrderDeleted: async (wo) => {
@@ -70,7 +70,7 @@ export const ActivityActions = {
       actionType: "work_order_deleted",
       actionDetails: `Deleted work order "${wo.title}"`
     });
-    NotificationTriggers.workOrderDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.workOrderDeleted(wo, user.full_name || user.email);
   },
 
   riderCreated: async (wo, parentTitle) => {
@@ -81,7 +81,7 @@ export const ActivityActions = {
       actionType: "rider_created",
       actionDetails: `Created rider "${wo.title}" for parent "${parentTitle}"`
     });
-    NotificationTriggers.riderCreated(wo, parentTitle, user.full_name || user.email);
+    await NotificationTriggers.riderCreated(wo, parentTitle, user.full_name || user.email);
   },
 
   stageChanged: async (wo, fromStage, toStage) => {
@@ -94,7 +94,7 @@ export const ActivityActions = {
       previousValue: fromStage,
       newValue: toStage
     });
-    NotificationTriggers.stageChanged(wo, fromStage, toStage, user.full_name || user.email);
+    await NotificationTriggers.stageChanged(wo, fromStage, toStage, user.full_name || user.email);
   },
 
   noteAdded: async (wo, noteText, noteType) => {
@@ -105,7 +105,7 @@ export const ActivityActions = {
       actionType: "note_added",
       actionDetails: `Added ${noteType} note to "${wo.title}": "${noteText.substring(0, 50)}${noteText.length > 50 ? '...' : ''}"`
     });
-    NotificationTriggers.noteAdded(wo, noteText, noteType, user.full_name || user.email);
+    await NotificationTriggers.noteAdded(wo, noteText, noteType, user.full_name || user.email);
   },
 
   noteDeleted: async (wo) => {
@@ -116,7 +116,7 @@ export const ActivityActions = {
       actionType: "note_deleted",
       actionDetails: `Deleted a note from "${wo.title}"`
     });
-    NotificationTriggers.noteDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.noteDeleted(wo, user.full_name || user.email);
   },
 
   subNoteAdded: async (wo, text) => {
@@ -145,7 +145,7 @@ export const ActivityActions = {
       actionType: "task_added",
       actionDetails: `Added task to "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
     });
-    NotificationTriggers.taskAdded(wo, taskText, user.full_name || user.email);
+    await NotificationTriggers.taskAdded(wo, taskText, user.full_name || user.email);
   },
 
   taskCompleted: async (wo, taskText) => {
@@ -156,7 +156,7 @@ export const ActivityActions = {
       actionType: "task_completed",
       actionDetails: `Completed task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
     });
-    NotificationTriggers.taskCompleted(wo, taskText, user.full_name || user.email);
+    await NotificationTriggers.taskCompleted(wo, taskText, user.full_name || user.email);
   },
 
   taskUncompleted: async (wo, taskText) => {
@@ -176,7 +176,7 @@ export const ActivityActions = {
       actionType: "task_deleted",
       actionDetails: `Deleted a task from "${wo.title}"`
     });
-    NotificationTriggers.taskDeleted(wo, user.full_name || user.email);
+    await NotificationTriggers.taskDeleted(wo, user.full_name || user.email);
   },
 
   taskEdited: async (wo, oldText, newText) => {
@@ -198,7 +198,7 @@ export const ActivityActions = {
       actionType: "image_uploaded",
       actionDetails: `Uploaded image to "${wo.title}"`
     });
-    NotificationTriggers.imageUploaded(wo, user.full_name || user.email);
+    await NotificationTriggers.imageUploaded(wo, user.full_name || user.email);
   },
 
   asapToggled: async (wo, isAsap) => {
@@ -210,7 +210,7 @@ export const ActivityActions = {
       actionDetails: `${isAsap ? 'Marked' : 'Unmarked'} "${wo.title}" as ASAP`,
       newValue: isAsap ? "ASAP" : "Normal"
     });
-    NotificationTriggers.asapToggled(wo, isAsap, user.full_name || user.email);
+    await NotificationTriggers.asapToggled(wo, isAsap, user.full_name || user.email);
   },
 
   priorityChanged: async (wo, newPriority) => {
@@ -221,7 +221,7 @@ export const ActivityActions = {
       actionType: "priority_changed",
       actionDetails: `Changed priority of "${wo.title}" to #${newPriority}`
     });
-    NotificationTriggers.priorityChanged(wo, user.full_name || user.email);
+    await NotificationTriggers.priorityChanged(wo, user.full_name || user.email);
   },
 
   restored: async (wo, toStage) => {
@@ -245,7 +245,7 @@ export const ActivityActions = {
       newValue: newValue
     });
     if (fieldName === "assigned_to") {
-      NotificationTriggers.assignedToChanged(wo, oldValue, newValue, user.full_name || user.email);
+      await NotificationTriggers.assignedToChanged(wo, oldValue, newValue, user.full_name || user.email);
     }
   }
 };

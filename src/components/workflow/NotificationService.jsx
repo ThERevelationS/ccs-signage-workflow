@@ -130,7 +130,19 @@ const checkAutomationTriggers = (automation, triggerType, workOrder, extraData =
   const triggers = automation.triggers || [];
   if (triggers.length === 0) return false;
   
-  let result = false;
+  // Check if ANY trigger matches the current trigger type
+  const hasMatchingTriggerType = triggers.some(t => t.trigger_type === triggerType);
+  if (!hasMatchingTriggerType) return false;
+  
+  // For single trigger, just check if it matches
+  if (triggers.length === 1) {
+    const trigger = triggers[0];
+    return trigger.trigger_type === triggerType && 
+      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData);
+  }
+  
+  // For multiple triggers, evaluate with AND/OR logic
+  let result = null;
   
   for (let i = 0; i < triggers.length; i++) {
     const trigger = triggers[i];
@@ -149,7 +161,7 @@ const checkAutomationTriggers = (automation, triggerType, workOrder, extraData =
     }
   }
   
-  return result;
+  return result === true;
 };
 
 // Check trigger conditions for a single trigger
