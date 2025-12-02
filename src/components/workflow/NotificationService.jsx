@@ -5,40 +5,43 @@ const EmailGroup = base44.entities.EmailGroup;
 const User = base44.entities.User;
 
 // Generate AI-enhanced email content
-const generateAIEmail = async (subject, body, workOrder, extraData = {}) => {
+const generateAIEmail = async (templateSubject, templateBody, workOrder, extraData = {}) => {
   try {
-    const context = `
-Work Order Details:
-- Title: ${workOrder?.title || "Unknown"}
-- Client: ${workOrder?.client_name || "Unknown"}
-- Current Stage: ${formatStageName(workOrder?.current_stage)}
-- Assigned To: ${workOrder?.assigned_to || "Unassigned"}
-- Due Date: ${workOrder?.due_date || "Not set"}
-- Is ASAP: ${workOrder?.asap ? "Yes" : "No"}
-- Is Rider: ${workOrder?.is_rider ? "Yes" : "No"}
-${extraData.previousStage ? `- Previous Stage: ${formatStageName(extraData.previousStage)}` : ""}
-${extraData.newStage ? `- New Stage: ${formatStageName(extraData.newStage)}` : ""}
-${extraData.taskText ? `- Task: ${extraData.taskText}` : ""}
-${extraData.noteText ? `- Note: ${extraData.noteText}` : ""}
-${extraData.changedBy ? `- Changed By: ${extraData.changedBy}` : ""}
-    `.trim();
-
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are writing a professional but friendly internal notification email for a sign shop workflow system.
+      prompt: `You are writing a professional internal notification email for a sign shop called Cincinnati Signs.
 
-Based on this template and context, write a natural, professional email that conveys the same information but sounds more human and engaging. Keep it concise but warm.
+Write a clear, professional email based on these details:
 
-Original Subject Template: ${subject}
-Original Body Template: ${body}
+EVENT: ${extraData.eventDescription || "Work order update"}
+WORK ORDER: "${workOrder?.title || "Unknown"}" for client "${workOrder?.client_name || "Unknown"}"
+${extraData.previousStage ? `MOVED FROM: ${formatStageName(extraData.previousStage)}` : ""}
+${extraData.newStage ? `MOVED TO: ${formatStageName(extraData.newStage)}` : ""}
+CURRENT STAGE: ${formatStageName(workOrder?.current_stage)}
+ASSIGNED TO: ${workOrder?.assigned_to || "Unassigned"}
+${workOrder?.due_date ? `DUE DATE: ${workOrder.due_date}` : ""}
+${workOrder?.asap ? "PRIORITY: ASAP - URGENT" : ""}
+${workOrder?.is_rider ? "TYPE: This is a RIDER task" : ""}
+${extraData.taskText ? `TASK: ${extraData.taskText}` : ""}
+${extraData.noteText ? `NOTE: ${extraData.noteText}` : ""}
+${extraData.changedBy ? `ACTION BY: ${extraData.changedBy}` : ""}
 
-${context}
+USER'S TEMPLATE TO BASE THIS ON:
+Subject: ${templateSubject}
+Body: ${templateBody}
 
-Write the email with a subject line and body. Make it sound professional but personable - like a helpful colleague sending an update. Don't be overly formal or stiff. Keep the key information but make it read naturally.`,
+INSTRUCTIONS:
+- Write a SHORT, professional email (2-4 sentences max for body)
+- Use the user's template as a guide for tone and what info to include
+- Format the body as clean HTML with proper <p> tags for paragraphs
+- Include a brief greeting and sign-off
+- Be direct and informative, not overly casual
+- Do NOT use markdown formatting like ** or - lists
+- Use <br> for line breaks within paragraphs if needed`,
       response_json_schema: {
         type: "object",
         properties: {
-          subject: { type: "string", description: "The email subject line" },
-          body: { type: "string", description: "The email body in plain text" }
+          subject: { type: "string", description: "The email subject line (plain text, no HTML)" },
+          body: { type: "string", description: "The email body formatted as clean HTML with <p> tags" }
         },
         required: ["subject", "body"]
       }
@@ -47,8 +50,11 @@ Write the email with a subject line and body. Make it sound professional but per
     return { subject: result.subject, body: result.body };
   } catch (error) {
     console.error("AI email generation failed, using template:", error);
-    // Fallback to original template
-    return { subject, body };
+    // Fallback to original template with basic HTML formatting
+    return { 
+      subject: templateSubject, 
+      body: `<p>${templateBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>` 
+    };
   }
 };
 
