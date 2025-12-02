@@ -362,12 +362,15 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
         if (action.action_type === "send_email") {
           const config = action.action_config || {};
           const recipients = await getAutomationRecipients(config, workOrder);
-          
+
           if (recipients.length === 0) continue;
-          
-          const subject = replaceVariables(config.subject || "", workOrder, extraData);
-          const body = replaceVariables(config.body || "", workOrder, extraData);
-          
+
+          const templateSubject = replaceVariables(config.subject || "", workOrder, extraData);
+          const templateBody = replaceVariables(config.body || "", workOrder, extraData);
+
+          // Generate AI-enhanced email
+          const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
+
           for (const email of recipients) {
             try {
               await base44.functions.invoke('sendGmail', {
