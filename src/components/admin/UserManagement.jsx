@@ -106,19 +106,41 @@ export default function UserManagement() {
     setInviteSuccess("");
 
     try {
+      // Check if user already exists
+      const existingUsers = await base44.entities.User.list();
+      const exists = existingUsers.some(u => u.email?.toLowerCase() === inviteEmail.trim().toLowerCase());
+      
+      if (exists) {
+        setInviteError("A user with this email already exists");
+        setIsInviting(false);
+        return;
+      }
+
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Use the auth invite API
-      await base44.auth.inviteUser(inviteEmail.trim(), inviteRole, fullName || undefined);
+      // Send invite email using Gmail (same as automation system)
+      const { sendGmail } = await import("@/functions/sendGmail");
+      await sendGmail({
+        to: inviteEmail.trim(),
+        subject: "You've been invited to Sign Shop Workflow",
+        body: `Hello${fullName ? ` ${fullName}` : ''},\n\nYou have been invited to access the Sign Shop Workflow Manager.\n\nSimply visit the application and enter this email address (${inviteEmail.trim()}) to access the system.\n\nYour role: ${inviteRole === 'admin' ? 'Administrator' : 'User'}\n\nBest regards,\nSign Shop Team`
+      });
       
-      setInviteSuccess("User invited successfully! They will receive an email.");
+      // Create user record directly
+      await base44.entities.User.create({
+        email: inviteEmail.trim().toLowerCase(),
+        full_name: fullName || null,
+        role: inviteRole
+      });
+      
+      setInviteSuccess("User added and invitation email sent!");
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to invite user");
+      setInviteError(error.message || "Failed to add user");
     }
     setIsInviting(false);
   };
