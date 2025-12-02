@@ -571,6 +571,7 @@ export default function WorkOrderDetailsDialog({
                     <div>
                       <Label>Type</Label>
                       <Select
+                        value={editValues.noteType || ""}
                         onValueChange={(val) => setEditValues({ ...editValues, noteType: val })}>
 
                         <SelectTrigger className="mt-1">
@@ -593,6 +594,7 @@ export default function WorkOrderDetailsDialog({
                       <Textarea
                         placeholder="Enter note details..."
                         className="mt-1 min-h-24"
+                        value={editValues.noteText || ""}
                         onChange={(e) => setEditValues({ ...editValues, noteText: e.target.value })} />
 
                     </div>
