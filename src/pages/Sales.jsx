@@ -158,13 +158,14 @@ export default function Sales() {
     <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               onClick={toggleFullScreen}
-              className="clay-button border-none text-gray-800"
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
               style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
             >
-              {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
             <Button
               onClick={() => {
@@ -172,11 +173,12 @@ export default function Sales() {
                 setRiderConfig(null);
                 setIsFormOpen(true);
               }}
-              className="clay-button border-none text-gray-800"
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
               style={{ background: 'linear-gradient(135deg, #B2DFDB 0%, #80CBC4 100%)' }}
             >
-              <Plus className="w-5 h-5 mr-2" />
-              New Work Order
+              <Plus className="w-4 h-4 mr-1" />
+              <span className="text-sm">New</span>
             </Button>
           </div>
         </div>

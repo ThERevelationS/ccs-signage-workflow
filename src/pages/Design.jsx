@@ -161,25 +161,27 @@ export default function Design() {
     <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
-              onClick={toggleFullScreen} className="bg-primary text-gray-800 px-4 py-2 text-sm font-medium opacity-70 rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 h-10 clay-button border-none"
-
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}>
-
-              {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              onClick={toggleFullScreen}
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
+              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
+            >
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
             <Button
               onClick={() => {
                 setEditingWorkOrder(null);
                 setRiderConfig(null);
                 setIsFormOpen(true);
-              }} className="bg-slate-700 text-lime-600 px-4 py-2 text-sm font-medium opacity-90 rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 h-10 clay-button border-none"
-
-              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}>
-
-              <Plus className="w-5 h-5 mr-2" />
-              New Work Order
+              }}
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
+              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              <span className="text-sm">New</span>
             </Button>
           </div>
         </div>

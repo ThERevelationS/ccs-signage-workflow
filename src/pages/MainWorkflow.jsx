@@ -77,11 +77,11 @@ export default function MainWorkflow() {
     <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
-          <div className="flex gap-3 items-center">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="w-4 h-4 text-gray-500" />
+          <div className="flex gap-2 items-center">
+            <div className="flex items-center gap-1">
+              <ArrowUpDown className="w-3 h-3 text-gray-500" />
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-32 h-9 clay-button border-none text-sm">
+                <SelectTrigger className="w-28 h-8 clay-button border-none text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="clay-card border-none">
@@ -93,15 +93,17 @@ export default function MainWorkflow() {
             </div>
             <Button
               onClick={loadWorkOrders}
-              className="clay-button border-none text-gray-800"
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
               style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, rgba(255,255,255,0.9) 100%)' }}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+              <RefreshCw className="w-4 h-4 mr-1" />
+              <span className="text-sm">Refresh</span>
             </Button>
             <Button
               onClick={toggleFullScreen}
-              className="clay-button border-none text-gray-800"
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
               style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
             >
               {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
