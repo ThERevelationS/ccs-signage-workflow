@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Loader2, Send } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { gmailAuthInitiate } from "@/functions/gmailAuthInitiate";
 
@@ -9,6 +9,7 @@ export default function GmailConnector() {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     checkConnectionStatus();
@@ -60,6 +61,22 @@ export default function GmailConnector() {
     setIsConnected(false);
   };
 
+  const handleTestEmail = async () => {
+    setIsTesting(true);
+    try {
+      const user = await base44.auth.me();
+      await base44.functions.invoke('sendGmail', {
+        to: user.email,
+        subject: 'Test Email from Sign Shop Workflow',
+        body: 'This is a test email to confirm your Gmail integration is working correctly.'
+      });
+      alert('Test email sent! Check your inbox.');
+    } catch (error) {
+      alert('Failed to send test email: ' + error.message);
+    }
+    setIsTesting(false);
+  };
+
   if (isLoading) {
     return (
       <div className="clay-card p-4 flex items-center gap-3">
@@ -88,6 +105,16 @@ export default function GmailConnector() {
                 <CheckCircle2 className="w-3 h-3" />
                 Connected
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestEmail}
+                disabled={isTesting}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
+                {isTesting ? 'Sending...' : 'Test'}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
