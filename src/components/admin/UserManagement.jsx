@@ -118,29 +118,21 @@ export default function UserManagement() {
 
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Send invite email using Gmail (same as automation system)
-      const { sendGmail } = await import("@/functions/sendGmail");
-      await sendGmail({
-        to: inviteEmail.trim(),
-        subject: "You've been invited to Sign Shop Workflow",
-        body: `Hello${fullName ? ` ${fullName}` : ''},\n\nYou have been invited to access the Sign Shop Workflow Manager.\n\nSimply visit the application and enter this email address (${inviteEmail.trim()}) to access the system.\n\nYour role: ${inviteRole === 'admin' ? 'Administrator' : 'User'}\n\nBest regards,\nSign Shop Team`
-      });
+      // Use Base44's built-in invite system
+      await base44.auth.inviteUser(
+        inviteEmail.trim(),
+        inviteRole,
+        fullName || undefined
+      );
       
-      // Create user record directly
-      await base44.entities.User.create({
-        email: inviteEmail.trim().toLowerCase(),
-        full_name: fullName || null,
-        role: inviteRole
-      });
-      
-      setInviteSuccess("User added and invitation email sent!");
+      setInviteSuccess("User invited successfully! They will receive an email.");
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
       setInviteRole("user");
       loadUsers();
     } catch (error) {
-      setInviteError(error.message || "Failed to add user");
+      setInviteError(error.message || "Failed to invite user");
     }
     setIsInviting(false);
   };
