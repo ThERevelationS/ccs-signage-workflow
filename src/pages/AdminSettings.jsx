@@ -139,6 +139,7 @@ export default function AdminSettings() {
   });
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {} }]);
+  const [triggerLogic, setTriggerLogic] = useState("or");
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
 
   const loadEmailGroups = async () => {
@@ -221,6 +222,7 @@ export default function AdminSettings() {
     await loadEmailGroups();
     setTriggers([{ trigger_type: "", trigger_condition: {} }]);
     setActions([{ action_type: "", action_config: {} }]);
+    setTriggerLogic("or");
     setFormData({ name: "", enabled: true, priority: 0 });
     setIsDialogOpen(true);
   };
@@ -230,6 +232,7 @@ export default function AdminSettings() {
     await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {} }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
+    setTriggerLogic(rule.trigger_logic || "or");
     setFormData({
       name: rule.name || "",
       enabled: rule.enabled !== false,
@@ -243,6 +246,7 @@ export default function AdminSettings() {
     await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {} }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
+    setTriggerLogic(rule.trigger_logic || "or");
     setFormData({
       name: `${rule.name} (Copy)`,
       enabled: true,
@@ -255,7 +259,8 @@ export default function AdminSettings() {
     const saveData = {
       ...formData,
       triggers,
-      actions
+      actions,
+      trigger_logic: triggerLogic
     };
     
     if (editingRule) {
@@ -633,26 +638,35 @@ export default function AdminSettings() {
               {/* IF - Triggers */}
               <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
-                    <span className="text-gray-600 text-sm">any of these happen...</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
-                    <Plus className="w-3 h-3 mr-1" /> Add Trigger
-                  </Button>
-                </div>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
+                          <Select value={triggerLogic} onValueChange={setTriggerLogic}>
+                            <SelectTrigger className="w-24 h-7 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="or">ANY (OR)</SelectItem>
+                              <SelectItem value="and">ALL (AND)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-gray-600 text-sm">of these happen...</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
+                          <Plus className="w-3 h-3 mr-1" /> Add Trigger
+                        </Button>
+                      </div>
                 
                 <div className="space-y-4">
                   {triggers.map((trigger, index) => (
                     <div key={index} className={index > 0 ? 'pt-4 border-t border-orange-200' : ''}>
                       {index > 0 && (
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-orange-600 font-medium">OR</span>
-                          <Button variant="ghost" size="icon" onClick={() => removeTrigger(index)} className="h-6 w-6">
-                            <Trash2 className="w-3 h-3 text-red-600" />
-                          </Button>
-                        </div>
-                      )}
+                                                    <div className="flex items-center justify-between mb-2">
+                                                      <span className="text-xs text-orange-600 font-medium">{triggerLogic === "and" ? "AND" : "OR"}</span>
+                                                      <Button variant="ghost" size="icon" onClick={() => removeTrigger(index)} className="h-6 w-6">
+                                                        <Trash2 className="w-3 h-3 text-red-600" />
+                                                      </Button>
+                                                    </div>
+                                                  )}
                       <Select value={trigger.trigger_type} onValueChange={(val) => updateTrigger(index, "trigger_type", val)}>
                         <SelectTrigger><SelectValue placeholder="Select trigger" /></SelectTrigger>
                         <SelectContent>
