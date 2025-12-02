@@ -122,6 +122,9 @@ export default function AdminSettings() {
     email_body: "",
     priority: 0
   });
+  
+  // Multiple triggers support
+  const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {} }]);
 
   useEffect(() => {
     loadNotifications();
@@ -140,8 +143,10 @@ export default function AdminSettings() {
     setIsLoading(false);
   };
 
-  const openNewRule = () => {
+  const openNewRule = async () => {
     setEditingRule(null);
+    await loadEmailGroups();
+    setTriggers([{ trigger_type: "", trigger_condition: {} }]);
     setFormData({
       name: "",
       enabled: true,
@@ -155,8 +160,15 @@ export default function AdminSettings() {
     setIsDialogOpen(true);
   };
 
-  const openEditRule = (rule) => {
+  const openEditRule = async (rule) => {
     setEditingRule(rule);
+    await loadEmailGroups();
+    // Support for multiple triggers (stored as array or single value)
+    if (rule.triggers && Array.isArray(rule.triggers)) {
+      setTriggers(rule.triggers);
+    } else {
+      setTriggers([{ trigger_type: rule.trigger_type || "", trigger_condition: rule.trigger_condition || {} }]);
+    }
     setFormData({
       name: rule.name || "",
       enabled: rule.enabled !== false,
@@ -186,10 +198,18 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
+    // Use first trigger as main trigger_type for backward compatibility
+    const saveData = {
+      ...formData,
+      trigger_type: triggers[0]?.trigger_type || formData.trigger_type,
+      trigger_condition: triggers[0]?.trigger_condition || formData.trigger_condition,
+      triggers: triggers.length > 1 ? triggers : undefined
+    };
+    
     if (editingRule) {
-      await EmailNotificationSettings.update(editingRule.id, formData);
+      await EmailNotificationSettings.update(editingRule.id, saveData);
     } else {
-      await EmailNotificationSettings.create(formData);
+      await EmailNotificationSettings.create(saveData);
     }
     setIsDialogOpen(false);
     loadNotifications();
@@ -230,6 +250,30 @@ export default function AdminSettings() {
       trigger_condition: { ...formData.trigger_condition, [field]: value }
     });
   };
+
+  // Multiple trigger helpers
+  const addTrigger = () => {
+    setTriggers([...triggers, { trigger_type: "", trigger_condition: {} }]);
+  };
+
+  const removeTrigger = (index) => {
+    if (triggers.length > 1) {
+      setTriggers(triggers.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateTrigger = (index, field, value) => {
+    const updated = [...triggers];
+    if (field === "trigger_type") {
+      updated[index] = { trigger_type: value, trigger_condition: {} };
+    } else {
+      updated[index] = { ...updated[index], trigger_condition: { ...updated[index].trigger_condition, [field]: value } };
+    }
+    setTriggers(updated);
+  };
+
+  const getTriggerNeedsStage = (triggerType) => ["stage_entered", "stage_exited"].includes(triggerType);
+  const getTriggerNeedsFromTo = (triggerType) => triggerType === "stage_changed";
 
   const insertVariable = (variable, field) => {
     setFormData({
@@ -488,150 +532,183 @@ export default function AdminSettings() {
                 </div>
               </div>
 
-              {/* IFTTT Style Trigger */}
+              {/* IFTTT Style Triggers - Multiple */}
               <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
-                  <span className="text-gray-600 text-sm">this happens...</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
+                    <span className="text-gray-600 text-sm">any of these happen...</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Condition
+                  </Button>
                 </div>
-                <Select
-                  value={formData.trigger_type}
-                  onValueChange={(val) => setFormData({ ...formData, trigger_type: val, trigger_condition: {} })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a trigger event" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(groupedTriggers).map(([category, triggers]) => (
-                      <div key={category}>
-                        <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100">
-                          {category}
+                
+                <div className="space-y-4">
+                  {triggers.map((trigger, index) => (
+                    <div key={index} className={`${index > 0 ? 'pt-4 border-t border-orange-200' : ''}`}>
+                      {index > 0 && (
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-orange-600 font-medium">OR</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeTrigger(index)}
+                            className="h-6 w-6"
+                          >
+                            <Trash2 className="w-3 h-3 text-red-600" />
+                          </Button>
                         </div>
-                        {triggers.map((trigger) => (
-                          <SelectItem key={trigger.value} value={trigger.value}>
-                            {trigger.label}
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Stage conditions */}
-                {needsStageCondition && (
-                  <div className="mt-3">
-                    <Label className="text-sm text-gray-600">Specific Stage</Label>
-                    <Select
-                      value={formData.trigger_condition.stage || ""}
-                      onValueChange={(val) => updateCondition("stage", val)}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select stage" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STAGES.map((stage) => (
-                          <SelectItem key={stage.value} value={stage.value}>
-                            {stage.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {needsFromToStage && (
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div>
-                      <Label className="text-sm text-gray-600">From Stage (optional)</Label>
+                      )}
                       <Select
-                        value={formData.trigger_condition.from_stage || ""}
-                        onValueChange={(val) => updateCondition("from_stage", val)}
+                        value={trigger.trigger_type}
+                        onValueChange={(val) => updateTrigger(index, "trigger_type", val)}
                       >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Any stage" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a trigger event" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={null}>Any Stage</SelectItem>
-                          {STAGES.map((stage) => (
-                            <SelectItem key={stage.value} value={stage.value}>
-                              {stage.label}
-                            </SelectItem>
+                          {Object.entries(groupedTriggers).map(([category, triggerList]) => (
+                            <div key={category}>
+                              <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100">
+                                {category}
+                              </div>
+                              {triggerList.map((t) => (
+                                <SelectItem key={t.value} value={t.value}>
+                                  {t.label}
+                                </SelectItem>
+                              ))}
+                            </div>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-600">To Stage (optional)</Label>
-                      <Select
-                        value={formData.trigger_condition.to_stage || ""}
-                        onValueChange={(val) => updateCondition("to_stage", val)}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Any stage" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>Any Stage</SelectItem>
-                          {STAGES.map((stage) => (
-                            <SelectItem key={stage.value} value={stage.value}>
-                              {stage.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
 
-                {/* Additional Filters */}
-                {formData.trigger_type && (
-                  <div className="mt-4 pt-3 border-t border-orange-200">
-                    <Label className="text-xs text-gray-500 mb-2 block">Additional Filters (Optional)</Label>
-                    <div className="flex flex-wrap gap-4">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={formData.trigger_condition.is_asap === true}
-                          onCheckedChange={(checked) => updateCondition("is_asap", checked ? true : undefined)}
-                        />
-                        <Label className="text-sm">ASAP Only</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={formData.trigger_condition.is_rider === true}
-                          onCheckedChange={(checked) => updateCondition("is_rider", checked ? true : undefined)}
-                        />
-                        <Label className="text-sm">Riders Only</Label>
-                      </div>
-                      <div>
-                        <Input
-                          placeholder="Filter by assignee"
-                          value={formData.trigger_condition.assigned_to || ""}
-                          onChange={(e) => updateCondition("assigned_to", e.target.value || undefined)}
-                          className="text-sm h-8 w-40"
-                        />
-                      </div>
+                      {/* Stage conditions */}
+                      {getTriggerNeedsStage(trigger.trigger_type) && (
+                        <div className="mt-3">
+                          <Label className="text-sm text-gray-600">Specific Stage</Label>
+                          <Select
+                            value={trigger.trigger_condition.stage || ""}
+                            onValueChange={(val) => updateTrigger(index, "stage", val)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select stage" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STAGES.map((stage) => (
+                                <SelectItem key={stage.value} value={stage.value}>
+                                  {stage.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {getTriggerNeedsFromTo(trigger.trigger_type) && (
+                        <div className="grid grid-cols-2 gap-4 mt-3">
+                          <div>
+                            <Label className="text-sm text-gray-600">From Stage (optional)</Label>
+                            <Select
+                              value={trigger.trigger_condition.from_stage || ""}
+                              onValueChange={(val) => updateTrigger(index, "from_stage", val)}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Any stage" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Any Stage</SelectItem>
+                                {STAGES.map((stage) => (
+                                  <SelectItem key={stage.value} value={stage.value}>
+                                    {stage.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-sm text-gray-600">To Stage (optional)</Label>
+                            <Select
+                              value={trigger.trigger_condition.to_stage || ""}
+                              onValueChange={(val) => updateTrigger(index, "to_stage", val)}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Any stage" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Any Stage</SelectItem>
+                                {STAGES.map((stage) => (
+                                  <SelectItem key={stage.value} value={stage.value}>
+                                    {stage.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Additional Filters */}
+                      {trigger.trigger_type && (
+                        <div className="mt-3 pt-2 border-t border-orange-100">
+                          <Label className="text-xs text-gray-500 mb-2 block">Filters (Optional)</Label>
+                          <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={trigger.trigger_condition.is_asap === true}
+                                onCheckedChange={(checked) => updateTrigger(index, "is_asap", checked ? true : undefined)}
+                              />
+                              <Label className="text-xs">ASAP Only</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={trigger.trigger_condition.is_rider === true}
+                                onCheckedChange={(checked) => updateTrigger(index, "is_rider", checked ? true : undefined)}
+                              />
+                              <Label className="text-xs">Riders Only</Label>
+                            </div>
+                            <Input
+                              placeholder="Filter by assignee"
+                              value={trigger.trigger_condition.assigned_to || ""}
+                              onChange={(e) => updateTrigger(index, "assigned_to", e.target.value || undefined)}
+                              className="text-xs h-7 w-32"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-center">
                 <ArrowRight className="w-6 h-6 text-gray-400 rotate-90" />
               </div>
 
-              {/* IFTTT Style Recipients */}
+              {/* IFTTT Style Recipients - Multiple */}
               <div className="clay-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm">THEN</div>
-                  <span className="text-gray-600 text-sm">send email to...</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm">THEN</div>
+                    <span className="text-gray-600 text-sm">send email to...</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={addRecipient} className="h-7 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Recipient
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   {formData.recipients.map((recipient, index) => (
-                    <div key={index} className="flex gap-2">
+                    <div key={index} className="flex gap-2 items-center">
+                      {index > 0 && (
+                        <span className="text-xs text-blue-600 font-medium w-8">AND</span>
+                      )}
                       <Select
                         value={recipient.type}
                         onValueChange={(val) => updateRecipient(index, "type", val)}
                       >
-                        <SelectTrigger className="w-48">
+                        <SelectTrigger className={index > 0 ? "w-40" : "w-48"}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -667,11 +744,17 @@ export default function AdminSettings() {
                             <SelectValue placeholder="Select group" />
                           </SelectTrigger>
                           <SelectContent>
-                            {emailGroups.map((group) => (
-                              <SelectItem key={group.id} value={group.id}>
-                                {group.name} ({group.emails?.length || 0} emails)
-                              </SelectItem>
-                            ))}
+                            {emailGroups.length === 0 ? (
+                              <div className="px-2 py-3 text-sm text-gray-500 text-center">
+                                No email groups yet. Create one in the Email Groups tab.
+                              </div>
+                            ) : (
+                              emailGroups.map((group) => (
+                                <SelectItem key={group.id} value={group.id}>
+                                  {group.name} ({group.emails?.length || 0} emails)
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       )}
@@ -680,17 +763,13 @@ export default function AdminSettings() {
                           variant="ghost"
                           size="icon"
                           onClick={() => removeRecipient(index)}
-                          className="h-10 w-10"
+                          className="h-8 w-8"
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       )}
                     </div>
                   ))}
-                  <Button variant="ghost" size="sm" onClick={addRecipient} className="h-7 text-xs">
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add Recipient
-                  </Button>
                 </div>
               </div>
 
@@ -740,7 +819,7 @@ export default function AdminSettings() {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={!formData.name || !formData.trigger_type || !formData.email_subject || !formData.email_body}
+                  disabled={!formData.name || !triggers[0]?.trigger_type || !formData.email_subject || !formData.email_body}
                   className="clay-button border-none"
                   style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
                 >
