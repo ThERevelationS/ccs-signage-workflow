@@ -411,15 +411,15 @@ export default function WorkOrderCard({
                     <p className="text-sm text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
                   {workOrder.is_rider &&
                   <Badge
-                    className="rounded-full px-1.5 py-0 leading-none flex-shrink-0"
+                    className="rounded-full px-3 py-1 leading-none flex-shrink-0 font-bold uppercase tracking-wide"
                     style={{
-                      background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)',
-                      color: '#7C3AED',
-                      fontSize: '10px',
-                      boxShadow: 'inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(0,0,0,0.1)'
+                      background: 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)',
+                      color: '#FFFFFF',
+                      fontSize: '11px',
+                      boxShadow: '0 2px 8px rgba(124, 58, 237, 0.4), inset 1px 1px 2px rgba(255,255,255,0.3)'
                     }}>
 
-                      Rider
+                      RIDER
                     </Badge>
                   }
                 </div>
