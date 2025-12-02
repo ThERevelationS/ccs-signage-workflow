@@ -1,6 +1,6 @@
-import { EmailNotificationSettings } from "@/entities/EmailNotificationSettings";
-import { User } from "@/entities/User";
-import { sendGmail } from "@/functions/sendGmail";
+import { base44 } from "@/api/base44Client";
+const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
+const User = base44.entities.User;
 
 // Variable replacements for email templates
 const replaceVariables = (template, workOrder, extraData = {}) => {
@@ -147,7 +147,7 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
       // Send to each recipient
       for (const email of recipients) {
         try {
-          await sendGmail({
+          await base44.functions.invoke('sendGmail', {
             to: email,
             subject: subject,
             body: body
