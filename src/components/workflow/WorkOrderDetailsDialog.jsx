@@ -650,23 +650,19 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </div>
 
-                  {/* Sub-tasks */}
+                  {/* Sub-notes */}
                   {note.sub_tasks && note.sub_tasks.length > 0 &&
                 <div className="ml-4 space-y-1 mb-2">
-                      {note.sub_tasks.map((subTask) =>
-                  <div key={subTask.id} className="flex items-center gap-2 p-2 bg-white/50 rounded">
-                          <Checkbox
-                      checked={subTask.completed}
-                      onCheckedChange={() => handleToggleSubTask(note.id, subTask.id)} />
-
-                          <span className={`text-sm flex-1 ${subTask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                            {subTask.text}
+                      {note.sub_tasks.map((subNote) =>
+                  <div key={subNote.id} className="flex items-center gap-2 p-2 bg-white/50 rounded">
+                          <span className="text-sm flex-1 text-gray-700">
+                            • {subNote.text}
                           </span>
                           <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={() => handleDeleteSubTask(note.id, subTask.id)}>
+                      onClick={() => handleDeleteSubTask(note.id, subNote.id)}>
 
                             <X className="w-3 h-3 text-gray-400" />
                           </Button>
