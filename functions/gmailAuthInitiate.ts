@@ -10,10 +10,9 @@ Deno.serve(async (req) => {
         }
 
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-        const appId = Deno.env.get("BASE44_APP_ID");
         
         // Build the redirect URI for the callback
-        const redirectUri = `https://${appId}.b44.app/api/functions/gmailAuthCallback`;
+        const redirectUri = `https://sign-shop-workflow-manager.b44.app/api/functions/gmailAuthCallback`;
         
         // Build the Google OAuth URL
         const scopes = [
