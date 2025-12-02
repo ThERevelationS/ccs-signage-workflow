@@ -5,6 +5,7 @@ import { Plus, Maximize2, Minimize2 } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function Estimating() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -13,6 +14,7 @@ export default function Estimating() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
     loadWorkOrders(true);
@@ -38,6 +40,7 @@ export default function Estimating() {
   };
 
   const handleReorder = async (reorderedItems) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setWorkOrders(reorderedItems);
     try {
       for (let i = 0; i < reorderedItems.length; i++) {
@@ -50,6 +53,7 @@ export default function Estimating() {
   };
 
   const handleSave = async (formData) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       if (editingWorkOrder) {
         await WorkOrder.update(editingWorkOrder.id, formData);
@@ -73,6 +77,7 @@ export default function Estimating() {
   };
 
   const handleMove = async (workOrder, newStage) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       const oldStage = workOrder.current_stage;
       let notes = workOrder.notes || [];
@@ -96,18 +101,21 @@ export default function Estimating() {
   };
 
   const handleEdit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setEditingWorkOrder(workOrder);
     setRiderConfig(null);
     setIsFormOpen(true);
   };
 
   const handleSplit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setRiderConfig({ parentWorkOrder: workOrder, stage: 'estimating' });
     setEditingWorkOrder(null);
     setIsFormOpen(true);
   };
 
   const handleComplete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
@@ -131,6 +139,7 @@ export default function Estimating() {
   };
 
   const handleDelete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);
@@ -169,6 +178,7 @@ export default function Estimating() {
             </Button>
             <Button
               onClick={() => {
+                if (!isRegistered) { promptForEmail(); return; }
                 setEditingWorkOrder(null);
                 setRiderConfig(null);
                 setIsFormOpen(true);
