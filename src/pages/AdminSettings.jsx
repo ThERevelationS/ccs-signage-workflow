@@ -50,6 +50,7 @@ import {
   GitBranch
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
+import GmailConnector from "../components/admin/GmailConnector";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -436,8 +437,11 @@ export default function AdminSettings() {
           </TabsList>
 
           <TabsContent value="groups">
-            <EmailGroupsManager />
-          </TabsContent>
+                            <div className="space-y-6">
+                              <GmailConnector />
+                              <EmailGroupsManager />
+                            </div>
+                          </TabsContent>
 
           <TabsContent value="automations">
             <div className="flex justify-end mb-4">
