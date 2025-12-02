@@ -67,7 +67,7 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     setIsLoading(true);
-    const allUsers = await User.list();
+    const allUsers = await UserEntity.list();
     setUsers(allUsers);
     setIsLoading(false);
   };
@@ -84,7 +84,7 @@ export default function UserManagement() {
 
   const handleSave = async () => {
     if (editingUser) {
-      await User.update(editingUser.id, formData);
+      await UserEntity.update(editingUser.id, formData);
     }
     setIsDialogOpen(false);
     setEditingUser(null);
@@ -115,7 +115,7 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (userId) => {
-    await User.delete(userId);
+    await UserEntity.delete(userId);
     setDeleteConfirm(null);
     loadUsers();
   };
@@ -131,7 +131,7 @@ export default function UserManagement() {
     }
     return (
       <Badge className="bg-blue-100 text-blue-700 flex items-center gap-1">
-        <User className="w-3 h-3" />
+        <UserIcon className="w-3 h-3" />
         User
       </Badge>
     );
@@ -314,7 +314,7 @@ export default function UserManagement() {
                 <SelectContent>
                   <SelectItem value="user">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
+                      <UserIcon className="w-4 h-4" />
                       User
                     </div>
                   </SelectItem>
