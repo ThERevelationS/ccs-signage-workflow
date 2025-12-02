@@ -40,8 +40,6 @@ import {
   Loader2
 } from "lucide-react";
 
-const UserEntity = base44.entities.User;
-
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
 export default function UserManagement() {
@@ -56,11 +54,11 @@ export default function UserManagement() {
   const [inviteRole, setInviteRole] = useState("user");
   const [isInviting, setIsInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState("");
 
   const [formData, setFormData] = useState({
     full_name: "",
-    role: "user",
-    department: ""
+    role: "user"
   });
 
   useEffect(() => {
@@ -69,8 +67,13 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     setIsLoading(true);
-    const allUsers = await UserEntity.list();
-    setUsers(allUsers);
+    try {
+      const allUsers = await base44.entities.User.list();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      setUsers([]);
+    }
     setIsLoading(false);
   };
 
@@ -78,15 +81,14 @@ export default function UserManagement() {
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
-      role: user.role || "user",
-      department: user.department || ""
+      role: user.role || "user"
     });
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (editingUser) {
-      await UserEntity.update(editingUser.id, formData);
+      await base44.entities.User.update(editingUser.id, formData);
     }
     setIsDialogOpen(false);
     setEditingUser(null);
@@ -101,27 +103,15 @@ export default function UserManagement() {
 
     setIsInviting(true);
     setInviteError("");
+    setInviteSuccess("");
 
     try {
-      // Check if user already exists
-      const existingUsers = await UserEntity.list();
-      const exists = existingUsers.some(u => u.email.toLowerCase() === inviteEmail.trim().toLowerCase());
-      
-      if (exists) {
-        setInviteError("A user with this email already exists");
-        setIsInviting(false);
-        return;
-      }
-
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
       // Use the auth invite API
-      await base44.auth.inviteUser(
-        inviteEmail.trim(),
-        inviteRole,
-        fullName || undefined
-      );
+      await base44.auth.inviteUser(inviteEmail.trim(), inviteRole, fullName || undefined);
       
+      setInviteSuccess("User invited successfully! They will receive an email.");
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
@@ -134,7 +124,7 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (userId) => {
-    await UserEntity.delete(userId);
+    await base44.entities.User.delete(userId);
     setDeleteConfirm(null);
     loadUsers();
   };
