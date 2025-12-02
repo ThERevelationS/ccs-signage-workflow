@@ -88,7 +88,7 @@ export default function UserManagement() {
 
   const handleSave = async () => {
     if (editingUser) {
-      await base44.entities.User.update(editingUser.id, formData);
+      await base44.entities.AuthorizedEmail.update(editingUser.id, formData);
     }
     setIsDialogOpen(false);
     setEditingUser(null);
