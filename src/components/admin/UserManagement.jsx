@@ -225,6 +225,9 @@ export default function UserManagement() {
         {inviteError && (
           <p className="text-red-500 text-sm mt-2">{inviteError}</p>
         )}
+        {inviteSuccess && (
+          <p className="text-green-600 text-sm mt-2">{inviteSuccess}</p>
+        )}
       </div>
 
       {/* Users List */}
