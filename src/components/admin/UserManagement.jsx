@@ -360,28 +360,6 @@ export default function UserManagement() {
               </Select>
             </div>
 
-            <div>
-              <Label>Department / Team</Label>
-              <Select
-                value={formData.department || ""}
-                onValueChange={(val) => setFormData({ ...formData, department: val })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="estimating">Estimating</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="permitting">Permitting</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="production">Production</SelectItem>
-                  <SelectItem value="fabrication">Fabrication</SelectItem>
-                  <SelectItem value="installation">Installation</SelectItem>
-                  <SelectItem value="admin">Administration</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
