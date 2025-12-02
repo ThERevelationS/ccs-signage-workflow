@@ -88,7 +88,7 @@ export default function UserManagement() {
 
   const handleSave = async () => {
     if (editingUser) {
-      await base44.entities.AuthorizedEmail.update(editingUser.id, formData);
+      await base44.entities.User.update(editingUser.id, formData);
     }
     setIsDialogOpen(false);
     setEditingUser(null);
@@ -138,7 +138,7 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (userId) => {
-    await base44.entities.User.delete(userId);
+    await base44.entities.AuthorizedEmail.delete(userId);
     setDeleteConfirm(null);
     loadUsers();
   };
