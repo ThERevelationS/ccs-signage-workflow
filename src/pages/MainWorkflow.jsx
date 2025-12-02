@@ -1,14 +1,23 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
-import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Maximize2, Minimize2, RefreshCw, ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
+
+const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
 export default function MainWorkflow() {
   const [workOrders, setWorkOrders] = useState([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("due_date");
 
   useEffect(() => {
     loadWorkOrders();
@@ -35,6 +44,24 @@ export default function MainWorkflow() {
     setIsLoading(false);
   };
 
+  const getSortedWorkOrders = () => {
+    const sorted = [...workOrders];
+    switch (sortBy) {
+      case "name":
+        sorted.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+        break;
+      case "due_date":
+        sorted.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+        break;
+      case "stage":
+        sorted.sort((a, b) => stageOrder.indexOf(a.current_stage) - stageOrder.indexOf(b.current_stage));
+        break;
+      default:
+        break;
+    }
+    return sorted;
+  };
+
   const toggleFullScreen = () => {
     if (!isFullScreen) {
       document.documentElement.requestFullscreen();
@@ -52,13 +79,26 @@ export default function MainWorkflow() {
             <h1 className="text-4xl font-bold text-gray-800 mb-2">Main Workflow</h1>
             <p className="text-gray-600">Visual timeline of all active work orders</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-gray-500" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-32 h-9 clay-button border-none text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="clay-card border-none">
+                  <SelectItem value="due_date">Due Date</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="stage">Stage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               onClick={loadWorkOrders}
               className="clay-button border-none text-gray-800"
               style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, rgba(255,255,255,0.9) 100%)' }}
             >
-              <RefreshCw className="w-5 h-5 mr-2" />
+              <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
             <Button
@@ -66,12 +106,12 @@ export default function MainWorkflow() {
               className="clay-button border-none text-gray-800"
               style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
             >
-              {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
           </div>
         </div>
 
-        <div className="clay-card p-6">
+        <div className="clay-card p-4">
           {isLoading ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">Loading timeline...</p>
@@ -82,7 +122,7 @@ export default function MainWorkflow() {
               <p className="text-gray-400 text-sm mt-2">Add start and due dates to work orders to see them here</p>
             </div>
           ) : (
-            <GanttChart workOrders={workOrders} />
+            <GanttChart workOrders={getSortedWorkOrders()} />
           )}
         </div>
       </div>

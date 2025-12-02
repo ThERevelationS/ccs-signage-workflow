@@ -1,4 +1,4 @@
-
+import React from "react";
 import { format, differenceInDays, addDays, startOfWeek } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -70,15 +70,12 @@ export default function GanttChart({ workOrders }) {
     <div className="overflow-x-auto">
       <div className="min-w-[1200px]">
         {/* Header */}
-        <div className="flex border-b-2 border-gray-200 pb-2 mb-4">
-          <div className="w-64 font-bold text-gray-700 pr-4">Work Order</div>
+        <div className="flex border-b border-gray-200 pb-1 mb-2">
+          <div className="w-48 font-semibold text-xs text-gray-700 pr-2">Work Order</div>
           <div className="flex-1 flex">
             {dateHeaders.map((date, i) => (
-              <div key={i} className="flex-1 text-center text-xs">
-                <div className="font-semibold text-gray-700">
-                  Week {i + 1}
-                </div>
-                <div className="text-gray-500">
+              <div key={i} className="flex-1 text-center text-[10px]">
+                <div className="font-medium text-gray-600">
                   {format(date, "MMM d")}
                 </div>
               </div>
@@ -88,39 +85,34 @@ export default function GanttChart({ workOrders }) {
 
         {/* Gantt Rows */}
         {workOrders.map((wo) => (
-          <div key={wo.id} className="mb-3">
-            <div className="flex items-center mb-1">
-              <div className="w-64 pr-4">
+          <div key={wo.id} className="mb-1">
+            <div className="flex items-center">
+              <div className="w-48 pr-2">
                 <Link to={createPageUrl(getPageNameForStage(wo.current_stage))}>
-                  <div className="clay-card p-3 cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="font-semibold text-sm text-gray-800 truncate">
+                  <div className="py-1 px-2 rounded-lg cursor-pointer hover:bg-white/50 transition-colors">
+                    <div className="font-medium text-xs text-gray-800 truncate leading-tight">
                       {wo.title}
                     </div>
-                    <div className="text-xs text-gray-600 truncate">{wo.client_name}</div>
-                    {wo.riders && wo.riders.length > 0 && (
-                      <div className="text-xs text-purple-600 font-medium mt-1">
-                        {wo.riders.length} Rider{wo.riders.length > 1 ? 's' : ''}
-                      </div>
-                    )}
+                    <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.client_name}</div>
                   </div>
                 </Link>
               </div>
-              <div className="flex-1 relative" style={{ height: wo.riders && wo.riders.length > 0 ? `${(wo.riders.length + 1) * 48}px` : '64px' }}>
-                <div className="absolute inset-0 flex flex-col gap-2">
+              <div className="flex-1 relative" style={{ height: wo.riders && wo.riders.length > 0 ? `${(wo.riders.length + 1) * 20}px` : '24px' }}>
+                <div className="absolute inset-0 flex flex-col gap-0.5">
                   {/* Parent work order bar */}
-                  <div className="relative h-10 flex items-center">
-                    <div className="w-full h-1 bg-gray-200 rounded-full" />
+                  <div className="relative h-5 flex items-center">
+                    <div className="w-full h-px bg-gray-200" />
                     {wo.start_date && wo.due_date && (
                       <Link 
                         to={createPageUrl(getPageNameForStage(wo.current_stage))}
-                        className="absolute h-10 rounded-2xl flex items-center justify-center transition-all duration-300 hover:opacity-80"
+                        className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80"
                         style={{
                           ...getBarPosition(wo.start_date, wo.due_date),
                           background: `linear-gradient(135deg, ${stageColors[wo.current_stage]}ee 0%, ${stageColors[wo.current_stage]}aa 100%)`,
-                          boxShadow: '3px 3px 8px rgba(0,0,0,0.1), -1px -1px 4px rgba(255,255,255,0.7), inset 1px 1px 3px rgba(255,255,255,0.5)'
+                          boxShadow: '1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)'
                         }}
                       >
-                        <span className="text-xs font-medium text-gray-700 px-2">
+                        <span className="text-[9px] font-medium text-gray-700 px-1 truncate">
                           {stageNames[wo.current_stage]}
                         </span>
                       </Link>
@@ -129,20 +121,20 @@ export default function GanttChart({ workOrders }) {
                   
                   {/* Rider bars */}
                   {wo.riders && wo.riders.map((rider, index) => (
-                    <div key={rider.id} className="relative h-10 flex items-center pl-6">
-                      <div className="w-full h-1 bg-gray-200 rounded-full" />
+                    <div key={rider.id} className="relative h-4 flex items-center pl-4">
+                      <div className="w-full h-px bg-gray-200" />
                       {rider.start_date && rider.due_date && (
                         <Link
                           to={createPageUrl(getPageNameForStage(rider.rider_stage || rider.current_stage))}
-                          className="absolute h-8 rounded-xl flex items-center justify-center transition-all duration-300 hover:opacity-80"
+                          className="absolute h-4 rounded-md flex items-center justify-center transition-all duration-300 hover:opacity-80"
                           style={{
                             ...getBarPosition(rider.start_date, rider.due_date),
                             background: `linear-gradient(135deg, ${stageColors[rider.rider_stage || rider.current_stage]}dd 0%, ${stageColors[rider.rider_stage || rider.current_stage]}88 100%)`,
-                            boxShadow: '2px 2px 6px rgba(0,0,0,0.1), -1px -1px 3px rgba(255,255,255,0.7), inset 1px 1px 2px rgba(255,255,255,0.4)',
-                            border: '2px dashed rgba(124, 58, 237, 0.3)'
+                            boxShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+                            border: '1px dashed rgba(124, 58, 237, 0.3)'
                           }}
                         >
-                          <span className="text-[10px] font-medium text-gray-700 px-2">
+                          <span className="text-[8px] font-medium text-gray-700 px-1 truncate">
                             {stageNames[rider.rider_stage || rider.current_stage]}
                           </span>
                         </Link>
