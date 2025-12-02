@@ -108,11 +108,7 @@ export default function CompletedJobs() {
   return (
     <div className="min-h-screen p-6">
       <div className="w-full max-w-[95vw] mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Completed Jobs</h1>
-            <p className="text-gray-600">Archive of finished work orders</p>
-          </div>
+        <div className="flex justify-end items-center gap-3 mb-2">
           <div className="flex gap-3">
             <Button
               onClick={loadWorkOrders}
@@ -131,7 +127,6 @@ export default function CompletedJobs() {
             </Button>
           </div>
         </div>
-
         <div className="clay-card p-6">
           {isLoading ? (
             <div className="text-center py-12">

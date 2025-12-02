@@ -157,11 +157,7 @@ export default function Sales() {
   return (
     <div className="min-h-screen p-6">
       <div className="w-full max-w-[95vw] mx-auto">
-        <div className="px-1 flex justify-between items-center">
-          <div>
-            <h1 className="text-gray-800 mb-2 text-base font-bold">Sales</h1>
-            <p className="text-gray-600 text-xs">Manage sales and client approval</p>
-          </div>
+        <div className="flex justify-end items-center gap-3 mb-2">
           <div className="flex gap-3">
             <Button
               onClick={toggleFullScreen}
@@ -184,7 +180,6 @@ export default function Sales() {
             </Button>
           </div>
         </div>
-
         <div className="clay-card">
           {isLoading ? (
             <div className="text-center py-12">

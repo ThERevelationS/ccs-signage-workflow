@@ -160,11 +160,7 @@ export default function Design() {
   return (
     <div className="min-h-screen p-6">
       <div className="w-full max-w-[95vw] mx-auto">
-        <div className="px-1 flex justify-between items-center">
-          <div>
-            <h1 className="text-gray-800 mb-2 text-base font-bold">Design</h1>
-            <p className="text-gray-600 text-xs">Create and approve designs</p>
-          </div>
+        <div className="flex justify-end items-center gap-3 mb-2">
           <div className="flex gap-3">
             <Button
               onClick={toggleFullScreen} className="bg-primary text-gray-800 px-4 py-2 text-sm font-medium opacity-70 rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-primary/90 h-10 clay-button border-none"
@@ -187,7 +183,6 @@ export default function Design() {
             </Button>
           </div>
         </div>
-
         <div className="clay-card">
           {isLoading ?
           <div className="text-center py-12">
