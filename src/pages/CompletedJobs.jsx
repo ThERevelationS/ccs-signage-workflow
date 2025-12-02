@@ -41,25 +41,27 @@ export default function CompletedJobs() {
   };
 
   const handleEdit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setEditingWorkOrder(workOrder);
     setIsFormOpen(true);
   };
 
   const handleSave = async (formData) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       if (editingWorkOrder) {
         await WorkOrder.update(editingWorkOrder.id, formData);
       }
       setEditingWorkOrder(null);
-      setIsFormOpen(false); // Close form after successful save
+      setIsFormOpen(false);
       loadWorkOrders();
     } catch (error) {
       console.error("Error saving work order:", error);
-      // Optionally, display an error message
     }
   };
 
   const handleRestore = async (workOrder, newStage) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
@@ -83,6 +85,7 @@ export default function CompletedJobs() {
   };
 
   const handleDelete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);

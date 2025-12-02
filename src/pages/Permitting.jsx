@@ -40,6 +40,7 @@ export default function Permitting() {
   };
 
   const handleReorder = async (reorderedItems) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setWorkOrders(reorderedItems);
     try {
       for (let i = 0; i < reorderedItems.length; i++) {
@@ -52,6 +53,7 @@ export default function Permitting() {
   };
 
   const handleSave = async (formData) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       if (editingWorkOrder) {
         await WorkOrder.update(editingWorkOrder.id, formData);
@@ -75,6 +77,7 @@ export default function Permitting() {
   };
 
   const handleMove = async (workOrder, newStage) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       const oldStage = workOrder.current_stage;
       let notes = workOrder.notes || [];
@@ -98,18 +101,21 @@ export default function Permitting() {
   };
 
   const handleEdit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setEditingWorkOrder(workOrder);
     setRiderConfig(null);
     setIsFormOpen(true);
   };
 
   const handleSplit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setRiderConfig({ parentWorkOrder: workOrder, stage: 'permitting' });
     setEditingWorkOrder(null);
     setIsFormOpen(true);
   };
 
   const handleComplete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
@@ -133,6 +139,7 @@ export default function Permitting() {
   };
 
   const handleDelete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);
@@ -171,6 +178,7 @@ export default function Permitting() {
             </Button>
             <Button
               onClick={() => {
+                if (!isRegistered) { promptForEmail(); return; }
                 setEditingWorkOrder(null);
                 setRiderConfig(null);
                 setIsFormOpen(true);

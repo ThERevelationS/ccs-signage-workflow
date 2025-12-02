@@ -39,21 +39,20 @@ export default function Fabrication() {
   };
 
   const handleReorder = async (reorderedItems) => {
-    // Optimistic update
+    if (!isRegistered) { promptForEmail(); return; }
     setWorkOrders(reorderedItems);
     try {
-      // Update priorities in the database
       for (let i = 0; i < reorderedItems.length; i++) {
         await WorkOrder.update(reorderedItems[i].id, { priority: i });
       }
     } catch (error) {
       console.error("Error reordering work orders:", error);
-      // Revert to previous state or reload to ensure data consistency
       loadWorkOrders();
     }
   };
 
   const handleSave = async (formData) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       if (editingWorkOrder) {
         await WorkOrder.update(editingWorkOrder.id, formData);
@@ -78,6 +77,7 @@ export default function Fabrication() {
   };
 
   const handleMove = async (workOrder, newStage) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       const oldStage = workOrder.current_stage;
       let notes = workOrder.notes || [];
@@ -101,18 +101,21 @@ export default function Fabrication() {
   };
 
   const handleEdit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setEditingWorkOrder(workOrder);
     setRiderConfig(null);
     setIsFormOpen(true);
   };
 
   const handleSplit = (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     setRiderConfig({ parentWorkOrder: workOrder, stage: 'fabrication' });
     setEditingWorkOrder(null);
     setIsFormOpen(true);
   };
 
   const handleComplete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
@@ -136,6 +139,7 @@ export default function Fabrication() {
   };
 
   const handleDelete = async (workOrder) => {
+    if (!isRegistered) { promptForEmail(); return; }
     try {
       await ActivityActions.workOrderDeleted(workOrder);
       await WorkOrder.delete(workOrder.id);
@@ -175,6 +179,7 @@ export default function Fabrication() {
             </Button>
             <Button
               onClick={() => {
+                if (!isRegistered) { promptForEmail(); return; }
                 setEditingWorkOrder(null);
                 setRiderConfig(null);
                 setIsFormOpen(true);
