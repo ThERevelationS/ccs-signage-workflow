@@ -141,6 +141,18 @@ export default function AdminSettings() {
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {} }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
 
+  const loadEmailGroups = async () => {
+    const groups = await EmailGroup.list();
+    setEmailGroups(groups);
+  };
+
+  const loadAutomations = async () => {
+    setIsLoading(true);
+    const rules = await AutomationRule.list("-created_date");
+    setAutomations(rules);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     // Check if already authenticated this session
     const authenticated = sessionStorage.getItem("adminAuthenticated") === "true";
@@ -203,18 +215,6 @@ export default function AdminSettings() {
       </div>
     );
   }
-
-  const loadEmailGroups = async () => {
-    const groups = await EmailGroup.list();
-    setEmailGroups(groups);
-  };
-
-  const loadAutomations = async () => {
-    setIsLoading(true);
-    const rules = await AutomationRule.list("-created_date");
-    setAutomations(rules);
-    setIsLoading(false);
-  };
 
   const openNewRule = async () => {
     setEditingRule(null);
