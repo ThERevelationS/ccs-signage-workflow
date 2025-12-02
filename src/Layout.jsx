@@ -12,8 +12,11 @@ import {
   Home,
   Calculator,
   DollarSign,
-  Settings
+  Settings,
+  LogOut,
+  User
 } from "lucide-react";
+import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 
 const navigationItems = [
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
@@ -31,10 +34,11 @@ const adminItems = [
   { title: "Admin Settings", url: createPageUrl("AdminSettings"), icon: Settings, color: "#FFE4D6" },
 ];
 
-export default function Layout({ children }) {
+function LayoutContent({ children }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -188,6 +192,27 @@ export default function Layout({ children }) {
                     </Link>
                   );
                 })}
+                
+                {/* User Info */}
+                <div className="w-px h-6 bg-gray-300 mx-2" />
+                <div className="flex items-center gap-2">
+                  <div className="clay-card px-3 py-1.5 flex items-center gap-2">
+                    <User className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {getUserFirstName() || currentUser?.email?.split('@')[0] || 'Guest'}
+                    </span>
+                    {!isRegistered && (
+                      <span className="text-xs text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">View Only</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                    title="Switch User"
+                  >
+                    <LogOut className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -213,5 +238,13 @@ export default function Layout({ children }) {
         )}
       </div>
     </>
+  );
+}
+
+export default function Layout({ children }) {
+  return (
+    <AuthProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </AuthProvider>
   );
 }
