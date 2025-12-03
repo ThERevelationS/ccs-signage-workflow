@@ -133,22 +133,29 @@ export default function UserManagement() {
         // Generate personalized email using AI
         const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
         const aiEmail = await base44.integrations.Core.InvokeLLM({
-          prompt: `Write a warm, friendly, and personable invitation email for someone joining a sign shop workflow management tool. 
-          
+          prompt: `Create a beautifully designed HTML invitation email for someone joining a sign shop workflow management tool called "Sign Shop Workflow".
+
 Details:
 - Recipient name: ${fullName ? fullName.split(' ')[0] : 'there'}
 - Their email: ${email}
 - Role: ${inviteRole === 'admin' ? 'Admin' : 'Team Member'}
 - App link: ${appUrl}
 
-Write the email in HTML format. Keep it brief but welcoming. Include:
-- A warm greeting
-- Brief explanation that they've been added to the Sign Shop Workflow tool
-- Their role
-- A clear call-to-action button/link to access the app (use the app link provided, style it as a nice button)
-- A friendly sign-off
+Design requirements:
+1. Use a modern, clean design with a soft gradient background (lavender to light blue tones like #F5F3FF to #E0F2FE)
+2. Include a stylish header with the app name "Sign Shop Workflow" in a nice font
+3. Use a card-style container with rounded corners and subtle shadow
+4. Add a prominent, eye-catching CTA button with gradient background (purple tones like #7C3AED to #6366F1) and rounded corners
+5. Use professional but warm typography - mix of weights for hierarchy
+6. Include subtle decorative elements like a small icon or emoji relevant to sign-making
+7. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
+8. Add a nice footer with a friendly sign-off
+9. Make sure the button is large and clickable with padding
+10. Use inline CSS styles for email compatibility
 
-Make it feel personal, not corporate. Use a conversational tone.`,
+The tone should be excited and welcoming - like inviting someone to join an awesome team tool. Make them feel special!
+
+Return valid HTML that will render beautifully in email clients.`,
           response_json_schema: {
             type: "object",
             properties: {
