@@ -14,7 +14,8 @@ import {
   DollarSign,
   Settings,
   LogOut,
-  User
+  User,
+  Lightbulb
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 
