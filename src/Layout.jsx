@@ -206,25 +206,7 @@ function LayoutContent({ children }) {
                   );
                 })}
 
-                {/* User Info */}
-                <div className="flex items-center gap-2">
-                  <div className="clay-card px-3 py-1.5 flex items-center gap-2">
-                    <User className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {getUserFirstName() || currentUser?.email?.split('@')[0] || 'Guest'}
-                    </span>
-                    {!isRegistered && (
-                      <span className="text-xs text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">View Only</span>
-                    )}
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                    title="Switch User"
-                  >
-                    <LogOut className="w-4 h-4 text-gray-500" />
-                  </button>
-                </div>
+
               </div>
             </div>
           </div>
