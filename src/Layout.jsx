@@ -38,23 +38,29 @@ const isUserAdmin = (user) => {
 };
 
 const getFullscreenStyles = (isFullscreen) => `
-  ${isFullscreen ? `
-    html, body {
-      overflow: auto;
+  html {
+    overflow: hidden;
+  }
+  body {
+    overflow: auto;
+    height: 100vh;
+    ${isFullscreen ? `
       scrollbar-width: none;
       -ms-overflow-style: none;
-    }
-    html::-webkit-scrollbar, body::-webkit-scrollbar {
+    ` : ''}
+  }
+  ${isFullscreen ? `
+    body::-webkit-scrollbar {
       display: none;
     }
-    html:hover, body:hover {
+    body:hover {
       scrollbar-width: thin;
     }
-    html:hover::-webkit-scrollbar, body:hover::-webkit-scrollbar {
+    body:hover::-webkit-scrollbar {
       display: block;
       width: 8px;
     }
-    html:hover::-webkit-scrollbar-thumb, body:hover::-webkit-scrollbar-thumb {
+    body:hover::-webkit-scrollbar-thumb {
       background: rgba(0,0,0,0.2);
       border-radius: 4px;
     }
