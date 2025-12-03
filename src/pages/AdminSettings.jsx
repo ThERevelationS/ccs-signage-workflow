@@ -415,17 +415,7 @@ export default function AdminSettings() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="clay-card p-3">
-              <Zap className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Automations</h1>
-              <p className="text-gray-600 text-sm">Create IF/THEN rules to automate your workflow</p>
-            </div>
-          </div>
-        </div>
+
 
         <Tabs defaultValue="automations" className="space-y-6">
           <TabsList className="clay-card border-none p-1">
