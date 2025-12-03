@@ -29,7 +29,6 @@ const navigationItems = [
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#FFD6E8" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#E0D4F7" },
   { title: "Completed Jobs", url: createPageUrl("CompletedJobs"), icon: CheckCircle2, color: "#C8F4E9" },
-  { title: "Reports", url: createPageUrl("FeatureReports"), icon: Lightbulb, color: "#FFE4D6" },
 ];
 
 const adminItems = [
@@ -233,18 +232,34 @@ function LayoutContent({ children }) {
           {children}
         </main>
 
-        {/* Floating Admin Button - hidden in fullscreen, only for admins */}
-                    {!isCollapsed && isUserAdmin(currentUser) && (
-                      <Link
-                        to={createPageUrl("AdminSettings")}
-                        className="fixed bottom-4 left-4 z-50 clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
-                        style={{ 
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
-                        }}
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span className="text-sm font-medium">Admin</span>
-                      </Link>
+        {/* Floating Buttons - hidden in fullscreen */}
+                    {!isCollapsed && (
+                      <div className="fixed bottom-4 left-4 z-50 flex gap-2">
+                        {isRegistered && (
+                          <Link
+                            to={createPageUrl("FeatureReports")}
+                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                            style={{ 
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                            }}
+                          >
+                            <Lightbulb className="w-4 h-4" />
+                            <span className="text-sm font-medium">Reports</span>
+                          </Link>
+                        )}
+                        {isUserAdmin(currentUser) && (
+                          <Link
+                            to={createPageUrl("AdminSettings")}
+                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                            style={{ 
+                              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                            }}
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span className="text-sm font-medium">Admin</span>
+                          </Link>
+                        )}
+                      </div>
                     )}
       </div>
     </>
