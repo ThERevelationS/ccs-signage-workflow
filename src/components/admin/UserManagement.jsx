@@ -125,11 +125,11 @@ export default function UserManagement() {
         role: inviteRole
       });
 
-      // Send invitation email
+      // Send invitation email via Gmail
       let emailSent = false;
       let emailErrorMsg = "";
       try {
-        const emailResult = await base44.integrations.Core.SendEmail({
+        const emailResult = await sendGmail({
           to: email,
           subject: "You've been invited to Sign Shop Workflow",
           body: `<h2>Welcome to Sign Shop Workflow!</h2><p>Hi${fullName ? ` ${fullName.split(' ')[0]}` : ''},</p><p>You've been invited to join the Sign Shop Workflow Manager as a${inviteRole === 'admin' ? 'n Admin' : ' Team Member'}.</p><p>To get started, simply visit the app and enter your email address (${email}) at the login prompt.</p><p>Welcome aboard!</p>`
