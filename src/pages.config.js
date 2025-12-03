@@ -8,6 +8,8 @@ import CompletedJobs from './pages/CompletedJobs';
 import Estimating from './pages/Estimating';
 import Sales from './pages/Sales';
 import AdminSettings from './pages/AdminSettings';
+import FeatureReports from './pages/FeatureReports';
+import CompletedReports from './pages/CompletedReports';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +24,8 @@ export const PAGES = {
     "Estimating": Estimating,
     "Sales": Sales,
     "AdminSettings": AdminSettings,
+    "FeatureReports": FeatureReports,
+    "CompletedReports": CompletedReports,
 }
 
 export const pagesConfig = {
