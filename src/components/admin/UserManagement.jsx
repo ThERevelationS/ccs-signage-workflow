@@ -131,7 +131,7 @@ export default function UserManagement() {
       let emailErrorMsg = "";
       try {
         // Generate personalized email using AI
-        const appUrl = window.location.origin;
+        const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
         const aiEmail = await base44.integrations.Core.InvokeLLM({
           prompt: `Write a warm, friendly, and personable invitation email for someone joining a sign shop workflow management tool. 
           
