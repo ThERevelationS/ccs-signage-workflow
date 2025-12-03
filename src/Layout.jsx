@@ -31,13 +31,35 @@ const navigationItems = [
   { title: "Completed Jobs", url: createPageUrl("CompletedJobs"), icon: CheckCircle2, color: "#C8F4E9" },
 ];
 
-const adminItems = [
-  { title: "Admin Settings", url: createPageUrl("AdminSettings"), icon: Settings, color: "#FFE4D6" },
-];
+
 
 const isUserAdmin = (user) => {
   return user?.role === "admin";
 };
+
+const getFullscreenStyles = (isFullscreen) => `
+  ${isFullscreen ? `
+    html, body {
+      overflow: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none;
+    }
+    html:hover, body:hover {
+      scrollbar-width: thin;
+    }
+    html:hover::-webkit-scrollbar, body:hover::-webkit-scrollbar {
+      display: block;
+      width: 8px;
+    }
+    html:hover::-webkit-scrollbar-thumb, body:hover::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+    }
+  ` : ''}
+`;
 
 function LayoutContent({ children }) {
   const location = useLocation();
@@ -59,6 +81,7 @@ function LayoutContent({ children }) {
   return (
     <>
       <style>{`
+        ${getFullscreenStyles(isCollapsed)}
         :root {
           --clay-lavender: #E0D4F7;
           --clay-mint: #C8F4E9;
@@ -179,28 +202,7 @@ function LayoutContent({ children }) {
                     </Link>
                   );
                 })}
-                {isUserAdmin(currentUser) && (
-                                      <>
-                                        <div className="w-px h-6 bg-gray-300 mx-2" />
-                                        {adminItems.map((item) => {
-                                          const isActive = location.pathname === item.url;
-                                          return (
-                                            <Link
-                                              key={item.title}
-                                              to={item.url}
-                                              className={`px-3 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 ${
-                                                isActive ? 'clay-card' : 'hover:clay-card'
-                                              }`}
-                                              style={isActive ? { 
-                                                background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
-                                              } : {}}
-                                            >
-                                              <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                                            </Link>
-                                          );
-                                        })}
-                                      </>
-                                    )}
+                
                 
                 {/* User Info */}
                 <div className="w-px h-6 bg-gray-300 mx-2" />
@@ -227,8 +229,8 @@ function LayoutContent({ children }) {
           </div>
         </nav>
 
-        {/* Main content with top padding */}
-        <main className="flex-1" style={{ paddingTop: '100px' }}>
+        {/* Main content with top padding - reduced in fullscreen */}
+        <main className="flex-1" style={{ paddingTop: isCollapsed ? '16px' : '100px' }}>
           {children}
         </main>
 
