@@ -127,26 +127,23 @@ export default function UserManagement() {
 
       // Send invitation email
       let emailSent = false;
+      let emailErrorMsg = "";
       try {
-        await base44.integrations.Core.SendEmail({
+        const emailResult = await base44.integrations.Core.SendEmail({
           to: email,
           subject: "You've been invited to Sign Shop Workflow",
-          body: `
-            <h2>Welcome to Sign Shop Workflow!</h2>
-            <p>Hi${fullName ? ` ${fullName.split(' ')[0]}` : ''},</p>
-            <p>You've been invited to join the Sign Shop Workflow Manager as a${inviteRole === 'admin' ? 'n Admin' : ' Team Member'}.</p>
-            <p>To get started, simply visit the app and enter your email address (${email}) at the login prompt.</p>
-            <p>Welcome aboard!</p>
-          `
+          body: `<h2>Welcome to Sign Shop Workflow!</h2><p>Hi${fullName ? ` ${fullName.split(' ')[0]}` : ''},</p><p>You've been invited to join the Sign Shop Workflow Manager as a${inviteRole === 'admin' ? 'n Admin' : ' Team Member'}.</p><p>To get started, simply visit the app and enter your email address (${email}) at the login prompt.</p><p>Welcome aboard!</p>`
         });
+        console.log("Email result:", emailResult);
         emailSent = true;
       } catch (emailError) {
         console.error("Failed to send invitation email:", emailError);
+        emailErrorMsg = emailError?.message || String(emailError);
       }
 
       setInviteSuccess(emailSent 
         ? `User authorized and invitation email sent to ${email}`
-        : `User authorized! (Email notification could not be sent)`);
+        : `User authorized! (Email failed: ${emailErrorMsg})`);
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
