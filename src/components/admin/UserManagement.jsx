@@ -126,6 +126,7 @@ export default function UserManagement() {
       });
 
       // Send invitation email
+      let emailSent = false;
       try {
         await base44.integrations.Core.SendEmail({
           to: email,
@@ -138,11 +139,14 @@ export default function UserManagement() {
             <p>Welcome aboard!</p>
           `
         });
+        emailSent = true;
       } catch (emailError) {
         console.error("Failed to send invitation email:", emailError);
       }
 
-      setInviteSuccess(`User authorized and invitation email sent to ${email}`);
+      setInviteSuccess(emailSent 
+        ? `User authorized and invitation email sent to ${email}`
+        : `User authorized! (Email notification could not be sent)`);
       setInviteEmail("");
       setInviteFirstName("");
       setInviteLastName("");
