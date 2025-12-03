@@ -29,7 +29,7 @@ const navigationItems = [
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#FFD6E8" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#E0D4F7" },
   { title: "Completed Jobs", url: createPageUrl("CompletedJobs"), icon: CheckCircle2, color: "#C8F4E9" },
-  { title: "Reports", url: createPageUrl("FeatureReports"), icon: ClipboardCheck, color: "#FFE4D6" },
+  { title: "Reports", url: createPageUrl("FeatureReports"), icon: Lightbulb, color: "#FFE4D6" },
 ];
 
 const adminItems = [
