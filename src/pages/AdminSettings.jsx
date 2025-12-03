@@ -418,17 +418,17 @@ export default function AdminSettings() {
 
 
         <Tabs defaultValue="automations" className="space-y-6">
-          <TabsList className="clay-card border-none p-1">
-                          <TabsTrigger value="automations" className="data-[state=active]:bg-white/80">
-                            <Zap className="w-4 h-4 mr-2" />
+          <TabsList className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
+                          <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Zap className="w-6 h-6 mr-3" />
                             Automations
                           </TabsTrigger>
-                          <TabsTrigger value="groups" className="data-[state=active]:bg-white/80">
-                            <Mail className="w-4 h-4 mr-2" />
+                          <TabsTrigger value="groups" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Mail className="w-6 h-6 mr-3" />
                             Email Groups
                           </TabsTrigger>
-                          <TabsTrigger value="users" className="data-[state=active]:bg-white/80">
-                            <Users className="w-4 h-4 mr-2" />
+                          <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Users className="w-6 h-6 mr-3" />
                             Users
                           </TabsTrigger>
                         </TabsList>
