@@ -55,7 +55,7 @@ export default function DragDropList({
                     key={workOrder.id} 
                     draggableId={workOrder.id} 
                     index={originalIndex}
-                    isDragDisabled={workOrder.is_rider}
+                    
                   >
                     {(provided, snapshot) => (
                       <div
@@ -75,7 +75,7 @@ export default function DragDropList({
                           onDelete={onDelete}
                           showMoveOptions={showMoveOptions}
                           priorityNumber={originalIndex + 1}
-                          dragHandleProps={workOrder.is_rider ? null : provided.dragHandleProps}
+                          dragHandleProps={provided.dragHandleProps}
                         />
                       </div>
                     )}
@@ -102,7 +102,7 @@ export default function DragDropList({
                     key={workOrder.id} 
                     draggableId={workOrder.id} 
                     index={originalIndex}
-                    isDragDisabled={workOrder.is_rider}
+                    
                   >
                     {(provided, snapshot) => (
                       <div
@@ -122,7 +122,7 @@ export default function DragDropList({
                           onDelete={onDelete}
                           showMoveOptions={showMoveOptions}
                           priorityNumber={originalIndex + 1}
-                          dragHandleProps={workOrder.is_rider ? null : provided.dragHandleProps}
+                          dragHandleProps={provided.dragHandleProps}
                         />
                       </div>
                     )}
