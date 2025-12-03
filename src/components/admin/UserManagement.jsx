@@ -130,10 +130,39 @@ export default function UserManagement() {
       let emailSent = false;
       let emailErrorMsg = "";
       try {
+        // Generate personalized email using AI
+        const appUrl = window.location.origin;
+        const aiEmail = await base44.integrations.Core.InvokeLLM({
+          prompt: `Write a warm, friendly, and personable invitation email for someone joining a sign shop workflow management tool. 
+          
+Details:
+- Recipient name: ${fullName ? fullName.split(' ')[0] : 'there'}
+- Their email: ${email}
+- Role: ${inviteRole === 'admin' ? 'Admin' : 'Team Member'}
+- App link: ${appUrl}
+
+Write the email in HTML format. Keep it brief but welcoming. Include:
+- A warm greeting
+- Brief explanation that they've been added to the Sign Shop Workflow tool
+- Their role
+- A clear call-to-action button/link to access the app (use the app link provided, style it as a nice button)
+- A friendly sign-off
+
+Make it feel personal, not corporate. Use a conversational tone.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              subject: { type: "string" },
+              body: { type: "string" }
+            },
+            required: ["subject", "body"]
+          }
+        });
+
         const emailResult = await sendGmail({
           to: email,
-          subject: "You've been invited to Sign Shop Workflow",
-          body: `<h2>Welcome to Sign Shop Workflow!</h2><p>Hi${fullName ? ` ${fullName.split(' ')[0]}` : ''},</p><p>You've been invited to join the Sign Shop Workflow Manager as a${inviteRole === 'admin' ? 'n Admin' : ' Team Member'}.</p><p>To get started, simply visit the app and enter your email address (${email}) at the login prompt.</p><p>Welcome aboard!</p>`
+          subject: aiEmail.subject || "You're invited to Sign Shop Workflow!",
+          body: aiEmail.body
         });
         console.log("Email result:", emailResult);
         if (emailResult.data?.error) {
