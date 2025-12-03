@@ -207,7 +207,6 @@ function LayoutContent({ children }) {
                 })}
 
                 {/* User Info */}
-                <div className="w-px h-6 bg-gray-300 mx-2" />
                 <div className="flex items-center gap-2">
                   <div className="clay-card px-3 py-1.5 flex items-center gap-2">
                     <User className="w-4 h-4 text-purple-600" />
