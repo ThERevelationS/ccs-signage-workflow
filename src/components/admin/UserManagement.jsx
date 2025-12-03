@@ -142,20 +142,20 @@ Details:
 - App link: ${appUrl}
 
 Design requirements:
-1. Use a modern, clean design with a soft gradient background (lavender to light blue tones like #F5F3FF to #E0F2FE)
-2. Include a stylish header with the app name "Sign Shop Workflow" in a nice font
-3. Use a card-style container with rounded corners and subtle shadow
-4. Add a prominent, eye-catching CTA button with gradient background (purple tones like #7C3AED to #6366F1) and rounded corners
-5. Use professional but warm typography - mix of weights for hierarchy
-6. Include subtle decorative elements like a small icon or emoji relevant to sign-making
-7. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
-8. Add a nice footer with a friendly sign-off
-9. Make sure the button is large and clickable with padding
-10. Use inline CSS styles for email compatibility
+1. Use a WHITE background for the main email body - this ensures compatibility with dark mode email clients
+2. Include a stylish header with the app name "Sign Shop Workflow" 
+3. Use a card-style container with WHITE background, rounded corners and subtle shadow
+4. Add a prominent CTA button with SOLID bright purple background (#7C3AED) and WHITE text - NOT transparent or gradient
+5. The button must have: background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;
+6. Use DARK text colors (#1F2937 or #374151) on WHITE backgrounds for maximum readability
+7. Include a fun emoji relevant to sign-making (like 🎨 or ✨ or 🪧)
+8. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
+9. Use inline CSS styles for email compatibility
+10. CRITICAL: All text must be dark on light backgrounds, button text must be white on purple
 
-The tone should be excited and welcoming - like inviting someone to join an awesome team tool. Make them feel special!
+The tone should be excited and welcoming. Make them feel special!
 
-Return valid HTML that will render beautifully in email clients.`,
+Return valid HTML that will render beautifully in ALL email clients including dark mode.`,
           response_json_schema: {
             type: "object",
             properties: {
