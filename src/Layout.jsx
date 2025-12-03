@@ -38,29 +38,26 @@ const isUserAdmin = (user) => {
 };
 
 const getFullscreenStyles = (isFullscreen) => `
-  html {
+  html, body, #root {
+    height: 100%;
     overflow: hidden;
   }
-  body {
-    overflow: auto;
-    height: 100vh;
-    ${isFullscreen ? `
+  ${isFullscreen ? `
+    .main-scroll-container {
       scrollbar-width: none;
       -ms-overflow-style: none;
-    ` : ''}
-  }
-  ${isFullscreen ? `
-    body::-webkit-scrollbar {
+    }
+    .main-scroll-container::-webkit-scrollbar {
       display: none;
     }
-    body:hover {
+    .main-scroll-container:hover {
       scrollbar-width: thin;
     }
-    body:hover::-webkit-scrollbar {
+    .main-scroll-container:hover::-webkit-scrollbar {
       display: block;
       width: 8px;
     }
-    body:hover::-webkit-scrollbar-thumb {
+    .main-scroll-container:hover::-webkit-scrollbar-thumb {
       background: rgba(0,0,0,0.2);
       border-radius: 4px;
     }
@@ -150,7 +147,7 @@ function LayoutContent({ children }) {
         }
       `}</style>
       
-      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className="h-full flex flex-col" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
@@ -236,7 +233,10 @@ function LayoutContent({ children }) {
         </nav>
 
         {/* Main content with top padding - reduced in fullscreen */}
-        <main className="flex-1" style={{ paddingTop: isCollapsed ? '16px' : '100px' }}>
+        <main 
+          className="flex-1 overflow-auto main-scroll-container" 
+          style={{ paddingTop: isCollapsed ? '16px' : '100px' }}
+        >
           {children}
         </main>
 
