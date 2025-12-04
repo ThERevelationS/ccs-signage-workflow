@@ -35,6 +35,8 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { GripVertical } from "lucide-react";
 
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
@@ -100,7 +102,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     
     const newOrder = await Order.create({
       customer_name: "",
-      request_type: "Other",
+      request_type: requestTypes[0] || "Other",
       description: "",
       quantity: "",
       requestor_email: currentUser?.email || "",
@@ -197,6 +199,22 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   const removeVendor = (vendor) => {
     saveVendors(vendors.filter(v => v !== vendor));
+  };
+
+  const handleRequestTypeDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(requestTypes);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    saveRequestTypes(items);
+  };
+
+  const handleVendorDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(vendors);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    saveVendors(items);
   };
 
   const getFilteredUsers = (searchTerm) => {
@@ -392,25 +410,20 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Requestor */}
               <div className={`${columnWidths.requestor} px-1 py-0.5 border-r flex-shrink-0 relative`}>
-                <div className="flex items-center gap-1">
+                <div 
+                  className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1"
+                  onClick={() => isRegistered && setShowRequestorDropdown(order.id)}
+                >
                   {order.requestor_name && (
                     <div className={`w-5 h-5 rounded-full ${getRequestorColor(order.requestor_email)} text-white text-xs flex items-center justify-center flex-shrink-0`}>
                       {order.requestor_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <Input
-                    value={order.requestor_name || ""}
-                    onChange={(e) => updateOrder(order.id, "requestor_name", e.target.value)}
-                    onFocus={() => setShowRequestorDropdown(order.id)}
-                    onBlur={() => setTimeout(() => setShowRequestorDropdown(null), 200)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Requestor..."
-                    disabled={!isRegistered}
-                  />
+                  <span className="text-xs truncate">{order.requestor_name || "Select..."}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
                   <div className="absolute top-full left-0 w-56 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
-                    {getFilteredUsers(order.requestor_name).map(u => (
+                    {users.map(u => (
                       <div
                         key={u.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs flex items-center gap-2"
@@ -547,16 +560,36 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {requestTypes.map(type => (
-                <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="text-sm">{type}</span>
-                  <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <DragDropContext onDragEnd={handleRequestTypeDragEnd}>
+              <Droppable droppableId="requestTypes">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
+                    {requestTypes.map((type, index) => (
+                      <Draggable key={type} draggableId={type} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div {...provided.dragHandleProps}>
+                                <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                              </div>
+                              <span className="text-sm">{type}</span>
+                            </div>
+                            <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </DialogContent>
       </Dialog>
@@ -579,16 +612,36 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {vendors.map(vendor => (
-                <div key={vendor} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="text-sm">{vendor}</span>
-                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <DragDropContext onDragEnd={handleVendorDragEnd}>
+              <Droppable droppableId="vendors">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
+                    {vendors.map((vendor, index) => (
+                      <Draggable key={vendor} draggableId={vendor} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div {...provided.dragHandleProps}>
+                                <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                              </div>
+                              <span className="text-sm">{vendor}</span>
+                            </div>
+                            <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </DialogContent>
       </Dialog>
