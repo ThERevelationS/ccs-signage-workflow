@@ -35,8 +35,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical } from "lucide-react";
+
 
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
@@ -202,21 +201,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     saveVendors(vendors.filter(v => v !== vendor));
   };
 
-  const handleRequestTypeDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(requestTypes);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    saveRequestTypes(items);
-  };
 
-  const handleVendorDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(vendors);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    saveVendors(items);
-  };
 
   const getFilteredUsers = (searchTerm) => {
     if (!searchTerm) return users.slice(0, 10);
@@ -576,43 +561,47 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <DragDropContext onDragEnd={handleRequestTypeDragEnd}>
-              <Droppable droppableId="requestTypes">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
-                    {requestTypes.map((type, index) => (
-                      <Draggable key={type} draggableId={`rt-${type}`} index={index}>
-                        {(provided, snapshot) => {
-                          const style = {
-                            ...provided.draggableProps.style,
-                            ...(snapshot.isDragging ? { position: 'fixed', zIndex: 10000 } : {})
-                          };
-                          return (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              style={style}
-                              className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg bg-white' : ''}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div {...provided.dragHandleProps}>
-                                  <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
-                                </div>
-                                <span className="text-sm">{type}</span>
-                              </div>
-                              <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          );
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {requestTypes.map((type, index) => (
+                <div
+                  key={type}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <button 
+                        onClick={() => {
+                          if (index === 0) return;
+                          const items = [...requestTypes];
+                          [items[index - 1], items[index]] = [items[index], items[index - 1]];
+                          saveRequestTypes(items);
                         }}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+                        disabled={index === 0}
+                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (index === requestTypes.length - 1) return;
+                          const items = [...requestTypes];
+                          [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                          saveRequestTypes(items);
+                        }}
+                        disabled={index === requestTypes.length - 1}
+                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                    </div>
+                    <span className="text-sm">{type}</span>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                  <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -635,43 +624,47 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <DragDropContext onDragEnd={handleVendorDragEnd}>
-              <Droppable droppableId="vendors">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
-                    {vendors.map((vendor, index) => (
-                      <Draggable key={vendor} draggableId={`v-${vendor}`} index={index}>
-                        {(provided, snapshot) => {
-                          const style = {
-                            ...provided.draggableProps.style,
-                            ...(snapshot.isDragging ? { position: 'fixed', zIndex: 10000 } : {})
-                          };
-                          return (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              style={style}
-                              className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg bg-white' : ''}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div {...provided.dragHandleProps}>
-                                  <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
-                                </div>
-                                <span className="text-sm">{vendor}</span>
-                              </div>
-                              <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          );
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {vendors.map((vendor, index) => (
+                <div
+                  key={vendor}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <button 
+                        onClick={() => {
+                          if (index === 0) return;
+                          const items = [...vendors];
+                          [items[index - 1], items[index]] = [items[index], items[index - 1]];
+                          saveVendors(items);
                         }}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+                        disabled={index === 0}
+                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (index === vendors.length - 1) return;
+                          const items = [...vendors];
+                          [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                          saveVendors(items);
+                        }}
+                        disabled={index === vendors.length - 1}
+                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                    </div>
+                    <span className="text-sm">{vendor}</span>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
