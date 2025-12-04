@@ -24,15 +24,24 @@ import {
   Calendar as CalendarIcon,
   Search,
   Link as LinkIcon,
-  Loader2
+  Loader2,
+  Pencil,
+  X,
+  Check
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
-const REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
-const VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
+const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
+const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
 export default function OrderSpreadsheet({ workOrderFilter = null, compact = false }) {
   const { currentUser, isRegistered } = useAuth();
@@ -46,6 +55,18 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingRequestTypes, setEditingRequestTypes] = useState(false);
+  const [editingVendors, setEditingVendors] = useState(false);
+  const [requestTypes, setRequestTypes] = useState(() => {
+    const saved = localStorage.getItem('orderRequestTypes');
+    return saved ? JSON.parse(saved) : DEFAULT_REQUEST_TYPES;
+  });
+  const [vendors, setVendors] = useState(() => {
+    const saved = localStorage.getItem('orderVendors');
+    return saved ? JSON.parse(saved) : DEFAULT_VENDORS;
+  });
+  const [newRequestType, setNewRequestType] = useState("");
+  const [newVendor, setNewVendor] = useState("");
 
   useEffect(() => {
     loadData();
@@ -133,10 +154,49 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const getFilteredWorkOrders = (searchTerm) => {
     if (!searchTerm) return workOrders.slice(0, 10);
     const lower = searchTerm.toLowerCase();
-    return workOrders.filter(wo => 
-      wo.client_name?.toLowerCase().includes(lower) ||
-      wo.title?.toLowerCase().includes(lower)
-    ).slice(0, 10);
+    const terms = lower.split(/\s+/).filter(t => t.length > 0);
+    
+    return workOrders.filter(wo => {
+      const searchable = [
+        wo.client_name,
+        wo.title,
+        wo.description
+      ].filter(Boolean).join(' ').toLowerCase();
+      
+      return terms.every(term => searchable.includes(term));
+    }).slice(0, 10);
+  };
+
+  const saveRequestTypes = (types) => {
+    setRequestTypes(types);
+    localStorage.setItem('orderRequestTypes', JSON.stringify(types));
+  };
+
+  const saveVendors = (vendorList) => {
+    setVendors(vendorList);
+    localStorage.setItem('orderVendors', JSON.stringify(vendorList));
+  };
+
+  const addRequestType = () => {
+    if (newRequestType.trim() && !requestTypes.includes(newRequestType.trim())) {
+      saveRequestTypes([...requestTypes, newRequestType.trim()]);
+      setNewRequestType("");
+    }
+  };
+
+  const removeRequestType = (type) => {
+    saveRequestTypes(requestTypes.filter(t => t !== type));
+  };
+
+  const addVendor = () => {
+    if (newVendor.trim() && !vendors.includes(newVendor.trim())) {
+      saveVendors([...vendors, newVendor.trim()]);
+      setNewVendor("");
+    }
+  };
+
+  const removeVendor = (vendor) => {
+    saveVendors(vendors.filter(v => v !== vendor));
   };
 
   const getFilteredUsers = (searchTerm) => {
@@ -189,7 +249,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
             >
               <Plus className="w-4 h-4 mr-1" />
-              Add Row
+              New Order
             </Button>
           )}
           {Object.keys(pendingChanges).length > 0 && (
@@ -214,13 +274,27 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
         <div className="flex bg-gray-100 border-b font-medium text-gray-700 sticky top-0 z-10">
           <div className={`${columnWidths.rowNum} px-2 py-2 border-r flex-shrink-0`}>#</div>
           <div className={`${columnWidths.customer} px-2 py-2 border-r flex-shrink-0`}>Customer Name</div>
-          <div className={`${columnWidths.type} px-2 py-2 border-r flex-shrink-0`}>Request Type</div>
+          <div className={`${columnWidths.type} px-2 py-2 border-r flex-shrink-0 flex items-center gap-1`}>
+            Request Type
+            {isRegistered && (
+              <button onClick={() => setEditingRequestTypes(true)} className="hover:bg-gray-200 rounded p-0.5">
+                <Pencil className="w-3 h-3 text-gray-500" />
+              </button>
+            )}
+          </div>
           <div className={`${columnWidths.desc} px-2 py-2 border-r flex-shrink-0`}>Description</div>
           <div className={`${columnWidths.qty} px-2 py-2 border-r flex-shrink-0`}>How Much?</div>
           <div className={`${columnWidths.requestor} px-2 py-2 border-r flex-shrink-0`}>Requestor</div>
           <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Date Needed</div>
           <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Ordered Date</div>
-          <div className={`${columnWidths.vendor} px-2 py-2 border-r flex-shrink-0`}>Vendor</div>
+          <div className={`${columnWidths.vendor} px-2 py-2 border-r flex-shrink-0 flex items-center gap-1`}>
+            Vendor
+            {isRegistered && (
+              <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
+                <Pencil className="w-3 h-3 text-gray-500" />
+              </button>
+            )}
+          </div>
           <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Date Received</div>
           <div className={`${columnWidths.actions} px-2 py-2 flex-shrink-0`}></div>
         </div>
@@ -287,7 +361,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {REQUEST_TYPES.map(t => (
+                    {requestTypes.map(t => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
                   </SelectContent>
@@ -409,7 +483,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     <SelectValue placeholder="-" />
                   </SelectTrigger>
                   <SelectContent>
-                    {VENDORS.map(v => (
+                    {vendors.map(v => (
                       <SelectItem key={v} value={v}>{v}</SelectItem>
                     ))}
                   </SelectContent>
@@ -454,6 +528,70 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           ))}
         </div>
       </div>
+
+      {/* Edit Request Types Dialog */}
+      <Dialog open={editingRequestTypes} onOpenChange={setEditingRequestTypes}>
+        <DialogContent className="clay-card border-none max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Request Types</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={newRequestType}
+                onChange={(e) => setNewRequestType(e.target.value)}
+                placeholder="New request type..."
+                onKeyDown={(e) => e.key === 'Enter' && addRequestType()}
+              />
+              <Button onClick={addRequestType} size="icon" className="shrink-0">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {requestTypes.map(type => (
+                <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="text-sm">{type}</span>
+                  <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Vendors Dialog */}
+      <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
+        <DialogContent className="clay-card border-none max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Vendors</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={newVendor}
+                onChange={(e) => setNewVendor(e.target.value)}
+                placeholder="New vendor..."
+                onKeyDown={(e) => e.key === 'Enter' && addVendor()}
+              />
+              <Button onClick={addVendor} size="icon" className="shrink-0">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {vendors.map(vendor => (
+                <div key={vendor} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="text-sm">{vendor}</span>
+                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
