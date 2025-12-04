@@ -75,7 +75,11 @@ const TRIGGER_TYPES = [
   { value: "due_date_approaching", label: "Due Date Approaching", category: "Dates" },
   { value: "due_date_passed", label: "Due Date Passed", category: "Dates" },
   { value: "assigned_to_changed", label: "Assignment Changed", category: "Assignment" },
-  { value: "priority_changed", label: "Priority Changed", category: "Priority" }
+  { value: "priority_changed", label: "Priority Changed", category: "Priority" },
+  { value: "order_created", label: "Order Created", category: "Orders" },
+  { value: "order_ordered", label: "Order Placed (Ordered)", category: "Orders" },
+  { value: "order_received", label: "Order Received", category: "Orders" },
+  { value: "order_date_needed_approaching", label: "Order Date Needed Approaching", category: "Orders" }
 ];
 
 const ACTION_TYPES = [
