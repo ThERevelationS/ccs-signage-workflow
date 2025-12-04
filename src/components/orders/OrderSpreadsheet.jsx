@@ -69,6 +69,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   });
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     loadData();
@@ -341,7 +342,11 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       updateOrder(order.id, "customer_name", e.target.value);
                       setCustomerSearch(e.target.value);
                     }}
-                    onFocus={() => setShowCustomerDropdown(order.id)}
+                    onFocus={(e) => {
+                      const rect = e.target.getBoundingClientRect();
+                      setDropdownPosition({ top: rect.bottom + 2, left: rect.left });
+                      setShowCustomerDropdown(order.id);
+                    }}
                     onBlur={() => setTimeout(() => setShowCustomerDropdown(null), 200)}
                     className="h-7 text-xs border-0 bg-transparent px-1 focus:ring-0"
                     placeholder="Customer..."
@@ -349,7 +354,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   />
                 </div>
                 {showCustomerDropdown === order.id && (
-                  <div className="fixed w-64 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
+                  <div 
+                    className="fixed w-64 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" 
+                    style={{ zIndex: 9999, top: dropdownPosition.top, left: dropdownPosition.left }}
+                  >
                     {getFilteredWorkOrders(order.customer_name).map(wo => (
                       <div
                         key={wo.id}
@@ -412,7 +420,12 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               <div className={`${columnWidths.requestor} px-1 py-0.5 border-r flex-shrink-0 relative`}>
                 <div 
                   className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1"
-                  onClick={() => isRegistered && setShowRequestorDropdown(order.id)}
+                  onClick={(e) => {
+                    if (!isRegistered) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setDropdownPosition({ top: rect.bottom + 2, left: rect.left });
+                    setShowRequestorDropdown(order.id);
+                  }}
                 >
                   {order.requestor_name && (
                     <div className={`w-5 h-5 rounded-full ${getRequestorColor(order.requestor_email)} text-white text-xs flex items-center justify-center flex-shrink-0`}>
@@ -422,7 +435,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   <span className="text-xs truncate">{order.requestor_name || "Select..."}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
-                  <div className="fixed w-56 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
+                  <div 
+                    className="fixed w-56 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" 
+                    style={{ zIndex: 9999, top: dropdownPosition.top, left: dropdownPosition.left }}
+                  >
                     {users.map(u => (
                       <div
                         key={u.id}
