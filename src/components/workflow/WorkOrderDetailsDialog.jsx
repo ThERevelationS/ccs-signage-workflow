@@ -48,6 +48,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
+import WorkOrderOrders from "../orders/WorkOrderOrders";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -1285,6 +1286,16 @@ export default function WorkOrderDetailsDialog({
                     </div>
                   </div>
                 }
+
+                {/* Orders Section */}
+                <div className="clay-card p-4">
+                  <h3 className="font-semibold text-sm mb-3">Material Orders</h3>
+                  <WorkOrderOrders 
+                    workOrderId={workOrder.id} 
+                    workOrderTitle={workOrder.title}
+                    clientName={workOrder.client_name}
+                  />
+                </div>
               </div>
             </div>
           </div>
