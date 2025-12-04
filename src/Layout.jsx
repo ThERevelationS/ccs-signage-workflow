@@ -186,29 +186,27 @@ function LayoutContent({ children }) {
               </div>
 
               {/* Navigation Links */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 flex-wrap justify-end flex-1 ml-4">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <Link
                       key={item.title}
                       to={item.url}
-                      className={`px-4 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 ${
+                      className={`px-2 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-1 whitespace-nowrap ${
                         isActive ? 'clay-card' : 'hover:clay-card'
                       }`}
                       style={isActive ? { 
                         background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
                       } : {}}
                     >
-                      <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                      <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : 'text-gray-600'}`}>
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
+                      <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : 'text-gray-600'}`}>
                         {item.title}
                       </span>
                     </Link>
                   );
                 })}
-
-
               </div>
             </div>
           </div>
