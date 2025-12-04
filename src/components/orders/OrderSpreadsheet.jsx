@@ -287,9 +287,9 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       </div>
 
       {/* Spreadsheet Table */}
-      <div className="border rounded-lg" style={{ fontSize: compact ? '11px' : '12px' }}>
+      <div className="border rounded-lg overflow-x-auto" style={{ fontSize: compact ? '11px' : '12px' }}>
         {/* Header Row */}
-        <div className="flex bg-gray-100 border-b font-medium text-gray-700 sticky top-0 z-10">
+        <div className="flex bg-gray-100 border-b font-medium text-gray-700 sticky top-0 z-10 min-w-max">
           <div className={`${columnWidths.rowNum} px-2 py-2 border-r flex-shrink-0`}>#</div>
           <div className={`${columnWidths.customer} px-2 py-2 border-r flex-shrink-0`}>Customer Name</div>
           <div className={`${columnWidths.type} px-2 py-2 border-r flex-shrink-0 flex items-center gap-1`}>
@@ -318,7 +318,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
         </div>
 
         {/* Data Rows */}
-        <div className="max-h-[600px] overflow-y-auto overflow-x-visible">
+        <div className="max-h-[600px] overflow-y-auto min-w-max">
           {orders.map((order, index) => (
             <div 
               key={order.id} 
@@ -349,7 +349,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   />
                 </div>
                 {showCustomerDropdown === order.id && (
-                  <div className="absolute top-full left-0 w-64 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                  <div className="fixed w-64 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
                     {getFilteredWorkOrders(order.customer_name).map(wo => (
                       <div
                         key={wo.id}
@@ -422,7 +422,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   <span className="text-xs truncate">{order.requestor_name || "Select..."}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
-                  <div className="absolute top-full left-0 w-56 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                  <div className="fixed w-56 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
                     {users.map(u => (
                       <div
                         key={u.id}
