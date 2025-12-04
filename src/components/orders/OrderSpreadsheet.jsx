@@ -581,24 +581,31 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
                     {requestTypes.map((type, index) => (
-                      <Draggable key={type} draggableId={type} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg' : ''}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div {...provided.dragHandleProps}>
-                                <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                      <Draggable key={type} draggableId={`rt-${type}`} index={index}>
+                        {(provided, snapshot) => {
+                          const style = {
+                            ...provided.draggableProps.style,
+                            ...(snapshot.isDragging ? { position: 'fixed', zIndex: 10000 } : {})
+                          };
+                          return (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              style={style}
+                              className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg bg-white' : ''}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div {...provided.dragHandleProps}>
+                                  <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                </div>
+                                <span className="text-sm">{type}</span>
                               </div>
-                              <span className="text-sm">{type}</span>
+                              <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
-                            <button onClick={() => removeRequestType(type)} className="text-red-500 hover:text-red-700">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                          );
+                        }}
                       </Draggable>
                     ))}
                     {provided.placeholder}
@@ -633,24 +640,31 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1 max-h-64 overflow-y-auto">
                     {vendors.map((vendor, index) => (
-                      <Draggable key={vendor} draggableId={vendor} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg' : ''}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div {...provided.dragHandleProps}>
-                                <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                      <Draggable key={vendor} draggableId={`v-${vendor}`} index={index}>
+                        {(provided, snapshot) => {
+                          const style = {
+                            ...provided.draggableProps.style,
+                            ...(snapshot.isDragging ? { position: 'fixed', zIndex: 10000 } : {})
+                          };
+                          return (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              style={style}
+                              className={`flex items-center justify-between p-2 bg-gray-50 rounded ${snapshot.isDragging ? 'shadow-lg bg-white' : ''}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div {...provided.dragHandleProps}>
+                                  <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+                                </div>
+                                <span className="text-sm">{vendor}</span>
                               </div>
-                              <span className="text-sm">{vendor}</span>
+                              <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
-                            <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                          );
+                        }}
                       </Draggable>
                     ))}
                     {provided.placeholder}
