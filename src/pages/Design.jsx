@@ -19,7 +19,23 @@ export default function Design() {
   useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 3000);
-    return () => clearInterval(interval);
+    
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const loadWorkOrders = async (showLoading = false) => {
@@ -165,35 +181,43 @@ export default function Design() {
     }
   };
 
+  const handleDoubleClick = (e) => {
+    if (isFullScreen && e.target.closest('.clay-card') === null) {
+      document.exitFullscreen();
+    }
+  };
+
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4" onDoubleClick={handleDoubleClick}>
       <div className="w-full max-w-[95vw] mx-auto">
-        <div className="flex justify-end items-center gap-2 mb-2">
-          <div className="flex gap-2">
-            <Button
-              onClick={toggleFullScreen}
-              size="sm"
-              className="clay-button border-none text-gray-800 h-8 px-3"
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
-            >
-              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </Button>
-            <Button
-              onClick={() => {
-                if (!isRegistered) { promptForEmail(); return; }
-                setEditingWorkOrder(null);
-                setRiderConfig(null);
-                setIsFormOpen(true);
-              }}
-              size="sm"
-              className="clay-button border-none text-gray-800 h-8 px-3"
-              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              <span className="text-sm">New</span>
-            </Button>
+        {!isFullScreen && (
+          <div className="flex justify-end items-center gap-2 mb-2">
+            <div className="flex gap-2">
+              <Button
+                onClick={toggleFullScreen}
+                size="sm"
+                className="clay-button border-none text-gray-800 h-8 px-3"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
+              >
+                <Maximize2 className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!isRegistered) { promptForEmail(); return; }
+                  setEditingWorkOrder(null);
+                  setRiderConfig(null);
+                  setIsFormOpen(true);
+                }}
+                size="sm"
+                className="clay-button border-none text-gray-800 h-8 px-3"
+                style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                <span className="text-sm">New</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
         <div className="clay-card">
           {isLoading ?
           <div className="text-center py-12">
