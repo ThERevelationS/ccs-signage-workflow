@@ -10,6 +10,7 @@ import Sales from './pages/Sales';
 import AdminSettings from './pages/AdminSettings';
 import FeatureReports from './pages/FeatureReports';
 import CompletedReports from './pages/CompletedReports';
+import OrderForm from './pages/OrderForm';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "AdminSettings": AdminSettings,
     "FeatureReports": FeatureReports,
     "CompletedReports": CompletedReports,
+    "OrderForm": OrderForm,
 }
 
 export const pagesConfig = {
