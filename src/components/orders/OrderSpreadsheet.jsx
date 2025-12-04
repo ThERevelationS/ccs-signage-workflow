@@ -287,7 +287,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       </div>
 
       {/* Spreadsheet Table */}
-      <div className="border rounded-lg overflow-hidden" style={{ fontSize: compact ? '11px' : '12px' }}>
+      <div className="border rounded-lg" style={{ fontSize: compact ? '11px' : '12px' }}>
         {/* Header Row */}
         <div className="flex bg-gray-100 border-b font-medium text-gray-700 sticky top-0 z-10">
           <div className={`${columnWidths.rowNum} px-2 py-2 border-r flex-shrink-0`}>#</div>
@@ -318,7 +318,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
         </div>
 
         {/* Data Rows */}
-        <div className="max-h-[600px] overflow-y-auto">
+        <div className="max-h-[600px] overflow-y-auto overflow-x-visible">
           {orders.map((order, index) => (
             <div 
               key={order.id} 
@@ -349,7 +349,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   />
                 </div>
                 {showCustomerDropdown === order.id && (
-                  <div className="absolute top-full left-0 w-64 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 w-64 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                     {getFilteredWorkOrders(order.customer_name).map(wo => (
                       <div
                         key={wo.id}
@@ -422,7 +422,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   <span className="text-xs truncate">{order.requestor_name || "Select..."}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
-                  <div className="absolute top-full left-0 w-56 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 w-56 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                     {users.map(u => (
                       <div
                         key={u.id}
