@@ -335,6 +335,32 @@ const getAutomationRecipients = async (actionConfig, workOrder) => {
   return Array.from(emails);
 };
 
+// Variable replacements for order templates
+const replaceOrderVariables = (template, order) => {
+  if (!template || !order) return template || "";
+  
+  const variables = {
+    "{{customer_name}}": order.customer_name || "",
+    "{{request_type}}": order.request_type || "",
+    "{{description}}": order.description || "",
+    "{{quantity}}": order.quantity || "",
+    "{{requestor_name}}": order.requestor_name || "",
+    "{{requestor_email}}": order.requestor_email || "",
+    "{{date_needed}}": order.date_needed || "Not set",
+    "{{date_ordered}}": order.date_ordered || "Not set",
+    "{{date_received}}": order.date_received || "Not set",
+    "{{vendor}}": order.vendor || "Not specified",
+    "{{status}}": order.status || "pending",
+    "{{timestamp}}": new Date().toLocaleString()
+  };
+
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
+  }
+  return result;
+};
+
 // Main notification trigger function
 export const triggerNotification = async (triggerType, workOrder, extraData = {}) => {
   try {
