@@ -179,20 +179,36 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   const pendingUpdatesRef = useRef({});
 
-  const updateOrder = (orderId, field, value) => {
+  const updateOrder = async (orderId, field, value) => {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) return;
-    
+
+    const oldValue = orders[orderIndex][field];
     const updatedOrders = [...orders];
     updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
     setOrders(updatedOrders);
-    
+
     // Accumulate updates and debounce save
     pendingUpdatesRef.current[orderId] = {
       ...pendingUpdatesRef.current[orderId],
       [field]: value
     };
     debouncedSave(orderId, pendingUpdatesRef.current[orderId]);
+
+    // Trigger notification for field change (debounced to avoid spam)
+    if (oldValue !== value && value) {
+      try {
+        await NotificationTriggers.orderFieldChanged(
+          updatedOrders[orderIndex], 
+          field, 
+          oldValue, 
+          value, 
+          currentUser?.full_name || currentUser?.email
+        );
+      } catch (e) {
+        console.error("Error triggering order field notification:", e);
+      }
+    }
   };
 
   const saveOrderImmediately = async (orderId, updates) => {
