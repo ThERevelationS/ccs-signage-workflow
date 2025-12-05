@@ -7,10 +7,22 @@ const User = base44.entities.User;
 // Generate AI-enhanced email content
 const generateAIEmail = async (templateSubject, templateBody, workOrder, extraData = {}) => {
   try {
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are an automated workflow notification system for Cincinnati Signs. Generate a brief, impersonal notification email.
-
-EVENT: ${extraData.eventDescription || "Work order update"}
+    // Build context based on whether it's an order or work order
+    let contextInfo = "";
+    if (extraData.orderData) {
+      const order = extraData.orderData;
+      contextInfo = `
+ORDER DETAILS:
+- Customer: ${order.customer_name || "Unknown"}
+- Request Type: ${order.request_type || "Unknown"}
+- Description: ${order.description || "No description"}
+- Quantity: ${order.quantity || "Not specified"}
+- Requestor: ${order.requestor_name || "Unknown"}
+- Date Needed: ${order.date_needed || "Not set"}
+- Vendor: ${order.vendor || "Not specified"}
+- Status: ${order.status || "pending"}`;
+    } else if (workOrder) {
+      contextInfo = `
 WORK ORDER: "${workOrder?.title || "Unknown"}" for client "${workOrder?.client_name || "Unknown"}"
 ${extraData.previousStage ? `MOVED FROM: ${formatStageName(extraData.previousStage)}` : ""}
 ${extraData.newStage ? `MOVED TO: ${formatStageName(extraData.newStage)}` : ""}
@@ -20,7 +32,14 @@ ${workOrder?.due_date ? `DUE DATE: ${workOrder.due_date}` : ""}
 ${workOrder?.asap ? "PRIORITY: ASAP - URGENT" : ""}
 ${workOrder?.is_rider ? "TYPE: This is a RIDER task" : ""}
 ${extraData.taskText ? `TASK: ${extraData.taskText}` : ""}
-${extraData.noteText ? `NOTE: ${extraData.noteText}` : ""}
+${extraData.noteText ? `NOTE: ${extraData.noteText}` : ""}`;
+    }
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `You are an automated workflow notification system for Cincinnati Signs. Generate a brief, impersonal notification email.
+
+EVENT: ${extraData.eventDescription || "Update"}
+${contextInfo}
 
 USER'S TEMPLATE TO BASE THIS ON:
 Subject: ${templateSubject}
