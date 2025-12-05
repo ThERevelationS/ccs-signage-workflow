@@ -27,8 +27,16 @@ import {
   Loader2,
   Pencil,
   X,
-  Check
+  Check,
+  Expand,
+  ExternalLink
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +77,32 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [expandedDescription, setExpandedDescription] = useState(null);
+
+  // Helper to render text with clickable links
+  const renderWithLinks = (text) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part.length > 40 ? part.substring(0, 40) + '...' : part}
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        );
+      }
+      return part;
+    });
+  };
 
   useEffect(() => {
     loadData();
@@ -287,7 +321,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
             )}
           </div>
           <div className={`${columnWidths.desc} px-2 py-2 border-r flex-shrink-0`}>Description</div>
-          <div className={`${columnWidths.qty} px-2 py-2 border-r flex-shrink-0`}>How Much?</div>
+          <div className={`${columnWidths.qty} px-2 py-2 border-r flex-shrink-0`}>Quantity</div>
           <div className={`${columnWidths.requestor} px-2 py-2 border-r flex-shrink-0`}>Requestor</div>
           <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Date Needed</div>
           <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Ordered Date</div>
@@ -348,8 +382,24 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                         key={wo.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs"
                         onMouseDown={() => {
-                          updateOrder(order.id, "customer_name", wo.client_name);
-                          updateOrder(order.id, "work_order_id", wo.id);
+                          const updatedOrders = [...orders];
+                          const orderIndex = orders.findIndex(o => o.id === order.id);
+                          if (orderIndex !== -1) {
+                            updatedOrders[orderIndex] = { 
+                              ...updatedOrders[orderIndex], 
+                              customer_name: wo.client_name,
+                              work_order_id: wo.id 
+                            };
+                            setOrders(updatedOrders);
+                            setPendingChanges(prev => ({
+                              ...prev,
+                              [order.id]: { 
+                                ...prev[order.id], 
+                                customer_name: wo.client_name,
+                                work_order_id: wo.id 
+                              }
+                            }));
+                          }
                           setShowCustomerDropdown(null);
                         }}
                       >
@@ -381,13 +431,26 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Description */}
               <div className={`${columnWidths.desc} px-1 py-0.5 border-r flex-shrink-0`}>
-                <Input
-                  value={order.description || ""}
-                  onChange={(e) => updateOrder(order.id, "description", e.target.value)}
-                  className="h-7 text-xs border-0 bg-transparent px-1"
-                  placeholder="Description..."
-                  disabled={!isRegistered}
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="h-7 text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
+                        onClick={() => setExpandedDescription(order.id)}
+                      >
+                        <span className="truncate flex-1">{order.description || "Description..."}</span>
+                        {order.description && order.description.length > 30 && (
+                          <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    {order.description && order.description.length > 30 && (
+                      <TooltipContent side="bottom" className="max-w-sm">
+                        <p className="text-xs whitespace-pre-wrap">{renderWithLinks(order.description)}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Quantity */}
@@ -602,6 +665,34 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 </div>
               ))}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expanded Description Dialog */}
+      <Dialog open={expandedDescription !== null} onOpenChange={() => setExpandedDescription(null)}>
+        <DialogContent className="clay-card border-none max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Description</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {expandedDescription && (
+              <>
+                <textarea
+                  value={orders.find(o => o.id === expandedDescription)?.description || ""}
+                  onChange={(e) => updateOrder(expandedDescription, "description", e.target.value)}
+                  className="w-full min-h-[150px] p-3 text-sm border rounded-lg resize-y"
+                  placeholder="Enter description..."
+                  disabled={!isRegistered}
+                />
+                <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                  <div className="font-medium mb-1">Preview with links:</div>
+                  <div className="whitespace-pre-wrap">
+                    {renderWithLinks(orders.find(o => o.id === expandedDescription)?.description || "")}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
