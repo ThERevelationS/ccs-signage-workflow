@@ -247,17 +247,20 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   };
 
   const getFilteredWorkOrders = (searchTerm) => {
-    if (!searchTerm) return workOrders.slice(0, 10);
+    // Filter out riders - only show main work orders
+    const mainWorkOrders = workOrders.filter(wo => !wo.is_rider);
+
+    if (!searchTerm) return mainWorkOrders.slice(0, 10);
     const lower = searchTerm.toLowerCase();
     const terms = lower.split(/\s+/).filter(t => t.length > 0);
-    
-    return workOrders.filter(wo => {
+
+    return mainWorkOrders.filter(wo => {
       const searchable = [
         wo.client_name,
         wo.title,
         wo.description
       ].filter(Boolean).join(' ').toLowerCase();
-      
+
       return terms.every(term => searchable.includes(term));
     }).slice(0, 10);
   };
@@ -523,8 +526,15 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                         key={wo.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs border-b last:border-0"
                         onMouseDown={() => {
-                          updateOrder(order.id, "customer_name", wo.client_name);
-                          updateOrder(order.id, "work_order_id", wo.id);
+                          // Update local state immediately
+                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: wo.client_name, work_order_id: wo.id } : o));
+                          // Track changes for save
+                          pendingChangesRef.current[order.id] = {
+                            ...pendingChangesRef.current[order.id],
+                            customer_name: wo.client_name,
+                            work_order_id: wo.id
+                          };
+                          setHasUnsavedChanges(true);
                           setShowCustomerDropdown(null);
                         }}
                       >
