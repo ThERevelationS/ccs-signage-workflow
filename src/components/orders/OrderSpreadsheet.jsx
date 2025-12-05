@@ -41,8 +41,18 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction
+} from "@/components/ui/alert-dialog";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 
@@ -83,6 +93,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
+  const [validationError, setValidationError] = useState(null);
   
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
@@ -223,6 +234,19 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     } catch (e) {
       console.error("Error triggering order notification:", e);
     }
+  };
+
+  const validateOrderForReceived = (order) => {
+    const missingFields = [];
+    if (!order.customer_name) missingFields.push("Customer Name");
+    if (!order.request_type) missingFields.push("Request Type");
+    if (!order.description) missingFields.push("Description");
+    if (!order.quantity) missingFields.push("Quantity");
+    if (!order.requestor_name) missingFields.push("Requestor");
+    if (!order.date_needed) missingFields.push("Date Needed");
+    if (!order.date_ordered) missingFields.push("Date Ordered");
+    if (!order.vendor) missingFields.push("Vendor");
+    return missingFields;
   };
 
   const updateOrder = (orderId, field, value) => {
@@ -721,9 +745,18 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                               mode="single"
                               selected={order.date_received ? new Date(order.date_received) : undefined}
                               onSelect={(date) => {
-                                updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
                                 if (date) {
+                                  // Validate all fields before marking as received
+                                  const missingFields = validateOrderForReceived(order);
+                                  if (missingFields.length > 0) {
+                                    setValidationError({ orderId: order.id, fields: missingFields });
+                                    setOpenDatePopover(null);
+                                    return;
+                                  }
+                                  updateOrder(order.id, "date_received", format(date, "yyyy-MM-dd"));
                                   updateOrder(order.id, "status", "received");
+                                } else {
+                                  updateOrder(order.id, "date_received", "");
                                 }
                                 setOpenDatePopover(null);
                               }}
@@ -840,6 +873,33 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Validation Error Dialog */}
+      <AlertDialog open={!!validationError} onOpenChange={() => setValidationError(null)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Cannot Mark as Received
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <p className="mb-3">Please fill out the following fields before marking this order as received:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-700">
+                {validationError?.fields.map((field, i) => (
+                  <li key={i} className="font-medium">{field}</li>
+                ))}
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
