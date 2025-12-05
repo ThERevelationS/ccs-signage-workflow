@@ -78,6 +78,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [newVendor, setNewVendor] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
+  const [expandedCustomer, setExpandedCustomer] = useState(null);
 
   // Helper to render text with clickable links
   const renderWithLinks = (text) => {
@@ -283,8 +284,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   }
 
   const columnWidths = compact 
-    ? { rowNum: "w-10", customer: "w-32", type: "w-24", desc: "w-40", qty: "w-16", requestor: "w-28", dates: "w-24", vendor: "w-20", actions: "w-12" }
-    : { rowNum: "w-12", customer: "w-44", type: "w-28", desc: "w-64", qty: "w-20", requestor: "w-36", dates: "w-28", vendor: "w-24", actions: "w-16" };
+    ? { rowNum: "w-8", customer: "w-40", type: "w-24", desc: "w-48", qty: "w-12", requestor: "w-20", dates: "w-20", vendor: "w-20", actions: "w-8" }
+    : { rowNum: "w-10", customer: "w-56", type: "w-28", desc: "w-80", qty: "w-14", requestor: "w-24", dates: "w-22", vendor: "w-24", actions: "w-10" };
 
   return (
     <div className="overflow-x-auto">
@@ -352,60 +353,29 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Customer Name with Work Order Link */}
               <div className={`${columnWidths.customer} px-1 py-0.5 border-r flex-shrink-0 relative`}>
-                <div className="flex items-center gap-1">
-                  {order.work_order_id && (
-                    <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                  )}
-                  <Input
-                    value={order.customer_name || ""}
-                    onChange={(e) => {
-                      updateOrder(order.id, "customer_name", e.target.value);
-                      setCustomerSearch(e.target.value);
-                    }}
-                    onFocus={(e) => {
-                      const rect = e.target.getBoundingClientRect();
-                      setDropdownPosition({ top: rect.bottom + 2, left: rect.left });
-                      setShowCustomerDropdown(order.id);
-                    }}
-                    onBlur={() => setTimeout(() => setShowCustomerDropdown(null), 200)}
-                    className="h-7 text-xs border-0 bg-transparent px-1 focus:ring-0"
-                    placeholder="Customer..."
-                    disabled={!isRegistered}
-                  />
-                </div>
-                {showCustomerDropdown === order.id && (
-                  <div 
-                    className="fixed w-64 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto" 
-                    style={{ zIndex: 9999, top: dropdownPosition.top, left: dropdownPosition.left }}
-                  >
-                    {getFilteredWorkOrders(order.customer_name).map(wo => (
-                      <div
-                        key={wo.id}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs"
-                        onMouseDown={() => {
-                          const updatedOrders = [...orders];
-                          const orderIndex = orders.findIndex(o => o.id === order.id);
-                          if (orderIndex !== -1) {
-                            updatedOrders[orderIndex] = { 
-                              ...updatedOrders[orderIndex], 
-                              customer_name: wo.client_name,
-                              work_order_id: wo.id 
-                            };
-                            setOrders(updatedOrders);
-                            saveOrderImmediately(order.id, { 
-                              customer_name: wo.client_name,
-                              work_order_id: wo.id 
-                            });
-                          }
-                          setShowCustomerDropdown(null);
-                        }}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="flex items-center gap-1 h-7 cursor-pointer hover:bg-gray-100 rounded px-1"
+                        onClick={() => setExpandedCustomer(order.id)}
                       >
-                        <div className="font-medium">{wo.client_name}</div>
-                        <div className="text-gray-500">{wo.title}</div>
+                        {order.work_order_id && (
+                          <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                        )}
+                        <span className="text-xs truncate flex-1">{order.customer_name || "Customer..."}</span>
+                        {order.customer_name && order.customer_name.length > 20 && (
+                          <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </TooltipTrigger>
+                    {order.customer_name && order.customer_name.length > 20 && (
+                      <TooltipContent side="bottom" className="max-w-sm">
+                        <p className="text-xs">{order.customer_name}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Request Type */}
@@ -662,6 +632,66 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 </div>
               ))}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expanded Customer Dialog */}
+      <Dialog open={expandedCustomer !== null} onOpenChange={() => setExpandedCustomer(null)}>
+        <DialogContent className="clay-card border-none max-w-md">
+          <DialogHeader>
+            <DialogTitle>Customer Name</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {expandedCustomer && (
+              <>
+                <Input
+                  value={orders.find(o => o.id === expandedCustomer)?.customer_name || ""}
+                  onChange={(e) => {
+                    updateOrder(expandedCustomer, "customer_name", e.target.value);
+                    setCustomerSearch(e.target.value);
+                  }}
+                  onFocus={(e) => {
+                    const rect = e.target.getBoundingClientRect();
+                    setDropdownPosition({ top: rect.bottom + 2, left: rect.left });
+                    setShowCustomerDropdown(expandedCustomer);
+                  }}
+                  className="w-full p-3 text-sm border rounded-lg"
+                  placeholder="Enter customer name..."
+                  disabled={!isRegistered}
+                />
+                {showCustomerDropdown === expandedCustomer && (
+                  <div className="w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {getFilteredWorkOrders(orders.find(o => o.id === expandedCustomer)?.customer_name).map(wo => (
+                      <div
+                        key={wo.id}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        onMouseDown={() => {
+                          const updatedOrders = [...orders];
+                          const orderIndex = orders.findIndex(o => o.id === expandedCustomer);
+                          if (orderIndex !== -1) {
+                            updatedOrders[orderIndex] = { 
+                              ...updatedOrders[orderIndex], 
+                              customer_name: wo.client_name,
+                              work_order_id: wo.id 
+                            };
+                            setOrders(updatedOrders);
+                            saveOrderImmediately(expandedCustomer, { 
+                              customer_name: wo.client_name,
+                              work_order_id: wo.id 
+                            });
+                          }
+                          setShowCustomerDropdown(null);
+                        }}
+                      >
+                        <div className="font-medium">{wo.client_name}</div>
+                        <div className="text-gray-500 text-xs">{wo.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
