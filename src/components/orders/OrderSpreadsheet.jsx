@@ -52,7 +52,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
-export default function OrderSpreadsheet({ workOrderFilter = null, compact = false }) {
+export default function OrderSpreadsheet({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all" }) {
   const { currentUser, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);

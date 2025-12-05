@@ -78,7 +78,7 @@ export default function OrderForm() {
 
         {/* Spreadsheet */}
         <div className="clay-card p-4">
-          <OrderSpreadsheet key={refreshKey} />
+          <OrderSpreadsheet key={refreshKey} searchTerm={searchTerm} filterStatus={filterStatus} />
         </div>
       </div>
     </div>
