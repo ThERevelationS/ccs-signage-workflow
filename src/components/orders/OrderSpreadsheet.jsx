@@ -370,15 +370,15 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
-          <col style={{ width: compact ? '160px' : '220px' }} />
-          <col style={{ width: compact ? '80px' : '90px' }} />
-          <col style={{ width: compact ? '200px' : '280px' }} />
-          <col style={{ width: '40px' }} />
-          <col style={{ width: '60px' }} />
-          <col style={{ width: '70px' }} />
-          <col style={{ width: '70px' }} />
-          <col style={{ width: compact ? '60px' : '70px' }} />
-          <col style={{ width: '70px' }} />
+          <col style={{ width: compact ? '12%' : '18%', minWidth: '140px' }} />
+          <col style={{ width: compact ? '8%' : '8%', minWidth: '80px' }} />
+          <col style={{ width: compact ? '20%' : '25%', minWidth: '180px' }} />
+          <col style={{ width: '5%', minWidth: '40px' }} />
+          <col style={{ width: '8%', minWidth: '60px' }} />
+          <col style={{ width: '8%', minWidth: '70px' }} />
+          <col style={{ width: '8%', minWidth: '70px' }} />
+          <col style={{ width: compact ? '7%' : '8%', minWidth: '60px' }} />
+          <col style={{ width: '8%', minWidth: '70px' }} />
           <col style={{ width: '32px' }} />
         </colgroup>
         {/* Header Row */}
