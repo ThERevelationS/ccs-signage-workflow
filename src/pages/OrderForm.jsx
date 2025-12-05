@@ -57,8 +57,8 @@ export default function OrderForm() {
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-[1600px] mx-auto">
+    <div className="min-h-screen p-4 sm:p-6">
+      <div className="w-full max-w-[95%] lg:max-w-[85%] xl:max-w-[80%] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
