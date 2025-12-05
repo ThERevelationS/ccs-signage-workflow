@@ -18,7 +18,9 @@ import {
   Lightbulb,
   ClipboardList,
   Moon,
-  Sun
+  Sun,
+  Menu,
+  X
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 
