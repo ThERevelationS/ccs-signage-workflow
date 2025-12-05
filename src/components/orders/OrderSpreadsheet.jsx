@@ -105,10 +105,13 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   useEffect(() => {
     loadData();
+    // Poll for updates every 5 seconds
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
   }, [workOrderFilter]);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (showLoading = true) => {
+    if (showLoading && orders.length === 0) setIsLoading(true);
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
         workOrderFilter 
