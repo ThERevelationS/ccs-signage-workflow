@@ -553,5 +553,33 @@ export const NotificationTriggers = {
       eventDescription: "Order date needed is approaching",
       orderData: order
     });
+  },
+  
+  // Order field change triggers
+  orderFieldChanged: async (order, fieldName, oldValue, newValue, changedBy) => {
+    const triggerMap = {
+      "customer_name": "order_customer_name_changed",
+      "request_type": "order_request_type_changed",
+      "description": "order_description_changed",
+      "quantity": "order_quantity_changed",
+      "requestor_name": "order_requestor_changed",
+      "requestor_email": "order_requestor_changed",
+      "date_needed": "order_date_needed_changed",
+      "date_ordered": "order_date_ordered_changed",
+      "vendor": "order_vendor_changed",
+      "date_received": "order_date_received_changed"
+    };
+    
+    const triggerType = triggerMap[fieldName];
+    if (triggerType) {
+      await triggerNotification(triggerType, null, {
+        changedBy,
+        eventDescription: `Order ${fieldName.replace(/_/g, ' ')} changed from "${oldValue || 'empty'}" to "${newValue || 'empty'}"`,
+        orderData: order,
+        fieldChanged: fieldName,
+        oldValue,
+        newValue
+      });
+    }
   }
 };
