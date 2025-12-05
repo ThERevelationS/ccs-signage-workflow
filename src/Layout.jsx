@@ -228,6 +228,7 @@ function LayoutContent({ children }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { currentUser, isRegistered, logout, getUserFirstName, darkMode, toggleDarkMode } = useAuth();
 
   useEffect(() => {
