@@ -215,6 +215,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     });
     
     setOrders([...orders, newOrder]);
+    originalOrdersRef.current[newOrder.id] = { ...newOrder };
     
     // Trigger notification for new order
     try {
@@ -224,58 +225,20 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     }
   };
 
-  // Debounced save function to prevent rate limiting
-  const debouncedSave = useCallback(
-    debounce(async (orderId, updates) => {
-      try {
-        await Order.update(orderId, updates);
-      } catch (error) {
-        console.error("Error saving order:", error);
-      }
-    }, 800),
-    []
-  );
-
-  const pendingUpdatesRef = useRef({});
-
-  const updateOrder = async (orderId, field, value) => {
+  const updateOrder = (orderId, field, value) => {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) return;
 
-    const oldValue = orders[orderIndex][field];
     const updatedOrders = [...orders];
     updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
     setOrders(updatedOrders);
 
-    // Accumulate updates and debounce save
-    pendingUpdatesRef.current[orderId] = {
-      ...pendingUpdatesRef.current[orderId],
+    // Track changes for batch save
+    pendingChangesRef.current[orderId] = {
+      ...pendingChangesRef.current[orderId],
       [field]: value
     };
-    debouncedSave(orderId, pendingUpdatesRef.current[orderId]);
-
-    // Trigger notification for field change (debounced to avoid spam)
-    if (oldValue !== value && value) {
-      try {
-        await NotificationTriggers.orderFieldChanged(
-          updatedOrders[orderIndex], 
-          field, 
-          oldValue, 
-          value, 
-          currentUser?.full_name || currentUser?.email
-        );
-      } catch (e) {
-        console.error("Error triggering order field notification:", e);
-      }
-    }
-  };
-
-  const saveOrderImmediately = async (orderId, updates) => {
-    try {
-      await Order.update(orderId, updates);
-    } catch (error) {
-      console.error("Error saving order:", error);
-    }
+    setHasUnsavedChanges(true);
   };
 
   const deleteOrder = async (orderId) => {
