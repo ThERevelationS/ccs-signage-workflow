@@ -632,23 +632,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
-                      mode="single"
-                      selected={order.date_ordered ? new Date(order.date_ordered) : undefined}
-                      onSelect={async (date) => {
-                        updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
-                        if (date) {
-                          updateOrder(order.id, "status", "ordered");
-                          // Trigger notification for order placed
-                          try {
-                            const updatedOrder = { ...order, date_ordered: format(date, "yyyy-MM-dd"), status: "ordered" };
-                            await NotificationTriggers.orderOrdered(updatedOrder, currentUser?.full_name || currentUser?.email);
-                          } catch (e) {
-                            console.error("Error triggering order notification:", e);
-                          }
-                        }
-                        setOpenDatePopover(null);
-                      }}
-                    />
+                              mode="single"
+                              selected={order.date_ordered ? new Date(order.date_ordered) : undefined}
+                              onSelect={(date) => {
+                                updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
+                                if (date) {
+                                  updateOrder(order.id, "status", "ordered");
+                                }
+                                setOpenDatePopover(null);
+                              }}
+                            />
                   </PopoverContent>
                 </Popover>
               </td>
