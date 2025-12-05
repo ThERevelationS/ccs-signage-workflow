@@ -13,9 +13,7 @@ import {
 import {
   ClipboardList,
   Filter,
-  Search,
-  Download,
-  RefreshCw
+  Search
 } from "lucide-react";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
 
