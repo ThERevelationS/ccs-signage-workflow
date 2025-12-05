@@ -156,6 +156,13 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     });
     
     setOrders([...orders, newOrder]);
+    
+    // Trigger notification for new order
+    try {
+      await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
+    } catch (e) {
+      console.error("Error triggering order notification:", e);
+    }
   };
 
   // Debounced save function to prevent rate limiting
