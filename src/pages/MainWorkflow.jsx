@@ -22,7 +22,23 @@ export default function MainWorkflow() {
   useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 3000);
-    return () => clearInterval(interval);
+    
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const loadWorkOrders = async (showLoading = false) => {
