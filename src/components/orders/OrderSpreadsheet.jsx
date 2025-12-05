@@ -368,29 +368,39 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Customer Name with Work Order Link */}
               <td className="px-1 py-0.5 border-r">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div 
-                        className="flex items-center gap-1 h-7 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
-                        onClick={() => setExpandedCustomer(order.id)}
-                      >
-                        {order.work_order_id && (
-                          <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                        )}
-                        <span className="text-xs truncate">{order.customer_name || "Customer..."}</span>
-                        {order.customer_name && order.customer_name.length > 20 && (
-                          <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    {order.customer_name && order.customer_name.length > 20 && (
-                      <TooltipContent side="bottom" className="max-w-sm">
-                        <p className="text-xs">{order.customer_name}</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                {order.customer_name ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="flex items-center gap-1 h-7 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
+                          onClick={() => setExpandedCustomer(order.id)}
+                        >
+                          {order.work_order_id && (
+                            <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                          )}
+                          <span className="text-xs truncate">{order.customer_name}</span>
+                          {order.customer_name.length > 20 && (
+                            <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      {order.customer_name.length > 20 && (
+                        <TooltipContent side="bottom" className="max-w-sm">
+                          <p className="text-xs">{order.customer_name}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <Input
+                    value=""
+                    onChange={(e) => updateOrder(order.id, "customer_name", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1 w-full"
+                    placeholder="Customer..."
+                    disabled={!isRegistered}
+                  />
+                )}
               </td>
 
               {/* Request Type */}
