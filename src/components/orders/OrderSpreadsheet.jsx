@@ -43,6 +43,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 
 const Order = base44.entities.Order;
