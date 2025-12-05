@@ -146,10 +146,49 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
+      // Store original data for comparison
+      ordersData.forEach(order => {
+        originalOrdersRef.current[order.id] = { ...order };
+      });
     } catch (error) {
       console.error("Error loading data:", error);
     }
     setIsLoading(false);
+  };
+
+  const saveAllChanges = async () => {
+    const changes = pendingChangesRef.current;
+    if (Object.keys(changes).length === 0) return;
+    
+    setIsSaving(true);
+    try {
+      const savePromises = Object.entries(changes).map(async ([orderId, updates]) => {
+        await Order.update(orderId, updates);
+        // Trigger notifications for significant changes
+        const order = orders.find(o => o.id === orderId);
+        if (order && updates.date_ordered && !originalOrdersRef.current[orderId]?.date_ordered) {
+          await NotificationTriggers.orderOrdered({ ...order, ...updates }, currentUser?.full_name || currentUser?.email);
+        }
+        if (order && updates.date_received && !originalOrdersRef.current[orderId]?.date_received) {
+          await NotificationTriggers.orderReceived({ ...order, ...updates }, currentUser?.full_name || currentUser?.email);
+        }
+        // Update original reference
+        originalOrdersRef.current[orderId] = { ...originalOrdersRef.current[orderId], ...updates };
+      });
+      
+      await Promise.all(savePromises);
+      pendingChangesRef.current = {};
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error("Error saving orders:", error);
+    }
+    setIsSaving(false);
+  };
+
+  // Expose save function to parent
+  const manualSave = () => {
+    saveAllChanges();
   };
 
   const addNewRow = async () => {
