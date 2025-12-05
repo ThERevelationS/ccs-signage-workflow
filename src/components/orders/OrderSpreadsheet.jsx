@@ -307,17 +307,17 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       {/* Spreadsheet Table */}
       <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed' }}>
         <colgroup>
-          <col style={{ width: '40px' }} />
-          <col style={{ width: compact ? '140px' : '180px' }} />
-          <col style={{ width: compact ? '90px' : '100px' }} />
-          <col style={{ width: compact ? '200px' : '280px' }} />
-          <col style={{ width: '50px' }} />
+          <col style={{ width: '32px' }} />
+          <col style={{ width: compact ? '160px' : '220px' }} />
           <col style={{ width: compact ? '80px' : '90px' }} />
-          <col style={{ width: '75px' }} />
-          <col style={{ width: '75px' }} />
-          <col style={{ width: compact ? '70px' : '80px' }} />
-          <col style={{ width: '75px' }} />
-          <col style={{ width: '36px' }} />
+          <col style={{ width: compact ? '200px' : '280px' }} />
+          <col style={{ width: '40px' }} />
+          <col style={{ width: '60px' }} />
+          <col style={{ width: '70px' }} />
+          <col style={{ width: '70px' }} />
+          <col style={{ width: compact ? '60px' : '70px' }} />
+          <col style={{ width: '70px' }} />
+          <col style={{ width: '32px' }} />
         </colgroup>
         {/* Header Row */}
         <thead className="bg-gray-100 sticky top-0 z-10">
@@ -462,7 +462,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       {order.requestor_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-xs truncate">{order.requestor_name || "-"}</span>
+                  <span className="text-xs truncate">{order.requestor_name ? order.requestor_name.split(' ')[0] : "-"}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
                   <div 
