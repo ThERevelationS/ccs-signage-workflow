@@ -49,7 +49,9 @@ import {
   FileText,
   GitBranch,
   Sparkles,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  SortAsc
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
@@ -143,6 +145,8 @@ export default function AdminSettings() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [sortBy, setSortBy] = useState("name"); // "name", "trigger", "action", "enabled"
+  const [sortDirection, setSortDirection] = useState("asc");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -268,6 +272,47 @@ export default function AdminSettings() {
     acc[trigger.category].push(trigger);
     return acc;
   }, {});
+
+  // Sort automations
+  const sortedAutomations = [...automations].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (sortBy) {
+      case "name":
+        comparison = (a.name || "").localeCompare(b.name || "");
+        break;
+      case "trigger":
+        const aTrigger = a.triggers?.[0]?.trigger_type || "";
+        const bTrigger = b.triggers?.[0]?.trigger_type || "";
+        const aTriggerLabel = TRIGGER_TYPES.find(t => t.value === aTrigger)?.category || aTrigger;
+        const bTriggerLabel = TRIGGER_TYPES.find(t => t.value === bTrigger)?.category || bTrigger;
+        comparison = aTriggerLabel.localeCompare(bTriggerLabel);
+        break;
+      case "action":
+        const aAction = a.actions?.[0]?.action_type || "";
+        const bAction = b.actions?.[0]?.action_type || "";
+        const aActionLabel = ACTION_TYPES.find(t => t.value === aAction)?.label || aAction;
+        const bActionLabel = ACTION_TYPES.find(t => t.value === bAction)?.label || bAction;
+        comparison = aActionLabel.localeCompare(bActionLabel);
+        break;
+      case "enabled":
+        comparison = (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0);
+        break;
+      default:
+        comparison = 0;
+    }
+    
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortDirection("asc");
+    }
+  };
 
   const renderActionConfig = (action, index) => {
     const config = action.action_config || {};
@@ -486,7 +531,45 @@ export default function AdminSettings() {
                         </TabsContent>
 
           <TabsContent value="automations">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
+              {/* Sort Controls */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Sort by:</span>
+                <div className="flex gap-1">
+                  <Button 
+                    variant={sortBy === "name" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => handleSort("name")}
+                    className={`h-7 text-xs ${sortBy === "name" ? "bg-purple-100 text-purple-700 border-purple-200" : ""}`}
+                  >
+                    Name {sortBy === "name" && <SortAsc className={`w-3 h-3 ml-1 ${sortDirection === "desc" ? "rotate-180" : ""}`} />}
+                  </Button>
+                  <Button 
+                    variant={sortBy === "trigger" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => handleSort("trigger")}
+                    className={`h-7 text-xs ${sortBy === "trigger" ? "bg-orange-100 text-orange-700 border-orange-200" : ""}`}
+                  >
+                    Trigger Type {sortBy === "trigger" && <SortAsc className={`w-3 h-3 ml-1 ${sortDirection === "desc" ? "rotate-180" : ""}`} />}
+                  </Button>
+                  <Button 
+                    variant={sortBy === "action" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => handleSort("action")}
+                    className={`h-7 text-xs ${sortBy === "action" ? "bg-blue-100 text-blue-700 border-blue-200" : ""}`}
+                  >
+                    Action Type {sortBy === "action" && <SortAsc className={`w-3 h-3 ml-1 ${sortDirection === "desc" ? "rotate-180" : ""}`} />}
+                  </Button>
+                  <Button 
+                    variant={sortBy === "enabled" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => handleSort("enabled")}
+                    className={`h-7 text-xs ${sortBy === "enabled" ? "bg-green-100 text-green-700 border-green-200" : ""}`}
+                  >
+                    Status {sortBy === "enabled" && <SortAsc className={`w-3 h-3 ml-1 ${sortDirection === "desc" ? "rotate-180" : ""}`} />}
+                  </Button>
+                </div>
+              </div>
               <Button onClick={openNewRule} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
@@ -536,7 +619,7 @@ export default function AdminSettings() {
               </div>
             ) : (
               <div className="space-y-3">
-                {automations.map((rule) => (
+                {sortedAutomations.map((rule) => (
                   <div key={rule.id} className={`clay-card p-4 ${!rule.enabled ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
