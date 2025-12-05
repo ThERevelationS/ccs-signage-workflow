@@ -283,10 +283,6 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     );
   }
 
-  const columnWidths = compact 
-    ? { rowNum: "w-8", customer: "w-40", type: "w-24", desc: "w-48", qty: "w-12", requestor: "w-20", dates: "w-20", vendor: "w-20", actions: "w-8" }
-    : { rowNum: "w-10", customer: "w-56", type: "w-28", desc: "w-80", qty: "w-14", requestor: "w-24", dates: "w-22", vendor: "w-24", actions: "w-10" };
-
   return (
     <div className="overflow-x-auto">
       {/* Toolbar */}
