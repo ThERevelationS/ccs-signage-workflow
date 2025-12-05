@@ -368,7 +368,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-visible">
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
@@ -409,7 +409,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       </div>
 
       {/* Spreadsheet Table */}
-      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed' }}>
+      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', overflow: 'visible' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
           <col style={{ width: compact ? '12%' : '18%', minWidth: '140px' }} />
@@ -424,7 +424,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           <col style={{ width: '32px' }} />
         </colgroup>
         {/* Header Row */}
-        <thead className="bg-gray-100 sticky top-0 z-10">
+        <thead className="bg-gray-100">
           <tr className="border-b">
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Customer Name</th>
@@ -459,7 +459,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
         </thead>
 
         {/* Data Rows */}
-        <tbody className="max-h-[600px] overflow-y-auto">
+        <tbody>
           {filteredOrders.map((order, index) => (
             <tr 
               key={order.id} 
