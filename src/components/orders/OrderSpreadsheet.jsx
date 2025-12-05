@@ -78,6 +78,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [newVendor, setNewVendor] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
+  const [openDatePopover, setOpenDatePopover] = useState(null); // tracks which date popover is open: "needed-{id}", "ordered-{id}", "received-{id}"
 
   // Helper to render text with clickable links
   const renderWithLinks = (text) => {
@@ -505,7 +506,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Date Needed */}
               <td className="px-1 py-0.5 border-r">
-                <Popover>
+                <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_needed ? format(new Date(order.date_needed), "MM/dd/yy") : "-"}
@@ -515,7 +516,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     <Calendar
                       mode="single"
                       selected={order.date_needed ? new Date(order.date_needed) : undefined}
-                      onSelect={(date) => updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "")}
+                      onSelect={(date) => {
+                        updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "");
+                        setOpenDatePopover(null);
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -523,7 +527,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Ordered Date */}
               <td className="px-1 py-0.5 border-r">
-                <Popover>
+                <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_ordered ? format(new Date(order.date_ordered), "MM/dd/yy") : "-"}
@@ -536,6 +540,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       onSelect={(date) => {
                         updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
                         if (date) updateOrder(order.id, "status", "ordered");
+                        setOpenDatePopover(null);
                       }}
                     />
                   </PopoverContent>
@@ -562,7 +567,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Date Received */}
               <td className="px-1 py-0.5 border-r">
-                <Popover>
+                <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_received ? format(new Date(order.date_received), "MM/dd/yy") : "-"}
@@ -575,6 +580,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       onSelect={(date) => {
                         updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
                         if (date) updateOrder(order.id, "status", "received");
+                        setOpenDatePopover(null);
                       }}
                     />
                   </PopoverContent>
