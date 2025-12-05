@@ -189,6 +189,11 @@ export default function Design() {
 
   return (
     <div className="min-h-screen p-4" onDoubleClick={handleDoubleClick}>
+      {isFullScreen && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm z-50 pointer-events-none">
+          To exit press ESC
+        </div>
+      )}
       <div className="w-full max-w-[95vw] mx-auto">
         {!isFullScreen && (
           <div className="flex justify-end items-center gap-2 mb-2">
