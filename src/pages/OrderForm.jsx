@@ -21,7 +21,6 @@ export default function OrderForm() {
   const { currentUser, isRegistered } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
   const [filterLoaded, setFilterLoaded] = useState(false);
 
   // Load saved filter preference from user data
