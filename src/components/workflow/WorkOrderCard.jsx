@@ -279,8 +279,14 @@ export default function WorkOrderCard({
       promptForEmail();
       return;
     }
-    await WorkOrder.update(workOrder.id, { asap: !isAsap });
-    await ActivityActions.asapToggled(workOrder, !isAsap);
+    const newAsapValue = !isAsap;
+    // If toggling ASAP on, set priority to -1 to move to top
+    const updateData = { asap: newAsapValue };
+    if (newAsapValue) {
+      updateData.priority = -1;
+    }
+    await WorkOrder.update(workOrder.id, updateData);
+    await ActivityActions.asapToggled(workOrder, newAsapValue);
     if (onUpdate) onUpdate();
   };
 
