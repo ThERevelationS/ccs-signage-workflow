@@ -16,7 +16,9 @@ import {
   LogOut,
   User,
   Lightbulb,
-  ClipboardList
+  ClipboardList,
+  Moon,
+  Sun
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 
@@ -66,11 +68,86 @@ const getFullscreenStyles = (isFullscreen) => `
   ` : ''}
 `;
 
+const getDarkModeStyles = () => `
+  .dark-mode {
+    --clay-bg: #1a1a2e;
+    --clay-card-bg: #16213e;
+    --clay-text: #e4e4e7;
+    --clay-text-muted: #a1a1aa;
+  }
+  
+  .dark-mode .clay-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(22, 33, 62, 0.9)) !important;
+    color: #e4e4e7;
+  }
+  
+  .dark-mode .clay-button {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(22, 33, 62, 0.9)) !important;
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode input, .dark-mode textarea, .dark-mode select {
+    background-color: #1e293b !important;
+    color: #e4e4e7 !important;
+    border-color: #374151 !important;
+  }
+  
+  .dark-mode table {
+    background-color: #1e293b;
+    color: #e4e4e7;
+  }
+  
+  .dark-mode thead {
+    background-color: #374151 !important;
+  }
+  
+  .dark-mode tbody tr {
+    background-color: #1e293b !important;
+    border-color: #374151 !important;
+  }
+  
+  .dark-mode tbody tr:hover {
+    background-color: #2d3748 !important;
+  }
+  
+  .dark-mode .bg-white {
+    background-color: #1e293b !important;
+  }
+  
+  .dark-mode .bg-gray-50, .dark-mode .bg-gray-100 {
+    background-color: #374151 !important;
+  }
+  
+  .dark-mode .text-gray-800, .dark-mode .text-gray-700, .dark-mode .text-gray-600 {
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode .text-gray-500 {
+    color: #9ca3af !important;
+  }
+  
+  .dark-mode .border-gray-200, .dark-mode .border-gray-300 {
+    border-color: #374151 !important;
+  }
+  
+  .dark-mode .bg-green-50 {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+  }
+  
+  .dark-mode .bg-green-100 {
+    background-color: rgba(34, 197, 94, 0.3) !important;
+  }
+  
+  .dark-mode .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+  }
+`;
+
 function LayoutContent({ children }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
+  const { currentUser, isRegistered, logout, getUserFirstName, darkMode, toggleDarkMode } = useAuth();
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -86,7 +163,8 @@ function LayoutContent({ children }) {
   return (
     <>
       <style>{`
-        ${getFullscreenStyles(isCollapsed)}
+                ${getFullscreenStyles(isCollapsed)}
+                ${getDarkModeStyles()}
         :root {
           --clay-lavender: #E0D4F7;
           --clay-mint: #C8F4E9;
@@ -149,7 +227,7 @@ function LayoutContent({ children }) {
         }
       `}</style>
       
-      <div className="h-full flex flex-col" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className={`h-full flex flex-col ${darkMode ? 'dark-mode' : ''}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
@@ -222,33 +300,49 @@ function LayoutContent({ children }) {
 
         {/* Floating Buttons - hidden in fullscreen */}
                     {!isCollapsed && (
-                      <div className="fixed bottom-4 left-4 z-50 flex gap-2">
-                        {isRegistered && (
-                          <Link
-                            to={createPageUrl("FeatureReports")}
-                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
-                            style={{ 
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
-                            }}
-                          >
-                            <Lightbulb className="w-4 h-4" />
-                            <span className="text-sm font-medium">Reports</span>
-                          </Link>
-                        )}
-                        {isUserAdmin(currentUser) && (
-                          <Link
-                            to={createPageUrl("AdminSettings")}
-                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
-                            style={{ 
-                              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
-                            }}
-                          >
-                            <Settings className="w-4 h-4" />
-                            <span className="text-sm font-medium">Admin</span>
-                          </Link>
-                        )}
-                      </div>
-                    )}
+                                      <div className="fixed bottom-4 left-4 z-50 flex gap-2">
+                                        {/* Dark Mode Toggle */}
+                                        <button
+                                          onClick={toggleDarkMode}
+                                          className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                                          style={{ 
+                                            background: darkMode 
+                                              ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(22, 33, 62, 0.9) 100%)'
+                                              : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                                          }}
+                                        >
+                                          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                        </button>
+                                        {isRegistered && (
+                                          <Link
+                                            to={createPageUrl("FeatureReports")}
+                                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                                            style={{ 
+                                              background: darkMode 
+                                                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(22, 33, 62, 0.9) 100%)'
+                                                : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                                            }}
+                                          >
+                                            <Lightbulb className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Reports</span>
+                                          </Link>
+                                        )}
+                                        {isUserAdmin(currentUser) && (
+                                          <Link
+                                            to={createPageUrl("AdminSettings")}
+                                            className="clay-button px-4 py-2 flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors"
+                                            style={{ 
+                                              background: darkMode 
+                                                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(22, 33, 62, 0.9) 100%)'
+                                                : 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.9) 100%)'
+                                            }}
+                                          >
+                                            <Settings className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Admin</span>
+                                          </Link>
+                                        )}
+                                      </div>
+                                    )}
       </div>
     </>
   );

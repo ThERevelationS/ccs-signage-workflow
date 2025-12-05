@@ -21,7 +21,9 @@ export function useAuth() {
       isRegistered: false,
       promptForEmail: () => {},
       getUserFirstName: () => null,
-      logout: () => {}
+      logout: () => {},
+      darkMode: false,
+      toggleDarkMode: () => {}
     };
   }
   return context;
@@ -36,10 +38,54 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     checkStoredEmail();
   }, []);
+
+  // Load dark mode preference
+  useEffect(() => {
+    const loadDarkMode = async () => {
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        try {
+          const me = await base44.auth.me();
+          if (me?.dark_mode) {
+            setDarkMode(true);
+          }
+        } catch (e) {
+          // Fallback to localStorage
+          const localDarkMode = localStorage.getItem("darkMode");
+          if (localDarkMode === "true") setDarkMode(true);
+        }
+      }
+    };
+    loadDarkMode();
+  }, [currentUser?.email]);
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark-mode");
+    } else {
+      document.documentElement.classList.remove("dark-mode");
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = async () => {
+    const newValue = !darkMode;
+    setDarkMode(newValue);
+    localStorage.setItem("darkMode", newValue.toString());
+    
+    if (currentUser?.email) {
+      try {
+        await base44.auth.updateMe({ dark_mode: newValue });
+      } catch (e) {
+        console.error("Error saving dark mode preference:", e);
+      }
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -140,7 +186,9 @@ export function AuthProvider({ children }) {
       isRegistered, 
       promptForEmail, 
       getUserFirstName,
-      logout 
+      logout,
+      darkMode,
+      toggleDarkMode
     }}>
       {children}
 
