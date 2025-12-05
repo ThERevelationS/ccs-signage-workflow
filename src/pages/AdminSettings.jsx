@@ -716,6 +716,21 @@ export default function AdminSettings() {
                 </div>
               </div>
 
+              {/* Validation Messages */}
+              {(!formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-amber-700 text-sm font-medium mb-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    Missing required fields:
+                  </div>
+                  <ul className="text-xs text-amber-600 list-disc list-inside space-y-0.5">
+                    {!formData.name && <li>Automation name is required</li>}
+                    {!triggers[0]?.trigger_type && <li>At least one trigger must be selected</li>}
+                    {!actions[0]?.action_type && <li>At least one action must be selected</li>}
+                  </ul>
+                </div>
+              )}
+
               {/* Save */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
