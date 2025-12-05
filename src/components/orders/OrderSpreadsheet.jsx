@@ -54,6 +54,7 @@ import {
   AlertDialogAction
 } from "@/components/ui/alert-dialog";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
+import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
 
 const Order = base44.entities.Order;
@@ -94,6 +95,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [expandedDescription, setExpandedDescription] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [validationError, setValidationError] = useState(null);
+  const [editingCustomerName, setEditingCustomerName] = useState(null);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
@@ -500,46 +503,84 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
               {/* Customer Name with Work Order Link */}
               <td className="px-1 py-0.5 border-r relative" style={{ overflow: 'visible' }}>
-                <div className="flex items-center gap-1 h-7">
-                  {order.work_order_id && (
-                    <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                  )}
-                  <Input
-                    value={order.customer_name || ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      // Update local state immediately without triggering pending changes
-                      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
-                      setCustomerSearch(val);
-                      if (val.length > 0) {
-                        setShowCustomerDropdown(order.id);
-                      } else {
-                        setShowCustomerDropdown(null);
-                      }
-                    }}
-                    onBlur={() => {
-                      // Save the change when leaving the field
-                      const currentOrder = orders.find(o => o.id === order.id);
-                      if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
-                        pendingChangesRef.current[order.id] = {
-                          ...pendingChangesRef.current[order.id],
-                          customer_name: currentOrder.customer_name
-                        };
-                        setHasUnsavedChanges(true);
-                      }
-                      setTimeout(() => setShowCustomerDropdown(null), 200);
-                    }}
-                    onFocus={(e) => {
-                      if (e.target.value.length > 0) {
-                        setCustomerSearch(e.target.value);
-                        setShowCustomerDropdown(order.id);
-                      }
-                    }}
-                    className="h-7 text-xs border-0 bg-transparent px-1 w-full"
-                    placeholder="Customer..."
-                    disabled={!isRegistered}
-                  />
-                </div>
+                {order.customer_name && editingCustomerName !== order.id ? (
+                  // Locked state - show customer name with edit button and clickable to open work order
+                  <div className="flex items-center gap-1 h-7">
+                    {order.work_order_id ? (
+                      <button
+                        onClick={() => {
+                          const wo = workOrders.find(w => w.id === order.work_order_id);
+                          if (wo) setSelectedWorkOrder(wo);
+                        }}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline truncate flex-1 text-left"
+                      >
+                        <LinkIcon className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{order.customer_name}</span>
+                      </button>
+                    ) : (
+                      <span className="text-xs truncate flex-1">{order.customer_name}</span>
+                    )}
+                    {isRegistered && (
+                      <button
+                        onClick={() => setEditingCustomerName(order.id)}
+                        className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
+                      >
+                        <Pencil className="w-3 h-3 text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  // Editing state - show input with dropdown
+                  <div className="flex items-center gap-1 h-7">
+                    <Input
+                      value={order.customer_name || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
+                        setCustomerSearch(val);
+                        if (val.length > 0) {
+                          setShowCustomerDropdown(order.id);
+                        } else {
+                          setShowCustomerDropdown(null);
+                        }
+                      }}
+                      onBlur={() => {
+                        const currentOrder = orders.find(o => o.id === order.id);
+                        if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
+                          pendingChangesRef.current[order.id] = {
+                            ...pendingChangesRef.current[order.id],
+                            customer_name: currentOrder.customer_name
+                          };
+                          setHasUnsavedChanges(true);
+                        }
+                        setTimeout(() => {
+                          setShowCustomerDropdown(null);
+                          if (order.customer_name) {
+                            setEditingCustomerName(null);
+                          }
+                        }, 200);
+                      }}
+                      onFocus={(e) => {
+                        if (e.target.value.length > 0) {
+                          setCustomerSearch(e.target.value);
+                          setShowCustomerDropdown(order.id);
+                        }
+                      }}
+                      className="h-7 text-xs border-0 bg-transparent px-1 w-full"
+                      placeholder="Customer..."
+                      disabled={!isRegistered}
+                      autoFocus={editingCustomerName === order.id}
+                    />
+                    {editingCustomerName === order.id && (
+                      <button
+                        onClick={() => setEditingCustomerName(null)}
+                        className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
+                      >
+                        <X className="w-3 h-3 text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+                )}
                 {showCustomerDropdown === order.id && getFilteredWorkOrders(customerSearch).length > 0 && (
                   <div 
                     className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
@@ -550,9 +591,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                         key={wo.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs border-b last:border-0"
                         onMouseDown={() => {
-                          // Update local state immediately
                           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: wo.client_name, work_order_id: wo.id } : o));
-                          // Track changes for save
                           pendingChangesRef.current[order.id] = {
                             ...pendingChangesRef.current[order.id],
                             customer_name: wo.client_name,
@@ -560,6 +599,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                           };
                           setHasUnsavedChanges(true);
                           setShowCustomerDropdown(null);
+                          setEditingCustomerName(null);
                         }}
                       >
                         <div className="font-medium text-gray-800">{wo.client_name}</div>
@@ -900,6 +940,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Work Order Details Dialog */}
+      <WorkOrderDetailsDialog
+        isOpen={!!selectedWorkOrder}
+        onClose={() => setSelectedWorkOrder(null)}
+        workOrder={selectedWorkOrder}
+        onUpdate={() => {
+          loadData(false);
+        }}
+      />
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
