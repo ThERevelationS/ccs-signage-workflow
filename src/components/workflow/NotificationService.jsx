@@ -458,5 +458,38 @@ export const NotificationTriggers = {
   
   automationTriggered: async (workOrder, automationName, changedBy) => {
     await triggerNotification("automation_triggered", workOrder, { automationName, changedBy, eventDescription: `Automation "${automationName}" triggered` });
+  },
+  
+  // Order-specific triggers
+  orderCreated: async (order, changedBy) => {
+    await triggerNotification("order_created", null, { 
+      changedBy, 
+      eventDescription: "New order created",
+      orderData: order
+    });
+  },
+  
+  orderOrdered: async (order, changedBy) => {
+    await triggerNotification("order_ordered", null, { 
+      changedBy, 
+      eventDescription: "Order has been placed",
+      orderData: order
+    });
+  },
+  
+  orderReceived: async (order, changedBy) => {
+    await triggerNotification("order_received", null, { 
+      changedBy, 
+      eventDescription: "Order has been received",
+      orderData: order
+    });
+  },
+  
+  orderDateNeededApproaching: async (order, changedBy) => {
+    await triggerNotification("order_date_needed_approaching", null, { 
+      changedBy, 
+      eventDescription: "Order date needed is approaching",
+      orderData: order
+    });
   }
 };
