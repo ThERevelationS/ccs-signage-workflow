@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { debounce } from "lodash";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,8 @@ import {
   X,
   Check,
   Expand,
-  ExternalLink
+  ExternalLink,
+  Save
 } from "lucide-react";
 import {
   Tooltip,
