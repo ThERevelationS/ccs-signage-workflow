@@ -114,10 +114,24 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   useEffect(() => {
     loadData();
-    // Poll for updates every 15 seconds
-    const interval = setInterval(() => loadData(false), 15000);
-    return () => clearInterval(interval);
   }, [workOrderFilter]);
+
+  // Auto-save every 5 seconds if there are unsaved changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (hasUnsavedChanges && Object.keys(pendingChangesRef.current).length > 0) {
+        saveAllChanges();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [hasUnsavedChanges]);
+
+  // Notify parent of save status
+  useEffect(() => {
+    if (onSaveStatusChange) {
+      onSaveStatusChange({ hasUnsavedChanges, isSaving, lastSaved });
+    }
+  }, [hasUnsavedChanges, isSaving, lastSaved]);
 
   const loadData = async (showLoading = true) => {
     if (showLoading && orders.length === 0) setIsLoading(true);
