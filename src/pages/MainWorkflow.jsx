@@ -75,6 +75,11 @@ export default function MainWorkflow() {
 
   return (
     <div className="min-h-screen p-4">
+      {isFullScreen && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm z-50 pointer-events-none">
+          To exit press ESC
+        </div>
+      )}
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
           <div className="flex gap-2 items-center">
