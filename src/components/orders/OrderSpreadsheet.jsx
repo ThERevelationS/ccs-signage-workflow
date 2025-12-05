@@ -414,19 +414,54 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               </td>
 
               {/* Customer Name with Work Order Link */}
-              <td className="px-1 py-0.5 border-r">
+              <td className="px-1 py-0.5 border-r relative">
                 <div className="flex items-center gap-1 h-7 overflow-hidden">
                   {order.work_order_id && (
                     <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
                   )}
                   <Input
                     value={order.customer_name || ""}
-                    onChange={(e) => updateOrder(order.id, "customer_name", e.target.value)}
+                    onChange={(e) => {
+                      updateOrder(order.id, "customer_name", e.target.value);
+                      setCustomerSearch(e.target.value);
+                      if (e.target.value.length > 0) {
+                        setShowCustomerDropdown(order.id);
+                      } else {
+                        setShowCustomerDropdown(null);
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value.length > 0) {
+                        setCustomerSearch(e.target.value);
+                        setShowCustomerDropdown(order.id);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowCustomerDropdown(null), 200)}
                     className="h-7 text-xs border-0 bg-transparent px-1 w-full"
                     placeholder="Customer..."
                     disabled={!isRegistered}
                   />
                 </div>
+                {showCustomerDropdown === order.id && getFilteredWorkOrders(customerSearch).length > 0 && (
+                  <div 
+                    className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50"
+                  >
+                    {getFilteredWorkOrders(customerSearch).map(wo => (
+                      <div
+                        key={wo.id}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs border-b last:border-0"
+                        onMouseDown={() => {
+                          updateOrder(order.id, "customer_name", wo.client_name);
+                          updateOrder(order.id, "work_order_id", wo.id);
+                          setShowCustomerDropdown(null);
+                        }}
+                      >
+                        <div className="font-medium text-gray-800">{wo.client_name}</div>
+                        <div className="text-gray-500 truncate">{wo.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </td>
 
               {/* Request Type */}
