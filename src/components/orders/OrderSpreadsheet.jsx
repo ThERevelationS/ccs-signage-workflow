@@ -239,6 +239,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     }
   };
 
+  const validateOrderForDateNeeded = (order) => {
+    const missingFields = [];
+    if (!order.customer_name) missingFields.push("Customer Name");
+    if (!order.request_type) missingFields.push("Request Type");
+    if (!order.description) missingFields.push("Description");
+    if (!order.quantity) missingFields.push("Quantity");
+    if (!order.requestor_name) missingFields.push("Requestor");
+    return missingFields;
+  };
+
   const validateOrderForReceived = (order) => {
     const missingFields = [];
     if (!order.customer_name) missingFields.push("Customer Name");
@@ -722,7 +732,17 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       mode="single"
                       selected={order.date_needed ? new Date(order.date_needed) : undefined}
                       onSelect={(date) => {
-                        updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "");
+                        if (date) {
+                          const missingFields = validateOrderForDateNeeded(order);
+                          if (missingFields.length > 0) {
+                            setValidationError({ orderId: order.id, fields: missingFields, type: 'date_needed' });
+                            setOpenDatePopover(null);
+                            return;
+                          }
+                          updateOrder(order.id, "date_needed", format(date, "yyyy-MM-dd"));
+                        } else {
+                          updateOrder(order.id, "date_needed", "");
+                        }
                         setOpenDatePopover(null);
                       }}
                     />
@@ -922,10 +942,14 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              Cannot Mark as Received
+              {validationError?.type === 'date_needed' ? 'Cannot Set Date Needed' : 'Cannot Mark as Received'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
-              <p className="mb-3">Please fill out the following fields before marking this order as received:</p>
+              <p className="mb-3">
+                {validationError?.type === 'date_needed' 
+                  ? 'Please fill out the following fields before setting the date needed:' 
+                  : 'Please fill out the following fields before marking this order as received:'}
+              </p>
               <ul className="list-disc list-inside space-y-1 text-gray-700">
                 {validationError?.fields.map((field, i) => (
                   <li key={i} className="font-medium">{field}</li>
