@@ -274,6 +274,29 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     return colors[index];
   };
 
+  // Filter orders based on search term and status
+  const filteredOrders = orders.filter(order => {
+    // Status filter
+    if (filterStatus !== "all" && order.status !== filterStatus) {
+      return false;
+    }
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      const searchable = [
+        order.customer_name,
+        order.description,
+        order.requestor_name,
+        order.vendor,
+        order.request_type
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!searchable.includes(search)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -300,7 +323,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           )}
   
         </div>
-        <span className="text-xs text-gray-500">{orders.length} orders</span>
+        <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
       </div>
 
       {/* Spreadsheet Table */}
@@ -355,7 +378,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
         {/* Data Rows */}
         <tbody className="max-h-[600px] overflow-y-auto">
-          {orders.map((order, index) => (
+          {filteredOrders.map((order, index) => (
             <tr 
               key={order.id} 
               className={`border-b hover:bg-gray-50 ${getRowColor(order)}`}
