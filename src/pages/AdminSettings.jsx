@@ -83,7 +83,16 @@ const TRIGGER_TYPES = [
   { value: "order_created", label: "Order Created", category: "Orders" },
   { value: "order_ordered", label: "Order Placed (Ordered)", category: "Orders" },
   { value: "order_received", label: "Order Received", category: "Orders" },
-  { value: "order_date_needed_approaching", label: "Order Date Needed Approaching", category: "Orders" }
+  { value: "order_date_needed_approaching", label: "Order Date Needed Approaching", category: "Orders" },
+  { value: "order_customer_name_changed", label: "Customer Name Changed", category: "Order Fields" },
+  { value: "order_request_type_changed", label: "Request Type Changed", category: "Order Fields" },
+  { value: "order_description_changed", label: "Description Changed", category: "Order Fields" },
+  { value: "order_quantity_changed", label: "Quantity Changed", category: "Order Fields" },
+  { value: "order_requestor_changed", label: "Requestor Changed", category: "Order Fields" },
+  { value: "order_date_needed_changed", label: "Date Needed Changed", category: "Order Fields" },
+  { value: "order_date_ordered_changed", label: "Date Ordered Changed", category: "Order Fields" },
+  { value: "order_vendor_changed", label: "Vendor Changed", category: "Order Fields" },
+  { value: "order_date_received_changed", label: "Date Received Changed", category: "Order Fields" }
 ];
 
 const ACTION_TYPES = [
