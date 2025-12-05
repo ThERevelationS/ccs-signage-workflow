@@ -373,19 +373,39 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
           {isRegistered && (
-            <Button
-              onClick={addNewRow}
-              size="sm"
-              className="clay-button border-none text-gray-700 h-8"
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              New Order
-            </Button>
+            <>
+              <Button
+                onClick={addNewRow}
+                size="sm"
+                className="clay-button border-none text-gray-700 h-8"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                New Order
+              </Button>
+              <Button
+                onClick={manualSave}
+                size="sm"
+                disabled={!hasUnsavedChanges || isSaving}
+                className={`clay-button border-none h-8 ${hasUnsavedChanges ? 'text-orange-700' : 'text-gray-500'}`}
+                style={{ background: hasUnsavedChanges ? 'linear-gradient(135deg, #FED7AA 0%, #FBBF24 100%)' : 'linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%)' }}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              </Button>
+            </>
           )}
-  
         </div>
-        <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
+        <div className="flex items-center gap-2">
+          {lastSaved && (
+            <span className="text-xs text-gray-400">
+              Saved {format(lastSaved, "h:mm:ss a")}
+            </span>
+          )}
+          {hasUnsavedChanges && !isSaving && (
+            <span className="text-xs text-orange-500 font-medium">Unsaved changes</span>
+          )}
+          <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
+        </div>
       </div>
 
       {/* Spreadsheet Table */}
