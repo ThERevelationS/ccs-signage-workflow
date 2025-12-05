@@ -309,61 +309,80 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       </div>
 
       {/* Spreadsheet Table */}
-      <div className="border rounded-lg overflow-x-auto" style={{ fontSize: compact ? '11px' : '12px' }}>
+      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed' }}>
+        <colgroup>
+          <col style={{ width: '40px' }} />
+          <col style={{ width: compact ? '140px' : '180px' }} />
+          <col style={{ width: compact ? '90px' : '100px' }} />
+          <col style={{ width: compact ? '200px' : '280px' }} />
+          <col style={{ width: '50px' }} />
+          <col style={{ width: compact ? '80px' : '90px' }} />
+          <col style={{ width: '75px' }} />
+          <col style={{ width: '75px' }} />
+          <col style={{ width: compact ? '70px' : '80px' }} />
+          <col style={{ width: '75px' }} />
+          <col style={{ width: '36px' }} />
+        </colgroup>
         {/* Header Row */}
-        <div className="flex bg-gray-100 border-b font-medium text-gray-700 sticky top-0 z-10 min-w-max">
-          <div className={`${columnWidths.rowNum} px-2 py-2 border-r flex-shrink-0`}>#</div>
-          <div className={`${columnWidths.customer} px-2 py-2 border-r flex-shrink-0`}>Customer Name</div>
-          <div className={`${columnWidths.type} px-2 py-2 border-r flex-shrink-0 flex items-center gap-1`}>
-            Request Type
-            {isRegistered && (
-              <button onClick={() => setEditingRequestTypes(true)} className="hover:bg-gray-200 rounded p-0.5">
-                <Pencil className="w-3 h-3 text-gray-500" />
-              </button>
-            )}
-          </div>
-          <div className={`${columnWidths.desc} px-2 py-2 border-r flex-shrink-0`}>Description</div>
-          <div className={`${columnWidths.qty} px-2 py-2 border-r flex-shrink-0`}>Quantity</div>
-          <div className={`${columnWidths.requestor} px-2 py-2 border-r flex-shrink-0`}>Requestor</div>
-          <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Date Needed</div>
-          <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Ordered Date</div>
-          <div className={`${columnWidths.vendor} px-2 py-2 border-r flex-shrink-0 flex items-center gap-1`}>
-            Vendor
-            {isRegistered && (
-              <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
-                <Pencil className="w-3 h-3 text-gray-500" />
-              </button>
-            )}
-          </div>
-          <div className={`${columnWidths.dates} px-2 py-2 border-r flex-shrink-0`}>Date Received</div>
-          <div className={`${columnWidths.actions} px-2 py-2 flex-shrink-0`}></div>
-        </div>
+        <thead className="bg-gray-100 sticky top-0 z-10">
+          <tr className="border-b">
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Customer Name</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">
+              <div className="flex items-center gap-1">
+                Request Type
+                {isRegistered && (
+                  <button onClick={() => setEditingRequestTypes(true)} className="hover:bg-gray-200 rounded p-0.5">
+                    <Pencil className="w-3 h-3 text-gray-500" />
+                  </button>
+                )}
+              </div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Description</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Qty</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Requestor</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Needed</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Ordered</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">
+              <div className="flex items-center gap-1">
+                Vendor
+                {isRegistered && (
+                  <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
+                    <Pencil className="w-3 h-3 text-gray-500" />
+                  </button>
+                )}
+              </div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Received</th>
+            <th className="px-2 py-2 text-left font-medium text-gray-700"></th>
+          </tr>
+        </thead>
 
         {/* Data Rows */}
-        <div className="max-h-[600px] overflow-y-auto min-w-max">
+        <tbody className="max-h-[600px] overflow-y-auto">
           {orders.map((order, index) => (
-            <div 
+            <tr 
               key={order.id} 
-              className={`flex border-b hover:bg-gray-50 ${getRowColor(order)}`}
+              className={`border-b hover:bg-gray-50 ${getRowColor(order)}`}
             >
               {/* Row Number */}
-              <div className={`${columnWidths.rowNum} px-2 py-1.5 border-r text-gray-500 flex-shrink-0`}>
+              <td className="px-2 py-1.5 border-r text-gray-500">
                 {order.row_number || index + 1}
-              </div>
+              </td>
 
               {/* Customer Name with Work Order Link */}
-              <div className={`${columnWidths.customer} px-1 py-0.5 border-r flex-shrink-0 relative`}>
+              <td className="px-1 py-0.5 border-r">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div 
-                        className="flex items-center gap-1 h-7 cursor-pointer hover:bg-gray-100 rounded px-1"
+                        className="flex items-center gap-1 h-7 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
                         onClick={() => setExpandedCustomer(order.id)}
                       >
                         {order.work_order_id && (
                           <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
                         )}
-                        <span className="text-xs truncate flex-1">{order.customer_name || "Customer..."}</span>
+                        <span className="text-xs truncate">{order.customer_name || "Customer..."}</span>
                         {order.customer_name && order.customer_name.length > 20 && (
                           <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
                         )}
@@ -376,16 +395,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     )}
                   </Tooltip>
                 </TooltipProvider>
-              </div>
+              </td>
 
               {/* Request Type */}
-              <div className={`${columnWidths.type} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Select
                   value={order.request_type || "Other"}
                   onValueChange={(val) => updateOrder(order.id, "request_type", val)}
                   disabled={!isRegistered}
                 >
-                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -394,10 +413,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </td>
 
               {/* Description */}
-              <div className={`${columnWidths.desc} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -405,7 +424,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                         className="h-7 text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
                         onClick={() => setExpandedDescription(order.id)}
                       >
-                        <span className="truncate flex-1">{order.description || "Description..."}</span>
+                        <span className="truncate">{order.description || "Description..."}</span>
                         {order.description && order.description.length > 30 && (
                           <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
                         )}
@@ -418,23 +437,23 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     )}
                   </Tooltip>
                 </TooltipProvider>
-              </div>
+              </td>
 
               {/* Quantity */}
-              <div className={`${columnWidths.qty} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Input
                   value={order.quantity || ""}
                   onChange={(e) => updateOrder(order.id, "quantity", e.target.value)}
-                  className="h-7 text-xs border-0 bg-transparent px-1"
-                  placeholder="Qty"
+                  className="h-7 text-xs border-0 bg-transparent px-1 w-full"
+                  placeholder="-"
                   disabled={!isRegistered}
                 />
-              </div>
+              </td>
 
               {/* Requestor */}
-              <div className={`${columnWidths.requestor} px-1 py-0.5 border-r flex-shrink-0 relative`}>
+              <td className="px-1 py-0.5 border-r relative">
                 <div 
-                  className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1"
+                  className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1 overflow-hidden"
                   onClick={(e) => {
                     if (!isRegistered) return;
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -447,7 +466,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       {order.requestor_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-xs truncate">{order.requestor_name || "Select..."}</span>
+                  <span className="text-xs truncate">{order.requestor_name || "-"}</span>
                 </div>
                 {showRequestorDropdown === order.id && (
                   <div 
@@ -475,10 +494,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     ))}
                   </div>
                 )}
-              </div>
+              </td>
 
               {/* Date Needed */}
-              <div className={`${columnWidths.dates} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Popover>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
@@ -493,10 +512,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     />
                   </PopoverContent>
                 </Popover>
-              </div>
+              </td>
 
               {/* Ordered Date */}
-              <div className={`${columnWidths.dates} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Popover>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
@@ -514,16 +533,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     />
                   </PopoverContent>
                 </Popover>
-              </div>
+              </td>
 
               {/* Vendor */}
-              <div className={`${columnWidths.vendor} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Select
                   value={order.vendor || ""}
                   onValueChange={(val) => updateOrder(order.id, "vendor", val)}
                   disabled={!isRegistered}
                 >
-                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent w-full">
                     <SelectValue placeholder="-" />
                   </SelectTrigger>
                   <SelectContent>
@@ -532,10 +551,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </td>
 
               {/* Date Received */}
-              <div className={`${columnWidths.dates} px-1 py-0.5 border-r flex-shrink-0`}>
+              <td className="px-1 py-0.5 border-r">
                 <Popover>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
@@ -553,10 +572,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     />
                   </PopoverContent>
                 </Popover>
-              </div>
+              </td>
 
               {/* Actions */}
-              <div className={`${columnWidths.actions} px-1 py-0.5 flex-shrink-0 flex items-center justify-center`}>
+              <td className="px-1 py-0.5 text-center">
                 {isRegistered && (
                   <Button
                     variant="ghost"
@@ -567,11 +586,11 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     <Trash2 className="w-3 h-3 text-red-500" />
                   </Button>
                 )}
-              </div>
-            </div>
+              </td>
+            </tr>
           ))}
-        </div>
-      </div>
+        </tbody>
+      </table>
 
       {/* Edit Request Types Dialog */}
       <Dialog open={editingRequestTypes} onOpenChange={setEditingRequestTypes}>
