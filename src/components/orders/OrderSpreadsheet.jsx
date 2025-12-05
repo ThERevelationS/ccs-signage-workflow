@@ -610,9 +610,18 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                     <Calendar
                       mode="single"
                       selected={order.date_received ? new Date(order.date_received) : undefined}
-                      onSelect={(date) => {
+                      onSelect={async (date) => {
                         updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
-                        if (date) updateOrder(order.id, "status", "received");
+                        if (date) {
+                          updateOrder(order.id, "status", "received");
+                          // Trigger notification for order received
+                          try {
+                            const updatedOrder = { ...order, date_received: format(date, "yyyy-MM-dd"), status: "received" };
+                            await NotificationTriggers.orderReceived(updatedOrder, currentUser?.full_name || currentUser?.email);
+                          } catch (e) {
+                            console.error("Error triggering order notification:", e);
+                          }
+                        }
                         setOpenDatePopover(null);
                       }}
                     />
