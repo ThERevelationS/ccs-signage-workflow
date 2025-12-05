@@ -313,7 +313,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   };
 
   const getRowStyle = (order) => {
-    if (order.status === "ordered" || order.status === "received") {
+    if (order.status === "received") {
       return { textDecoration: "line-through", textDecorationColor: "#1F2937", textDecorationThickness: "2px" };
     }
     return {};
@@ -472,21 +472,35 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               </td>
 
               {/* Customer Name with Work Order Link */}
-              <td className="px-1 py-0.5 border-r relative">
-                <div className="flex items-center gap-1 h-7 overflow-hidden">
+              <td className="px-1 py-0.5 border-r relative" style={{ overflow: 'visible' }}>
+                <div className="flex items-center gap-1 h-7">
                   {order.work_order_id && (
                     <LinkIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />
                   )}
                   <Input
                     value={order.customer_name || ""}
                     onChange={(e) => {
-                      updateOrder(order.id, "customer_name", e.target.value);
-                      setCustomerSearch(e.target.value);
-                      if (e.target.value.length > 0) {
+                      const val = e.target.value;
+                      // Update local state immediately without triggering pending changes
+                      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
+                      setCustomerSearch(val);
+                      if (val.length > 0) {
                         setShowCustomerDropdown(order.id);
                       } else {
                         setShowCustomerDropdown(null);
                       }
+                    }}
+                    onBlur={() => {
+                      // Save the change when leaving the field
+                      const currentOrder = orders.find(o => o.id === order.id);
+                      if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
+                        pendingChangesRef.current[order.id] = {
+                          ...pendingChangesRef.current[order.id],
+                          customer_name: currentOrder.customer_name
+                        };
+                        setHasUnsavedChanges(true);
+                      }
+                      setTimeout(() => setShowCustomerDropdown(null), 200);
                     }}
                     onFocus={(e) => {
                       if (e.target.value.length > 0) {
@@ -494,7 +508,6 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                         setShowCustomerDropdown(order.id);
                       }
                     }}
-                    onBlur={() => setTimeout(() => setShowCustomerDropdown(null), 200)}
                     className="h-7 text-xs border-0 bg-transparent px-1 w-full"
                     placeholder="Customer..."
                     disabled={!isRegistered}
@@ -502,7 +515,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 </div>
                 {showCustomerDropdown === order.id && getFilteredWorkOrders(customerSearch).length > 0 && (
                   <div 
-                    className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50"
+                    className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                    style={{ zIndex: 9999 }}
                   >
                     {getFilteredWorkOrders(customerSearch).map(wo => (
                       <div

@@ -222,6 +222,22 @@ const getDarkModeStyles = () => `
   .dark-mode .shadow-lg {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3) !important;
   }
+
+  .dark-mode .clay-card {
+    box-shadow: 
+      8px 8px 20px rgba(0, 0, 0, 0.3),
+      -8px -8px 20px rgba(50, 50, 60, 0.4),
+      inset 2px 2px 8px rgba(60, 60, 70, 0.3),
+      inset -2px -2px 8px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .dark-mode .clay-button {
+    box-shadow: 
+      4px 4px 12px rgba(0, 0, 0, 0.3),
+      -4px -4px 12px rgba(50, 50, 60, 0.4),
+      inset 1px 1px 4px rgba(60, 60, 70, 0.3),
+      inset -1px -1px 4px rgba(0, 0, 0, 0.2) !important;
+  }
 `;
 
 function LayoutContent({ children }) {
