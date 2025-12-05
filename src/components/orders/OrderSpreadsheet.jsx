@@ -20,7 +20,6 @@ import { format } from "date-fns";
 import {
   Plus,
   Trash2,
-  Save,
   Calendar as CalendarIcon,
   Search,
   Link as LinkIcon,
@@ -59,11 +58,11 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingCell, setEditingCell] = useState(null);
-  const [pendingChanges, setPendingChanges] = useState({});
+
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
+
   const [editingRequestTypes, setEditingRequestTypes] = useState(false);
   const [editingVendors, setEditingVendors] = useState(false);
   const [requestTypes, setRequestTypes] = useState(() => {
@@ -161,25 +160,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
     setOrders(updatedOrders);
     
-    // Track pending changes
-    setPendingChanges(prev => ({
-      ...prev,
-      [orderId]: { ...prev[orderId], [field]: value }
-    }));
-  };
-
-  const saveChanges = async () => {
-    setIsSaving(true);
-    try {
-      const updates = Object.entries(pendingChanges);
-      await Promise.all(
-        updates.map(([orderId, changes]) => Order.update(orderId, changes))
-      );
-      setPendingChanges({});
-    } catch (error) {
-      console.error("Error saving changes:", error);
-    }
-    setIsSaving(false);
+    // Auto-save immediately
+    await Order.update(orderId, { [field]: value });
   };
 
   const deleteOrder = async (orderId) => {
@@ -290,18 +272,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               New Order
             </Button>
           )}
-          {Object.keys(pendingChanges).length > 0 && (
-            <Button
-              onClick={saveChanges}
-              size="sm"
-              disabled={isSaving}
-              className="clay-button border-none text-gray-700 h-8"
-              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #FFD6E8 100%)' }}
-            >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-              Save Changes
-            </Button>
-          )}
+  
         </div>
         <span className="text-xs text-gray-500">{orders.length} orders</span>
       </div>
@@ -381,7 +352,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       <div
                         key={wo.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs"
-                        onMouseDown={() => {
+                        onMouseDown={async () => {
                           const updatedOrders = [...orders];
                           const orderIndex = orders.findIndex(o => o.id === order.id);
                           if (orderIndex !== -1) {
@@ -391,14 +362,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                               work_order_id: wo.id 
                             };
                             setOrders(updatedOrders);
-                            setPendingChanges(prev => ({
-                              ...prev,
-                              [order.id]: { 
-                                ...prev[order.id], 
-                                customer_name: wo.client_name,
-                                work_order_id: wo.id 
-                              }
-                            }));
+                            await Order.update(order.id, { 
+                              customer_name: wo.client_name,
+                              work_order_id: wo.id 
+                            });
                           }
                           setShowCustomerDropdown(null);
                         }}
