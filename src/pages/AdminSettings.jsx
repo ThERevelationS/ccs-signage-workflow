@@ -58,50 +58,7 @@ import UserManagement from "../components/admin/UserManagement";
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
 
-const generateAIEmail = async (triggerType, actionContext) => {
-  const triggerLabel = TRIGGER_TYPES.find(t => t.value === triggerType)?.label || triggerType;
-  
-  const prompt = `Generate a professional email for a sign shop workflow automation.
 
-Trigger: ${triggerLabel}
-Context: This email will be sent automatically when "${triggerLabel}" occurs in the workflow system.
-
-Available template variables you MUST use where appropriate:
-- {{title}} - Work order title
-- {{client_name}} - Client name
-- {{description}} - Work order description
-- {{current_stage}} - Current workflow stage
-- {{assigned_to}} - Person assigned
-- {{due_date}} - Due date
-- {{created_by}} - Who created it
-- {{is_asap}} - Whether it's urgent
-- {{previous_stage}} - Previous stage (for stage changes)
-- {{new_stage}} - New stage (for stage changes)
-- {{task_text}} - Task text (for task triggers)
-- {{note_text}} - Note text (for note triggers)
-- {{changed_by}} - Who made the change
-- {{timestamp}} - When it happened
-
-Generate a concise, professional email with:
-1. A clear subject line
-2. A brief body that informs the recipient about what happened and any action needed
-
-Return as JSON: {"subject": "...", "body": "..."}`;
-
-  const result = await base44.integrations.Core.InvokeLLM({
-    prompt,
-    response_json_schema: {
-      type: "object",
-      properties: {
-        subject: { type: "string" },
-        body: { type: "string" }
-      },
-      required: ["subject", "body"]
-    }
-  });
-  
-  return result;
-};
 
 const TRIGGER_TYPES = [
   { value: "work_order_created", label: "Work Order Created", category: "Work Orders" },
@@ -186,7 +143,6 @@ export default function AdminSettings() {
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
-  const [generatingAI, setGeneratingAI] = useState(null); // index of action being generated
 
   const loadEmailGroups = async () => {
     const groups = await EmailGroup.list();
@@ -304,21 +260,6 @@ export default function AdminSettings() {
     return acc;
   }, {});
 
-  const handleGenerateAIEmail = async (actionIndex) => {
-    const triggerType = triggers[0]?.trigger_type;
-    if (!triggerType) return;
-    
-    setGeneratingAI(actionIndex);
-    try {
-      const result = await generateAIEmail(triggerType, {});
-      updateAction(actionIndex, "subject", result.subject);
-      updateAction(actionIndex, "body", result.body);
-    } catch (error) {
-      console.error("Error generating AI email:", error);
-    }
-    setGeneratingAI(null);
-  };
-
   const renderActionConfig = (action, index) => {
     const config = action.action_config || {};
     
@@ -326,29 +267,27 @@ export default function AdminSettings() {
       case "send_email":
         return (
           <div className="space-y-3 mt-3 p-3 bg-white/50 rounded-lg">
-            {/* AI Generate Button */}
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <span className="text-xs text-gray-500">Email Content</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleGenerateAIEmail(index)}
-                disabled={generatingAI === index || !triggers[0]?.trigger_type}
-                className="h-7 text-xs gap-1.5 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 hover:border-purple-300"
-              >
-                {generatingAI === index ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3 h-3 text-purple-500" />
-                    Generate with AI
-                  </>
-                )}
-              </Button>
+            {/* AI Dynamic Email Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                <div>
+                  <Label className="text-sm font-medium">AI-Generated Email</Label>
+                  <p className="text-xs text-gray-500">Dynamically generate email content based on actual order/work order data</p>
+                </div>
+              </div>
+              <Switch 
+                checked={config.use_ai === true} 
+                onCheckedChange={(val) => updateAction(index, "use_ai", val)} 
+              />
             </div>
+
+            {config.use_ai && (
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 text-xs text-purple-700">
+                <div className="font-medium mb-1">How it works:</div>
+                <p>When this automation triggers, AI will generate a personalized email using the actual data from the order/work order (customer name, description, items, dates, etc.) instead of using a fixed template.</p>
+              </div>
+            )}
             
             <div className="space-y-2">
               {(config.recipients || [{ type: "email", value: "" }]).map((recipient, rIndex) => (
@@ -417,14 +356,16 @@ export default function AdminSettings() {
               onChange={(e) => updateAction(index, "body", e.target.value)}
               className="min-h-20"
             />
-            <div className="flex flex-wrap gap-1">
-              {TEMPLATE_VARIABLES.slice(0, 6).map(v => (
-                <Button key={v} variant="outline" size="sm" className="h-5 text-xs px-1"
-                  onClick={() => updateAction(index, "body", (config.body || "") + v)}>
-                  {v}
-                </Button>
-              ))}
-            </div>
+            {!config.use_ai && (
+              <div className="flex flex-wrap gap-1">
+                {TEMPLATE_VARIABLES.slice(0, 6).map(v => (
+                  <Button key={v} variant="outline" size="sm" className="h-5 text-xs px-1"
+                    onClick={() => updateAction(index, "body", (config.body || "") + v)}>
+                    {v}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         );
       
