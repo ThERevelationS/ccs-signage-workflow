@@ -93,21 +93,12 @@ export default function OrderForm() {
                 <SelectItem value="received">Received</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Refresh */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setRefreshKey(k => k + 1)}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
         {/* Spreadsheet */}
         <div className="clay-card p-4">
-          <OrderSpreadsheet key={refreshKey} searchTerm={searchTerm} filterStatus={filterStatus} />
+          <OrderSpreadsheet searchTerm={searchTerm} filterStatus={filterStatus} />
         </div>
       </div>
     </div>
