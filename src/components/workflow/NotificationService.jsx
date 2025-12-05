@@ -414,11 +414,28 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
 
           if (recipients.length === 0) continue;
 
-          const templateSubject = replaceVariables(config.subject || "", workOrder, extraData);
-          const templateBody = replaceVariables(config.body || "", workOrder, extraData);
+          // Apply variable replacements based on context (order vs work order)
+          let templateSubject = config.subject || "";
+          let templateBody = config.body || "";
+          
+          if (extraData.orderData) {
+            templateSubject = replaceOrderVariables(templateSubject, extraData.orderData);
+            templateBody = replaceOrderVariables(templateBody, extraData.orderData);
+          } else {
+            templateSubject = replaceVariables(templateSubject, workOrder, extraData);
+            templateBody = replaceVariables(templateBody, workOrder, extraData);
+          }
 
-          // Generate AI-enhanced email
-          const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
+          // Check if AI generation is enabled
+          let subject, body;
+          if (config.use_ai) {
+            const aiResult = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
+            subject = aiResult.subject;
+            body = aiResult.body;
+          } else {
+            subject = templateSubject;
+            body = `<p>${templateBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+          }
 
           for (const email of recipients) {
             try {
