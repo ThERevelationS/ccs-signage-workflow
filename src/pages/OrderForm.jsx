@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +24,37 @@ export default function OrderForm() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [filterLoaded, setFilterLoaded] = useState(false);
+
+  // Load saved filter preference from user data
+  useEffect(() => {
+    const loadSavedFilter = async () => {
+      if (currentUser?.email) {
+        try {
+          const me = await base44.auth.me();
+          if (me?.order_form_filter) {
+            setFilterStatus(me.order_form_filter);
+          }
+        } catch (e) {
+          // User might not have this field yet
+        }
+      }
+      setFilterLoaded(true);
+    };
+    loadSavedFilter();
+  }, [currentUser?.email]);
+
+  // Save filter preference when it changes
+  const handleFilterChange = async (value) => {
+    setFilterStatus(value);
+    if (currentUser?.email) {
+      try {
+        await base44.auth.updateMe({ order_form_filter: value });
+      } catch (e) {
+        console.error("Error saving filter preference:", e);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen p-6">
@@ -52,7 +84,7 @@ export default function OrderForm() {
             </div>
 
             {/* Filter */}
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-36">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue />

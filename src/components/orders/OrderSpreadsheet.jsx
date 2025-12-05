@@ -260,10 +260,17 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   };
 
   const getRowColor = (order) => {
-    if (order.status === "received") return "bg-green-50";
-    if (order.status === "ordered") return "bg-blue-50";
+    if (order.status === "received") return "bg-green-100";
+    if (order.status === "ordered") return "bg-green-50";
     if (order.status === "cancelled") return "bg-gray-100";
     return "bg-white";
+  };
+
+  const getRowStyle = (order) => {
+    if (order.status === "ordered") {
+      return { textDecoration: "line-through", textDecorationColor: "#9CA3AF" };
+    }
+    return {};
   };
 
   const getRequestorColor = (email) => {
@@ -296,6 +303,14 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       }
     }
     return true;
+  }).sort((a, b) => {
+    // Sort: pending first, then ordered/received at bottom
+    const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
+    const aOrder = statusOrder[a.status] ?? 0;
+    const bOrder = statusOrder[b.status] ?? 0;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    // Within same status, sort by row_number
+    return (a.row_number || 0) - (b.row_number || 0);
   });
 
   if (isLoading) {
@@ -383,6 +398,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
             <tr 
               key={order.id} 
               className={`border-b hover:bg-gray-50 ${getRowColor(order)}`}
+              style={getRowStyle(order)}
             >
               {/* Row Number */}
               <td className="px-2 py-1.5 border-r text-gray-500">
