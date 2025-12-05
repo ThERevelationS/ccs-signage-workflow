@@ -268,7 +268,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   const getRowStyle = (order) => {
     if (order.status === "ordered" || order.status === "received") {
-      return { textDecoration: "line-through", textDecorationColor: "#9CA3AF" };
+      return { textDecoration: "line-through", textDecorationColor: "#1F2937", textDecorationThickness: "2px" };
     }
     return {};
   };
