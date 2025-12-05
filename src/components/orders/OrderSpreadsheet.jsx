@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { debounce } from "lodash";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
@@ -105,8 +106,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   useEffect(() => {
     loadData();
-    // Poll for updates every 5 seconds
-    const interval = setInterval(loadData, 5000);
+    // Poll for updates every 15 seconds
+    const interval = setInterval(() => loadData(false), 15000);
     return () => clearInterval(interval);
   }, [workOrderFilter]);
 
@@ -155,7 +156,21 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     setOrders([...orders, newOrder]);
   };
 
-  const updateOrder = async (orderId, field, value) => {
+  // Debounced save function to prevent rate limiting
+  const debouncedSave = useCallback(
+    debounce(async (orderId, updates) => {
+      try {
+        await Order.update(orderId, updates);
+      } catch (error) {
+        console.error("Error saving order:", error);
+      }
+    }, 800),
+    []
+  );
+
+  const pendingUpdatesRef = useRef({});
+
+  const updateOrder = (orderId, field, value) => {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) return;
     
@@ -163,8 +178,20 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
     setOrders(updatedOrders);
     
-    // Auto-save immediately
-    await Order.update(orderId, { [field]: value });
+    // Accumulate updates and debounce save
+    pendingUpdatesRef.current[orderId] = {
+      ...pendingUpdatesRef.current[orderId],
+      [field]: value
+    };
+    debouncedSave(orderId, pendingUpdatesRef.current[orderId]);
+  };
+
+  const saveOrderImmediately = async (orderId, updates) => {
+    try {
+      await Order.update(orderId, updates);
+    } catch (error) {
+      console.error("Error saving order:", error);
+    }
   };
 
   const deleteOrder = async (orderId) => {
@@ -355,7 +382,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                       <div
                         key={wo.id}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs"
-                        onMouseDown={async () => {
+                        onMouseDown={() => {
                           const updatedOrders = [...orders];
                           const orderIndex = orders.findIndex(o => o.id === order.id);
                           if (orderIndex !== -1) {
@@ -365,7 +392,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                               work_order_id: wo.id 
                             };
                             setOrders(updatedOrders);
-                            await Order.update(order.id, { 
+                            saveOrderImmediately(order.id, { 
                               customer_name: wo.client_name,
                               work_order_id: wo.id 
                             });
