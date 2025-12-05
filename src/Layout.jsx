@@ -330,7 +330,7 @@ function LayoutContent({ children }) {
           className={`top-nav fixed top-0 left-0 right-0 z-50 ${isCollapsed ? (isHovered ? 'show' : 'collapsed') : ''}`}
           onMouseLeave={() => isCollapsed && setIsHovered(false)}
           style={{ 
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+            background: darkMode ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(22, 33, 62, 0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
           }}
@@ -338,22 +338,30 @@ function LayoutContent({ children }) {
           <div className="px-4 py-2">
             <div className="flex items-center justify-between">
               {/* Logo */}
-              <div className="clay-card px-4 py-2 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center" 
+              <div className="clay-card px-3 py-2 flex items-center gap-2 sm:gap-3 sm:px-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center" 
                   style={{ 
                     background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
                     boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
                   }}>
-                  <Home className="w-5 h-5 text-purple-700" />
+                  <Home className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700" />
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <h2 className="font-bold text-gray-800 text-lg leading-tight">Sign Shop</h2>
                   <p className="text-xs text-gray-500">Workflow Manager</p>
                 </div>
               </div>
 
-              {/* Navigation Links */}
-              <div className="flex items-center gap-1 flex-wrap justify-end flex-1 ml-4">
+              {/* Mobile Menu Button */}
+              <button 
+                className="lg:hidden clay-button p-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+
+              {/* Desktop Navigation Links */}
+              <div className="hidden lg:flex items-center gap-1 flex-wrap justify-end flex-1 ml-4">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
@@ -376,6 +384,35 @@ function LayoutContent({ children }) {
                 })}
               </div>
             </div>
+
+            {/* Mobile Navigation Menu */}
+            {mobileMenuOpen && (
+              <div className="lg:hidden mt-2 pb-2 border-t border-gray-200 pt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {navigationItems.map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <Link
+                        key={item.title}
+                        to={item.url}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`px-3 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 ${
+                          isActive ? 'clay-card' : 'hover:bg-gray-100'
+                        }`}
+                        style={isActive ? { 
+                          background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
+                        } : {}}
+                      >
+                        <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
+                        <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : 'text-gray-600'}`}>
+                          {item.title}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </nav>
 
