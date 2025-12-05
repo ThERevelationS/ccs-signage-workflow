@@ -53,13 +53,16 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
-export default function OrderSpreadsheet({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all" }) {
+export default function OrderSpreadsheet({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null }) {
   const { currentUser, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingCell, setEditingCell] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
@@ -79,7 +82,10 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [newVendor, setNewVendor] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
-  const [openDatePopover, setOpenDatePopover] = useState(null); // tracks which date popover is open: "needed-{id}", "ordered-{id}", "received-{id}"
+  const [openDatePopover, setOpenDatePopover] = useState(null);
+  
+  const pendingChangesRef = useRef({}); // Track changes per order ID
+  const originalOrdersRef = useRef({}); // Track original order data for comparison
 
   // Helper to render text with clickable links
   const renderWithLinks = (text) => {
