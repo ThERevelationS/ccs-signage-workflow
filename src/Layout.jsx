@@ -78,7 +78,7 @@ const getDarkModeStyles = () => `
   
   .dark-mode .clay-card {
     background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(22, 33, 62, 0.9)) !important;
-    color: #e4e4e7;
+    color: #e4e4e7 !important;
   }
   
   .dark-mode .clay-button {
@@ -89,25 +89,41 @@ const getDarkModeStyles = () => `
   .dark-mode input, .dark-mode textarea, .dark-mode select {
     background-color: #1e293b !important;
     color: #e4e4e7 !important;
-    border-color: #374151 !important;
+    border-color: #475569 !important;
+  }
+  
+  .dark-mode input::placeholder, .dark-mode textarea::placeholder {
+    color: #64748b !important;
   }
   
   .dark-mode table {
-    background-color: #1e293b;
-    color: #e4e4e7;
+    background-color: #1e293b !important;
+    color: #e4e4e7 !important;
   }
   
   .dark-mode thead {
-    background-color: #374151 !important;
+    background-color: #334155 !important;
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode thead th {
+    background-color: #334155 !important;
+    color: #e4e4e7 !important;
   }
   
   .dark-mode tbody tr {
     background-color: #1e293b !important;
-    border-color: #374151 !important;
+    border-color: #475569 !important;
+    color: #e4e4e7 !important;
   }
   
   .dark-mode tbody tr:hover {
-    background-color: #2d3748 !important;
+    background-color: #334155 !important;
+  }
+  
+  .dark-mode tbody td {
+    border-color: #475569 !important;
+    color: #e4e4e7 !important;
   }
   
   .dark-mode .bg-white {
@@ -115,31 +131,94 @@ const getDarkModeStyles = () => `
   }
   
   .dark-mode .bg-gray-50, .dark-mode .bg-gray-100 {
-    background-color: #374151 !important;
+    background-color: #334155 !important;
   }
   
   .dark-mode .text-gray-800, .dark-mode .text-gray-700, .dark-mode .text-gray-600 {
     color: #e4e4e7 !important;
   }
   
-  .dark-mode .text-gray-500 {
-    color: #9ca3af !important;
+  .dark-mode .text-gray-500, .dark-mode .text-gray-400 {
+    color: #94a3b8 !important;
+  }
+  
+  .dark-mode .border, .dark-mode .border-b, .dark-mode .border-r {
+    border-color: #475569 !important;
   }
   
   .dark-mode .border-gray-200, .dark-mode .border-gray-300 {
-    border-color: #374151 !important;
+    border-color: #475569 !important;
   }
   
   .dark-mode .bg-green-50 {
-    background-color: rgba(34, 197, 94, 0.2) !important;
+    background-color: rgba(34, 197, 94, 0.15) !important;
   }
   
   .dark-mode .bg-green-100 {
-    background-color: rgba(34, 197, 94, 0.3) !important;
+    background-color: rgba(34, 197, 94, 0.25) !important;
   }
   
   .dark-mode .bg-blue-50 {
-    background-color: rgba(59, 130, 246, 0.2) !important;
+    background-color: rgba(59, 130, 246, 0.15) !important;
+  }
+  
+  .dark-mode .bg-orange-50, .dark-mode .bg-yellow-50 {
+    background-color: rgba(251, 146, 60, 0.15) !important;
+  }
+  
+  .dark-mode .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+  }
+  
+  .dark-mode .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+  }
+  
+  .dark-mode [data-radix-popper-content-wrapper] > div,
+  .dark-mode [role="listbox"],
+  .dark-mode [role="dialog"],
+  .dark-mode [data-state="open"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode [role="option"] {
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode [role="option"]:hover,
+  .dark-mode [data-highlighted] {
+    background-color: #334155 !important;
+  }
+  
+  .dark-mode .hover\\:bg-gray-50:hover,
+  .dark-mode .hover\\:bg-gray-100:hover {
+    background-color: #334155 !important;
+  }
+  
+  .dark-mode label {
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
+    color: #f1f5f9 !important;
+  }
+  
+  .dark-mode p {
+    color: #cbd5e1 !important;
+  }
+  
+  .dark-mode .rounded-lg, .dark-mode .rounded-xl {
+    border-color: #475569 !important;
+  }
+  
+  .dark-mode button {
+    color: #e4e4e7 !important;
+  }
+  
+  .dark-mode .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3) !important;
   }
 `;
 
