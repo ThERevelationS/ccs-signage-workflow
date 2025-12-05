@@ -151,7 +151,14 @@ function LayoutContent({ children }) {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsCollapsed(!!document.fullscreenElement);
+      const isFullscreen = !!document.fullscreenElement;
+      setIsCollapsed(isFullscreen);
+      // Prevent logout/email prompt in fullscreen
+      if (isFullscreen) {
+        localStorage.setItem("fullscreenMode", "true");
+      } else {
+        localStorage.removeItem("fullscreenMode");
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);

@@ -102,6 +102,7 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     const users = await loadUsers();
     const storedEmail = localStorage.getItem("userEmail");
+    const isFullscreen = localStorage.getItem("fullscreenMode") === "true" || !!document.fullscreenElement;
     
     if (storedEmail) {
       const user = users.find(u => u.email?.toLowerCase() === storedEmail.toLowerCase());
@@ -112,6 +113,11 @@ export function AuthProvider({ children }) {
         setCurrentUser({ email: storedEmail, full_name: null });
         setIsRegistered(false);
       }
+      setShowEmailPrompt(false);
+    } else if (isFullscreen) {
+      // Don't show email prompt in fullscreen mode
+      setCurrentUser({ email: null, full_name: null });
+      setIsRegistered(false);
       setShowEmailPrompt(false);
     } else {
       setShowEmailPrompt(true);
@@ -192,7 +198,7 @@ export function AuthProvider({ children }) {
     }}>
       {children}
 
-      <Dialog open={showEmailPrompt} onOpenChange={() => {}}>
+      <Dialog open={showEmailPrompt && !document.fullscreenElement} onOpenChange={() => {}}>
         <DialogContent className="clay-card border-none" hideClose>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
