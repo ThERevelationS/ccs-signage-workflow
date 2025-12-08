@@ -9,128 +9,143 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { action, code, folderId } = body;
+    const url = new URL(req.url);
+    const action = url.searchParams.get('action');
 
-    const CLIENT_ID = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-    const CLIENT_SECRET = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
-    const REDIRECT_URI = 'https://app.base44.com/oauth/callback';
-
-    if (action === 'getAuthUrl') {
-      const scopes = [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'email'
-      ];
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${CLIENT_ID}&` +
-        `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent(scopes.join(' '))}&` +
-        `access_type=offline&` +
-        `prompt=consent`;
+    // Step 1: Initiate OAuth flow
+    if (action === 'initiate') {
+      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
+      const redirectUri = `${url.origin}/functions/googleDriveCustomAuth?action=callback`;
       
-      return Response.json({ authUrl });
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id', clientId);
+      authUrl.searchParams.set('redirect_uri', redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/drive.readonly email');
+      authUrl.searchParams.set('access_type', 'offline');
+      authUrl.searchParams.set('state', user.email);
+
+      return Response.redirect(authUrl.toString(), 302);
     }
 
-    if (action === 'exchangeCode') {
+    // Step 2: Handle OAuth callback
+    if (action === 'callback') {
+      const code = url.searchParams.get('code');
+      const state = url.searchParams.get('state');
+      
       if (!code) {
-        return Response.json({ error: 'Code is required' }, { status: 400 });
+        return new Response('Authorization failed', { status: 400 });
       }
 
+      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
+      const redirectUri = `${url.origin}/functions/googleDriveCustomAuth?action=callback`;
+
+      // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           code,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          redirect_uri: REDIRECT_URI,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
           grant_type: 'authorization_code'
         })
       });
 
-      if (!tokenResponse.ok) {
-        const error = await tokenResponse.text();
-        return Response.json({ error: 'Token exchange failed', details: error }, { status: 400 });
-      }
-
       const tokens = await tokenResponse.json();
       
-      // Store tokens for this user
-      await base44.asServiceRole.entities.User.update(user.id, {
-        google_drive_access_token: tokens.access_token,
-        google_drive_refresh_token: tokens.refresh_token
-      });
-
-      return Response.json({ success: true });
-    }
-
-    if (action === 'listFiles') {
-      if (!folderId) {
-        return Response.json({ error: 'folderId is required' }, { status: 400 });
+      if (tokens.error) {
+        return new Response(`Token error: ${tokens.error_description}`, { status: 400 });
       }
 
-      // Get stored token
-      const userData = await base44.asServiceRole.entities.User.get(user.id);
-      let accessToken = userData.google_drive_access_token;
+      // Store tokens for this user
+      const existingUser = await base44.asServiceRole.entities.User.filter({ email: state });
+      if (existingUser.length > 0) {
+        await base44.asServiceRole.entities.User.update(existingUser[0].id, {
+          google_drive_access_token: tokens.access_token,
+          google_drive_refresh_token: tokens.refresh_token
+        });
+      }
 
-      if (!accessToken) {
+      return new Response(`
+        <html>
+          <body>
+            <h2>Google Drive Connected!</h2>
+            <p>You can now close this window and return to the app.</p>
+            <script>window.close();</script>
+          </body>
+        </html>
+      `, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
+
+    // Step 3: List files in folder
+    if (action === 'listFiles') {
+      const body = await req.json();
+      const { folderId } = body;
+
+      if (!folderId) {
+        return Response.json({ error: 'folderId required' }, { status: 400 });
+      }
+
+      // Get user's stored token
+      const users = await base44.asServiceRole.entities.User.filter({ email: user.email });
+      if (users.length === 0 || !users[0].google_drive_access_token) {
         return Response.json({ error: 'Not authenticated', needsAuth: true }, { status: 401 });
       }
 
-      // List files in folder
-      const listUrl = `https://www.googleapis.com/drive/v3/files?` +
-        `q='${folderId}'+in+parents&` +
-        `fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&` +
-        `pageSize=100`;
+      let accessToken = users[0].google_drive_access_token;
 
-      let response = await fetch(listUrl, {
+      // List files in folder
+      const filesUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&pageSize=100`;
+      let filesResponse = await fetch(filesUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
 
-      // If token expired, try to refresh
-      if (response.status === 401 && userData.google_drive_refresh_token) {
+      // If token expired, refresh it
+      if (filesResponse.status === 401 && users[0].google_drive_refresh_token) {
         const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            refresh_token: userData.google_drive_refresh_token,
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
+            refresh_token: users[0].google_drive_refresh_token,
+            client_id: Deno.env.get('GOOGLE_DRIVE_CLIENT_ID'),
+            client_secret: Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET'),
             grant_type: 'refresh_token'
           })
         });
 
-        if (refreshResponse.ok) {
-          const newTokens = await refreshResponse.json();
+        const newTokens = await refreshResponse.json();
+        if (newTokens.access_token) {
           accessToken = newTokens.access_token;
-          
-          await base44.asServiceRole.entities.User.update(user.id, {
+          await base44.asServiceRole.entities.User.update(users[0].id, {
             google_drive_access_token: accessToken
           });
 
-          response = await fetch(listUrl, {
+          filesResponse = await fetch(filesUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
         }
       }
 
-      if (!response.ok) {
-        const error = await response.text();
-        return Response.json({ error: 'Failed to fetch files', details: error }, { status: 400 });
+      const filesData = await filesResponse.json();
+      
+      if (filesData.error) {
+        return Response.json({ error: filesData.error.message }, { status: 400 });
       }
 
-      const data = await response.json();
-      return Response.json({ files: data.files || [] });
+      return Response.json({ files: filesData.files || [] });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
-    
+
   } catch (error) {
     console.error('Function error:', error);
     return Response.json({ 
-      error: 'Server error',
-      message: error.message 
+      error: error.message 
     }, { status: 500 });
   }
 });
