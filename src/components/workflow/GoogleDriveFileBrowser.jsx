@@ -65,7 +65,12 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
 
   const handlePickFiles = async () => {
     if (!pickerInited) {
-      setError('Google Picker is loading...');
+      setError('Google Picker is still loading, please wait...');
+      return;
+    }
+
+    if (!window.google?.picker) {
+      setError('Google Picker API not loaded');
       return;
     }
 
@@ -78,20 +83,27 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       });
 
       if (!result.data.token) {
-        setError('Failed to get access token');
+        setError('Failed to get access token. Please reconnect Google Drive.');
         setLoading(false);
         return;
       }
 
       const view = new window.google.picker.DocsView()
-        .setIncludeFolders(false);
+        .setIncludeFolders(false)
+        .setMode(window.google.picker.DocsViewMode.LIST);
 
       const picker = new window.google.picker.PickerBuilder()
         .addView(view)
         .setOAuthToken(result.data.token)
         .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
-        .setOrigin(window.location.protocol + '//' + window.location.host)
+        .setOrigin(window.location.origin)
+        .setSize(1051, 650)
         .setCallback(async (data) => {
+          if (data.action === window.google.picker.Action.CANCEL) {
+            setLoading(false);
+            return;
+          }
+          
           if (data.action === window.google.picker.Action.PICKED) {
             const fileIds = data.docs.map(doc => doc.id);
             
@@ -113,7 +125,8 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
 
       picker.setVisible(true);
     } catch (err) {
-      setError('Picker error: ' + err.message);
+      console.error('Picker error:', err);
+      setError('Error opening picker: ' + err.message);
       setLoading(false);
     }
   };
