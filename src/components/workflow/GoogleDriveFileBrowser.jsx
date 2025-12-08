@@ -69,12 +69,14 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
       
       const popup = window.open(authUrl, 'google-auth', 'width=600,height=700');
       
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          loadFiles();
-        }
-      }, 500);
+      if (popup) {
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            loadFiles();
+          }
+        }, 500);
+      }
     } catch (err) {
       setError('Failed to initiate Google Drive authentication');
     }
@@ -124,10 +126,16 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
           </div>
           <div className="flex gap-2 justify-center">
           {needsAuth ? (
-            <Button size="sm" onClick={handleAuth} className="bg-blue-600 text-white">
-              <Key className="w-4 h-4 mr-2" />
-              Connect Google Drive
-            </Button>
+            <a 
+              href="https://app.base44.com/dashboard/settings/app-connectors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm" className="bg-blue-600 text-white">
+                <Key className="w-4 h-4 mr-2" />
+                Connect Google Drive
+              </Button>
+            </a>
           ) : (
             <Button size="sm" onClick={loadFiles} variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
