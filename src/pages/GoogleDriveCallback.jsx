@@ -25,8 +25,8 @@ export default function GoogleDriveCallback() {
 
       if (!code || !state) {
         setStatus('error');
-        setMessage('No authorization code received');
-        setTimeout(() => window.close(), 3000);
+        setMessage(`Missing data - code: ${!!code}, state: ${!!state}`);
+        setTimeout(() => window.close(), 5000);
         return;
       }
 
@@ -49,13 +49,13 @@ export default function GoogleDriveCallback() {
         setTimeout(() => window.close(), 2000);
       } else {
         setStatus('error');
-        setMessage('Failed to complete authorization');
-        setTimeout(() => window.close(), 3000);
+        setMessage(`Failed: ${data.error || 'Unknown error'}`);
+        setTimeout(() => window.close(), 5000);
       }
     } catch (err) {
       setStatus('error');
       setMessage(`Error: ${err.message}`);
-      setTimeout(() => window.close(), 3000);
+      setTimeout(() => window.close(), 5000);
     }
   };
 
