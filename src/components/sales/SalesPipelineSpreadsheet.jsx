@@ -969,29 +969,9 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
                   </Select>
                 </td>
 
-                <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.description || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Notes..."
-                    disabled={!isRegistered}
-                  />
-                </td>
-
+                {/* Actions */}
                 <td className="px-1 py-0.5">
                   <div className="flex gap-1">
-                    {isRegistered && wo.sales_status === "won" && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => moveToWorkflow(wo)}
-                        className="h-6 w-6"
-                        title="Move to workflow"
-                      >
-                        <ArrowRight className="w-3 h-3 text-green-600" />
-                      </Button>
-                    )}
                     {isRegistered && (
                       <Button
                         variant="ghost"
@@ -1005,7 +985,8 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
