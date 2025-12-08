@@ -1,0 +1,380 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2 } from "lucide-react";
+import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+
+const WorkOrder = base44.entities.WorkOrder;
+
+const SALES_STATUSES = [
+  { value: "lead", label: "Lead", color: "bg-blue-100" },
+  { value: "quoted", label: "Quoted", color: "bg-yellow-100" },
+  { value: "follow_up", label: "Follow Up", color: "bg-orange-100" },
+  { value: "won", label: "Won", color: "bg-green-100" },
+  { value: "lost", label: "Lost", color: "bg-red-100" },
+  { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
+];
+
+export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus = "all" }) {
+  const { currentUser, isRegistered } = useAuth();
+  const [workOrders, setWorkOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [openDatePopover, setOpenDatePopover] = useState(null);
+
+  useEffect(() => {
+    loadWorkOrders();
+  }, []);
+
+  const loadWorkOrders = async () => {
+    setIsLoading(true);
+    try {
+      const orders = await WorkOrder.filter({ in_pipeline: false, completed: false });
+      setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
+    } catch (error) {
+      console.error("Error loading work orders:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const addNewRow = async () => {
+    if (!isRegistered) return;
+    const newOrder = await WorkOrder.create({
+      title: "",
+      client_name: "",
+      description: "",
+      in_pipeline: false,
+      sales_status: "lead",
+      sales_rep: currentUser?.full_name || currentUser?.email || ""
+    });
+    setWorkOrders([newOrder, ...workOrders]);
+  };
+
+  const updateWorkOrder = async (orderId, field, value) => {
+    await WorkOrder.update(orderId, { [field]: value });
+    setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
+  };
+
+  const deleteWorkOrder = async (orderId) => {
+    await WorkOrder.delete(orderId);
+    setWorkOrders(workOrders.filter(wo => wo.id !== orderId));
+  };
+
+  const moveToWorkflow = async (workOrder) => {
+    await WorkOrder.update(workOrder.id, { 
+      in_pipeline: true,
+      current_stage: "estimating",
+      start_date: workOrder.start_date || format(new Date(), "yyyy-MM-dd"),
+      priority: 0
+    });
+    setWorkOrders(workOrders.filter(wo => wo.id !== workOrder.id));
+  };
+
+  const getRowColor = (status) => {
+    const statusObj = SALES_STATUSES.find(s => s.value === status);
+    return statusObj?.color || "bg-white";
+  };
+
+  const filteredWorkOrders = workOrders.filter(wo => {
+    if (filterStatus !== "all" && wo.sales_status !== filterStatus) return false;
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
+      if (!searchable.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-visible">
+      <div className="flex items-center justify-between mb-2 px-2">
+        {isRegistered && (
+          <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
+            style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
+            <Plus className="w-4 h-4 mr-1" />
+            New Lead
+          </Button>
+        )}
+        <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '11px', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '180px' }} />
+            <col style={{ width: '150px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '200px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '80px' }} />
+            <col style={{ width: '60px' }} />
+          </colgroup>
+
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr className="border-b">
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Project Name</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Client</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Status</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Description</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Contact</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Phone</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Quote Amount</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Probability</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Quote Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Follow Up</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Close Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Sales Rep</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Lead Source</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Location</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredWorkOrders.map((wo) => (
+              <tr key={wo.id} className={`border-b hover:bg-gray-50 ${getRowColor(wo.sales_status)}`}>
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.title || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "title", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Project name..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.client_name || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "client_name", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Client..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Select
+                    value={wo.sales_status || "lead"}
+                    onValueChange={(val) => updateWorkOrder(wo.id, "sales_status", val)}
+                    disabled={!isRegistered}
+                  >
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_STATUSES.map(s => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.description || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Description..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.contact_name || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "contact_name", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Contact..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.contact_phone || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "contact_phone", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Phone..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    type="number"
+                    value={wo.quoted_amount || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "quoted_amount", parseFloat(e.target.value) || 0)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="$0"
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    type="number"
+                    value={wo.probability || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="0%"
+                    min="0"
+                    max="100"
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.quote_date ? format(new Date(wo.quote_date), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={wo.quote_date ? new Date(wo.quote_date) : undefined}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "quote_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.follow_up_date ? format(new Date(wo.follow_up_date), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.close_date ? format(new Date(wo.close_date), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={wo.close_date ? new Date(wo.close_date) : undefined}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "close_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.sales_rep || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "sales_rep", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Rep..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.lead_source || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "lead_source", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Source..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Input
+                    value={wo.install_location || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "install_location", e.target.value)}
+                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    placeholder="Location..."
+                    disabled={!isRegistered}
+                  />
+                </td>
+
+                <td className="px-1 py-0.5">
+                  <div className="flex gap-1">
+                    {isRegistered && wo.sales_status === "won" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => moveToWorkflow(wo)}
+                        className="h-6 w-6"
+                        title="Move to workflow"
+                      >
+                        <ArrowRight className="w-3 h-3 text-green-600" />
+                      </Button>
+                    )}
+                    {isRegistered && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteWorkOrder(wo.id)}
+                        className="h-6 w-6"
+                      >
+                        <Trash2 className="w-3 h-3 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedWorkOrder && (
+        <WorkOrderDetailsDialog
+          isOpen={true}
+          onClose={() => setSelectedWorkOrder(null)}
+          workOrder={selectedWorkOrder}
+          onUpdate={() => loadWorkOrders()}
+        />
+      )}
+    </div>
+  );
+}

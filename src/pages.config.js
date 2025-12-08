@@ -11,6 +11,7 @@ import AdminSettings from './pages/AdminSettings';
 import FeatureReports from './pages/FeatureReports';
 import CompletedReports from './pages/CompletedReports';
 import OrderForm from './pages/OrderForm';
+import SalesPipeline from './pages/SalesPipeline';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +29,7 @@ export const PAGES = {
     "FeatureReports": FeatureReports,
     "CompletedReports": CompletedReports,
     "OrderForm": OrderForm,
+    "SalesPipeline": SalesPipeline,
 }
 
 export const pagesConfig = {
