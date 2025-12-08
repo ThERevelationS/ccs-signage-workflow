@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,10 @@ import {
 import {
   ClipboardList,
   Filter,
-  Search
+  Search,
+  Plus,
+  Upload,
+  Download
 } from "lucide-react";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
 
@@ -22,6 +25,7 @@ export default function OrderForm() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
+  const spreadsheetRef = useRef(null);
 
   // Load saved filter preference from user data
   useEffect(() => {
@@ -68,7 +72,7 @@ export default function OrderForm() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Search */}
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -93,12 +97,48 @@ export default function OrderForm() {
                 <SelectItem value="received">Received</SelectItem>
               </SelectContent>
             </Select>
+
+            {isRegistered && (
+              <Button 
+                onClick={() => spreadsheetRef.current?.addNewRow()}
+                size="sm" 
+                className="h-8 px-2"
+                variant="ghost"
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            )}
+            
+            {isRegistered && (
+              <Button 
+                onClick={() => spreadsheetRef.current?.fileInputRef?.current?.click()}
+                size="sm" 
+                className="h-8 px-2"
+                variant="ghost"
+              >
+                <Upload className="w-3 h-3" />
+              </Button>
+            )}
+
+            <Button 
+              onClick={() => spreadsheetRef.current?.exportToExcel()}
+              size="sm" 
+              className="h-8 px-2"
+              variant="ghost"
+            >
+              <Download className="w-3 h-3" />
+            </Button>
           </div>
         </div>
 
         {/* Spreadsheet */}
         <div className="clay-card p-4">
-          <OrderSpreadsheet searchTerm={searchTerm} filterStatus={filterStatus} />
+          <OrderSpreadsheet 
+            ref={spreadsheetRef}
+            searchTerm={searchTerm} 
+            filterStatus={filterStatus}
+            showButtonsInline={false}
+          />
         </div>
       </div>
     </div>

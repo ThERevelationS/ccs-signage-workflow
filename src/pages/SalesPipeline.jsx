@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2 } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 
 export default function SalesPipeline() {
   const { isRegistered } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const spreadsheetRef = useRef(null);
 
   return (
     <div className="min-h-screen p-4 sm:p-6">
@@ -25,7 +26,7 @@ export default function SalesPipeline() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
@@ -51,11 +52,47 @@ export default function SalesPipeline() {
                 <SelectItem value="on_hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
+
+            {isRegistered && (
+              <Button 
+                onClick={() => spreadsheetRef.current?.addNewRow()}
+                size="sm" 
+                className="h-8 px-2"
+                variant="ghost"
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            )}
+            
+            {isRegistered && (
+              <Button 
+                onClick={() => spreadsheetRef.current?.importFromExcel()}
+                size="sm" 
+                className="h-8 px-2"
+                variant="ghost"
+              >
+                <Upload className="w-3 h-3" />
+              </Button>
+            )}
+
+            <Button 
+              onClick={() => spreadsheetRef.current?.exportToExcel()}
+              size="sm" 
+              className="h-8 px-2"
+              variant="ghost"
+            >
+              <Download className="w-3 h-3" />
+            </Button>
           </div>
         </div>
 
         <div className="clay-card p-4">
-          <SalesPipelineSpreadsheet searchTerm={searchTerm} filterStatus={filterStatus} />
+          <SalesPipelineSpreadsheet 
+            ref={spreadsheetRef}
+            searchTerm={searchTerm} 
+            filterStatus={filterStatus}
+            showButtonsInline={false}
+          />
         </div>
       </div>
     </div>

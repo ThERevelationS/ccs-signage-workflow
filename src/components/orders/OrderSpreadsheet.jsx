@@ -67,7 +67,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
-export default function OrderSpreadsheet({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null }) {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [orders, setOrders] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -446,6 +446,12 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     e.target.value = "";
   };
 
+  React.useImperativeHandle(ref, () => ({
+    addNewRow,
+    exportToExcel,
+    fileInputRef
+  }));
+
   // Filter orders based on search term and status
   const filteredOrders = orders.filter(order => {
     // Status filter
@@ -516,8 +522,9 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       )}
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between mb-2 px-2">
-        <div className="flex items-center gap-2">
+      {showButtonsInline && (
+        <div className="flex items-center justify-between mb-2 px-2">
+          <div className="flex items-center gap-2">
           {/* Import/Export Progress */}
           {importProgress.show && (
             <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">

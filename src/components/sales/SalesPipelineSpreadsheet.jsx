@@ -11,6 +11,7 @@ import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import * as XLSX from "xlsx";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -25,7 +26,7 @@ const SALES_STATUSES = [
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
 
-export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus = "all" }) {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
@@ -39,6 +40,7 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const debounceTimers = useRef({});
   const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
+  const [showForm, setShowForm] = useState(false);
 
   // Predefined list management
   const [leadSources, setLeadSources] = useState(() => {
@@ -93,17 +95,19 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     }
   };
 
-  const addNewRow = async () => {
+  const addNewRow = () => {
     if (!isRegistered) return;
+    setShowForm(true);
+  };
+
+  const handleSaveNew = async (workOrderData) => {
     const newOrder = await WorkOrder.create({
-      title: "",
-      client_name: "",
-      description: "",
+      ...workOrderData,
       in_pipeline: false,
-      sales_status: "lead",
-      sales_rep: currentUser?.full_name || currentUser?.email || ""
+      sales_status: "lead"
     });
     setWorkOrders([newOrder, ...workOrders]);
+    setShowForm(false);
   };
 
   const updateWorkOrder = (orderId, field, value) => {
@@ -321,6 +325,12 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     e.target.value = "";
   };
 
+  React.useImperativeHandle(ref, () => ({
+    addNewRow,
+    exportToExcel,
+    importFromExcel: () => fileInputRef.current?.click()
+  }));
+
   const filteredWorkOrders = workOrders.filter(wo => {
     if (filterStatus !== "all" && wo.sales_status !== filterStatus) return false;
     if (searchTerm) {
@@ -341,48 +351,50 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
 
   return (
     <div className="overflow-visible">
-      <div className="flex items-center justify-between mb-2 px-2">
-        <div className="flex gap-2">
-          {isRegistered && (
-            <>
-              <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
-                <Plus className="w-4 h-4 mr-1" />
-                New Lead
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={importFromExcel}
-                className="hidden"
-                disabled={importProgress.show}
-              />
-              <Button 
-                onClick={() => fileInputRef.current?.click()} 
-                size="sm"
-                disabled={importProgress.show}
-                className="clay-button border-none text-gray-700 h-8"
-                style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
-              >
-                {importProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
-                Import
-              </Button>
-            </>
-          )}
-          <Button 
-            onClick={exportToExcel}
-            disabled={exportProgress.show}
-            size="sm" 
-            className="clay-button border-none text-gray-700 h-8"
-            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
-          >
-            {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-            Export
-          </Button>
+      {showButtonsInline && (
+        <div className="flex items-center justify-between mb-2 px-2">
+          <div className="flex gap-2">
+            {isRegistered && (
+              <>
+                <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
+                  style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  New Lead
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={importFromExcel}
+                  className="hidden"
+                  disabled={importProgress.show}
+                />
+                <Button 
+                  onClick={() => fileInputRef.current?.click()} 
+                  size="sm"
+                  disabled={importProgress.show}
+                  className="clay-button border-none text-gray-700 h-8"
+                  style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
+                >
+                  {importProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+                  Import
+                </Button>
+              </>
+            )}
+            <Button 
+              onClick={exportToExcel}
+              disabled={exportProgress.show}
+              size="sm" 
+              className="clay-button border-none text-gray-700 h-8"
+              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+            >
+              {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+              Export
+            </Button>
+          </div>
+          <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
         </div>
-        <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
-      </div>
+      )}
 
       {/* Import/Export Progress */}
       {importProgress.show && (
@@ -1004,6 +1016,14 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
         />
       )}
 
+      {showForm && (
+        <WorkOrderForm
+          onSave={handleSaveNew}
+          onCancel={() => setShowForm(false)}
+          requireDueDate={false}
+        />
+      )}
+
       {/* Edit Dialog for Dropdown Lists */}
       <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [] })}>
         <DialogContent className="clay-card border-none max-w-md">
@@ -1049,4 +1069,6 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
       </Dialog>
     </div>
   );
-}
+});
+
+export default SalesPipelineSpreadsheet;
