@@ -32,6 +32,8 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const fileInputRef = useRef(null);
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
   const [editInput, setEditInput] = useState("");
+  const [pendingChanges, setPendingChanges] = useState({});
+  const debounceTimers = useRef({});
 
   // Predefined list management
   const [salesReps, setSalesReps] = useState(["Carl", "Twyla", "Brett", "Kyle", "Joe"]);
@@ -66,9 +68,35 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     setWorkOrders([newOrder, ...workOrders]);
   };
 
-  const updateWorkOrder = async (orderId, field, value) => {
-    await WorkOrder.update(orderId, { [field]: value });
+  const updateWorkOrder = (orderId, field, value) => {
+    // Update UI immediately
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
+    
+    // Track pending change
+    setPendingChanges(prev => ({
+      ...prev,
+      [orderId]: { ...prev[orderId], [field]: value }
+    }));
+
+    // Clear existing timer for this order
+    if (debounceTimers.current[orderId]) {
+      clearTimeout(debounceTimers.current[orderId]);
+    }
+
+    // Set new timer to save after 1 second of inactivity
+    debounceTimers.current[orderId] = setTimeout(async () => {
+      const changes = pendingChanges[orderId] || { [field]: value };
+      try {
+        await WorkOrder.update(orderId, changes);
+        setPendingChanges(prev => {
+          const updated = { ...prev };
+          delete updated[orderId];
+          return updated;
+        });
+      } catch (error) {
+        console.error("Error updating work order:", error);
+      }
+    }, 1000);
   };
 
   const deleteWorkOrder = async (orderId) => {
