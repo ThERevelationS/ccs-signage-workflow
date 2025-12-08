@@ -35,28 +35,31 @@ export default function GoogleDriveCallback() {
 
       setMessage('Exchanging authorization code...');
 
+      const requestBody = {
+        action: 'exchangeCode',
+        code: code,
+        userEmail: state
+      };
+      
+      setDetails(`Sending request: ${JSON.stringify(requestBody, null, 2)}`);
+
       const response = await fetch('/api/functions/googleDriveAuth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'exchangeCode',
-          code: code,
-          userEmail: state
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      setDetails(`Response status: ${response.status}`);
+      const responseText = await response.text();
+      setDetails(`Response status: ${response.status}\nResponse: ${responseText}`);
 
       if (!response.ok) {
-        const errorText = await response.text();
         setStatus('error');
         setMessage(`Server error (${response.status})`);
-        setDetails(errorText);
         setTimeout(() => window.close(), 8000);
         return;
       }
 
-      const data = await response.json();
+      const data = JSON.parse(responseText);
 
       if (data.success) {
         setStatus('success');
