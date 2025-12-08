@@ -85,21 +85,42 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
 
     // Set new timer to save after 1 second of inactivity
     debounceTimers.current[orderId] = setTimeout(async () => {
-      const changes = pendingChanges[orderId] || { [field]: value };
       try {
+        const changes = pendingChanges[orderId] || { [field]: value };
         await WorkOrder.update(orderId, changes);
         setPendingChanges(prev => {
           const updated = { ...prev };
           delete updated[orderId];
           return updated;
         });
+        delete debounceTimers.current[orderId];
       } catch (error) {
-        console.error("Error updating work order:", error);
+        // Silently ignore errors for deleted work orders
+        if (!error.message?.includes('not found')) {
+          console.error("Error updating work order:", error);
+        }
+        delete debounceTimers.current[orderId];
+        setPendingChanges(prev => {
+          const updated = { ...prev };
+          delete updated[orderId];
+          return updated;
+        });
       }
     }, 1000);
   };
 
   const deleteWorkOrder = async (orderId) => {
+    // Clear any pending timers and changes for this work order
+    if (debounceTimers.current[orderId]) {
+      clearTimeout(debounceTimers.current[orderId]);
+      delete debounceTimers.current[orderId];
+    }
+    setPendingChanges(prev => {
+      const updated = { ...prev };
+      delete updated[orderId];
+      return updated;
+    });
+    
     await WorkOrder.delete(orderId);
     setWorkOrders(workOrders.filter(wo => wo.id !== orderId));
   };
