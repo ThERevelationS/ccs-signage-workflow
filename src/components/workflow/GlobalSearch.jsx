@@ -9,11 +9,11 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover";
-import { Search, Filter, X, Loader2 } from "lucide-react";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
+import { Search, Filter, X, Loader2, ChevronDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
 
@@ -47,6 +47,7 @@ export default function GlobalSearch() {
   const [filterStages, setFilterStages] = useState([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (showResults && searchTerm.length >= 2) {
@@ -134,7 +135,7 @@ export default function GlobalSearch() {
 
       {/* Search Dialog */}
       <Dialog open={showResults} onOpenChange={setShowResults}>
-        <DialogContent className="clay-card border-none max-w-3xl max-h-[85vh]">
+        <DialogContent className="clay-card border-none max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Search className="w-5 h-5 text-purple-600" />
@@ -142,89 +143,113 @@ export default function GlobalSearch() {
             </DialogTitle>
           </DialogHeader>
 
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Type to search work orders..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-              className="h-10 pl-10 pr-4"
-            />
-            {isSearching && (
-              <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
-            )}
-          </div>
-
-          {/* Filters Section */}
-          <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">Filters</Label>
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-6 px-2 text-xs"
-                >
-                  <X className="w-3 h-3 mr-1" />
-                  Clear All
-                </Button>
+          <div className="flex flex-col gap-3 flex-1 overflow-hidden">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Type to search work orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+                className="h-10 pl-10 pr-4"
+              />
+              {isSearching && (
+                <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
               )}
             </div>
 
-            {/* Stage filters */}
-            <div>
-              <Label className="text-xs mb-2 block">Stages</Label>
-              <div className="flex flex-wrap gap-1">
-                {stageOrder.map(stage => (
-                  <button
-                    key={stage}
-                    onClick={() => toggleStageFilter(stage)}
-                    className={`px-2 py-1 text-xs rounded-lg transition-all ${
-                      filterStages.includes(stage)
-                        ? 'bg-purple-100 text-purple-700 font-medium border border-purple-300'
-                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                    }`}
-                  >
-                    {stageNames[stage]}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Collapsible Filters */}
+            <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between clay-button border-none h-9"
+                  style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    <span className="font-semibold">Filters</span>
+                    {hasActiveFilters && (
+                      <span className="bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {(filterStages.length > 0 ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0)}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  {hasActiveFilters && (
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Clear All
+                      </Button>
+                    </div>
+                  )}
 
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs mb-1 block">From Date</Label>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">To Date</Label>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-          </div>
+                  {/* Stage filters */}
+                  <div>
+                    <Label className="text-xs mb-2 block">Stages</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {stageOrder.map(stage => (
+                        <button
+                          key={stage}
+                          onClick={() => toggleStageFilter(stage)}
+                          className={`px-2 py-1 text-xs rounded-lg transition-all ${
+                            filterStages.includes(stage)
+                              ? 'bg-purple-100 text-purple-700 font-medium border border-purple-300'
+                              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          {stageNames[stage]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-          {/* Results count */}
-          {searchTerm.length >= 2 && (
-            <div className="text-sm text-gray-500">
-              {results.length} {results.length === 1 ? 'result' : 'results'} found
-            </div>
-          )}
+                  {/* Date Range */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs mb-1 block">From Date</Label>
+                      <Input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block">To Date</Label>
+                      <Input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
-          <div className="overflow-y-auto max-h-[50vh] space-y-2">
+            {/* Results count */}
+            {searchTerm.length >= 2 && (
+              <div className="text-sm text-gray-500">
+                {results.length} {results.length === 1 ? 'result' : 'results'} found
+              </div>
+            )}
+
+            {/* Results Container */}
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
             {searchTerm.length < 2 ? (
               <div className="text-center py-8 text-gray-500">
                 <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -287,6 +312,7 @@ export default function GlobalSearch() {
                 </div>
               ))
             )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
