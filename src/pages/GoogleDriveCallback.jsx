@@ -14,6 +14,7 @@ export default function GoogleDriveCallback() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      const state = urlParams.get('state');
       const error = urlParams.get('error');
 
       if (error) {
@@ -23,7 +24,7 @@ export default function GoogleDriveCallback() {
         return;
       }
 
-      if (!code) {
+      if (!code || !state) {
         setStatus('error');
         setMessage('No authorization code received');
         setTimeout(() => window.close(), 3000);
@@ -32,7 +33,8 @@ export default function GoogleDriveCallback() {
 
       const result = await base44.functions.invoke('googleDriveAuth', {
         action: 'exchangeCode',
-        code
+        code,
+        userEmail: state
       });
 
       if (result.data.success) {

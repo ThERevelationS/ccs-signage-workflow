@@ -28,6 +28,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'exchangeCode') {
+      const { userEmail } = await req.json();
+      
+      if (!userEmail) {
+        return Response.json({ error: 'User email required' }, { status: 400 });
+      }
+
       const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
       const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
       const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
@@ -50,8 +56,13 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Failed to get access token' }, { status: 400 });
       }
 
-      // Store tokens using Base44's service role
-      await base44.asServiceRole.entities.User.update(user.id, {
+      // Find user by email and update their tokens using service role
+      const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+      if (users.length === 0) {
+        return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      await base44.asServiceRole.entities.User.update(users[0].id, {
         google_drive_token: tokens.access_token,
         google_drive_refresh_token: tokens.refresh_token
       });
