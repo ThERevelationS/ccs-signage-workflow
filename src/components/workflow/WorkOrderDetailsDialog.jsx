@@ -499,7 +499,7 @@ export default function WorkOrderDetailsDialog({
           <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-sm">Notes</h3>
-              <Popover>
+              <Popover open={editingField === 'addNote'} onOpenChange={(open) => open ? setEditingField('addNote') : setEditingField(null)}>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 px-3 text-xs">
                     <Plus className="w-3 h-3 mr-1" />
@@ -539,13 +539,14 @@ export default function WorkOrderDetailsDialog({
                     <Button
                       size="sm"
                       className="w-full"
-                      onClick={() => {
+                      onClick={async () => {
                         if (editValues.noteType && editValues.noteText) {
-                          handleAddWorkNote({
+                          await handleAddWorkNote({
                             type: editValues.noteType,
                             text: editValues.noteText
                           });
                           setEditValues({});
+                          setEditingField(null);
                         }
                       }}>
                       Add Note
