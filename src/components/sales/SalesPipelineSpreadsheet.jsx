@@ -469,6 +469,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Prmt</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Appr</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Inst</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Quote Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Follow Up</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Close Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '70px' }}>Probability</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Next Follow Up</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Start Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Lead Source</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Project Type</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>Actions</th>
             </tr>
           </thead>
