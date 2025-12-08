@@ -40,8 +40,10 @@ import {
   EyeOff,
   Upload,
   Check,
-  Pencil } from
-"lucide-react";
+  Pencil,
+  FolderOpen,
+  ExternalLink
+} from "lucide-react";
 import { format } from "date-fns";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Link } from "react-router-dom";
