@@ -390,16 +390,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setExportProgress({ show: true, progress: 0 });
     
     const exportData = filteredOrders.map(order => ({
-      "Customer Name": order.customer_name || "",
-      "Request Type": order.request_type || "",
+      "Customer": order.customer_name || "",
+      "Type": order.request_type || "",
       "Description": order.description || "",
-      "Quantity": order.quantity || "",
+      "How much?": order.quantity || "",
       "Requestor": order.requestor_name || "",
-      "Date Needed": order.date_needed || "",
-      "Date Ordered": order.date_ordered || "",
-      "Vendor": order.vendor || "",
-      "Date Received": order.date_received || "",
-      "Status": order.status || ""
+      "Date Needed (Requester fills out this column)": order.date_needed || "",
+      "Ordered Date (Carl Fills out this column)": order.date_ordered || "",
+      "Vendor (Anyone can fill out this column)": order.vendor || "",
+      "Date Recieved (Anyone can fill out this column)": order.date_received || ""
     }));
 
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -431,23 +430,60 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       setImportProgress({ show: true, current: 0, total: jsonData.length });
 
+      // Track existing orders to avoid duplicates
+      const existingOrders = new Set(
+        orders.map(o => `${o.customer_name}|${o.description}|${o.request_type}`.toLowerCase())
+      );
+
+      let importedCount = 0;
+
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
+        
+        // Skip empty rows
+        if (!row["Customer"] && !row["Description"]) {
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          continue;
+        }
+
+        // Check for duplicates
+        const uniqueKey = `${row["Customer"] || ""}|${row["Description"] || ""}|${row["Type"] || ""}`.toLowerCase();
+        if (existingOrders.has(uniqueKey)) {
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          continue;
+        }
+
+        const dateReceived = row["Date Recieved (Anyone can fill out this column)"] || "";
+        const dateOrdered = row["Ordered Date (Carl Fills out this column)"] || "";
+        
+        // Determine status based on dates
+        let status = "pending";
+        if (dateReceived) {
+          status = "received";
+        } else if (dateOrdered) {
+          status = "ordered";
+        }
+
+        // Create order with import flag to suppress notifications
         await Order.create({
-          customer_name: row["Customer Name"] || "",
-          request_type: row["Request Type"] || requestTypes[0] || "Other",
+          customer_name: row["Customer"] || "",
+          request_type: row["Type"] || requestTypes[0] || "Other",
           description: row["Description"] || "",
-          quantity: row["Quantity"] || "",
+          quantity: row["How much?"] || "",
           requestor_email: currentUser?.email || "",
           requestor_name: row["Requestor"] || currentUser?.full_name || "",
-          date_needed: row["Date Needed"] || "",
-          date_ordered: row["Date Ordered"] || "",
-          vendor: row["Vendor"] || "",
-          date_received: row["Date Received"] || "",
-          status: row["Status"] || "pending",
-          row_number: maxRowNumber + i + 1,
-          work_order_id: workOrderFilter || ""
+          date_needed: row["Date Needed (Requester fills out this column)"] || "",
+          date_ordered: dateOrdered,
+          vendor: row["Vendor (Anyone can fill out this column)"] || "",
+          date_received: dateReceived,
+          status: status,
+          row_number: maxRowNumber + importedCount + 1,
+          work_order_id: workOrderFilter || "",
+          is_import: true // Flag to suppress email notifications
         });
+        
+        existingOrders.add(uniqueKey);
+        importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
       }
 
