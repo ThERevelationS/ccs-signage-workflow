@@ -698,6 +698,53 @@ export default function WorkOrderDetailsDialog({
                 </Popover>
               </div>
             )}
+            {/* Google Drive - Full Width Large Section */}
+            <div className="clay-card p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5 text-green-600" />
+                  Google Drive Folder
+                </h3>
+                <div className="flex items-center gap-2">
+                  {editingField === 'google_drive_folder_url' ? (
+                    <>
+                      <Input
+                        value={editValues.google_drive_folder_url || ''}
+                        onChange={(e) => setEditValues({ ...editValues, google_drive_folder_url: e.target.value })}
+                        placeholder="https://drive.google.com/drive/folders/..."
+                        className="w-96"
+                      />
+                      <Button size="sm" onClick={() => saveEdit('google_drive_folder_url')}>
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {workOrder.google_drive_folder_url ? (
+                        <a
+                          href={workOrder.google_drive_folder_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          Open in Drive <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-400">No folder linked</span>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => startEdit('google_drive_folder_url')}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} />
+            </div>
+
             <div className="grid grid-cols-3 gap-6">
               
               {/* Left Column - Core Info */}
@@ -733,44 +780,6 @@ export default function WorkOrderDetailsDialog({
 
                 {/* Basic Info - Editable */}
                 <div className="clay-card p-4 space-y-3">
-                  {/* Google Drive Folder */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
-                        <FolderOpen className="w-4 h-4 text-green-600" />
-                        <span className="font-medium">Drive Folder:</span>
-                        {workOrder.google_drive_folder_url ? (
-                          <a
-                            href={workOrder.google_drive_folder_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Open <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-gray-400">Not set</span>
-                        )}
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="clay-card w-96">
-                      <Label>Google Drive Folder URL</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          value={editValues.google_drive_folder_url || workOrder.google_drive_folder_url || ''}
-                          onChange={(e) => setEditValues({ ...editValues, google_drive_folder_url: e.target.value })}
-                          placeholder="https://drive.google.com/drive/folders/..." />
-                        <Button size="sm" onClick={() => saveEdit('google_drive_folder_url')}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Paste the Google Drive folder URL here to link it to this work order.
-                      </p>
-                    </PopoverContent>
-                  </Popover>
-
                   <Popover>
                     <PopoverTrigger asChild>
                       <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
@@ -848,17 +857,6 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </PopoverContent>
                 </Popover>
-
-                {/* Google Drive File Browser */}
-                <div className="clay-card p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <FolderOpen className="w-4 h-4 text-green-600" />
-                      Google Drive Files
-                    </h3>
-                  </div>
-                  <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} />
-                </div>
 
                 {/* Relationships */}
                 <div className="clay-card p-4">
