@@ -521,86 +521,19 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         </div>
       )}
 
-      {/* Toolbar */}
-      {showButtonsInline && (
-        <div className="flex items-center justify-between mb-2 px-2">
-          <div className="flex items-center gap-2">
-          {!showButtonsInline && <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>}
-          {/* Import/Export Progress */}
-          {importProgress.show && (
-            <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">
-              <span className="text-xs font-medium">Importing...</span>
-              <span className="text-xs text-gray-500">{importProgress.current}/{importProgress.total}</span>
-            </div>
-          )}
-          {exportProgress.show && (
-            <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">
-              <span className="text-xs font-medium">Exporting...</span>
-              <span className="text-xs text-gray-500">{exportProgress.progress}%</span>
-            </div>
-          )}
-          {isRegistered && (
-            <>
-              <Button
-                onClick={addNewRow}
-                size="sm"
-                className="clay-button border-none text-gray-700 h-8"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                New Order
-              </Button>
-              <Button
-                onClick={manualSave}
-                size="sm"
-                disabled={!hasUnsavedChanges || isSaving}
-                className={`clay-button border-none h-8 ${hasUnsavedChanges ? 'text-orange-700' : 'text-gray-500'}`}
-                style={{ background: hasUnsavedChanges ? 'linear-gradient(135deg, #FED7AA 0%, #FBBF24 100%)' : 'linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%)' }}
-              >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={importFromExcel}
-                className="hidden"
-                disabled={importProgress.show}
-              />
-              <Button 
-                onClick={() => fileInputRef.current?.click()} 
-                size="sm"
-                disabled={importProgress.show}
-                className="clay-button border-none text-gray-700 h-8"
-                style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
-              >
-                {importProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
-                Import
-              </Button>
-            </>
-          )}
-          <Button 
-            onClick={exportToExcel}
-            disabled={exportProgress.show}
-            size="sm" 
-            className="clay-button border-none text-gray-700 h-8"
-            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
-          >
-            {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-            Export
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          {lastSaved && (
-            <span className="text-xs text-gray-400">
-              Saved {format(lastSaved, "h:mm:ss a")}
-            </span>
-          )}
-          {hasUnsavedChanges && !isSaving && (
-            <span className="text-xs text-orange-500 font-medium">Unsaved changes</span>
-          )}
           <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
-        </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {lastSaved && (
+              <span className="text-xs text-gray-400">
+                Saved {format(lastSaved, "h:mm:ss a")}
+              </span>
+            )}
+            {hasUnsavedChanges && !isSaving && (
+              <span className="text-xs text-orange-500 font-medium">Unsaved changes</span>
+            )}
+            <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
+          </div>
         </div>
       )}
 
