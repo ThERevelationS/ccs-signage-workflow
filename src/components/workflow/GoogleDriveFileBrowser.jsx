@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function GoogleDriveFileBrowser({ folderUrl }) {
+  const { currentUser } = useAuth();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   useEffect(() => {
     if (folderUrl) {
@@ -24,6 +27,25 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
     return match ? match[1] : null;
   };
 
+  const handleGoogleAuth = async () => {
+    try {
+      setLoading(true);
+      const result = await base44.functions.invoke('googleDriveAuth', { action: 'getAuthUrl' });
+      const authWindow = window.open(result.data.authUrl, 'Google Auth', 'width=500,height=600');
+      
+      const checkAuth = setInterval(async () => {
+        if (authWindow.closed) {
+          clearInterval(checkAuth);
+          setLoading(false);
+          loadFiles();
+        }
+      }, 1000);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   const loadFiles = async () => {
     const folderId = extractFolderId(folderUrl);
     if (!folderId) {
@@ -33,12 +55,23 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
 
     setLoading(true);
     setError(null);
+    setNeedsAuth(false);
 
     try {
       const result = await base44.functions.invoke('listDriveFiles', { folderId });
-      setFiles(result.data.files || []);
+      if (result.data.needsAuth) {
+        setNeedsAuth(true);
+        setError("Please connect your Google Drive account to view files");
+      } else {
+        setFiles(result.data.files || []);
+      }
     } catch (err) {
-      setError(err.message || "Failed to load files from Google Drive");
+      if (err.message?.includes('Not authenticated') || err.message?.includes('401')) {
+        setNeedsAuth(true);
+        setError("Please connect your Google Drive account to view files");
+      } else {
+        setError(err.message || "Failed to load files from Google Drive");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,10 +119,19 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
           <p className="font-medium">Error loading files</p>
           <p className="text-sm mt-1">{error}</p>
         </div>
-        <Button size="sm" onClick={loadFiles} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry
-        </Button>
+        <div className="flex gap-2 justify-center">
+          {needsAuth ? (
+            <Button size="sm" onClick={handleGoogleAuth} className="bg-blue-600 text-white">
+              <LinkIcon className="w-4 h-4 mr-2" />
+              Connect Google Drive
+            </Button>
+          ) : (
+            <Button size="sm" onClick={loadFiles} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
