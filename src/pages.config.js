@@ -10,6 +10,7 @@ import FeatureReports from './pages/FeatureReports';
 import CompletedReports from './pages/CompletedReports';
 import OrderForm from './pages/OrderForm';
 import SalesPipeline from './pages/SalesPipeline';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "CompletedReports": CompletedReports,
     "OrderForm": OrderForm,
     "SalesPipeline": SalesPipeline,
+    "PrivacyPolicy": PrivacyPolicy,
 }
 
 export const pagesConfig = {
