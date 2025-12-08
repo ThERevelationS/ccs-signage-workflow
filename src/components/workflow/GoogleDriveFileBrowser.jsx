@@ -8,6 +8,7 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   useEffect(() => {
     if (folderUrl) {
@@ -33,6 +34,7 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
 
     setLoading(true);
     setError(null);
+    setNeedsAuth(false);
 
     try {
       const result = await base44.functions.invoke('googleDriveAuth', { 
@@ -40,15 +42,41 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
         folderId 
       });
       
-      if (result.data.error) {
+      if (result.data.error && result.data.error.includes('Not authenticated')) {
+        setNeedsAuth(true);
+        setError('Please connect your Google Drive account');
+      } else if (result.data.error) {
         setError(result.data.error);
       } else {
         setFiles(result.data.files || []);
       }
     } catch (err) {
-      setError(err.message || "Failed to load files from Google Drive");
+      if (err.message?.includes('401')) {
+        setNeedsAuth(true);
+        setError('Please connect your Google Drive account');
+      } else {
+        setError(err.message || "Failed to load files from Google Drive");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAuth = async () => {
+    try {
+      const result = await base44.functions.invoke('googleDriveAuth', { action: 'getAuthUrl' });
+      const authUrl = result.data.authUrl;
+      
+      const popup = window.open(authUrl, 'google-auth', 'width=600,height=700');
+      
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          loadFiles();
+        }
+      }, 500);
+    } catch (err) {
+      setError('Failed to initiate Google Drive authentication');
     }
   };
 
@@ -94,10 +122,19 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
           <p className="font-medium">Error loading files</p>
           <p className="text-sm mt-1">{error}</p>
           </div>
-          <Button size="sm" onClick={loadFiles} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry
-          </Button>
+          <div className="flex gap-2 justify-center">
+          {needsAuth ? (
+            <Button size="sm" onClick={handleAuth} className="bg-blue-600 text-white">
+              <Key className="w-4 h-4 mr-2" />
+              Connect Google Drive
+            </Button>
+          ) : (
+            <Button size="sm" onClick={loadFiles} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          )}
+          </div>
       </div>
     );
   }
