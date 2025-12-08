@@ -3,12 +3,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { action, code, folderId, userEmail } = await req.json();
+    const body = await req.json();
+    const { action, code, folderId, userEmail } = body;
 
     // exchangeCode doesn't need auth since it uses service role with userEmail from OAuth state
     if (action === 'exchangeCode') {
       if (!userEmail || !code) {
-        return Response.json({ error: 'User email and code required' }, { status: 400 });
+        return Response.json({ error: 'User email and code required', received: { userEmail, code } }, { status: 400 });
       }
 
       const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
