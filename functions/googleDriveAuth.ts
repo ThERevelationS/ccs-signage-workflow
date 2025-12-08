@@ -4,125 +4,48 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
   try {
-    const body = await req.json();
-    const { action, code, folderId, userEmail } = body;
-
-    console.log('Action:', action);
-    console.log('Has code:', !!code);
-    console.log('Has userEmail:', !!userEmail);
-    console.log('Has folderId:', !!folderId);
-
-    // Handle token exchange - doesn't need user auth
-    if (action === 'exchangeCode') {
-      if (!userEmail || !code) {
-        return Response.json({ 
-          error: 'Missing required parameters',
-          hasUserEmail: !!userEmail,
-          hasCode: !!code
-        }, { status: 400 });
-      }
-
-      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-      const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
-      
-      console.log('Has clientId:', !!clientId);
-      console.log('Has clientSecret:', !!clientSecret);
-
-      if (!clientId || !clientSecret) {
-        return Response.json({ error: 'Google Drive credentials not configured' }, { status: 500 });
-      }
-
-      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
-
-      console.log('Exchanging code with Google...');
-
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: clientId,
-          client_secret: clientSecret,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code'
-        }).toString()
-      });
-
-      const tokens = await tokenResponse.json();
-      
-      console.log('Token response status:', tokenResponse.status);
-      console.log('Has access_token:', !!tokens.access_token);
-      console.log('Token error:', tokens.error);
-      
-      if (!tokens.access_token) {
-        return Response.json({ 
-          error: 'Google token exchange failed',
-          details: tokens
-        }, { status: 400 });
-      }
-
-      // Store tokens for user
-      const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-      
-      console.log('Found users:', users.length);
-      
-      if (users.length === 0) {
-        return Response.json({ error: 'User not found' }, { status: 404 });
-      }
-
-      await base44.asServiceRole.entities.User.update(users[0].id, {
-        google_drive_token: tokens.access_token,
-        google_drive_refresh_token: tokens.refresh_token
-      });
-
-      console.log('Tokens saved successfully');
-
-      return Response.json({ success: true });
-    }
-
-    // All other actions need authentication
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (action === 'getAuthUrl') {
-      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
-      
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly')}&` +
-        `access_type=offline&` +
-        `prompt=consent&` +
-        `state=${user.email}`;
-      
-      return Response.json({ authUrl });
-    }
+    const body = await req.json();
+    const { action, folderId } = body;
 
     if (action === 'listFiles') {
-      const userData = await base44.asServiceRole.entities.User.filter({ email: user.email });
-      const token = userData[0]?.google_drive_token;
+      // Get token from Base44's googledrive connector
+      const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
 
-      if (!token) {
-        return Response.json({ error: 'Not authenticated with Google Drive' }, { status: 401 });
+      if (!accessToken) {
+        return Response.json({ error: 'Not authenticated with Google Drive. Please connect via Dashboard > Settings > App Connectors' }, { status: 401 });
       }
 
-      const filesUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&pageSize=100`;
+      // Instead of listing folder, try to get specific file IDs from the folder URL
+      // For now, just try to access the folder metadata to verify permissions
+      const folderUrl = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType,capabilities`;
       
-      const filesResponse = await fetch(filesUrl, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const folderResponse = await fetch(folderUrl, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
       });
 
-      if (!filesResponse.ok) {
-        const error = await filesResponse.text();
-        return Response.json({ error: `Google Drive API error: ${error}` }, { status: filesResponse.status });
+      if (!folderResponse.ok) {
+        const error = await folderResponse.text();
+        return Response.json({ 
+          error: `Cannot access this folder with current permissions. The drive.file scope only allows access to files created by this app or explicitly opened by you.`,
+          details: error,
+          suggestion: 'Share individual files with the app or use a service account'
+        }, { status: folderResponse.status });
       }
 
-      const data = await filesResponse.json();
-      return Response.json({ files: data.files || [] });
+      const folderData = await folderResponse.json();
+      
+      // With drive.file scope, we can't list arbitrary folders
+      // Return a message explaining the limitation
+      return Response.json({ 
+        files: [],
+        warning: 'Limited access: Base44\'s Google Drive connector uses drive.file scope, which only allows access to files created by or opened by this app. To see all folder files, they must be individually shared with the app.',
+        folder: folderData
+      });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });

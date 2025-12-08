@@ -10,7 +10,6 @@ import FeatureReports from './pages/FeatureReports';
 import CompletedReports from './pages/CompletedReports';
 import OrderForm from './pages/OrderForm';
 import SalesPipeline from './pages/SalesPipeline';
-import GoogleDriveCallback from './pages/GoogleDriveCallback';
 import __Layout from './Layout.jsx';
 
 
@@ -27,7 +26,6 @@ export const PAGES = {
     "CompletedReports": CompletedReports,
     "OrderForm": OrderForm,
     "SalesPipeline": SalesPipeline,
-    "GoogleDriveCallback": GoogleDriveCallback,
 }
 
 export const pagesConfig = {

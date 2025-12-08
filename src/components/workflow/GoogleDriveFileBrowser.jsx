@@ -44,9 +44,12 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
       
       if (result.data.error && result.data.error.includes('Not authenticated')) {
         setNeedsAuth(true);
-        setError('Please connect your Google Drive account');
+        setError('Please connect Google Drive via Dashboard > App Connectors');
       } else if (result.data.error) {
         setError(result.data.error);
+      } else if (result.data.warning) {
+        setError(result.data.warning);
+        setFiles([]);
       } else {
         setFiles(result.data.files || []);
       }
@@ -62,24 +65,8 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
     }
   };
 
-  const handleAuth = async () => {
-    try {
-      const result = await base44.functions.invoke('googleDriveAuth', { action: 'getAuthUrl' });
-      const authUrl = result.data.authUrl;
-      
-      const popup = window.open(authUrl, 'google-auth', 'width=600,height=700');
-      
-      if (popup) {
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed);
-            loadFiles();
-          }
-        }, 500);
-      }
-    } catch (err) {
-      setError('Failed to initiate Google Drive authentication');
-    }
+  const handleAuth = () => {
+    window.open('https://app.base44.com/dashboard/settings/app-connectors', '_blank');
   };
 
   const getFileIcon = (mimeType) => {
