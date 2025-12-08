@@ -487,6 +487,34 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
 
   return (
     <div className="overflow-visible">
+      {/* Import/Export Progress */}
+      {importProgress.show && (
+        <div className="mb-3 px-2">
+          <div className="clay-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Importing...</span>
+              <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      {exportProgress.show && (
+        <div className="mb-3 px-2">
+          <div className="clay-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Exporting...</span>
+              <span className="text-xs text-gray-500">{exportProgress.progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-green-600 h-2 rounded-full transition-all" style={{ width: `${exportProgress.progress}%` }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
