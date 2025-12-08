@@ -72,7 +72,7 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       const picker = new window.google.picker.PickerBuilder()
         .addView(window.google.picker.ViewId.DOCS)
         .setOAuthToken(result.data.token)
-        .setDeveloperKey('AIzaSyBXqzF-qPZvVwB8xN7V3h_vKEqP3jkp5Qw') // Public API key for picker
+        .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
         .setCallback(async (data) => {
           if (data.action === window.google.picker.Action.PICKED) {
             const fileIds = data.docs.map(doc => doc.id);
