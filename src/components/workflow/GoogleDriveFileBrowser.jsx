@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Key, FileSearch } from "lucide-react";
+import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Key } from "lucide-react";
 import { format } from "date-fns";
 
 export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
@@ -9,31 +9,14 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [needsAuth, setNeedsAuth] = useState(false);
-  const [pickerLoaded, setPickerLoaded] = useState(false);
 
   useEffect(() => {
-    // Load Google Picker API
-    const script = document.createElement('script');
-    script.src = 'https://apis.google.com/js/api.js';
-    script.onload = () => {
-      window.gapi.load('picker', () => {
-        setPickerLoaded(true);
-      });
-    };
-    document.body.appendChild(script);
-
     if (folderUrl) {
       loadFiles();
     } else {
       setFiles([]);
       setError(null);
     }
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
   }, [folderUrl]);
 
   const extractFolderId = (url) => {
@@ -43,14 +26,10 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    if (!folderUrl) {
-      setFiles([]);
-      return;
-    }
-
     const folderId = extractFolderId(folderUrl);
     if (!folderId) {
-      setError('Invalid folder URL');
+      setFiles([]);
+      setLoading(false);
       return;
     }
     
@@ -63,13 +42,14 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
         folderId
       });
       
-      if (result.data.needsAuth) {
+      if (result.data.needsAuth || result.data.error?.includes('Not authenticated')) {
         setNeedsAuth(true);
-        setError('Please connect your Google Drive');
+        setError('Please connect your Google Drive account to browse files');
       } else if (result.data.error) {
         setError(result.data.error);
       } else {
         setFiles(result.data.files || []);
+        setNeedsAuth(false);
       }
     } catch (err) {
       setError(err.message || 'Failed to load files');
@@ -78,11 +58,36 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     }
   };
 
-  const handleAuth = () => {
-    window.open('/functions/googleDriveCustomAuth?action=initiate', '_blank', 'width=600,height=700');
+  const handleAuth = async () => {
+    try {
+      const result = await base44.functions.invoke('googleDriveCustomAuth', {
+        action: 'getAuthUrl'
+      });
+      
+      if (result.data.authUrl) {
+        const width = 600;
+        const height = 700;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+        
+        const popup = window.open(
+          result.data.authUrl,
+          'Google Drive Authorization',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+        
+        // Poll for popup close
+        const pollTimer = window.setInterval(() => {
+          if (popup.closed) {
+            window.clearInterval(pollTimer);
+            loadFiles();
+          }
+        }, 500);
+      }
+    } catch (err) {
+      setError('Failed to initiate authentication');
+    }
   };
-
-
 
   const getFileIcon = (mimeType) => {
     if (mimeType?.includes('folder')) return <FolderOpen className="w-5 h-5 text-blue-500" />;
@@ -106,7 +111,7 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       <div className="text-center py-8 text-gray-400">
         <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No Google Drive folder linked</p>
-        <p className="text-xs mt-1">Add a folder URL to view files</p>
+        <p className="text-xs mt-1">Add a folder URL above to browse files</p>
       </div>
     );
   }
@@ -128,17 +133,25 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
           <p className="font-medium">Error loading files</p>
           <p className="text-sm mt-1">{error}</p>
           </div>
+          <div className="flex gap-2 justify-center">
           {needsAuth ? (
             <Button size="sm" onClick={handleAuth} className="bg-blue-600 text-white">
               <Key className="w-4 h-4 mr-2" />
               Connect Google Drive
             </Button>
           ) : (
-            <Button size="sm" onClick={loadFiles} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
+            <>
+              <Button size="sm" onClick={handleAuth} className="bg-blue-600 text-white mr-2">
+                <Key className="w-4 h-4 mr-2" />
+                Connect Google Drive
+              </Button>
+              <Button size="sm" onClick={loadFiles} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </>
           )}
+          </div>
       </div>
     );
   }
@@ -147,15 +160,24 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-sm text-gray-700">Drive Files ({files.length})</h4>
-        <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
-          <RefreshCw className="w-3 h-3" />
-        </Button>
+        <div className="flex gap-2">
+          {needsAuth && (
+            <Button size="sm" onClick={handleAuth} className="h-7 px-3 bg-blue-600 text-white">
+              <Key className="w-3 h-3 mr-1" />
+              Connect
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
+            <RefreshCw className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
 
       {files.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No files in this folder</p>
+          <p className="text-sm mb-2">No files in this folder</p>
+          {needsAuth && <p className="text-xs">Connect Google Drive above to view files</p>}
         </div>
       ) : (
         <div className="space-y-1 max-h-96 overflow-y-auto">
