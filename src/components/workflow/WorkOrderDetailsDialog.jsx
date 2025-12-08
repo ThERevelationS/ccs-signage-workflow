@@ -495,15 +495,15 @@ export default function WorkOrderDetailsDialog({
             </div>
           </div>
 
-          {/* Work Notes - Compact, Full Width, Fixed */}
-          <div className="px-6 py-2 border-b border-gray-200 flex-shrink-0">
+          {/* Work Notes - Spreadsheet Style, Full Width */}
+          <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-sm">Notes</h3>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                  <Button variant="ghost" size="sm" className="h-7 px-3 text-xs">
                     <Plus className="w-3 h-3 mr-1" />
-                    Add
+                    Add Note
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="clay-card w-96">
@@ -555,13 +555,22 @@ export default function WorkOrderDetailsDialog({
               </Popover>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 max-h-24">
-              {workNotes.map((note) =>
-              <div key={note.id} className="clay-card p-2 flex-shrink-0 min-w-48 max-w-64">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Badge variant="outline" className="text-xs px-1 py-0">
+            {/* Spreadsheet-style notes table */}
+            <div className="border rounded-lg overflow-hidden" style={{ maxHeight: '120px', overflowY: 'auto' }}>
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 border-b sticky top-0">
+                  <tr>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '80px' }}>Type</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '70px' }}>Date</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700">Note</th>
+                    <th className="text-center px-2 py-1.5 font-medium text-gray-700" style={{ width: '40px' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workNotes.map((note, idx) => (
+                    <tr key={note.id} className={`border-b last:border-b-0 hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-2 py-1.5">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">
                           {note.type === 'admin' && 'Admin'}
                           {note.type === 'fabrication' && 'Fab'}
                           {note.type === 'vinyl' && 'Vinyl'}
@@ -571,29 +580,36 @@ export default function WorkOrderDetailsDialog({
                           {note.type === 'client' && 'Client'}
                           {note.type === 'other' && 'Other'}
                         </Badge>
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(note.timestamp), "M/d")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-700 line-clamp-2">{note.text}</p>
-                      {note.sub_tasks && note.sub_tasks.length > 0 &&
-                        <p className="text-xs text-gray-400 mt-0.5">+{note.sub_tasks.length} sub-notes</p>
-                      }
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 flex-shrink-0"
-                      onClick={() => handleDeleteWorkNote(note.id)}>
-                      <X className="w-3 h-3 text-gray-400" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {workNotes.length === 0 &&
-                <p className="text-xs text-gray-400 py-2">No notes yet</p>
-              }
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-500">
+                        {format(new Date(note.timestamp), "M/d/yy")}
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-700">
+                        {note.text}
+                        {note.sub_tasks && note.sub_tasks.length > 0 && (
+                          <span className="text-gray-400 ml-2">({note.sub_tasks.length} sub-tasks)</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => handleDeleteWorkNote(note.id)}>
+                          <X className="w-3 h-3 text-gray-400 hover:text-red-600" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {workNotes.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-2 py-3 text-center text-gray-400">
+                        No notes yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
