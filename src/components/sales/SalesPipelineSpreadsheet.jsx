@@ -72,7 +72,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setIsLoading(true);
     try {
       const [orders, usersData] = await Promise.all([
-        WorkOrder.filter({ in_pipeline: false, completed: false }),
+        WorkOrder.filter({ is_rider: false, completed: false }),
         AuthorizedEmail.list()
       ]);
       setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
@@ -103,7 +103,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const handleSaveNew = async (workOrderData) => {
     const newOrder = await WorkOrder.create({
       ...workOrderData,
-      in_pipeline: false,
       sales_status: "lead"
     });
     setWorkOrders([newOrder, ...workOrders]);
@@ -433,24 +432,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Task Deadline</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '110px' }}>Task Assigned</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
-                <div className="flex items-center gap-1">
-                  Designer
-                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("designer", designers)} />}
-                </div>
-              </th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
-                <div className="flex items-center gap-1">
-                  PM
-                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_manager", projectManagers)} />}
-                </div>
-              </th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
-                <div className="flex items-center gap-1">
-                  Estimator
-                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("estimator", estimators)} />}
-                </div>
-              </th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Designer</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>PM</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Estimator</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '80px' }}>Est/Inv @</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Est. Amount</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '150px' }}>Task Desc</th>
@@ -546,7 +530,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map(u => (
+                      {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
                         <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -564,8 +548,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
-                      {designers.map(d => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
+                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -582,8 +566,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
-                      {projectManagers.map(pm => (
-                        <SelectItem key={pm} value={pm}>{pm}</SelectItem>
+                      {users.filter(u => u.sales_roles?.includes("PM")).map(u => (
+                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -600,8 +584,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
-                      {estimators.map(e => (
-                        <SelectItem key={e} value={e}>{e}</SelectItem>
+                      {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
+                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

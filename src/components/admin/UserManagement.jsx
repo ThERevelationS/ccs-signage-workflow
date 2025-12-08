@@ -38,8 +38,10 @@ import {
   User as UserIcon,
   UserPlus,
   Crown,
-  Loader2
+  Loader2,
+  Briefcase
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -59,7 +61,8 @@ export default function UserManagement() {
 
   const [formData, setFormData] = useState({
     full_name: "",
-    role: "user"
+    role: "user",
+    sales_roles: ["Task Assigned"]
   });
 
   useEffect(() => {
@@ -82,7 +85,8 @@ export default function UserManagement() {
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
-      role: user.role || "user"
+      role: user.role || "user",
+      sales_roles: user.sales_roles || ["Task Assigned"]
     });
     setIsDialogOpen(true);
   };
@@ -123,7 +127,8 @@ export default function UserManagement() {
       await base44.entities.AuthorizedEmail.create({
         email,
         full_name: fullName || null,
-        role: inviteRole
+        role: inviteRole,
+        sales_roles: ["Task Assigned"]
       });
 
       // Send invitation email via Gmail
@@ -354,6 +359,16 @@ Return valid HTML that will render beautifully in ALL email clients including da
                       {getRoleBadge(user.role)}
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
+                    {user.sales_roles && user.sales_roles.length > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Briefcase className="w-3 h-3 text-gray-400" />
+                        {user.sales_roles.map(role => (
+                          <Badge key={role} variant="outline" className="text-xs">
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -433,6 +448,28 @@ Return valid HTML that will render beautifully in ALL email clients including da
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label>Sales Pipeline Roles</Label>
+              <div className="mt-2 space-y-2">
+                {["Task Assigned", "Designer", "PM", "Estimator"].map((role) => (
+                  <div key={role} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.sales_roles?.includes(role) || false}
+                      onCheckedChange={(checked) => {
+                        const currentRoles = formData.sales_roles || [];
+                        const newRoles = checked
+                          ? [...currentRoles, role]
+                          : currentRoles.filter(r => r !== role);
+                        setFormData({ ...formData, sales_roles: newRoles });
+                      }}
+                    />
+                    <label className="text-sm">{role}</label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Select which sales pipeline roles this user can be assigned to</p>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
