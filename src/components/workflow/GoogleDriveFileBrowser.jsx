@@ -1,22 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Key } from "lucide-react";
+import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Key, FileSearch } from "lucide-react";
 import { format } from "date-fns";
 
-export default function GoogleDriveFileBrowser({ folderUrl }) {
+export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [needsAuth, setNeedsAuth] = useState(false);
+  const [pickerLoaded, setPickerLoaded] = useState(false);
 
   useEffect(() => {
+    // Load Google Picker API
+    const script = document.createElement('script');
+    script.src = 'https://apis.google.com/js/api.js';
+    script.onload = () => {
+      window.gapi.load('picker', () => {
+        setPickerLoaded(true);
+      });
+    };
+    document.body.appendChild(script);
+
     if (folderUrl) {
       loadFiles();
     } else {
       setFiles([]);
       setError(null);
     }
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, [folderUrl]);
 
   const extractFolderId = (url) => {
@@ -69,6 +86,42 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
     window.open('https://app.base44.com/dashboard/settings/app-connectors', '_blank');
   };
 
+  const openFilePicker = async () => {
+    try {
+      const result = await base44.functions.invoke('googleDriveAuth', { action: 'getPickerToken' });
+      const token = result.data.token;
+
+      if (!token) {
+        setNeedsAuth(true);
+        setError('Please connect Google Drive via Dashboard > App Connectors');
+        return;
+      }
+
+      const picker = new window.google.picker.PickerBuilder()
+        .addView(window.google.picker.ViewId.DOCS)
+        .addView(window.google.picker.ViewId.FOLDERS)
+        .setOAuthToken(token)
+        .setCallback(async (data) => {
+          if (data.action === window.google.picker.Action.PICKED) {
+            const selectedFiles = data.docs;
+            // Save selected file IDs to work order
+            const fileIds = selectedFiles.map(f => f.id);
+            await base44.functions.invoke('googleDriveAuth', { 
+              action: 'saveFileAccess',
+              workOrderId,
+              fileIds 
+            });
+            loadFiles();
+          }
+        })
+        .build();
+      
+      picker.setVisible(true);
+    } catch (err) {
+      setError('Failed to open file picker: ' + err.message);
+    }
+  };
+
   const getFileIcon = (mimeType) => {
     if (mimeType?.includes('folder')) return <FolderOpen className="w-5 h-5 text-blue-500" />;
     if (mimeType?.includes('image')) return <ImageIcon className="w-5 h-5 text-green-500" />;
@@ -89,7 +142,13 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
       <div className="text-center py-8 text-gray-400">
         <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No Google Drive folder linked</p>
-        <p className="text-xs mt-1">Add a folder URL above to see your files</p>
+        <p className="text-xs mt-1 mb-3">With Google Drive's limited access, you need to select files individually</p>
+        {pickerLoaded && (
+          <Button size="sm" onClick={openFilePicker} className="bg-blue-600 text-white">
+            <FileSearch className="w-4 h-4 mr-2" />
+            Select Files from Drive
+          </Button>
+        )}
       </div>
     );
   }
@@ -132,9 +191,17 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-sm text-gray-700">Files ({files.length})</h4>
-        <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
-          <RefreshCw className="w-3 h-3" />
-        </Button>
+        <div className="flex gap-1">
+          {pickerLoaded && (
+            <Button size="sm" variant="ghost" onClick={openFilePicker} className="h-7 px-2">
+              <FileSearch className="w-3 h-3 mr-1" />
+              <span className="text-xs">Add</span>
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
+            <RefreshCw className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
 
       {files.length === 0 ? (

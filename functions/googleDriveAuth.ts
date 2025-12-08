@@ -10,42 +10,63 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, folderId } = body;
+    const { action, folderId, workOrderId, fileIds } = body;
+
+    if (action === 'getPickerToken') {
+      const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+      return Response.json({ token: accessToken });
+    }
+
+    if (action === 'saveFileAccess') {
+      // Store file IDs that user granted access to
+      if (!workOrderId || !fileIds) {
+        return Response.json({ error: 'Missing workOrderId or fileIds' }, { status: 400 });
+      }
+
+      const workOrder = await base44.entities.WorkOrder.get(workOrderId);
+      const existingFiles = workOrder.google_drive_file_ids || [];
+      const updatedFiles = [...new Set([...existingFiles, ...fileIds])];
+
+      await base44.entities.WorkOrder.update(workOrderId, {
+        google_drive_file_ids: updatedFiles
+      });
+
+      return Response.json({ success: true });
+    }
 
     if (action === 'listFiles') {
-      // Get token from Base44's googledrive connector
       const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
 
       if (!accessToken) {
         return Response.json({ error: 'Not authenticated with Google Drive. Please connect via Dashboard > Settings > App Connectors' }, { status: 401 });
       }
 
-      // Instead of listing folder, try to get specific file IDs from the folder URL
-      // For now, just try to access the folder metadata to verify permissions
-      const folderUrl = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType,capabilities`;
-      
-      const folderResponse = await fetch(folderUrl, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
+      // Get file IDs that user has granted access to
+      const workOrder = await base44.entities.WorkOrder.get(folderId); // Using folderId as workOrderId here
+      const fileIds = workOrder?.google_drive_file_ids || [];
 
-      if (!folderResponse.ok) {
-        const error = await folderResponse.text();
-        return Response.json({ 
-          error: `Cannot access this folder with current permissions. The drive.file scope only allows access to files created by this app or explicitly opened by you.`,
-          details: error,
-          suggestion: 'Share individual files with the app or use a service account'
-        }, { status: folderResponse.status });
+      if (fileIds.length === 0) {
+        return Response.json({ files: [] });
       }
 
-      const folderData = await folderResponse.json();
-      
-      // With drive.file scope, we can't list arbitrary folders
-      // Return a message explaining the limitation
-      return Response.json({ 
-        files: [],
-        warning: 'Limited access: Base44\'s Google Drive connector uses drive.file scope, which only allows access to files created by or opened by this app. To see all folder files, they must be individually shared with the app.',
-        folder: folderData
+      // Fetch details for each file
+      const filePromises = fileIds.map(async (fileId) => {
+        try {
+          const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink`;
+          const response = await fetch(fileUrl, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          });
+          if (response.ok) {
+            return await response.json();
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
       });
+
+      const files = (await Promise.all(filePromises)).filter(f => f !== null);
+      return Response.json({ files });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
