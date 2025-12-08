@@ -1,41 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, AlertCircle, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, FolderOpen, FileText, Image as ImageIcon, File, ExternalLink, RefreshCw, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [pickerInited, setPickerInited] = useState(false);
+  const [driveUrl, setDriveUrl] = useState('');
 
   useEffect(() => {
     loadFiles();
   }, [workOrderId]);
-
-  useEffect(() => {
-    // Load Google Picker API
-    const script = document.createElement('script');
-    script.src = 'https://apis.google.com/js/api.js';
-    script.onload = () => {
-      window.gapi.load('picker', {
-        callback: () => {
-          console.log('Google Picker loaded successfully');
-          setPickerInited(true);
-        },
-        onerror: () => {
-          console.error('Failed to load Google Picker');
-          setError('Failed to load Google Picker API');
-        }
-      });
-    };
-    script.onerror = () => {
-      console.error('Failed to load gapi script');
-      setError('Failed to load Google API script');
-    };
-    document.body.appendChild(script);
-  }, []);
 
   const loadFiles = async () => {
     if (!workOrderId) return;
@@ -63,14 +41,27 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     }
   };
 
-  const handlePickFiles = async () => {
-    if (!pickerInited) {
-      setError('Google Picker is still loading, please wait...');
-      return;
+  const extractFileId = (url) => {
+    const patterns = [
+      /\/file\/d\/([^\/]+)/,
+      /id=([^&]+)/,
+      /folders\/([^\/\?]+)/,
+      /^([a-zA-Z0-9_-]{25,})$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
     }
+    return null;
+  };
 
-    if (!window.google?.picker) {
-      setError('Google Picker API not loaded');
+  const handleAddFile = async () => {
+    if (!driveUrl.trim()) return;
+    
+    const fileId = extractFileId(driveUrl.trim());
+    if (!fileId) {
+      setError('Invalid Google Drive URL or file ID');
       return;
     }
 
@@ -78,55 +69,17 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     setError(null);
 
     try {
-      const result = await base44.functions.invoke('googleDriveAuth', {
-        action: 'getPickerToken'
+      await base44.functions.invoke('googleDriveAuth', {
+        action: 'saveFileAccess',
+        workOrderId,
+        fileIds: [fileId]
       });
 
-      if (!result.data.token) {
-        setError('Failed to get access token. Please reconnect Google Drive.');
-        setLoading(false);
-        return;
-      }
-
-      const view = new window.google.picker.DocsView()
-        .setIncludeFolders(false)
-        .setMode(window.google.picker.DocsViewMode.LIST);
-
-      const picker = new window.google.picker.PickerBuilder()
-        .addView(view)
-        .setOAuthToken(result.data.token)
-        .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
-        .setOrigin(window.location.origin)
-        .setSize(1051, 650)
-        .setCallback(async (data) => {
-          if (data.action === window.google.picker.Action.CANCEL) {
-            setLoading(false);
-            return;
-          }
-          
-          if (data.action === window.google.picker.Action.PICKED) {
-            const fileIds = data.docs.map(doc => doc.id);
-            
-            try {
-              await base44.functions.invoke('googleDriveAuth', {
-                action: 'saveFileAccess',
-                workOrderId,
-                fileIds
-              });
-
-              await loadFiles();
-            } catch (err) {
-              setError('Failed to save files: ' + err.message);
-            }
-          }
-          setLoading(false);
-        })
-        .build();
-
-      picker.setVisible(true);
+      await loadFiles();
+      setDriveUrl('');
     } catch (err) {
-      console.error('Picker error:', err);
-      setError('Error opening picker: ' + err.message);
+      setError('Failed to add file: ' + err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -172,14 +125,29 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
               Open Folder <ExternalLink className="w-3 h-3" />
             </a>
           )}
-          <Button size="sm" onClick={handlePickFiles} className="h-7 px-2 bg-blue-600 text-white">
-            <Plus className="w-3 h-3 mr-1" />
-            Select Files
-          </Button>
           <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
             <RefreshCw className="w-3 h-3" />
           </Button>
         </div>
+      </div>
+
+      <div className="flex gap-2 mb-3">
+        <Input
+          placeholder="Paste Google Drive file URL or ID..."
+          value={driveUrl}
+          onChange={(e) => setDriveUrl(e.target.value)}
+          className="flex-1 h-8 text-sm"
+          onKeyDown={(e) => e.key === 'Enter' && handleAddFile()}
+        />
+        <Button 
+          size="sm" 
+          onClick={handleAddFile} 
+          disabled={loading || !driveUrl.trim()}
+          className="h-8 px-3 bg-blue-600 text-white"
+        >
+          <Plus className="w-3 h-3 mr-1" />
+          Add
+        </Button>
       </div>
 
       {error && (
@@ -191,8 +159,8 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       {files.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No files selected</p>
-          <p className="text-xs mt-1">Click "Select Files" to choose files from your Drive</p>
+          <p className="text-sm">No files added</p>
+          <p className="text-xs mt-1">Paste a Google Drive link above to add files</p>
         </div>
       ) : (
         <div className="space-y-1 max-h-96 overflow-y-auto">
