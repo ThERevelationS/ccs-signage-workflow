@@ -56,6 +56,8 @@ import {
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
 import UserManagement from "../components/admin/UserManagement";
+import ProjectTrash from "../components/admin/ProjectTrash";
+import OrderTrash from "../components/admin/OrderTrash";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -517,6 +519,14 @@ export default function AdminSettings() {
                             <Users className="w-6 h-6 mr-3" />
                             Users
                           </TabsTrigger>
+                          <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Trash2 className="w-6 h-6 mr-3" />
+                            Project Trash
+                          </TabsTrigger>
+                          <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Trash2 className="w-6 h-6 mr-3" />
+                            Order Trash
+                          </TabsTrigger>
                         </TabsList>
 
           <TabsContent value="groups">
@@ -528,6 +538,14 @@ export default function AdminSettings() {
 
                         <TabsContent value="users">
                           <UserManagement />
+                        </TabsContent>
+
+                        <TabsContent value="project_trash">
+                          <ProjectTrash />
+                        </TabsContent>
+
+                        <TabsContent value="order_trash">
+                          <OrderTrash />
                         </TabsContent>
 
           <TabsContent value="automations">
