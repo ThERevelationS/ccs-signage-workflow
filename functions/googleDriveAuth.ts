@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       if (!workOrderId) {
         return Response.json({ error: 'workOrderId is required' }, { status: 400 });
       }
-      
+
       const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
 
       if (!accessToken) {
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       }
 
       // Get file IDs that user has granted access to
-      const workOrder = await base44.entities.WorkOrder.get(folderId); // Using folderId as workOrderId here
+      const workOrder = await base44.asServiceRole.entities.WorkOrder.get(workOrderId);
       const fileIds = workOrder?.google_drive_file_ids || [];
 
       if (fileIds.length === 0) {
