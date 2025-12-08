@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { WorkOrder } from "@/entities/WorkOrder";
+import { base44 } from "@/api/base44Client";
+
+const WorkOrder = base44.entities.WorkOrder;
 import { Button } from "@/components/ui/button";
 import {
   Select,
