@@ -23,6 +23,7 @@ import {
   X
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
+import GlobalSearch from "@/components/workflow/GlobalSearch";
 
 const navigationItems = [
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
@@ -377,7 +378,7 @@ function LayoutContent({ children }) {
               </button>
 
               {/* Desktop Navigation Links */}
-              <div className="hidden lg:flex items-center gap-1 flex-wrap justify-end flex-1 ml-4">
+              <div className="hidden lg:flex items-center gap-1 flex-wrap flex-1 ml-4">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
@@ -398,6 +399,11 @@ function LayoutContent({ children }) {
                     </Link>
                   );
                 })}
+              </div>
+
+              {/* Global Search */}
+              <div className="hidden lg:flex">
+                <GlobalSearch />
               </div>
             </div>
 
