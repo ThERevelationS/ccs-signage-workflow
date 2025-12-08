@@ -126,16 +126,10 @@ export default function GoogleDriveFileBrowser({ folderUrl }) {
           </div>
           <div className="flex gap-2 justify-center">
           {needsAuth ? (
-            <a 
-              href="https://app.base44.com/dashboard/settings/app-connectors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="sm" className="bg-blue-600 text-white">
-                <Key className="w-4 h-4 mr-2" />
-                Connect Google Drive
-              </Button>
-            </a>
+            <Button size="sm" onClick={handleAuth} className="bg-blue-600 text-white">
+              <Key className="w-4 h-4 mr-2" />
+              Connect Google Drive
+            </Button>
           ) : (
             <Button size="sm" onClick={loadFiles} variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
