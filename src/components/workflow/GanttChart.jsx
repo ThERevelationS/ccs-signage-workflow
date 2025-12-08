@@ -1,7 +1,5 @@
 import React from "react";
 import { format, differenceInDays, addDays, startOfWeek } from "date-fns";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -23,7 +21,7 @@ const stageNames = {
   installation: "Installation"
 };
 
-export default function GanttChart({ workOrders }) {
+export default function GanttChart({ workOrders, onWorkOrderClick }) {
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const weeks = 8;
@@ -53,19 +51,6 @@ export default function GanttChart({ workOrders }) {
     return { left: `${Math.max(0, left)}%`, width: `${Math.max(2, width)}%` }; // Ensure min width of 2% for visibility
   };
 
-  const getPageNameForStage = (stage) => {
-    const stagePageMap = {
-      'estimating': 'Estimating',
-      'sales': 'Sales',
-      'permitting': 'Permitting',
-      'design': 'Design',
-      'production': 'Production',
-      'fabrication': 'Fabrication',
-      'installation': 'InstallationDeliver'
-    };
-    return stagePageMap[stage] || 'Estimating';
-  };
-
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[1200px]">
@@ -88,14 +73,15 @@ export default function GanttChart({ workOrders }) {
           <div key={wo.id} className="mb-1">
             <div className="flex items-center">
               <div className="w-48 pr-2">
-                <Link to={createPageUrl(getPageNameForStage(wo.current_stage))}>
-                  <div className="py-1 px-2 rounded-lg cursor-pointer hover:bg-white/50 transition-colors">
-                    <div className="font-medium text-xs text-gray-800 truncate leading-tight">
-                      {wo.title}
-                    </div>
-                    <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.client_name}</div>
+                <div 
+                  className="py-1 px-2 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
+                  onClick={() => onWorkOrderClick && onWorkOrderClick(wo)}
+                >
+                  <div className="font-medium text-xs text-gray-800 truncate leading-tight">
+                    {wo.title}
                   </div>
-                </Link>
+                  <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.client_name}</div>
+                </div>
               </div>
               <div className="flex-1 relative" style={{ height: wo.riders && wo.riders.length > 0 ? `${(wo.riders.length + 1) * 20}px` : '24px' }}>
                 <div className="absolute inset-0 flex flex-col gap-0.5">
@@ -103,19 +89,19 @@ export default function GanttChart({ workOrders }) {
                   <div className="relative h-5 flex items-center">
                     <div className="w-full h-px bg-gray-200" />
                     {wo.start_date && wo.due_date && (
-                      <Link 
-                        to={createPageUrl(getPageNameForStage(wo.current_stage))}
-                        className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80"
+                      <div
+                        className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
                         style={{
                           ...getBarPosition(wo.start_date, wo.due_date),
                           background: `linear-gradient(135deg, ${stageColors[wo.current_stage]}ee 0%, ${stageColors[wo.current_stage]}aa 100%)`,
                           boxShadow: '1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)'
                         }}
+                        onClick={() => onWorkOrderClick && onWorkOrderClick(wo)}
                       >
                         <span className="text-[9px] font-medium text-gray-700 px-1 truncate">
                           {stageNames[wo.current_stage]}
                         </span>
-                      </Link>
+                      </div>
                     )}
                   </div>
                   
@@ -124,20 +110,20 @@ export default function GanttChart({ workOrders }) {
                     <div key={rider.id} className="relative h-4 flex items-center pl-4">
                       <div className="w-full h-px bg-gray-200" />
                       {rider.start_date && rider.due_date && (
-                        <Link
-                          to={createPageUrl(getPageNameForStage(rider.rider_stage || rider.current_stage))}
-                          className="absolute h-4 rounded-md flex items-center justify-center transition-all duration-300 hover:opacity-80"
+                        <div
+                          className="absolute h-4 rounded-md flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
                           style={{
                             ...getBarPosition(rider.start_date, rider.due_date),
                             background: `linear-gradient(135deg, ${stageColors[rider.rider_stage || rider.current_stage]}dd 0%, ${stageColors[rider.rider_stage || rider.current_stage]}88 100%)`,
                             boxShadow: '1px 1px 2px rgba(0,0,0,0.1)',
                             border: '1px dashed rgba(124, 58, 237, 0.3)'
                           }}
+                          onClick={() => onWorkOrderClick && onWorkOrderClick(rider)}
                         >
                           <span className="text-[8px] font-medium text-gray-700 px-1 truncate">
                             {stageNames[rider.rider_stage || rider.current_stage]}
                           </span>
-                        </Link>
+                        </div>
                       )}
                     </div>
                   ))}

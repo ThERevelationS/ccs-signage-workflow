@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Maximize2, Minimize2, RefreshCw, ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
+import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
 const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
@@ -18,6 +19,7 @@ export default function MainWorkflow() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState("due_date");
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
 
   useEffect(() => {
     loadWorkOrders(true);
@@ -142,10 +144,19 @@ export default function MainWorkflow() {
               <p className="text-gray-400 text-sm mt-2">Add start and due dates to work orders to see them here</p>
             </div>
           ) : (
-            <GanttChart workOrders={getSortedWorkOrders()} />
+            <GanttChart workOrders={getSortedWorkOrders()} onWorkOrderClick={setSelectedWorkOrder} />
           )}
         </div>
       </div>
+
+      {selectedWorkOrder && (
+        <WorkOrderDetailsDialog
+          isOpen={true}
+          onClose={() => setSelectedWorkOrder(null)}
+          workOrder={selectedWorkOrder}
+          onUpdate={() => loadWorkOrders(false)}
+        />
+      )}
     </div>
   );
 }
