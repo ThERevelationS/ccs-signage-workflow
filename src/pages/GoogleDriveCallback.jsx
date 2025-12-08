@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 export default function GoogleDriveCallback() {
@@ -31,13 +30,20 @@ export default function GoogleDriveCallback() {
         return;
       }
 
-      const result = await base44.functions.invoke('googleDriveAuth', {
-        action: 'exchangeCode',
-        code,
-        userEmail: state
+      // Call backend function directly without SDK to avoid auth requirements
+      const result = await fetch('/api/functions/googleDriveAuth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'exchangeCode',
+          code,
+          userEmail: state
+        })
       });
+      
+      const data = await result.json();
 
-      if (result.data.success) {
+      if (data.success) {
         setStatus('success');
         setMessage('Successfully connected to Google Drive!');
         setTimeout(() => window.close(), 2000);
