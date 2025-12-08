@@ -41,6 +41,14 @@ export default function GoogleDriveCallback() {
         })
       });
       
+      if (!result.ok) {
+        const errorText = await result.text();
+        setStatus('error');
+        setMessage(`Server error (${result.status}): ${errorText}`);
+        setTimeout(() => window.close(), 5000);
+        return;
+      }
+
       const data = await result.json();
 
       if (data.success) {
@@ -49,7 +57,7 @@ export default function GoogleDriveCallback() {
         setTimeout(() => window.close(), 2000);
       } else {
         setStatus('error');
-        setMessage(`Failed: ${data.error || 'Unknown error'}`);
+        setMessage(`Failed: ${JSON.stringify(data)}`);
         setTimeout(() => window.close(), 5000);
       }
     } catch (err) {
