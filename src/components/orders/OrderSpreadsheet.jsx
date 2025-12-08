@@ -966,14 +966,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       </AlertDialog>
 
       {/* Work Order Details Dialog */}
-      <WorkOrderDetailsDialog
-        isOpen={!!selectedWorkOrder}
-        onClose={() => setSelectedWorkOrder(null)}
-        workOrder={selectedWorkOrder}
-        onUpdate={() => {
-          loadData(false);
-        }}
-      />
+      {selectedWorkOrder && (
+        <WorkOrderDetailsDialog
+          isOpen={true}
+          onClose={() => setSelectedWorkOrder(null)}
+          workOrder={selectedWorkOrder}
+          onUpdate={() => {
+            loadData(false);
+          }}
+        />
+      )}
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
