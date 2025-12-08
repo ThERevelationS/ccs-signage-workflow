@@ -191,6 +191,10 @@ export default function WorkOrderDetailsDialog({
     const newValue = editValues[field];
     await WorkOrder.update(workOrder.id, { [field]: newValue });
     await ActivityActions.fieldUpdated(workOrder, field, oldValue, newValue);
+    
+    // Update the local workOrder object immediately
+    Object.assign(workOrder, { [field]: newValue });
+    
     setEditingField(null);
     if (onUpdate) await onUpdate();
     await loadRelatedData();
