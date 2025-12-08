@@ -43,20 +43,31 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    if (!workOrderId) return;
+    if (!folderUrl) {
+      setFiles([]);
+      return;
+    }
+    
+    const folderId = extractFolderId(folderUrl);
+    if (!folderId) {
+      setError('Invalid Google Drive folder URL');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     
     try {
-      const result = await base44.functions.invoke('googleDriveAuth', {
+      const result = await base44.functions.invoke('googleDriveCustomAuth', {
         action: 'listFiles',
-        workOrderId
+        folderId
       });
       
-      if (result.data.error) {
+      if (result.data.needsAuth) {
+        setNeedsAuth(true);
+        setError('Please connect your Google Drive account');
+      } else if (result.data.error) {
         setError(result.data.error);
-        setNeedsAuth(result.data.error.includes('Not authenticated'));
       } else {
         setFiles(result.data.files || []);
       }
@@ -67,8 +78,18 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     }
   };
 
-  const handleAuth = () => {
-    window.open('https://app.base44.com/dashboard/settings/app-connectors', '_blank');
+  const handleAuth = async () => {
+    try {
+      const result = await base44.functions.invoke('googleDriveCustomAuth', {
+        action: 'getAuthUrl'
+      });
+      
+      if (result.data.authUrl) {
+        window.open(result.data.authUrl, '_blank');
+      }
+    } catch (err) {
+      setError('Failed to start authentication');
+    }
   };
 
   const openFilePicker = async () => {
