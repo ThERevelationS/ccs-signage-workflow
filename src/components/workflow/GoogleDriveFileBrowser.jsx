@@ -43,10 +43,28 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    // Google Drive with drive.file scope cannot list folder contents
-    // Just show empty state with instructions
-    setFiles([]);
-    setLoading(false);
+    if (!workOrderId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await base44.functions.invoke('googleDriveAuth', {
+        action: 'listFiles',
+        workOrderId
+      });
+      
+      if (result.data.error) {
+        setError(result.data.error);
+        setNeedsAuth(result.data.error.includes('Not authenticated'));
+      } else {
+        setFiles(result.data.files || []);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load files');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAuth = () => {
@@ -54,7 +72,47 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const openFilePicker = async () => {
-    setError('Google Drive file picker requires additional API key configuration. Instead, please share files directly with this app from Google Drive, or use the folder URL to view files you have access to.');
+    if (!pickerLoaded) {
+      setError('Google Picker is still loading...');
+      return;
+    }
+
+    try {
+      const result = await base44.functions.invoke('googleDriveAuth', {
+        action: 'getPickerToken'
+      });
+
+      const token = result.data.token;
+      if (!token) {
+        setError('Failed to get access token');
+        return;
+      }
+
+      const picker = new window.google.picker.PickerBuilder()
+        .addView(window.google.picker.ViewId.DOCS)
+        .setOAuthToken(token)
+        .setDeveloperKey('YOUR_API_KEY') // This needs to be set in Dashboard
+        .setCallback(async (data) => {
+          if (data.action === window.google.picker.Action.PICKED) {
+            const fileIds = data.docs.map(doc => doc.id);
+            
+            const saveResult = await base44.functions.invoke('googleDriveAuth', {
+              action: 'saveFileAccess',
+              workOrderId,
+              fileIds
+            });
+
+            if (saveResult.data.success) {
+              await loadFiles();
+            }
+          }
+        })
+        .build();
+
+      picker.setVisible(true);
+    } catch (err) {
+      setError(err.message || 'Failed to open file picker');
+    }
   };
 
   const getFileIcon = (mimeType) => {
