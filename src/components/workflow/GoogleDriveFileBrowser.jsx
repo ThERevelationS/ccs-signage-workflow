@@ -19,9 +19,20 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     const script = document.createElement('script');
     script.src = 'https://apis.google.com/js/api.js';
     script.onload = () => {
-      window.gapi.load('picker', () => {
-        setPickerInited(true);
+      window.gapi.load('picker', {
+        callback: () => {
+          console.log('Google Picker loaded successfully');
+          setPickerInited(true);
+        },
+        onerror: () => {
+          console.error('Failed to load Google Picker');
+          setError('Failed to load Google Picker API');
+        }
       });
+    };
+    script.onerror = () => {
+      console.error('Failed to load gapi script');
+      setError('Failed to load Google API script');
     };
     document.body.appendChild(script);
   }, []);
@@ -72,14 +83,19 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
         return;
       }
 
+      console.log('Creating picker with token:', result.data.token ? 'Token exists' : 'No token');
+      
       const view = new window.google.picker.DocsView()
-        .setIncludeFolders(true);
+        .setIncludeFolders(true)
+        .setSelectFolderEnabled(false);
 
       const picker = new window.google.picker.PickerBuilder()
+        .setAppId('YOUR_APP_ID')
         .addView(view)
         .setOAuthToken(result.data.token)
         .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
         .setCallback(async (data) => {
+          console.log('Picker callback:', data);
           if (data.action === window.google.picker.Action.PICKED) {
             const fileIds = data.docs.map(doc => doc.id);
             
@@ -99,6 +115,7 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
         })
         .build();
 
+      console.log('Opening picker...');
       picker.setVisible(true);
     } catch (err) {
       setError('Picker error: ' + err.message);
