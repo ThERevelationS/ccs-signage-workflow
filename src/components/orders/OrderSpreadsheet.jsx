@@ -525,6 +525,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       {showButtonsInline && (
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="flex items-center gap-2">
+          {!showButtonsInline && <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>}
           {/* Import/Export Progress */}
           {importProgress.show && (
             <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">
@@ -600,7 +601,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           )}
           <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Spreadsheet Table */}
       <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', overflow: 'visible' }}>
@@ -1195,4 +1197,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       </Dialog>
     </div>
   );
-}
+});
+
+export default OrderSpreadsheet;
