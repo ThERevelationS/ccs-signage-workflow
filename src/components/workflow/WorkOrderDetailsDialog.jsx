@@ -1001,10 +1001,9 @@ export default function WorkOrderDetailsDialog({
                     }
                                         </div>
                                       </div>
+              </div>
 
-
-
-                {/* Dependencies / Automations */}
+              {/* Right Column - Actions */}
                 <div className="clay-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
