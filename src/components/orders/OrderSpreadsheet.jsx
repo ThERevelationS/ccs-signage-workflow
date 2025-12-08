@@ -29,8 +29,11 @@ import {
   Check,
   Expand,
   ExternalLink,
-  Save
+  Save,
+  Download,
+  Upload
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   Tooltip,
   TooltipContent,
@@ -100,6 +103,7 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
+  const fileInputRef = useRef(null);
 
   // Helper to render text with clickable links
   const renderWithLinks = (text) => {
@@ -368,6 +372,66 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     return colors[index];
   };
 
+  const exportToExcel = () => {
+    const exportData = filteredOrders.map(order => ({
+      "Customer Name": order.customer_name || "",
+      "Request Type": order.request_type || "",
+      "Description": order.description || "",
+      "Quantity": order.quantity || "",
+      "Requestor": order.requestor_name || "",
+      "Date Needed": order.date_needed || "",
+      "Date Ordered": order.date_ordered || "",
+      "Vendor": order.vendor || "",
+      "Date Received": order.date_received || "",
+      "Status": order.status || ""
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, `orders_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  };
+
+  const importFromExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const maxRowNumber = orders.length > 0 
+        ? Math.max(...orders.map(o => o.row_number || 0)) 
+        : 0;
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        await Order.create({
+          customer_name: row["Customer Name"] || "",
+          request_type: row["Request Type"] || requestTypes[0] || "Other",
+          description: row["Description"] || "",
+          quantity: row["Quantity"] || "",
+          requestor_email: currentUser?.email || "",
+          requestor_name: row["Requestor"] || currentUser?.full_name || "",
+          date_needed: row["Date Needed"] || "",
+          date_ordered: row["Date Ordered"] || "",
+          vendor: row["Vendor"] || "",
+          date_received: row["Date Received"] || "",
+          status: row["Status"] || "pending",
+          row_number: maxRowNumber + i + 1,
+          work_order_id: workOrderFilter || ""
+        });
+      }
+
+      await loadData();
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
+
   // Filter orders based on search term and status
   const filteredOrders = orders.filter(order => {
     // Status filter
@@ -432,8 +496,29 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="hidden"
+              />
+              <Button 
+                onClick={() => fileInputRef.current?.click()} 
+                size="sm" 
+                className="clay-button border-none text-gray-700 h-8"
+                style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
+              >
+                <Upload className="w-4 h-4 mr-1" />
+                Import
+              </Button>
             </>
           )}
+          <Button onClick={exportToExcel} size="sm" className="clay-button border-none text-gray-700 h-8"
+            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}>
+            <Download className="w-4 h-4 mr-1" />
+            Export
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           {lastSaved && (

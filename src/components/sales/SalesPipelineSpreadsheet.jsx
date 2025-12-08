@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2 } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import * as XLSX from "xlsx";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -27,6 +28,7 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadWorkOrders();
@@ -81,6 +83,67 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     return statusObj?.color || "bg-white";
   };
 
+  const exportToExcel = () => {
+    const exportData = filteredWorkOrders.map(wo => ({
+      "Project Name": wo.title || "",
+      "Client": wo.client_name || "",
+      "Status": wo.sales_status || "",
+      "Description": wo.description || "",
+      "Contact": wo.contact_name || "",
+      "Phone": wo.contact_phone || "",
+      "Quote Amount": wo.quoted_amount || "",
+      "Probability": wo.probability || "",
+      "Quote Date": wo.quote_date || "",
+      "Follow Up": wo.follow_up_date || "",
+      "Close Date": wo.close_date || "",
+      "Sales Rep": wo.sales_rep || "",
+      "Lead Source": wo.lead_source || "",
+      "Location": wo.install_location || ""
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
+    XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  };
+
+  const importFromExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      for (const row of jsonData) {
+        await WorkOrder.create({
+          title: row["Project Name"] || "",
+          client_name: row["Client"] || "",
+          sales_status: row["Status"] || "lead",
+          description: row["Description"] || "",
+          contact_name: row["Contact"] || "",
+          contact_phone: row["Phone"] || "",
+          quoted_amount: parseFloat(row["Quote Amount"]) || 0,
+          probability: parseInt(row["Probability"]) || 0,
+          quote_date: row["Quote Date"] || "",
+          follow_up_date: row["Follow Up"] || "",
+          close_date: row["Close Date"] || "",
+          sales_rep: row["Sales Rep"] || "",
+          lead_source: row["Lead Source"] || "",
+          install_location: row["Location"] || "",
+          in_pipeline: false
+        });
+      }
+
+      await loadWorkOrders();
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
+  };
+
   const filteredWorkOrders = workOrders.filter(wo => {
     if (filterStatus !== "all" && wo.sales_status !== filterStatus) return false;
     if (searchTerm) {
@@ -102,13 +165,38 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   return (
     <div className="overflow-visible">
       <div className="flex items-center justify-between mb-2 px-2">
-        {isRegistered && (
-          <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
-            style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
-            <Plus className="w-4 h-4 mr-1" />
-            New Lead
+        <div className="flex gap-2">
+          {isRegistered && (
+            <>
+              <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Lead
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={importFromExcel}
+                className="hidden"
+              />
+              <Button 
+                onClick={() => fileInputRef.current?.click()} 
+                size="sm" 
+                className="clay-button border-none text-gray-700 h-8"
+                style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
+              >
+                <Upload className="w-4 h-4 mr-1" />
+                Import
+              </Button>
+            </>
+          )}
+          <Button onClick={exportToExcel} size="sm" className="clay-button border-none text-gray-700 h-8"
+            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}>
+            <Download className="w-4 h-4 mr-1" />
+            Export
           </Button>
-        )}
+        </div>
         <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
       </div>
 
