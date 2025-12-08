@@ -57,6 +57,10 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     const saved = localStorage.getItem('salesEstimators');
     return saved ? JSON.parse(saved) : ["Estimator 1", "Estimator 2"];
   });
+  const [projectTypes, setProjectTypes] = useState(() => {
+    const saved = localStorage.getItem('salesProjectTypes');
+    return saved ? JSON.parse(saved) : ["Signage", "Wraps", "Decals", "Banners", "Other"];
+  });
 
   useEffect(() => {
     loadWorkOrders();
