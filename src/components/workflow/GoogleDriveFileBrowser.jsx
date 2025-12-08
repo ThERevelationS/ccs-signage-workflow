@@ -83,19 +83,15 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
         return;
       }
 
-      console.log('Creating picker with token:', result.data.token ? 'Token exists' : 'No token');
-      
       const view = new window.google.picker.DocsView()
-        .setIncludeFolders(true)
-        .setSelectFolderEnabled(false);
+        .setIncludeFolders(false);
 
       const picker = new window.google.picker.PickerBuilder()
-        .setAppId('YOUR_APP_ID')
         .addView(view)
         .setOAuthToken(result.data.token)
         .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
+        .setOrigin(window.location.protocol + '//' + window.location.host)
         .setCallback(async (data) => {
-          console.log('Picker callback:', data);
           if (data.action === window.google.picker.Action.PICKED) {
             const fileIds = data.docs.map(doc => doc.id);
             
@@ -115,7 +111,6 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
         })
         .build();
 
-      console.log('Opening picker...');
       picker.setVisible(true);
     } catch (err) {
       setError('Picker error: ' + err.message);
