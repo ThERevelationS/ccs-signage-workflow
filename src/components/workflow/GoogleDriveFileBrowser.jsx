@@ -136,18 +136,20 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     return `${mb.toFixed(1)} MB`;
   };
 
+  const showPickerButton = (
+    <Button size="sm" onClick={openFilePicker} className="bg-blue-600 text-white hover:bg-blue-700">
+      <FileSearch className="w-4 h-4 mr-2" />
+      Select Files from Drive
+    </Button>
+  );
+
   if (!folderUrl) {
     return (
       <div className="text-center py-8 text-gray-400">
         <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No Google Drive folder linked</p>
-        <p className="text-xs mt-1 mb-3">With Google Drive's limited access, you need to select files individually</p>
-        {pickerLoaded && (
-          <Button size="sm" onClick={openFilePicker} className="bg-blue-600 text-white">
-            <FileSearch className="w-4 h-4 mr-2" />
-            Select Files from Drive
-          </Button>
-        )}
+        <p className="text-xs mt-1 mb-3">Select files individually to grant access</p>
+        {showPickerButton}
       </div>
     );
   }
@@ -189,14 +191,9 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-sm text-gray-700">Files ({files.length})</h4>
-        <div className="flex gap-1">
-          {pickerLoaded && (
-            <Button size="sm" variant="ghost" onClick={openFilePicker} className="h-7 px-2">
-              <FileSearch className="w-3 h-3 mr-1" />
-              <span className="text-xs">Add</span>
-            </Button>
-          )}
+        <h4 className="font-medium text-sm text-gray-700">Drive Files ({files.length})</h4>
+        <div className="flex gap-2">
+          {showPickerButton}
           <Button size="sm" variant="ghost" onClick={loadFiles} className="h-7 px-2">
             <RefreshCw className="w-3 h-3" />
           </Button>
@@ -206,8 +203,8 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       {files.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No files found</p>
-          <p className="text-xs mt-1">The folder may be empty or files may not be accessible</p>
+          <p className="text-sm mb-2">No files selected yet</p>
+          <p className="text-xs mb-3">Click "Select Files from Drive" above to choose files</p>
         </div>
       ) : (
         <div className="space-y-1 max-h-96 overflow-y-auto">
