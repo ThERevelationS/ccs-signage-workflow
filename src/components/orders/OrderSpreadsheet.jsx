@@ -521,22 +521,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         </div>
       )}
 
-          <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {lastSaved && (
-              <span className="text-xs text-gray-400">
-                Saved {format(lastSaved, "h:mm:ss a")}
-              </span>
-            )}
-            {hasUnsavedChanges && !isSaving && (
-              <span className="text-xs text-orange-500 font-medium">Unsaved changes</span>
-            )}
-            <span className="text-xs text-gray-500">{filteredOrders.length} orders</span>
-          </div>
-        </div>
-      )}
-
       {/* Spreadsheet Table */}
       <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', overflow: 'visible' }}>
         <colgroup>
