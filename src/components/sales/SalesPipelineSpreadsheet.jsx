@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import * as XLSX from "xlsx";
 
 const WorkOrder = base44.entities.WorkOrder;
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100" },
@@ -26,6 +28,7 @@ const SALES_STATUSES = [
 export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus = "all" }) {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
+  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
@@ -34,11 +37,26 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const [editInput, setEditInput] = useState("");
   const [pendingChanges, setPendingChanges] = useState({});
   const debounceTimers = useRef({});
+  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
+  const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
 
   // Predefined list management
-  const [salesReps, setSalesReps] = useState(["Carl", "Twyla", "Brett", "Kyle", "Joe"]);
-  const [leadSources, setLeadSources] = useState(["Website", "Referral", "Cold Call", "Trade Show", "Social Media"]);
-  const [projectTypes, setProjectTypes] = useState(["Signage", "Vehicle Wrap", "Banners", "Building Graphics"]);
+  const [leadSources, setLeadSources] = useState(() => {
+    const saved = localStorage.getItem('salesLeadSources');
+    return saved ? JSON.parse(saved) : ["Walk-in", "Phone", "Email", "Referral", "Website"];
+  });
+  const [designers, setDesigners] = useState(() => {
+    const saved = localStorage.getItem('salesDesigners');
+    return saved ? JSON.parse(saved) : ["Designer 1", "Designer 2", "Designer 3"];
+  });
+  const [projectManagers, setProjectManagers] = useState(() => {
+    const saved = localStorage.getItem('salesPMs');
+    return saved ? JSON.parse(saved) : ["PM 1", "PM 2", "PM 3"];
+  });
+  const [estimators, setEstimators] = useState(() => {
+    const saved = localStorage.getItem('salesEstimators');
+    return saved ? JSON.parse(saved) : ["Estimator 1", "Estimator 2"];
+  });
 
   useEffect(() => {
     loadWorkOrders();
@@ -47,12 +65,28 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const loadWorkOrders = async () => {
     setIsLoading(true);
     try {
-      const orders = await WorkOrder.filter({ in_pipeline: false, completed: false });
+      const [orders, usersData] = await Promise.all([
+        WorkOrder.filter({ in_pipeline: false, completed: false }),
+        AuthorizedEmail.list()
+      ]);
       setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
+      setUsers(usersData);
     } catch (error) {
       console.error("Error loading work orders:", error);
     }
     setIsLoading(false);
+  };
+
+  // Calculate days between dates
+  const calculateDays = (fromDate, toDate = new Date()) => {
+    if (!fromDate) return null;
+    try {
+      const from = new Date(fromDate);
+      const to = typeof toDate === 'string' ? new Date(toDate) : toDate;
+      return differenceInDays(to, from);
+    } catch {
+      return null;
+    }
   };
 
   const addNewRow = async () => {
@@ -135,25 +169,45 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     setWorkOrders(workOrders.filter(wo => wo.id !== workOrder.id));
   };
 
-  const openEditDialog = (field, items) => {
-    setEditDialog({ open: true, field, items });
+  const openEditDialog = (field, items, storageKey) => {
+    setEditDialog({ open: true, field, items, storageKey });
     setEditInput("");
   };
 
   const addToList = () => {
     if (!editInput.trim()) return;
     const newItems = [...editDialog.items, editInput.trim()];
-    if (editDialog.field === "sales_rep") setSalesReps(newItems);
-    else if (editDialog.field === "lead_source") setLeadSources(newItems);
-    else if (editDialog.field === "project_type") setProjectTypes(newItems);
+    if (editDialog.field === "lead_source") {
+      setLeadSources(newItems);
+      localStorage.setItem('salesLeadSources', JSON.stringify(newItems));
+    } else if (editDialog.field === "designer") {
+      setDesigners(newItems);
+      localStorage.setItem('salesDesigners', JSON.stringify(newItems));
+    } else if (editDialog.field === "project_manager") {
+      setProjectManagers(newItems);
+      localStorage.setItem('salesPMs', JSON.stringify(newItems));
+    } else if (editDialog.field === "estimator") {
+      setEstimators(newItems);
+      localStorage.setItem('salesEstimators', JSON.stringify(newItems));
+    }
     setEditInput("");
   };
 
   const removeFromList = (item) => {
     const newItems = editDialog.items.filter(i => i !== item);
-    if (editDialog.field === "sales_rep") setSalesReps(newItems);
-    else if (editDialog.field === "lead_source") setLeadSources(newItems);
-    else if (editDialog.field === "project_type") setProjectTypes(newItems);
+    if (editDialog.field === "lead_source") {
+      setLeadSources(newItems);
+      localStorage.setItem('salesLeadSources', JSON.stringify(newItems));
+    } else if (editDialog.field === "designer") {
+      setDesigners(newItems);
+      localStorage.setItem('salesDesigners', JSON.stringify(newItems));
+    } else if (editDialog.field === "project_manager") {
+      setProjectManagers(newItems);
+      localStorage.setItem('salesPMs', JSON.stringify(newItems));
+    } else if (editDialog.field === "estimator") {
+      setEstimators(newItems);
+      localStorage.setItem('salesEstimators', JSON.stringify(newItems));
+    }
     setEditDialog({ ...editDialog, items: newItems });
   };
 
@@ -162,28 +216,57 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
     return statusObj?.color || "bg-white";
   };
 
-  const exportToExcel = () => {
-    const exportData = filteredWorkOrders.map(wo => ({
-      "Project Name": wo.title || "",
-      "Client": wo.client_name || "",
-      "Status": wo.sales_status || "",
-      "Description": wo.description || "",
-      "Contact": wo.contact_name || "",
-      "Phone": wo.contact_phone || "",
-      "Quote Amount": wo.quoted_amount || "",
-      "Probability": wo.probability || "",
-      "Quote Date": wo.quote_date || "",
-      "Follow Up": wo.follow_up_date || "",
-      "Close Date": wo.close_date || "",
-      "Sales Rep": wo.sales_rep || "",
-      "Lead Source": wo.lead_source || "",
-      "Location": wo.install_location || ""
-    }));
+  const exportToExcel = async () => {
+    setExportProgress({ show: true, progress: 0 });
+    
+    const exportData = filteredWorkOrders.map(wo => {
+      const daysFromInitial = calculateDays(wo.date_initial_contact);
+      const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
+      const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
+      const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
+      const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
+      const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
+      
+      return {
+        "Customer": wo.client_name || "",
+        "Source": wo.lead_source || "",
+        "Current Task Deadline": wo.current_task_deadline || "",
+        "Current Task Assigned to": wo.current_task_assigned_to || "",
+        "Designer": wo.designer || "",
+        "Project Manager": wo.project_manager || "",
+        "Estimator": wo.estimator || "",
+        "Est/Inv @": wo.est_inv_at || "",
+        "Estimate Amount": wo.estimate_amount || "",
+        "Current Task Description": wo.current_task_description || "",
+        "Date Est. Requested/Initial Contact": wo.date_initial_contact || "",
+        "Site Survey": wo.site_survey_date || "",
+        "Date Estimate Sent to Customer": wo.date_estimate_sent || "",
+        "Date Order Created": wo.date_order_created || "",
+        "Project Install Date": wo.project_install_date || "",
+        "Permit Submitted": wo.permit_submitted_date || "",
+        "Notes": wo.title || "",
+        "Date Permit Receipt Confirmed": wo.permit_receipt_confirmed_date || "",
+        "Permit Number": wo.permit_number || "",
+        "Date Permit Approved/Received": wo.permit_approved_date || "",
+        "Days from Initial Request to today": daysFromInitial ?? "",
+        "Days Est. Sent from Date Requested": daysEstSent ?? "",
+        "Days from Est. Sent to Date Order Created": daysEstToOrder ?? "",
+        "Days from Order Created to Permit Submitted": daysOrderToPermit ?? "",
+        "Days from Permit Submitted to Permit Approved": daysPermitToApproved ?? "",
+        "Days from Project Install Date from Order Created": daysOrderToInstall ?? ""
+      };
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setExportProgress({ show: true, progress: 50 });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
     XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    
+    setExportProgress({ show: true, progress: 100 });
+    setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
   };
 
   const importFromExcel = async (e) => {
@@ -197,27 +280,38 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      for (const row of jsonData) {
+      setImportProgress({ show: true, current: 0, total: jsonData.length });
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
         await WorkOrder.create({
-          title: row["Project Name"] || "",
-          client_name: row["Client"] || "",
-          sales_status: row["Status"] || "lead",
-          description: row["Description"] || "",
-          contact_name: row["Contact"] || "",
-          contact_phone: row["Phone"] || "",
-          quoted_amount: parseFloat(row["Quote Amount"]) || 0,
-          probability: parseInt(row["Probability"]) || 0,
-          quote_date: row["Quote Date"] || "",
-          follow_up_date: row["Follow Up"] || "",
-          close_date: row["Close Date"] || "",
-          sales_rep: row["Sales Rep"] || "",
-          lead_source: row["Lead Source"] || "",
-          install_location: row["Location"] || "",
+          title: row["Notes"] || row["Customer"] || "",
+          client_name: row["Customer"] || "",
+          lead_source: row["Source"] || "",
+          current_task_deadline: row["Current Task Deadline"] || "",
+          current_task_assigned_to: row["Current Task Assigned to"] || "",
+          designer: row["Designer"] || "",
+          project_manager: row["Project Manager"] || "",
+          estimator: row["Estimator"] || "",
+          est_inv_at: row["Est/Inv @"] || "",
+          estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
+          current_task_description: row["Current Task Description"] || "",
+          date_initial_contact: row["Date Est. Requested/Initial Contact"] || "",
+          site_survey_date: row["Site Survey"] || "",
+          date_estimate_sent: row["Date Estimate Sent to Customer"] || "",
+          date_order_created: row["Date Order Created"] || "",
+          project_install_date: row["Project Install Date"] || "",
+          permit_submitted_date: row["Permit Submitted"] || "",
+          permit_receipt_confirmed_date: row["Date Permit Receipt Confirmed"] || "",
+          permit_number: row["Permit Number"] || "",
+          permit_approved_date: row["Date Permit Approved/Received"] || "",
           in_pipeline: false
         });
+        setImportProgress({ show: true, current: i + 1, total: jsonData.length });
       }
 
       await loadWorkOrders();
+      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
