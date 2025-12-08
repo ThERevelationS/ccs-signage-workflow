@@ -751,7 +751,7 @@ export default function WorkOrderDetailsDialog({
                   )}
                 </div>
               </div>
-              <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} />
+              <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} workOrderId={workOrder.id} />
             </div>
 
             <div className="grid grid-cols-3 gap-6">

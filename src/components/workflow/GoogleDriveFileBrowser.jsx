@@ -43,9 +43,8 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    const folderId = extractFolderId(folderUrl);
-    if (!folderId) {
-      setError("Invalid Google Drive folder URL");
+    if (!workOrderId) {
+      setError("Work order ID is required");
       return;
     }
 
@@ -56,7 +55,7 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
     try {
       const result = await base44.functions.invoke('googleDriveAuth', { 
         action: 'listFiles',
-        folderId 
+        workOrderId 
       });
       
       if (result.data.error && result.data.error.includes('Not authenticated')) {
