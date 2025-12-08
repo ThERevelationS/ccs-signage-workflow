@@ -524,6 +524,9 @@ export const NotificationTriggers = {
   
   // Order-specific triggers
   orderCreated: async (order, changedBy) => {
+    // Skip notifications for imported orders
+    if (order.is_import) return;
+    
     await triggerNotification("order_created", null, { 
       changedBy, 
       eventDescription: "New order created",
@@ -532,6 +535,9 @@ export const NotificationTriggers = {
   },
   
   orderOrdered: async (order, changedBy) => {
+    // Skip notifications for imported orders
+    if (order.is_import) return;
+    
     await triggerNotification("order_ordered", null, { 
       changedBy, 
       eventDescription: "Order has been placed",
@@ -540,6 +546,9 @@ export const NotificationTriggers = {
   },
   
   orderReceived: async (order, changedBy) => {
+    // Skip notifications for imported orders
+    if (order.is_import) return;
+    
     await triggerNotification("order_received", null, { 
       changedBy, 
       eventDescription: "Order has been received",
