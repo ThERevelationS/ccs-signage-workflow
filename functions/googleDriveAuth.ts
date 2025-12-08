@@ -3,35 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { action, code, folderId, userEmail } = await req.json();
 
-    const { action, code, folderId } = await req.json();
-
-    if (action === 'getAuthUrl') {
-      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
-      
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly')}&` +
-        `access_type=offline&` +
-        `prompt=consent&` +
-        `state=${user.email}`;
-      
-      return Response.json({ authUrl });
-    }
-
+    // exchangeCode doesn't need auth since it uses service role with userEmail from OAuth state
     if (action === 'exchangeCode') {
-      const { userEmail } = await req.json();
-      
-      if (!userEmail) {
-        return Response.json({ error: 'User email required' }, { status: 400 });
+      if (!userEmail || !code) {
+        return Response.json({ error: 'User email and code required' }, { status: 400 });
       }
 
       const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
@@ -53,7 +30,7 @@ Deno.serve(async (req) => {
       const tokens = await tokenResponse.json();
       
       if (!tokens.access_token) {
-        return Response.json({ error: 'Failed to get access token' }, { status: 400 });
+        return Response.json({ error: 'Failed to get access token', details: tokens }, { status: 400 });
       }
 
       // Find user by email and update their tokens using service role
@@ -69,6 +46,31 @@ Deno.serve(async (req) => {
 
       return Response.json({ success: true });
     }
+
+    // Other actions require authentication
+    const user = await base44.auth.me();
+    
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (action === 'getAuthUrl') {
+      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
+      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly')}&` +
+        `access_type=offline&` +
+        `prompt=consent&` +
+        `state=${user.email}`;
+      
+      return Response.json({ authUrl });
+    }
+
+
 
     if (action === 'listFiles') {
       // Get stored token
