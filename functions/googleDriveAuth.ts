@@ -9,36 +9,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action } = await req.json();
-
-    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const redirectUri = `${new URL(req.url).origin}/api/googleDriveCallback`;
-
-    if (!clientId || !clientSecret) {
-      return Response.json({ error: 'Google OAuth credentials not configured' }, { status: 500 });
-    }
+    const { action, code, folderId } = await req.json();
 
     if (action === 'getAuthUrl') {
-      const scopes = [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/userinfo.email'
-      ];
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const redirectUri = `${new URL(req.url).origin}/api/functions/googleDriveAuth`;
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `response_type=code&` +
-        `scope=${encodeURIComponent(scopes.join(' '))}&` +
+        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly')}&` +
         `access_type=offline&` +
+        `prompt=consent&` +
         `state=${user.email}`;
-
+      
       return Response.json({ authUrl });
     }
 
     if (action === 'exchangeCode') {
-      const { code } = await req.json();
-      
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      const redirectUri = `${new URL(req.url).origin}/api/functions/googleDriveAuth`;
+
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -53,55 +46,44 @@ Deno.serve(async (req) => {
 
       const tokens = await tokenResponse.json();
       
-      if (!tokenResponse.ok) {
-        return Response.json({ error: tokens.error_description || 'Failed to exchange code' }, { status: 400 });
+      if (!tokens.access_token) {
+        return Response.json({ error: 'Failed to get access token' }, { status: 400 });
       }
 
-      // Store tokens in user's data
-      await base44.auth.updateMe({
-        google_drive_access_token: tokens.access_token,
-        google_drive_refresh_token: tokens.refresh_token,
-        google_drive_token_expiry: Date.now() + (tokens.expires_in * 1000)
+      // Store tokens using Base44's service role
+      await base44.asServiceRole.entities.User.update(user.id, {
+        google_drive_token: tokens.access_token,
+        google_drive_refresh_token: tokens.refresh_token
       });
 
       return Response.json({ success: true });
     }
 
-    if (action === 'refreshToken') {
-      const currentUser = await base44.auth.me();
-      const refreshToken = currentUser.google_drive_refresh_token;
+    if (action === 'listFiles') {
+      // Get stored token
+      const userData = await base44.asServiceRole.entities.User.filter({ email: user.email });
+      const token = userData[0]?.google_drive_token;
 
-      if (!refreshToken) {
-        return Response.json({ error: 'No refresh token available' }, { status: 400 });
+      if (!token) {
+        return Response.json({ error: 'Not authenticated with Google Drive' }, { status: 401 });
       }
 
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          refresh_token: refreshToken,
-          client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: 'refresh_token'
-        })
-      });
-
-      const tokens = await tokenResponse.json();
+      const filesUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&pageSize=100`;
       
-      if (!tokenResponse.ok) {
-        return Response.json({ error: 'Failed to refresh token' }, { status: 400 });
-      }
-
-      await base44.auth.updateMe({
-        google_drive_access_token: tokens.access_token,
-        google_drive_token_expiry: Date.now() + (tokens.expires_in * 1000)
+      const filesResponse = await fetch(filesUrl, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      return Response.json({ access_token: tokens.access_token });
+      if (!filesResponse.ok) {
+        const error = await filesResponse.text();
+        return Response.json({ error: `Google Drive API error: ${error}` }, { status: filesResponse.status });
+      }
+
+      const data = await filesResponse.json();
+      return Response.json({ files: data.files || [] });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
-
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

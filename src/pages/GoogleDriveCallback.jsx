@@ -1,0 +1,83 @@
+import React, { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
+
+export default function GoogleDriveCallback() {
+  const [status, setStatus] = useState('processing');
+  const [message, setMessage] = useState('Connecting to Google Drive...');
+
+  useEffect(() => {
+    handleCallback();
+  }, []);
+
+  const handleCallback = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+
+      if (error) {
+        setStatus('error');
+        setMessage(`Authorization failed: ${error}`);
+        setTimeout(() => window.close(), 3000);
+        return;
+      }
+
+      if (!code) {
+        setStatus('error');
+        setMessage('No authorization code received');
+        setTimeout(() => window.close(), 3000);
+        return;
+      }
+
+      const result = await base44.functions.invoke('googleDriveAuth', {
+        action: 'exchangeCode',
+        code
+      });
+
+      if (result.data.success) {
+        setStatus('success');
+        setMessage('Successfully connected to Google Drive!');
+        setTimeout(() => window.close(), 2000);
+      } else {
+        setStatus('error');
+        setMessage('Failed to complete authorization');
+        setTimeout(() => window.close(), 3000);
+      }
+    } catch (err) {
+      setStatus('error');
+      setMessage(`Error: ${err.message}`);
+      setTimeout(() => window.close(), 3000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="clay-card p-8 max-w-md text-center">
+        {status === 'processing' && (
+          <>
+            <Loader2 className="w-16 h-16 animate-spin text-blue-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Connecting...</h2>
+          </>
+        )}
+        
+        {status === 'success' && (
+          <>
+            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Success!</h2>
+          </>
+        )}
+        
+        {status === 'error' && (
+          <>
+            <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
+          </>
+        )}
+        
+        <p className="text-gray-600">{message}</p>
+        <p className="text-sm text-gray-400 mt-4">This window will close automatically...</p>
+      </div>
+    </div>
+  );
+}
