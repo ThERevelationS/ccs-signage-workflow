@@ -10,67 +10,20 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, folderId, workOrderId, fileIds } = body;
+    const { action } = body;
 
     if (action === 'getPickerToken') {
       const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
       return Response.json({ token: accessToken });
     }
 
-    if (action === 'saveFileAccess') {
-      // Store file IDs that user granted access to
-      if (!workOrderId || !fileIds) {
-        return Response.json({ error: 'Missing workOrderId or fileIds' }, { status: 400 });
-      }
-
-      const workOrder = await base44.entities.WorkOrder.get(workOrderId);
-      const existingFiles = workOrder.google_drive_file_ids || [];
-      const updatedFiles = [...new Set([...existingFiles, ...fileIds])];
-
-      await base44.entities.WorkOrder.update(workOrderId, {
-        google_drive_file_ids: updatedFiles
-      });
-
-      return Response.json({ success: true });
-    }
-
     if (action === 'listFiles') {
-      if (!workOrderId) {
-        return Response.json({ error: 'workOrderId is required' }, { status: 400 });
-      }
-      
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
-
-      if (!accessToken) {
-        return Response.json({ error: 'Not authenticated with Google Drive. Please connect via Dashboard > Settings > App Connectors' }, { status: 401 });
-      }
-
-      // Get file IDs that user has granted access to
-      const workOrder = await base44.asServiceRole.entities.WorkOrder.get(workOrderId);
-      const fileIds = workOrder?.google_drive_file_ids || [];
-
-      if (fileIds.length === 0) {
-        return Response.json({ files: [] });
-      }
-
-      // Fetch details for each file
-      const filePromises = fileIds.map(async (fileId) => {
-        try {
-          const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink`;
-          const response = await fetch(fileUrl, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
-          if (response.ok) {
-            return await response.json();
-          }
-          return null;
-        } catch (e) {
-          return null;
-        }
+      // Due to drive.file scope limitations, we cannot list folder contents
+      // The app can only see files that are explicitly opened/created by it
+      return Response.json({ 
+        files: [],
+        message: 'Google Drive folder browsing is not available with current permissions. Please access files directly through Google Drive.'
       });
-
-      const files = (await Promise.all(filePromises)).filter(f => f !== null);
-      return Response.json({ files });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });

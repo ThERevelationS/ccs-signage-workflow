@@ -43,42 +43,10 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    if (!workOrderId) {
-      setError("Work order ID is required");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setNeedsAuth(false);
-
-    try {
-      const result = await base44.functions.invoke('googleDriveAuth', { 
-        action: 'listFiles',
-        workOrderId 
-      });
-      
-      if (result.data.error && result.data.error.includes('Not authenticated')) {
-        setNeedsAuth(true);
-        setError('Please connect Google Drive via Dashboard > App Connectors');
-      } else if (result.data.error) {
-        setError(result.data.error);
-      } else if (result.data.warning) {
-        setError(result.data.warning);
-        setFiles([]);
-      } else {
-        setFiles(result.data.files || []);
-      }
-    } catch (err) {
-      if (err.message?.includes('401')) {
-        setNeedsAuth(true);
-        setError('Please connect your Google Drive account');
-      } else {
-        setError(err.message || "Failed to load files from Google Drive");
-      }
-    } finally {
-      setLoading(false);
-    }
+    // Google Drive with drive.file scope cannot list folder contents
+    // Just show empty state with instructions
+    setFiles([]);
+    setLoading(false);
   };
 
   const handleAuth = () => {
