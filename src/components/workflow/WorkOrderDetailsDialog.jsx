@@ -192,7 +192,8 @@ export default function WorkOrderDetailsDialog({
     await WorkOrder.update(workOrder.id, { [field]: newValue });
     await ActivityActions.fieldUpdated(workOrder, field, oldValue, newValue);
     setEditingField(null);
-    if (onUpdate) onUpdate();
+    if (onUpdate) await onUpdate();
+    await loadRelatedData();
   };
 
   const cancelEdit = () => {
