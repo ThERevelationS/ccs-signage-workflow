@@ -124,7 +124,7 @@ export default function GlobalSearch() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1">
         <div className="relative">
           <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
@@ -132,7 +132,7 @@ export default function GlobalSearch() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={() => searchTerm.length >= 2 && setShowResults(true)}
-            className="h-8 pl-7 pr-2 w-56 text-xs"
+            className="h-7 pl-7 pr-2 w-56 text-xs"
           />
           {isSearching && (
             <Loader2 className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
@@ -143,11 +143,11 @@ export default function GlobalSearch() {
           <PopoverTrigger asChild>
             <Button
               size="sm"
-              className={`clay-button border-none h-8 px-3 ${hasActiveFilters ? 'text-purple-700' : 'text-gray-800'}`}
+              className={`clay-button border-none h-7 px-3 w-56 ${hasActiveFilters ? 'text-purple-700' : 'text-gray-800'}`}
               style={{ background: hasActiveFilters ? 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' : 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
             >
-              <Filter className="w-4 h-4 mr-1" />
-              <span className="text-sm">Filters</span>
+              <Filter className="w-3 h-3 mr-1" />
+              <span className="text-xs">Filters</span>
               {hasActiveFilters && (
                 <span className="ml-1 bg-purple-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   {(filterStages.length > 0 ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0)}
