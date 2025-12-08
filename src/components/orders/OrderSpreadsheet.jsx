@@ -100,6 +100,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
   const [validationError, setValidationError] = useState(null);
   const [editingCustomerName, setEditingCustomerName] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
+  const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
@@ -372,7 +374,9 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
     return colors[index];
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    setExportProgress({ show: true, progress: 0 });
+    
     const exportData = filteredOrders.map(order => ({
       "Customer Name": order.customer_name || "",
       "Request Type": order.request_type || "",
@@ -386,10 +390,16 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       "Status": order.status || ""
     }));
 
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setExportProgress({ show: true, progress: 50 });
+
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
     XLSX.writeFile(wb, `orders_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    
+    setExportProgress({ show: true, progress: 100 });
+    setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
   };
 
   const importFromExcel = async (e) => {
@@ -406,6 +416,8 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       const maxRowNumber = orders.length > 0 
         ? Math.max(...orders.map(o => o.row_number || 0)) 
         : 0;
+
+      setImportProgress({ show: true, current: 0, total: jsonData.length });
 
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
@@ -424,9 +436,11 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
           row_number: maxRowNumber + i + 1,
           work_order_id: workOrderFilter || ""
         });
+        setImportProgress({ show: true, current: i + 1, total: jsonData.length });
       }
 
       await loadData();
+      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
@@ -476,6 +490,19 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
+          {/* Import/Export Progress */}
+          {importProgress.show && (
+            <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">
+              <span className="text-xs font-medium">Importing...</span>
+              <span className="text-xs text-gray-500">{importProgress.current}/{importProgress.total}</span>
+            </div>
+          )}
+          {exportProgress.show && (
+            <div className="clay-card px-3 py-1 flex items-center gap-2 min-w-48">
+              <span className="text-xs font-medium">Exporting...</span>
+              <span className="text-xs text-gray-500">{exportProgress.progress}%</span>
+            </div>
+          )}
           {isRegistered && (
             <>
               <Button
@@ -502,21 +529,28 @@ export default function OrderSpreadsheet({ workOrderFilter = null, compact = fal
                 accept=".xlsx,.xls"
                 onChange={importFromExcel}
                 className="hidden"
+                disabled={importProgress.show}
               />
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
-                size="sm" 
+                size="sm"
+                disabled={importProgress.show}
                 className="clay-button border-none text-gray-700 h-8"
                 style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
               >
-                <Upload className="w-4 h-4 mr-1" />
+                {importProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
                 Import
               </Button>
             </>
           )}
-          <Button onClick={exportToExcel} size="sm" className="clay-button border-none text-gray-700 h-8"
-            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}>
-            <Download className="w-4 h-4 mr-1" />
+          <Button 
+            onClick={exportToExcel}
+            disabled={exportProgress.show}
+            size="sm" 
+            className="clay-button border-none text-gray-700 h-8"
+            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+          >
+            {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
             Export
           </Button>
         </div>

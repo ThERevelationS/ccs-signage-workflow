@@ -1025,7 +1025,10 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-blue-600" />
-              Edit {editDialog.field === "sales_rep" ? "Sales Reps" : editDialog.field === "lead_source" ? "Lead Sources" : "Project Types"}
+              Edit {editDialog.field === "lead_source" ? "Lead Sources" : 
+                    editDialog.field === "designer" ? "Designers" :
+                    editDialog.field === "project_manager" ? "Project Managers" :
+                    editDialog.field === "estimator" ? "Estimators" : "Items"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
