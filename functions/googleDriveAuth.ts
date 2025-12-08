@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
     if (action === 'getAuthUrl') {
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-      const redirectUri = `${new URL(req.url).origin}/api/functions/googleDriveAuth`;
+      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     if (action === 'exchangeCode') {
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
       const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-      const redirectUri = `${new URL(req.url).origin}/api/functions/googleDriveAuth`;
+      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
 
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
