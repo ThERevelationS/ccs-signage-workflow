@@ -352,26 +352,57 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
                 accept=".xlsx,.xls"
                 onChange={importFromExcel}
                 className="hidden"
+                disabled={importProgress.show}
               />
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
-                size="sm" 
+                size="sm"
+                disabled={importProgress.show}
                 className="clay-button border-none text-gray-700 h-8"
                 style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
               >
-                <Upload className="w-4 h-4 mr-1" />
+                {importProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
                 Import
               </Button>
             </>
           )}
-          <Button onClick={exportToExcel} size="sm" className="clay-button border-none text-gray-700 h-8"
-            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}>
-            <Download className="w-4 h-4 mr-1" />
+          <Button 
+            onClick={exportToExcel}
+            disabled={exportProgress.show}
+            size="sm" 
+            className="clay-button border-none text-gray-700 h-8"
+            style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+          >
+            {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
             Export
           </Button>
         </div>
         <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
       </div>
+
+      {/* Import/Export Progress */}
+      {importProgress.show && (
+        <div className="mb-3 px-2">
+          <div className="clay-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Importing...</span>
+              <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+            </div>
+            <Progress value={(importProgress.current / importProgress.total) * 100} className="h-2" />
+          </div>
+        </div>
+      )}
+      {exportProgress.show && (
+        <div className="mb-3 px-2">
+          <div className="clay-card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Exporting...</span>
+              <span className="text-xs text-gray-500">{exportProgress.progress}%</span>
+            </div>
+            <Progress value={exportProgress.progress} className="h-2" />
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '11px', tableLayout: 'fixed' }}>
