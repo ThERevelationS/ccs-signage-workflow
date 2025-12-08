@@ -196,8 +196,12 @@ export default function WorkOrderDetailsDialog({
     Object.assign(workOrder, { [field]: newValue });
     
     setEditingField(null);
-    if (onUpdate) await onUpdate();
-    await loadRelatedData();
+    
+    // Don't refresh the entire page for google drive URL changes
+    if (field !== 'google_drive_folder_url') {
+      if (onUpdate) await onUpdate();
+      await loadRelatedData();
+    }
   };
 
   const cancelEdit = () => {
