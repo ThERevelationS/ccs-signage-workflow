@@ -86,39 +86,7 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const openFilePicker = async () => {
-    try {
-      const result = await base44.functions.invoke('googleDriveAuth', { action: 'getPickerToken' });
-      const token = result.data.token;
-
-      if (!token) {
-        setNeedsAuth(true);
-        setError('Please connect Google Drive via Dashboard > App Connectors');
-        return;
-      }
-
-      const picker = new window.google.picker.PickerBuilder()
-        .addView(window.google.picker.ViewId.DOCS)
-        .addView(window.google.picker.ViewId.FOLDERS)
-        .setOAuthToken(token)
-        .setCallback(async (data) => {
-          if (data.action === window.google.picker.Action.PICKED) {
-            const selectedFiles = data.docs;
-            // Save selected file IDs to work order
-            const fileIds = selectedFiles.map(f => f.id);
-            await base44.functions.invoke('googleDriveAuth', { 
-              action: 'saveFileAccess',
-              workOrderId,
-              fileIds 
-            });
-            loadFiles();
-          }
-        })
-        .build();
-      
-      picker.setVisible(true);
-    } catch (err) {
-      setError('Failed to open file picker: ' + err.message);
-    }
+    setError('Google Drive file picker requires additional API key configuration. Instead, please share files directly with this app from Google Drive, or use the folder URL to view files you have access to.');
   };
 
   const getFileIcon = (mimeType) => {
@@ -137,10 +105,20 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const showPickerButton = (
-    <Button size="sm" onClick={openFilePicker} className="bg-blue-600 text-white hover:bg-blue-700">
-      <FileSearch className="w-4 h-4 mr-2" />
-      Select Files from Drive
-    </Button>
+    <div className="text-center">
+      <p className="text-xs text-gray-500 mb-2">
+        Due to Google Drive API limitations, the app can only see files you explicitly share or create.
+      </p>
+      <a
+        href={folderUrl || "https://drive.google.com"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+      >
+        <ExternalLink className="w-4 h-4" />
+        Open in Google Drive
+      </a>
+    </div>
   );
 
   if (!folderUrl) {
