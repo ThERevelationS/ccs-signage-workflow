@@ -9,114 +9,61 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { action, folderId, code } = body;
+    const url = new URL(req.url);
+    const action = url.searchParams.get('action');
 
-    const CLIENT_ID = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-    const CLIENT_SECRET = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
-    const REDIRECT_URI = `${new URL(req.url).origin}/api/functions/googleDriveCustomAuth`;
-
-    if (action === 'getAuthUrl') {
-      const scopes = [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/userinfo.email'
-      ];
+    if (action === 'initiate') {
+      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
+      const redirectUri = `${url.origin}/functions/googleDriveCustomCallback`;
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${CLIENT_ID}` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-        `&response_type=code` +
-        `&scope=${encodeURIComponent(scopes.join(' '))}` +
-        `&access_type=offline` +
-        `&prompt=consent` +
-        `&state=${user.email}`;
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly email')}&` +
+        `access_type=offline&` +
+        `state=${user.email}`;
 
       return Response.json({ authUrl });
     }
 
-    if (action === 'handleCallback') {
-      if (!code) {
-        return Response.json({ error: 'No code provided' }, { status: 400 });
-      }
-
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          redirect_uri: REDIRECT_URI,
-          grant_type: 'authorization_code'
-        })
-      });
-
-      const tokenData = await tokenResponse.json();
-      
-      if (tokenData.error) {
-        return Response.json({ error: tokenData.error_description || tokenData.error }, { status: 400 });
-      }
-
-      // Store tokens in user entity
-      await base44.asServiceRole.entities.User.update(user.id, {
-        google_drive_access_token: tokenData.access_token,
-        google_drive_refresh_token: tokenData.refresh_token,
-        google_drive_token_expiry: new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
-      });
-
-      return Response.json({ success: true });
-    }
-
     if (action === 'listFiles') {
-      if (!folderId) {
-        return Response.json({ error: 'folderId is required' }, { status: 400 });
-      }
+      const body = await req.json();
+      const { folderId } = body;
 
-      // Get user's stored token
-      const userData = await base44.asServiceRole.entities.User.get(user.id);
-      let accessToken = userData.google_drive_access_token;
-
-      // Check if token expired and refresh if needed
-      if (userData.google_drive_token_expiry && new Date(userData.google_drive_token_expiry) < new Date()) {
-        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-            refresh_token: userData.google_drive_refresh_token,
-            grant_type: 'refresh_token'
-          })
-        });
-
-        const refreshData = await refreshResponse.json();
-        if (refreshData.access_token) {
-          accessToken = refreshData.access_token;
-          await base44.asServiceRole.entities.User.update(user.id, {
-            google_drive_access_token: accessToken,
-            google_drive_token_expiry: new Date(Date.now() + (refreshData.expires_in * 1000)).toISOString()
-          });
-        }
-      }
+      // Get stored access token for this user
+      const userRecord = await base44.asServiceRole.entities.User.list();
+      const currentUser = userRecord.find(u => u.email === user.email);
+      const accessToken = currentUser?.google_drive_token;
 
       if (!accessToken) {
-        return Response.json({ error: 'Not authenticated', needsAuth: true }, { status: 401 });
+        return Response.json({ 
+          error: 'Not authenticated',
+          needsAuth: true 
+        }, { status: 401 });
       }
 
       // List files in folder
-      const filesUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&pageSize=100`;
-      
-      const filesResponse = await fetch(filesUrl, {
+      const listUrl = folderId 
+        ? `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)`
+        : `https://www.googleapis.com/drive/v3/files?fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)`;
+
+      const response = await fetch(listUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
 
-      if (!filesResponse.ok) {
-        const error = await filesResponse.text();
-        return Response.json({ error: `Failed to list files: ${error}` }, { status: filesResponse.status });
+      if (!response.ok) {
+        if (response.status === 401) {
+          return Response.json({ 
+            error: 'Token expired',
+            needsAuth: true 
+          }, { status: 401 });
+        }
+        throw new Error(`Failed to list files: ${response.statusText}`);
       }
 
-      const filesData = await filesResponse.json();
-      return Response.json({ files: filesData.files || [] });
+      const data = await response.json();
+      return Response.json({ files: data.files || [] });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
