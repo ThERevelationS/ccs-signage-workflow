@@ -405,49 +405,56 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '11px', tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: '180px' }} />
-            <col style={{ width: '150px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '200px' }} />
-            <col style={{ width: '80px' }} />
-          </colgroup>
-
+        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '10px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Project Name</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Contact</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
-                Sales Rep
-                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("sales_rep", salesReps)} />}
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '120px' }}>Customer</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
+                <div className="flex items-center gap-1">
+                  Source
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source", leadSources)} />}
+                </div>
               </th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Status</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Budget</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Quote Date</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Close Date</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Probability</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Follow Up</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Install Date</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
-                Lead Source
-                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source", leadSources)} />}
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Task Deadline</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '110px' }}>Task Assigned</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
+                <div className="flex items-center gap-1">
+                  Designer
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("designer", designers)} />}
+                </div>
               </th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
-                Project Type
-                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_type", projectTypes)} />}
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
+                <div className="flex items-center gap-1">
+                  PM
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_manager", projectManagers)} />}
+                </div>
               </th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Additional Notes</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700">Actions</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
+                <div className="flex items-center gap-1">
+                  Estimator
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("estimator", estimators)} />}
+                </div>
+              </th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '80px' }}>Est/Inv @</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Est. Amount</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '150px' }}>Task Desc</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Initial Contact</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Site Survey</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Est. Sent</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Order Created</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Install Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Permit Sub</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Notes</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Permit Conf</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '80px' }}>Permit #</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '90px' }}>Permit Appr</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Init</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Req</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Ord</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Prmt</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Appr</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '60px' }}>Days Inst</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>Actions</th>
             </tr>
           </thead>
 
