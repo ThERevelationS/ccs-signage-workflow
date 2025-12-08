@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import * as XLSX from "xlsx";
 
@@ -29,6 +30,13 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const fileInputRef = useRef(null);
+  const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
+  const [editInput, setEditInput] = useState("");
+
+  // Predefined list management
+  const [salesReps, setSalesReps] = useState(["Carl", "Twyla", "Brett", "Kyle", "Joe"]);
+  const [leadSources, setLeadSources] = useState(["Website", "Referral", "Cold Call", "Trade Show", "Social Media"]);
+  const [projectTypes, setProjectTypes] = useState(["Signage", "Vehicle Wrap", "Banners", "Building Graphics"]);
 
   useEffect(() => {
     loadWorkOrders();
@@ -71,11 +79,33 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
   const moveToWorkflow = async (workOrder) => {
     await WorkOrder.update(workOrder.id, { 
       in_pipeline: true,
-      current_stage: "estimating",
+      current_stage: "permitting",
       start_date: workOrder.start_date || format(new Date(), "yyyy-MM-dd"),
       priority: 0
     });
     setWorkOrders(workOrders.filter(wo => wo.id !== workOrder.id));
+  };
+
+  const openEditDialog = (field, items) => {
+    setEditDialog({ open: true, field, items });
+    setEditInput("");
+  };
+
+  const addToList = () => {
+    if (!editInput.trim()) return;
+    const newItems = [...editDialog.items, editInput.trim()];
+    if (editDialog.field === "sales_rep") setSalesReps(newItems);
+    else if (editDialog.field === "lead_source") setLeadSources(newItems);
+    else if (editDialog.field === "project_type") setProjectTypes(newItems);
+    setEditInput("");
+  };
+
+  const removeFromList = (item) => {
+    const newItems = editDialog.items.filter(i => i !== item);
+    if (editDialog.field === "sales_rep") setSalesReps(newItems);
+    else if (editDialog.field === "lead_source") setLeadSources(newItems);
+    else if (editDialog.field === "project_type") setProjectTypes(newItems);
+    setEditDialog({ ...editDialog, items: newItems });
   };
 
   const getRowColor = (status) => {
@@ -205,37 +235,44 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
           <colgroup>
             <col style={{ width: '180px' }} />
             <col style={{ width: '150px' }} />
+            <col style={{ width: '120px' }} />
             <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '120px' }} />
             <col style={{ width: '200px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '120px' }} />
             <col style={{ width: '80px' }} />
-            <col style={{ width: '60px' }} />
           </colgroup>
 
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Project Name</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Client</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Status</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Description</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Contact</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Phone</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Quote Amount</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Probability</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
+                Sales Rep
+                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("sales_rep", salesReps)} />}
+              </th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Status</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Budget</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Quote Date</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Follow Up</th>
               <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Close Date</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Sales Rep</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Lead Source</th>
-              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Location</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Probability</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Follow Up</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Install Date</th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
+                Lead Source
+                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source", leadSources)} />}
+              </th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700 flex items-center gap-1">
+                Project Type
+                {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_type", projectTypes)} />}
+              </th>
+              <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Additional Notes</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
@@ -244,23 +281,39 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
             {filteredWorkOrders.map((wo) => (
               <tr key={wo.id} className={`border-b hover:bg-gray-50 ${getRowColor(wo.sales_status)}`}>
                 <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.title || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "title", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Project name..."
-                    disabled={!isRegistered}
-                  />
+                  <button
+                    onClick={() => setSelectedWorkOrder(wo)}
+                    className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600 font-medium"
+                  >
+                    {wo.title || "Untitled"}
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
                 </td>
 
                 <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.client_name || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "client_name", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Client..."
+                  <button
+                    onClick={() => setSelectedWorkOrder(wo)}
+                    className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
+                  >
+                    {wo.contact_name || "-"}
+                  </button>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Select
+                    value={wo.sales_rep || ""}
+                    onValueChange={(val) => updateWorkOrder(wo.id, "sales_rep", val)}
                     disabled={!isRegistered}
-                  />
+                  >
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesReps.map(rep => (
+                        <SelectItem key={rep} value={rep}>{rep}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </td>
 
                 <td className="px-1 py-0.5 border-r">
@@ -282,54 +335,11 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
 
                 <td className="px-1 py-0.5 border-r">
                   <Input
-                    value={wo.description || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Description..."
-                    disabled={!isRegistered}
-                  />
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.contact_name || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "contact_name", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Contact..."
-                    disabled={!isRegistered}
-                  />
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.contact_phone || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "contact_phone", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Phone..."
-                    disabled={!isRegistered}
-                  />
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
-                  <Input
                     type="number"
                     value={wo.quoted_amount || ""}
                     onChange={(e) => updateWorkOrder(wo.id, "quoted_amount", parseFloat(e.target.value) || 0)}
                     className="h-7 text-xs border-0 bg-transparent px-1"
                     placeholder="$0"
-                    disabled={!isRegistered}
-                  />
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
-                  <Input
-                    type="number"
-                    value={wo.probability || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="0%"
-                    min="0"
-                    max="100"
                     disabled={!isRegistered}
                   />
                 </td>
@@ -396,30 +406,97 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
 
                 <td className="px-1 py-0.5 border-r">
                   <Input
-                    value={wo.sales_rep || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "sales_rep", e.target.value)}
+                    type="number"
+                    value={wo.probability || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
                     className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Rep..."
+                    placeholder="0%"
+                    min="0"
+                    max="100"
                     disabled={!isRegistered}
                   />
                 </td>
 
                 <td className="px-1 py-0.5 border-r">
-                  <Input
+                  <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.follow_up_date ? format(new Date(wo.follow_up_date), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.start_date ? format(new Date(wo.start_date), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={wo.start_date ? new Date(wo.start_date) : undefined}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "start_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Select
                     value={wo.lead_source || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "lead_source", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Source..."
+                    onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
                     disabled={!isRegistered}
-                  />
+                  >
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leadSources.map(source => (
+                        <SelectItem key={source} value={source}>{source}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+
+                <td className="px-1 py-0.5 border-r">
+                  <Select
+                    value={wo.project_type || ""}
+                    onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
+                    disabled={!isRegistered}
+                  >
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </td>
 
                 <td className="px-1 py-0.5 border-r">
                   <Input
-                    value={wo.install_location || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "install_location", e.target.value)}
+                    value={wo.description || ""}
+                    onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)}
                     className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="Location..."
+                    placeholder="Notes..."
                     disabled={!isRegistered}
                   />
                 </td>
@@ -463,6 +540,47 @@ export default function SalesPipelineSpreadsheet({ searchTerm = "", filterStatus
           onUpdate={() => loadWorkOrders()}
         />
       )}
+
+      {/* Edit Dialog for Dropdown Lists */}
+      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [] })}>
+        <DialogContent className="clay-card border-none max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-blue-600" />
+              Edit {editDialog.field === "sales_rep" ? "Sales Reps" : editDialog.field === "lead_source" ? "Lead Sources" : "Project Types"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                value={editInput}
+                onChange={(e) => setEditInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addToList()}
+                placeholder="Add new item..."
+                className="flex-1"
+              />
+              <Button onClick={addToList} size="sm" className="clay-button">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-1 max-h-60 overflow-y-auto">
+              {editDialog.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span className="text-sm">{item}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFromList(item)}
+                    className="h-6 w-6"
+                  >
+                    <Trash2 className="w-3 h-3 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
