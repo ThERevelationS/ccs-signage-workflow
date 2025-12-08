@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
 import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
@@ -72,7 +73,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setIsLoading(true);
     try {
       const [orders, usersData] = await Promise.all([
-        WorkOrder.filter({ is_rider: false, completed: false }),
+        WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
         AuthorizedEmail.list()
       ]);
       setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
@@ -150,7 +151,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }, 1000);
   };
 
-  const deleteWorkOrder = async (orderId) => {
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const deleteWorkOrder = async (workOrder) => {
+    setDeleteConfirm(workOrder);
+  };
+
+  const confirmDelete = async () => {
+    const orderId = deleteConfirm.id;
+    
     // Clear any pending timers and changes for this work order
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
@@ -162,8 +171,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return updated;
     });
     
-    await WorkOrder.delete(orderId);
+    // Soft delete
+    await WorkOrder.update(orderId, {
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+      deleted_by: currentUser?.email || "unknown"
+    });
     setWorkOrders(workOrders.filter(wo => wo.id !== orderId));
+    setDeleteConfirm(null);
   };
 
   const moveToWorkflow = async (workOrder) => {
@@ -976,7 +991,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deleteWorkOrder(wo.id)}
+                        onClick={() => deleteWorkOrder(wo)}
                         className="h-6 w-6"
                       >
                         <Trash2 className="w-3 h-3 text-red-500" />
@@ -1051,8 +1066,27 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-});
 
-export default SalesPipelineSpreadsheet;
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteConfirm?.title || deleteConfirm?.client_name}"?
+              <br /><br />
+              <span className="font-medium text-orange-600">Note:</span> This action moves the item to the Project Trash. Only admins can permanently delete or recover items.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </div>
+      );
+      });
+
+      export default SalesPipelineSpreadsheet;

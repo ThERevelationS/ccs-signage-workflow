@@ -54,7 +54,8 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogAction
+  AlertDialogAction,
+  AlertDialogCancel
 } from "@/components/ui/alert-dialog";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
@@ -158,9 +159,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
         workOrderFilter 
-          ? Order.filter({ work_order_id: workOrderFilter }, "row_number")
-          : Order.list("row_number"),
-        WorkOrder.filter({ completed: { $ne: true } }),
+          ? Order.filter({ work_order_id: workOrderFilter, deleted: { $ne: true } }, "row_number")
+          : Order.filter({ deleted: { $ne: true } }, "row_number"),
+        WorkOrder.filter({ completed: { $ne: true }, deleted: { $ne: true } }),
         AuthorizedEmail.list()
       ]);
       setOrders(ordersData);
@@ -284,9 +285,20 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setHasUnsavedChanges(true);
   };
 
-  const deleteOrder = async (orderId) => {
-    await Order.delete(orderId);
-    setOrders(orders.filter(o => o.id !== orderId));
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const deleteOrder = async (order) => {
+    setDeleteConfirm(order);
+  };
+
+  const confirmDelete = async () => {
+    await Order.update(deleteConfirm.id, {
+      deleted: true,
+      deleted_at: new Date().toISOString(),
+      deleted_by: currentUser?.email || "unknown"
+    });
+    setOrders(orders.filter(o => o.id !== deleteConfirm.id));
+    setDeleteConfirm(null);
   };
 
   const getFilteredWorkOrders = (searchTerm) => {
@@ -904,7 +916,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteOrder(order.id)}
+                    onClick={() => deleteOrder(order)}
                     className="h-6 w-6"
                   >
                     <Trash2 className="w-3 h-3 text-red-500" />
@@ -1049,6 +1061,26 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this order for "{deleteConfirm?.customer_name}"?
+              <br /><br />
+              <span className="font-medium text-orange-600">Note:</span> This action moves the item to the Order Trash. Only admins can permanently delete or recover items.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
