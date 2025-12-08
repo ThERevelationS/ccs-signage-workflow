@@ -51,6 +51,7 @@ import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
+import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -847,6 +848,17 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </PopoverContent>
                 </Popover>
+
+                {/* Google Drive File Browser */}
+                <div className="clay-card p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <FolderOpen className="w-4 h-4 text-green-600" />
+                      Google Drive Files
+                    </h3>
+                  </div>
+                  <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} />
+                </div>
 
                 {/* Relationships */}
                 <div className="clay-card p-4">
