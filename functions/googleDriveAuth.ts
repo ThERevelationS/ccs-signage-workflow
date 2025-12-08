@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       if (!workOrderId) {
         return Response.json({ error: 'workOrderId is required' }, { status: 400 });
       }
-
+      
       const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
 
       if (!accessToken) {
