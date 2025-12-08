@@ -377,22 +377,22 @@ function LayoutContent({ children }) {
               </button>
 
               {/* Desktop Navigation Links */}
-              <div className="hidden lg:flex items-center gap-1 flex-wrap flex-1 ml-4">
+              <div className="hidden lg:flex items-center gap-2 flex-wrap flex-1 ml-4">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <Link
                       key={item.title}
                       to={item.url}
-                      className={`px-2 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-1 whitespace-nowrap ${
-                        isActive ? 'clay-card' : 'hover:clay-card'
+                      className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap border-2 ${
+                        isActive ? 'clay-card border-purple-300 shadow-md' : 'hover:clay-card border-gray-200 hover:border-gray-300'
                       }`}
                       style={isActive ? { 
                         background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
                       } : {}}
                     >
-                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                      <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : 'text-gray-600'}`}>
+                      <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
+                      <span className={`font-bold text-sm ${isActive ? 'text-purple-900' : 'text-gray-700'}`}>
                         {item.title}
                       </span>
                     </Link>
