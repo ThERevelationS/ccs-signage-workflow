@@ -43,23 +43,20 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
   };
 
   const loadFiles = async () => {
-    if (!folderUrl) {
-      setFiles([]);
-      return;
-    }
+    if (!folderUrl) return;
+    
+    const folderId = extractFolderId(folderUrl);
+    if (!folderId) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      const folderId = extractFolderId(folderUrl);
-      const result = await base44.functions.invoke('googleDriveCustomAuth?action=listFiles', {
-        folderId
-      });
+      const result = await base44.functions.invoke('driveBrowseFolder', { folderId });
       
       if (result.data.needsAuth) {
         setNeedsAuth(true);
-        setError('Please authorize Google Drive access');
+        setError('Please connect your Google Drive account');
       } else if (result.data.error) {
         setError(result.data.error);
       } else {
@@ -74,19 +71,11 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
 
   const handleAuth = async () => {
     try {
-      const result = await base44.functions.invoke('googleDriveCustomAuth?action=initiate', {});
-      const authUrl = result.data.authUrl;
-      
-      const authWindow = window.open(authUrl, 'Google Drive Auth', 'width=600,height=600');
-      
-      const messageHandler = (event) => {
-        if (event.data.type === 'google_drive_auth_success') {
-          window.removeEventListener('message', messageHandler);
-          loadFiles();
-        }
-      };
-      
-      window.addEventListener('message', messageHandler);
+      const result = await base44.functions.invoke('driveOAuthInitiate', {});
+      if (result.data.authUrl) {
+        window.open(result.data.authUrl, '_blank', 'width=600,height=700');
+        setTimeout(() => loadFiles(), 5000);
+      }
     } catch (err) {
       setError('Failed to initiate authorization');
     }
