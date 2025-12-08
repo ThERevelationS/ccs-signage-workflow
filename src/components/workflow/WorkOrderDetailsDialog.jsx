@@ -597,83 +597,86 @@ export default function WorkOrderDetailsDialog({
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {/* Timeline inside scrollable area */}
-            {timelineData &&
-            <div className="mb-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="px-4 cursor-pointer hover:shadow-lg transition-shadow clay-card">
-                    <h3 className="font-semibold text-sm mb-3">Project Timeline</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{format(timelineData.earliestStart, "MMM d, yyyy")}</span>
-                        <span>{format(timelineData.latestEnd, "MMM d, yyyy")}</span>
+            {timelineData && (
+              <div className="mb-4 clay-card p-4">
+                <h3 className="font-semibold text-sm mb-3">Project Timeline</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-xs text-gray-500 mb-2">
+                    <span>{format(timelineData.earliestStart, "MMM d, yyyy")}</span>
+                    <span>{format(timelineData.latestEnd, "MMM d, yyyy")}</span>
+                  </div>
+                  
+                  {timelineData.bars.map((bar) => (
+                    <div key={bar.id} className="mb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium" style={{
+                            color: bar.type === 'parent' ? '#6B7280' : bar.isCurrent ? '#7C3AED' : '#EC4899'
+                          }}>
+                            {bar.type === 'parent' ? '↑ Parent' : bar.isCurrent ? '● Current' : '↓ Rider'}: {bar.title}
+                          </span>
+                        </div>
+                        <Badge className="text-xs" style={{ backgroundColor: stageColors[bar.current_stage] }}>
+                          {stageDisplayNames[bar.current_stage]}
+                        </Badge>
                       </div>
-                      <div className="relative min-h-[80px] rounded-lg p-2" style={{
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
-                        boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
-                      }}>
-                        {timelineData.bars.map((bar) =>
-                          <div key={bar.id} className="mb-2">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-medium" style={{
-                                color: bar.type === 'parent' ? '#6B7280' : bar.isCurrent ? '#7C3AED' : '#EC4899'
-                              }}>
-                                {bar.type === 'parent' ? '↑ Parent' : bar.isCurrent ? '● Current' : '↓ Rider'}: {bar.title}
-                              </span>
-                              <Badge className="text-xs" style={{ backgroundColor: stageColors[bar.current_stage] }}>
-                                {stageDisplayNames[bar.current_stage]}
-                              </Badge>
-                            </div>
-                            <div className="relative h-6 rounded-lg" style={{ background: 'rgba(255,255,255,0.5)' }}>
-                              <div
-                                className="absolute h-full rounded-lg transition-all flex items-center px-2"
-                                style={{
-                                  left: `${bar.startOffset}%`,
-                                  width: `${bar.width}%`,
-                                  background: bar.isCurrent ?
-                                    `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)` :
-                                    bar.type === 'parent' ?
-                                    'linear-gradient(135deg, rgba(150,150,150,0.5) 0%, rgba(200,200,200,0.5) 100%)' :
-                                    'linear-gradient(135deg, rgba(255,182,193,0.7) 0%, rgba(221,160,221,0.7) 100%)',
-                                  border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.2)',
-                                  boxShadow: bar.isCurrent ? '0 0 12px rgba(124,58,237,0.5)' : '0 2px 4px rgba(0,0,0,0.1)'
-                                }}>
-                                <span className="text-xs font-medium text-gray-800 truncate">
-                                  {format(new Date(bar.start_date), "MMM d")} - {format(new Date(bar.due_date), "MMM d")}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                      
+                      <div className="relative h-10 rounded-lg bg-gray-100">
+                        <div
+                          className="absolute h-full rounded-lg transition-all flex items-center justify-center"
+                          style={{
+                            left: `${bar.startOffset}%`,
+                            width: `${bar.width}%`,
+                            background: bar.isCurrent ?
+                              `linear-gradient(135deg, ${stageColors[bar.current_stage]} 0%, rgba(255,255,255,0.7) 100%)` :
+                              bar.type === 'parent' ?
+                              'linear-gradient(135deg, rgba(150,150,150,0.6) 0%, rgba(200,200,200,0.6) 100%)' :
+                              'linear-gradient(135deg, rgba(255,182,193,0.8) 0%, rgba(221,160,221,0.8) 100%)',
+                            border: bar.isCurrent ? '2px solid #7C3AED' : '1px solid rgba(0,0,0,0.3)',
+                            boxShadow: bar.isCurrent ? '0 0 12px rgba(124,58,237,0.5)' : '0 2px 4px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          <span className="text-xs font-medium text-gray-800">
+                            {format(new Date(bar.start_date), "MMM d")} - {format(new Date(bar.due_date), "MMM d")}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="clay-card w-80">
-                  <Label>Start Date</Label>
-                  <div className="flex gap-2 mt-2 mb-3">
-                    <Input
-                      type="date"
-                      value={editValues.start_date || workOrder.start_date || ''}
-                      onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
-                    <Button size="sm" onClick={() => saveEdit('start_date')}>
-                      <Check className="w-4 h-4" />
+                  ))}
+                </div>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full mt-3">
+                      <Calendar className="w-3 h-3 mr-2" />
+                      Edit Dates
                     </Button>
-                  </div>
-                  <Label>Due Date</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      type="date"
-                      value={editValues.due_date || workOrder.due_date || ''}
-                      onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
-                    <Button size="sm" onClick={() => saveEdit('due_date')}>
-                      <Check className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-            }
+                  </PopoverTrigger>
+                  <PopoverContent className="clay-card w-80">
+                    <Label>Start Date</Label>
+                    <div className="flex gap-2 mt-2 mb-3">
+                      <Input
+                        type="date"
+                        value={editValues.start_date || workOrder.start_date || ''}
+                        onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
+                      <Button size="sm" onClick={() => saveEdit('start_date')}>
+                        <Check className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <Label>Due Date</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        type="date"
+                        value={editValues.due_date || workOrder.due_date || ''}
+                        onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
+                      <Button size="sm" onClick={() => saveEdit('due_date')}>
+                        <Check className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-6">
               
               {/* Left Column - Core Info */}
@@ -831,9 +834,9 @@ export default function WorkOrderDetailsDialog({
                 </div>
               </div>
 
-              {/* Middle Column - Tasks & Notes */}
+              {/* Middle Column - Tasks */}
               <div className="space-y-4">
-                {/* Tasks (formerly Notes) */}
+                {/* Tasks */}
                                       <div className="clay-card p-4">
                                         <div className="flex items-center justify-between mb-3">
                                           <h3 className="font-semibold text-sm">Tasks</h3>
@@ -1287,16 +1290,17 @@ export default function WorkOrderDetailsDialog({
                   </div>
                 }
 
-                {/* Orders Section */}
-                <div className="clay-card p-4">
-                  <h3 className="font-semibold text-sm mb-3">Material Orders</h3>
-                  <WorkOrderOrders 
-                    workOrderId={workOrder.id} 
-                    workOrderTitle={workOrder.title}
-                    clientName={workOrder.client_name}
-                  />
-                </div>
               </div>
+            </div>
+
+            {/* Material Orders - Full Width Section */}
+            <div className="mt-6 clay-card p-4">
+              <h3 className="font-semibold text-lg mb-3">Material Orders</h3>
+              <WorkOrderOrders 
+                workOrderId={workOrder.id} 
+                workOrderTitle={workOrder.title}
+                clientName={workOrder.client_name}
+              />
             </div>
           </div>
         </DialogContent>
