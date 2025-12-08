@@ -1,41 +1,36 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  
   try {
-    const base44 = createClientFromRequest(req);
-    
-    // Parse body once at the start
-    let body;
-    try {
-      body = await req.json();
-    } catch (e) {
-      return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 });
-    }
-    
+    const body = await req.json();
     const { action, code, folderId, userEmail } = body;
 
-    console.log('Action:', action, 'Code:', !!code, 'UserEmail:', userEmail);
-
-    // exchangeCode doesn't need auth since it uses service role with userEmail from OAuth state
+    // Handle token exchange - doesn't need user auth
     if (action === 'exchangeCode') {
       if (!userEmail || !code) {
         return Response.json({ 
-          error: 'User email and code required', 
-          received: { hasUserEmail: !!userEmail, hasCode: !!code } 
+          error: 'Missing required parameters',
+          hasUserEmail: !!userEmail,
+          hasCode: !!code
         }, { status: 400 });
       }
 
       const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
       const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
-      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
+      
+      if (!clientId || !clientSecret) {
+        return Response.json({ error: 'Google Drive credentials not configured' }, { status: 500 });
+      }
 
-      console.log('Exchanging code for tokens...');
+      const redirectUri = 'https://clay-flow-signage-suite-387da97c.base44.app/GoogleDriveCallback';
 
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          code: code,
+          code,
           client_id: clientId,
           client_secret: clientSecret,
           redirect_uri: redirectUri,
@@ -44,16 +39,15 @@ Deno.serve(async (req) => {
       });
 
       const tokens = await tokenResponse.json();
-      console.log('Token response:', { hasAccessToken: !!tokens.access_token, error: tokens.error });
       
       if (!tokens.access_token) {
         return Response.json({ 
-          error: 'Failed to get access token', 
-          details: tokens 
+          error: 'Google token exchange failed',
+          details: tokens
         }, { status: 400 });
       }
 
-      // Find user by email and update their tokens using service role
+      // Store tokens for user
       const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
       if (users.length === 0) {
         return Response.json({ error: 'User not found' }, { status: 404 });
@@ -64,13 +58,11 @@ Deno.serve(async (req) => {
         google_drive_refresh_token: tokens.refresh_token
       });
 
-      console.log('Successfully stored tokens for user:', userEmail);
       return Response.json({ success: true });
     }
 
-    // Other actions require authentication
+    // All other actions need authentication
     const user = await base44.auth.me();
-    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -92,7 +84,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'listFiles') {
-      // Get stored token
       const userData = await base44.asServiceRole.entities.User.filter({ email: user.email });
       const token = userData[0]?.google_drive_token;
 
@@ -116,8 +107,11 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
+    
   } catch (error) {
-    console.error('Error in googleDriveAuth:', error);
-    return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
+    return Response.json({ 
+      error: 'Server error',
+      message: error.message 
+    }, { status: 500 });
   }
 });
