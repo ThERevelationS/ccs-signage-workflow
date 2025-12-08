@@ -58,41 +58,51 @@ export default function GoogleDriveFileBrowser({ folderUrl, workOrderId }) {
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
-      // Get access token
       const result = await base44.functions.invoke('googleDriveAuth', {
         action: 'getPickerToken'
       });
 
       if (!result.data.token) {
         setError('Failed to get access token');
+        setLoading(false);
         return;
       }
 
+      const view = new window.google.picker.DocsView()
+        .setIncludeFolders(true);
+
       const picker = new window.google.picker.PickerBuilder()
-        .addView(window.google.picker.ViewId.DOCS)
+        .addView(view)
         .setOAuthToken(result.data.token)
         .setDeveloperKey('AIzaSyD_I3KaIpMQBPhejdKZhIy37SsK_qwY8LE')
         .setCallback(async (data) => {
           if (data.action === window.google.picker.Action.PICKED) {
             const fileIds = data.docs.map(doc => doc.id);
             
-            // Save selected files
-            await base44.functions.invoke('googleDriveAuth', {
-              action: 'saveFileAccess',
-              workOrderId,
-              fileIds
-            });
+            try {
+              await base44.functions.invoke('googleDriveAuth', {
+                action: 'saveFileAccess',
+                workOrderId,
+                fileIds
+              });
 
-            // Reload files
-            await loadFiles();
+              await loadFiles();
+            } catch (err) {
+              setError('Failed to save files: ' + err.message);
+            }
           }
+          setLoading(false);
         })
         .build();
 
       picker.setVisible(true);
     } catch (err) {
-      setError('Failed to open file picker: ' + err.message);
+      setError('Picker error: ' + err.message);
+      setLoading(false);
     }
   };
 
