@@ -65,7 +65,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     ];
   });
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
-  const [hiddenColumns, setHiddenColumns] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState(true);
   const [columnOrderDialog, setColumnOrderDialog] = useState(false);
 
   useEffect(() => {
@@ -421,7 +421,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           <div className="flex gap-2">
             {isRegistered && (
               <>
-                <Button onClick={addNewRow} className="clay-button border-none text-gray-700"
+                <Button onClick={addNewRow} className="clay-button border-none text-gray-800"
                   style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Client
@@ -462,7 +462,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               className="clay-button border-none text-gray-700 h-8"
               style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
             >
-              {hiddenColumns ? "Show All Columns" : "Carl's Button"}
+              {hiddenColumns ? "Carl's View" : "Normal View"}
             </Button>
           </div>
           <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
@@ -527,12 +527,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
+              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>
@@ -557,11 +557,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
           <tbody>
             {filteredWorkOrders.map((wo) => {
+              // Days from Initial Request to Today's Date
               const daysFromInitial = calculateDays(wo.date_initial_contact);
+              // Days from Date Requested to Estimate Sent
               const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
+              // Days from Estimate Sent to Date Order Created
               const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
+              // Days from Order Created to Permit Submitted
               const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
+              // Days from Permit Submitted to Permit Approved
               const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
+              // Days from Order Created to Project Install Date
               const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
 
               return (
@@ -934,12 +940,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </td>
 
                 {/* Calculated Days Columns */}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
-                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
+                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
