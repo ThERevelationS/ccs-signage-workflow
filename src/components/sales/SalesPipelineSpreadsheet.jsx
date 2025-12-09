@@ -679,7 +679,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   <td className="px-1 py-0.5 border-r">
                     <Select
                       value={wo.project_manager || ""}
-                      onValueChange=(val) => updateWorkOrder(wo.id, "project_manager", val)}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
                       disabled={!isRegistered}
                     >
                       <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
