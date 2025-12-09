@@ -105,7 +105,7 @@ export default function SalesPipeline() {
                 <SelectItem value="manage_filters">
                   <div className="flex items-center gap-2 font-bold">
                     <Settings className="w-4 h-4" />
-                    Manage Filters & Columns
+                    Manage Custom Filters
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -114,8 +114,8 @@ export default function SalesPipeline() {
             <Select 
               value={activeColumnPreset?.id || ""} 
               onValueChange={(value) => {
-                if (value === "manage_filters") {
-                  setShowCustomFilterDialog(true);
+                if (value === "manage_columns") {
+                  setShowColumnFilterDialog(true);
                 } else if (value) {
                   const preset = activeFilters.find(f => f.id === value);
                   setActiveColumnPreset(preset || null);
@@ -136,10 +136,10 @@ export default function SalesPipeline() {
                   </SelectItem>
                 ))}
                 <div className="h-px bg-gray-800 my-2 mx-2"></div>
-                <SelectItem value="manage_filters">
+                <SelectItem value="manage_columns">
                   <div className="flex items-center gap-2 font-bold">
                     <Settings className="w-4 h-4" />
-                    Manage Filters & Columns
+                    Manage Custom Column Filters
                   </div>
                 </SelectItem>
               </SelectContent>
