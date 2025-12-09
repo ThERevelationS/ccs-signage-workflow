@@ -44,7 +44,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const [showForm, setShowForm] = useState(false);
 
-  // Predefined list management
   const [leadSources, setLeadSources] = useState(() => {
     const saved = localStorage.getItem('salesLeadSources');
     return saved ? JSON.parse(saved) : ["Walk-in", "Phone", "Email", "Referral", "Website"];
@@ -85,7 +84,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setIsLoading(false);
   };
 
-  // Calculate days between dates
   const calculateDays = (fromDate, toDate = new Date()) => {
     if (!fromDate) return null;
     try {
@@ -96,8 +94,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return null;
     }
   };
-
-
 
   const addNewRow = () => {
     if (!isRegistered) return;
@@ -114,21 +110,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const updateWorkOrder = (orderId, field, value) => {
-    // Update UI immediately
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
     
-    // Track pending change
     setPendingChanges(prev => ({
       ...prev,
       [orderId]: { ...prev[orderId], [field]: value }
     }));
 
-    // Clear existing timer for this order
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
     }
 
-    // Set new timer to save after 1 second of inactivity
     debounceTimers.current[orderId] = setTimeout(async () => {
       try {
         const changes = pendingChanges[orderId] || { [field]: value };
@@ -140,7 +132,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         });
         delete debounceTimers.current[orderId];
       } catch (error) {
-        // Silently ignore errors for deleted work orders
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
@@ -163,7 +154,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const confirmDelete = async () => {
     const orderId = deleteConfirm.id;
     
-    // Clear any pending timers and changes for this work order
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
       delete debounceTimers.current[orderId];
@@ -174,7 +164,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return updated;
     });
     
-    // Soft delete
     await WorkOrder.update(orderId, {
       deleted: true,
       deleted_at: new Date().toISOString(),
@@ -283,17 +272,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setExportProgress({ show: true, progress: 0 });
     
     const exportData = filteredWorkOrders.map(wo => {
-      // Days from Initial Request to Today's Date
       const daysFromInitial = calculateDays(wo.date_initial_contact);
-      // Days from Date Requested to Estimate Sent
       const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
-      // Days from Estimate Sent to Date Order Created
       const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
-      // Days from Order Created to Permit Submitted
       const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
-      // Days from Permit Submitted to Permit Approved
       const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
-      // Days from Order Created to Project Install Date
       const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
       
       return {
@@ -429,12 +412,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const filteredWorkOrders = workOrders.filter(wo => {
-    // Apply standard status filters
     if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
       if (wo.sales_status !== filterStatus) return false;
     }
     
-    // Apply custom filters
     if (filterStatus.startsWith("custom_")) {
       const filterId = filterStatus.replace("custom_", "");
       const customFilter = customFilters.find(f => f.id === filterId);
@@ -443,7 +424,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     }
     
-    // Apply search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
@@ -515,7 +495,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      {/* Import/Export Progress */}
       {importProgress.show && (
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
@@ -583,7 +562,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>}
               {isColumnVisible("close_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>}
               {isColumnVisible("probability") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '50px' }}>Prob</th>}
-              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Next FU</th>}
               {isColumnVisible("start_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Start</th>}
               {isColumnVisible("project_type") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
                 <div className="flex items-center gap-1">
@@ -597,389 +575,402 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
           <tbody>
             {filteredWorkOrders.map((wo) => {
-              // Days from Initial Request to Today's Date
               const daysFromInitial = calculateDays(wo.date_initial_contact);
-              // Days from Date Requested to Estimate Sent
               const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
-              // Days from Estimate Sent to Date Order Created
               const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
-              // Days from Order Created to Permit Submitted
               const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
-              // Days from Permit Submitted to Permit Approved
               const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
-              // Days from Order Created to Project Install Date
               const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
 
               return (
               <tr key={wo.id} className="border-b hover:bg-gray-50">
-                {/* Customer */}
-                {isColumnVisible("client_name") && <td className="px-1 py-0.5 border-r">
-                  <button
-                    onClick={() => setSelectedWorkOrder(wo)}
-                    className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
-                  >
-                    <LinkIcon className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{wo.client_name || "Unnamed"}</span>
-                  </button>
-                </td>}
+                {isColumnVisible("client_name") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <button
+                      onClick={() => setSelectedWorkOrder(wo)}
+                      className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
+                    >
+                      <LinkIcon className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                    </button>
+                  </td>
+                )}
 
-                {/* Source */}
-                {isColumnVisible("lead_source") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.lead_source || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leadSources.map(source => (
-                        <SelectItem key={source} value={source}>{source}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("lead_source") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.lead_source || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {leadSources.map(source => (
+                          <SelectItem key={source} value={source}>{source}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Current Task Deadline */}
-                {isColumnVisible("current_task_deadline") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.current_task_deadline ? format(new Date(wo.current_task_deadline), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.current_task_deadline ? new Date(wo.current_task_deadline) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "current_task_deadline", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("current_task_deadline") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.current_task_deadline ? format(new Date(wo.current_task_deadline), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.current_task_deadline ? new Date(wo.current_task_deadline) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "current_task_deadline", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Current Task Assigned to */}
-                {isColumnVisible("current_task_assigned_to") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.current_task_assigned_to || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
-                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("current_task_assigned_to") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.current_task_assigned_to || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
+                          <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Designer */}
-                {isColumnVisible("designer") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.designer || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
-                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("designer") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.designer || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
+                          <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Project Manager */}
-                {isColumnVisible("project_manager") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.project_manager || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.filter(u => u.sales_roles?.includes("PM")).map(u => (
-                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("project_manager") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.project_manager || ""}
+                      onValueChange=(val) => updateWorkOrder(wo.id, "project_manager", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.filter(u => u.sales_roles?.includes("PM")).map(u => (
+                          <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Estimator */}
-                {isColumnVisible("estimator") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.estimator || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
-                        <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("estimator") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.estimator || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
+                          <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Est/Inv @ - Corbridge Popup */}
-                {isColumnVisible("est_inv_at") && <td className="px-1 py-0.5 border-r">
-                  <div className="flex items-center gap-1">
-                    {wo.corbridge_link ? (
-                      <a
-                        href={wo.corbridge_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline truncate flex-1"
-                      >
-                        {wo.corbridge_invoice_number || wo.est_inv_at || "Link"}
-                      </a>
-                    ) : (
-                      <span className="text-xs truncate flex-1">{wo.corbridge_invoice_number || wo.est_inv_at || "-"}</span>
-                    )}
-                    {isRegistered && (
-                      <button
-                        onClick={() => openCorbridgeDialog(wo)}
-                        className="flex-shrink-0"
-                      >
-                        <Pencil className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" />
-                      </button>
-                    )}
-                  </div>
-                </td>}
+                {isColumnVisible("est_inv_at") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <div className="flex items-center gap-1">
+                      {wo.corbridge_link ? (
+                        <a
+                          href={wo.corbridge_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline truncate flex-1"
+                        >
+                          {wo.corbridge_invoice_number || wo.est_inv_at || "Link"}
+                        </a>
+                      ) : (
+                        <span className="text-xs truncate flex-1">{wo.corbridge_invoice_number || wo.est_inv_at || "-"}</span>
+                      )}
+                      {isRegistered && (
+                        <button
+                          onClick={() => openCorbridgeDialog(wo)}
+                          className="flex-shrink-0"
+                        >
+                          <Pencil className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                )}
 
-                {/* Estimate Amount */}
-                {isColumnVisible("estimate_amount") && <td className="px-1 py-0.5 border-r">
-                  <Input
-                    type="number"
-                    value={wo.estimate_amount || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "estimate_amount", parseFloat(e.target.value) || 0)}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    placeholder="$0"
-                    disabled={!isRegistered}
-                  />
-                </td>}
+                {isColumnVisible("estimate_amount") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Input
+                      type="number"
+                      value={wo.estimate_amount || ""}
+                      onChange={(e) => updateWorkOrder(wo.id, "estimate_amount", parseFloat(e.target.value) || 0)}
+                      className="h-6 text-xs border-0 bg-transparent px-1"
+                      placeholder="$0"
+                      disabled={!isRegistered}
+                    />
+                  </td>
+                )}
 
-                {/* Current Task Description - Dropdown */}
-                {isColumnVisible("current_task_description") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.current_task_description || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {taskDescriptions.map(desc => (
-                        <SelectItem key={desc} value={desc}>{desc}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("current_task_description") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.current_task_description || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {taskDescriptions.map(desc => (
+                          <SelectItem key={desc} value={desc}>{desc}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Date Est. Requested/Initial Contact */}
-                {isColumnVisible("date_initial_contact") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_initial_contact ? format(new Date(wo.date_initial_contact), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.date_initial_contact ? new Date(wo.date_initial_contact) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "date_initial_contact", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>
+                {isColumnVisible("date_initial_contact") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_initial_contact ? format(new Date(wo.date_initial_contact), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.date_initial_contact ? new Date(wo.date_initial_contact) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "date_initial_contact", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Site Survey */}
-                {isColumnVisible("site_survey_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.site_survey_date ? format(new Date(wo.site_survey_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.site_survey_date ? new Date(wo.site_survey_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "site_survey_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("site_survey_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.site_survey_date ? format(new Date(wo.site_survey_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.site_survey_date ? new Date(wo.site_survey_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "site_survey_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Date Estimate Sent to Customer */}
-                {isColumnVisible("date_estimate_sent") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_estimate_sent ? format(new Date(wo.date_estimate_sent), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.date_estimate_sent ? new Date(wo.date_estimate_sent) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "date_estimate_sent", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("date_estimate_sent") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_estimate_sent ? format(new Date(wo.date_estimate_sent), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.date_estimate_sent ? new Date(wo.date_estimate_sent) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "date_estimate_sent", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Date Order Created */}
-                {isColumnVisible("date_order_created") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_order_created ? format(new Date(wo.date_order_created), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.date_order_created ? new Date(wo.date_order_created) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "date_order_created", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("date_order_created") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_order_created ? format(new Date(wo.date_order_created), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.date_order_created ? new Date(wo.date_order_created) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "date_order_created", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Project Install Date */}
-                {isColumnVisible("project_install_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.project_install_date ? format(new Date(wo.project_install_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.project_install_date ? new Date(wo.project_install_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "project_install_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("project_install_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.project_install_date ? format(new Date(wo.project_install_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.project_install_date ? new Date(wo.project_install_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "project_install_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Permit Submitted */}
-                {isColumnVisible("permit_submitted_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.permit_submitted_date ? format(new Date(wo.permit_submitted_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.permit_submitted_date ? new Date(wo.permit_submitted_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "permit_submitted_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("permit_submitted_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_submitted_date ? format(new Date(wo.permit_submitted_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.permit_submitted_date ? new Date(wo.permit_submitted_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "permit_submitted_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Notes (Link to Work Order) */}
-                {isColumnVisible("title") && <td className="px-1 py-0.5 border-r">
-                  <button
-                    onClick={() => setSelectedWorkOrder(wo)}
-                    className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
-                  >
-                    {wo.title || "View Details"}
-                  </button>
-                </td>}
+                {isColumnVisible("title") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <button
+                      onClick={() => setSelectedWorkOrder(wo)}
+                      className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
+                    >
+                      {wo.title || "View Details"}
+                    </button>
+                  </td>
+                )}
 
-                {/* Date Permit Receipt Confirmed */}
-                {isColumnVisible("permit_receipt_confirmed_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.permit_receipt_confirmed_date ? format(new Date(wo.permit_receipt_confirmed_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.permit_receipt_confirmed_date ? new Date(wo.permit_receipt_confirmed_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "permit_receipt_confirmed_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("permit_receipt_confirmed_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_receipt_confirmed_date ? format(new Date(wo.permit_receipt_confirmed_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.permit_receipt_confirmed_date ? new Date(wo.permit_receipt_confirmed_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "permit_receipt_confirmed_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Permit Number */}
-                {isColumnVisible("permit_number") && <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.permit_number || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    placeholder="-"
-                    disabled={!isRegistered}
-                  />
-                </td>}
+                {isColumnVisible("permit_number") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Input
+                      value={wo.permit_number || ""}
+                      onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)}
+                      className="h-6 text-xs border-0 bg-transparent px-1"
+                      placeholder="-"
+                      disabled={!isRegistered}
+                    />
+                  </td>
+                )}
 
-                {/* Date Permit Approved/Received */}
-                {isColumnVisible("permit_approved_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.permit_approved_date ? format(new Date(wo.permit_approved_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.permit_approved_date ? new Date(wo.permit_approved_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "permit_approved_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("permit_approved_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_approved_date ? format(new Date(wo.permit_approved_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.permit_approved_date ? new Date(wo.permit_approved_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "permit_approved_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {/* Calculated Days Columns */}
                 {isColumnVisible("days_init_today") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
                 {isColumnVisible("days_req_est") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
                 {isColumnVisible("days_est_ord") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
@@ -987,117 +978,128 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 {isColumnVisible("days_prm_app") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
                 {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
-                {isColumnVisible("quote_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.quote_date ? format(new Date(wo.quote_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.quote_date ? new Date(wo.quote_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "quote_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("quote_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.quote_date ? format(new Date(wo.quote_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.quote_date ? new Date(wo.quote_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "quote_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {isColumnVisible("follow_up_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.follow_up_date ? format(new Date(wo.follow_up_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("follow_up_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.follow_up_date ? format(new Date(wo.follow_up_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {isColumnVisible("close_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.close_date ? format(new Date(wo.close_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.close_date ? new Date(wo.close_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "close_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("close_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.close_date ? format(new Date(wo.close_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.close_date ? new Date(wo.close_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "close_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {isColumnVisible("probability") && <td className="px-1 py-0.5 border-r">
-                  <Input
-                    type="number"
-                    value={wo.probability || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    placeholder="0"
-                    min="0"
-                    max="100"
-                    disabled={!isRegistered}
-                  />
-                </td>}
+                {isColumnVisible("probability") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Input
+                      type="number"
+                      value={wo.probability || ""}
+                      onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
+                      className="h-6 text-xs border-0 bg-transparent px-1"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                      disabled={!isRegistered}
+                    />
+                  </td>
+                )}
 
-                {isColumnVisible("start_date") && <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.start_date ? format(new Date(wo.start_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.start_date ? new Date(wo.start_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "start_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>}
+                {isColumnVisible("start_date") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.start_date ? format(new Date(wo.start_date), "M/d/yy") : "-"}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={wo.start_date ? new Date(wo.start_date) : undefined}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "start_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </td>
+                )}
 
-                {isColumnVisible("project_type") && <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.project_type || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projectTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>}
+                {isColumnVisible("project_type") && (
+                  <td className="px-1 py-0.5 border-r">
+                    <Select
+                      value={wo.project_type || ""}
+                      onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projectTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                )}
 
-                {/* Actions */}
                 <td className="px-1 py-0.5">
                   <div className="flex gap-1">
                     {isRegistered && (
@@ -1130,13 +1132,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       {showForm && (
         <WorkOrderForm
+          isOpen={showForm}
+          onClose={() => setShowForm(false)}
           onSave={handleSaveNew}
-          onCancel={() => setShowForm(false)}
-          requireDueDate={false}
         />
       )}
 
-      {/* Corbridge Invoice Dialog */}
       <Dialog open={corbridgeDialog.open} onOpenChange={(open) => !open && setCorbridgeDialog({ open: false, workOrder: null })}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
@@ -1184,7 +1185,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog for Dropdown Lists */}
       <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [], storageKey: "" })}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
@@ -1289,8 +1289,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </div>
-      );
-      });
+    </div>
+  );
+});
 
-      export default SalesPipelineSpreadsheet;
+export default SalesPipelineSpreadsheet;
