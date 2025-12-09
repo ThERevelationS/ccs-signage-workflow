@@ -274,7 +274,8 @@ export default function WorkOrderDetailsDialog({
     const updatedNotes = [...workNotes, newNote];
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
     await ActivityActions.noteAdded(workOrder, noteData.text, noteData.type);
-    if (onUpdate) onUpdate();
+    Object.assign(workOrder, { work_notes: updatedNotes });
+    await loadRelatedData();
   };
 
   const handleDeleteWorkNote = async (noteId) => {
@@ -626,6 +627,169 @@ export default function WorkOrderDetailsDialog({
 
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Tasks - Full Width */}
+            <div className="clay-card p-4 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm">Tasks</h3>
+                <div className="flex items-center gap-2">
+                  {completedTasks.length > 0 &&
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCompletedNotes(!showCompletedNotes)}
+                      className="h-6 px-2 text-xs">
+                      {showCompletedNotes ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                      {showCompletedNotes ? 'Hide' : 'Show'} ({completedTasks.length})
+                    </Button>
+                  }
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingTask(true)}
+                    className="h-6 px-2 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {/* Add Task Form */}
+                {isAddingTask &&
+                  <div className="p-2 bg-blue-50 rounded-lg space-y-2">
+                    <Input
+                      value={newTaskText}
+                      onChange={(e) => setNewTaskText(e.target.value)}
+                      placeholder="Enter task..."
+                      className="text-sm h-8"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddTask();
+                        if (e.key === 'Escape') {setIsAddingTask(false);setNewTaskText("");}
+                      }} />
+                    <div className="flex gap-1">
+                      <Button size="sm" onClick={handleAddTask} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                        <Check className="w-3 h-3 mr-1" />Save
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => {setIsAddingTask(false);setNewTaskText("");}} className="h-6 px-2 text-xs">
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                }
+
+                {activeTasks.map((task, idx) => {
+                  const actualIndex = tasks.findIndex((t) => t === task);
+                  return (
+                    <div key={idx} className="p-2 bg-white/50 rounded-lg flex items-start gap-2">
+                      <Checkbox
+                        checked={false}
+                        onCheckedChange={() => handleToggleTask(actualIndex)}
+                        className="mt-0.5" />
+                      {editingTaskIndex === actualIndex ?
+                        <div className="flex-1 space-y-1">
+                          <Input
+                            value={editedTaskText}
+                            onChange={(e) => setEditedTaskText(e.target.value)}
+                            className="text-sm h-8"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleEditTask(actualIndex);
+                              if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");}
+                            }} />
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                              <Check className="w-3 h-3 mr-1" />Save
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");}} className="h-6 px-2 text-xs">
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div> :
+                        <>
+                          <div
+                            className="flex-1 cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
+                            onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
+                            <p className="text-sm text-gray-700">{task.text}</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteTask(actualIndex)}
+                            className="h-6 w-6 flex-shrink-0">
+                            <Trash2 className="w-3 h-3 text-red-600" />
+                          </Button>
+                        </>
+                      }
+                    </div>
+                  );
+                })}
+
+                {showCompletedNotes && completedTasks.map((task, idx) => {
+                  const actualIndex = tasks.findIndex((t) => t === task);
+                  return (
+                    <div key={idx} className="p-2 bg-gray-100/50 rounded-lg opacity-60 flex items-start gap-2">
+                      <Checkbox
+                        checked={true}
+                        onCheckedChange={() => handleToggleTask(actualIndex)}
+                        className="mt-0.5" />
+                      {editingTaskIndex === actualIndex ?
+                        <div className="flex-1 space-y-1">
+                          <Input
+                            value={editedTaskText}
+                            onChange={(e) => setEditedTaskText(e.target.value)}
+                            className="text-sm h-8"
+                            autoFocus />
+                          <div className="flex gap-1">
+                            <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                              <Check className="w-3 h-3 mr-1" />Save
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");}} className="h-6 px-2 text-xs">
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div> :
+                        <>
+                          <div
+                            className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded px-1 transition-colors"
+                            onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
+                            <p className="text-sm text-gray-600 line-through">{task.text}</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteTask(actualIndex)}
+                            className="h-6 w-6 flex-shrink-0">
+                            <Trash2 className="w-3 h-3 text-red-600" />
+                          </Button>
+                        </>
+                      }
+                    </div>
+                  );
+                })}
+
+                {activeTasks.length === 0 && !isAddingTask &&
+                  <p className="text-xs text-gray-400 text-center py-2">No active tasks</p>
+                }
+              </div>
+            </div>
+
+            {/* Material Orders - Full Width Section */}
+            <div className="clay-card p-4 mb-6">
+              <h3 className="font-semibold text-lg mb-3">Material Orders</h3>
+              <WorkOrderOrders 
+                workOrderId={workOrder.id} 
+                workOrderTitle={workOrder.title}
+                clientName={workOrder.client_name}
+              />
+            </div>
+
             {/* Timeline inside scrollable area */}
             {timelineData && (
               <div className="mb-4 clay-card p-4">
@@ -707,8 +871,168 @@ export default function WorkOrderDetailsDialog({
                 </Popover>
               </div>
             )}
-            {/* Google Drive - Full Width Large Section */}
-            <div className="clay-card p-6 mb-6">
+            {/* Three column layout */}
+            <div className="grid grid-cols-3 gap-6 mb-6">
+
+              {/* Left Column - Core Info */}
+              <div className="space-y-4">
+                {/* Image - Editable */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="rounded-xl overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" style={{
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.8) 100%)',
+                      boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                      {workOrder.image_url ?
+                      <img src={workOrder.image_url} alt={workOrder.title} className="w-full h-48 object-contain" /> :
+
+                      <div className="w-full h-48 flex items-center justify-center">
+                          <Upload className="w-12 h-12 text-gray-400" />
+                        </div>
+                      }
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="clay-card w-64">
+                    <Label>Upload New Image</Label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="mt-2 text-sm"
+                      disabled={uploading} />
+
+                    {uploading && <p className="text-xs text-gray-500 mt-2">Uploading...</p>}
+                  </PopoverContent>
+                </Popover>
+
+                {/* Basic Info - Editable */}
+                <div className="clay-card p-4 space-y-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
+                        <User className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium">Assigned:</span>
+                        <span className="text-gray-600">{workOrder.assigned_to || 'Unassigned'}</span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-64">
+                      <Label>Assigned To</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          value={editValues.assigned_to || workOrder.assigned_to || ''}
+                          onChange={(e) => setEditValues({ ...editValues, assigned_to: e.target.value })}
+                          placeholder="Enter name" />
+
+                        <Button size="sm" onClick={() => saveEdit('assigned_to')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
+                        <Calendar className="w-4 h-4 text-orange-600" />
+                        <span className="font-medium">Due:</span>
+                        <span className="text-gray-600">
+                          {workOrder.due_date ? format(new Date(workOrder.due_date), "MMM d, yyyy") : 'No due date'}
+                        </span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="clay-card w-64">
+                      <Label>Due Date</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          type="date"
+                          value={editValues.due_date || workOrder.due_date || ''}
+                          onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
+
+                        <Button size="sm" onClick={() => saveEdit('due_date')}>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <div className="flex items-center gap-2 text-sm p-2">
+                    <FileText className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium">Stage:</span>
+                    <Badge style={{ backgroundColor: stageColors[workOrder.current_stage] }}>
+                      {stageDisplayNames[workOrder.current_stage]}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Relationships */}
+                <div className="clay-card p-4">
+                  <h3 className="font-semibold text-sm mb-3">Relationships</h3>
+
+                  {parentWorkOrder &&
+                  <div className="mb-3">
+                      <p className="text-xs text-gray-500 mb-1">Parent Work Order</p>
+                      <Link to={createPageUrl(getPageNameForStage(parentWorkOrder.current_stage))}>
+                        <div className="clay-button p-2 rounded-lg flex items-center gap-2 hover:opacity-80 transition-opacity">
+                          <LinkIcon className="w-4 h-4 text-blue-600" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{parentWorkOrder.title}</p>
+                            <p className="text-xs text-gray-500">{parentWorkOrder.client_name}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  }
+
+                  {riders.length > 0 &&
+                  <div>
+                      <p className="text-xs text-gray-500 mb-1">Riders ({riders.length})</p>
+                      <div className="space-y-1">
+                        {riders.map((rider) =>
+                      <Link key={rider.id} to={createPageUrl(getPageNameForStage(rider.rider_stage || rider.current_stage))}>
+                            <div className="clay-button p-2 rounded-lg flex items-center gap-2 hover:opacity-80 transition-opacity">
+                              <LinkIcon className="w-4 h-4 text-purple-600" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{rider.title}</p>
+                                <p className="text-xs text-gray-500">Stage: {stageDisplayNames[rider.current_stage]}</p>
+                              </div>
+                            </div>
+                          </Link>
+                      )}
+                      </div>
+                    </div>
+                  }
+
+                  {!parentWorkOrder && riders.length === 0 &&
+                  <p className="text-xs text-gray-400 text-center py-2">No relationships</p>
+                  }
+                </div>
+              </div>
+
+              {/* Middle Column - Description and Google Drive */}
+              <div className="space-y-4">
+                {/* Description - Editable */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="clay-card p-4 cursor-pointer hover:shadow-lg transition-shadow">
+                      <h3 className="font-semibold text-sm mb-2">Description</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">{workOrder.description || 'Click to add description'}</p>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="clay-card w-80">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editValues.description || workOrder.description || ''}
+                      onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
+                      className="mt-2 min-h-24" />
+
+                    <Button size="sm" className="mt-2" onClick={() => saveEdit('description')}>
+                      Save
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Google Drive - Same size as description */}
+                <div className="clay-card p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <FolderOpen className="w-5 h-5 text-green-600" />
@@ -752,9 +1076,10 @@ export default function WorkOrderDetailsDialog({
                 </div>
               </div>
               <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} workOrderId={workOrder.id} />
-            </div>
+              </div>
+              </div>
 
-            <div className="grid grid-cols-3 gap-6">
+              {/* Right Column - Actions */}
               
               {/* Left Column - Core Info */}
               <div className="space-y-4">
@@ -1168,17 +1493,7 @@ export default function WorkOrderDetailsDialog({
                 }
 
               </div>
-            </div>
-
-            {/* Material Orders - Full Width Section */}
-            <div className="mt-6 clay-card p-4">
-              <h3 className="font-semibold text-lg mb-3">Material Orders</h3>
-              <WorkOrderOrders 
-                workOrderId={workOrder.id} 
-                workOrderTitle={workOrder.title}
-                clientName={workOrder.client_name}
-              />
-            </div>
+              </div>
           </div>
         </DialogContent>
       </Dialog>

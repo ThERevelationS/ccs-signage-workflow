@@ -489,7 +489,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Designer</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>PM</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Estimator</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Est/Inv</th>
+              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Estimate/Invoice # Link</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Amount</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '120px' }}>
                 <div className="flex items-center gap-1">
@@ -1115,31 +1115,36 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number</label>
+              <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number <span className="text-red-500">*</span></label>
               <Input
                 defaultValue={corbridgeDialog.workOrder?.corbridge_invoice_number || ""}
                 onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_invoice_number = e.target.value)}
                 placeholder="Enter number..."
                 className="w-full"
+                required
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Corbridge Link</label>
+              <label className="text-sm font-medium mb-1 block">Corbridge Link <span className="text-red-500">*</span></label>
               <Input
                 defaultValue={corbridgeDialog.workOrder?.corbridge_link || ""}
                 onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_link = e.target.value)}
                 placeholder="Paste the Invoice or Estimate URL here..."
                 className="w-full"
+                required
               />
               <p className="text-xs text-gray-500 mt-1">Copy the URL from Corbridge and paste it here</p>
             </div>
             <Button
               onClick={() => {
                 if (corbridgeDialog.workOrder) {
-                  saveCorbridgeData(
-                    corbridgeDialog.workOrder.corbridge_invoice_number,
-                    corbridgeDialog.workOrder.corbridge_link
-                  );
+                  const invoiceNum = corbridgeDialog.workOrder.corbridge_invoice_number?.trim();
+                  const link = corbridgeDialog.workOrder.corbridge_link?.trim();
+                  if (!invoiceNum || !link) {
+                    alert("Both Invoice/Estimate Number and Corbridge Link are required");
+                    return;
+                  }
+                  saveCorbridgeData(invoiceNum, link);
                 }
               }}
               className="w-full"
