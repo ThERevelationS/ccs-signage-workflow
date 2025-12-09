@@ -693,8 +693,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_initial_contact ? format(new Date(wo.date_initial_contact), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.date_initial_contact ? format(new Date(wo.date_initial_contact), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -714,8 +714,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.site_survey_date ? format(new Date(wo.site_survey_date), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.site_survey_date ? format(new Date(wo.site_survey_date), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -735,8 +735,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_estimate_sent ? format(new Date(wo.date_estimate_sent), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.date_estimate_sent ? format(new Date(wo.date_estimate_sent), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -756,8 +756,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.date_order_created ? format(new Date(wo.date_order_created), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.date_order_created ? format(new Date(wo.date_order_created), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -777,8 +777,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.project_install_date ? format(new Date(wo.project_install_date), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.project_install_date ? format(new Date(wo.project_install_date), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -798,8 +798,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.permit_submitted_date ? format(new Date(wo.permit_submitted_date), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.permit_submitted_date ? format(new Date(wo.permit_submitted_date), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
