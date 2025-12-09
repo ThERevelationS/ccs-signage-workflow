@@ -204,20 +204,6 @@ export default function Production() {
               >
                 <Maximize2 className="w-4 h-4" />
               </Button>
-              <Button
-                onClick={() => {
-                  if (!isRegistered) { promptForEmail(); return; }
-                  setEditingWorkOrder(null);
-                  setRiderConfig(null);
-                  setIsFormOpen(true);
-                }}
-                size="sm"
-                className="clay-button border-none text-gray-800 h-8 px-3"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                <span className="text-sm">New</span>
-              </Button>
             </div>
           </div>
         )}
