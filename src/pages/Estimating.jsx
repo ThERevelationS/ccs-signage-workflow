@@ -171,20 +171,7 @@ export default function Estimating() {
             >
               <Maximize2 className="w-4 h-4" />
             </Button>
-            {isRegistered && (
-              <Button
-                onClick={() => {
-                  setEditingWorkOrder(null);
-                  setRiderConfig(null);
-                  setShowForm(true);
-                }}
-                className="clay-button border-none"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New
-              </Button>
-            )}
+
           </div>
         </div>
       )}

@@ -65,6 +65,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     ];
   });
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
+  const [hiddenColumns, setHiddenColumns] = useState(false);
+  const [columnOrderDialog, setColumnOrderDialog] = useState(false);
 
   useEffect(() => {
     loadWorkOrders();
@@ -95,6 +97,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     } catch {
       return null;
     }
+  };
+
+  const toggleCarlsView = () => {
+    setHiddenColumns(!hiddenColumns);
   };
 
   const addNewRow = () => {
@@ -281,11 +287,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setExportProgress({ show: true, progress: 0 });
     
     const exportData = filteredWorkOrders.map(wo => {
+      // Days from Initial Request to Today's Date
       const daysFromInitial = calculateDays(wo.date_initial_contact);
+      // Days from Date Requested to Estimate Sent
       const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
+      // Days from Estimate Sent to Date Order Created
       const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
+      // Days from Order Created to Permit Submitted
       const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
+      // Days from Permit Submitted to Permit Approved
       const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
+      // Days from Order Created to Project Install Date
       const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
       
       return {
@@ -409,10 +421,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           <div className="flex gap-2">
             {isRegistered && (
               <>
-                <Button onClick={addNewRow} size="sm" className="clay-button border-none text-gray-700 h-8"
+                <Button onClick={addNewRow} className="clay-button border-none text-gray-700"
                   style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  New Lead
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Client
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -443,6 +455,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             >
               {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
               Export
+            </Button>
+            <Button
+              onClick={toggleCarlsView}
+              size="sm"
+              className="clay-button border-none text-gray-700 h-8"
+              style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
+            >
+              {hiddenColumns ? "Show All Columns" : "Carl's Button"}
             </Button>
           </div>
           <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
@@ -507,12 +527,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Init</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Req</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ord</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Prm</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D App</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ins</th>
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Init</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Req</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ord</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Prm</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D App</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ins</th>}
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>
@@ -914,12 +934,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </td>
 
                 {/* Calculated Days Columns */}
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
+                {!hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
