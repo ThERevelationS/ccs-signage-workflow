@@ -613,7 +613,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               return (
               <tr key={wo.id} className="border-b hover:bg-gray-50">
                 {/* Customer */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("client_name") && <td className="px-1 py-0.5 border-r">
                   <button
                     onClick={() => setSelectedWorkOrder(wo)}
                     className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
@@ -621,10 +621,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <LinkIcon className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">{wo.client_name || "Unnamed"}</span>
                   </button>
-                </td>
+                </td>}
 
                 {/* Source */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("lead_source") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.lead_source || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
@@ -639,10 +639,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Current Task Deadline */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("current_task_deadline") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -660,10 +660,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Current Task Assigned to */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("current_task_assigned_to") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.current_task_assigned_to || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
@@ -678,10 +678,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Designer */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("designer") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.designer || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
@@ -696,10 +696,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Project Manager */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("project_manager") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.project_manager || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
@@ -714,10 +714,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Estimator */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("estimator") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.estimator || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
@@ -732,10 +732,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Est/Inv @ - Corbridge Popup */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("est_inv_at") && <td className="px-1 py-0.5 border-r">
                   <div className="flex items-center gap-1">
                     {wo.corbridge_link ? (
                       <a
@@ -758,10 +758,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       </button>
                     )}
                   </div>
-                </td>
+                </td>}
 
                 {/* Estimate Amount */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("estimate_amount") && <td className="px-1 py-0.5 border-r">
                   <Input
                     type="number"
                     value={wo.estimate_amount || ""}
@@ -770,10 +770,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     placeholder="$0"
                     disabled={!isRegistered}
                   />
-                </td>
+                </td>}
 
                 {/* Current Task Description - Dropdown */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("current_task_description") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.current_task_description || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
@@ -788,10 +788,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Date Est. Requested/Initial Contact */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("date_initial_contact") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -812,7 +812,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </td>
 
                 {/* Site Survey */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("site_survey_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -830,10 +830,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Date Estimate Sent to Customer */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("date_estimate_sent") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -851,10 +851,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Date Order Created */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("date_order_created") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -872,10 +872,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Project Install Date */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("project_install_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -893,10 +893,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Permit Submitted */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("permit_submitted_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -914,20 +914,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Notes (Link to Work Order) */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("title") && <td className="px-1 py-0.5 border-r">
                   <button
                     onClick={() => setSelectedWorkOrder(wo)}
                     className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
                   >
                     {wo.title || "View Details"}
                   </button>
-                </td>
+                </td>}
 
                 {/* Date Permit Receipt Confirmed */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("permit_receipt_confirmed_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -945,10 +945,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Permit Number */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("permit_number") && <td className="px-1 py-0.5 border-r">
                   <Input
                     value={wo.permit_number || ""}
                     onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)}
@@ -956,10 +956,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     placeholder="-"
                     disabled={!isRegistered}
                   />
-                </td>
+                </td>}
 
                 {/* Date Permit Approved/Received */}
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("permit_approved_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -980,14 +980,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </td>
 
                 {/* Calculated Days Columns */}
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>
-                <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>
+                {isColumnVisible("days_init_today") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
+                {isColumnVisible("days_req_est") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
+                {isColumnVisible("days_est_ord") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
+                {isColumnVisible("days_ord_prm") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
+                {isColumnVisible("days_prm_app") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
+                {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("quote_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1025,9 +1025,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("close_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1045,9 +1045,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("probability") && <td className="px-1 py-0.5 border-r">
                   <Input
                     type="number"
                     value={wo.probability || ""}
@@ -1058,29 +1058,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     max="100"
                     disabled={!isRegistered}
                   />
-                </td>
+                </td>}
 
-                <td className="px-1 py-0.5 border-r">
-                  <Popover open={openDatePopover === `nextfollowup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `nextfollowup-${wo.id}` : null)}>
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.follow_up_date ? format(new Date(wo.follow_up_date), "M/d/yy") : "-"}
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
-                        onSelect={(date) => {
-                          updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
-                          setOpenDatePopover(null);
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("start_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1098,26 +1078,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
-                <td className="px-1 py-0.5 border-r">
-                  <Select
-                    value={wo.lead_source || ""}
-                    onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
-                    disabled={!isRegistered}
-                  >
-                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
-                      <SelectValue placeholder="-" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leadSources.map(source => (
-                        <SelectItem key={source} value={source}>{source}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>
-
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("project_type") && <td className="px-1 py-0.5 border-r">
                   <Select
                     value={wo.project_type || ""}
                     onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
@@ -1132,7 +1095,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       ))}
                     </SelectContent>
                   </Select>
-                </td>
+                </td>}
 
                 {/* Actions */}
                 <td className="px-1 py-0.5">
