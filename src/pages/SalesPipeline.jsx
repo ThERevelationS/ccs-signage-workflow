@@ -15,6 +15,7 @@ export default function SalesPipeline() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [showCustomFilterDialog, setShowCustomFilterDialog] = useState(false);
+  const [showColumnFilterDialog, setShowColumnFilterDialog] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const spreadsheetRef = useRef(null);
@@ -192,8 +193,20 @@ export default function SalesPipeline() {
       {showCustomFilterDialog && (
         <CustomFilterDialog
           isOpen={showCustomFilterDialog}
+          mode="filters"
           onClose={() => {
             setShowCustomFilterDialog(false);
+            loadActiveFilters();
+          }}
+        />
+      )}
+
+      {showColumnFilterDialog && (
+        <CustomFilterDialog
+          isOpen={showColumnFilterDialog}
+          mode="columns"
+          onClose={() => {
+            setShowColumnFilterDialog(false);
             loadActiveFilters();
           }}
         />

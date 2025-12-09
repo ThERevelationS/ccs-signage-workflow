@@ -86,7 +86,7 @@ const STANDARD_COLUMN_PRESETS = [
   })) }
 ];
 
-export default function CustomFilterDialog({ isOpen, onClose }) {
+export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }) {
   const { currentUser } = useAuth();
   const [filters, setFilters] = useState([]);
   const [columnPresets, setColumnPresets] = useState([]);
@@ -95,7 +95,7 @@ export default function CustomFilterDialog({ isOpen, onClose }) {
   const [filterConditions, setFilterConditions] = useState([{ field: "", operator: "equals", value: "" }]);
   const [columnSettings, setColumnSettings] = useState(ALL_COLUMNS);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [activeTab, setActiveTab] = useState("filters");
+  const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
 
   useEffect(() => {
@@ -251,30 +251,15 @@ export default function CustomFilterDialog({ isOpen, onClose }) {
         <DialogContent className="clay-card border-none max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold">Manage Filters & Column Settings</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">
+                {activeTab === "filters" ? "Manage Custom Filters" : "Manage Custom Column Filters"}
+              </DialogTitle>
               <Button onClick={onClose} className="clay-button border-none">
                 <Save className="w-4 h-4 mr-2" />
                 Save & Close
               </Button>
             </div>
           </DialogHeader>
-
-          <div className="flex gap-2 border-b pb-2 mb-4">
-            <Button
-              variant={activeTab === "filters" ? "default" : "ghost"}
-              onClick={() => { setActiveTab("filters"); setActiveSubTab("pool"); }}
-              className={activeTab === "filters" ? "clay-button border-none" : ""}
-            >
-              Filters
-            </Button>
-            <Button
-              variant={activeTab === "columns" ? "default" : "ghost"}
-              onClick={() => { setActiveTab("columns"); setActiveSubTab("pool"); }}
-              className={activeTab === "columns" ? "clay-button border-none" : ""}
-            >
-              Column Presets
-            </Button>
-          </div>
 
           {/* Sub-tabs */}
           <div className="flex gap-2 mb-4">
