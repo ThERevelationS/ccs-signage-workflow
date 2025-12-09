@@ -29,6 +29,10 @@ export default function SalesPipeline() {
     const userEmail = currentUser?.email || "";
     const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
     setActiveFilters(selected);
+    
+    // Load active column preset
+    const columnPreset = selected.find(f => f.type === "column_preset");
+    setActiveColumnPreset(columnPreset || null);
   };
 
   return (
@@ -87,7 +91,7 @@ export default function SalesPipeline() {
                 <SelectItem value="lost">Lost</SelectItem>
                 <SelectItem value="on_hold">On Hold</SelectItem>
                 {activeFilters.filter(f => f.type === "filter").map(filter => (
-                  <SelectItem key={filter.id} value={filter.id}>
+                  <SelectItem key={filter.id} value={`custom_${filter.id}`}>
                     {filter.name}
                   </SelectItem>
                 ))}
@@ -130,6 +134,7 @@ export default function SalesPipeline() {
             filterStatus={filterStatus}
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
+            customFilters={activeFilters.filter(f => f.type === "filter")}
           />
         </div>
       </div>

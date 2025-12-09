@@ -27,7 +27,7 @@ const SALES_STATUSES = [
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true, activeColumnPreset = null }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
@@ -402,15 +402,62 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     handleCreateFromForm
   }));
 
+  const applyCustomFilter = (wo, conditions) => {
+    if (!conditions || conditions.length === 0) return true;
+    
+    return conditions.every(condition => {
+      const fieldValue = wo[condition.field];
+      const condValue = condition.value;
+      
+      switch (condition.operator) {
+        case "equals":
+          return fieldValue == condValue;
+        case "contains":
+          return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
+        case "greater_than":
+          return parseFloat(fieldValue) > parseFloat(condValue);
+        case "less_than":
+          return parseFloat(fieldValue) < parseFloat(condValue);
+        case "not_empty":
+          return fieldValue != null && fieldValue !== "";
+        case "empty":
+          return fieldValue == null || fieldValue === "";
+        default:
+          return true;
+      }
+    });
+  };
+
   const filteredWorkOrders = workOrders.filter(wo => {
-    if (filterStatus !== "all" && wo.sales_status !== filterStatus) return false;
+    // Apply standard status filters
+    if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
+      if (wo.sales_status !== filterStatus) return false;
+    }
+    
+    // Apply custom filters
+    if (filterStatus.startsWith("custom_")) {
+      const filterId = filterStatus.replace("custom_", "");
+      const customFilter = customFilters.find(f => f.id === filterId);
+      if (customFilter && !applyCustomFilter(wo, customFilter.conditions)) {
+        return false;
+      }
+    }
+    
+    // Apply search term
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
       if (!searchable.includes(search)) return false;
     }
+    
     return true;
   });
+
+  const isColumnVisible = (columnId) => {
+    if (!activeColumnPreset?.column_settings) return true;
+    const setting = activeColumnPreset.column_settings.find(c => c.id === columnId);
+    return setting?.visible !== false;
+  };
 
   if (isLoading) {
     return (
@@ -496,60 +543,54 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '10px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '100px' }}>Customer</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
+              {isColumnVisible("client_name") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '100px' }}>Customer</th>}
+              {isColumnVisible("lead_source") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
                 <div className="flex items-center gap-1">
                   Source
                   {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source", leadSources, "salesLeadSources")} />}
                 </div>
-              </th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Deadline</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Task Assigned</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Designer</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>PM</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Estimator</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Estimate/Invoice # Link</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Amount</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '120px' }}>
+              </th>}
+              {isColumnVisible("current_task_deadline") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Deadline</th>}
+              {isColumnVisible("current_task_assigned_to") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Task Assigned</th>}
+              {isColumnVisible("designer") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Designer</th>}
+              {isColumnVisible("project_manager") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>PM</th>}
+              {isColumnVisible("estimator") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Estimator</th>}
+              {isColumnVisible("est_inv_at") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Estimate/Invoice # Link</th>}
+              {isColumnVisible("estimate_amount") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Amount</th>}
+              {isColumnVisible("current_task_description") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '120px' }}>
                 <div className="flex items-center gap-1">
                   Task Description
                   {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions")} />}
                 </div>
-              </th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Initial</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Survey</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Est Sent</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Order</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Install</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Sub</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Notes</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '50px' }}>Prob</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Next FU</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Start</th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
-                <div className="flex items-center gap-1">
-                  Lead Src
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source2", leadSources, "salesLeadSources")} />}
-                </div>
-              </th>
-              <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
+              </th>}
+              {isColumnVisible("date_initial_contact") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Initial</th>}
+              {isColumnVisible("site_survey_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Survey</th>}
+              {isColumnVisible("date_estimate_sent") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Est Sent</th>}
+              {isColumnVisible("date_order_created") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Order</th>}
+              {isColumnVisible("project_install_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Install</th>}
+              {isColumnVisible("permit_submitted_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Sub</th>}
+              {isColumnVisible("title") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Notes</th>}
+              {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>}
+              {isColumnVisible("permit_number") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>}
+              {isColumnVisible("permit_approved_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>}
+              {isColumnVisible("days_init_today") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
+              {isColumnVisible("days_req_est") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
+              {isColumnVisible("days_est_ord") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
+              {isColumnVisible("days_ord_prm") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
+              {isColumnVisible("days_prm_app") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
+              {isColumnVisible("days_ord_ins") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
+              {isColumnVisible("quote_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>}
+              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>}
+              {isColumnVisible("close_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>}
+              {isColumnVisible("probability") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '50px' }}>Prob</th>}
+              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Next FU</th>}
+              {isColumnVisible("start_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Start</th>}
+              {isColumnVisible("project_type") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
                 <div className="flex items-center gap-1">
                   Project Type
                   {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_type", projectTypes, "salesProjectTypes")} />}
                 </div>
-              </th>
+              </th>}
               <th className="px-1 py-1 text-left font-medium text-gray-700 text-xs" style={{ minWidth: '40px' }}>Act</th>
             </tr>
           </thead>
