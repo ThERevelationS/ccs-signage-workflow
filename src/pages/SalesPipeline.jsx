@@ -3,14 +3,18 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2 } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2, Settings } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
+import WorkOrderForm from "@/components/workflow/WorkOrderForm";
+import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
 export default function SalesPipeline() {
   const { isRegistered } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [carlsView, setCarlsView] = useState(true);
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [showCustomFilterDialog, setShowCustomFilterDialog] = useState(false);
   const spreadsheetRef = useRef(null);
 
   return (
@@ -28,6 +32,17 @@ export default function SalesPipeline() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isRegistered && (
+              <Button 
+                onClick={() => setShowNewClientForm(true)}
+                className="clay-button border-none text-gray-800"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Client
+              </Button>
+            )}
+
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
@@ -38,7 +53,13 @@ export default function SalesPipeline() {
               />
             </div>
 
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus} onValueChange={(value) => {
+              if (value === "custom_filter") {
+                setShowCustomFilterDialog(true);
+              } else {
+                setFilterStatus(value);
+              }
+            }}>
               <SelectTrigger className="w-36">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue />
@@ -51,19 +72,15 @@ export default function SalesPipeline() {
                 <SelectItem value="won">Won</SelectItem>
                 <SelectItem value="lost">Lost</SelectItem>
                 <SelectItem value="on_hold">On Hold</SelectItem>
+                <div className="h-px bg-gray-800 my-2 mx-2"></div>
+                <SelectItem value="custom_filter">
+                  <div className="flex items-center gap-2 font-bold">
+                    <Settings className="w-4 h-4" />
+                    Create Custom Filters
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
-
-            {isRegistered && (
-              <Button 
-                onClick={() => spreadsheetRef.current?.addNewRow()}
-                className="clay-button border-none text-gray-800"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Client
-              </Button>
-            )}
             
             {isRegistered && (
               <Button 
@@ -106,6 +123,24 @@ export default function SalesPipeline() {
           />
         </div>
       </div>
+
+      {showNewClientForm && (
+        <WorkOrderForm
+          isOpen={showNewClientForm}
+          onClose={() => setShowNewClientForm(false)}
+          onSave={async (data) => {
+            await spreadsheetRef.current?.handleCreateFromForm(data);
+            setShowNewClientForm(false);
+          }}
+        />
+      )}
+
+      {showCustomFilterDialog && (
+        <CustomFilterDialog
+          isOpen={showCustomFilterDialog}
+          onClose={() => setShowCustomFilterDialog(false)}
+        />
+      )}
     </div>
   );
 }

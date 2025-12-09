@@ -386,10 +386,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     e.target.value = "";
   };
 
+  const handleCreateFromForm = async (data) => {
+    const newOrder = await WorkOrder.create({
+      ...data,
+      sales_status: "lead",
+      in_pipeline: false
+    });
+    setWorkOrders([newOrder, ...workOrders]);
+  };
+
   React.useImperativeHandle(ref, () => ({
     addNewRow,
     exportToExcel,
-    importFromExcel: () => fileInputRef.current?.click()
+    importFromExcel: () => fileInputRef.current?.click(),
+    handleCreateFromForm
   }));
 
   const filteredWorkOrders = workOrders.filter(wo => {
