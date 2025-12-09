@@ -977,7 +977,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
                 {/* Calculated Days Columns */}
                 {isColumnVisible("days_init_today") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
@@ -1005,9 +1005,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       />
                     </PopoverContent>
                   </Popover>
-                </td>
+                </td>}
 
-                <td className="px-1 py-0.5 border-r">
+                {isColumnVisible("follow_up_date") && <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
