@@ -200,6 +200,8 @@ export default function CustomFilterDialog({ isOpen, onClose }) {
       const key = `sales_standard_${item.value || item.name}_selected`;
       const current = localStorage.getItem(key) === "true";
       localStorage.setItem(key, (!current).toString());
+      // Force re-render
+      setFilters([...filters]);
     } else {
       const SalesFilter = base44.entities.SalesFilter;
       const selectedBy = item.selected_by || [];
@@ -280,7 +282,10 @@ export default function CustomFilterDialog({ isOpen, onClose }) {
             <Button
               size="sm"
               variant={activeSubTab === "create" ? "default" : "outline"}
-              onClick={() => { setActiveSubTab("create"); resetForm(); }}
+              onClick={() => {
+                resetForm();
+                setActiveSubTab("create");
+              }}
             >
               {editingItem ? "Edit" : "Create New"}
             </Button>
