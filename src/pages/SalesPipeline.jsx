@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +10,26 @@ import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
 export default function SalesPipeline() {
-  const { isRegistered } = useAuth();
+  const { isRegistered, currentUser } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [carlsView, setCarlsView] = useState(true);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [showCustomFilterDialog, setShowCustomFilterDialog] = useState(false);
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const spreadsheetRef = useRef(null);
+
+  useEffect(() => {
+    loadActiveFilters();
+  }, [currentUser]);
+
+  const loadActiveFilters = async () => {
+    const SalesFilter = base44.entities.SalesFilter;
+    const allFilters = await SalesFilter.list();
+    const userEmail = currentUser?.email || "";
+    const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
+    setActiveFilters(selected);
+  };
 
   return (
     <div className="min-h-screen p-4 sm:p-6">
@@ -54,13 +68,13 @@ export default function SalesPipeline() {
             </div>
 
             <Select value={filterStatus} onValueChange={(value) => {
-              if (value === "custom_filter") {
+              if (value === "manage_filters") {
                 setShowCustomFilterDialog(true);
               } else {
                 setFilterStatus(value);
               }
             }}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-48">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -72,11 +86,16 @@ export default function SalesPipeline() {
                 <SelectItem value="won">Won</SelectItem>
                 <SelectItem value="lost">Lost</SelectItem>
                 <SelectItem value="on_hold">On Hold</SelectItem>
+                {activeFilters.filter(f => f.type === "filter").map(filter => (
+                  <SelectItem key={filter.id} value={filter.id}>
+                    {filter.name}
+                  </SelectItem>
+                ))}
                 <div className="h-px bg-gray-800 my-2 mx-2"></div>
-                <SelectItem value="custom_filter">
+                <SelectItem value="manage_filters">
                   <div className="flex items-center gap-2 font-bold">
                     <Settings className="w-4 h-4" />
-                    Create Custom Filters
+                    Manage Filters & Columns
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -101,15 +120,6 @@ export default function SalesPipeline() {
             >
               <Download className="w-3 h-3" />
             </Button>
-
-            <Button
-              onClick={() => setCarlsView(!carlsView)}
-              size="sm"
-              className="clay-button border-none text-gray-700 h-8"
-              style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
-            >
-              {carlsView ? "Carl's View" : "Normal View"}
-            </Button>
           </div>
         </div>
 
@@ -119,7 +129,7 @@ export default function SalesPipeline() {
             searchTerm={searchTerm} 
             filterStatus={filterStatus}
             showButtonsInline={false}
-            carlsView={carlsView}
+            activeColumnPreset={activeColumnPreset}
           />
         </div>
       </div>
@@ -138,7 +148,10 @@ export default function SalesPipeline() {
       {showCustomFilterDialog && (
         <CustomFilterDialog
           isOpen={showCustomFilterDialog}
-          onClose={() => setShowCustomFilterDialog(false)}
+          onClose={() => {
+            setShowCustomFilterDialog(false);
+            loadActiveFilters();
+          }}
         />
       )}
     </div>
