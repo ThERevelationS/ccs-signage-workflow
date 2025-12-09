@@ -37,6 +37,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const fileInputRef = useRef(null);
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
   const [editInput, setEditInput] = useState("");
+  const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const [pendingChanges, setPendingChanges] = useState({});
   const debounceTimers = useRef({});
   const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
@@ -213,6 +214,40 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const removeFromList = (item) => {
     const newItems = editDialog.items.filter(i => i !== item);
+    if (editDialog.storageKey === "salesLeadSources") {
+      setLeadSources(newItems);
+    } else if (editDialog.storageKey === "salesProjectTypes") {
+      setProjectTypes(newItems);
+    } else if (editDialog.storageKey === "salesTaskDescriptions") {
+      setTaskDescriptions(newItems);
+    }
+    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+    setEditDialog({ ...editDialog, items: newItems });
+  };
+
+  const updateListItem = (oldItem, newItem) => {
+    if (!newItem.trim()) return;
+    const newItems = editDialog.items.map(i => i === oldItem ? newItem.trim() : i);
+    if (editDialog.storageKey === "salesLeadSources") {
+      setLeadSources(newItems);
+    } else if (editDialog.storageKey === "salesProjectTypes") {
+      setProjectTypes(newItems);
+    } else if (editDialog.storageKey === "salesTaskDescriptions") {
+      setTaskDescriptions(newItems);
+    }
+    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+    setEditDialog({ ...editDialog, items: newItems });
+  };
+
+  const moveListItem = (index, direction) => {
+    const newItems = [...editDialog.items];
+    if (direction === 'up' && index > 0) {
+      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+    } else if (direction === 'down' && index < newItems.length - 1) {
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+    } else {
+      return;
+    }
     if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
     } else if (editDialog.storageKey === "salesProjectTypes") {
@@ -458,7 +493,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Amount</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '120px' }}>
                 <div className="flex items-center gap-1">
-                  Task Desc
+                  Task Description
                   {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions")} />}
                 </div>
               </th>
@@ -1141,8 +1176,52 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </div>
             <div className="space-y-1 max-h-60 overflow-y-auto">
               {editDialog.items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span className="text-sm">{item}</span>
+                <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => moveListItem(idx, 'up')}
+                      disabled={idx === 0}
+                      className="h-4 w-4 p-0"
+                    >
+                      <span className="text-xs">▲</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => moveListItem(idx, 'down')}
+                      disabled={idx === editDialog.items.length - 1}
+                      className="h-4 w-4 p-0"
+                    >
+                      <span className="text-xs">▼</span>
+                    </Button>
+                  </div>
+                  {editingItem.index === idx ? (
+                    <Input
+                      value={editingItem.value}
+                      onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                      onBlur={() => {
+                        updateListItem(item, editingItem.value);
+                        setEditingItem({ index: null, value: "" });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          updateListItem(item, editingItem.value);
+                          setEditingItem({ index: null, value: "" });
+                        }
+                      }}
+                      className="flex-1 h-7 text-sm"
+                      autoFocus
+                    />
+                  ) : (
+                    <span 
+                      className="text-sm flex-1 cursor-pointer hover:text-blue-600"
+                      onClick={() => setEditingItem({ index: idx, value: item })}
+                    >
+                      {item}
+                    </span>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
