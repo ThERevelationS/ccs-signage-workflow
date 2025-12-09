@@ -27,7 +27,7 @@ const SALES_STATUSES = [
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true, carlsView = true }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
