@@ -48,22 +48,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const saved = localStorage.getItem('salesLeadSources');
     return saved ? JSON.parse(saved) : ["Walk-in", "Phone", "Email", "Referral", "Website"];
   });
-  const [designers, setDesigners] = useState(() => {
-    const saved = localStorage.getItem('salesDesigners');
-    return saved ? JSON.parse(saved) : ["Designer 1", "Designer 2", "Designer 3"];
-  });
-  const [projectManagers, setProjectManagers] = useState(() => {
-    const saved = localStorage.getItem('salesPMs');
-    return saved ? JSON.parse(saved) : ["PM 1", "PM 2", "PM 3"];
-  });
-  const [estimators, setEstimators] = useState(() => {
-    const saved = localStorage.getItem('salesEstimators');
-    return saved ? JSON.parse(saved) : ["Estimator 1", "Estimator 2"];
-  });
   const [projectTypes, setProjectTypes] = useState(() => {
     const saved = localStorage.getItem('salesProjectTypes');
     return saved ? JSON.parse(saved) : ["Signage", "Wraps", "Decals", "Banners", "Other"];
   });
+  const [taskDescriptions, setTaskDescriptions] = useState(() => {
+    const saved = localStorage.getItem('salesTaskDescriptions');
+    return saved ? JSON.parse(saved) : [
+      "Waiting on site visit",
+      "Waiting on survey",
+      "Waiting on client to approve estimate",
+      "Waiting on permit approval",
+      "Waiting on materials",
+      "In progress"
+    ];
+  });
+  const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
 
   useEffect(() => {
     loadWorkOrders();
