@@ -199,38 +199,42 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const addToList = () => {
     if (!editInput.trim()) return;
     const newItems = [...editDialog.items, editInput.trim()];
-    if (editDialog.field === "lead_source") {
+    if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
-      localStorage.setItem('salesLeadSources', JSON.stringify(newItems));
-    } else if (editDialog.field === "designer") {
-      setDesigners(newItems);
-      localStorage.setItem('salesDesigners', JSON.stringify(newItems));
-    } else if (editDialog.field === "project_manager") {
-      setProjectManagers(newItems);
-      localStorage.setItem('salesPMs', JSON.stringify(newItems));
-    } else if (editDialog.field === "estimator") {
-      setEstimators(newItems);
-      localStorage.setItem('salesEstimators', JSON.stringify(newItems));
+    } else if (editDialog.storageKey === "salesProjectTypes") {
+      setProjectTypes(newItems);
+    } else if (editDialog.storageKey === "salesTaskDescriptions") {
+      setTaskDescriptions(newItems);
     }
+    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+    setEditDialog({ ...editDialog, items: newItems });
     setEditInput("");
   };
 
   const removeFromList = (item) => {
     const newItems = editDialog.items.filter(i => i !== item);
-    if (editDialog.field === "lead_source") {
+    if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
-      localStorage.setItem('salesLeadSources', JSON.stringify(newItems));
-    } else if (editDialog.field === "designer") {
-      setDesigners(newItems);
-      localStorage.setItem('salesDesigners', JSON.stringify(newItems));
-    } else if (editDialog.field === "project_manager") {
-      setProjectManagers(newItems);
-      localStorage.setItem('salesPMs', JSON.stringify(newItems));
-    } else if (editDialog.field === "estimator") {
-      setEstimators(newItems);
-      localStorage.setItem('salesEstimators', JSON.stringify(newItems));
+    } else if (editDialog.storageKey === "salesProjectTypes") {
+      setProjectTypes(newItems);
+    } else if (editDialog.storageKey === "salesTaskDescriptions") {
+      setTaskDescriptions(newItems);
     }
+    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
     setEditDialog({ ...editDialog, items: newItems });
+  };
+
+  const openCorbridgeDialog = (workOrder) => {
+    setCorbridgeDialog({ open: true, workOrder });
+  };
+
+  const saveCorbridgeData = async (invoiceNumber, link) => {
+    await WorkOrder.update(corbridgeDialog.workOrder.id, {
+      corbridge_invoice_number: invoiceNumber,
+      corbridge_link: link
+    });
+    setCorbridgeDialog({ open: false, workOrder: null });
+    loadWorkOrders();
   };
 
   const getRowColor = (status) => {
