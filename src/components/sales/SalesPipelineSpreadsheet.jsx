@@ -527,12 +527,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Init</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Req</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ord</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Prm</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D App</th>}
-              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '45px' }}>D Ins</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
+              {!hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>
