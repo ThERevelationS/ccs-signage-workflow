@@ -65,8 +65,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     ];
   });
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
-  const [hiddenColumns, setHiddenColumns] = useState(true);
-  const [columnOrderDialog, setColumnOrderDialog] = useState(false);
 
   useEffect(() => {
     loadWorkOrders();
@@ -99,9 +97,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const toggleCarlsView = () => {
-    setHiddenColumns(!hiddenColumns);
-  };
+
 
   const addNewRow = () => {
     if (!isRegistered) return;
@@ -456,14 +452,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
               Export
             </Button>
-            <Button
-              onClick={toggleCarlsView}
-              size="sm"
-              className="clay-button border-none text-gray-700 h-8"
-              style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
-            >
-              {hiddenColumns ? "Carl's View" : "Normal View"}
-            </Button>
+
           </div>
           <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
         </div>
@@ -527,12 +516,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
-              {hiddenColumns && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
+              {carlsView && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>
               <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>
@@ -940,12 +929,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </td>
 
                 {/* Calculated Days Columns */}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
-                {hiddenColumns && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
+                {carlsView && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>

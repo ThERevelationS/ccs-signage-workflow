@@ -10,6 +10,7 @@ export default function SalesPipeline() {
   const { isRegistered } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [carlsView, setCarlsView] = useState(true);
   const spreadsheetRef = useRef(null);
 
   return (
@@ -56,11 +57,11 @@ export default function SalesPipeline() {
             {isRegistered && (
               <Button 
                 onClick={() => spreadsheetRef.current?.addNewRow()}
-                size="sm" 
-                className="h-8 px-2"
-                variant="ghost"
+                className="clay-button border-none text-gray-800"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-4 h-4 mr-2" />
+                New Client
               </Button>
             )}
             
@@ -83,6 +84,15 @@ export default function SalesPipeline() {
             >
               <Download className="w-3 h-3" />
             </Button>
+
+            <Button
+              onClick={() => setCarlsView(!carlsView)}
+              size="sm"
+              className="clay-button border-none text-gray-700 h-8"
+              style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
+            >
+              {carlsView ? "Carl's View" : "Normal View"}
+            </Button>
           </div>
         </div>
 
@@ -92,6 +102,7 @@ export default function SalesPipeline() {
             searchTerm={searchTerm} 
             filterStatus={filterStatus}
             showButtonsInline={false}
+            carlsView={carlsView}
           />
         </div>
       </div>
