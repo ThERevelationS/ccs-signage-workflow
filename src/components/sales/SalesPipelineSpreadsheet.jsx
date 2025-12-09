@@ -515,7 +515,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <button
                     onClick={() => setSelectedWorkOrder(wo)}
-                    className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
+                    className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
                   >
                     <LinkIcon className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">{wo.client_name || "Unnamed"}</span>
@@ -529,7 +529,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
                     disabled={!isRegistered}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
@@ -544,8 +544,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {wo.current_task_deadline ? format(new Date(wo.current_task_deadline), "MM/dd/yy") : "-"}
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {wo.current_task_deadline ? format(new Date(wo.current_task_deadline), "M/d/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -568,7 +568,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
                     disabled={!isRegistered}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
@@ -586,7 +586,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
                     disabled={!isRegistered}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
@@ -604,7 +604,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
                     disabled={!isRegistered}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
@@ -622,7 +622,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
                     disabled={!isRegistered}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent">
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
                     <SelectContent>
@@ -633,15 +633,30 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </Select>
                 </td>
 
-                {/* Est/Inv @ */}
+                {/* Est/Inv @ - Corbridge Popup */}
                 <td className="px-1 py-0.5 border-r">
-                  <Input
-                    value={wo.est_inv_at || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "est_inv_at", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="-"
-                    disabled={!isRegistered}
-                  />
+                  <div className="flex items-center gap-1">
+                    {wo.corbridge_link ? (
+                      <a
+                        href={wo.corbridge_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline truncate flex-1"
+                      >
+                        {wo.corbridge_invoice_number || wo.est_inv_at || "Link"}
+                      </a>
+                    ) : (
+                      <span className="text-xs truncate flex-1">{wo.corbridge_invoice_number || wo.est_inv_at || "-"}</span>
+                    )}
+                    {isRegistered && (
+                      <button
+                        onClick={() => openCorbridgeDialog(wo)}
+                        className="flex-shrink-0"
+                      >
+                        <Pencil className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" />
+                      </button>
+                    )}
+                  </div>
                 </td>
 
                 {/* Estimate Amount */}
@@ -650,21 +665,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     type="number"
                     value={wo.estimate_amount || ""}
                     onChange={(e) => updateWorkOrder(wo.id, "estimate_amount", parseFloat(e.target.value) || 0)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
+                    className="h-6 text-xs border-0 bg-transparent px-1"
                     placeholder="$0"
                     disabled={!isRegistered}
                   />
                 </td>
 
-                {/* Current Task Description */}
+                {/* Current Task Description - Dropdown */}
                 <td className="px-1 py-0.5 border-r">
-                  <Input
+                  <Select
                     value={wo.current_task_description || ""}
-                    onChange={(e) => updateWorkOrder(wo.id, "current_task_description", e.target.value)}
-                    className="h-7 text-xs border-0 bg-transparent px-1"
-                    placeholder="-"
+                    onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
                     disabled={!isRegistered}
-                  />
+                  >
+                    <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectValue placeholder="-" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {taskDescriptions.map(desc => (
+                        <SelectItem key={desc} value={desc}>{desc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </td>
 
                 {/* Date Est. Requested/Initial Contact */}
