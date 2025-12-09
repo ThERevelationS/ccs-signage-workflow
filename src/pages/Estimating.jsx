@@ -5,7 +5,7 @@ import DragDropList from "@/components/workflow/DragDropList";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { Maximize2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ActivityActions from "@/components/workflow/ActivityLogger";
+import { ActivityActions } from "@/components/workflow/ActivityLogger";
 
 const WorkOrder = base44.entities.WorkOrder;
 
