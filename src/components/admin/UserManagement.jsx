@@ -94,10 +94,10 @@ export default function UserManagement() {
   const handleSave = async () => {
     if (editingUser) {
       await base44.entities.AuthorizedEmail.update(editingUser.id, formData);
+      await loadUsers();
     }
     setIsDialogOpen(false);
     setEditingUser(null);
-    loadUsers();
   };
 
   const handleInvite = async () => {
