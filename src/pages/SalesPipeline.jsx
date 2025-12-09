@@ -35,6 +35,11 @@ export default function SalesPipeline() {
     setActiveColumnPreset(columnPreset || null);
   };
 
+  const isStandardFilterEnabled = (value) => {
+    const key = `sales_standard_${value}_selected`;
+    return localStorage.getItem(key) === "true";
+  };
+
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="w-full max-w-[98%] mx-auto">
@@ -83,16 +88,50 @@ export default function SalesPipeline() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Leads</SelectItem>
-                <SelectItem value="lead">Lead</SelectItem>
-                <SelectItem value="quoted">Quoted</SelectItem>
-                <SelectItem value="follow_up">Follow Up</SelectItem>
-                <SelectItem value="won">Won</SelectItem>
-                <SelectItem value="lost">Lost</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
+                {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
+                {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
+                {isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
+                {isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
+                {isStandardFilterEnabled("won") && <SelectItem value="won">Won</SelectItem>}
+                {isStandardFilterEnabled("lost") && <SelectItem value="lost">Lost</SelectItem>}
+                {isStandardFilterEnabled("on_hold") && <SelectItem value="on_hold">On Hold</SelectItem>}
                 {activeFilters.filter(f => f.type === "filter").map(filter => (
                   <SelectItem key={filter.id} value={`custom_${filter.id}`}>
                     {filter.name}
+                  </SelectItem>
+                ))}
+                <div className="h-px bg-gray-800 my-2 mx-2"></div>
+                <SelectItem value="manage_filters">
+                  <div className="flex items-center gap-2 font-bold">
+                    <Settings className="w-4 h-4" />
+                    Manage Filters & Columns
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select 
+              value={activeColumnPreset?.id || ""} 
+              onValueChange={(value) => {
+                if (value === "manage_filters") {
+                  setShowCustomFilterDialog(true);
+                } else if (value) {
+                  const preset = activeFilters.find(f => f.id === value);
+                  setActiveColumnPreset(preset || null);
+                } else {
+                  setActiveColumnPreset(null);
+                }
+              }}
+            >
+              <SelectTrigger className="w-48">
+                <Settings className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Column Filters" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>Default View</SelectItem>
+                {activeFilters.filter(f => f.type === "column_preset").map(preset => (
+                  <SelectItem key={preset.id} value={preset.id}>
+                    {preset.name}
                   </SelectItem>
                 ))}
                 <div className="h-px bg-gray-800 my-2 mx-2"></div>

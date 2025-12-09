@@ -250,7 +250,13 @@ export default function CustomFilterDialog({ isOpen, onClose }) {
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="clay-card border-none max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Manage Filters & Column Settings</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl font-bold">Manage Filters & Column Settings</DialogTitle>
+              <Button onClick={onClose} className="clay-button border-none">
+                <Save className="w-4 h-4 mr-2" />
+                Save & Close
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="flex gap-2 border-b pb-2 mb-4">
