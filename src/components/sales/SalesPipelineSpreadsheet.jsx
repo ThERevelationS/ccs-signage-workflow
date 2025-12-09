@@ -1072,16 +1072,58 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         />
       )}
 
+      {/* Corbridge Invoice Dialog */}
+      <Dialog open={corbridgeDialog.open} onOpenChange={(open) => !open && setCorbridgeDialog({ open: false, workOrder: null })}>
+        <DialogContent className="clay-card border-none max-w-md">
+          <DialogHeader>
+            <DialogTitle>Corbridge Invoice/Estimate</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number</label>
+              <Input
+                defaultValue={corbridgeDialog.workOrder?.corbridge_invoice_number || ""}
+                onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_invoice_number = e.target.value)}
+                placeholder="Enter number..."
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Corbridge Link</label>
+              <Input
+                defaultValue={corbridgeDialog.workOrder?.corbridge_link || ""}
+                onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_link = e.target.value)}
+                placeholder="Paste the Invoice or Estimate URL here..."
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">Copy the URL from Corbridge and paste it here</p>
+            </div>
+            <Button
+              onClick={() => {
+                if (corbridgeDialog.workOrder) {
+                  saveCorbridgeData(
+                    corbridgeDialog.workOrder.corbridge_invoice_number,
+                    corbridgeDialog.workOrder.corbridge_link
+                  );
+                }
+              }}
+              className="w-full"
+            >
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog for Dropdown Lists */}
-      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [] })}>
+      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [], storageKey: "" })}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-blue-600" />
-              Edit {editDialog.field === "lead_source" ? "Lead Sources" : 
-                    editDialog.field === "designer" ? "Designers" :
-                    editDialog.field === "project_manager" ? "Project Managers" :
-                    editDialog.field === "estimator" ? "Estimators" : "Items"}
+              Edit {editDialog.field === "lead_source" || editDialog.field === "lead_source2" ? "Lead Sources" : 
+                    editDialog.field === "project_type" ? "Project Types" :
+                    editDialog.field === "task_description" ? "Task Descriptions" : "Items"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
