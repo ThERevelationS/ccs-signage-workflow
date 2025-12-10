@@ -883,12 +883,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={order.date_ordered ? new Date(order.date_ordered) : undefined}
-                              onSelect={(date) => {
+                              onSelect={async (date) => {
                                 updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
                                 if (date) {
                                   updateOrder(order.id, "status", "ordered");
                                 }
                                 setOpenDatePopover(null);
+                                // Save immediately to ensure the change persists
+                                await saveAllChanges();
                               }}
                             />
                   </PopoverContent>
@@ -925,7 +927,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={order.date_received ? new Date(order.date_received) : undefined}
-                              onSelect={(date) => {
+                              onSelect={async (date) => {
                                 if (date) {
                                   // Validate all fields before marking as received
                                   const missingFields = validateOrderForReceived(order);
@@ -940,6 +942,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                   updateOrder(order.id, "date_received", "");
                                 }
                                 setOpenDatePopover(null);
+                                // Save immediately to ensure the change persists
+                                await saveAllChanges();
                               }}
                             />
                   </PopoverContent>
