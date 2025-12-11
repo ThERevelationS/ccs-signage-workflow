@@ -860,11 +860,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                             setOpenDatePopover(null);
                             return;
                           }
+                          // Prevent selecting dates in the past
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          if (date < today) {
+                            setValidationError({ orderId: order.id, fields: ["Date needed cannot be in the past"], type: 'date_needed' });
+                            setOpenDatePopover(null);
+                            return;
+                          }
                           updateOrder(order.id, "date_needed", format(date, "yyyy-MM-dd"));
                         } else {
                           updateOrder(order.id, "date_needed", "");
                         }
                         setOpenDatePopover(null);
+                      }}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
                       }}
                     />
                   </PopoverContent>
@@ -936,6 +949,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setOpenDatePopover(null);
                                     return;
                                   }
+                                  // Prevent received date from being before ordered date or needed date
+                                  if (order.date_ordered && new Date(date) < new Date(order.date_ordered)) {
+                                    setValidationError({ orderId: order.id, fields: ["Date received cannot be before date ordered"], type: 'date_received' });
+                                    setOpenDatePopover(null);
+                                    return;
+                                  }
+                                  if (order.date_needed && new Date(date) < new Date(order.date_needed)) {
+                                    setValidationError({ orderId: order.id, fields: ["Date received cannot be before date needed"], type: 'date_received' });
+                                    setOpenDatePopover(null);
+                                    return;
+                                  }
                                   updateOrder(order.id, "date_received", format(date, "yyyy-MM-dd"));
                                   updateOrder(order.id, "status", "received");
                                 } else {
@@ -944,6 +968,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                 setOpenDatePopover(null);
                                 // Save immediately to ensure the change persists
                                 await saveAllChanges();
+                              }}
+                              disabled={(date) => {
+                                if (order.date_ordered && date < new Date(order.date_ordered)) return true;
+                                if (order.date_needed && date < new Date(order.date_needed)) return true;
+                                return false;
                               }}
                             />
                   </PopoverContent>
@@ -1073,6 +1102,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <p className="mb-3">
                 {validationError?.type === 'date_needed' 
                   ? 'Please fill out the following fields before setting the date needed:' 
+                  : validationError?.type === 'date_received'
+                  ? 'Date validation error:'
                   : 'Please fill out the following fields before marking this order as received:'}
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-700">
