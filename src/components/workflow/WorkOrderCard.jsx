@@ -48,6 +48,8 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { base44 } from "@/api/base44Client";
+import TaskTemplateDialog from "./TaskTemplateDialog";
 
 const stageColors = {
   estimating: "#FFF9C4", // Added Estimating color
@@ -126,6 +128,8 @@ export default function WorkOrderCard({
 
   // Check if this work order has any riders and store them
   const [riders, setRiders] = React.useState([]);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
 
   const notes = React.useMemo(() => {
     if (!workOrder.notes) return [];
@@ -263,7 +267,8 @@ export default function WorkOrderCard({
       text: newNoteText,
       timestamp: new Date().toISOString(),
       created_by: currentUser?.email || "Unknown",
-      completed: false
+      completed: false,
+      sub_tasks: []
     };
 
     const updatedNotes = [...notes, newNote];
@@ -271,6 +276,23 @@ export default function WorkOrderCard({
     await ActivityActions.taskAdded(workOrder, newNoteText);
     setNewNoteText("");
     setIsAddingNote(false);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleUseTemplate = async (template) => {
+    const newTasks = template.tasks.map(t => ({
+      text: t.text,
+      timestamp: new Date().toISOString(),
+      created_by: currentUser?.email || "Template",
+      completed: false,
+      sub_tasks: (t.sub_tasks || []).map(st => ({
+        text: st,
+        completed: false,
+        id: Date.now() + Math.random()
+      }))
+    }));
+    const updatedNotes = [...notes, ...newTasks];
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) onUpdate();
   };
 
@@ -713,7 +735,7 @@ export default function WorkOrderCard({
                       <Input
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
-                      placeholder="Type your note..."
+                      placeholder="Type your task..."
                       className="text-sm h-8 border-gray-300"
                       autoFocus />
 
@@ -752,21 +774,45 @@ export default function WorkOrderCard({
 
                 {/* Vertical Add Task Button */}
                 <div className="flex-shrink-0 flex items-stretch">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isRegistered) {
-                        promptForEmail();
-                        return;
-                      }
-                      setIsAddingNote(true);
-                    }}
-                    className="px-0.5 hover:bg-gray-100 rounded font-medium flex items-center justify-center"
-                    style={{ writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '10px' }}>
-                    +
-                  </Button>
+                  <DropdownMenu open={showAddTaskMenu} onOpenChange={setShowAddTaskMenu}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isRegistered) {
+                            promptForEmail();
+                            return;
+                          }
+                          setShowAddTaskMenu(true);
+                        }}
+                        className="px-0.5 hover:bg-gray-100 rounded font-medium flex items-center justify-center"
+                        style={{ writingMode: 'vertical-rl', textOrientation: 'upright', fontSize: '10px' }}>
+                        +
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAddTaskMenu(false);
+                          setIsAddingNote(true);
+                        }}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Task
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAddTaskMenu(false);
+                          setShowTemplateDialog(true);
+                        }}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Use Template
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -916,6 +962,13 @@ export default function WorkOrderCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Task Template Dialog */}
+      <TaskTemplateDialog
+        isOpen={showTemplateDialog}
+        onClose={() => setShowTemplateDialog(false)}
+        onUseTemplate={handleUseTemplate}
+      />
     </>);
 
 }
