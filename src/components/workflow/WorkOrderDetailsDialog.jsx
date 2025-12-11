@@ -249,7 +249,7 @@ export default function WorkOrderDetailsDialog({
     if (onUpdate) onUpdate();
   };
 
-  const handleAddSubTask = async (taskIndex) => {
+  const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
     const updatedTasks = [...tasks];
     if (!updatedTasks[taskIndex].sub_tasks) {
@@ -266,14 +266,14 @@ export default function WorkOrderDetailsDialog({
     if (onUpdate) onUpdate();
   };
 
-  const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
+  const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed = !updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed;
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
 
-  const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
+  const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
@@ -770,13 +770,13 @@ export default function WorkOrderDetailsDialog({
                                     <div key={subIdx} className="flex items-center gap-2 text-xs">
                                       <Checkbox
                                         checked={subTask.completed}
-                                        onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
+                                        onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
                                         className="h-3 w-3" />
                                       <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
+                                        onClick={() => handleDeleteTaskSubTask(actualIndex, subIdx)}
                                         className="h-4 w-4 ml-auto">
                                         <X className="w-2 h-2 text-red-500" />
                                       </Button>
@@ -794,10 +794,10 @@ export default function WorkOrderDetailsDialog({
                                     className="h-6 text-xs"
                                     autoFocus
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleAddSubTask(actualIndex);
+                                      if (e.key === 'Enter') handleAddTaskSubTask(actualIndex);
                                       if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");}
                                     }} />
-                                  <Button size="sm" onClick={() => handleAddSubTask(actualIndex)} className="h-6 px-2">
+                                  <Button size="sm" onClick={() => handleAddTaskSubTask(actualIndex)} className="h-6 px-2">
                                     <Check className="w-3 h-3" />
                                   </Button>
                                   <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");}} className="h-6 px-2">
