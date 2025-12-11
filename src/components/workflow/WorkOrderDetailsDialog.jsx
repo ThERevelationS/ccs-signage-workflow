@@ -52,6 +52,9 @@ import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
 import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
+import { base44 } from "@/api/base44Client";
+import { List } from "lucide-react";
+import TaskTemplateDialog from "./TaskTemplateDialog";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -109,6 +112,9 @@ export default function WorkOrderDetailsDialog({
   const [newTaskText, setNewTaskText] = useState("");
   const [editingTaskIndex, setEditingTaskIndex] = useState(null);
   const [editedTaskText, setEditedTaskText] = useState("");
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
+  const [newSubTaskText, setNewSubTaskText] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -232,13 +238,45 @@ export default function WorkOrderDetailsDialog({
       text: newTaskText,
       timestamp: new Date().toISOString(),
       created_by: "Unknown",
-      completed: false
+      completed: false,
+      sub_tasks: []
     };
     const updatedTasks = [...tasks, newTask];
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     await ActivityActions.taskAdded(workOrder, newTaskText);
     setNewTaskText("");
     setIsAddingTask(false);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleAddSubTask = async (taskIndex) => {
+    if (!newSubTaskText.trim()) return;
+    const updatedTasks = [...tasks];
+    if (!updatedTasks[taskIndex].sub_tasks) {
+      updatedTasks[taskIndex].sub_tasks = [];
+    }
+    updatedTasks[taskIndex].sub_tasks.push({
+      text: newSubTaskText,
+      completed: false,
+      id: Date.now()
+    });
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    setNewSubTaskText("");
+    setAddingSubTaskFor(null);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed = !updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed;
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+  };
+
+  const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[taskIndex].sub_tasks.splice(subTaskIndex, 1);
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
 
@@ -645,6 +683,14 @@ export default function WorkOrderDetailsDialog({
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setShowTemplateDialog(true)}
+                    className="h-6 px-2 text-xs">
+                    <List className="w-3 h-3 mr-1" />
+                    Templates
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsAddingTask(true)}
                     className="h-6 px-2 text-xs">
                     <Plus className="w-3 h-3 mr-1" />
@@ -681,49 +727,104 @@ export default function WorkOrderDetailsDialog({
                 {activeTasks.map((task, idx) => {
                   const actualIndex = tasks.findIndex((t) => t === task);
                   return (
-                    <div key={idx} className="p-2 bg-white/50 rounded-lg flex items-start gap-2">
-                      <Checkbox
-                        checked={false}
-                        onCheckedChange={() => handleToggleTask(actualIndex)}
-                        className="mt-0.5" />
-                      {editingTaskIndex === actualIndex ?
-                        <div className="flex-1 space-y-1">
-                          <Input
-                            value={editedTaskText}
-                            onChange={(e) => setEditedTaskText(e.target.value)}
-                            className="text-sm h-8"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleEditTask(actualIndex);
-                              if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");}
-                            }} />
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
-                              <Check className="w-3 h-3 mr-1" />Save
+                    <div key={idx} className="bg-white/50 rounded-lg">
+                      <div className="p-2 flex items-start gap-2">
+                        <Checkbox
+                          checked={false}
+                          onCheckedChange={() => handleToggleTask(actualIndex)}
+                          className="mt-0.5" />
+                        {editingTaskIndex === actualIndex ?
+                          <div className="flex-1 space-y-1">
+                            <Input
+                              value={editedTaskText}
+                              onChange={(e) => setEditedTaskText(e.target.value)}
+                              className="text-sm h-8"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleEditTask(actualIndex);
+                                if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");}
+                              }} />
+                            <div className="flex gap-1">
+                              <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
+                                <Check className="w-3 h-3 mr-1" />Save
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");}} className="h-6 px-2 text-xs">
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div> :
+                          <>
+                            <div className="flex-1">
+                              <div
+                                className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
+                                onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
+                                <p className="text-sm text-gray-700">{task.text}</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                                </p>
+                              </div>
+                              {/* Sub-tasks */}
+                              {task.sub_tasks && task.sub_tasks.length > 0 && (
+                                <div className="ml-4 mt-2 space-y-1">
+                                  {task.sub_tasks.map((subTask, subIdx) => (
+                                    <div key={subIdx} className="flex items-center gap-2 text-xs">
+                                      <Checkbox
+                                        checked={subTask.completed}
+                                        onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
+                                        className="h-3 w-3" />
+                                      <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
+                                        className="h-4 w-4 ml-auto">
+                                        <X className="w-2 h-2 text-red-500" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Add sub-task */}
+                              {addingSubTaskFor === actualIndex ? (
+                                <div className="ml-4 mt-2 flex gap-1">
+                                  <Input
+                                    value={newSubTaskText}
+                                    onChange={(e) => setNewSubTaskText(e.target.value)}
+                                    placeholder="Sub-task..."
+                                    className="h-6 text-xs"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleAddSubTask(actualIndex);
+                                      if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");}
+                                    }} />
+                                  <Button size="sm" onClick={() => handleAddSubTask(actualIndex)} className="h-6 px-2">
+                                    <Check className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");}} className="h-6 px-2">
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAddingSubTaskFor(actualIndex)}
+                                  className="h-5 px-2 text-xs ml-4 mt-1">
+                                  <Plus className="w-2 h-2 mr-1" />
+                                  Sub-task
+                                </Button>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteTask(actualIndex)}
+                              className="h-6 w-6 flex-shrink-0">
+                              <Trash2 className="w-3 h-3 text-red-600" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");}} className="h-6 px-2 text-xs">
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div> :
-                        <>
-                          <div
-                            className="flex-1 cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
-                            onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
-                            <p className="text-sm text-gray-700">{task.text}</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteTask(actualIndex)}
-                            className="h-6 w-6 flex-shrink-0">
-                            <Trash2 className="w-3 h-3 text-red-600" />
-                          </Button>
-                        </>
-                      }
+                          </>
+                        }
+                      </div>
                     </div>
                   );
                 })}
@@ -1189,6 +1290,28 @@ export default function WorkOrderDetailsDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Task Template Dialog */}
+      <TaskTemplateDialog
+        isOpen={showTemplateDialog}
+        onClose={() => setShowTemplateDialog(false)}
+        onUseTemplate={async (template) => {
+          const newTasks = template.tasks.map(t => ({
+            text: t.text,
+            timestamp: new Date().toISOString(),
+            created_by: "Template",
+            completed: false,
+            sub_tasks: (t.sub_tasks || []).map(st => ({
+              text: st,
+              completed: false,
+              id: Date.now() + Math.random()
+            }))
+          }));
+          const updatedTasks = [...tasks, ...newTasks];
+          await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+          if (onUpdate) onUpdate();
+        }}
+      />
     </>);
 
 }

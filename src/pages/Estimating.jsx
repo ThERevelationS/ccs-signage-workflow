@@ -44,7 +44,6 @@ export default function Estimating() {
   }, []);
 
   const loadWorkOrders = async () => {
-    setIsLoading(true);
     const orders = await WorkOrder.filter({ 
       current_stage: "estimating", 
       is_rider: false, 
