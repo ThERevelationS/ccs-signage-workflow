@@ -130,6 +130,8 @@ export default function WorkOrderCard({
   const [riders, setRiders] = React.useState([]);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
+  const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
+  const [newSubTaskText, setNewSubTaskText] = useState("");
 
   const notes = React.useMemo(() => {
     if (!workOrder.notes) return [];
@@ -292,6 +294,37 @@ export default function WorkOrderCard({
       }))
     }));
     const updatedNotes = [...notes, ...newTasks];
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
+  };
+
+  const handleAddSubTask = async (taskIndex) => {
+    if (!newSubTaskText.trim()) return;
+    const updatedNotes = [...notes];
+    if (!updatedNotes[taskIndex].sub_tasks) {
+      updatedNotes[taskIndex].sub_tasks = [];
+    }
+    updatedNotes[taskIndex].sub_tasks.push({
+      text: newSubTaskText,
+      completed: false,
+      id: Date.now()
+    });
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    setNewSubTaskText("");
+    setAddingSubTaskFor(null);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
+  };
+
+  const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) onUpdate();
   };
@@ -595,7 +628,8 @@ export default function WorkOrderCard({
                       {activeNotes.map((note, index) => {
                       const actualIndex = notes.findIndex((n) => n === note);
                       return (
-                        <div key={actualIndex} className="p-1 bg-white/50 rounded flex items-start gap-1">
+                        <div key={actualIndex} className="bg-white/50 rounded">
+                          <div className="p-1 flex items-start gap-1">
                             {editingNoteIndex === actualIndex ?
                             <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                                   <Input
@@ -642,18 +676,75 @@ export default function WorkOrderCard({
 
                                     <Circle className="w-3 h-3 text-gray-400" />
                                   </Button>
-                                  <div
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleNoteEdit(index, false);
-                                }}
-                                className="flex-1 cursor-pointer hover:bg-white/70 rounded px-1 transition-colors">
-
-                                    <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
+                                  <div className="flex-1">
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleNoteEdit(index, false);
+                                      }}
+                                      className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors">
+                                      <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
+                                    </div>
+                                    {/* Sub-tasks */}
+                                    {note.sub_tasks && note.sub_tasks.length > 0 && (
+                                      <div className="ml-3 mt-1 space-y-0.5">
+                                        {note.sub_tasks.map((subTask, subIdx) => (
+                                          <div key={subIdx} className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox
+                                              checked={subTask.completed}
+                                              onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
+                                              className="h-2.5 w-2.5" />
+                                            <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
+                                              className="h-3 w-3 ml-auto p-0">
+                                              <X className="w-2 h-2 text-red-500" />
+                                            </Button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {/* Add sub-task */}
+                                    {addingSubTaskFor === actualIndex ? (
+                                      <div className="ml-3 mt-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <Input
+                                          value={newSubTaskText}
+                                          onChange={(e) => setNewSubTaskText(e.target.value)}
+                                          placeholder="Sub-task..."
+                                          className="h-5 text-xs"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleAddSubTask(actualIndex);
+                                            if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");}
+                                          }} />
+                                        <Button size="sm" onClick={() => handleAddSubTask(actualIndex)} className="h-5 px-1">
+                                          <Check className="w-2.5 h-2.5" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");}} className="h-5 px-1">
+                                          <X className="w-2.5 h-2.5" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setAddingSubTaskFor(actualIndex);
+                                        }}
+                                        className="h-4 px-1 text-xs ml-3 mt-0.5"
+                                        style={{ fontSize: '9px' }}>
+                                        <Plus className="w-2 h-2 mr-0.5" />
+                                        Sub
+                                      </Button>
+                                    )}
                                   </div>
                                 </>
                             }
-                          </div>);
+                          </div>
+                        </div>);
 
                     })}
                     </div>
