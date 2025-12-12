@@ -934,7 +934,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_ordered)}
-                              onSelect={async (date) => {
+                              onSelect={(date) => {
                                 if (date) {
                                   // Check if ordered date is before needed date
                                   if (order.date_needed && date < parseLocalDate(order.date_needed)) {
@@ -948,8 +948,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                   updateOrder(order.id, "date_ordered", "");
                                 }
                                 setOpenDatePopover(null);
-                                // Save immediately to ensure the change persists
-                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 if (order.date_needed) {
@@ -1008,7 +1006,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_received)}
-                              onSelect={async (date) => {
+                              onSelect={(date) => {
                                 if (date) {
                                   // Validate all fields before marking as received
                                   const missingFields = validateOrderForReceived(order);
@@ -1034,8 +1032,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                   updateOrder(order.id, "date_received", "");
                                 }
                                 setOpenDatePopover(null);
-                                // Save immediately to ensure the change persists
-                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 if (order.date_ordered) {
