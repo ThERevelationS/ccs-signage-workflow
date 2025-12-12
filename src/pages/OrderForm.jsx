@@ -111,7 +111,7 @@ export default function OrderForm() {
             
             {isRegistered && (
               <Button 
-                onClick={() => spreadsheetRef.current?.fileInputRef?.current?.click()}
+                onClick={() => spreadsheetRef.current?.importFromExcel()}
                 size="sm" 
                 className="h-8 px-2"
                 variant="ghost"
