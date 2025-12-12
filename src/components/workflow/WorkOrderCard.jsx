@@ -125,9 +125,11 @@ export default function WorkOrderCard({
   // Added state for delete functionality
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showRiderDeleteWarning, setShowRiderDeleteWarning] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   // Check if this work order has any riders and store them
   const [riders, setRiders] = React.useState([]);
+  const [parentWorkOrder, setParentWorkOrder] = React.useState(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
@@ -160,17 +162,25 @@ export default function WorkOrderCard({
   }, []);
 
   React.useEffect(() => {
-    const checkForRiders = async () => {
+    const checkForRidersAndParent = async () => {
+      const allWorkOrders = await WorkOrder.filter({ completed: false });
+      
+      // Check for riders if this is not a rider
       if (!workOrder.is_rider && workOrder.id) {
-        const allWorkOrders = await WorkOrder.filter({ completed: false });
         const foundRiders = allWorkOrders.filter(
           (wo) => wo.parent_work_order_id === workOrder.id && wo.is_rider
         );
         setRiders(foundRiders);
       }
+      
+      // Check for parent if this is a rider
+      if (workOrder.is_rider && workOrder.parent_work_order_id) {
+        const parent = allWorkOrders.find((wo) => wo.id === workOrder.parent_work_order_id);
+        setParentWorkOrder(parent);
+      }
     };
-    checkForRiders();
-  }, [workOrder.id, workOrder.is_rider]);
+    checkForRidersAndParent();
+  }, [workOrder.id, workOrder.is_rider, workOrder.parent_work_order_id]);
 
   const loadUser = async () => {
     try {
@@ -354,9 +364,15 @@ export default function WorkOrderCard({
       }
     }
 
+    // Show confirmation dialog
+    setShowCompleteConfirm(true);
+  };
+
+  const confirmComplete = async () => {
     if (onComplete) {
       onComplete(workOrder);
     }
+    setShowCompleteConfirm(false);
   };
 
   // Added delete functionality handlers
@@ -401,7 +417,14 @@ export default function WorkOrderCard({
     <>
       <div 
         className="clay-card relative transition-all hover:shadow-2xl cursor-pointer"
-        onClick={() => setShowDetailsDialog(true)}
+        onClick={() => {
+          // If this is a rider and has a parent, show parent details instead
+          if (workOrder.is_rider && parentWorkOrder) {
+            setShowDetailsDialog(parentWorkOrder);
+          } else {
+            setShowDetailsDialog(workOrder);
+          }
+        }}
         style={{
           background: `linear-gradient(145deg, ${stageColor}dd, rgba(255,255,255,0.95))`,
           width: '100%',
@@ -924,9 +947,9 @@ export default function WorkOrderCard({
 
       {/* Details Dialog */}
       <WorkOrderDetailsDialog
-        isOpen={showDetailsDialog}
+        isOpen={!!showDetailsDialog}
         onClose={() => setShowDetailsDialog(false)}
-        workOrder={workOrder}
+        workOrder={showDetailsDialog || workOrder}
         onEdit={onEdit}
         onMove={onMove}
         onSplit={onSplit}
@@ -1049,6 +1072,52 @@ export default function WorkOrderCard({
               }}>
 
               OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete Confirmation Dialog */}
+      <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+        <AlertDialogContent
+          className="clay-card border-none"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'auto'
+          }}
+          onPointerEnter={(e) => e.stopPropagation()}
+          onPointerMove={(e) => e.stopPropagation()}>
+
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-bold text-gray-800">
+              Mark as Complete?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 text-base">
+              Are you sure you want to mark "{workOrder.title}" as complete?
+              <br /><br />
+              This will send an email notification to the team.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="clay-button border-none text-gray-800"
+              style={{
+                background: 'linear-gradient(135deg, #E5E7EB 0%, #F3F4F6 100%)'
+              }}>
+
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmComplete}
+              className="border-none text-white"
+              style={{
+                background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)'
+              }}>
+
+              Mark Complete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
