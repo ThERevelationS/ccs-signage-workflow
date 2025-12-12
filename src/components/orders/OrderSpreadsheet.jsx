@@ -505,7 +505,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   React.useImperativeHandle(ref, () => ({
     addNewRow,
     exportToExcel,
-    fileInputRef
+    importFromExcel: () => fileInputRef.current?.click()
   }));
 
   // Filter orders based on search term and status
@@ -549,6 +549,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   return (
     <div className="overflow-visible">
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={importFromExcel}
+        className="hidden"
+      />
+
       {/* Import/Export Progress */}
       {importProgress.show && (
         <div className="mb-3 px-2">
