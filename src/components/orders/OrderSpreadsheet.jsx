@@ -904,13 +904,28 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               mode="single"
                               selected={parseLocalDate(order.date_ordered)}
                               onSelect={async (date) => {
-                                updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
                                 if (date) {
+                                  // Check if ordered date is before needed date
+                                  if (order.date_needed && date < parseLocalDate(order.date_needed)) {
+                                    setValidationError({ orderId: order.id, fields: ["Date ordered cannot be before date needed"], type: 'date_ordered' });
+                                    setOpenDatePopover(null);
+                                    return;
+                                  }
+                                  updateOrder(order.id, "date_ordered", format(date, "yyyy-MM-dd"));
                                   updateOrder(order.id, "status", "ordered");
+                                } else {
+                                  updateOrder(order.id, "date_ordered", "");
                                 }
                                 setOpenDatePopover(null);
                                 // Save immediately to ensure the change persists
                                 await saveAllChanges();
+                              }}
+                              disabled={(date) => {
+                                if (order.date_needed) {
+                                  const neededDate = parseLocalDate(order.date_needed);
+                                  return date < neededDate;
+                                }
+                                return false;
                               }}
                             />
                   </PopoverContent>
@@ -977,8 +992,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                 await saveAllChanges();
                               }}
                               disabled={(date) => {
-                                if (order.date_ordered && date < parseLocalDate(order.date_ordered)) return true;
-                                if (order.date_needed && date < parseLocalDate(order.date_needed)) return true;
+                                if (order.date_ordered) {
+                                  const orderedDate = parseLocalDate(order.date_ordered);
+                                  return date < orderedDate;
+                                }
                                 return false;
                               }}
                             />
@@ -1103,13 +1120,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              {validationError?.type === 'date_needed' ? 'Cannot Set Date Needed' : 'Cannot Mark as Received'}
+              {validationError?.type === 'date_needed' 
+                ? 'Cannot Set Date Needed' 
+                : validationError?.type === 'date_ordered'
+                ? 'Cannot Set Date Ordered'
+                : 'Cannot Mark as Received'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-left">
               <p className="mb-3">
                 {validationError?.type === 'date_needed' 
                   ? 'Please fill out the following fields before setting the date needed:' 
-                  : validationError?.type === 'date_received'
+                  : validationError?.type === 'date_received' || validationError?.type === 'date_ordered'
                   ? 'Date validation error:'
                   : 'Please fill out the following fields before marking this order as received:'}
               </p>
