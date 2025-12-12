@@ -708,7 +708,7 @@ export default function WorkOrderCard({
                                       className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors">
                                       <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
                                     </div>
-                                    {/* Sub-tasks */}
+                                    {/* Sub-tasks - always show all */}
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
                                       <div className="ml-3 mt-1 space-y-0.5">
                                         {note.sub_tasks.map((subTask, subIdx) => (

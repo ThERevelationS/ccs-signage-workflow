@@ -763,25 +763,27 @@ export default function WorkOrderDetailsDialog({
                                   {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
                                 </p>
                               </div>
-                              {/* Sub-tasks - always show */}
-                              <div className="ml-4 mt-2 space-y-1">
-                                {task.sub_tasks && task.sub_tasks.map((subTask, subIdx) => (
-                                  <div key={subIdx} className="flex items-center gap-2 text-xs">
-                                    <Checkbox
-                                      checked={subTask.completed}
-                                      onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
-                                      className="h-3 w-3" />
-                                    <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleDeleteTaskSubTask(actualIndex, subIdx)}
-                                      className="h-4 w-4 ml-auto">
-                                      <X className="w-2 h-2 text-red-500" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
+                              {/* Sub-tasks - always show all */}
+                              {task.sub_tasks && task.sub_tasks.length > 0 && (
+                                <div className="ml-4 mt-2 space-y-1">
+                                  {task.sub_tasks.map((subTask, subIdx) => (
+                                    <div key={subIdx} className="flex items-center gap-2 text-xs">
+                                      <Checkbox
+                                        checked={subTask.completed}
+                                        onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
+                                        className="h-3 w-3" />
+                                      <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteTaskSubTask(actualIndex, subIdx)}
+                                        className="h-4 w-4 ml-auto">
+                                        <X className="w-2 h-2 text-red-500" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               {/* Add sub-task */}
                               {addingSubTaskFor === actualIndex ? (
                                 <div className="ml-4 mt-2 flex gap-1">
