@@ -248,7 +248,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="clay-card border-none max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          className="clay-card border-none overflow-y-auto" 
+          hideClose
+          style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "80vw", maxHeight: "90vh" }}
+        >
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl font-bold">
@@ -484,25 +488,24 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
 
-                <div>
-                  <Label>Preset Name</Label>
-                  <Input
-                    value={itemName}
-                    onChange={(e) => setItemName(e.target.value)}
-                    placeholder="e.g., My Custom View"
-                    className="mt-1"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Preset Name</Label>
+                    <Input
+                      value={itemName}
+                      onChange={(e) => setItemName(e.target.value)}
+                      placeholder="e.g., My Custom View"
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <Label>Column Settings</Label>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Customize which columns are visible and their order.
-                  </p>
+                  <Label className="mb-3 block">Column Settings - Toggle visibility and reorder</Label>
                   
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-40 overflow-y-auto mb-4">
                     {columnSettings.map((column, index) => (
-                      <div key={column.id} className="clay-card p-3 flex items-center justify-between">
+                      <div key={column.id} className="clay-card p-2 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
@@ -510,7 +513,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             onChange={() => toggleColumnVisibility(column.id)}
                             className="w-4 h-4"
                           />
-                          <span className={column.visible ? "font-medium" : "text-gray-400"}>
+                          <span className={column.visible ? "font-medium text-sm" : "text-gray-400 text-sm"}>
                             {column.label}
                           </span>
                         </div>
@@ -521,6 +524,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             size="sm"
                             onClick={() => moveColumn(index, "up")}
                             disabled={index === 0}
+                            className="h-6 w-6 p-0"
                           >
                             ▲
                           </Button>
@@ -529,12 +533,47 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             size="sm"
                             onClick={() => moveColumn(index, "down")}
                             disabled={index === columnSettings.length - 1}
+                            className="h-6 w-6 p-0"
                           >
                             ▼
                           </Button>
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">Preview (with sample data)</Label>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full border-collapse" style={{ fontSize: '10px', tableLayout: 'auto' }}>
+                      <thead className="bg-gray-100">
+                        <tr className="border-b">
+                          {columnSettings.filter(c => c.visible).map(column => (
+                            <th key={column.id} className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>
+                              {column.label}
+                            </th>
+                          ))}
+                          <th className="px-1 py-1 text-left font-medium text-gray-700 text-xs" style={{ minWidth: '40px' }}>Act</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b hover:bg-gray-50">
+                          {columnSettings.filter(c => c.visible).map(column => (
+                            <td key={column.id} className="px-1 py-0.5 border-r text-xs text-gray-600">
+                              {column.id === "client_name" ? "Test Customer" : 
+                               column.id.includes("date") ? format(new Date(), "M/d/yy") : 
+                               column.id.includes("amount") ? "$1,000" : 
+                               column.id.includes("days") ? "5" : 
+                               column.id === "title" ? "Sample Note" :
+                               column.id === "probability" ? "75" :
+                               "Sample"}
+                            </td>
+                          ))}
+                          <td className="px-1 py-0.5 text-xs">...</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
