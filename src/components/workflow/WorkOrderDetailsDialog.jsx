@@ -51,7 +51,7 @@ import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
-import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
+
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
@@ -1134,50 +1134,56 @@ export default function WorkOrderDetailsDialog({
 
                 {/* Google Drive - Same size as description */}
                 <div className="clay-card p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <FolderOpen className="w-5 h-5 text-green-600" />
-                  Google Drive Folder
-                </h3>
-                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4 text-green-600" />
+                    Google Drive
+                  </h3>
                   {editingField === 'google_drive_folder_url' ? (
-                    <>
+                    <div className="space-y-2">
                       <Input
                         value={editValues.google_drive_folder_url || ''}
                         onChange={(e) => setEditValues({ ...editValues, google_drive_folder_url: e.target.value })}
                         placeholder="https://drive.google.com/drive/folders/..."
-                        className="w-96"
+                        className="text-sm"
                       />
-                      <Button size="sm" onClick={() => saveEdit('google_drive_folder_url')}>
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => saveEdit('google_drive_folder_url')}>
+                          <Check className="w-4 h-4 mr-1" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <>
+                    <div className="space-y-2">
                       {workOrder.google_drive_folder_url ? (
                         <a
                           href={workOrder.google_drive_folder_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                          className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity"
+                          style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
                         >
-                          Open in Drive <ExternalLink className="w-3 h-3" />
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="font-medium">Open Customer Files</span>
                         </a>
                       ) : (
-                        <span className="text-sm text-gray-400">No folder linked</span>
+                        <p className="text-sm text-gray-400 text-center py-2">No folder linked</p>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => startEdit('google_drive_folder_url')}>
-                        <Pencil className="w-4 h-4" />
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => startEdit('google_drive_folder_url')}
+                        className="w-full text-xs"
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        {workOrder.google_drive_folder_url ? 'Edit Link' : 'Add Link'}
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
-              </div>
-              <GoogleDriveFileBrowser folderUrl={workOrder.google_drive_folder_url} workOrderId={workOrder.id} />
-              </div>
               </div>
 
               {/* Right Column - Actions */}
