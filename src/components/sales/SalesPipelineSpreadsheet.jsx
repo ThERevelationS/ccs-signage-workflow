@@ -457,6 +457,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   return (
     <div className="overflow-visible">
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={importFromExcel}
+        className="hidden"
+        disabled={importProgress.show}
+      />
+
       {showButtonsInline && (
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="flex gap-2">
@@ -467,14 +477,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   <Plus className="w-4 h-4 mr-2" />
                   New Client
                 </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={importFromExcel}
-                  className="hidden"
-                  disabled={importProgress.show}
-                />
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
                   size="sm"
