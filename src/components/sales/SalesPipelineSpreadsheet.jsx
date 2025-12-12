@@ -50,6 +50,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const [showForm, setShowForm] = useState(false);
+  const [clearDateConfirm, setClearDateConfirm] = useState(null);
 
   const [leadSources, setLeadSources] = useState(() => {
     const saved = localStorage.getItem('salesLeadSources');
