@@ -944,13 +944,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setOpenDatePopover(null);
                                     return;
                                   }
-                                  updateOrder(order.id, "date_ordered", format(date, "yyyy-MM-dd"));
-                                  updateOrder(order.id, "status", "ordered");
+                                  const dateStr = format(date, "yyyy-MM-dd");
+                                  // Update state immediately
+                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: dateStr, status: "ordered" } : o));
+                                  // Save immediately
+                                  await Order.update(order.id, { date_ordered: dateStr, status: "ordered" });
                                 } else {
-                                  updateOrder(order.id, "date_ordered", "");
+                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: "" } : o));
+                                  await Order.update(order.id, { date_ordered: "" });
                                 }
                                 setOpenDatePopover(null);
-                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 const today = new Date();
@@ -1028,13 +1031,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setOpenDatePopover(null);
                                     return;
                                   }
-                                  updateOrder(order.id, "date_received", format(date, "yyyy-MM-dd"));
-                                  updateOrder(order.id, "status", "received");
+                                  const dateStr = format(date, "yyyy-MM-dd");
+                                  // Update state immediately
+                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: dateStr, status: "received" } : o));
+                                  // Save immediately
+                                  await Order.update(order.id, { date_received: dateStr, status: "received" });
                                 } else {
-                                  updateOrder(order.id, "date_received", "");
+                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: "" } : o));
+                                  await Order.update(order.id, { date_received: "" });
                                 }
                                 setOpenDatePopover(null);
-                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 if (order.date_ordered) {
