@@ -936,12 +936,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               selected={parseLocalDate(order.date_ordered)}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Check if ordered date is before needed date
-                                  if (order.date_needed && date < parseLocalDate(order.date_needed)) {
-                                    setValidationError({ orderId: order.id, fields: ["Date ordered cannot be before date needed"], type: 'date_ordered' });
-                                    setOpenDatePopover(null);
-                                    return;
-                                  }
                                   // Check if ordered date is in the future
                                   const today = new Date();
                                   today.setHours(0, 0, 0, 0);
@@ -960,14 +954,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                               disabled={(date) => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
-                                // Disable future dates
-                                if (date > today) return true;
-                                // Disable dates before needed date
-                                if (order.date_needed) {
-                                  const neededDate = parseLocalDate(order.date_needed);
-                                  return date < neededDate;
-                                }
-                                return false;
+                                // Only disable future dates
+                                return date > today;
                               }}
                             />
                   </PopoverContent>
