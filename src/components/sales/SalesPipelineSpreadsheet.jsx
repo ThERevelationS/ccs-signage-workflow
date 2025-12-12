@@ -344,6 +344,57 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
+        
+        // Parse notes into individual entries by date
+        const notesText = row["Notes"] || "";
+        const parsedNotes = [];
+        
+        if (notesText) {
+          // Split by date pattern (MM/DD/YYYY or M/D/YYYY)
+          const datePattern = /(\d{1,2}\/\d{1,2}\/\d{4})/g;
+          const parts = notesText.split(datePattern);
+          
+          let currentNote = "";
+          let currentDate = null;
+          
+          for (let j = 0; j < parts.length; j++) {
+            const part = parts[j].trim();
+            if (!part) continue;
+            
+            // Check if this part is a date
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(part)) {
+              // Save previous note if exists
+              if (currentNote && currentDate) {
+                parsedNotes.push({
+                  text: currentNote.trim(),
+                  timestamp: currentDate,
+                  created_by: "Import",
+                  completed: false,
+                  sub_tasks: []
+                });
+              }
+              // Convert MM/DD/YYYY to ISO date
+              const [month, day, year] = part.split('/').map(Number);
+              currentDate = new Date(year, month - 1, day).toISOString();
+              currentNote = "";
+            } else {
+              // Add text to current note
+              currentNote += (currentNote ? " " : "") + part;
+            }
+          }
+          
+          // Save last note
+          if (currentNote && currentDate) {
+            parsedNotes.push({
+              text: currentNote.trim(),
+              timestamp: currentDate,
+              created_by: "Import",
+              completed: false,
+              sub_tasks: []
+            });
+          }
+        }
+        
         await WorkOrder.create({
           title: row["Notes"] || row["Customer"] || "",
           client_name: row["Customer"] || "",
@@ -365,7 +416,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           permit_receipt_confirmed_date: row["Date Permit Receipt Confirmed"] || "",
           permit_number: row["Permit Number"] || "",
           permit_approved_date: row["Date Permit Approved/Received"] || "",
-          in_pipeline: false
+          in_pipeline: false,
+          notes: parsedNotes
         });
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
       }
