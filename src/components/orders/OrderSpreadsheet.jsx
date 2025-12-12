@@ -110,6 +110,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
+  const [clearDateConfirm, setClearDateConfirm] = useState(null);
   
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
@@ -856,6 +857,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
+                    {order.date_needed && (
+                      <div className="p-2 border-b">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setClearDateConfirm({ orderId: order.id, field: 'date_needed' });
+                            setOpenDatePopover(null);
+                          }}
+                        >
+                          Clear Date
+                        </Button>
+                      </div>
+                    )}
                     <Calendar
                       mode="single"
                       selected={parseLocalDate(order.date_needed)}
@@ -900,6 +916,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
+                    {order.date_ordered && (
+                      <div className="p-2 border-b">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setClearDateConfirm({ orderId: order.id, field: 'date_ordered' });
+                            setOpenDatePopover(null);
+                          }}
+                        >
+                          Clear Date
+                        </Button>
+                      </div>
+                    )}
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_ordered)}
@@ -959,6 +990,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
+                    {order.date_received && (
+                      <div className="p-2 border-b">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setClearDateConfirm({ orderId: order.id, field: 'date_received' });
+                            setOpenDatePopover(null);
+                          }}
+                        >
+                          Clear Date
+                        </Button>
+                      </div>
+                    )}
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_received)}
@@ -1176,6 +1222,44 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear Date Confirmation Dialog */}
+      <AlertDialog open={!!clearDateConfirm} onOpenChange={() => setClearDateConfirm(null)}>
+        <AlertDialogContent className="clay-card border-none max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Date?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear this date?
+              <br /><br />
+              <span className="font-medium text-orange-600">Note:</span> Email automations may be resent if this field is filled out again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (clearDateConfirm) {
+                  updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, "");
+                  // If clearing date_received, update status back to ordered or pending
+                  if (clearDateConfirm.field === 'date_received') {
+                    const order = orders.find(o => o.id === clearDateConfirm.orderId);
+                    if (order?.date_ordered) {
+                      updateOrder(clearDateConfirm.orderId, "status", "ordered");
+                    } else {
+                      updateOrder(clearDateConfirm.orderId, "status", "pending");
+                    }
+                  }
+                  await saveAllChanges();
+                }
+                setClearDateConfirm(null);
+              }}
+              className="bg-red-600 text-white"
+            >
+              Clear Date
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -631,6 +631,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.current_task_deadline && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'current_task_deadline' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.current_task_deadline)}
@@ -788,6 +803,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.date_initial_contact && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'date_initial_contact' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.date_initial_contact)}
@@ -810,6 +840,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.site_survey_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'site_survey_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.site_survey_date)}
@@ -832,6 +877,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.date_estimate_sent && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'date_estimate_sent' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.date_estimate_sent)}
@@ -854,6 +914,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.date_order_created && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'date_order_created' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.date_order_created)}
@@ -876,6 +951,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.project_install_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'project_install_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.project_install_date)}
@@ -898,6 +988,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.permit_submitted_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'permit_submitted_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.permit_submitted_date)}
@@ -931,6 +1036,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.permit_receipt_confirmed_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'permit_receipt_confirmed_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.permit_receipt_confirmed_date)}
@@ -965,6 +1085,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.permit_approved_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'permit_approved_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.permit_approved_date)}
@@ -994,6 +1129,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.quote_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'quote_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.quote_date)}
@@ -1016,6 +1166,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.follow_up_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'follow_up_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.follow_up_date)}
@@ -1038,6 +1203,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.close_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'close_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.close_date)}
@@ -1075,6 +1255,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
+                        {wo.start_date && (
+                          <div className="p-2 border-b">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setClearDateConfirm({ woId: wo.id, field: 'start_date' });
+                                setOpenDatePopover(null);
+                              }}
+                            >
+                              Clear Date
+                            </Button>
+                          </div>
+                        )}
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.start_date)}
@@ -1277,6 +1472,34 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Clear Date Confirmation Dialog */}
+      <AlertDialog open={!!clearDateConfirm} onOpenChange={() => setClearDateConfirm(null)}>
+        <AlertDialogContent className="clay-card border-none max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Date?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear this date?
+              <br /><br />
+              <span className="font-medium text-orange-600">Note:</span> Email automations may be resent if this field is filled out again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (clearDateConfirm) {
+                  updateWorkOrder(clearDateConfirm.woId, clearDateConfirm.field, "");
+                }
+                setClearDateConfirm(null);
+              }}
+              className="bg-red-600 text-white"
+            >
+              Clear Date
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
