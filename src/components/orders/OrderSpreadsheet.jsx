@@ -934,7 +934,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_ordered)}
-                              onSelect={(date) => {
+                              onSelect={async (date) => {
                                 if (date) {
                                   // Check if ordered date is in the future
                                   const today = new Date();
@@ -950,6 +950,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                   updateOrder(order.id, "date_ordered", "");
                                 }
                                 setOpenDatePopover(null);
+                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 const today = new Date();
@@ -1007,7 +1008,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_received)}
-                              onSelect={(date) => {
+                              onSelect={async (date) => {
                                 if (date) {
                                   // Validate all fields before marking as received
                                   const missingFields = validateOrderForReceived(order);
@@ -1033,6 +1034,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                   updateOrder(order.id, "date_received", "");
                                 }
                                 setOpenDatePopover(null);
+                                await saveAllChanges();
                               }}
                               disabled={(date) => {
                                 if (order.date_ordered) {
