@@ -16,7 +16,14 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+
+// Helper to parse date string as local date (not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import {
   Plus,
   Trash2,
@@ -845,13 +852,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_needed ? format(new Date(order.date_needed), "MM/dd/yy") : "-"}
+                      {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={order.date_needed ? new Date(order.date_needed) : undefined}
+                      selected={parseLocalDate(order.date_needed)}
                       onSelect={(date) => {
                         if (date) {
                           const missingFields = validateOrderForDateNeeded(order);
@@ -889,13 +896,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_ordered ? format(new Date(order.date_ordered), "MM/dd/yy") : "-"}
+                      {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                               mode="single"
-                              selected={order.date_ordered ? new Date(order.date_ordered) : undefined}
+                              selected={parseLocalDate(order.date_ordered)}
                               onSelect={async (date) => {
                                 updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
                                 if (date) {
@@ -933,13 +940,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_received ? format(new Date(order.date_received), "MM/dd/yy") : "-"}
+                      {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                               mode="single"
-                              selected={order.date_received ? new Date(order.date_received) : undefined}
+                              selected={parseLocalDate(order.date_received)}
                               onSelect={async (date) => {
                                 if (date) {
                                   // Validate all fields before marking as received
@@ -950,12 +957,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     return;
                                   }
                                   // Prevent received date from being before ordered date or needed date
-                                  if (order.date_ordered && new Date(date) < new Date(order.date_ordered)) {
+                                  if (order.date_ordered && date < parseLocalDate(order.date_ordered)) {
                                     setValidationError({ orderId: order.id, fields: ["Date received cannot be before date ordered"], type: 'date_received' });
                                     setOpenDatePopover(null);
                                     return;
                                   }
-                                  if (order.date_needed && new Date(date) < new Date(order.date_needed)) {
+                                  if (order.date_needed && date < parseLocalDate(order.date_needed)) {
                                     setValidationError({ orderId: order.id, fields: ["Date received cannot be before date needed"], type: 'date_received' });
                                     setOpenDatePopover(null);
                                     return;
@@ -970,8 +977,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                 await saveAllChanges();
                               }}
                               disabled={(date) => {
-                                if (order.date_ordered && date < new Date(order.date_ordered)) return true;
-                                if (order.date_needed && date < new Date(order.date_needed)) return true;
+                                if (order.date_ordered && date < parseLocalDate(order.date_ordered)) return true;
+                                if (order.date_needed && date < parseLocalDate(order.date_needed)) return true;
                                 return false;
                               }}
                             />

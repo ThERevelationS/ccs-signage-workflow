@@ -7,6 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
+
+// Helper to parse date string as local date (not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -620,13 +627,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.current_task_deadline ? format(new Date(wo.current_task_deadline), "M/d/yy") : "-"}
+                          {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.current_task_deadline ? new Date(wo.current_task_deadline) : undefined}
+                          selected={parseLocalDate(wo.current_task_deadline)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "current_task_deadline", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -777,13 +784,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_initial_contact ? format(new Date(wo.date_initial_contact), "M/d/yy") : "-"}
+                          {wo.date_initial_contact ? format(parseLocalDate(wo.date_initial_contact), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.date_initial_contact ? new Date(wo.date_initial_contact) : undefined}
+                          selected={parseLocalDate(wo.date_initial_contact)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "date_initial_contact", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -799,13 +806,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.site_survey_date ? format(new Date(wo.site_survey_date), "M/d/yy") : "-"}
+                          {wo.site_survey_date ? format(parseLocalDate(wo.site_survey_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.site_survey_date ? new Date(wo.site_survey_date) : undefined}
+                          selected={parseLocalDate(wo.site_survey_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "site_survey_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -821,13 +828,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_estimate_sent ? format(new Date(wo.date_estimate_sent), "M/d/yy") : "-"}
+                          {wo.date_estimate_sent ? format(parseLocalDate(wo.date_estimate_sent), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.date_estimate_sent ? new Date(wo.date_estimate_sent) : undefined}
+                          selected={parseLocalDate(wo.date_estimate_sent)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "date_estimate_sent", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -843,13 +850,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_order_created ? format(new Date(wo.date_order_created), "M/d/yy") : "-"}
+                          {wo.date_order_created ? format(parseLocalDate(wo.date_order_created), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.date_order_created ? new Date(wo.date_order_created) : undefined}
+                          selected={parseLocalDate(wo.date_order_created)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "date_order_created", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -865,13 +872,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.project_install_date ? format(new Date(wo.project_install_date), "M/d/yy") : "-"}
+                          {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.project_install_date ? new Date(wo.project_install_date) : undefined}
+                          selected={parseLocalDate(wo.project_install_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "project_install_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -887,13 +894,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_submitted_date ? format(new Date(wo.permit_submitted_date), "M/d/yy") : "-"}
+                          {wo.permit_submitted_date ? format(parseLocalDate(wo.permit_submitted_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.permit_submitted_date ? new Date(wo.permit_submitted_date) : undefined}
+                          selected={parseLocalDate(wo.permit_submitted_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "permit_submitted_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -920,13 +927,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_receipt_confirmed_date ? format(new Date(wo.permit_receipt_confirmed_date), "M/d/yy") : "-"}
+                          {wo.permit_receipt_confirmed_date ? format(parseLocalDate(wo.permit_receipt_confirmed_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.permit_receipt_confirmed_date ? new Date(wo.permit_receipt_confirmed_date) : undefined}
+                          selected={parseLocalDate(wo.permit_receipt_confirmed_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "permit_receipt_confirmed_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -954,13 +961,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_approved_date ? format(new Date(wo.permit_approved_date), "M/d/yy") : "-"}
+                          {wo.permit_approved_date ? format(parseLocalDate(wo.permit_approved_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.permit_approved_date ? new Date(wo.permit_approved_date) : undefined}
+                          selected={parseLocalDate(wo.permit_approved_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "permit_approved_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -983,13 +990,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.quote_date ? format(new Date(wo.quote_date), "M/d/yy") : "-"}
+                          {wo.quote_date ? format(parseLocalDate(wo.quote_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.quote_date ? new Date(wo.quote_date) : undefined}
+                          selected={parseLocalDate(wo.quote_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "quote_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -1005,13 +1012,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.follow_up_date ? format(new Date(wo.follow_up_date), "M/d/yy") : "-"}
+                          {wo.follow_up_date ? format(parseLocalDate(wo.follow_up_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.follow_up_date ? new Date(wo.follow_up_date) : undefined}
+                          selected={parseLocalDate(wo.follow_up_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "follow_up_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -1027,13 +1034,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.close_date ? format(new Date(wo.close_date), "M/d/yy") : "-"}
+                          {wo.close_date ? format(parseLocalDate(wo.close_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.close_date ? new Date(wo.close_date) : undefined}
+                          selected={parseLocalDate(wo.close_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "close_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -1064,13 +1071,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.start_date ? format(new Date(wo.start_date), "M/d/yy") : "-"}
+                          {wo.start_date ? format(parseLocalDate(wo.start_date), "M/d/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={wo.start_date ? new Date(wo.start_date) : undefined}
+                          selected={parseLocalDate(wo.start_date)}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "start_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
