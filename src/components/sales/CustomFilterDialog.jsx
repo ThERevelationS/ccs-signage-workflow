@@ -544,14 +544,32 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                 <div>
                   <Label className="mb-3 block font-bold text-base">Preview - Horizontal Layout (Matches Main Page)</Label>
-                  <div className="overflow-x-auto border-2 border-blue-300 rounded-lg p-2 bg-blue-50/30">
-                    <p className="text-xs text-gray-600 mb-2 italic">This preview matches the exact layout of the main sales pipeline page</p>
+                  <div className="overflow-x-auto border-2 border-blue-300 rounded-lg p-2 bg-blue-50/30" style={{ maxHeight: '500px' }}>
+                    <p className="text-xs text-gray-600 mb-2 italic">This preview matches the exact layout of the main sales pipeline page. Click column headers to reorder.</p>
                     <table className="w-full border-collapse" style={{ fontSize: '11px', tableLayout: 'auto' }}>
-                      <thead className="bg-gray-100">
+                      <thead className="bg-gray-100 sticky top-0">
                         <tr className="border-b">
-                          {columnSettings.filter(c => c.visible).map(column => (
-                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
-                              {column.label}
+                          {columnSettings.filter(c => c.visible).map((column, index) => (
+                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 group" style={{ minWidth: '100px' }}>
+                              <div className="flex items-center justify-between gap-1">
+                                <span>{column.label}</span>
+                                <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
+                                    disabled={index === 0}
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  </button>
+                                  <button 
+                                    onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
+                                    disabled={index === columnSettings.filter(c => c.visible).length - 1}
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                  </button>
+                                </div>
+                              </div>
                             </th>
                           ))}
                           <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>Actions</th>
