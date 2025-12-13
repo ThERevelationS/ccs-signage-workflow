@@ -325,16 +325,20 @@ export default function WorkOrderCard({
     if (onUpdate) onUpdate();
   };
 
-  const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
+
+
+  const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
     const updatedNotes = [...notes];
-    updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
+    if (!updatedNotes[taskIndex].sub_tasks) return;
+    updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) onUpdate();
   };
 
-  const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
+  const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
     const updatedNotes = [...notes];
-    updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
+    if (!updatedNotes[taskIndex].sub_tasks || !updatedNotes[taskIndex].sub_tasks[subTaskIndex]) return;
+    updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) onUpdate();
   };

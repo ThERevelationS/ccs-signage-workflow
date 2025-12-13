@@ -249,8 +249,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
-          className="clay-card border-none overflow-y-auto" 
-          hideClose
+          className="clay-card border-none overflow-y-auto [&>button]:hidden" 
           style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "80vw", maxHeight: "90vh" }}
         >
           <DialogHeader>
@@ -544,33 +543,43 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div>
-                  <Label className="mb-2 block">Preview (with sample data)</Label>
-                  <div className="overflow-x-auto border rounded-lg">
-                    <table className="w-full border-collapse" style={{ fontSize: '10px', tableLayout: 'auto' }}>
+                  <Label className="mb-3 block font-bold text-base">Preview - Horizontal Layout (Matches Main Page)</Label>
+                  <div className="overflow-x-auto border-2 border-blue-300 rounded-lg p-2 bg-blue-50/30">
+                    <p className="text-xs text-gray-600 mb-2 italic">This preview matches the exact layout of the main sales pipeline page</p>
+                    <table className="w-full border-collapse" style={{ fontSize: '11px', tableLayout: 'auto' }}>
                       <thead className="bg-gray-100">
                         <tr className="border-b">
                           {columnSettings.filter(c => c.visible).map(column => (
-                            <th key={column.id} className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>
+                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
                               {column.label}
                             </th>
                           ))}
-                          <th className="px-1 py-1 text-left font-medium text-gray-700 text-xs" style={{ minWidth: '40px' }}>Act</th>
+                          <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b hover:bg-gray-50">
+                        <tr className="border-b hover:bg-gray-50 bg-white">
                           {columnSettings.filter(c => c.visible).map(column => (
-                            <td key={column.id} className="px-1 py-0.5 border-r text-xs text-gray-600">
-                              {column.id === "client_name" ? "Test Customer" : 
-                               column.id.includes("date") ? format(new Date(), "M/d/yy") : 
-                               column.id.includes("amount") ? "$1,000" : 
-                               column.id.includes("days") ? "5" : 
-                               column.id === "title" ? "Sample Note" :
-                               column.id === "probability" ? "75" :
-                               "Sample"}
+                            <td key={column.id} className="px-2 py-1.5 border-r text-gray-700">
+                              {column.id === "client_name" ? "Test" : 
+                               column.id === "lead_source" ? "Website" :
+                               column.id === "designer" ? "John" :
+                               column.id === "project_manager" ? "Sarah" :
+                               column.id === "estimator" ? "Mike" :
+                               column.id === "current_task_assigned_to" ? "Carl" :
+                               column.id === "current_task_description" ? "Follow up call" :
+                               column.id === "title" ? "Sample project notes" :
+                               column.id === "project_type" ? "Sign" :
+                               column.id === "est_inv_at" ? "Location A" :
+                               column.id === "permit_number" ? "P-12345" :
+                               column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
+                               column.id.includes("amount") ? "$5,000" : 
+                               column.id.includes("days") ? "7" : 
+                               column.id === "probability" ? "75%" :
+                               "-"}
                             </td>
                           ))}
-                          <td className="px-1 py-0.5 text-xs">...</td>
+                          <td className="px-2 py-1.5 text-gray-500">•••</td>
                         </tr>
                       </tbody>
                     </table>

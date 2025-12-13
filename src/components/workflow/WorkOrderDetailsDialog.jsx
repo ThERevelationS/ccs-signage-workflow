@@ -275,7 +275,16 @@ export default function WorkOrderDetailsDialog({
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
     const updatedTasks = [...tasks];
+    if (!updatedTasks[taskIndex].sub_tasks) return;
     updatedTasks[taskIndex].sub_tasks.splice(subTaskIndex, 1);
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+  };
+
+  const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
+    const updatedTasks = [...tasks];
+    if (!updatedTasks[taskIndex].sub_tasks || !updatedTasks[taskIndex].sub_tasks[subTaskIndex]) return;
+    updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed = !updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed;
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
