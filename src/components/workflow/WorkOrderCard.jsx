@@ -142,11 +142,11 @@ export default function WorkOrderCard({
 
   const notes = React.useMemo(() => {
     if (!localWorkOrder.notes) return [];
-    if (!workOrder.notes) return [];
-    if (Array.isArray(workOrder.notes)) {
-      return workOrder.notes.map((note) => ({
+    if (Array.isArray(localWorkOrder.notes)) {
+      return localWorkOrder.notes.map((note) => ({
         ...note,
-        completed: note.completed || false
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
       }));
     }
     if (typeof localWorkOrder.notes === 'string' && localWorkOrder.notes.trim()) {
@@ -154,7 +154,8 @@ export default function WorkOrderCard({
         text: localWorkOrder.notes,
         timestamp: localWorkOrder.created_date || new Date().toISOString(),
         created_by: localWorkOrder.created_by || "Unknown",
-        completed: false
+        completed: false,
+        sub_tasks: []
       }];
     }
     return [];
