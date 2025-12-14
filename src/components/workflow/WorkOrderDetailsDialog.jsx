@@ -251,12 +251,15 @@ export default function WorkOrderDetailsDialog({
 
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
-    const updatedTasks = tasks.map((task, idx) => ({
-      ...task,
-      sub_tasks: idx === taskIndex 
-        ? [...(task.sub_tasks || []), { text: newSubTaskText, completed: false, id: Date.now() }]
-        : [...(task.sub_tasks || [])]
-    }));
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...task,
+          sub_tasks: [...(task.sub_tasks || []), { text: newSubTaskText, completed: false, id: Date.now() }]
+        };
+      }
+      return task;
+    });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
@@ -264,25 +267,31 @@ export default function WorkOrderDetailsDialog({
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedTasks = tasks.map((task, idx) => ({
-      ...task,
-      sub_tasks: idx === taskIndex 
-        ? (task.sub_tasks || []).map((st, stIdx) => 
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...task,
+          sub_tasks: (task.sub_tasks || []).map((st, stIdx) => 
             stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
           )
-        : [...(task.sub_tasks || [])]
-    }));
+        };
+      }
+      return task;
+    });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedTasks = tasks.map((task, idx) => ({
-      ...task,
-      sub_tasks: idx === taskIndex 
-        ? (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
-        : [...(task.sub_tasks || [])]
-    }));
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...task,
+          sub_tasks: (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
+        };
+      }
+      return task;
+    });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
