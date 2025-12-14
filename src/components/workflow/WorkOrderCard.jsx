@@ -134,8 +134,14 @@ export default function WorkOrderCard({
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
+  const [localWorkOrder, setLocalWorkOrder] = useState(workOrder);
+
+  React.useEffect(() => {
+    setLocalWorkOrder(workOrder);
+  }, [workOrder]);
 
   const notes = React.useMemo(() => {
+    if (!localWorkOrder.notes) return [];
     if (!workOrder.notes) return [];
     if (Array.isArray(workOrder.notes)) {
       return workOrder.notes.map((note) => ({
@@ -143,16 +149,16 @@ export default function WorkOrderCard({
         completed: note.completed || false
       }));
     }
-    if (typeof workOrder.notes === 'string' && workOrder.notes.trim()) {
+    if (typeof localWorkOrder.notes === 'string' && localWorkOrder.notes.trim()) {
       return [{
-        text: workOrder.notes,
-        timestamp: workOrder.created_date || new Date().toISOString(),
-        created_by: workOrder.created_by || "Unknown",
+        text: localWorkOrder.notes,
+        timestamp: localWorkOrder.created_date || new Date().toISOString(),
+        created_by: localWorkOrder.created_by || "Unknown",
         completed: false
       }];
     }
     return [];
-  }, [workOrder.notes, workOrder.created_date, workOrder.created_by]);
+  }, [localWorkOrder.notes, localWorkOrder.created_date, localWorkOrder.created_by]);
 
   const activeNotes = notes.filter((note) => !note.completed);
   const completedNotes = notes.filter((note) => note.completed);
@@ -320,8 +326,12 @@ export default function WorkOrderCard({
       id: Date.now()
     });
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    
+    // Update local state immediately
+    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
+    
     if (onUpdate) onUpdate();
   };
 
