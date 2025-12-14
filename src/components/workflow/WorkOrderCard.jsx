@@ -134,32 +134,27 @@ export default function WorkOrderCard({
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
-  const [localWorkOrder, setLocalWorkOrder] = useState(workOrder);
-
-  React.useEffect(() => {
-    setLocalWorkOrder(workOrder);
-  }, [workOrder]);
 
   const notes = React.useMemo(() => {
-    if (!localWorkOrder.notes) return [];
-    if (Array.isArray(localWorkOrder.notes)) {
-      return localWorkOrder.notes.map((note) => ({
+    if (!workOrder.notes) return [];
+    if (Array.isArray(workOrder.notes)) {
+      return workOrder.notes.map((note) => ({
         ...note,
         completed: note.completed || false,
         sub_tasks: note.sub_tasks || []
       }));
     }
-    if (typeof localWorkOrder.notes === 'string' && localWorkOrder.notes.trim()) {
+    if (typeof workOrder.notes === 'string' && workOrder.notes.trim()) {
       return [{
-        text: localWorkOrder.notes,
-        timestamp: localWorkOrder.created_date || new Date().toISOString(),
-        created_by: localWorkOrder.created_by || "Unknown",
+        text: workOrder.notes,
+        timestamp: workOrder.created_date || new Date().toISOString(),
+        created_by: workOrder.created_by || "Unknown",
         completed: false,
         sub_tasks: []
       }];
     }
     return [];
-  }, [localWorkOrder.notes, localWorkOrder.created_date, localWorkOrder.created_by]);
+  }, [workOrder.notes, workOrder.created_date, workOrder.created_by]);
 
   const activeNotes = notes.filter((note) => !note.completed);
   const completedNotes = notes.filter((note) => note.completed);
@@ -327,11 +322,10 @@ export default function WorkOrderCard({
       id: Date.now()
     });
     
-    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
     
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) await onUpdate();
   };
 
@@ -340,9 +334,7 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks) return;
     updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     
-    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
-    
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) await onUpdate();
   };
 
@@ -351,9 +343,7 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks || !updatedNotes[taskIndex].sub_tasks[subTaskIndex]) return;
     updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
     
-    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
-    
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) await onUpdate();
   };
 
