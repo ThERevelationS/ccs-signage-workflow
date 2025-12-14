@@ -224,16 +224,12 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                   <Input
                     value={order.description || ""}
                     onChange={(e) => updateOrder(order.id, "description", e.target.value)}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
+                    className="h-6 text-xs border-0 bg-transparent px-1 description-field"
                     placeholder="Description..."
                     disabled={!isRegistered}
                   />
                   {order.description && order.description.length > 30 && (
-                    <div className="hidden group-hover:block fixed bg-gray-900 text-white text-xs p-2 rounded shadow-lg z-[9999] max-w-xs whitespace-normal pointer-events-none"
-                         style={{
-                           marginTop: '4px',
-                           transform: 'translateY(0)'
-                         }}>
+                    <div className="hidden group-hover:block absolute left-0 bottom-full mb-1 bg-gray-900 text-white text-xs p-3 rounded shadow-2xl z-[9999] min-w-[300px] max-w-[400px] whitespace-normal pointer-events-none border border-gray-700">
                       {order.description}
                     </div>
                   )}
