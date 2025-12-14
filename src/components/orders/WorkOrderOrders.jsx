@@ -229,7 +229,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     disabled={!isRegistered}
                   />
                   {order.description && order.description.length > 30 && (
-                    <div className="hidden group-hover:block absolute left-0 top-full mt-1 bg-gray-900 text-white text-xs p-2 rounded shadow-lg z-30 max-w-xs whitespace-normal">
+                    <div className="hidden group-hover:block fixed bg-gray-900 text-white text-xs p-2 rounded shadow-lg z-[9999] max-w-xs whitespace-normal pointer-events-none"
+                         style={{
+                           marginTop: '4px',
+                           transform: 'translateY(0)'
+                         }}>
                       {order.description}
                     </div>
                   )}
