@@ -251,15 +251,12 @@ export default function WorkOrderDetailsDialog({
 
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
-    const updatedTasks = [...tasks];
-    if (!updatedTasks[taskIndex].sub_tasks) {
-      updatedTasks[taskIndex].sub_tasks = [];
-    }
-    updatedTasks[taskIndex].sub_tasks.push({
-      text: newSubTaskText,
-      completed: false,
-      id: Date.now()
-    });
+    const updatedTasks = tasks.map((task, idx) => ({
+      ...task,
+      sub_tasks: idx === taskIndex 
+        ? [...(task.sub_tasks || []), { text: newSubTaskText, completed: false, id: Date.now() }]
+        : [...(task.sub_tasks || [])]
+    }));
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
@@ -267,17 +264,25 @@ export default function WorkOrderDetailsDialog({
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedTasks = [...tasks];
-    if (!updatedTasks[taskIndex].sub_tasks || !updatedTasks[taskIndex].sub_tasks[subTaskIndex]) return;
-    updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed = !updatedTasks[taskIndex].sub_tasks[subTaskIndex].completed;
+    const updatedTasks = tasks.map((task, idx) => ({
+      ...task,
+      sub_tasks: idx === taskIndex 
+        ? (task.sub_tasks || []).map((st, stIdx) => 
+            stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
+          )
+        : [...(task.sub_tasks || [])]
+    }));
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedTasks = [...tasks];
-    if (!updatedTasks[taskIndex].sub_tasks) return;
-    updatedTasks[taskIndex].sub_tasks.splice(subTaskIndex, 1);
+    const updatedTasks = tasks.map((task, idx) => ({
+      ...task,
+      sub_tasks: idx === taskIndex 
+        ? (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
+        : [...(task.sub_tasks || [])]
+    }));
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
   };
@@ -455,7 +460,8 @@ export default function WorkOrderDetailsDialog({
     if (Array.isArray(workOrder.notes)) {
       return workOrder.notes.map((note) => ({
         ...note,
-        completed: note.completed || false
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
       }));
     }
     return [];
