@@ -327,13 +327,11 @@ export default function WorkOrderCard({
       id: Date.now()
     });
     
-    // Update local state immediately for instant UI feedback
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
     
-    // Save to database in background
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) await onUpdate();
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
@@ -341,11 +339,8 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks) return;
     updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     
-    // Update local state immediately
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
-    
-    // Save to database in background
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
@@ -353,11 +348,8 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks || !updatedNotes[taskIndex].sub_tasks[subTaskIndex]) return;
     updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
     
-    // Update local state immediately
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
-    
-    // Save to database in background
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleAsap = async () => {
