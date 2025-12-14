@@ -220,7 +220,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 </div>
 
                 {/* Description */}
-                <div className="flex-1 px-1 py-0.5 border-r">
+                <div className="flex-1 px-1 py-0.5 border-r relative group">
                   <Input
                     value={order.description || ""}
                     onChange={(e) => updateOrder(order.id, "description", e.target.value)}
@@ -228,6 +228,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     placeholder="Description..."
                     disabled={!isRegistered}
                   />
+                  {order.description && order.description.length > 30 && (
+                    <div className="hidden group-hover:block absolute left-0 top-full mt-1 bg-gray-900 text-white text-xs p-2 rounded shadow-lg z-30 max-w-xs whitespace-normal">
+                      {order.description}
+                    </div>
+                  )}
                 </div>
 
                 {/* Qty */}
