@@ -254,11 +254,24 @@ export default function WorkOrderDetailsDialog({
     const updatedTasks = tasks.map((task, idx) => {
       if (idx === taskIndex) {
         return {
-          ...task,
-          sub_tasks: [...(task.sub_tasks || []), { text: newSubTaskText, completed: false, id: Date.now() }]
+          text: task.text,
+          timestamp: task.timestamp,
+          created_by: task.created_by,
+          completed: task.completed || false,
+          sub_tasks: [...(task.sub_tasks || []), { 
+            text: newSubTaskText, 
+            completed: false, 
+            id: Date.now() + Math.random()
+          }]
         };
       }
-      return task;
+      return {
+        text: task.text,
+        timestamp: task.timestamp,
+        created_by: task.created_by,
+        completed: task.completed || false,
+        sub_tasks: task.sub_tasks || []
+      };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     setNewSubTaskText("");
@@ -270,13 +283,22 @@ export default function WorkOrderDetailsDialog({
     const updatedTasks = tasks.map((task, idx) => {
       if (idx === taskIndex) {
         return {
-          ...task,
+          text: task.text,
+          timestamp: task.timestamp,
+          created_by: task.created_by,
+          completed: task.completed || false,
           sub_tasks: (task.sub_tasks || []).map((st, stIdx) => 
             stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
           )
         };
       }
-      return task;
+      return {
+        text: task.text,
+        timestamp: task.timestamp,
+        created_by: task.created_by,
+        completed: task.completed || false,
+        sub_tasks: task.sub_tasks || []
+      };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();
@@ -286,11 +308,20 @@ export default function WorkOrderDetailsDialog({
     const updatedTasks = tasks.map((task, idx) => {
       if (idx === taskIndex) {
         return {
-          ...task,
+          text: task.text,
+          timestamp: task.timestamp,
+          created_by: task.created_by,
+          completed: task.completed || false,
           sub_tasks: (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
         };
       }
-      return task;
+      return {
+        text: task.text,
+        timestamp: task.timestamp,
+        created_by: task.created_by,
+        completed: task.completed || false,
+        sub_tasks: task.sub_tasks || []
+      };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (onUpdate) onUpdate();

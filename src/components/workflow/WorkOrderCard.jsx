@@ -312,14 +312,28 @@ export default function WorkOrderCard({
 
   const handleAddSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
+    
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
         return {
-          ...note,
-          sub_tasks: [...(note.sub_tasks || []), { text: newSubTaskText, completed: false, id: Date.now() }]
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
+          sub_tasks: [...(note.sub_tasks || []), { 
+            text: newSubTaskText, 
+            completed: false, 
+            id: Date.now() + Math.random()
+          }]
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     setNewSubTaskText("");
@@ -333,11 +347,20 @@ export default function WorkOrderCard({
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
         return {
-          ...note,
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
           sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
@@ -348,13 +371,22 @@ export default function WorkOrderCard({
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
         return {
-          ...note,
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
           sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
             stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
           )
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
