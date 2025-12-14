@@ -191,10 +191,6 @@ export default function WorkOrderCard({
     }
   };
 
-  const loadData = async () => {
-    if (onUpdate) await onUpdate();
-  };
-
   const handleImageUpload = async (e) => {
     if (!isRegistered) {
       promptForEmail();
@@ -326,10 +322,8 @@ export default function WorkOrderCard({
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
-    await loadData();
+    if (onUpdate) onUpdate();
   };
-
-
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
     const updatedNotes = [...notes];
