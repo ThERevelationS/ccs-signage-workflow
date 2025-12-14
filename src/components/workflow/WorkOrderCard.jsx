@@ -327,7 +327,7 @@ export default function WorkOrderCard({
       id: Date.now()
     });
     
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
+    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
     
@@ -340,7 +340,7 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks) return;
     updatedNotes[taskIndex].sub_tasks.splice(subTaskIndex, 1);
     
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
+    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) await onUpdate();
@@ -351,7 +351,7 @@ export default function WorkOrderCard({
     if (!updatedNotes[taskIndex].sub_tasks || !updatedNotes[taskIndex].sub_tasks[subTaskIndex]) return;
     updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed = !updatedNotes[taskIndex].sub_tasks[subTaskIndex].completed;
     
-    setLocalWorkOrder({ ...localWorkOrder, notes: updatedNotes });
+    setLocalWorkOrder(prev => ({ ...prev, notes: updatedNotes }));
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (onUpdate) await onUpdate();
