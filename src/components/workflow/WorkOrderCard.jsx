@@ -311,36 +311,31 @@ export default function WorkOrderCard({
   };
 
   const handleAddSubTask = async (taskIndex) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
     if (!newSubTaskText.trim()) return;
     
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
-        return {
-          text: note.text,
-          timestamp: note.timestamp,
-          created_by: note.created_by,
-          completed: note.completed || false,
-          sub_tasks: [...(note.sub_tasks || []), { 
-            text: newSubTaskText, 
-            completed: false, 
-            id: Date.now() + Math.random()
-          }]
-        };
-      }
-      return {
-        text: note.text,
-        timestamp: note.timestamp,
-        created_by: note.created_by,
-        completed: note.completed || false,
-        sub_tasks: note.sub_tasks || []
+    try {
+      const updatedNotes = [...notes];
+      updatedNotes[taskIndex] = {
+        ...updatedNotes[taskIndex],
+        sub_tasks: [...(updatedNotes[taskIndex].sub_tasks || []), { 
+          text: newSubTaskText, 
+          completed: false, 
+          id: Date.now() + Math.random()
+        }]
       };
-    });
-    
-    setNewSubTaskText("");
-    setAddingSubTaskFor(null);
-    
-    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) await onUpdate();
+      
+      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+      setNewSubTaskText("");
+      setAddingSubTaskFor(null);
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error("Error adding subtask:", error);
+      alert("Failed to add subtask: " + error.message);
+    }
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
