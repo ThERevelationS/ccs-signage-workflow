@@ -476,6 +476,7 @@ export default function WorkOrderCard({
     await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
     const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
     if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleAsap = async () => {

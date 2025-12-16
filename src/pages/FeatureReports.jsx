@@ -188,39 +188,40 @@ export default function FeatureReports() {
     <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 pt-2">
           <div className="flex items-center gap-3">
-            <div className="clay-card p-3">
+            <div className="clay-card p-3 flex-shrink-0">
               <Lightbulb className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Feature & Bug Reports</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Feature & Bug Reports</h1>
               <p className="text-gray-600 text-sm">Submit ideas and report issues</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Link to={createPageUrl("CompletedReports")}>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-1 sm:gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4" />
-                Completed
+                <span className="hidden sm:inline">Completed</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </Link>
             {isRegistered && (
               <Button
                 onClick={openNewReport}
-                className="clay-button border-none text-gray-800"
+                className="clay-button border-none text-gray-800 text-sm"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
               >
-                <Plus className="w-5 h-5 mr-2" />
-                New Report
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">New Report</span>
+                <span className="sm:hidden">New</span>
               </Button>
             )}
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <Button
             variant={filterType === "all" ? "default" : "outline"}
             size="sm"
@@ -237,7 +238,7 @@ export default function FeatureReports() {
               className="gap-1"
             >
               <config.icon className="w-3 h-3" />
-              {config.label}
+              <span className="hidden sm:inline">{config.label}</span>
             </Button>
           ))}
         </div>
