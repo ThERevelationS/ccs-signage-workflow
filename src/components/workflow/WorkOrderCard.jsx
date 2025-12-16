@@ -854,24 +854,24 @@ export default function WorkOrderCard({
                                     </div>
                                     {/* Sub-tasks - always show all */}
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
-                                      <div className="ml-3 mt-1 space-y-0.5">
-                                        {note.sub_tasks.map((subTask, subIdx) => (
-                                          <div key={subIdx} className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                            <Checkbox
-                                              checked={subTask.completed}
-                                              onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
-                                              className="h-2.5 w-2.5" />
-                                            <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
-                                              className="h-3 w-3 ml-auto p-0">
-                                              <X className="w-2 h-2 text-red-500" />
-                                            </Button>
-                                          </div>
-                                        ))}
+                                    <div className="ml-3 mt-1 space-y-0.5">
+                                    {note.sub_tasks.map((subTask, subIdx) => (
+                                      <div key={subIdx} className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <Checkbox
+                                          checked={subTask.completed}
+                                          onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
+                                          className="h-3 w-3 [&_svg]:h-2 [&_svg]:w-2" />
+                                        <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
+                                          className="h-3 w-3 ml-auto p-0">
+                                          <X className="w-2 h-2 text-red-500" />
+                                        </Button>
                                       </div>
+                                    ))}
+                                    </div>
                                     )}
                                     {/* Add sub-task */}
                                     {addingSubTaskFor === actualIndex ? (
