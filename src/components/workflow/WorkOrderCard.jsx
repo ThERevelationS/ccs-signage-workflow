@@ -276,13 +276,16 @@ export default function WorkOrderCard({
       ...updatedNotes[actualIndex],
       completed: !updatedNotes[actualIndex].completed
     };
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
+    // Then persist to database
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (isCompleted) {
       await ActivityActions.taskUncompleted(workOrder, taskText);
     } else {
       await ActivityActions.taskCompleted(workOrder, taskText);
     }
-    if (onUpdate) onUpdate();
   };
 
   const handleMarkAllSubtasksComplete = async () => {
@@ -473,10 +476,11 @@ export default function WorkOrderCard({
       };
     });
     
-    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { notes: updatedNotes });
     if (onUpdate) onUpdate();
+    // Then persist to database
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
   };
 
   const handleToggleAsap = async () => {
