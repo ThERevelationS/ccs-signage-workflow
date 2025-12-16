@@ -318,15 +318,30 @@ export default function WorkOrderCard({
     if (!newSubTaskText.trim()) return;
     
     try {
-      const updatedNotes = [...notes];
-      updatedNotes[taskIndex] = {
-        ...updatedNotes[taskIndex],
-        sub_tasks: [...(updatedNotes[taskIndex].sub_tasks || []), { 
-          text: newSubTaskText, 
-          completed: false, 
-          id: Date.now() + Math.random()
-        }]
-      };
+      // Get fresh data from the workOrder prop
+      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const updatedNotes = currentNotes.map((note, idx) => {
+        if (idx === taskIndex) {
+          return {
+            text: note.text,
+            timestamp: note.timestamp,
+            created_by: note.created_by,
+            completed: note.completed || false,
+            sub_tasks: [...(note.sub_tasks || []), { 
+              text: newSubTaskText, 
+              completed: false, 
+              id: Date.now() + Math.random()
+            }]
+          };
+        }
+        return {
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
+          sub_tasks: note.sub_tasks || []
+        };
+      });
       
       await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
       setNewSubTaskText("");
@@ -339,53 +354,71 @@ export default function WorkOrderCard({
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    try {
+      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const updatedNotes = currentNotes.map((note, idx) => {
+        if (idx === taskIndex) {
+          return {
+            text: note.text,
+            timestamp: note.timestamp,
+            created_by: note.created_by,
+            completed: note.completed || false,
+            sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
+          };
+        }
         return {
           text: note.text,
           timestamp: note.timestamp,
           created_by: note.created_by,
           completed: note.completed || false,
-          sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
+          sub_tasks: note.sub_tasks || []
         };
-      }
-      return {
-        text: note.text,
-        timestamp: note.timestamp,
-        created_by: note.created_by,
-        completed: note.completed || false,
-        sub_tasks: note.sub_tasks || []
-      };
-    });
-    
-    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) await onUpdate();
+      });
+      
+      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error("Error deleting subtask:", error);
+    }
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    try {
+      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const updatedNotes = currentNotes.map((note, idx) => {
+        if (idx === taskIndex) {
+          return {
+            text: note.text,
+            timestamp: note.timestamp,
+            created_by: note.created_by,
+            completed: note.completed || false,
+            sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
+              stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
+            )
+          };
+        }
         return {
           text: note.text,
           timestamp: note.timestamp,
           created_by: note.created_by,
           completed: note.completed || false,
-          sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
-            stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
-          )
+          sub_tasks: note.sub_tasks || []
         };
-      }
-      return {
-        text: note.text,
-        timestamp: note.timestamp,
-        created_by: note.created_by,
-        completed: note.completed || false,
-        sub_tasks: note.sub_tasks || []
-      };
-    });
-    
-    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) await onUpdate();
+      });
+      
+      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error("Error toggling subtask:", error);
+    }
   };
 
   const handleToggleAsap = async () => {
