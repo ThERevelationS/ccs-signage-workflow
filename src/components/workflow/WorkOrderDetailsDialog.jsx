@@ -94,6 +94,7 @@ export default function WorkOrderDetailsDialog({
   const [parentWorkOrder, setParentWorkOrder] = useState(null);
   const [dependencies, setDependencies] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
   const [isEditingDependency, setIsEditingDependency] = useState(false);
 
@@ -306,6 +307,7 @@ export default function WorkOrderDetailsDialog({
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -1258,7 +1260,7 @@ export default function WorkOrderDetailsDialog({
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
-                      onClick={() => {onComplete(workOrder);onClose();}}>
+                      onClick={() => setShowCompleteConfirm(true)}>
 
                         <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
                         Mark Complete
@@ -1344,6 +1346,32 @@ export default function WorkOrderDetailsDialog({
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete Confirmation Dialog */}
+      <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as Complete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark "{workOrder.title}" as complete?
+              <br /><br />
+              This will send an email notification to the team.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (onComplete) onComplete(workOrder);
+                setShowCompleteConfirm(false);
+                onClose();
+              }} 
+              className="bg-green-600 text-white hover:bg-green-700">
+              Mark Complete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
