@@ -224,14 +224,16 @@ export default function WorkOrderDetailsDialog({
       ...updatedTasks[taskIndex],
       completed: !updatedTasks[taskIndex].completed
     };
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     if (wasCompleted) {
       await ActivityActions.taskUncompleted(workOrder, taskText);
     } else {
       await ActivityActions.taskCompleted(workOrder, taskText);
     }
-    if (onUpdate) onUpdate();
   };
 
   const handleAddTask = async () => {
@@ -306,9 +308,11 @@ export default function WorkOrderDetailsDialog({
         sub_tasks: task.sub_tasks || []
       };
     });
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
