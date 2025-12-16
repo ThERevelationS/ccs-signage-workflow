@@ -18,7 +18,6 @@ export default function Design() {
 
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 30000);
     
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -32,7 +31,6 @@ export default function Design() {
     document.addEventListener('keydown', handleKeyDown);
     
     return () => {
-      clearInterval(interval);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };

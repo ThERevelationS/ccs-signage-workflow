@@ -20,8 +20,6 @@ export default function Estimating() {
 
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(loadWorkOrders, 30000); // Changed to 30 seconds to avoid overwriting edits
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
