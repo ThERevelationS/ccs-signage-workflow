@@ -338,7 +338,6 @@ export default function WorkOrderCard({
       
       setNewSubTaskText("");
       setAddingSubTaskFor(null);
-      if (onUpdate) await onUpdate();
     } catch (error) {
       console.error('Error adding subtask:', error);
       alert('Failed to add subtask: ' + error.message);
