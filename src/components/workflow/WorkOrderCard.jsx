@@ -318,8 +318,10 @@ export default function WorkOrderCard({
     if (!newSubTaskText.trim()) return;
     
     try {
-      // Get fresh data from the workOrder prop
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      // Fetch fresh data from database to avoid stale state
+      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
+      
       const updatedNotes = currentNotes.map((note, idx) => {
         if (idx === taskIndex) {
           return {
@@ -359,7 +361,9 @@ export default function WorkOrderCard({
       return;
     }
     try {
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
+      
       const updatedNotes = currentNotes.map((note, idx) => {
         if (idx === taskIndex) {
           return {
@@ -392,7 +396,9 @@ export default function WorkOrderCard({
       return;
     }
     try {
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
+      
       const updatedNotes = currentNotes.map((note, idx) => {
         if (idx === taskIndex) {
           return {

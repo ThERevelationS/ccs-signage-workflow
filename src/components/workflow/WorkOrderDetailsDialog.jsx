@@ -252,7 +252,10 @@ export default function WorkOrderDetailsDialog({
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
     try {
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      // Fetch fresh data from database
+      const freshData = await WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
+      
       const updatedTasks = currentNotes.map((task, idx) => {
         if (idx === taskIndex) {
           return {
@@ -286,7 +289,9 @@ export default function WorkOrderDetailsDialog({
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
     try {
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const freshData = await WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
+      
       const updatedTasks = currentNotes.map((task, idx) => {
         if (idx === taskIndex) {
           return {
@@ -316,7 +321,9 @@ export default function WorkOrderDetailsDialog({
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
     try {
-      const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
+      const freshData = await WorkOrder.filter({ id: workOrder.id });
+      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
+      
       const updatedTasks = currentNotes.map((task, idx) => {
         if (idx === taskIndex) {
           return {
