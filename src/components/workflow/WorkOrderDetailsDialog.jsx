@@ -274,9 +274,9 @@ export default function WorkOrderDetailsDialog({
       };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    Object.assign(workOrder, { notes: updatedTasks });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
-    if (onUpdate) await onUpdate();
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -305,7 +305,7 @@ export default function WorkOrderDetailsDialog({
       };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    if (onUpdate) await onUpdate();
+    Object.assign(workOrder, { notes: updatedTasks });
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -328,7 +328,7 @@ export default function WorkOrderDetailsDialog({
       };
     });
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    if (onUpdate) await onUpdate();
+    Object.assign(workOrder, { notes: updatedTasks });
   };
 
   const handleEditTask = async (taskIndex) => {
