@@ -45,6 +45,13 @@ import {
   ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
+
+// Helper to parse date string as local date (not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -1111,7 +1118,7 @@ export default function WorkOrderDetailsDialog({
                         <Calendar className="w-4 h-4 text-orange-600" />
                         <span className="font-medium">Due:</span>
                         <span className="text-gray-600">
-                          {workOrder.due_date ? format(new Date(workOrder.due_date), "MMM d, yyyy") : 'No due date'}
+                          {workOrder.due_date ? format(parseLocalDate(workOrder.due_date), "MMM d, yyyy") : 'No due date'}
                         </span>
                       </div>
                     </PopoverTrigger>

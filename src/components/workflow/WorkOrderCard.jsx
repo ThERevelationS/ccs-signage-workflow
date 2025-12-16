@@ -37,6 +37,13 @@ import {
   AlertDialogTitle } from
 "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+
+// Helper to parse date string as local date (not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import { WorkOrder } from "@/entities/WorkOrder";
 import { User as UserEntity } from "@/entities/User";
 import { UploadFile } from "@/integrations/Core";
@@ -725,7 +732,7 @@ export default function WorkOrderCard({
               {workOrder.due_date &&
               <div className="flex items-center gap-1 text-gray-600">
                   <Calendar className="w-3 h-3 flex-shrink-0 text-orange-600" />
-                  <span className="text-xs font-medium">{format(new Date(workOrder.due_date), "MMM d")}</span>
+                  <span className="text-xs font-medium">{format(parseLocalDate(workOrder.due_date), "MMM d")}</span>
                 </div>
               }
               {riders.length > 0 && !workOrder.is_rider &&
