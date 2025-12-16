@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+
+// Helper to parse date string as local date (not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import {
   Plus,
   Trash2,
@@ -291,13 +298,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                   <Popover modal={true}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {order.date_needed ? format(new Date(order.date_needed), "MM/dd/yy") : "-"}
+                        {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                       <Calendar
                         mode="single"
-                        selected={order.date_needed ? new Date(order.date_needed) : undefined}
+                        selected={parseLocalDate(order.date_needed)}
                         onSelect={(date) => updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "")}
                         initialFocus
                       />
@@ -328,13 +335,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                   <Popover modal={true}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                        {order.date_received ? format(new Date(order.date_received), "MM/dd/yy") : "-"}
+                        {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                       <Calendar
                         mode="single"
-                        selected={order.date_received ? new Date(order.date_received) : undefined}
+                        selected={parseLocalDate(order.date_received)}
                         onSelect={(date) => {
                           updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
                           if (date) updateOrder(order.id, "status", "received");
