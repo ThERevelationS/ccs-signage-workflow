@@ -819,14 +819,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
                 {isColumnVisible("estimate_amount") && (
                   <td className="px-1 py-0.5 border-r">
-                    <Input
-                      type="number"
-                      value={wo.estimate_amount || ""}
-                      onChange={(e) => updateWorkOrder(wo.id, "estimate_amount", parseFloat(e.target.value) || 0)}
-                      className="h-6 text-xs border-0 bg-transparent px-1"
-                      placeholder="$0"
-                      disabled={!isRegistered}
-                    />
+                    <div className="relative flex items-center">
+                      <span className="absolute left-1 text-xs text-gray-500">$</span>
+                      <Input
+                        type="number"
+                        value={wo.estimate_amount || ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          updateWorkOrder(wo.id, "estimate_amount", parseFloat(val) || 0);
+                        }}
+                        className="h-6 text-xs border-0 bg-transparent pl-3 pr-1"
+                        placeholder="0"
+                        disabled={!isRegistered}
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
                   </td>
                 )}
 

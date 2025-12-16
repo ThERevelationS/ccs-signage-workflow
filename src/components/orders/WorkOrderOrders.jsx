@@ -288,13 +288,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Needed */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Popover>
+                  <Popover modal={true}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                         {order.date_needed ? format(new Date(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
                       <Calendar
                         mode="single"
                         selected={order.date_needed ? new Date(order.date_needed) : undefined}
@@ -324,13 +324,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Received */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Popover>
+                  <Popover modal={true}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                         {order.date_received ? format(new Date(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
                       <Calendar
                         mode="single"
                         selected={order.date_received ? new Date(order.date_received) : undefined}
