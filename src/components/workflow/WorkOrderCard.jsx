@@ -317,42 +317,19 @@ export default function WorkOrderCard({
     }
     if (!newSubTaskText.trim()) return;
     
-    try {
-      // Fetch fresh data from database to avoid stale state
-      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
-      
-      const updatedNotes = currentNotes.map((note, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: note.text,
-            timestamp: note.timestamp,
-            created_by: note.created_by,
-            completed: note.completed || false,
-            sub_tasks: [...(note.sub_tasks || []), { 
-              text: newSubTaskText, 
-              completed: false, 
-              id: Date.now() + Math.random()
-            }]
-          };
-        }
-        return {
-          text: note.text,
-          timestamp: note.timestamp,
-          created_by: note.created_by,
-          completed: note.completed || false,
-          sub_tasks: note.sub_tasks || []
-        };
-      });
-      
-      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-      setNewSubTaskText("");
-      setAddingSubTaskFor(null);
-      if (onUpdate) await onUpdate();
-    } catch (error) {
-      console.error("Error adding subtask:", error);
-      alert("Failed to add subtask: " + error.message);
-    }
+    const updatedNotes = [...notes];
+    updatedNotes[taskIndex] = {
+      ...updatedNotes[taskIndex],
+      sub_tasks: [...(updatedNotes[taskIndex].sub_tasks || []), { 
+        text: newSubTaskText, 
+        completed: false
+      }]
+    };
+    
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    setNewSubTaskText("");
+    setAddingSubTaskFor(null);
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
@@ -360,34 +337,15 @@ export default function WorkOrderCard({
       promptForEmail();
       return;
     }
-    try {
-      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
-      
-      const updatedNotes = currentNotes.map((note, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: note.text,
-            timestamp: note.timestamp,
-            created_by: note.created_by,
-            completed: note.completed || false,
-            sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
-          };
-        }
-        return {
-          text: note.text,
-          timestamp: note.timestamp,
-          created_by: note.created_by,
-          completed: note.completed || false,
-          sub_tasks: note.sub_tasks || []
-        };
-      });
-      
-      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-      if (onUpdate) await onUpdate();
-    } catch (error) {
-      console.error("Error deleting subtask:", error);
-    }
+    
+    const updatedNotes = [...notes];
+    updatedNotes[taskIndex] = {
+      ...updatedNotes[taskIndex],
+      sub_tasks: (updatedNotes[taskIndex].sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
+    };
+    
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
@@ -395,36 +353,17 @@ export default function WorkOrderCard({
       promptForEmail();
       return;
     }
-    try {
-      const freshWorkOrder = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshWorkOrder[0]?.notes) ? freshWorkOrder[0].notes : [];
-      
-      const updatedNotes = currentNotes.map((note, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: note.text,
-            timestamp: note.timestamp,
-            created_by: note.created_by,
-            completed: note.completed || false,
-            sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
-              stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
-            )
-          };
-        }
-        return {
-          text: note.text,
-          timestamp: note.timestamp,
-          created_by: note.created_by,
-          completed: note.completed || false,
-          sub_tasks: note.sub_tasks || []
-        };
-      });
-      
-      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
-      if (onUpdate) await onUpdate();
-    } catch (error) {
-      console.error("Error toggling subtask:", error);
-    }
+    
+    const updatedNotes = [...notes];
+    const subTasks = [...(updatedNotes[taskIndex].sub_tasks || [])];
+    subTasks[subTaskIndex] = { ...subTasks[subTaskIndex], completed: !subTasks[subTaskIndex].completed };
+    updatedNotes[taskIndex] = {
+      ...updatedNotes[taskIndex],
+      sub_tasks: subTasks
+    };
+    
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleAsap = async () => {
