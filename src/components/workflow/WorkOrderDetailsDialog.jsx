@@ -251,102 +251,41 @@ export default function WorkOrderDetailsDialog({
 
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
-    try {
-      // Fetch fresh data from database
-      const freshData = await WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
-      
-      const updatedTasks = currentNotes.map((task, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: task.text,
-            timestamp: task.timestamp,
-            created_by: task.created_by,
-            completed: task.completed || false,
-            sub_tasks: [...(task.sub_tasks || []), { 
-              text: newSubTaskText, 
-              completed: false, 
-              id: Date.now() + Math.random()
-            }]
-          };
-        }
-        return {
-          text: task.text,
-          timestamp: task.timestamp,
-          created_by: task.created_by,
-          completed: task.completed || false,
-          sub_tasks: task.sub_tasks || []
-        };
-      });
-      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-      setNewSubTaskText("");
-      setAddingSubTaskFor(null);
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      console.error("Error adding subtask:", error);
-    }
+    
+    const updatedTasks = [...tasks];
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      sub_tasks: [...(updatedTasks[taskIndex].sub_tasks || []), { 
+        text: newSubTaskText, 
+        completed: false
+      }]
+    };
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    setNewSubTaskText("");
+    setAddingSubTaskFor(null);
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
-    try {
-      const freshData = await WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
-      
-      const updatedTasks = currentNotes.map((task, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: task.text,
-            timestamp: task.timestamp,
-            created_by: task.created_by,
-            completed: task.completed || false,
-            sub_tasks: (task.sub_tasks || []).map((st, stIdx) => 
-              stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
-            )
-          };
-        }
-        return {
-          text: task.text,
-          timestamp: task.timestamp,
-          created_by: task.created_by,
-          completed: task.completed || false,
-          sub_tasks: task.sub_tasks || []
-        };
-      });
-      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      console.error("Error toggling subtask:", error);
-    }
+    const updatedTasks = [...tasks];
+    const subTasks = [...(updatedTasks[taskIndex].sub_tasks || [])];
+    subTasks[subTaskIndex] = { ...subTasks[subTaskIndex], completed: !subTasks[subTaskIndex].completed };
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      sub_tasks: subTasks
+    };
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
-    try {
-      const freshData = await WorkOrder.filter({ id: workOrder.id });
-      const currentNotes = Array.isArray(freshData[0]?.notes) ? freshData[0].notes : [];
-      
-      const updatedTasks = currentNotes.map((task, idx) => {
-        if (idx === taskIndex) {
-          return {
-            text: task.text,
-            timestamp: task.timestamp,
-            created_by: task.created_by,
-            completed: task.completed || false,
-            sub_tasks: (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
-          };
-        }
-        return {
-          text: task.text,
-          timestamp: task.timestamp,
-          created_by: task.created_by,
-          completed: task.completed || false,
-          sub_tasks: task.sub_tasks || []
-        };
-      });
-      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      console.error("Error deleting subtask:", error);
-    }
+    const updatedTasks = [...tasks];
+    updatedTasks[taskIndex] = {
+      ...updatedTasks[taskIndex],
+      sub_tasks: (updatedTasks[taskIndex].sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
+    };
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
   };
 
   const handleEditTask = async (taskIndex) => {
