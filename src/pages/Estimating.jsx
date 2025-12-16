@@ -189,6 +189,7 @@ export default function Estimating() {
             onSplit={handleSplit}
             onComplete={handleComplete}
             onDelete={handleDelete}
+            onUpdate={loadWorkOrders}
             currentStage="estimating"
             isFullscreen={isFullscreen}
           />
