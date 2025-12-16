@@ -328,15 +328,17 @@ export default function WorkOrderCard({
           : (note.sub_tasks || [])
       }));
       
-      console.log('Adding subtask. Updated notes:', JSON.stringify(updatedNotes, null, 2));
-      await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-      console.log('Subtask saved successfully');
+      await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
       
-      // Update local workOrder object to reflect changes immediately
-      Object.assign(workOrder, { notes: updatedNotes });
+      // Fetch fresh data to confirm save
+      const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+      if (refreshed[0]) {
+        Object.assign(workOrder, refreshed[0]);
+      }
       
       setNewSubTaskText("");
       setAddingSubTaskFor(null);
+      if (onUpdate) await onUpdate();
     } catch (error) {
       console.error('Error adding subtask:', error);
       alert('Failed to add subtask: ' + error.message);
@@ -368,8 +370,10 @@ export default function WorkOrderCard({
       };
     });
     
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    Object.assign(workOrder, { notes: updatedNotes });
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
@@ -403,8 +407,10 @@ export default function WorkOrderCard({
       };
     });
     
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    Object.assign(workOrder, { notes: updatedNotes });
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleAsap = async () => {
