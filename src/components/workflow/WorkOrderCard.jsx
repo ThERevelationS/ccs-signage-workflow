@@ -320,14 +320,23 @@ export default function WorkOrderCard({
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
         return {
-          ...note,
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
           sub_tasks: [...(note.sub_tasks || []), { 
             text: newSubTaskText, 
             completed: false
           }]
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
@@ -345,11 +354,20 @@ export default function WorkOrderCard({
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
         return {
-          ...note,
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
           sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
@@ -364,15 +382,27 @@ export default function WorkOrderCard({
     
     const updatedNotes = notes.map((note, idx) => {
       if (idx === taskIndex) {
-        const subTasks = (note.sub_tasks || []).map((st, stIdx) => 
-          stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
-        );
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return { text: st.text, completed: !st.completed };
+          }
+          return { text: st.text, completed: st.completed };
+        });
         return {
-          ...note,
-          sub_tasks: subTasks
+          text: note.text,
+          timestamp: note.timestamp,
+          created_by: note.created_by,
+          completed: note.completed || false,
+          sub_tasks: updatedSubTasks
         };
       }
-      return note;
+      return {
+        text: note.text,
+        timestamp: note.timestamp,
+        created_by: note.created_by,
+        completed: note.completed || false,
+        sub_tasks: note.sub_tasks || []
+      };
     });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
