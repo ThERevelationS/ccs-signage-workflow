@@ -317,19 +317,23 @@ export default function WorkOrderCard({
     }
     if (!newSubTaskText.trim()) return;
     
-    const updatedNotes = [...notes];
-    updatedNotes[taskIndex] = {
-      ...updatedNotes[taskIndex],
-      sub_tasks: [...(updatedNotes[taskIndex].sub_tasks || []), { 
-        text: newSubTaskText, 
-        completed: false
-      }]
-    };
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...note,
+          sub_tasks: [...(note.sub_tasks || []), { 
+            text: newSubTaskText, 
+            completed: false
+          }]
+        };
+      }
+      return note;
+    });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
-    if (onUpdate) onUpdate();
+    if (onUpdate) await onUpdate();
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
@@ -338,14 +342,18 @@ export default function WorkOrderCard({
       return;
     }
     
-    const updatedNotes = [...notes];
-    updatedNotes[taskIndex] = {
-      ...updatedNotes[taskIndex],
-      sub_tasks: (updatedNotes[taskIndex].sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
-    };
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).filter((_, subIdx) => subIdx !== subTaskIndex)
+        };
+      }
+      return note;
+    });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) onUpdate();
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
@@ -354,16 +362,21 @@ export default function WorkOrderCard({
       return;
     }
     
-    const updatedNotes = [...notes];
-    const subTasks = [...(updatedNotes[taskIndex].sub_tasks || [])];
-    subTasks[subTaskIndex] = { ...subTasks[subTaskIndex], completed: !subTasks[subTaskIndex].completed };
-    updatedNotes[taskIndex] = {
-      ...updatedNotes[taskIndex],
-      sub_tasks: subTasks
-    };
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        const subTasks = (note.sub_tasks || []).map((st, stIdx) => 
+          stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
+        );
+        return {
+          ...note,
+          sub_tasks: subTasks
+        };
+      }
+      return note;
+    });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) onUpdate();
+    if (onUpdate) await onUpdate();
   };
 
   const handleToggleAsap = async () => {
