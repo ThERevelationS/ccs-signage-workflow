@@ -225,6 +225,7 @@ export default function WorkOrderDetailsDialog({
       completed: !updatedTasks[taskIndex].completed
     };
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    Object.assign(workOrder, { notes: updatedTasks });
     if (wasCompleted) {
       await ActivityActions.taskUncompleted(workOrder, taskText);
     } else {
