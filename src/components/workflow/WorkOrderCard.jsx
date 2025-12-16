@@ -332,9 +332,11 @@ export default function WorkOrderCard({
       await WorkOrder.update(workOrder.id, { notes: updatedNotes });
       console.log('Subtask saved successfully');
       
+      // Update local workOrder object to reflect changes immediately
+      Object.assign(workOrder, { notes: updatedNotes });
+      
       setNewSubTaskText("");
       setAddingSubTaskFor(null);
-      if (onUpdate) await onUpdate();
     } catch (error) {
       console.error('Error adding subtask:', error);
       alert('Failed to add subtask: ' + error.message);
@@ -367,7 +369,7 @@ export default function WorkOrderCard({
     });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) await onUpdate();
+    Object.assign(workOrder, { notes: updatedNotes });
   };
 
   const handleToggleSubTask = async (taskIndex, subTaskIndex) => {
@@ -402,7 +404,7 @@ export default function WorkOrderCard({
     });
     
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    if (onUpdate) await onUpdate();
+    Object.assign(workOrder, { notes: updatedNotes });
   };
 
   const handleToggleAsap = async () => {
