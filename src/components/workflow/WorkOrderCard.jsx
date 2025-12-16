@@ -134,6 +134,8 @@ export default function WorkOrderCard({
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
+  const [showIncompleteSubtasksDialog, setShowIncompleteSubtasksDialog] = useState(false);
+  const [incompleteSubtasksData, setIncompleteSubtasksData] = useState(null);
 
   const notes = React.useMemo(() => {
     if (!workOrder.notes) return [];
@@ -255,7 +257,20 @@ export default function WorkOrderCard({
     }
     const notesList = isCompleted ? completedNotes : activeNotes;
     const actualIndex = notes.findIndex((n) => n === notesList[index]);
-    const taskText = notes[actualIndex].text;
+    const task = notes[actualIndex];
+    
+    // If trying to complete, check if all subtasks are completed
+    if (!isCompleted && task.sub_tasks && task.sub_tasks.length > 0) {
+      const hasIncomplete = task.sub_tasks.some(st => !st.completed);
+      if (hasIncomplete) {
+        // Show dialog with subtasks
+        setIncompleteSubtasksData({ taskIndex: actualIndex, task });
+        setShowIncompleteSubtasksDialog(true);
+        return;
+      }
+    }
+    
+    const taskText = task.text;
     const updatedNotes = [...notes];
     updatedNotes[actualIndex] = {
       ...updatedNotes[actualIndex],
@@ -268,6 +283,59 @@ export default function WorkOrderCard({
       await ActivityActions.taskCompleted(workOrder, taskText);
     }
     if (onUpdate) onUpdate();
+  };
+
+  const handleMarkAllSubtasksComplete = async () => {
+    if (!incompleteSubtasksData) return;
+    
+    const { taskIndex } = incompleteSubtasksData;
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).map(st => ({ ...st, completed: true })),
+          completed: true
+        };
+      }
+      return note;
+    });
+    
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    
+    await ActivityActions.taskCompleted(workOrder, notes[taskIndex].text);
+    setShowIncompleteSubtasksDialog(false);
+    setIncompleteSubtasksData(null);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleToggleSubTaskInDialog = async (subTaskIndex) => {
+    if (!incompleteSubtasksData) return;
+    
+    const { taskIndex } = incompleteSubtasksData;
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
+            stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
+          )
+        };
+      }
+      return note;
+    });
+    
+    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) {
+      Object.assign(workOrder, refreshed[0]);
+      // Update dialog data
+      setIncompleteSubtasksData({
+        taskIndex,
+        task: refreshed[0].notes[taskIndex]
+      });
+    }
   };
 
   const handleAddNote = async () => {
@@ -1200,6 +1268,71 @@ export default function WorkOrderCard({
         onClose={() => setShowTemplateDialog(false)}
         onUseTemplate={handleUseTemplate}
       />
+
+      {/* Incomplete Subtasks Dialog */}
+      <AlertDialog open={showIncompleteSubtasksDialog} onOpenChange={setShowIncompleteSubtasksDialog}>
+        <AlertDialogContent
+          className="clay-card border-none max-w-md"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'auto'
+          }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold text-gray-800">
+              Subtasks Not Completed
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 text-sm">
+              Please complete all subtasks before marking this task as complete.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {incompleteSubtasksData && (
+            <div className="space-y-3 my-4">
+              <p className="font-semibold text-gray-700 text-sm">{incompleteSubtasksData.task.text}</p>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {incompleteSubtasksData.task.sub_tasks?.map((subTask, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-white/70 rounded">
+                    <Checkbox
+                      checked={subTask.completed}
+                      onCheckedChange={() => handleToggleSubTaskInDialog(idx)}
+                      className="h-4 w-4"
+                    />
+                    <span className={`text-sm flex-1 ${subTask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                      {subTask.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter className="flex gap-2">
+            <Button
+              onClick={handleMarkAllSubtasksComplete}
+              className="flex-1 border-none text-white"
+              style={{
+                background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)'
+              }}>
+              Mark All Complete
+            </Button>
+            <AlertDialogCancel
+              className="flex-1 clay-button border-none text-gray-800"
+              onClick={() => {
+                setShowIncompleteSubtasksDialog(false);
+                setIncompleteSubtasksData(null);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #E5E7EB 0%, #F3F4F6 100%)'
+              }}>
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>);
 
 }
