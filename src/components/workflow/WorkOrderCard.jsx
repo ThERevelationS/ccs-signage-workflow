@@ -317,32 +317,28 @@ export default function WorkOrderCard({
     }
     if (!newSubTaskText.trim()) return;
     
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
-        return {
-          text: note.text,
-          timestamp: note.timestamp,
-          created_by: note.created_by,
-          completed: note.completed || false,
-          sub_tasks: [...(note.sub_tasks || []), { 
-            text: newSubTaskText, 
-            completed: false
-          }]
-        };
-      }
-      return {
+    try {
+      const updatedNotes = notes.map((note, idx) => ({
         text: note.text,
         timestamp: note.timestamp,
         created_by: note.created_by,
         completed: note.completed || false,
-        sub_tasks: note.sub_tasks || []
-      };
-    });
-    
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    setNewSubTaskText("");
-    setAddingSubTaskFor(null);
-    if (onUpdate) await onUpdate();
+        sub_tasks: idx === taskIndex 
+          ? [...(note.sub_tasks || []), { text: newSubTaskText, completed: false }]
+          : (note.sub_tasks || [])
+      }));
+      
+      console.log('Adding subtask. Updated notes:', JSON.stringify(updatedNotes, null, 2));
+      await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+      console.log('Subtask saved successfully');
+      
+      setNewSubTaskText("");
+      setAddingSubTaskFor(null);
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error('Error adding subtask:', error);
+      alert('Failed to add subtask: ' + error.message);
+    }
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
