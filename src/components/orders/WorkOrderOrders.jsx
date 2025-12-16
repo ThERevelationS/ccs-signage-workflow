@@ -294,11 +294,12 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         {order.date_needed ? format(new Date(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                       <Calendar
                         mode="single"
                         selected={order.date_needed ? new Date(order.date_needed) : undefined}
                         onSelect={(date) => updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "")}
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -330,7 +331,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         {order.date_received ? format(new Date(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                       <Calendar
                         mode="single"
                         selected={order.date_received ? new Date(order.date_received) : undefined}
@@ -338,6 +339,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
                           if (date) updateOrder(order.id, "status", "received");
                         }}
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
