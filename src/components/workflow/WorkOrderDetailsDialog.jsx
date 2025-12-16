@@ -246,11 +246,14 @@ export default function WorkOrderDetailsDialog({
       sub_tasks: []
     };
     const updatedTasks = [...tasks, newTask];
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    await ActivityActions.taskAdded(workOrder, newTaskText);
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { notes: updatedTasks });
     setNewTaskText("");
     setIsAddingTask(false);
     if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    await ActivityActions.taskAdded(workOrder, newTaskText);
   };
 
   const handleAddTaskSubTask = async (taskIndex) => {
@@ -277,10 +280,13 @@ export default function WorkOrderDetailsDialog({
         sub_tasks: task.sub_tasks || []
       };
     });
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     setNewSubTaskText("");
     setAddingSubTaskFor(null);
+    if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -334,8 +340,11 @@ export default function WorkOrderDetailsDialog({
         sub_tasks: task.sub_tasks || []
       };
     });
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
   };
 
   const handleEditTask = async (taskIndex) => {
@@ -346,18 +355,24 @@ export default function WorkOrderDetailsDialog({
       ...updatedTasks[taskIndex],
       text: editedTaskText
     };
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-    await ActivityActions.taskEdited(workOrder, oldText, editedTaskText);
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { notes: updatedTasks });
     setEditingTaskIndex(null);
     setEditedTaskText("");
     if (onUpdate) onUpdate();
+    // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    await ActivityActions.taskEdited(workOrder, oldText, editedTaskText);
   };
 
   const handleDeleteTask = async (taskIndex) => {
     const updatedTasks = tasks.filter((_, idx) => idx !== taskIndex);
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+    // Then persist to database
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     await ActivityActions.taskDeleted(workOrder);
-    if (onUpdate) onUpdate();
   };
 
   const handleAddWorkNote = async (noteData) => {
