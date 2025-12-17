@@ -287,44 +287,82 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
       const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
       
-      // Ensure all values are primitives (string or number), not objects/arrays
       return {
-        "Customer": String(wo.client_name || ""),
-        "Source": String(wo.lead_source || ""),
-        "Current Task Deadline": String(wo.current_task_deadline || ""),
-        "Current Task Assigned to": String(wo.current_task_assigned_to || ""),
-        "Designer": String(wo.designer || ""),
-        "Project Manager": String(wo.project_manager || ""),
-        "Estimator": String(wo.estimator || ""),
-        "Est/Inv @": String(wo.est_inv_at || wo.corbridge_invoice_number || ""),
-        "Estimate Amount": typeof wo.estimate_amount === 'number' ? wo.estimate_amount : (parseFloat(wo.estimate_amount) || 0),
-        "Current Task Description": String(wo.current_task_description || ""),
-        "Date Est. Requested/Initial Contact": String(wo.date_initial_contact || ""),
-        "Site Survey": String(wo.site_survey_date || ""),
-        "Date Estimate Sent to Customer": String(wo.date_estimate_sent || ""),
-        "Date Order Created": String(wo.date_order_created || ""),
-        "Project Install Date": String(wo.project_install_date || ""),
-        "Permit Submitted": String(wo.permit_submitted_date || ""),
-        "Notes": String(wo.title || ""),
-        "Date Permit Receipt Confirmed": String(wo.permit_receipt_confirmed_date || ""),
-        "Permit Number": String(wo.permit_number || ""),
-        "Date Permit Approved/Received": String(wo.permit_approved_date || ""),
-        "Days from Initial Request to today": daysFromInitial ?? "",
-        "Days Est. Sent from Date Requested": daysEstSent ?? "",
-        "Days from Est. Sent to Date Order Created": daysEstToOrder ?? "",
-        "Days from Order Created to Permit Submitted": daysOrderToPermit ?? "",
-        "Days from Permit Submitted to Permit Approved": daysPermitToApproved ?? "",
-        "Days from Project Install Date from Order Created": daysOrderToInstall ?? ""
+        "Customer": wo.client_name || "",
+        "Source": wo.lead_source || "",
+        "Current Task Deadline": wo.current_task_deadline || "",
+        "Current Task Assigned to": wo.current_task_assigned_to || "",
+        "Designer": wo.designer || "",
+        "Project Manager": wo.project_manager || "",
+        "Estimator": wo.estimator || "",
+        "Est/Inv @": wo.est_inv_at || wo.corbridge_invoice_number || "",
+        "Estimate Amount": wo.estimate_amount || 0,
+        "Current Task Description": wo.current_task_description || "",
+        "Date Est. Requested/Initial Contact": wo.date_initial_contact || "",
+        "Site Survey": wo.site_survey_date || "",
+        "Date Estimate Sent to Customer": wo.date_estimate_sent || "",
+        "Date Order Created": wo.date_order_created || "",
+        "Project Install Date": wo.project_install_date || "",
+        "Permit Submitted": wo.permit_submitted_date || "",
+        "Notes": wo.title || "",
+        "Date Permit Receipt Confirmed": wo.permit_receipt_confirmed_date || "",
+        "Permit Number": wo.permit_number || "",
+        "Date Permit Approved/Received": wo.permit_approved_date || "",
+        "Days from Initial Request to today": daysFromInitial !== null ? daysFromInitial : "",
+        "Days Est. Sent from Date Requested": daysEstSent !== null ? daysEstSent : "",
+        "Days from Est. Sent to Date Order Created": daysEstToOrder !== null ? daysEstToOrder : "",
+        "Days from Order Created to Permit Submitted": daysOrderToPermit !== null ? daysOrderToPermit : "",
+        "Days from Permit Submitted to Permit Approved": daysPermitToApproved !== null ? daysPermitToApproved : "",
+        "Days from Project Install Date from Order Created": daysOrderToInstall !== null ? daysOrderToInstall : ""
       };
     });
 
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
 
+    // Create worksheet from data
     const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Set column widths for better readability
+    const colWidths = [
+      { wch: 25 }, // Customer
+      { wch: 12 }, // Source
+      { wch: 15 }, // Current Task Deadline
+      { wch: 20 }, // Current Task Assigned to
+      { wch: 15 }, // Designer
+      { wch: 15 }, // Project Manager
+      { wch: 15 }, // Estimator
+      { wch: 15 }, // Est/Inv @
+      { wch: 15 }, // Estimate Amount
+      { wch: 30 }, // Current Task Description
+      { wch: 15 }, // Date Est. Requested
+      { wch: 12 }, // Site Survey
+      { wch: 15 }, // Date Estimate Sent
+      { wch: 15 }, // Date Order Created
+      { wch: 15 }, // Project Install Date
+      { wch: 15 }, // Permit Submitted
+      { wch: 40 }, // Notes
+      { wch: 18 }, // Date Permit Receipt
+      { wch: 12 }, // Permit Number
+      { wch: 18 }, // Date Permit Approved
+      { wch: 18 }, // Days Init->Today
+      { wch: 18 }, // Days Req->Est
+      { wch: 18 }, // Days Est->Ord
+      { wch: 18 }, // Days Ord->Prm
+      { wch: 18 }, // Days Prm->App
+      { wch: 18 }, // Days Ord->Ins
+    ];
+    ws['!cols'] = colWidths;
+
+    // Create workbook and add the worksheet
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
-    XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    
+    // Write as xlsx with proper bookType
+    XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`, { 
+      bookType: 'xlsx',
+      type: 'binary'
+    });
     
     setExportProgress({ show: true, progress: 100 });
     setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
