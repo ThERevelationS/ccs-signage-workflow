@@ -59,6 +59,7 @@ import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
 import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
+import EmbeddedDriveFiles from "./EmbeddedDriveFiles";
 
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
