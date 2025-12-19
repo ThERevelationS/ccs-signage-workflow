@@ -1242,18 +1242,34 @@ export default function WorkOrderDetailsDialog({
                   ) : (
                     <div className="space-y-2">
                       {workOrder.google_drive_folder_url ? (
-                        <a
-                          href={workOrder.google_drive_folder_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity"
+                        <>
+                          <Button
+                            onClick={() => setShowDriveBrowser(true)}
+                            className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity border-none"
+                            style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
+                          >
+                            <FolderOpen className="w-4 h-4" />
+                            <span className="font-medium">Browse Files</span>
+                          </Button>
+                          <a
+                            href={workOrder.google_drive_folder_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 p-2 w-full text-xs text-blue-600 hover:underline"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Open in Google Drive
+                          </a>
+                        </>
+                      ) : (
+                        <Button
+                          onClick={() => setShowDriveBrowser(true)}
+                          className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity border-none"
                           style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
                         >
-                          <ExternalLink className="w-4 h-4" />
-                          <span className="font-medium">Open Customer Files</span>
-                        </a>
-                      ) : (
-                        <p className="text-sm text-gray-400 text-center py-2">No folder linked</p>
+                          <FolderOpen className="w-4 h-4" />
+                          <span className="font-medium">Browse Files</span>
+                        </Button>
                       )}
                       <Button 
                         size="sm" 
@@ -1262,7 +1278,7 @@ export default function WorkOrderDetailsDialog({
                         className="w-full text-xs"
                       >
                         <Pencil className="w-3 h-3 mr-1" />
-                        {workOrder.google_drive_folder_url ? 'Edit Link' : 'Add Link'}
+                        {workOrder.google_drive_folder_url ? 'Edit Folder Link' : 'Link a Folder'}
                       </Button>
                     </div>
                   )}
