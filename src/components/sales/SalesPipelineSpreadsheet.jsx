@@ -316,33 +316,37 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
       const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
       
+      // Helper to ensure clean string values
+      const str = (val) => (val == null ? "" : String(val));
+      const num = (val) => (typeof val === 'number' && !isNaN(val) ? val : (val == null || val === "" ? null : Number(val) || null));
+      
       return {
-        "Customer": wo.client_name || "",
-        "Source": wo.lead_source || "",
-        "Current Task Deadline": wo.current_task_deadline || "",
-        "Current Task Assigned to": wo.current_task_assigned_to || "",
-        "Designer": wo.designer || "",
-        "Project Manager": wo.project_manager || "",
-        "Estimator": wo.estimator || "",
-        "Est/Inv @": wo.est_inv_at || wo.corbridge_invoice_number || "",
-        "Estimate Amount": wo.estimate_amount || 0,
-        "Current Task Description": wo.current_task_description || "",
-        "Date Est. Requested/Initial Contact": wo.date_initial_contact || "",
-        "Site Survey": wo.site_survey_date || "",
-        "Date Estimate Sent to Customer": wo.date_estimate_sent || "",
-        "Date Order Created": wo.date_order_created || "",
-        "Project Install Date": wo.project_install_date || "",
-        "Permit Submitted": wo.permit_submitted_date || "",
-        "Notes": wo.title || "",
-        "Date Permit Receipt Confirmed": wo.permit_receipt_confirmed_date || "",
-        "Permit Number": wo.permit_number || "",
-        "Date Permit Approved/Received": wo.permit_approved_date || "",
-        "Days from Initial Request to today": daysFromInitial !== null ? daysFromInitial : "",
-        "Days Est. Sent from Date Requested": daysEstSent !== null ? daysEstSent : "",
-        "Days from Est. Sent to Date Order Created": daysEstToOrder !== null ? daysEstToOrder : "",
-        "Days from Order Created to Permit Submitted": daysOrderToPermit !== null ? daysOrderToPermit : "",
-        "Days from Permit Submitted to Permit Approved": daysPermitToApproved !== null ? daysPermitToApproved : "",
-        "Days from Project Install Date from Order Created": daysOrderToInstall !== null ? daysOrderToInstall : ""
+        "Customer": str(wo.client_name),
+        "Source": str(wo.lead_source),
+        "Current Task Deadline": str(wo.current_task_deadline),
+        "Current Task Assigned to": str(wo.current_task_assigned_to),
+        "Designer": str(wo.designer),
+        "Project Manager": str(wo.project_manager),
+        "Estimator": str(wo.estimator),
+        "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number),
+        "Estimate Amount": num(wo.estimate_amount),
+        "Current Task Description": str(wo.current_task_description),
+        "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
+        "Site Survey": str(wo.site_survey_date),
+        "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
+        "Date Order Created": str(wo.date_order_created),
+        "Project Install Date": str(wo.project_install_date),
+        "Permit Submitted": str(wo.permit_submitted_date),
+        "Notes": str(wo.title),
+        "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date),
+        "Permit Number": str(wo.permit_number),
+        "Date Permit Approved/Received": str(wo.permit_approved_date),
+        "Days from Initial Request to today": num(daysFromInitial),
+        "Days Est. Sent from Date Requested": num(daysEstSent),
+        "Days from Est. Sent to Date Order Created": num(daysEstToOrder),
+        "Days from Order Created to Permit Submitted": num(daysOrderToPermit),
+        "Days from Permit Submitted to Permit Approved": num(daysPermitToApproved),
+        "Days from Project Install Date from Order Created": num(daysOrderToInstall)
       };
     });
 
