@@ -14,14 +14,15 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'listFiles': {
-        // List files in a specific folder or root
+        // With drive.file scope, we can only list files we created or user granted access to
+        // Try to list files in the folder - this works for shared folders user has access to
         let query = "trashed=false";
         if (folderId) {
           query += ` and '${folderId}' in parents`;
         }
         
         const response = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink,thumbnailLink,iconLink)&orderBy=folder,name`,
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime,webViewLink,thumbnailLink,iconLink)&orderBy=folder,name&supportsAllDrives=true&includeItemsFromAllDrives=true`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -30,8 +31,15 @@ Deno.serve(async (req) => {
         );
         
         if (!response.ok) {
-          const error = await response.text();
-          return Response.json({ error: `Failed to list files: ${error}` }, { status: response.status });
+          const errorText = await response.text();
+          // If we get a 403, it might be scope limitation
+          if (response.status === 403) {
+            return Response.json({ 
+              files: [], 
+              notice: "Limited access: Can only see files created by this app. Use 'Open in Drive' to view all files." 
+            });
+          }
+          return Response.json({ error: `Failed to list files: ${errorText}` }, { status: response.status });
         }
         
         const data = await response.json();
