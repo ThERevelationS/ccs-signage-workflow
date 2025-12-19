@@ -18,8 +18,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { User } from "@/entities/User";
-import { UploadFile } from "@/integrations/Core";
-import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2 } from "lucide-react";
+import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
+import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 
