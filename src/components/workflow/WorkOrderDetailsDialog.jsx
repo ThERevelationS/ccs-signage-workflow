@@ -1215,12 +1215,36 @@ export default function WorkOrderDetailsDialog({
                   </PopoverContent>
                 </Popover>
 
-                {/* Google Drive - Same size as description */}
+                {/* Google Drive - Embedded File Browser */}
                 <div className="clay-card p-4">
-                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <FolderOpen className="w-4 h-4 text-green-600" />
-                    Google Drive
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <FolderOpen className="w-4 h-4 text-green-600" />
+                      Google Drive
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {workOrder.google_drive_folder_url && (
+                        <a
+                          href={workOrder.google_drive_folder_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Open in Drive
+                        </a>
+                      )}
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => startEdit('google_drive_folder_url')}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        {workOrder.google_drive_folder_url ? 'Edit' : 'Link Folder'}
+                      </Button>
+                    </div>
+                  </div>
                   {editingField === 'google_drive_folder_url' ? (
                     <div className="space-y-2">
                       <Input
@@ -1240,47 +1264,11 @@ export default function WorkOrderDetailsDialog({
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {workOrder.google_drive_folder_url ? (
-                        <>
-                          <Button
-                            onClick={() => setShowDriveBrowser(true)}
-                            className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity border-none"
-                            style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-                          >
-                            <FolderOpen className="w-4 h-4" />
-                            <span className="font-medium">Browse Files</span>
-                          </Button>
-                          <a
-                            href={workOrder.google_drive_folder_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 p-2 w-full text-xs text-blue-600 hover:underline"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Open in Google Drive
-                          </a>
-                        </>
-                      ) : (
-                        <Button
-                          onClick={() => setShowDriveBrowser(true)}
-                          className="clay-button flex items-center justify-center gap-2 p-3 w-full hover:opacity-80 transition-opacity border-none"
-                          style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-                        >
-                          <FolderOpen className="w-4 h-4" />
-                          <span className="font-medium">Browse Files</span>
-                        </Button>
-                      )}
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => startEdit('google_drive_folder_url')}
-                        className="w-full text-xs"
-                      >
-                        <Pencil className="w-3 h-3 mr-1" />
-                        {workOrder.google_drive_folder_url ? 'Edit Folder Link' : 'Link a Folder'}
-                      </Button>
-                    </div>
+                    <EmbeddedDriveFiles 
+                      folderUrl={workOrder.google_drive_folder_url}
+                      workOrderId={workOrder.id}
+                      onUpdate={onUpdate}
+                    />
                   )}
                 </div>
               </div>
