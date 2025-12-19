@@ -1,9 +1,9 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import { User } from "@/entities/User";
 import { UploadFile } from "@/integrations/Core";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -43,26 +44,100 @@ export default function WorkOrderForm({
   parentWorkOrder = null,
   lockedStage = null
 }) {
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [customName, setCustomName] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [showCompletedNotes, setShowCompletedNotes] = useState(false);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
+  const [newSubTaskText, setNewSubTaskText] = useState("");
+  const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
+  const [newFollowUpText, setNewFollowUpText] = useState("");
+  const [showCompletedFollowUp, setShowCompletedFollowUp] = useState(false);
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
   const [formData, setFormData] = useState({
+    // Basic work order fields
     title: "",
     client_name: "",
     description: "",
     image_url: "",
-    current_stage: "permitting",
+    current_stage: "estimating",
     assigned_to: "",
     notes: [],
     due_date: "",
     start_date: todayDate,
     is_rider: isRider,
     parent_work_order_id: parentWorkOrder?.id || null,
-    rider_stage: null
+    rider_stage: null,
+    
+    // Customer Information fields from PDF
+    designer: "",
+    surveyor: "",
+    site_survey_date: "",
+    site_survey_time: "",
+    site_survey_am_pm: "",
+    representative: "",
+    contact_phone: "",
+    contact_email: "",
+    install_location: "",
+    address_line_2: "",
+    billing_address: "",
+    billing_address_line_2: "",
+    additional_contact: "",
+    
+    // Permitting
+    permitting: "",
+    township_city: "",
+    county: "",
+    permit_code: "",
+    permit_class: "",
+    property_owner: "",
+    pud: "",
+    parcel_number: "",
+    electrical_ibi: false,
+    electrical_nkyei: false,
+    electrical_nec: false,
+    electrical_city: false,
+    electrical_county: false,
+    
+    // Customer type
+    customer_is_building_owner: false,
+    customer_is_tenant: false,
+    customer_is_marketing_co: false,
+    business_co_coo_reminder: false,
+    business_co_coo_date: "",
+    
+    // Service details
+    install_yes: false,
+    install_no: false,
+    budget_less_than: "",
+    removal_yes: false,
+    removal_no: false,
+    service_repair: "",
+    origination: "",
+    patch: "",
+    paint: "",
+    color: "",
+    
+    // Products
+    product_1: "",
+    product_2: "",
+    product_3: "",
+    product_4: "",
+    product_5: "",
+    product_6: "",
+    cb_complete: false,
+    cf_complete: false,
+    cc_complete: false,
+    sms_complete: false,
+    
+    // Follow up
+    follow_up: []
   });
 
   useEffect(() => {
@@ -78,21 +153,22 @@ export default function WorkOrderForm({
       }
       
       setFormData({
+        ...formData,
         ...workOrder,
         notes: notes,
+        follow_up: workOrder.follow_up || [],
         is_rider: workOrder.is_rider || isRider,
         parent_work_order_id: workOrder.parent_work_order_id || parentWorkOrder?.id || null,
         rider_stage: workOrder.rider_stage || null
       });
       
-      // Check if assigned_to is a custom name
       if (workOrder.assigned_to && !TEAM_MEMBERS.includes(workOrder.assigned_to)) {
         setShowCustomInput(true);
         setCustomName(workOrder.assigned_to);
       }
     } else if (isRider && parentWorkOrder) {
-      // For riders, only copy title, client_name, description, and image_url
       setFormData({
+        ...formData,
         title: parentWorkOrder.title,
         client_name: parentWorkOrder.client_name,
         description: parentWorkOrder.description,
@@ -100,6 +176,7 @@ export default function WorkOrderForm({
         current_stage: lockedStage || "permitting",
         assigned_to: "",
         notes: [],
+        follow_up: [],
         due_date: "",
         start_date: todayDate,
         is_rider: true,
@@ -107,17 +184,24 @@ export default function WorkOrderForm({
         rider_stage: lockedStage || "permitting"
       });
     }
-  }, [workOrder, isRider, parentWorkOrder, lockedStage, todayDate]);
+  }, [workOrder, isRider, parentWorkOrder, lockedStage]);
 
   const loadUsers = async () => {
     const usersList = await User.list();
     setUsers(usersList);
   };
 
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCheckboxChange = (field) => {
+    setFormData(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const result = await UploadFile({ file });
@@ -145,9 +229,120 @@ export default function WorkOrderForm({
     setFormData({ ...formData, assigned_to: value });
   };
 
+  // Notes functions
+  const handleAddNote = () => {
+    if (!newNoteText.trim()) return;
+    const newNote = {
+      text: newNoteText,
+      timestamp: new Date().toISOString(),
+      created_by: currentUser?.email || "Unknown",
+      completed: false,
+      sub_tasks: []
+    };
+    setFormData(prev => ({
+      ...prev,
+      notes: [...(prev.notes || []), newNote]
+    }));
+    setNewNoteText("");
+    setIsAddingNote(false);
+  };
+
+  const handleToggleNote = (index) => {
+    const updatedNotes = [...formData.notes];
+    updatedNotes[index] = {
+      ...updatedNotes[index],
+      completed: !updatedNotes[index].completed
+    };
+    setFormData(prev => ({ ...prev, notes: updatedNotes }));
+  };
+
+  const handleDeleteNote = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      notes: prev.notes.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddSubTask = (noteIndex) => {
+    if (!newSubTaskText.trim()) return;
+    const updatedNotes = formData.notes.map((note, idx) => {
+      if (idx === noteIndex) {
+        return {
+          ...note,
+          sub_tasks: [...(note.sub_tasks || []), { text: newSubTaskText, completed: false }]
+        };
+      }
+      return note;
+    });
+    setFormData(prev => ({ ...prev, notes: updatedNotes }));
+    setNewSubTaskText("");
+    setAddingSubTaskFor(null);
+  };
+
+  const handleToggleSubTask = (noteIndex, subTaskIndex) => {
+    const updatedNotes = formData.notes.map((note, idx) => {
+      if (idx === noteIndex) {
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return { ...st, completed: !st.completed };
+          }
+          return st;
+        });
+        return { ...note, sub_tasks: updatedSubTasks };
+      }
+      return note;
+    });
+    setFormData(prev => ({ ...prev, notes: updatedNotes }));
+  };
+
+  const handleDeleteSubTask = (noteIndex, subTaskIndex) => {
+    const updatedNotes = formData.notes.map((note, idx) => {
+      if (idx === noteIndex) {
+        return {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
+        };
+      }
+      return note;
+    });
+    setFormData(prev => ({ ...prev, notes: updatedNotes }));
+  };
+
+  // Follow Up functions
+  const handleAddFollowUp = () => {
+    if (!newFollowUpText.trim()) return;
+    const newItem = {
+      text: newFollowUpText,
+      timestamp: new Date().toISOString(),
+      created_by: currentUser?.email || "Unknown",
+      completed: false
+    };
+    setFormData(prev => ({
+      ...prev,
+      follow_up: [...(prev.follow_up || []), newItem]
+    }));
+    setNewFollowUpText("");
+    setIsAddingFollowUp(false);
+  };
+
+  const handleToggleFollowUp = (index) => {
+    const updated = [...formData.follow_up];
+    updated[index] = {
+      ...updated[index],
+      completed: !updated[index].completed
+    };
+    setFormData(prev => ({ ...prev, follow_up: updated }));
+  };
+
+  const handleDeleteFollowUp = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      follow_up: prev.follow_up.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // For riders, set rider_stage to current_stage
     const submitData = isRider && !workOrder 
       ? { ...formData, rider_stage: formData.current_stage }
       : formData;
@@ -155,9 +350,14 @@ export default function WorkOrderForm({
     onClose();
   };
 
+  const activeNotes = (formData.notes || []).filter(n => !n.completed);
+  const completedNotes = (formData.notes || []).filter(n => n.completed);
+  const activeFollowUp = (formData.follow_up || []).filter(f => !f.completed);
+  const completedFollowUp = (formData.follow_up || []).filter(f => f.completed);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent role="dialog" className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent role="dialog" className="clay-card border-none max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-gray-800">
             {workOrder ? "Edit" : "Create"} {isRider ? "Rider Task" : "Work Order"}
@@ -165,88 +365,486 @@ export default function WorkOrderForm({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {/* Image Upload */}
-          <div>
-            <Label className="text-gray-700 font-medium">Image</Label>
-            <div className="mt-1 flex gap-3">
-              {formData.image_url && (
-                <div className="relative">
-                  <img 
-                    src={formData.image_url} 
-                    alt="Preview" 
-                    className="w-24 h-24 object-cover rounded-xl"
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="destructive"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                    onClick={() => setFormData({ ...formData, image_url: "" })}
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
-              <label className="flex-1">
-                <div className="clay-button border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-gray-400 transition-colors">
-                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    {uploading ? "Uploading..." : "Click to upload image"}
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
+          {/* Header Section - Designer/Surveyor */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <div>
+                <Label className="font-semibold">Designer</Label>
+                <Select value={formData.designer} onValueChange={(v) => handleChange("designer", v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select designer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEAM_MEMBERS.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="font-semibold">Initial Contact Date</Label>
+                <Input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => handleChange("start_date", e.target.value)}
+                  className="mt-1"
                 />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label className="font-semibold">Surveyor</Label>
+                <Select value={formData.surveyor} onValueChange={(v) => handleChange("surveyor", v)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select surveyor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEAM_MEMBERS.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="font-semibold text-xs">Site Survey Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.site_survey_date}
+                    onChange={(e) => handleChange("site_survey_date", e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="font-semibold text-xs">Time</Label>
+                  <Input
+                    type="time"
+                    value={formData.site_survey_time}
+                    onChange={(e) => handleChange("site_survey_time", e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="font-semibold text-xs">AM/PM</Label>
+                  <Select value={formData.site_survey_am_pm} onValueChange={(v) => handleChange("site_survey_am_pm", v)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="--" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Information Section */}
+          <div className="clay-card p-4">
+            <h3 className="font-bold text-lg mb-3 border-b pb-2">Customer Information</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Customer *</Label>
+                <Input
+                  value={formData.client_name}
+                  onChange={(e) => handleChange("client_name", e.target.value)}
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Representative</Label>
+                <Input
+                  value={formData.representative}
+                  onChange={(e) => handleChange("representative", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Address</Label>
+                <Input
+                  value={formData.install_location}
+                  onChange={(e) => handleChange("install_location", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Contact Phone</Label>
+                <Input
+                  value={formData.contact_phone}
+                  onChange={(e) => handleChange("contact_phone", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Input
+                  value={formData.address_line_2}
+                  onChange={(e) => handleChange("address_line_2", e.target.value)}
+                  placeholder="Address Line 2"
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.contact_email}
+                  onChange={(e) => handleChange("contact_email", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Billing Address</Label>
+                <Input
+                  value={formData.billing_address}
+                  onChange={(e) => handleChange("billing_address", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Add'l Contact</Label>
+                <Input
+                  value={formData.additional_contact}
+                  onChange={(e) => handleChange("additional_contact", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Input
+                  value={formData.billing_address_line_2}
+                  onChange={(e) => handleChange("billing_address_line_2", e.target.value)}
+                  placeholder="Billing Address Line 2"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Permitting Section */}
+          <div className="clay-card p-4">
+            <h3 className="font-bold text-lg mb-3 border-b pb-2">Permitting & Location</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 flex-wrap">
+                <Label className="font-semibold">Permitting:</Label>
+                <div className="flex items-center gap-4">
+                  {["yes", "no", "maybe", "na"].map(opt => (
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={formData.permitting === opt}
+                        onCheckedChange={() => handleChange("permitting", opt)}
+                      />
+                      <span className="capitalize text-sm">{opt === "na" ? "N/A" : opt}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 ml-4">
+                  <Label className="text-sm">Twp / City:</Label>
+                  <Input
+                    value={formData.township_city}
+                    onChange={(e) => handleChange("township_city", e.target.value)}
+                    className="w-32 h-8"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Cty:</Label>
+                  <Input
+                    value={formData.county}
+                    onChange={(e) => handleChange("county", e.target.value)}
+                    className="w-32 h-8"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-sm">Code</Label>
+                  <Input
+                    value={formData.permit_code}
+                    onChange={(e) => handleChange("permit_code", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Class</Label>
+                  <Input
+                    value={formData.permit_class}
+                    onChange={(e) => handleChange("permit_class", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-sm">Owner</Label>
+                  <Input
+                    value={formData.property_owner}
+                    onChange={(e) => handleChange("property_owner", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-sm">PUD</Label>
+                  <Input
+                    value={formData.pud}
+                    onChange={(e) => handleChange("pud", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Parcel #</Label>
+                  <Input
+                    value={formData.parcel_number}
+                    onChange={(e) => handleChange("parcel_number", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm mb-1 block">Electrical</Label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox checked={formData.electrical_ibi} onCheckedChange={() => handleCheckboxChange("electrical_ibi")} />
+                      <span className="text-xs">IBI</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox checked={formData.electrical_nkyei} onCheckedChange={() => handleCheckboxChange("electrical_nkyei")} />
+                      <span className="text-xs">NKYEI</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox checked={formData.electrical_nec} onCheckedChange={() => handleCheckboxChange("electrical_nec")} />
+                      <span className="text-xs">NEC</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox checked={formData.electrical_city} onCheckedChange={() => handleCheckboxChange("electrical_city")} />
+                      <span className="text-xs">City</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox checked={formData.electrical_county} onCheckedChange={() => handleCheckboxChange("electrical_county")} />
+                      <span className="text-xs">County</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Label className="font-semibold text-sm">Customer is:</Label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.customer_is_building_owner} onCheckedChange={() => handleCheckboxChange("customer_is_building_owner")} />
+                    <span className="text-xs">Building Owner</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.customer_is_tenant} onCheckedChange={() => handleCheckboxChange("customer_is_tenant")} />
+                    <span className="text-xs">Tenant</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.customer_is_marketing_co} onCheckedChange={() => handleCheckboxChange("customer_is_marketing_co")} />
+                    <span className="text-xs">Marketing Co.</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.business_co_coo_reminder} onCheckedChange={() => handleCheckboxChange("business_co_coo_reminder")} />
+                    <span className="text-xs">Business CO or COO Reminder</span>
+                  </label>
+                  <Input
+                    value={formData.business_co_coo_date}
+                    onChange={(e) => handleChange("business_co_coo_date", e.target.value)}
+                    placeholder="Date"
+                    className="w-28 h-7 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Install/Removal/Service Section */}
+          <div className="clay-card p-4">
+            <h3 className="font-bold text-lg mb-3 border-b pb-2">Service Details</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Label className="font-semibold w-16 text-sm">Install:</Label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.install_yes} onCheckedChange={() => handleCheckboxChange("install_yes")} />
+                    <span className="text-xs">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.install_no} onCheckedChange={() => handleCheckboxChange("install_no")} />
+                    <span className="text-xs">No</span>
+                  </label>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Label className="text-xs">Due Date:</Label>
+                    <Input
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => handleChange("due_date", e.target.value)}
+                      className="w-36 h-7"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label className="font-semibold w-16 text-sm">Removal:</Label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.removal_yes} onCheckedChange={() => handleCheckboxChange("removal_yes")} />
+                    <span className="text-xs">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <Checkbox checked={formData.removal_no} onCheckedChange={() => handleCheckboxChange("removal_no")} />
+                    <span className="text-xs">No</span>
+                  </label>
+                </div>
+                <div>
+                  <Label className="text-sm">Service / Repair</Label>
+                  <Input
+                    value={formData.service_repair}
+                    onChange={(e) => handleChange("service_repair", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Patch</Label>
+                    <Input
+                      value={formData.patch}
+                      onChange={(e) => handleChange("patch", e.target.value)}
+                      className="mt-1 h-7"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Paint</Label>
+                    <Input
+                      value={formData.paint}
+                      onChange={(e) => handleChange("paint", e.target.value)}
+                      className="mt-1 h-7"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Color</Label>
+                    <Input
+                      value={formData.color}
+                      onChange={(e) => handleChange("color", e.target.value)}
+                      className="mt-1 h-7"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm">Budget - Less than $</Label>
+                  <Input
+                    type="number"
+                    value={formData.budget_less_than}
+                    onChange={(e) => handleChange("budget_less_than", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Origination</Label>
+                  <Input
+                    value={formData.origination}
+                    onChange={(e) => handleChange("origination", e.target.value)}
+                    className="mt-1 h-8"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Section */}
+          <div className="clay-card p-4">
+            <h3 className="font-bold text-lg mb-3 border-b pb-2">Products</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">#1</Label>
+                <Input value={formData.product_1} onChange={(e) => handleChange("product_1", e.target.value)} className="mt-1 h-8" />
+              </div>
+              <div>
+                <Label className="text-sm">#4</Label>
+                <Input value={formData.product_4} onChange={(e) => handleChange("product_4", e.target.value)} className="mt-1 h-8" />
+              </div>
+              <div>
+                <Label className="text-sm">#2</Label>
+                <Input value={formData.product_2} onChange={(e) => handleChange("product_2", e.target.value)} className="mt-1 h-8" />
+              </div>
+              <div>
+                <Label className="text-sm">#5</Label>
+                <Input value={formData.product_5} onChange={(e) => handleChange("product_5", e.target.value)} className="mt-1 h-8" />
+              </div>
+              <div>
+                <Label className="text-sm">#3</Label>
+                <Input value={formData.product_3} onChange={(e) => handleChange("product_3", e.target.value)} className="mt-1 h-8" />
+              </div>
+              <div>
+                <Label className="text-sm">#6</Label>
+                <Input value={formData.product_6} onChange={(e) => handleChange("product_6", e.target.value)} className="mt-1 h-8" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-4">
+              <span className="font-semibold text-sm">Complete:</span>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox checked={formData.cb_complete} onCheckedChange={() => handleCheckboxChange("cb_complete")} />
+                <span className="text-xs">CB</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox checked={formData.cf_complete} onCheckedChange={() => handleCheckboxChange("cf_complete")} />
+                <span className="text-xs">CF</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox checked={formData.cc_complete} onCheckedChange={() => handleCheckboxChange("cc_complete")} />
+                <span className="text-xs">CC</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox checked={formData.sms_complete} onCheckedChange={() => handleCheckboxChange("sms_complete")} />
+                <span className="text-xs">SMS</span>
               </label>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Image & Description Row */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-gray-700 font-medium">Title *</Label>
+              <Label className="text-gray-700 font-medium">Image</Label>
+              <div className="mt-1 flex gap-2">
+                {formData.image_url && (
+                  <div className="relative">
+                    <img src={formData.image_url} alt="Preview" className="w-20 h-20 object-cover rounded-lg" />
+                    <Button type="button" size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setFormData({ ...formData, image_url: "" })}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+                <label className="flex-1">
+                  <div className="clay-button border-2 border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                    <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
+                    <p className="text-xs text-gray-600">{uploading ? "..." : "Upload"}</p>
+                  </div>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                </label>
+              </div>
+            </div>
+            <div className="col-span-2">
+              <Label className="text-gray-700 font-medium">Title / Description *</Label>
               <Input
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => handleChange("title", e.target.value)}
+                placeholder="Work order title"
                 required
-                className="clay-button border-none mt-1"
+                className="mt-1 mb-2"
               />
-            </div>
-            
-            <div>
-              <Label className="text-gray-700 font-medium">Client Name *</Label>
-              <Input
-                value={formData.client_name}
-                onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                required
-                className="clay-button border-none mt-1"
+              <Textarea
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                placeholder="Description"
+                className="min-h-16"
               />
             </div>
           </div>
 
-          <div>
-            <Label className="text-gray-700 font-medium">Description *</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              required
-              className="clay-button border-none mt-1 min-h-20"
-            />
-          </div>
-
+          {/* Stage and Assignment */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-gray-700 font-medium">
-                {isRider && !workOrder ? "Select Stage for Rider" : "Current Stage"}
-              </Label>
-              <Select
-                value={formData.current_stage}
-                onValueChange={(value) => setFormData({...formData, current_stage: value})}
-                disabled={isRider && workOrder}
-              >
+              <Label className="text-gray-700 font-medium">{isRider && !workOrder ? "Select Stage for Rider" : "Current Stage"}</Label>
+              <Select value={formData.current_stage} onValueChange={(value) => handleChange("current_stage", value)} disabled={isRider && workOrder}>
                 <SelectTrigger className="clay-button border-none mt-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -260,49 +858,24 @@ export default function WorkOrderForm({
                   <SelectItem value="installation">Installation/Delivery</SelectItem>
                 </SelectContent>
               </Select>
-              {isRider && !workOrder && (
-                <p className="text-xs text-gray-500 mt-1">Rider will stay in this stage</p>
-              )}
             </div>
-
             <div>
-              <Label className="text-gray-700 font-medium">Assign To *</Label>
+              <Label className="text-gray-700 font-medium">Assign To</Label>
               {showCustomInput ? (
                 <div className="flex gap-2 mt-1">
-                  <Input
-                    value={customName}
-                    onChange={handleCustomNameChange}
-                    placeholder="Enter name"
-                    required
-                    className="clay-button border-none flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowCustomInput(false);
-                      setCustomName("");
-                      setFormData({ ...formData, assigned_to: "" });
-                    }}
-                    className="clay-button border-none"
-                  >
+                  <Input value={customName} onChange={handleCustomNameChange} placeholder="Enter name" className="clay-button border-none flex-1" />
+                  <Button type="button" variant="outline" onClick={() => { setShowCustomInput(false); setCustomName(""); setFormData({ ...formData, assigned_to: "" }); }} className="clay-button border-none">
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
               ) : (
-                <Select
-                  value={formData.assigned_to}
-                  onValueChange={handleAssignToChange}
-                  required
-                >
+                <Select value={formData.assigned_to} onValueChange={handleAssignToChange}>
                   <SelectTrigger className="clay-button border-none mt-1">
                     <SelectValue placeholder="Select person" />
                   </SelectTrigger>
                   <SelectContent className="clay-card border-none">
                     {TEAM_MEMBERS.map((name) => (
-                      <SelectItem key={name} value={name}>
-                        {name}
-                      </SelectItem>
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
                     ))}
                     <SelectItem value="custom">+ Add Custom Name</SelectItem>
                   </SelectContent>
@@ -311,45 +884,176 @@ export default function WorkOrderForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-gray-700 font-medium">Start Date</Label>
-              <Input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({...formData, start_date: e.target.value})}
-                className="clay-button border-none mt-1"
-              />
+          {/* Notes Section */}
+          <div className="clay-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-lg">Notes</h3>
+              <div className="flex items-center gap-2">
+                {completedNotes.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setShowCompletedNotes(!showCompletedNotes)} className="h-6 px-2 text-xs">
+                    {showCompletedNotes ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                    ({completedNotes.length})
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setIsAddingNote(true)} className="h-6 px-2 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />Add
+                </Button>
+              </div>
             </div>
-            
-            <div>
-              <Label className="text-gray-700 font-medium">Due Date *</Label>
-              <Input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                required
-                className="clay-button border-none mt-1"
-              />
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {isAddingNote && (
+                <div className="p-2 bg-blue-50 rounded-lg space-y-2">
+                  <Input value={newNoteText} onChange={(e) => setNewNoteText(e.target.value)} placeholder="Enter note..." className="text-sm h-8" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddNote(); if (e.key === 'Escape') { setIsAddingNote(false); setNewNoteText(""); } }} />
+                  <div className="flex gap-1">
+                    <Button size="sm" type="button" onClick={handleAddNote} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800"><Check className="w-3 h-3 mr-1" />Save</Button>
+                    <Button size="sm" type="button" variant="ghost" onClick={() => { setIsAddingNote(false); setNewNoteText(""); }} className="h-6 px-2 text-xs"><X className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              )}
+
+              {activeNotes.map((note, idx) => {
+                const actualIndex = formData.notes.findIndex(n => n === note);
+                return (
+                  <div key={idx} className="bg-white/50 rounded-lg">
+                    <div className="p-2 flex items-start gap-2">
+                      <Button variant="ghost" size="icon" type="button" onClick={() => handleToggleNote(actualIndex)} className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-green-100 p-0">
+                        <Circle className="w-3 h-3 text-gray-400" />
+                      </Button>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-700">{note.text}</p>
+                        <p className="text-xs text-gray-400 mt-1">{format(new Date(note.timestamp), "MMM d, h:mm a")}</p>
+                        {note.sub_tasks && note.sub_tasks.length > 0 && (
+                          <div className="ml-4 mt-2 space-y-1">
+                            {note.sub_tasks.map((subTask, subIdx) => (
+                              <div key={subIdx} className="flex items-center gap-2 text-xs">
+                                <Checkbox checked={subTask.completed} onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)} className="h-3 w-3" />
+                                <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
+                                <Button variant="ghost" size="icon" type="button" onClick={() => handleDeleteSubTask(actualIndex, subIdx)} className="h-4 w-4 ml-auto p-0">
+                                  <X className="w-2 h-2 text-red-500" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {addingSubTaskFor === actualIndex ? (
+                          <div className="ml-4 mt-2 flex gap-1">
+                            <Input value={newSubTaskText} onChange={(e) => setNewSubTaskText(e.target.value)} placeholder="Sub-task..." className="h-6 text-xs" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubTask(actualIndex); if (e.key === 'Escape') { setAddingSubTaskFor(null); setNewSubTaskText(""); } }} />
+                            <Button size="sm" type="button" onClick={() => handleAddSubTask(actualIndex)} className="h-6 px-2"><Check className="w-3 h-3" /></Button>
+                            <Button size="sm" type="button" variant="ghost" onClick={() => { setAddingSubTaskFor(null); setNewSubTaskText(""); }} className="h-6 px-2"><X className="w-3 h-3" /></Button>
+                          </div>
+                        ) : (
+                          <Button variant="ghost" size="sm" type="button" onClick={() => setAddingSubTaskFor(actualIndex)} className="h-5 px-2 text-xs ml-4 mt-1">
+                            <Plus className="w-2 h-2 mr-1" />Sub-task
+                          </Button>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="icon" type="button" onClick={() => handleDeleteNote(actualIndex)} className="h-6 w-6 flex-shrink-0">
+                        <Trash2 className="w-3 h-3 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {showCompletedNotes && completedNotes.map((note, idx) => {
+                const actualIndex = formData.notes.findIndex(n => n === note);
+                return (
+                  <div key={idx} className="p-2 bg-gray-100/50 rounded-lg opacity-60 flex items-start gap-2">
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleToggleNote(actualIndex)} className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-gray-200 p-0">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                    </Button>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 line-through">{note.text}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleDeleteNote(actualIndex)} className="h-6 w-6 flex-shrink-0">
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {activeNotes.length === 0 && !isAddingNote && (
+                <p className="text-xs text-gray-400 text-center py-2">No notes yet</p>
+              )}
             </div>
           </div>
 
+          {/* Follow Up Section */}
+          <div className="clay-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-lg">Follow Up</h3>
+              <div className="flex items-center gap-2">
+                {completedFollowUp.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setShowCompletedFollowUp(!showCompletedFollowUp)} className="h-6 px-2 text-xs">
+                    {showCompletedFollowUp ? <EyeOff className="w-3 h-3 mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                    ({completedFollowUp.length})
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setIsAddingFollowUp(true)} className="h-6 px-2 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />Add
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {isAddingFollowUp && (
+                <div className="p-2 bg-blue-50 rounded-lg space-y-2">
+                  <Input value={newFollowUpText} onChange={(e) => setNewFollowUpText(e.target.value)} placeholder="Enter follow up..." className="text-sm h-8" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddFollowUp(); if (e.key === 'Escape') { setIsAddingFollowUp(false); setNewFollowUpText(""); } }} />
+                  <div className="flex gap-1">
+                    <Button size="sm" type="button" onClick={handleAddFollowUp} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800"><Check className="w-3 h-3 mr-1" />Save</Button>
+                    <Button size="sm" type="button" variant="ghost" onClick={() => { setIsAddingFollowUp(false); setNewFollowUpText(""); }} className="h-6 px-2 text-xs"><X className="w-3 h-3" /></Button>
+                  </div>
+                </div>
+              )}
+
+              {activeFollowUp.map((item, idx) => {
+                const actualIndex = formData.follow_up.findIndex(f => f === item);
+                return (
+                  <div key={idx} className="p-2 bg-white/50 rounded-lg flex items-start gap-2">
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleToggleFollowUp(actualIndex)} className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-green-100 p-0">
+                      <Circle className="w-3 h-3 text-gray-400" />
+                    </Button>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-700">{item.text}</p>
+                      <p className="text-xs text-gray-400 mt-1">{format(new Date(item.timestamp), "MMM d, h:mm a")}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleDeleteFollowUp(actualIndex)} className="h-6 w-6 flex-shrink-0">
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {showCompletedFollowUp && completedFollowUp.map((item, idx) => {
+                const actualIndex = formData.follow_up.findIndex(f => f === item);
+                return (
+                  <div key={idx} className="p-2 bg-gray-100/50 rounded-lg opacity-60 flex items-start gap-2">
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleToggleFollowUp(actualIndex)} className="h-4 w-4 rounded-full flex-shrink-0 hover:bg-gray-200 p-0">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                    </Button>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 line-through">{item.text}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => handleDeleteFollowUp(actualIndex)} className="h-6 w-6 flex-shrink-0">
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {activeFollowUp.length === 0 && !isAddingFollowUp && (
+                <p className="text-xs text-gray-400 text-center py-2">No follow up items yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="clay-button border-none"
-            >
+            <Button type="button" variant="outline" onClick={onClose} className="clay-button border-none">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="clay-button border-none text-gray-800"
-              style={{
-                background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)'
-              }}
-            >
+            <Button type="submit" className="clay-button border-none text-gray-800" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
               {workOrder ? "Update" : "Create"} {isRider ? "Rider" : "Work Order"}
             </Button>
           </div>
