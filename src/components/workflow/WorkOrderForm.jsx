@@ -517,9 +517,36 @@ export default function WorkOrderForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent role="dialog" className="clay-card border-none max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-800">
-            {workOrder ? "Edit" : "Create"} {isRider ? "Rider Task" : "Work Order"}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold text-gray-800">
+              {workOrder ? "Edit" : "Create"} {isRider ? "Rider Task" : "Work Order"}
+            </DialogTitle>
+            {!workOrder && !isRider && (
+              <label className="cursor-pointer">
+                <div className={`clay-button flex items-center gap-2 px-4 py-2 text-sm font-medium ${scanningForm ? 'opacity-50' : 'hover:opacity-80'}`}
+                  style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
+                  {scanningForm ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <FileSearch className="w-4 h-4" />
+                      Import from Scan
+                    </>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleScanForm}
+                  className="hidden"
+                  disabled={scanningForm}
+                />
+              </label>
+            )}
+          </div>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
