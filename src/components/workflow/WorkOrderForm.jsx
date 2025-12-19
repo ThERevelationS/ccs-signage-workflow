@@ -342,6 +342,163 @@ export default function WorkOrderForm({
     }));
   };
 
+  // AI Form Scanner
+  const handleScanForm = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setScanningForm(true);
+    try {
+      // Upload the file first
+      const uploadResult = await UploadFile({ file });
+      
+      // Extract data using AI
+      const extractResult = await ExtractDataFromUploadedFile({
+        file_url: uploadResult.file_url,
+        json_schema: {
+          type: "object",
+          properties: {
+            designer: { type: "string", description: "Designer name" },
+            surveyor: { type: "string", description: "Surveyor name" },
+            initial_contact_date: { type: "string", description: "Initial contact date in YYYY-MM-DD format" },
+            site_survey_date: { type: "string", description: "Site survey date in YYYY-MM-DD format" },
+            site_survey_time: { type: "string", description: "Site survey time" },
+            site_survey_am_pm: { type: "string", enum: ["AM", "PM"], description: "AM or PM" },
+            customer_name: { type: "string", description: "Customer name" },
+            representative: { type: "string", description: "Customer representative" },
+            address: { type: "string", description: "Customer address" },
+            contact_phone: { type: "string", description: "Contact phone number" },
+            email: { type: "string", description: "Customer email" },
+            billing_address: { type: "string", description: "Billing address" },
+            additional_contact: { type: "string", description: "Additional contact person" },
+            permitting: { type: "string", enum: ["yes", "no", "maybe", "na"], description: "Permitting required - yes, no, maybe, or na" },
+            township_city: { type: "string", description: "Township or City" },
+            county: { type: "string", description: "County" },
+            permit_code: { type: "string", description: "Permit code" },
+            permit_class: { type: "string", description: "Permit class" },
+            property_owner: { type: "string", description: "Property owner name" },
+            pud: { type: "string", description: "PUD" },
+            parcel_number: { type: "string", description: "Parcel number" },
+            electrical_ibi: { type: "boolean", description: "IBI electrical checkbox" },
+            electrical_nkyei: { type: "boolean", description: "NKYEI electrical checkbox" },
+            electrical_nec: { type: "boolean", description: "NEC electrical checkbox" },
+            electrical_city: { type: "boolean", description: "City electrical checkbox" },
+            electrical_county: { type: "boolean", description: "County electrical checkbox" },
+            customer_is_building_owner: { type: "boolean", description: "Customer is building owner checkbox" },
+            customer_is_tenant: { type: "boolean", description: "Customer is tenant checkbox" },
+            customer_is_marketing_co: { type: "boolean", description: "Customer is marketing company checkbox" },
+            business_co_coo_reminder: { type: "boolean", description: "Business CO or COO reminder checkbox" },
+            business_co_coo_date: { type: "string", description: "CO/COO reminder date" },
+            install_yes: { type: "boolean", description: "Install yes checkbox" },
+            install_no: { type: "boolean", description: "Install no checkbox" },
+            install_due_date: { type: "string", description: "Install due date in YYYY-MM-DD format" },
+            budget_less_than: { type: "number", description: "Budget less than amount" },
+            removal_yes: { type: "boolean", description: "Removal yes checkbox" },
+            removal_no: { type: "boolean", description: "Removal no checkbox" },
+            service_repair: { type: "string", description: "Service/Repair description" },
+            origination: { type: "string", description: "Lead origination source" },
+            patch: { type: "string", description: "Patch details" },
+            paint: { type: "string", description: "Paint details" },
+            color: { type: "string", description: "Color specification" },
+            product_1: { type: "string", description: "Product #1" },
+            product_2: { type: "string", description: "Product #2" },
+            product_3: { type: "string", description: "Product #3" },
+            product_4: { type: "string", description: "Product #4" },
+            product_5: { type: "string", description: "Product #5" },
+            product_6: { type: "string", description: "Product #6" },
+            cb_complete: { type: "boolean", description: "CB complete checkbox" },
+            cf_complete: { type: "boolean", description: "CF complete checkbox" },
+            cc_complete: { type: "boolean", description: "CC complete checkbox" },
+            sms_complete: { type: "boolean", description: "SMS complete checkbox" },
+            notes_text: { type: "string", description: "All text from the Notes section" },
+            follow_up_text: { type: "string", description: "All text from the Follow Up section" }
+          }
+        }
+      });
+
+      if (extractResult.status === "success" && extractResult.output) {
+        const data = extractResult.output;
+        
+        // Map extracted data to form fields
+        setFormData(prev => ({
+          ...prev,
+          designer: data.designer || prev.designer,
+          surveyor: data.surveyor || prev.surveyor,
+          start_date: data.initial_contact_date || prev.start_date,
+          site_survey_date: data.site_survey_date || prev.site_survey_date,
+          site_survey_time: data.site_survey_time || prev.site_survey_time,
+          site_survey_am_pm: data.site_survey_am_pm || prev.site_survey_am_pm,
+          client_name: data.customer_name || prev.client_name,
+          representative: data.representative || prev.representative,
+          install_location: data.address || prev.install_location,
+          contact_phone: data.contact_phone || prev.contact_phone,
+          contact_email: data.email || prev.contact_email,
+          billing_address: data.billing_address || prev.billing_address,
+          additional_contact: data.additional_contact || prev.additional_contact,
+          permitting: data.permitting || prev.permitting,
+          township_city: data.township_city || prev.township_city,
+          county: data.county || prev.county,
+          permit_code: data.permit_code || prev.permit_code,
+          permit_class: data.permit_class || prev.permit_class,
+          property_owner: data.property_owner || prev.property_owner,
+          pud: data.pud || prev.pud,
+          parcel_number: data.parcel_number || prev.parcel_number,
+          electrical_ibi: data.electrical_ibi ?? prev.electrical_ibi,
+          electrical_nkyei: data.electrical_nkyei ?? prev.electrical_nkyei,
+          electrical_nec: data.electrical_nec ?? prev.electrical_nec,
+          electrical_city: data.electrical_city ?? prev.electrical_city,
+          electrical_county: data.electrical_county ?? prev.electrical_county,
+          customer_is_building_owner: data.customer_is_building_owner ?? prev.customer_is_building_owner,
+          customer_is_tenant: data.customer_is_tenant ?? prev.customer_is_tenant,
+          customer_is_marketing_co: data.customer_is_marketing_co ?? prev.customer_is_marketing_co,
+          business_co_coo_reminder: data.business_co_coo_reminder ?? prev.business_co_coo_reminder,
+          business_co_coo_date: data.business_co_coo_date || prev.business_co_coo_date,
+          install_yes: data.install_yes ?? prev.install_yes,
+          install_no: data.install_no ?? prev.install_no,
+          due_date: data.install_due_date || prev.due_date,
+          budget_less_than: data.budget_less_than || prev.budget_less_than,
+          removal_yes: data.removal_yes ?? prev.removal_yes,
+          removal_no: data.removal_no ?? prev.removal_no,
+          service_repair: data.service_repair || prev.service_repair,
+          origination: data.origination || prev.origination,
+          patch: data.patch || prev.patch,
+          paint: data.paint || prev.paint,
+          color: data.color || prev.color,
+          product_1: data.product_1 || prev.product_1,
+          product_2: data.product_2 || prev.product_2,
+          product_3: data.product_3 || prev.product_3,
+          product_4: data.product_4 || prev.product_4,
+          product_5: data.product_5 || prev.product_5,
+          product_6: data.product_6 || prev.product_6,
+          cb_complete: data.cb_complete ?? prev.cb_complete,
+          cf_complete: data.cf_complete ?? prev.cf_complete,
+          cc_complete: data.cc_complete ?? prev.cc_complete,
+          sms_complete: data.sms_complete ?? prev.sms_complete,
+          title: data.customer_name ? `${data.customer_name} - Work Order` : prev.title,
+          notes: data.notes_text ? [...prev.notes, {
+            text: data.notes_text,
+            timestamp: new Date().toISOString(),
+            created_by: currentUser?.email || "AI Import",
+            completed: false,
+            sub_tasks: []
+          }] : prev.notes,
+          follow_up: data.follow_up_text ? [...prev.follow_up, {
+            text: data.follow_up_text,
+            timestamp: new Date().toISOString(),
+            created_by: currentUser?.email || "AI Import",
+            completed: false
+          }] : prev.follow_up
+        }));
+      } else {
+        alert("Could not extract data from the form. Please try with a clearer scan.");
+      }
+    } catch (error) {
+      console.error("Error scanning form:", error);
+      alert("Error scanning form: " + error.message);
+    }
+    setScanningForm(false);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const submitData = isRider && !workOrder 
