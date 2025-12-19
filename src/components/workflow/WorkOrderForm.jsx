@@ -57,6 +57,7 @@ export default function WorkOrderForm({
   const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
   const [newFollowUpText, setNewFollowUpText] = useState("");
   const [showCompletedFollowUp, setShowCompletedFollowUp] = useState(false);
+  const [scanningForm, setScanningForm] = useState(false);
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
