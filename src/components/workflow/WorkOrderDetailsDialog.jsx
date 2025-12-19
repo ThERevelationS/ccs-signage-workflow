@@ -1443,6 +1443,22 @@ export default function WorkOrderDetailsDialog({
           if (onUpdate) onUpdate();
         }}
       />
+
+      {/* Google Drive File Browser */}
+      <GoogleDriveFileBrowser
+        isOpen={showDriveBrowser}
+        onClose={() => setShowDriveBrowser(false)}
+        folderUrl={workOrder.google_drive_folder_url}
+        workOrderTitle={workOrder.title}
+        onFileIdsUpdate={async (fileId) => {
+          const currentIds = workOrder.google_drive_file_ids || [];
+          if (!currentIds.includes(fileId)) {
+            await WorkOrder.update(workOrder.id, {
+              google_drive_file_ids: [...currentIds, fileId]
+            });
+          }
+        }}
+      />
     </>);
 
 }
