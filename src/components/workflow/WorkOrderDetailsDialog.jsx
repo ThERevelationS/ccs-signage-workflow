@@ -58,6 +58,7 @@ import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
+import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
 
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
@@ -123,6 +124,7 @@ export default function WorkOrderDetailsDialog({
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
+  const [showDriveBrowser, setShowDriveBrowser] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
