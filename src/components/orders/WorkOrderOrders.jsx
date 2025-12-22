@@ -296,18 +296,17 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Needed */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Popover modal={true}>
+                  <Popover>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                         {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={5} style={{ zIndex: 99999 }}>
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_needed)}
                         onSelect={(date) => updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "")}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -315,13 +314,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Ordered */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Popover modal={true}>
+                  <Popover>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                         {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={5} style={{ zIndex: 99999 }}>
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_ordered)}
@@ -329,7 +328,6 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
                           if (date) updateOrder(order.id, "status", "ordered");
                         }}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -345,7 +343,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-1">
                       <SelectValue placeholder="-" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 99999 }}>
                       {VENDORS.map(v => (
                         <SelectItem key={v} value={v}>{v}</SelectItem>
                       ))}
@@ -355,13 +353,13 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Received */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Popover modal={true}>
+                  <Popover>
                     <PopoverTrigger asChild disabled={!isRegistered}>
                       <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                         {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={5} style={{ zIndex: 99999 }}>
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_received)}
@@ -369,7 +367,6 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
                           if (date) updateOrder(order.id, "status", "received");
                         }}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
