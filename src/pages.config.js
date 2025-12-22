@@ -1,35 +1,37 @@
-import Permitting from './pages/Permitting';
+import AdminSettings from './pages/AdminSettings';
+import CompletedJobs from './pages/CompletedJobs';
+import CompletedReports from './pages/CompletedReports';
 import Design from './pages/Design';
-import Production from './pages/Production';
+import Estimating from './pages/Estimating';
 import Fabrication from './pages/Fabrication';
+import FeatureReports from './pages/FeatureReports';
+import Home from './pages/Home';
 import InstallationDeliver from './pages/InstallationDeliver';
 import MainWorkflow from './pages/MainWorkflow';
-import CompletedJobs from './pages/CompletedJobs';
-import AdminSettings from './pages/AdminSettings';
-import FeatureReports from './pages/FeatureReports';
-import CompletedReports from './pages/CompletedReports';
 import OrderForm from './pages/OrderForm';
-import SalesPipeline from './pages/SalesPipeline';
+import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import Estimating from './pages/Estimating';
+import Production from './pages/Production';
+import SalesPipeline from './pages/SalesPipeline';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Permitting": Permitting,
+    "AdminSettings": AdminSettings,
+    "CompletedJobs": CompletedJobs,
+    "CompletedReports": CompletedReports,
     "Design": Design,
-    "Production": Production,
+    "Estimating": Estimating,
     "Fabrication": Fabrication,
+    "FeatureReports": FeatureReports,
+    "Home": Home,
     "InstallationDeliver": InstallationDeliver,
     "MainWorkflow": MainWorkflow,
-    "CompletedJobs": CompletedJobs,
-    "AdminSettings": AdminSettings,
-    "FeatureReports": FeatureReports,
-    "CompletedReports": CompletedReports,
     "OrderForm": OrderForm,
-    "SalesPipeline": SalesPipeline,
+    "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
-    "Estimating": Estimating,
+    "Production": Production,
+    "SalesPipeline": SalesPipeline,
 }
 
 export const pagesConfig = {
