@@ -297,27 +297,55 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Needed */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Input
-                    type="date"
-                    value={order.date_needed || ""}
-                    onChange={(e) => updateOrder(order.id, "date_needed", e.target.value)}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    disabled={!isRegistered}
-                  />
+                  <Popover modal={false}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-auto p-0" 
+                      align="start" 
+                      side="bottom" 
+                      sideOffset={5}
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      onPointerDownOutside={(e) => e.preventDefault()}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={parseLocalDate(order.date_needed)}
+                        onSelect={(date) => updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Date Ordered */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Input
-                    type="date"
-                    value={order.date_ordered || ""}
-                    onChange={(e) => {
-                      updateOrder(order.id, "date_ordered", e.target.value);
-                      if (e.target.value) updateOrder(order.id, "status", "ordered");
-                    }}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    disabled={!isRegistered}
-                  />
+                  <Popover modal={false}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-auto p-0" 
+                      align="start" 
+                      side="bottom" 
+                      sideOffset={5}
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      onPointerDownOutside={(e) => e.preventDefault()}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={parseLocalDate(order.date_ordered)}
+                        onSelect={(date) => {
+                          updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
+                          if (date) updateOrder(order.id, "status", "ordered");
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Vendor */}
@@ -340,16 +368,30 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
                 {/* Date Received */}
                 <div className="w-24 px-1 py-0.5 border-r">
-                  <Input
-                    type="date"
-                    value={order.date_received || ""}
-                    onChange={(e) => {
-                      updateOrder(order.id, "date_received", e.target.value);
-                      if (e.target.value) updateOrder(order.id, "status", "received");
-                    }}
-                    className="h-6 text-xs border-0 bg-transparent px-1"
-                    disabled={!isRegistered}
-                  />
+                  <Popover modal={false}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-auto p-0" 
+                      align="start" 
+                      side="bottom" 
+                      sideOffset={5}
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      onPointerDownOutside={(e) => e.preventDefault()}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={parseLocalDate(order.date_received)}
+                        onSelect={(date) => {
+                          updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
+                          if (date) updateOrder(order.id, "status", "received");
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Delete */}
