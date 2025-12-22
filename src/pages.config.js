@@ -8,7 +8,6 @@ import FeatureReports from './pages/FeatureReports';
 import Home from './pages/Home';
 import InstallationDeliver from './pages/InstallationDeliver';
 import MainWorkflow from './pages/MainWorkflow';
-import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
@@ -27,7 +26,6 @@ export const PAGES = {
     "Home": Home,
     "InstallationDeliver": InstallationDeliver,
     "MainWorkflow": MainWorkflow,
-    "OrderForm": OrderForm,
     "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
