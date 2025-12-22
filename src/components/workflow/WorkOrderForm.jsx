@@ -519,7 +519,7 @@ export default function WorkOrderForm({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold text-gray-800">
-              {workOrder ? "Edit" : "Create"} {isRider ? "Rider Task" : "Work Order"}
+              {workOrder ? "Edit" : "New"} {isRider ? "Rider Task" : "Client"}
             </DialogTitle>
             {!workOrder && !isRider && (
               <label className="cursor-pointer">
