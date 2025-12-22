@@ -286,95 +286,159 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           </div>
 
           {activeSubTab === "pool" && (
-            <div className="space-y-6">
-              {/* Standard Items */}
+            <div className="space-y-4">
+              {/* My Presets - Shows selected items */}
+              {(() => {
+                const standardItems = activeTab === "filters" ? STANDARD_FILTERS : STANDARD_COLUMN_PRESETS;
+                const customItems = activeTab === "filters" ? filters : columnPresets;
+                const selectedStandard = standardItems.filter(item => isSelected(item, true));
+                const selectedCustom = customItems.filter(item => isSelected(item));
+                const hasSelected = selectedStandard.length > 0 || selectedCustom.length > 0;
+                
+                return hasSelected ? (
+                  <div className="clay-card p-3 bg-purple-50">
+                    <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-purple-800">
+                      ⭐ My Presets
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedStandard.map(item => (
+                        <div 
+                          key={item.value || item.name} 
+                          className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs font-medium flex items-center gap-1"
+                        >
+                          {item.name}
+                          <button 
+                            onClick={() => toggleSelection(item, true)}
+                            className="hover:text-purple-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      {selectedCustom.map(item => (
+                        <div 
+                          key={item.id} 
+                          className="px-2 py-1 bg-purple-200 text-purple-800 rounded text-xs font-medium flex items-center gap-1"
+                        >
+                          {item.name}
+                          <button 
+                            onClick={() => toggleSelection(item)}
+                            className="hover:text-purple-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Standard Items - Compact */}
               <div>
-                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                  <Users className="w-5 h-5" />
+                <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
                   Standard {activeTab === "filters" ? "Filters" : "Column Presets"}
                 </h3>
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
                   {(activeTab === "filters" ? STANDARD_FILTERS : STANDARD_COLUMN_PRESETS).map(item => (
-                    <div key={item.value || item.name} className="clay-card p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <input
-                          type="checkbox"
-                          checked={isSelected(item, true)}
-                          onChange={() => toggleSelection(item, true)}
-                          className="w-4 h-4"
-                        />
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-xs text-gray-500">System default</p>
-                        </div>
-                      </div>
+                    <div 
+                      key={item.value || item.name} 
+                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 cursor-pointer border transition-colors ${
+                        isSelected(item, true) 
+                          ? 'bg-blue-100 border-blue-300 text-blue-800' 
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => toggleSelection(item, true)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected(item, true)}
+                        onChange={() => {}}
+                        className="w-3 h-3"
+                      />
+                      {item.name}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => duplicateItem({ 
-                          ...item, 
-                          type: activeTab === "filters" ? "filter" : "column_preset",
-                          column_settings: item.columns || []
-                        })}
+                        className="h-4 w-4 p-0 ml-0.5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateItem({ 
+                            ...item, 
+                            type: activeTab === "filters" ? "filter" : "column_preset",
+                            column_settings: item.columns || []
+                          });
+                        }}
                       >
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3 h-3" />
                       </Button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Custom Items Pool */}
+              {/* Custom Items Pool - Compact */}
               <div>
-                <h3 className="font-bold text-lg mb-3">
+                <h3 className="font-bold text-sm mb-2">
                   Custom {activeTab === "filters" ? "Filters" : "Column Presets"}
                 </h3>
                 {(activeTab === "filters" ? filters : columnPresets).length === 0 ? (
-                  <p className="text-gray-500 text-sm">No custom {activeTab === "filters" ? "filters" : "presets"} yet. Create one!</p>
+                  <p className="text-gray-500 text-xs">No custom {activeTab === "filters" ? "filters" : "presets"} yet. Create one!</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(activeTab === "filters" ? filters : columnPresets).map(item => (
-                      <div key={item.id} className="clay-card p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <input
-                            type="checkbox"
-                            checked={isSelected(item)}
-                            onChange={() => toggleSelection(item)}
-                            className="w-4 h-4"
-                          />
-                          <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-xs text-gray-500">
-                              Created by {item.created_by_name} on {format(new Date(item.created_date), "MMM d, yyyy")}
-                              {activeTab === "filters" && ` • ${item.conditions?.length || 0} condition${item.conditions?.length !== 1 ? 's' : ''}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
+                      <div 
+                        key={item.id} 
+                        className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 cursor-pointer border transition-colors ${
+                          isSelected(item) 
+                            ? 'bg-green-100 border-green-300 text-green-800' 
+                            : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={() => toggleSelection(item)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected(item)}
+                          onChange={() => {}}
+                          className="w-3 h-3"
+                        />
+                        {item.name}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicateItem(item);
+                          }}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            editItem(item);
+                          }}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        {canDelete(item) && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => duplicateItem(item)}
+                            className="h-4 w-4 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteItem(item);
+                            }}
                           >
-                            <Copy className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 text-red-500" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => editItem(item)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          {canDelete(item) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteItem(item)}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          )}
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
