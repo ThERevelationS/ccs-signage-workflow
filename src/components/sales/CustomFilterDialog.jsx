@@ -566,40 +566,37 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 <div>
                   <Label className="mb-2 block">Column Settings - Toggle visibility and reorder</Label>
                   
-                  <div className="grid grid-cols-4 gap-2 mb-4">
+                  <div className="grid grid-cols-6 gap-1 mb-4">
                     {columnSettings.map((column, index) => (
                       <div 
                         key={column.id} 
-                        className={`p-2 rounded-lg border flex items-center justify-between ${
+                        className={`px-1.5 py-1 rounded border flex items-center gap-1 ${
                           column.visible ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
                         }`}
                       >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={column.visible}
-                            onChange={() => toggleColumnVisibility(column.id)}
-                            className="w-3 h-3 flex-shrink-0"
-                          />
-                          <span className={`text-xs truncate ${column.visible ? "font-medium text-blue-800" : "text-gray-400"}`}>
-                            {column.label}
-                          </span>
-                        </div>
-                        
-                        <div className="flex gap-0.5 flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={column.visible}
+                          onChange={() => toggleColumnVisibility(column.id)}
+                          className="w-3 h-3 flex-shrink-0"
+                        />
+                        <span className={`text-[10px] truncate flex-1 ${column.visible ? "font-medium text-blue-800" : "text-gray-400"}`} title={column.label}>
+                          {column.label}
+                        </span>
+                        <div className="flex flex-shrink-0">
                           <button
                             onClick={() => moveColumn(index, "up")}
                             disabled={index === 0}
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 p-0.5"
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                           </button>
                           <button
                             onClick={() => moveColumn(index, "down")}
                             disabled={index === columnSettings.length - 1}
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 p-0.5"
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                           </button>
                         </div>
                       </div>
