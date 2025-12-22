@@ -10,20 +10,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
 
-// Helper to parse date string as local date (not UTC)
-const parseLocalDate = (dateString) => {
-  if (!dateString) return undefined;
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
-};
 import {
   Plus,
   Trash2,
