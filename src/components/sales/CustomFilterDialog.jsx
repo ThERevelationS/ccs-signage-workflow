@@ -250,7 +250,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
           className="clay-card border-none overflow-y-auto [&>button]:hidden" 
-          style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "80vw", maxHeight: "90vh" }}
+          style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "600px", maxHeight: "90vh" }}
         >
           <DialogHeader>
             <div className="flex items-center justify-between">
