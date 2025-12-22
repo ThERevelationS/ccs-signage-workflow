@@ -47,6 +47,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   const [pendingChanges, setPendingChanges] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
+  const [openDatePopover, setOpenDatePopover] = useState(null);
 
   useEffect(() => {
     loadData();
