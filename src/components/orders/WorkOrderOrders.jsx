@@ -308,8 +308,10 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_needed)}
-                        onSelect={(date) => {
-                          updateOrder(order.id, "date_needed", date ? format(date, "yyyy-MM-dd") : "");
+                        onSelect={async (date) => {
+                          const dateStr = date ? format(date, "yyyy-MM-dd") : "";
+                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_needed: dateStr } : o));
+                          await Order.update(order.id, { date_needed: dateStr });
                           setOpenDatePopover(null);
                         }}
                       />
@@ -329,9 +331,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_ordered)}
-                        onSelect={(date) => {
-                          updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
-                          if (date) updateOrder(order.id, "status", "ordered");
+                        onSelect={async (date) => {
+                          const dateStr = date ? format(date, "yyyy-MM-dd") : "";
+                          const newStatus = date ? "ordered" : order.status;
+                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: dateStr, status: newStatus } : o));
+                          await Order.update(order.id, { date_ordered: dateStr, status: newStatus });
                           setOpenDatePopover(null);
                         }}
                       />
@@ -369,9 +373,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       <Calendar
                         mode="single"
                         selected={parseLocalDate(order.date_received)}
-                        onSelect={(date) => {
-                          updateOrder(order.id, "date_received", date ? format(date, "yyyy-MM-dd") : "");
-                          if (date) updateOrder(order.id, "status", "received");
+                        onSelect={async (date) => {
+                          const dateStr = date ? format(date, "yyyy-MM-dd") : "";
+                          const newStatus = date ? "received" : order.status;
+                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: dateStr, status: newStatus } : o));
+                          await Order.update(order.id, { date_received: dateStr, status: newStatus });
                           setOpenDatePopover(null);
                         }}
                       />
