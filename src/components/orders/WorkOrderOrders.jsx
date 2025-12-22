@@ -313,6 +313,28 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                   </Popover>
                 </div>
 
+                {/* Date Ordered */}
+                <div className="w-24 px-1 py-0.5 border-r">
+                  <Popover modal={true}>
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                      <Calendar
+                        mode="single"
+                        selected={parseLocalDate(order.date_ordered)}
+                        onSelect={(date) => {
+                          updateOrder(order.id, "date_ordered", date ? format(date, "yyyy-MM-dd") : "");
+                          if (date) updateOrder(order.id, "status", "ordered");
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 {/* Vendor */}
                 <div className="w-20 px-1 py-0.5 border-r">
                   <Select
