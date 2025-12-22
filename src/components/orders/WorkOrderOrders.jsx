@@ -199,6 +199,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
             <div className="w-16 px-2 py-1.5 border-r">Qty</div>
             <div className="w-28 px-2 py-1.5 border-r">Requestor</div>
             <div className="w-24 px-2 py-1.5 border-r">Needed</div>
+            <div className="w-24 px-2 py-1.5 border-r">Ordered</div>
             <div className="w-20 px-2 py-1.5 border-r">Vendor</div>
             <div className="w-24 px-2 py-1.5 border-r">Received</div>
             <div className="w-10 px-1 py-1.5"></div>
