@@ -12,6 +12,7 @@ import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
 import SalesPipeline from './pages/SalesPipeline';
+import OrderForm from './pages/OrderForm';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
     "SalesPipeline": SalesPipeline,
+    "OrderForm": OrderForm,
 }
 
 export const pagesConfig = {
