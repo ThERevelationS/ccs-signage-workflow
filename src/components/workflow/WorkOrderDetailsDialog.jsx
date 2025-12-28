@@ -1216,38 +1216,25 @@ export default function WorkOrderDetailsDialog({
                   </PopoverContent>
                 </Popover>
 
-                {/* Google Drive - Embedded File Browser */}
-                <div className="clay-card p-4">
-                  <div className="flex items-center justify-between mb-3">
+                {/* Google Drive - Compact */}
+                <div className="clay-card p-3">
+                  <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-sm flex items-center gap-2">
                       <FolderOpen className="w-4 h-4 text-green-600" />
                       Google Drive
                     </h3>
-                    <div className="flex items-center gap-2">
-                      {workOrder.google_drive_folder_url && (
-                        <a
-                          href={workOrder.google_drive_folder_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Open in Drive
-                        </a>
-                      )}
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => startEdit('google_drive_folder_url')}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <Pencil className="w-3 h-3 mr-1" />
-                        {workOrder.google_drive_folder_url ? 'Edit' : 'Link Folder'}
-                      </Button>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => startEdit('google_drive_folder_url')}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Pencil className="w-3 h-3 mr-1" />
+                      {workOrder.google_drive_folder_url ? 'Edit' : 'Link'}
+                    </Button>
                   </div>
                   {editingField === 'google_drive_folder_url' ? (
-                    <div className="space-y-2">
+                    <div className="space-y-2 mt-2">
                       <Input
                         value={editValues.google_drive_folder_url || ''}
                         onChange={(e) => setEditValues({ ...editValues, google_drive_folder_url: e.target.value })}
@@ -1264,12 +1251,17 @@ export default function WorkOrderDetailsDialog({
                         </Button>
                       </div>
                     </div>
+                  ) : workOrder.google_drive_folder_url ? (
+                    <Button
+                      onClick={() => window.open(workOrder.google_drive_folder_url, '_blank')}
+                      className="w-full mt-2 gap-2"
+                      size="sm"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open in Drive
+                    </Button>
                   ) : (
-                    <EmbeddedDriveFiles 
-                      folderUrl={workOrder.google_drive_folder_url}
-                      workOrderId={workOrder.id}
-                      onUpdate={onUpdate}
-                    />
+                    <p className="text-xs text-gray-400 mt-2 text-center">No folder linked</p>
                   )}
                 </div>
               </div>
@@ -1277,7 +1269,34 @@ export default function WorkOrderDetailsDialog({
               {/* Right Column - Actions */}
               <div className="space-y-4">
                 <div className="clay-card p-4">
-                  <h3 className="font-semibold text-sm mb-3">Actions</h3>
+                  {/* Move to Stage - inside Actions */}
+                  {!workOrder.is_rider && onMove && (
+                    <>
+                      <h3 className="font-semibold text-sm mb-2">Move to Stage</h3>
+                      <div className="grid grid-cols-2 gap-1.5 mb-4">
+                        {Object.keys(stageDisplayNames).map((stage) =>
+                          <Button
+                            key={stage}
+                            className="clay-button text-xs justify-start"
+                            variant="ghost"
+                            size="sm"
+                            disabled={workOrder.current_stage === stage}
+                            onClick={() => {onMove(workOrder, stage);onClose();}}
+                            style={{
+                              background: workOrder.current_stage === stage ?
+                              `linear-gradient(135deg, ${stageColors[stage]} 0%, rgba(255,255,255,0.9) 100%)` :
+                              undefined,
+                              opacity: workOrder.current_stage === stage ? 0.5 : 1
+                            }}>
+                            <ArrowRight className="w-3 h-3 mr-1" />
+                            {stageDisplayNames[stage]}
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  <h3 className="font-semibold text-sm mb-2">Actions</h3>
                   <div className="space-y-2">
                     {!workOrder.is_rider && onSplit &&
                     <Button
@@ -1311,34 +1330,6 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </div>
                 </div>
-
-                {/* Move to Stage */}
-                {!workOrder.is_rider && onMove &&
-                <div className="clay-card p-4">
-                    <h3 className="font-semibold text-sm mb-3">Move to Stage</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.keys(stageDisplayNames).map((stage) =>
-                    <Button
-                      key={stage}
-                      className="clay-button text-xs justify-start"
-                      variant="ghost"
-                      size="sm"
-                      disabled={workOrder.current_stage === stage}
-                      onClick={() => {onMove(workOrder, stage);onClose();}}
-                      style={{
-                        background: workOrder.current_stage === stage ?
-                        `linear-gradient(135deg, ${stageColors[stage]} 0%, rgba(255,255,255,0.9) 100%)` :
-                        undefined,
-                        opacity: workOrder.current_stage === stage ? 0.5 : 1
-                      }}>
-
-                          <ArrowRight className="w-3 h-3 mr-1" />
-                          {stageDisplayNames[stage]}
-                        </Button>
-                    )}
-                    </div>
-                  </div>
-                }
 
                 {/* Restore Options (for completed work orders) */}
                 {onRestore && workOrder.completed &&
