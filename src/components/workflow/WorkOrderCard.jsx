@@ -143,6 +143,8 @@ export default function WorkOrderCard({
   const [newSubTaskText, setNewSubTaskText] = useState("");
   const [showIncompleteSubtasksDialog, setShowIncompleteSubtasksDialog] = useState(false);
   const [incompleteSubtasksData, setIncompleteSubtasksData] = useState(null);
+  const [addingDetailFor, setAddingDetailFor] = useState(null); // { taskIndex, subTaskIndex }
+  const [newDetailText, setNewDetailText] = useState("");
 
   const notes = React.useMemo(() => {
     if (!workOrder.notes) return [];
@@ -377,11 +379,18 @@ export default function WorkOrderCard({
       timestamp: new Date().toISOString(),
       created_by: currentUser?.email || "Template",
       completed: false,
-      sub_tasks: (t.sub_tasks || []).map(st => ({
-        text: st,
-        completed: false,
-        id: Date.now() + Math.random()
-      }))
+      sub_tasks: (t.sub_tasks || []).map(st => {
+        const subTaskText = typeof st === 'string' ? st : st.text;
+        const subTaskDetails = typeof st === 'string' ? [] : (st.details || []);
+        return {
+          text: subTaskText,
+          completed: false,
+          details: subTaskDetails.map(d => ({
+            text: typeof d === 'string' ? d : d.text,
+            completed: false
+          }))
+        };
+      })
     }));
     const updatedNotes = [...notes, ...newTasks];
     await WorkOrder.update(workOrder.id, { notes: updatedNotes });
@@ -462,9 +471,9 @@ export default function WorkOrderCard({
       if (idx === taskIndex) {
         const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
           if (stIdx === subTaskIndex) {
-            return { text: st.text, completed: !st.completed };
+            return { ...st, text: st.text, completed: !st.completed, details: st.details || [] };
           }
-          return { text: st.text, completed: st.completed };
+          return { ...st, text: st.text, completed: st.completed, details: st.details || [] };
         });
         return {
           text: note.text,
@@ -488,6 +497,96 @@ export default function WorkOrderCard({
     if (onUpdate) onUpdate();
     // Then persist to database
     await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+  };
+
+  const handleAddDetail = async (taskIndex, subTaskIndex) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    if (!newDetailText.trim()) return;
+    
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return {
+              ...st,
+              details: [...(st.details || []), { text: newDetailText, completed: false }]
+            };
+          }
+          return st;
+        });
+        return { ...note, sub_tasks: updatedSubTasks };
+      }
+      return note;
+    });
+    
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    
+    setNewDetailText("");
+    setAddingDetailFor(null);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleToggleDetail = async (taskIndex, subTaskIndex, detailIndex) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            const updatedDetails = (st.details || []).map((d, dIdx) => {
+              if (dIdx === detailIndex) {
+                return { ...d, completed: !d.completed };
+              }
+              return d;
+            });
+            return { ...st, details: updatedDetails };
+          }
+          return st;
+        });
+        return { ...note, sub_tasks: updatedSubTasks };
+      }
+      return note;
+    });
+    
+    Object.assign(workOrder, { notes: updatedNotes });
+    if (onUpdate) onUpdate();
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+  };
+
+  const handleDeleteDetail = async (taskIndex, subTaskIndex, detailIndex) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return {
+              ...st,
+              details: (st.details || []).filter((_, dIdx) => dIdx !== detailIndex)
+            };
+          }
+          return st;
+        });
+        return { ...note, sub_tasks: updatedSubTasks };
+      }
+      return note;
+    });
+    
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) onUpdate();
   };
 
   const handleToggleAsap = async () => {
@@ -863,19 +962,74 @@ export default function WorkOrderCard({
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
                                     <div className="ml-3 mt-1 space-y-0.5">
                                     {note.sub_tasks.map((subTask, subIdx) => (
-                                      <div key={subIdx} className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                        <Checkbox
-                                          checked={subTask.completed}
-                                          onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
-                                          className="h-3 w-3 [&_svg]:h-2 [&_svg]:w-2" />
-                                        <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
-                                          className="h-3 w-3 ml-auto p-0">
-                                          <X className="w-2 h-2 text-red-500" />
-                                        </Button>
+                                      <div key={subIdx} onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center gap-1">
+                                          <Checkbox
+                                            checked={subTask.completed}
+                                            onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
+                                            className="h-3 w-3 [&_svg]:h-2 [&_svg]:w-2" />
+                                          <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
+                                            className="h-3 w-3 ml-auto p-0">
+                                            <X className="w-2 h-2 text-red-500" />
+                                          </Button>
+                                        </div>
+                                        {/* Subtask Details */}
+                                        {subTask.details && subTask.details.length > 0 && (
+                                          <div className="ml-5 mt-0.5 space-y-0.5">
+                                            {subTask.details.map((detail, detailIdx) => (
+                                              <div key={detailIdx} className="flex items-center gap-1">
+                                                <Checkbox
+                                                  checked={detail.completed}
+                                                  onCheckedChange={() => handleToggleDetail(actualIndex, subIdx, detailIdx)}
+                                                  className="h-2.5 w-2.5 [&_svg]:h-1.5 [&_svg]:w-1.5" />
+                                                <span className={`text-xs ${detail.completed ? "line-through text-gray-400" : "text-gray-500"}`} style={{ fontSize: '10px' }}>{detail.text}</span>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={() => handleDeleteDetail(actualIndex, subIdx, detailIdx)}
+                                                  className="h-2.5 w-2.5 ml-auto p-0">
+                                                  <X className="w-1.5 h-1.5 text-red-500" />
+                                                </Button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {/* Add Detail */}
+                                        {addingDetailFor?.taskIndex === actualIndex && addingDetailFor?.subTaskIndex === subIdx ? (
+                                          <div className="ml-5 mt-0.5 flex gap-1">
+                                            <Input
+                                              value={newDetailText}
+                                              onChange={(e) => setNewDetailText(e.target.value)}
+                                              placeholder="Detail..."
+                                              className="h-4 text-xs"
+                                              style={{ fontSize: '10px' }}
+                                              autoFocus
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleAddDetail(actualIndex, subIdx);
+                                                if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");}
+                                              }} />
+                                            <Button size="sm" onClick={() => handleAddDetail(actualIndex, subIdx)} className="h-4 px-1">
+                                              <Check className="w-2 h-2" />
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");}} className="h-4 px-1">
+                                              <X className="w-2 h-2" />
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
+                                            className="h-3 px-1 ml-5 mt-0.5"
+                                            style={{ fontSize: '8px' }}>
+                                            <Plus className="w-1.5 h-1.5 mr-0.5" />
+                                            Detail
+                                          </Button>
+                                        )}
                                       </div>
                                     ))}
                                     </div>
