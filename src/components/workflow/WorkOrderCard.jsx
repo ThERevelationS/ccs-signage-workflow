@@ -901,7 +901,7 @@ export default function WorkOrderCard({
                       {activeNotes.map((note, index) => {
                       const actualIndex = notes.findIndex((n) => n === note);
                       return (
-                        <div key={actualIndex} className="bg-white/50 rounded">
+                        <div key={actualIndex} className="bg-white/50 rounded group/task">
                           <div className="p-1 flex items-start gap-1">
                             {editingNoteIndex === actualIndex ?
                             <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
@@ -962,7 +962,7 @@ export default function WorkOrderCard({
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
                                     <div className="ml-3 mt-1 space-y-0.5">
                                     {note.sub_tasks.map((subTask, subIdx) => (
-                                      <div key={subIdx} onClick={(e) => e.stopPropagation()}>
+                                      <div key={subIdx} className="group/subtask" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center gap-1">
                                           <Checkbox
                                             checked={subTask.completed}
@@ -998,7 +998,7 @@ export default function WorkOrderCard({
                                             ))}
                                           </div>
                                         )}
-                                        {/* Add Detail */}
+                                        {/* Add Detail - hover reveal */}
                                         {addingDetailFor?.taskIndex === actualIndex && addingDetailFor?.subTaskIndex === subIdx ? (
                                           <div className="ml-5 mt-0.5 flex gap-1">
                                             <Input
@@ -1020,21 +1020,23 @@ export default function WorkOrderCard({
                                             </Button>
                                           </div>
                                         ) : (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
-                                            className="h-3 px-1 ml-5 mt-0.5"
-                                            style={{ fontSize: '8px' }}>
-                                            <Plus className="w-1.5 h-1.5 mr-0.5" />
-                                            Detail
-                                          </Button>
+                                          <div className="hidden group-hover/subtask:block ml-5 mt-0.5">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
+                                              className="h-3 px-1"
+                                              style={{ fontSize: '8px' }}>
+                                              <Plus className="w-1.5 h-1.5 mr-0.5" />
+                                              Detail
+                                            </Button>
+                                          </div>
                                         )}
                                       </div>
                                     ))}
                                     </div>
                                     )}
-                                    {/* Add sub-task */}
+                                    {/* Add sub-task - hover reveal */}
                                     {addingSubTaskFor === actualIndex ? (
                                       <div className="ml-3 mt-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                         <Input
@@ -1055,18 +1057,17 @@ export default function WorkOrderCard({
                                         </Button>
                                       </div>
                                     ) : (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setAddingSubTaskFor(actualIndex);
-                                        }}
-                                        className="h-4 px-1 text-xs ml-3 mt-0.5"
-                                        style={{ fontSize: '9px' }}>
-                                        <Plus className="w-2 h-2 mr-0.5" />
-                                        Sub
-                                      </Button>
+                                      <div className="hidden group-hover/task:block ml-3 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setAddingSubTaskFor(actualIndex)}
+                                          className="h-4 px-1 text-xs"
+                                          style={{ fontSize: '9px' }}>
+                                          <Plus className="w-2 h-2 mr-0.5" />
+                                          Sub
+                                        </Button>
+                                      </div>
                                     )}
                                   </div>
                                 </>

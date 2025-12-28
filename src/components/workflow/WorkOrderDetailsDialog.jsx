@@ -886,7 +886,7 @@ export default function WorkOrderDetailsDialog({
                 {activeTasks.map((task, idx) => {
                   const actualIndex = tasks.findIndex((t) => t === task);
                   return (
-                    <div key={idx} className="bg-white/50 rounded-lg">
+                    <div key={idx} className="bg-white/50 rounded-lg group/task">
                       <div className="p-2 flex items-start gap-2">
                         <Checkbox
                           checked={false}
@@ -926,7 +926,7 @@ export default function WorkOrderDetailsDialog({
                               {task.sub_tasks && task.sub_tasks.length > 0 && (
                                 <div className="ml-4 mt-2 space-y-1">
                                   {task.sub_tasks.map((subTask, subIdx) => (
-                                    <div key={subIdx}>
+                                    <div key={subIdx} className="group/subtask">
                                       <div className="flex items-center gap-2 text-xs">
                                         <Checkbox
                                           checked={subTask.completed}
@@ -962,7 +962,7 @@ export default function WorkOrderDetailsDialog({
                                           ))}
                                         </div>
                                       )}
-                                      {/* Add Detail */}
+                                      {/* Add Detail - hover reveal */}
                                       {addingDetailFor?.taskIndex === actualIndex && addingDetailFor?.subTaskIndex === subIdx ? (
                                         <div className="ml-6 mt-1 flex gap-1">
                                           <Input
@@ -983,21 +983,23 @@ export default function WorkOrderDetailsDialog({
                                           </Button>
                                         </div>
                                       ) : (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
-                                          className="h-4 px-1 text-xs ml-6 mt-0.5"
-                                          style={{ fontSize: '10px' }}>
-                                          <Plus className="w-2 h-2 mr-0.5" />
-                                          Detail
-                                        </Button>
+                                        <div className="hidden group-hover/subtask:block ml-6 mt-0.5">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
+                                            className="h-4 px-1 text-xs"
+                                            style={{ fontSize: '10px' }}>
+                                            <Plus className="w-2 h-2 mr-0.5" />
+                                            Detail
+                                          </Button>
+                                        </div>
                                       )}
                                     </div>
                                   ))}
                                 </div>
                               )}
-                              {/* Add sub-task */}
+                              {/* Add sub-task - hover reveal */}
                               {addingSubTaskFor === actualIndex ? (
                                 <div className="ml-4 mt-2 flex gap-1">
                                   <Input
@@ -1018,14 +1020,16 @@ export default function WorkOrderDetailsDialog({
                                   </Button>
                                 </div>
                               ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setAddingSubTaskFor(actualIndex)}
-                                  className="h-5 px-2 text-xs ml-4 mt-1">
-                                  <Plus className="w-2 h-2 mr-1" />
-                                  Sub-task
-                                </Button>
+                                <div className="hidden group-hover/task:block ml-4 mt-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setAddingSubTaskFor(actualIndex)}
+                                    className="h-5 px-2 text-xs">
+                                    <Plus className="w-2 h-2 mr-1" />
+                                    Sub-task
+                                  </Button>
+                                </div>
                               )}
                             </div>
                             <Button
