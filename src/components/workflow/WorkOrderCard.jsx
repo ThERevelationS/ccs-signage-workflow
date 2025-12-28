@@ -901,7 +901,7 @@ export default function WorkOrderCard({
                       {activeNotes.map((note, index) => {
                       const actualIndex = notes.findIndex((n) => n === note);
                       return (
-                        <div key={actualIndex} className="bg-white/50 rounded group/task">
+                        <div key={actualIndex} className="bg-white/50 rounded group/task [&_.hover-btn]:opacity-0 [&:hover_.hover-btn]:opacity-100 [&_.hover-btn]:transition-opacity [&_.hover-btn]:duration-200 [&_.hover-btn]:delay-75">
                           <div className="p-1 flex items-start gap-1">
                             {editingNoteIndex === actualIndex ?
                             <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
@@ -962,7 +962,7 @@ export default function WorkOrderCard({
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
                                     <div className="ml-3 mt-1 space-y-0.5">
                                     {note.sub_tasks.map((subTask, subIdx) => (
-                                      <div key={subIdx} className="group/subtask" onClick={(e) => e.stopPropagation()}>
+                                      <div key={subIdx} className="group/subtask [&_.hover-btn-detail]:opacity-0 [&:hover_.hover-btn-detail]:opacity-100 [&_.hover-btn-detail]:transition-opacity [&_.hover-btn-detail]:duration-200 [&_.hover-btn-detail]:delay-75" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center gap-1">
                                           <Checkbox
                                             checked={subTask.completed}
@@ -1020,7 +1020,7 @@ export default function WorkOrderCard({
                                             </Button>
                                           </div>
                                         ) : (
-                                          <div className="hidden group-hover/subtask:block ml-5 mt-0.5">
+                                          <div className="ml-5 mt-0.5 hover-btn-detail">
                                             <Button
                                               variant="ghost"
                                               size="sm"
@@ -1057,7 +1057,7 @@ export default function WorkOrderCard({
                                         </Button>
                                       </div>
                                     ) : (
-                                      <div className="hidden group-hover/task:block ml-3 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                                      <div className="ml-3 mt-0.5 hover-btn" onClick={(e) => e.stopPropagation()}>
                                         <Button
                                           variant="ghost"
                                           size="sm"

@@ -886,7 +886,7 @@ export default function WorkOrderDetailsDialog({
                 {activeTasks.map((task, idx) => {
                   const actualIndex = tasks.findIndex((t) => t === task);
                   return (
-                    <div key={idx} className="bg-white/50 rounded-lg group/task">
+                    <div key={idx} className="bg-white/50 rounded-lg group/task [&_.hover-btn]:opacity-0 [&:hover_.hover-btn]:opacity-100 [&_.hover-btn]:transition-opacity [&_.hover-btn]:duration-200 [&_.hover-btn]:delay-75">
                       <div className="p-2 flex items-start gap-2">
                         <Checkbox
                           checked={false}
@@ -926,7 +926,7 @@ export default function WorkOrderDetailsDialog({
                               {task.sub_tasks && task.sub_tasks.length > 0 && (
                                 <div className="ml-4 mt-2 space-y-1">
                                   {task.sub_tasks.map((subTask, subIdx) => (
-                                    <div key={subIdx} className="group/subtask">
+                                    <div key={subIdx} className="group/subtask [&_.hover-btn-detail]:opacity-0 [&:hover_.hover-btn-detail]:opacity-100 [&_.hover-btn-detail]:transition-opacity [&_.hover-btn-detail]:duration-200 [&_.hover-btn-detail]:delay-75">
                                       <div className="flex items-center gap-2 text-xs">
                                         <Checkbox
                                           checked={subTask.completed}
@@ -983,7 +983,7 @@ export default function WorkOrderDetailsDialog({
                                           </Button>
                                         </div>
                                       ) : (
-                                        <div className="hidden group-hover/subtask:block ml-6 mt-0.5">
+                                        <div className="ml-6 mt-0.5 hover-btn-detail">
                                           <Button
                                             variant="ghost"
                                             size="sm"
@@ -1020,7 +1020,7 @@ export default function WorkOrderDetailsDialog({
                                   </Button>
                                 </div>
                               ) : (
-                                <div className="hidden group-hover/task:block ml-4 mt-1">
+                                <div className="ml-4 mt-1 hover-btn">
                                   <Button
                                     variant="ghost"
                                     size="sm"
