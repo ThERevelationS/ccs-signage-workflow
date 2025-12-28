@@ -126,6 +126,8 @@ export default function WorkOrderDetailsDialog({
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
   const [showDriveBrowser, setShowDriveBrowser] = useState(false);
+  const [addingDetailFor, setAddingDetailFor] = useState(null); // { taskIndex, subTaskIndex }
+  const [newDetailText, setNewDetailText] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -304,9 +306,9 @@ export default function WorkOrderDetailsDialog({
       if (idx === taskIndex) {
         const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
           if (stIdx === subTaskIndex) {
-            return { text: st.text, completed: !st.completed };
+            return { ...st, text: st.text, completed: !st.completed, details: st.details || [] };
           }
-          return { text: st.text, completed: st.completed };
+          return { ...st, text: st.text, completed: st.completed, details: st.details || [] };
         });
         return {
           text: task.text,
@@ -328,6 +330,79 @@ export default function WorkOrderDetailsDialog({
     Object.assign(workOrder, { notes: updatedTasks });
     if (onUpdate) onUpdate();
     // Then persist to database
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+  };
+
+  const handleAddTaskDetail = async (taskIndex, subTaskIndex) => {
+    if (!newDetailText.trim()) return;
+    
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return {
+              ...st,
+              details: [...(st.details || []), { text: newDetailText, completed: false }]
+            };
+          }
+          return st;
+        });
+        return { ...task, sub_tasks: updatedSubTasks };
+      }
+      return task;
+    });
+    
+    Object.assign(workOrder, { notes: updatedTasks });
+    setNewDetailText("");
+    setAddingDetailFor(null);
+    if (onUpdate) onUpdate();
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+  };
+
+  const handleToggleTaskDetail = async (taskIndex, subTaskIndex, detailIndex) => {
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            const updatedDetails = (st.details || []).map((d, dIdx) => {
+              if (dIdx === detailIndex) {
+                return { ...d, completed: !d.completed };
+              }
+              return d;
+            });
+            return { ...st, details: updatedDetails };
+          }
+          return st;
+        });
+        return { ...task, sub_tasks: updatedSubTasks };
+      }
+      return task;
+    });
+    
+    Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
+    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+  };
+
+  const handleDeleteTaskDetail = async (taskIndex, subTaskIndex, detailIndex) => {
+    const updatedTasks = tasks.map((task, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return {
+              ...st,
+              details: (st.details || []).filter((_, dIdx) => dIdx !== detailIndex)
+            };
+          }
+          return st;
+        });
+        return { ...task, sub_tasks: updatedSubTasks };
+      }
+      return task;
+    });
+    
+    Object.assign(workOrder, { notes: updatedTasks });
+    if (onUpdate) onUpdate();
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
   };
 
@@ -851,19 +926,73 @@ export default function WorkOrderDetailsDialog({
                               {task.sub_tasks && task.sub_tasks.length > 0 && (
                                 <div className="ml-4 mt-2 space-y-1">
                                   {task.sub_tasks.map((subTask, subIdx) => (
-                                    <div key={subIdx} className="flex items-center gap-2 text-xs">
-                                      <Checkbox
-                                        checked={subTask.completed}
-                                        onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
-                                        className="h-3 w-3" />
-                                      <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleDeleteTaskSubTask(actualIndex, subIdx)}
-                                        className="h-4 w-4 ml-auto">
-                                        <X className="w-2 h-2 text-red-500" />
-                                      </Button>
+                                    <div key={subIdx}>
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <Checkbox
+                                          checked={subTask.completed}
+                                          onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
+                                          className="h-3 w-3" />
+                                        <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleDeleteTaskSubTask(actualIndex, subIdx)}
+                                          className="h-4 w-4 ml-auto">
+                                          <X className="w-2 h-2 text-red-500" />
+                                        </Button>
+                                      </div>
+                                      {/* Subtask Details */}
+                                      {subTask.details && subTask.details.length > 0 && (
+                                        <div className="ml-6 mt-1 space-y-1">
+                                          {subTask.details.map((detail, detailIdx) => (
+                                            <div key={detailIdx} className="flex items-center gap-2 text-xs">
+                                              <Checkbox
+                                                checked={detail.completed}
+                                                onCheckedChange={() => handleToggleTaskDetail(actualIndex, subIdx, detailIdx)}
+                                                className="h-2.5 w-2.5" />
+                                              <span className={`${detail.completed ? "line-through text-gray-400" : "text-gray-500"}`} style={{ fontSize: '11px' }}>{detail.text}</span>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteTaskDetail(actualIndex, subIdx, detailIdx)}
+                                                className="h-3 w-3 ml-auto">
+                                                <X className="w-2 h-2 text-red-500" />
+                                              </Button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {/* Add Detail */}
+                                      {addingDetailFor?.taskIndex === actualIndex && addingDetailFor?.subTaskIndex === subIdx ? (
+                                        <div className="ml-6 mt-1 flex gap-1">
+                                          <Input
+                                            value={newDetailText}
+                                            onChange={(e) => setNewDetailText(e.target.value)}
+                                            placeholder="Detail..."
+                                            className="h-5 text-xs"
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') handleAddTaskDetail(actualIndex, subIdx);
+                                              if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");}
+                                            }} />
+                                          <Button size="sm" onClick={() => handleAddTaskDetail(actualIndex, subIdx)} className="h-5 px-2">
+                                            <Check className="w-3 h-3" />
+                                          </Button>
+                                          <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");}} className="h-5 px-2">
+                                            <X className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setAddingDetailFor({ taskIndex: actualIndex, subTaskIndex: subIdx })}
+                                          className="h-4 px-1 text-xs ml-6 mt-0.5"
+                                          style={{ fontSize: '10px' }}>
+                                          <Plus className="w-2 h-2 mr-0.5" />
+                                          Detail
+                                        </Button>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
