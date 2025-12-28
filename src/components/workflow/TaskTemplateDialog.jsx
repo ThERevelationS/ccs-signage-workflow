@@ -43,7 +43,12 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
       name: templateName,
       tasks: validTasks.map(t => ({
         text: t.text,
-        sub_tasks: t.sub_tasks.filter(st => st.trim())
+        sub_tasks: t.sub_tasks
+          .filter(st => (typeof st === 'string' ? st.trim() : st.text?.trim()))
+          .map(st => typeof st === 'string' 
+            ? { text: st, details: [] }
+            : { text: st.text, details: (st.details || []).filter(d => d.trim()) }
+          )
       }))
     };
 
@@ -64,7 +69,9 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
     setTemplateName(template.name);
     setTemplateTasks(template.tasks.map(t => ({
       text: t.text,
-      sub_tasks: t.sub_tasks || []
+      sub_tasks: (t.sub_tasks || []).map(st => 
+        typeof st === 'string' ? { text: st, details: [] } : { text: st.text || st, details: st.details || [] }
+      )
     })));
   };
 
@@ -95,19 +102,47 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
 
   const addSubTask = (taskIndex) => {
     const updated = [...templateTasks];
-    updated[taskIndex].sub_tasks.push("");
+    updated[taskIndex].sub_tasks.push({ text: "", details: [] });
     setTemplateTasks(updated);
   };
 
   const updateSubTask = (taskIndex, subTaskIndex, text) => {
     const updated = [...templateTasks];
-    updated[taskIndex].sub_tasks[subTaskIndex] = text;
+    if (typeof updated[taskIndex].sub_tasks[subTaskIndex] === 'string') {
+      updated[taskIndex].sub_tasks[subTaskIndex] = { text, details: [] };
+    } else {
+      updated[taskIndex].sub_tasks[subTaskIndex].text = text;
+    }
     setTemplateTasks(updated);
   };
 
   const removeSubTask = (taskIndex, subTaskIndex) => {
     const updated = [...templateTasks];
     updated[taskIndex].sub_tasks.splice(subTaskIndex, 1);
+    setTemplateTasks(updated);
+  };
+
+  const addSubTaskDetail = (taskIndex, subTaskIndex) => {
+    const updated = [...templateTasks];
+    const subTask = updated[taskIndex].sub_tasks[subTaskIndex];
+    if (typeof subTask === 'string') {
+      updated[taskIndex].sub_tasks[subTaskIndex] = { text: subTask, details: [""] };
+    } else {
+      subTask.details = subTask.details || [];
+      subTask.details.push("");
+    }
+    setTemplateTasks(updated);
+  };
+
+  const updateSubTaskDetail = (taskIndex, subTaskIndex, detailIndex, text) => {
+    const updated = [...templateTasks];
+    updated[taskIndex].sub_tasks[subTaskIndex].details[detailIndex] = text;
+    setTemplateTasks(updated);
+  };
+
+  const removeSubTaskDetail = (taskIndex, subTaskIndex, detailIndex) => {
+    const updated = [...templateTasks];
+    updated[taskIndex].sub_tasks[subTaskIndex].details.splice(detailIndex, 1);
     setTemplateTasks(updated);
   };
 
@@ -212,24 +247,61 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
                         </div>
                         {/* Sub-tasks */}
                         {task.sub_tasks.length > 0 && (
-                          <div className="ml-4 space-y-1 mb-2">
-                            {task.sub_tasks.map((subTask, subIdx) => (
-                              <div key={subIdx} className="flex gap-2">
-                                <Input
-                                  value={subTask}
-                                  onChange={(e) => updateSubTask(idx, subIdx, e.target.value)}
-                                  placeholder="Sub-task..."
-                                  className="flex-1 h-6 text-xs"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeSubTask(idx, subIdx)}
-                                  className="h-6 w-6">
-                                  <X className="w-2 h-2 text-red-500" />
-                                </Button>
-                              </div>
-                            ))}
+                          <div className="ml-4 space-y-2 mb-2">
+                            {task.sub_tasks.map((subTask, subIdx) => {
+                              const subTaskText = typeof subTask === 'string' ? subTask : subTask.text;
+                              const subTaskDetails = typeof subTask === 'string' ? [] : (subTask.details || []);
+                              return (
+                                <div key={subIdx} className="bg-white/50 rounded p-1.5">
+                                  <div className="flex gap-2">
+                                    <Input
+                                      value={subTaskText}
+                                      onChange={(e) => updateSubTask(idx, subIdx, e.target.value)}
+                                      placeholder="Sub-task..."
+                                      className="flex-1 h-6 text-xs"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeSubTask(idx, subIdx)}
+                                      className="h-6 w-6">
+                                      <X className="w-2 h-2 text-red-500" />
+                                    </Button>
+                                  </div>
+                                  {/* Subtask Details */}
+                                  {subTaskDetails.length > 0 && (
+                                    <div className="ml-4 mt-1 space-y-1">
+                                      {subTaskDetails.map((detail, detailIdx) => (
+                                        <div key={detailIdx} className="flex gap-1">
+                                          <Input
+                                            value={detail}
+                                            onChange={(e) => updateSubTaskDetail(idx, subIdx, detailIdx, e.target.value)}
+                                            placeholder="Detail..."
+                                            className="flex-1 h-5 text-xs"
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeSubTaskDetail(idx, subIdx, detailIdx)}
+                                            className="h-5 w-5">
+                                            <X className="w-2 h-2 text-red-500" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => addSubTaskDetail(idx, subIdx)}
+                                    className="h-4 px-1 text-xs ml-4 mt-1"
+                                    style={{ fontSize: '9px' }}>
+                                    <Plus className="w-2 h-2 mr-0.5" />
+                                    Detail
+                                  </Button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                         <Button
