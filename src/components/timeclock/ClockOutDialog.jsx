@@ -24,7 +24,7 @@ const INHOUSE_TASKS = [
 ];
 
 export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut }) {
-  const [lunchMinutes, setLunchMinutes] = useState(30);
+  const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -37,8 +37,12 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const clockInTime = timeEntry ? new Date(timeEntry.clock_in) : new Date();
   const clockOutTime = new Date();
   const totalMinutesWorked = Math.floor((clockOutTime - clockInTime) / (1000 * 60));
-  const workableMinutes = totalMinutesWorked - lunchMinutes;
+  const lunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
+  const workableMinutes = totalMinutesWorked - lunchMins;
   const workableHours = Math.max(0, workableMinutes / 60);
+  
+  const lunchEntered = lunchMinutes !== "" && lunchMinutes !== null;
+  const jobsEntered = jobAllocations.length > 0 && jobAllocations.every(j => j.hours > 0);
 
   useEffect(() => {
     const total = jobAllocations.reduce((sum, job) => sum + (parseFloat(job.hours) || 0), 0);
@@ -109,8 +113,14 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const handleClockOut = () => {
     setError("");
 
+    // Validate lunch is entered
+    if (lunchMinutes === "" || lunchMinutes === null) {
+      setError("Please enter your lunch break time");
+      return;
+    }
+
     // Validate lunch
-    if (lunchMinutes < 0) {
+    if (lunchMins < 0) {
       setError("Lunch break cannot be negative");
       return;
     }
@@ -121,10 +131,10 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       return;
     }
 
-    // Validate total hours match
+    // Validate total hours match exactly (100% used)
     const diff = Math.abs(totalAllocatedHours - workableHours);
-    if (diff > 0.1) { // Allow small rounding difference
-      setError(`Total allocated hours (${totalAllocatedHours.toFixed(2)}) must equal workable hours (${workableHours.toFixed(2)})`);
+    if (diff > 0.01) {
+      setError(`All time must be allocated. You have ${remainingHours.toFixed(2)} hours remaining.`);
       return;
     }
 
@@ -141,7 +151,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
     }
 
     onClockOut({
-      lunchMinutes,
+      lunchMinutes: lunchMins,
       jobAllocations,
       totalHours: workableHours,
       clockOutTime: clockOutTime.toISOString()
@@ -188,30 +198,35 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
           </div>
 
           {/* Lunch Break */}
-          <div className="clay-card p-4">
+          <div className={`clay-card p-4 ${!lunchEntered ? 'border-2 border-red-400' : ''}`}>
             <div className="flex items-center gap-2 mb-3">
               <Coffee className="w-4 h-4 text-amber-600" />
-              <Label className="font-semibold">Lunch Break (minutes)</Label>
+              <Label className={`font-semibold ${!lunchEntered ? 'text-red-600' : ''}`}>
+                Lunch Break (minutes) <span className="text-red-500">*</span>
+              </Label>
             </div>
             <Input
               type="number"
               min="0"
               max="120"
               value={lunchMinutes}
-              onChange={(e) => setLunchMinutes(parseInt(e.target.value) || 0)}
-              className="w-32"
+              onChange={(e) => setLunchMinutes(e.target.value)}
+              placeholder="Enter minutes..."
+              className={`w-32 ${!lunchEntered ? 'border-red-400 text-red-600 placeholder:text-red-400' : ''}`}
             />
             <p className="text-xs text-gray-500 mt-2">
-              Workable hours after lunch: <span className="font-bold text-blue-600">{workableHours.toFixed(2)} hrs</span>
+              Workable hours after lunch: <span className="font-bold text-blue-600">{lunchEntered ? workableHours.toFixed(2) : '--'} hrs</span>
             </p>
           </div>
 
           {/* Job Allocations */}
-          <div className="clay-card p-4">
+          <div className={`clay-card p-4 ${!jobsEntered ? 'border-2 border-red-400' : ''}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-purple-600" />
-                <Label className="font-semibold">Job Time Allocations</Label>
+                <Label className={`font-semibold ${!jobsEntered ? 'text-red-600' : ''}`}>
+                  Job Time Allocations <span className="text-red-500">*</span>
+                </Label>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -332,14 +347,24 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                     )}
 
                     <div className="mt-2 flex items-center gap-2">
-                      <Label className="text-xs">Hours:</Label>
+                      <Label className={`text-xs ${!job.hours || job.hours <= 0 ? 'text-red-600' : ''}`}>Hours:</Label>
                       <Input
                         type="number"
                         min="0"
                         step="0.25"
-                        value={job.hours}
-                        onChange={(e) => updateAllocation(index, "hours", parseFloat(e.target.value) || 0)}
-                        className="w-24 h-8"
+                        value={job.hours || ""}
+                        onChange={(e) => {
+                          let val = parseFloat(e.target.value) || 0;
+                          // Auto-round down if exceeds remaining workable hours
+                          const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseFloat(j.hours) || 0) : sum, 0);
+                          const maxAllowed = Math.max(0, workableHours - otherAllocations);
+                          if (val > maxAllowed) {
+                            val = Math.floor(maxAllowed * 100) / 100; // Round down to 2 decimals
+                          }
+                          updateAllocation(index, "hours", val);
+                        }}
+                        placeholder="0"
+                        className={`w-24 h-8 ${!job.hours || job.hours <= 0 ? 'border-red-400 text-red-600' : ''}`}
                       />
                     </div>
                   </div>
