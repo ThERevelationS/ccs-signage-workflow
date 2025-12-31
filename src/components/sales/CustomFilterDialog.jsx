@@ -274,7 +274,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const canDelete = (item) => {
-    return !item.is_standard && item.created_by === currentUser?.email;
+    if (item.is_standard) return false;
+    // Admins can delete any custom filter, others can only delete their own
+    if (currentUser?.role === "admin") return true;
+    return item.created_by === currentUser?.email;
   };
 
   return (
