@@ -45,7 +45,6 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 import { WorkOrder } from "@/entities/WorkOrder";
-import { User as UserEntity } from "@/entities/User";
 import { UploadFile } from "@/integrations/Core";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -197,7 +196,7 @@ export default function WorkOrderCard({
 
   const loadUser = async () => {
     try {
-      const user = await UserEntity.me();
+      const user = await base44.auth.me();
       setCurrentUser(user);
     } catch (error) {
       console.error("Error loading user:", error);
