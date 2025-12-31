@@ -77,17 +77,19 @@ export default function SalesPipeline() {
               />
             </div>
 
-            <Select value={filterStatus} onValueChange={(value) => {
-              if (value === "manage_filters") {
-                setShowCustomFilterDialog(true);
-              } else {
-                setFilterStatus(value);
-              }
-            }}>
-              <SelectTrigger className="w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Information Filters" />
-              </SelectTrigger>
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Information Filters</span>
+              <Select value={filterStatus} onValueChange={(value) => {
+                if (value === "manage_filters") {
+                  setShowCustomFilterDialog(true);
+                } else {
+                  setFilterStatus(value);
+                }
+              }}>
+                <SelectTrigger className="w-48">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Select filter" />
+                </SelectTrigger>
               <SelectContent>
                 {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
                 {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
@@ -110,8 +112,11 @@ export default function SalesPipeline() {
                 </SelectItem>
               </SelectContent>
             </Select>
+            </div>
 
-            <Select 
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Column Filters</span>
+              <Select 
               value={activeColumnPreset?.id || ""} 
               onValueChange={(value) => {
                 if (value === "manage_columns") {
@@ -144,6 +149,7 @@ export default function SalesPipeline() {
                 </SelectItem>
               </SelectContent>
             </Select>
+            </div>
             
             {isRegistered && (
               <Button 
