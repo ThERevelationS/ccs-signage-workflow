@@ -451,7 +451,7 @@ export default function Financials() {
               customFilters={activeFilters.filter(f => f.type === "filter")}
               startMonth={startMonth}
               filterPM={filterPM}
-              filterClient={filterClient}
+              filterEstimator={filterEstimator}
             />
           </div>
         ) : (
