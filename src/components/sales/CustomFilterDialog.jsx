@@ -671,14 +671,14 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                 <div>
                   <Label className="mb-2 block font-bold text-base">Preview - Horizontal Layout</Label>
-                  <div className="border-2 border-blue-300 rounded-lg bg-blue-50/30 overflow-hidden">
-                    <p className="text-xs text-gray-600 p-2 italic border-b border-blue-200">Use arrows in headers to reorder columns.</p>
-                    <div className="overflow-x-auto" style={{ maxHeight: '300px' }}>
-                      <table className="border-collapse" style={{ fontSize: '11px', minWidth: 'max-content' }}>
-                        <thead className="bg-gray-100 sticky top-0">
+                  <div className="border-2 border-blue-300 rounded-lg bg-blue-50/30 p-2">
+                    <p className="text-xs text-gray-600 mb-2 italic">Use arrows in headers to reorder columns.</p>
+                    <div className="overflow-x-auto" style={{ maxWidth: '100%' }}>
+                      <table className="border-collapse" style={{ fontSize: '11px' }}>
+                        <thead className="bg-gray-100">
                           <tr className="border-b">
                             {columnSettings.filter(c => c.visible).map((column, index) => (
-                              <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap" style={{ minWidth: '80px' }}>
+                              <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap">
                                 <div className="flex items-center gap-1">
                                   <span>{column.label}</span>
                                   <div className="flex items-center">
@@ -700,7 +700,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 </div>
                               </th>
                             ))}
-                            <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap" style={{ minWidth: '60px' }}>Actions</th>
+                            <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
