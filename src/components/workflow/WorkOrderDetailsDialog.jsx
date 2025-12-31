@@ -63,6 +63,7 @@ import EmbeddedDriveFiles from "./EmbeddedDriveFiles";
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
+import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
 
 const WorkOrder = base44.entities.WorkOrder;
 
