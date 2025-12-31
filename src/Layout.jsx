@@ -378,15 +378,6 @@ function LayoutContent({ children }) {
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
 
-              {/* Time Clock Link - Centered Above Nav */}
-              <Link
-                to={createPageUrl("TimeClock")}
-                className="hidden lg:flex px-4 py-2 rounded-xl transition-all duration-300 items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
-              >
-                <Home className="w-4 h-4 text-green-600" />
-                <span className="font-bold text-sm text-green-700">Time Clock</span>
-              </Link>
-
               {/* Desktop Navigation Links */}
               <div className="hidden lg:flex items-center gap-2 flex-wrap flex-1 ml-4">
                 {navigationItems.map((item) => {
@@ -410,6 +401,15 @@ function LayoutContent({ children }) {
                   );
                 })}
               </div>
+
+              {/* Time Clock Link - Above Search */}
+              <Link
+                to={createPageUrl("TimeClock")}
+                className="hidden lg:flex px-4 py-2 rounded-xl transition-all duration-300 items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+              >
+                <Home className="w-4 h-4 text-green-600" />
+                <span className="font-bold text-sm text-green-700">Time Clock</span>
+              </Link>
 
               {/* Global Search */}
               <div className="hidden lg:flex">
