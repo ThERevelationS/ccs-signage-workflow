@@ -13,6 +13,7 @@ import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
 import SalesPipeline from './pages/SalesPipeline';
+import Financials from './pages/Financials';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
     "SalesPipeline": SalesPipeline,
+    "Financials": Financials,
 }
 
 export const pagesConfig = {
