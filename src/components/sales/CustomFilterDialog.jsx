@@ -645,105 +645,91 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div>
-                  <Label className="mb-2 block">Column Settings - Toggle visibility and reorder</Label>
+                  <Label className="mb-2 block">Column Settings - Toggle visibility</Label>
                   
-                  <div className="grid grid-cols-6 gap-1 mb-4">
-                    {columnSettings.map((column, index) => (
-                      <div 
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {columnSettings.map((column) => (
+                      <label 
                         key={column.id} 
-                        className={`px-1.5 py-1 rounded border flex items-center gap-1 ${
-                          column.visible ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                        className={`px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer text-[10px] ${
+                          column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={column.visible}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-3 h-3 flex-shrink-0"
+                          className="w-2.5 h-2.5"
                         />
-                        <span className={`text-[10px] truncate flex-1 ${column.visible ? "font-medium text-blue-800" : "text-gray-400"}`} title={column.label}>
+                        <span className={column.visible ? "font-medium" : ""}>
                           {column.label}
                         </span>
-                        <div className="flex flex-shrink-0">
-                          <button
-                            onClick={() => moveColumn(index, "up")}
-                            disabled={index === 0}
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                          </button>
-                          <button
-                            onClick={() => moveColumn(index, "down")}
-                            disabled={index === columnSettings.length - 1}
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                        </div>
-                      </div>
+                      </label>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <Label className="mb-3 block font-bold text-base">Preview - Horizontal Layout (Matches Main Page)</Label>
-                  <div className="overflow-x-auto border-2 border-blue-300 rounded-lg p-2 bg-blue-50/30" style={{ maxHeight: '500px' }}>
-                    <p className="text-xs text-gray-600 mb-2 italic">This preview matches the exact layout of the main sales pipeline page. Click column headers to reorder.</p>
-                    <table className="w-full border-collapse" style={{ fontSize: '11px', tableLayout: 'auto' }}>
-                      <thead className="bg-gray-100 sticky top-0">
-                        <tr className="border-b">
-                          {columnSettings.filter(c => c.visible).map((column, index) => (
-                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>
-                              <div className="flex items-center justify-between gap-1">
-                                <span>{column.label}</span>
-                                <div className="flex items-center gap-0.5">
-                                  <button 
-                                    onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
-                                    disabled={index === 0}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                                  >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                  </button>
-                                  <button 
-                                    onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
-                                    disabled={index === columnSettings.filter(c => c.visible).length - 1}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                                  >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                  </button>
+                  <Label className="mb-2 block font-bold text-base">Preview - Horizontal Layout</Label>
+                  <div className="border-2 border-blue-300 rounded-lg bg-blue-50/30 overflow-hidden">
+                    <p className="text-xs text-gray-600 p-2 italic border-b border-blue-200">Use arrows in headers to reorder columns.</p>
+                    <div className="overflow-x-auto" style={{ maxHeight: '300px' }}>
+                      <table className="border-collapse" style={{ fontSize: '11px', minWidth: 'max-content' }}>
+                        <thead className="bg-gray-100 sticky top-0">
+                          <tr className="border-b">
+                            {columnSettings.filter(c => c.visible).map((column, index) => (
+                              <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap" style={{ minWidth: '80px' }}>
+                                <div className="flex items-center gap-1">
+                                  <span>{column.label}</span>
+                                  <div className="flex items-center">
+                                    <button 
+                                      onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
+                                      disabled={index === 0}
+                                      className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    </button>
+                                    <button 
+                                      onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
+                                      disabled={index === columnSettings.filter(c => c.visible).length - 1}
+                                      className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            </th>
-                          ))}
-                          <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="border-b hover:bg-gray-50 bg-white">
-                          {columnSettings.filter(c => c.visible).map(column => (
-                            <td key={column.id} className="px-2 py-1.5 border-r text-gray-700">
-                              {column.id === "client_name" ? "Test" : 
-                               column.id === "lead_source" ? "Website" :
-                               column.id === "designer" ? "John" :
-                               column.id === "project_manager" ? "Sarah" :
-                               column.id === "estimator" ? "Mike" :
-                               column.id === "current_task_assigned_to" ? "Carl" :
-                               column.id === "current_task_description" ? "Follow up call" :
-                               column.id === "title" ? "Sample project notes" :
-                               column.id === "project_type" ? "Sign" :
-                               column.id === "est_inv_at" ? "Location A" :
-                               column.id === "permit_number" ? "P-12345" :
-                               column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
-                               column.id.includes("amount") ? "$5,000" : 
-                               column.id.includes("days") ? "7" : 
-                               column.id === "probability" ? "75%" :
-                               "-"}
-                            </td>
-                          ))}
-                          <td className="px-2 py-1.5 text-gray-500">•••</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                              </th>
+                            ))}
+                            <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap" style={{ minWidth: '60px' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b hover:bg-gray-50 bg-white">
+                            {columnSettings.filter(c => c.visible).map(column => (
+                              <td key={column.id} className="px-2 py-1.5 border-r text-gray-700 whitespace-nowrap">
+                                {column.id === "client_name" ? "Test" : 
+                                 column.id === "lead_source" ? "Website" :
+                                 column.id === "designer" ? "John" :
+                                 column.id === "project_manager" ? "Sarah" :
+                                 column.id === "estimator" ? "Mike" :
+                                 column.id === "current_task_assigned_to" ? "Carl" :
+                                 column.id === "current_task_description" ? "Follow up call" :
+                                 column.id === "title" ? "Sample project notes" :
+                                 column.id === "project_type" ? "Sign" :
+                                 column.id === "est_inv_at" ? "Location A" :
+                                 column.id === "permit_number" ? "P-12345" :
+                                 column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
+                                 column.id.includes("amount") ? "$5,000" : 
+                                 column.id.includes("days") ? "7" : 
+                                 column.id === "probability" ? "75%" :
+                                 "-"}
+                              </td>
+                            ))}
+                            <td className="px-2 py-1.5 text-gray-500 whitespace-nowrap">•••</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
 
