@@ -52,7 +52,7 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
-import { WorkOrder } from "@/entities/WorkOrder";
+const WorkOrder = base44.entities.WorkOrder;
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
