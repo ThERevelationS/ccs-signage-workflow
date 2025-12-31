@@ -52,7 +52,6 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
-const WorkOrder = base44.entities.WorkOrder;
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { UploadFile } from "@/integrations/Core";
@@ -64,6 +63,8 @@ import EmbeddedDriveFiles from "./EmbeddedDriveFiles";
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
+
+const WorkOrder = base44.entities.WorkOrder;
 
 const stageColors = {
   estimating: "#FFF9C4",
