@@ -151,7 +151,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
     if (filterPM !== "all" && wo.project_manager !== filterPM) return false;
     
     // Estimator filter
-    if (filterEstimator !== "all" && wo.estimator !== filterEstimator) return false;
+    if (filterEstimator && filterEstimator !== "all" && wo.estimator !== filterEstimator) return false;
     
     return true;
   });
