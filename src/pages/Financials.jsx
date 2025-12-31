@@ -32,6 +32,7 @@ export default function Financials() {
   });
   const [activeTab, setActiveTab] = useState("spreadsheet");
   const [reportPeriod, setReportPeriod] = useState("monthly");
+  const [monthCount, setMonthCount] = useState(4);
   
   // Advanced filters
   const [dateRangeStart, setDateRangeStart] = useState(null);
@@ -204,98 +205,86 @@ export default function Financials() {
             <div className="flex flex-col">
               <span className="text-xs font-medium text-gray-500 mb-1">Date Range</span>
               <div className="flex items-center gap-1">
-                {activeTab === "spreadsheet" ? (
-                  <>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigateMonths(-1)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateMonths(-1)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-2 min-w-[140px]">
+                      <CalendarIcon className="w-3 h-3" />
+                      {format(startMonth, "MMM yy")} - {format(new Date(startMonth.getFullYear(), startMonth.getMonth() + monthCount - 1), "MMM yy")}
                     </Button>
-                    <div className="text-sm font-medium px-2 min-w-[140px] text-center">
-                      {getMonthLabel(0)} - {getMonthLabel(3)}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-500">Start Month</label>
+                        <Input
+                          type="month"
+                          value={format(startMonth, "yyyy-MM")}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const [year, month] = e.target.value.split('-').map(Number);
+                              setStartMonth(new Date(year, month - 1, 1));
+                            }
+                          }}
+                          className="h-8 mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500">End Month</label>
+                        <Input
+                          type="month"
+                          value={format(new Date(startMonth.getFullYear(), startMonth.getMonth() + monthCount - 1), "yyyy-MM")}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const [year, month] = e.target.value.split('-').map(Number);
+                              const endDate = new Date(year, month - 1, 1);
+                              const months = (endDate.getFullYear() - startMonth.getFullYear()) * 12 + (endDate.getMonth() - startMonth.getMonth()) + 1;
+                              setMonthCount(Math.max(1, Math.min(24, months)));
+                            }
+                          }}
+                          className="h-8 mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500"># of Months: {monthCount}</label>
+                        <Input
+                          type="range"
+                          min="1"
+                          max="24"
+                          value={monthCount}
+                          onChange={(e) => setMonthCount(parseInt(e.target.value))}
+                          className="h-8 mt-1"
+                        />
+                      </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigateMonths(1)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-8 gap-2">
-                          <CalendarIcon className="w-3 h-3" />
-                          {dateRangeStart ? format(dateRangeStart, "M/d/yy") : "Start"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3">
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Enter Date</label>
-                            <Input
-                              type="date"
-                              value={dateRangeStart ? format(dateRangeStart, "yyyy-MM-dd") : ""}
-                              onChange={(e) => setDateRangeStart(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
-                              className="h-8 mt-1"
-                            />
-                          </div>
-                          <div className="border-t pt-2">
-                            <Calendar
-                              mode="single"
-                              selected={dateRangeStart}
-                              onSelect={setDateRangeStart}
-                            />
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <span className="text-xs text-gray-400">to</span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-8 gap-2">
-                          <CalendarIcon className="w-3 h-3" />
-                          {dateRangeEnd ? format(dateRangeEnd, "M/d/yy") : "End"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3">
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-xs font-medium text-gray-500">Enter Date</label>
-                            <Input
-                              type="date"
-                              value={dateRangeEnd ? format(dateRangeEnd, "yyyy-MM-dd") : ""}
-                              onChange={(e) => setDateRangeEnd(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
-                              className="h-8 mt-1"
-                            />
-                          </div>
-                          <div className="border-t pt-2">
-                            <Calendar
-                              mode="single"
-                              selected={dateRangeEnd}
-                              onSelect={setDateRangeEnd}
-                            />
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                      <SelectTrigger className="w-28 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="quarterly">Quarterly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </>
+                  </PopoverContent>
+                </Popover>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateMonths(1)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                {activeTab === "dashboard" && (
+                  <Select value={reportPeriod} onValueChange={setReportPeriod}>
+                    <SelectTrigger className="w-28 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
             </div>
@@ -450,6 +439,7 @@ export default function Financials() {
               activeColumnPreset={activeColumnPreset}
               customFilters={activeFilters.filter(f => f.type === "filter")}
               startMonth={startMonth}
+              monthCount={monthCount}
               filterPM={filterPM}
               filterEstimator={filterEstimator}
             />

@@ -27,6 +27,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
   activeColumnPreset = null, 
   customFilters = [],
   startMonth = new Date(),
+  monthCount = 4,
   filterPM = "all",
   filterEstimator = "all"
 }, ref) => {
@@ -159,19 +160,19 @@ const FinancialsSpreadsheet = React.forwardRef(({
   // Generate month columns
   const monthColumns = useMemo(() => {
     const months = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < monthCount; i++) {
       const date = new Date(startMonth);
       date.setMonth(date.getMonth() + i);
       months.push({
         key: `month_${i}`,
-        label: date.toLocaleDateString('en-US', { month: 'short' }),
+        label: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
         year: date.getFullYear(),
         month: date.getMonth(),
         fullLabel: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       });
     }
     return months;
-  }, [startMonth]);
+  }, [startMonth, monthCount]);
 
   // Calculate which month column an amount should go in
   const getMonthForInstallDate = (installDate) => {
