@@ -86,7 +86,7 @@ export default function SalesPipeline() {
             }}>
               <SelectTrigger className="w-48">
                 <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
+                <SelectValue placeholder="Information Filters" />
               </SelectTrigger>
               <SelectContent>
                 {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
@@ -105,7 +105,7 @@ export default function SalesPipeline() {
                 <SelectItem value="manage_filters">
                   <div className="flex items-center gap-2 font-bold">
                     <Settings className="w-4 h-4" />
-                    Manage Custom Filters
+                    Manage Custom Information Filters
                   </div>
                 </SelectItem>
               </SelectContent>
