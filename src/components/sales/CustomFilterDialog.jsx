@@ -11,16 +11,35 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format } from "date-fns";
 
 const FILTER_FIELDS = [
-  { value: "client_name", label: "Customer" },
-  { value: "lead_source", label: "Source" },
-  { value: "current_task_assigned_to", label: "Task Assigned To" },
-  { value: "designer", label: "Designer" },
-  { value: "project_manager", label: "Project Manager" },
-  { value: "estimator", label: "Estimator" },
-  { value: "sales_status", label: "Status" },
-  { value: "project_type", label: "Project Type" },
-  { value: "estimate_amount", label: "Estimate Amount" },
-  { value: "probability", label: "Probability" }
+  { value: "client_name", label: "Customer", type: "text" },
+  { value: "lead_source", label: "Source", type: "text" },
+  { value: "current_task_assigned_to", label: "Task Assigned To", type: "user", role: "Task Assigned" },
+  { value: "designer", label: "Designer", type: "user", role: "Designer" },
+  { value: "project_manager", label: "Project Manager", type: "user", role: "PM" },
+  { value: "estimator", label: "Estimator", type: "user", role: "Estimator" },
+  { value: "sales_status", label: "Status", type: "select", options: ["lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
+  { value: "project_type", label: "Project Type", type: "text" },
+  { value: "estimate_amount", label: "Estimate Amount", type: "number" },
+  { value: "probability", label: "Probability", type: "number" },
+  { value: "title", label: "Notes", type: "text" },
+  { value: "current_task_description", label: "Task Description", type: "text" },
+  { value: "current_task_deadline", label: "Task Deadline", type: "date" },
+  { value: "date_initial_contact", label: "Initial Contact Date", type: "date" },
+  { value: "site_survey_date", label: "Site Survey Date", type: "date" },
+  { value: "date_estimate_sent", label: "Estimate Sent Date", type: "date" },
+  { value: "date_order_created", label: "Order Created Date", type: "date" },
+  { value: "project_install_date", label: "Install Date", type: "date" },
+  { value: "permit_submitted_date", label: "Permit Submitted Date", type: "date" },
+  { value: "permit_receipt_confirmed_date", label: "Permit Confirmed Date", type: "date" },
+  { value: "permit_number", label: "Permit Number", type: "text" },
+  { value: "permit_approved_date", label: "Permit Approved Date", type: "date" },
+  { value: "quote_date", label: "Quote Date", type: "date" },
+  { value: "follow_up_date", label: "Follow Up Date", type: "date" },
+  { value: "close_date", label: "Close Date", type: "date" },
+  { value: "start_date", label: "Start Date", type: "date" },
+  { value: "est_inv_at", label: "Est/Inv Location", type: "text" },
+  { value: "corbridge_invoice_number", label: "Corbridge Invoice #", type: "text" },
+  { value: "corbridge_link", label: "Corbridge Link", type: "text" }
 ];
 
 const OPERATORS = [
@@ -86,6 +105,8 @@ const STANDARD_COLUMN_PRESETS = [
   })) }
 ];
 
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
+
 export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }) {
   const { currentUser } = useAuth();
   const [filters, setFilters] = useState([]);
@@ -97,9 +118,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     loadData();
+    loadUsers();
   }, []);
 
   const loadData = async () => {
@@ -107,6 +130,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     const all = await SalesFilter.list();
     setFilters(all.filter(f => f.type === "filter"));
     setColumnPresets(all.filter(f => f.type === "column_preset"));
+  };
+
+  const loadUsers = async () => {
+    const usersData = await AuthorizedEmail.list();
+    setUsers(usersData);
+  };
+
+  const getUsersForRole = (role) => {
+    return users.filter(u => u.sales_roles?.includes(role));
   };
 
   const addCondition = () => {
@@ -255,7 +287,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl font-bold">
-                {activeTab === "filters" ? "Manage Custom Filters" : "Manage Custom Column Filters"}
+                {activeTab === "filters" ? "Manage Custom Information Filters" : "Manage Custom Column Filters"}
               </DialogTitle>
               <Button onClick={onClose} className="clay-button border-none">
                 <Save className="w-4 h-4 mr-2" />
@@ -271,7 +303,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
               variant={activeSubTab === "pool" ? "default" : "outline"}
               onClick={() => setActiveSubTab("pool")}
             >
-              {activeTab === "filters" ? "Filter Pool" : "Preset Pool"}
+              {activeTab === "filters" ? "Information Filter Pool" : "Preset Pool"}
             </Button>
             <Button
               size="sm"
@@ -338,7 +370,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
               <div>
                 <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Standard {activeTab === "filters" ? "Filters" : "Column Presets"}
+                  Standard {activeTab === "filters" ? "Information Filters" : "Column Presets"}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {(activeTab === "filters" ? STANDARD_FILTERS : STANDARD_COLUMN_PRESETS).map(item => (
@@ -381,10 +413,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
               {/* Custom Items Pool - Compact */}
               <div>
                 <h3 className="font-bold text-sm mb-2">
-                  Custom {activeTab === "filters" ? "Filters" : "Column Presets"}
+                  Custom {activeTab === "filters" ? "Information Filters" : "Column Presets"}
                 </h3>
                 {(activeTab === "filters" ? filters : columnPresets).length === 0 ? (
-                  <p className="text-gray-500 text-xs">No custom {activeTab === "filters" ? "filters" : "presets"} yet. Create one!</p>
+                  <p className="text-gray-500 text-xs">No custom {activeTab === "filters" ? "information filters" : "presets"} yet. Create one!</p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {(activeTab === "filters" ? filters : columnPresets).map(item => (
@@ -451,7 +483,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
             <div className="space-y-4">
               <div className="clay-card p-4 space-y-4">
                 <h3 className="font-bold text-lg">
-                  {editingItem ? "Edit Filter" : "Create New Filter"}
+                  {editingItem ? "Edit Information Filter" : "Create New Information Filter"}
                 </h3>
 
                 <div>
@@ -466,59 +498,105 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                 <div>
                   <Label>Filter Conditions</Label>
-                  {filterConditions.map((condition, index) => (
-                    <div key={index} className="flex gap-2 mt-2">
-                      <Select
-                        value={condition.field}
-                        onValueChange={(value) => updateCondition(index, "field", value)}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {FILTER_FIELDS.map(field => (
-                            <SelectItem key={field.value} value={field.value}>
-                              {field.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {filterConditions.map((condition, index) => {
+                    const selectedField = FILTER_FIELDS.find(f => f.value === condition.field);
+                    const isUserField = selectedField?.type === "user";
+                    const isSelectField = selectedField?.type === "select";
+                    
+                    return (
+                      <div key={index} className="flex gap-2 mt-2">
+                        <Select
+                          value={condition.field}
+                          onValueChange={(value) => {
+                            updateCondition(index, "field", value);
+                            updateCondition(index, "value", ""); // Reset value when field changes
+                          }}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select field" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FILTER_FIELDS.map(field => (
+                              <SelectItem key={field.value} value={field.value}>
+                                {field.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
 
-                      <Select
-                        value={condition.operator}
-                        onValueChange={(value) => updateCondition(index, "operator", value)}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OPERATORS.map(op => (
-                            <SelectItem key={op.value} value={op.value}>
-                              {op.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <Select
+                          value={condition.operator}
+                          onValueChange={(value) => updateCondition(index, "operator", value)}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {OPERATORS.map(op => (
+                              <SelectItem key={op.value} value={op.value}>
+                                {op.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
 
-                      {condition.operator !== "empty" && condition.operator !== "not_empty" && (
-                        <Input
-                          value={condition.value}
-                          onChange={(e) => updateCondition(index, "value", e.target.value)}
-                          placeholder="Value"
-                          className="flex-1"
-                        />
-                      )}
+                        {condition.operator !== "empty" && condition.operator !== "not_empty" && (
+                          <>
+                            {isUserField ? (
+                              <Select
+                                value={condition.value}
+                                onValueChange={(value) => updateCondition(index, "value", value)}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue placeholder="Select user" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getUsersForRole(selectedField.role).map(u => (
+                                    <SelectItem key={u.email} value={u.full_name}>
+                                      {u.full_name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : isSelectField ? (
+                              <Select
+                                value={condition.value}
+                                onValueChange={(value) => updateCondition(index, "value", value)}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue placeholder="Select value" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {selectedField.options.map(opt => (
+                                    <SelectItem key={opt} value={opt}>
+                                      {opt.charAt(0).toUpperCase() + opt.slice(1).replace(/_/g, ' ')}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={condition.value}
+                                onChange={(e) => updateCondition(index, "value", e.target.value)}
+                                placeholder="Value"
+                                className="flex-1"
+                                type={selectedField?.type === "number" ? "number" : "text"}
+                              />
+                            )}
+                          </>
+                        )}
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeCondition(index)}
-                        disabled={filterConditions.length === 1}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
-                    </div>
-                  ))}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCondition(index)}
+                          disabled={filterConditions.length === 1}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                   
                   <Button
                     variant="outline"
@@ -534,7 +612,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 <div className="flex gap-2">
                   <Button onClick={saveItem} className="clay-button border-none">
                     <Save className="w-4 h-4 mr-2" />
-                    {editingItem ? "Update Filter" : "Save Filter"}
+                    {editingItem ? "Update Information Filter" : "Save Information Filter"}
                   </Button>
                   <Button variant="outline" onClick={resetForm}>
                     Cancel
@@ -684,7 +762,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {activeTab === "filters" ? "Filter" : "Preset"}?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {activeTab === "filters" ? "Information Filter" : "Preset"}?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
             </AlertDialogDescription>
