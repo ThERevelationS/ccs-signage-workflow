@@ -147,6 +147,12 @@ const FinancialsSpreadsheet = React.forwardRef(({
       if (!searchable.includes(search)) return false;
     }
     
+    // Project Manager filter
+    if (filterPM !== "all" && wo.project_manager !== filterPM) return false;
+    
+    // Client filter
+    if (filterClient && wo.client_name !== filterClient) return false;
+    
     return true;
   });
 
