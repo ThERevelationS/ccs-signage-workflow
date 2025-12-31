@@ -37,7 +37,7 @@ export default function Financials() {
   const [dateRangeStart, setDateRangeStart] = useState(null);
   const [dateRangeEnd, setDateRangeEnd] = useState(null);
   const [filterPM, setFilterPM] = useState("all");
-  const [filterClient, setFilterClient] = useState("");
+  const [filterEstimator, setFilterEstimator] = useState("all");
   
   // Data
   const [workOrders, setWorkOrders] = useState([]);
@@ -100,14 +100,10 @@ export default function Financials() {
     return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
   };
 
-  // Get unique clients for filter
-  const uniqueClients = useMemo(() => {
-    const clients = new Set();
-    workOrders.forEach(wo => {
-      if (wo.client_name) clients.add(wo.client_name);
-    });
-    return Array.from(clients).sort();
-  }, [workOrders]);
+  // Get unique estimators for filter
+  const estimators = useMemo(() => {
+    return users.filter(u => u.sales_roles?.includes("Estimator"));
+  }, [users]);
 
   // Get PMs with sales roles
   const projectManagers = useMemo(() => {
@@ -153,23 +149,23 @@ export default function Financials() {
       // Project Manager filter
       if (filterPM !== "all" && wo.project_manager !== filterPM) return false;
       
-      // Client filter
-      if (filterClient && wo.client_name !== filterClient) return false;
+      // Estimator filter
+      if (filterEstimator !== "all" && wo.estimator !== filterEstimator) return false;
       
       return true;
     });
-  }, [workOrders, filterStatus, searchTerm, filterPM, filterClient, activeFilters]);
+  }, [workOrders, filterStatus, searchTerm, filterPM, filterEstimator, activeFilters]);
 
   const clearFilters = () => {
     setDateRangeStart(null);
     setDateRangeEnd(null);
     setFilterPM("all");
-    setFilterClient("");
+    setFilterEstimator("all");
     setSearchTerm("");
     setFilterStatus("all");
   };
 
-  const hasActiveFilters = dateRangeStart || dateRangeEnd || filterPM !== "all" || filterClient || searchTerm || filterStatus !== "all";
+  const hasActiveFilters = dateRangeStart || dateRangeEnd || filterPM !== "all" || filterEstimator !== "all" || searchTerm || filterStatus !== "all";
 
   return (
     <div className="min-h-screen p-4 sm:p-6">
@@ -204,84 +200,107 @@ export default function Financials() {
         {/* Filters Row */}
         <div className="clay-card p-3 mb-4">
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Month Navigation (Spreadsheet only) */}
-            {activeTab === "spreadsheet" && (
+            {/* Date Range Section */}
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Date Range</span>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateMonths(-1)}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="text-sm font-medium px-2 min-w-[140px] text-center">
-                  {getMonthLabel(0)} - {getMonthLabel(3)}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateMonths(1)}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                {activeTab === "spreadsheet" ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigateMonths(-1)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <div className="text-sm font-medium px-2 min-w-[140px] text-center">
+                      {getMonthLabel(0)} - {getMonthLabel(3)}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigateMonths(1)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 gap-2">
+                          <CalendarIcon className="w-3 h-3" />
+                          {dateRangeStart ? format(dateRangeStart, "M/d/yy") : "Start"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3">
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Enter Date</label>
+                            <Input
+                              type="date"
+                              value={dateRangeStart ? format(dateRangeStart, "yyyy-MM-dd") : ""}
+                              onChange={(e) => setDateRangeStart(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
+                              className="h-8 mt-1"
+                            />
+                          </div>
+                          <div className="border-t pt-2">
+                            <Calendar
+                              mode="single"
+                              selected={dateRangeStart}
+                              onSelect={setDateRangeStart}
+                            />
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-xs text-gray-400">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 gap-2">
+                          <CalendarIcon className="w-3 h-3" />
+                          {dateRangeEnd ? format(dateRangeEnd, "M/d/yy") : "End"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3">
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Enter Date</label>
+                            <Input
+                              type="date"
+                              value={dateRangeEnd ? format(dateRangeEnd, "yyyy-MM-dd") : ""}
+                              onChange={(e) => setDateRangeEnd(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
+                              className="h-8 mt-1"
+                            />
+                          </div>
+                          <div className="border-t pt-2">
+                            <Calendar
+                              mode="single"
+                              selected={dateRangeEnd}
+                              onSelect={setDateRangeEnd}
+                            />
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Select value={reportPeriod} onValueChange={setReportPeriod}>
+                      <SelectTrigger className="w-28 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Date Range Filters (Dashboard only) */}
-            {activeTab === "dashboard" && (
-              <>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">From:</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-2">
-                        <CalendarIcon className="w-3 h-3" />
-                        {dateRangeStart ? format(dateRangeStart, "M/d/yy") : "Start"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={dateRangeStart}
-                        onSelect={setDateRangeStart}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">To:</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-2">
-                        <CalendarIcon className="w-3 h-3" />
-                        {dateRangeEnd ? format(dateRangeEnd, "M/d/yy") : "End"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={dateRangeEnd}
-                        onSelect={setDateRangeEnd}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                  <SelectTrigger className="w-32 h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-
-            <div className="h-6 w-px bg-gray-300" />
+            <div className="h-10 w-px bg-gray-300" />
 
             {/* Search */}
             <div className="relative">
@@ -307,89 +326,95 @@ export default function Financials() {
               </SelectContent>
             </Select>
 
-            {/* Client Filter */}
-            <Select value={filterClient || "all"} onValueChange={(v) => setFilterClient(v === "all" ? "" : v)}>
+            {/* Estimator Filter */}
+            <Select value={filterEstimator} onValueChange={setFilterEstimator}>
               <SelectTrigger className="w-40 h-8">
-                <SelectValue placeholder="All Clients" />
+                <SelectValue placeholder="Estimates Entered By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {uniqueClients.map(client => (
-                  <SelectItem key={client} value={client}>{client}</SelectItem>
+                <SelectItem value="all">All Estimators</SelectItem>
+                {estimators.map(est => (
+                  <SelectItem key={est.email} value={est.full_name}>{est.full_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Information Filters */}
-            <Select value={filterStatus} onValueChange={(value) => {
-              if (value === "manage_filters") {
-                setShowCustomFilterDialog(true);
-              } else {
-                setFilterStatus(value);
-              }
-            }}>
-              <SelectTrigger className="w-40 h-8">
-                <Filter className="w-3 h-3 mr-1" />
-                <SelectValue placeholder="Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
-                {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
-                {isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
-                {isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
-                {isStandardFilterEnabled("won") && <SelectItem value="won">Won</SelectItem>}
-                {isStandardFilterEnabled("lost") && <SelectItem value="lost">Lost</SelectItem>}
-                {isStandardFilterEnabled("on_hold") && <SelectItem value="on_hold">On Hold</SelectItem>}
-                {activeFilters.filter(f => f.type === "filter").map(filter => (
-                  <SelectItem key={filter.id} value={`custom_${filter.id}`}>
-                    {filter.name}
-                  </SelectItem>
-                ))}
-                <div className="h-px bg-gray-300 my-1" />
-                <SelectItem value="manage_filters">
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-3 h-3" />
-                    Manage Filters
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Column Filters (Spreadsheet only) */}
-            {activeTab === "spreadsheet" && (
-              <Select 
-                value={activeColumnPreset?.id || ""} 
-                onValueChange={(value) => {
-                  if (value === "manage_columns") {
-                    setShowColumnFilterDialog(true);
-                  } else if (value) {
-                    const preset = activeFilters.find(f => f.id === value);
-                    setActiveColumnPreset(preset || null);
-                  } else {
-                    setActiveColumnPreset(null);
-                  }
-                }}
-              >
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Information Filters</span>
+              <Select value={filterStatus} onValueChange={(value) => {
+                if (value === "manage_filters") {
+                  setShowCustomFilterDialog(true);
+                } else {
+                  setFilterStatus(value);
+                }
+              }}>
                 <SelectTrigger className="w-40 h-8">
-                  <Settings className="w-3 h-3 mr-1" />
-                  <SelectValue placeholder="Columns" />
+                  <Filter className="w-3 h-3 mr-1" />
+                  <SelectValue placeholder="Filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>Default Columns</SelectItem>
-                  {activeFilters.filter(f => f.type === "column_preset").map(preset => (
-                    <SelectItem key={preset.id} value={preset.id}>
-                      {preset.name}
+                  {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
+                  {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
+                  {isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
+                  {isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
+                  {isStandardFilterEnabled("won") && <SelectItem value="won">Won</SelectItem>}
+                  {isStandardFilterEnabled("lost") && <SelectItem value="lost">Lost</SelectItem>}
+                  {isStandardFilterEnabled("on_hold") && <SelectItem value="on_hold">On Hold</SelectItem>}
+                  {activeFilters.filter(f => f.type === "filter").map(filter => (
+                    <SelectItem key={filter.id} value={`custom_${filter.id}`}>
+                      {filter.name}
                     </SelectItem>
                   ))}
                   <div className="h-px bg-gray-300 my-1" />
-                  <SelectItem value="manage_columns">
+                  <SelectItem value="manage_filters">
                     <div className="flex items-center gap-2">
                       <Settings className="w-3 h-3" />
-                      Manage Columns
+                      Manage Filters
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Column Filters (Spreadsheet only) */}
+            {activeTab === "spreadsheet" && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-gray-500 mb-1">Column Filters</span>
+                <Select 
+                  value={activeColumnPreset?.id || ""} 
+                  onValueChange={(value) => {
+                    if (value === "manage_columns") {
+                      setShowColumnFilterDialog(true);
+                    } else if (value) {
+                      const preset = activeFilters.find(f => f.id === value);
+                      setActiveColumnPreset(preset || null);
+                    } else {
+                      setActiveColumnPreset(null);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-40 h-8">
+                    <Settings className="w-3 h-3 mr-1" />
+                    <SelectValue placeholder="Columns" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Default Columns</SelectItem>
+                    {activeFilters.filter(f => f.type === "column_preset").map(preset => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </SelectItem>
+                    ))}
+                    <div className="h-px bg-gray-300 my-1" />
+                    <SelectItem value="manage_columns">
+                      <div className="flex items-center gap-2">
+                        <Settings className="w-3 h-3" />
+                        Manage Columns
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {/* Clear Filters */}
