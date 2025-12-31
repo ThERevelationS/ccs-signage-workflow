@@ -28,7 +28,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
   customFilters = [],
   startMonth = new Date(),
   filterPM = "all",
-  filterClient = ""
+  filterEstimator = "all"
 }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
@@ -150,8 +150,8 @@ const FinancialsSpreadsheet = React.forwardRef(({
     // Project Manager filter
     if (filterPM !== "all" && wo.project_manager !== filterPM) return false;
     
-    // Client filter
-    if (filterClient && wo.client_name !== filterClient) return false;
+    // Estimator filter
+    if (filterEstimator !== "all" && wo.estimator !== filterEstimator) return false;
     
     return true;
   });
