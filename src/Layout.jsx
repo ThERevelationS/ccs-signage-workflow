@@ -402,17 +402,15 @@ function LayoutContent({ children }) {
                 })}
               </div>
 
-              {/* Time Clock Link - Above Search */}
-              <Link
-                to={createPageUrl("TimeClock")}
-                className="hidden lg:flex px-4 py-2 rounded-xl transition-all duration-300 items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
-              >
-                <Home className="w-4 h-4 text-green-600" />
-                <span className="font-bold text-sm text-green-700">Time Clock</span>
-              </Link>
-
-              {/* Global Search */}
-              <div className="hidden lg:flex">
+              {/* Time Clock + Search stacked vertically */}
+              <div className="hidden lg:flex flex-col items-center gap-2">
+                <Link
+                  to={createPageUrl("TimeClock")}
+                  className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                >
+                  <Home className="w-4 h-4 text-green-600" />
+                  <span className="font-bold text-sm text-green-700">Time Clock</span>
+                </Link>
                 <GlobalSearch />
               </div>
             </div>
