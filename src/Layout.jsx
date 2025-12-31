@@ -28,6 +28,7 @@ import GlobalSearch from "@/components/workflow/GlobalSearch";
 const navigationItems = [
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
   { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, color: "#B2DFDB" },
+  { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D4E9F7" },
   { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#FFD6E8" },
   { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, color: "#FFE4D6" },
   { title: "Design", url: createPageUrl("Design"), icon: Pencil, color: "#D4E9F7" },
