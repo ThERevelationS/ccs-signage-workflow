@@ -1489,6 +1489,14 @@ export default function WorkOrderDetailsDialog({
 
               </div>
               </div>
+
+            {/* Time Entries Section - Full Width at Bottom */}
+            <div className="clay-card p-4 mb-6">
+              <WorkOrderTimeEntries 
+                workOrderId={workOrder.id}
+                workOrderTitle={workOrder.title}
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
