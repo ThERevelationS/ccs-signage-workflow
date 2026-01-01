@@ -153,7 +153,21 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     try {
       const updates = Object.entries(pendingChanges);
       await Promise.all(
-        updates.map(([orderId, changes]) => Order.update(orderId, changes))
+        updates.map(([orderId, changes]) => {
+          // Filter out undefined values and ensure date fields are strings or null
+          const cleanedChanges = {};
+          Object.entries(changes).forEach(([key, value]) => {
+            if (value !== undefined) {
+              // For date fields, ensure they are strings (empty string becomes null for API)
+              if (['date_needed', 'date_ordered', 'date_received'].includes(key)) {
+                cleanedChanges[key] = value === "" ? null : value;
+              } else {
+                cleanedChanges[key] = value;
+              }
+            }
+          });
+          return Order.update(orderId, cleanedChanges);
+        })
       );
       setPendingChanges({});
     } catch (error) {
