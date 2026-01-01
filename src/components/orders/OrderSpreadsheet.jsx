@@ -472,10 +472,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       setImportProgress({ show: true, current: 0, total: jsonData.length });
 
-      // Track existing orders to avoid duplicates
-      const existingOrders = new Set(
-        orders.map(o => `${o.customer_name}|${o.description}|${o.request_type}`.toLowerCase())
-      );
+      // Track existing orders to check for duplicates - map key to order object
+      const existingOrdersMap = new Map();
+      orders.forEach(o => {
+        const key = `${o.customer_name}|${o.description}|${o.request_type}`.toLowerCase();
+        existingOrdersMap.set(key, o);
+      });
 
       let importedCount = 0;
 
@@ -493,9 +495,68 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           continue;
         }
 
-        // Check for duplicates
+        // Check for duplicates - if found, fill in missing fields instead of skipping
         const uniqueKey = `${row["Customer"] || ""}|${row["Description"] || ""}|${row["Type"] || ""}`.toLowerCase();
-        if (existingOrders.has(uniqueKey)) {
+        const existingOrder = existingOrdersMap.get(uniqueKey);
+        
+        if (existingOrder) {
+          // Fill in missing information on existing order
+          const updates = {};
+          
+          if (!existingOrder.quantity && row["How much?"]) {
+            updates.quantity = String(row["How much?"]);
+          }
+          if (!existingOrder.requestor_name && row["Requestor"]) {
+            updates.requestor_name = String(row["Requestor"]);
+          }
+          if (!existingOrder.vendor && row["Vendor (Anyone can fill out this column)"]) {
+            updates.vendor = String(row["Vendor (Anyone can fill out this column)"]);
+          }
+          
+          // Parse and fill in dates if missing
+          const parseExcelDateForUpdate = (value) => {
+            if (!value) return null;
+            if (typeof value === 'number') {
+              const date = new Date((value - 25569) * 86400 * 1000);
+              if (!isNaN(date.getTime())) {
+                return format(date, "yyyy-MM-dd");
+              }
+            }
+            if (typeof value === 'string' && value.trim()) {
+              const parsed = new Date(value);
+              if (!isNaN(parsed.getTime())) {
+                return format(parsed, "yyyy-MM-dd");
+              }
+            }
+            return null;
+          };
+          
+          const dateNeeded = parseExcelDateForUpdate(row["Date Needed (Requester fills out this column)"]);
+          const dateOrdered = parseExcelDateForUpdate(row["Ordered Date (Carl Fills out this column)"]);
+          const dateReceived = parseExcelDateForUpdate(row["Date Recieved (Anyone can fill out this column)"]);
+          
+          if (!existingOrder.date_needed && dateNeeded) {
+            updates.date_needed = dateNeeded;
+          }
+          if (!existingOrder.date_ordered && dateOrdered) {
+            updates.date_ordered = dateOrdered;
+          }
+          if (!existingOrder.date_received && dateReceived) {
+            updates.date_received = dateReceived;
+          }
+          
+          // Update status if dates were added
+          if (updates.date_received && !existingOrder.date_received) {
+            updates.status = "received";
+          } else if (updates.date_ordered && !existingOrder.date_ordered && !existingOrder.date_received) {
+            updates.status = "ordered";
+          }
+          
+          // Only update if there are changes
+          if (Object.keys(updates).length > 0) {
+            await Order.update(existingOrder.id, updates);
+          }
+          
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
           continue;
         }
@@ -569,9 +630,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         if (parsedDateReceived) {
           orderData.date_received = parsedDateReceived;
         }
-        await Order.create(orderData);
+        const newOrder = await Order.create(orderData);
         
-        existingOrders.add(uniqueKey);
+        existingOrdersMap.set(uniqueKey, newOrder);
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
       }
