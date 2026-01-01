@@ -521,7 +521,7 @@ export default function AdminSettings() {
                           </TabsTrigger>
                           <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
                             <Trash2 className="w-6 h-6 mr-3" />
-                            Project Trash
+                            Client Trash
                           </TabsTrigger>
                           <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
                             <Trash2 className="w-6 h-6 mr-3" />

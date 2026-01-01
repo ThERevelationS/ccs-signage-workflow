@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,16 +15,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Trash2, RotateCcw, Loader2, AlertTriangle } from "lucide-react";
+import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
 
 const Order = base44.entities.Order;
+const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
 
 export default function OrderTrash() {
   const [deletedOrders, setDeletedOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeletePassword, setBulkDeletePassword] = useState("");
+  const [bulkDeleteError, setBulkDeleteError] = useState("");
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState({ active: false, current: 0, total: 0 });
 
   useEffect(() => {
     loadDeletedOrders();
@@ -54,6 +62,28 @@ export default function OrderTrash() {
     setPermanentDeleteConfirm(null);
   };
 
+  const handleBulkDeleteAllOrders = async () => {
+    if (bulkDeletePassword !== SYSTEM_RESET_PASSWORD) {
+      setBulkDeleteError("Incorrect password");
+      return;
+    }
+    setBulkDeleteError("");
+    setBulkDeleteConfirm(false);
+    
+    // Get ALL orders (not just deleted ones)
+    const allOrders = await Order.list();
+    setBulkDeleteProgress({ active: true, current: 0, total: allOrders.length });
+    
+    for (let i = 0; i < allOrders.length; i++) {
+      await Order.delete(allOrders[i].id);
+      setBulkDeleteProgress({ active: true, current: i + 1, total: allOrders.length });
+    }
+    
+    setBulkDeleteProgress({ active: false, current: 0, total: 0 });
+    setBulkDeletePassword("");
+    loadDeletedOrders();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -64,11 +94,34 @@ export default function OrderTrash() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <AlertTriangle className="w-5 h-5 text-orange-600" />
-        <p className="text-sm text-gray-600">
-          {deletedOrders.length} deleted order{deletedOrders.length !== 1 ? 's' : ''} in trash
-        </p>
+      {/* Bulk Delete Progress */}
+      {bulkDeleteProgress.active && (
+        <div className="clay-card p-4 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-red-600">Deleting all orders...</span>
+            <span className="text-xs text-gray-500">{bulkDeleteProgress.current} / {bulkDeleteProgress.total}</span>
+          </div>
+          <Progress value={(bulkDeleteProgress.current / bulkDeleteProgress.total) * 100} className="h-2" />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-orange-600" />
+          <p className="text-sm text-gray-600">
+            {deletedOrders.length} deleted order{deletedOrders.length !== 1 ? 's' : ''} in trash
+          </p>
+        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => setBulkDeleteConfirm(true)}
+          disabled={bulkDeleteProgress.active}
+          className="bg-red-600 hover:bg-red-700"
+        >
+          <Lock className="w-4 h-4 mr-2" />
+          Delete ALL Orders (System Reset)
+        </Button>
       </div>
 
       {deletedOrders.length === 0 ? (
@@ -154,6 +207,39 @@ export default function OrderTrash() {
             <AlertDialogAction onClick={handlePermanentDelete} className="bg-red-600 text-white">
               Permanently Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete All Orders Confirmation */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => { setBulkDeleteConfirm(open); setBulkDeletePassword(""); setBulkDeleteError(""); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              System Reset - Delete ALL Orders
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>This will <span className="font-bold text-red-600">permanently delete ALL orders</span> from the system, not just items in trash.</p>
+              <p className="text-red-600 font-bold">This action cannot be undone!</p>
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="bulk-delete-password">Enter password to confirm:</Label>
+                <Input
+                  id="bulk-delete-password"
+                  type="password"
+                  value={bulkDeletePassword}
+                  onChange={(e) => { setBulkDeletePassword(e.target.value); setBulkDeleteError(""); }}
+                  placeholder="Enter system reset password"
+                />
+                {bulkDeleteError && <p className="text-red-500 text-sm">{bulkDeleteError}</p>}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <Button onClick={handleBulkDeleteAllOrders} className="bg-red-600 text-white hover:bg-red-700">
+              Delete All Orders
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
