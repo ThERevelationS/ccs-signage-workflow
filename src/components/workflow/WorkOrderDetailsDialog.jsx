@@ -650,7 +650,7 @@ export default function WorkOrderDetailsDialog({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose} modal={true} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent className="clay-card border-none max-w-[95vw] w-[1400px] max-h-[95vh] overflow-hidden flex flex-col p-0">
           {/* Header */}
           <div className="px-6 border-b border-gray-200 flex-shrink-0">
@@ -1123,10 +1123,11 @@ export default function WorkOrderDetailsDialog({
                         <>
                           <div
                             className="flex-1 cursor-pointer hover:bg-gray-200/50 rounded px-1 transition-colors"
-                            onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
+                            onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);setEditedTaskAssignedTo(task.assigned_to || "");}}>
                             <p className="text-sm text-gray-600 line-through">{task.text}</p>
                             <p className="text-xs text-gray-400 mt-1">
                               {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                              {task.assigned_to && <span className="ml-2 text-blue-600">→ {task.assigned_to}</span>}
                             </p>
                           </div>
                           <Button
