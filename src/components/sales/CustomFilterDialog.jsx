@@ -626,8 +626,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "columns" && (
-            <div className="space-y-4">
-              <div className="clay-card p-4 space-y-4">
+            <div className="space-y-3">
+              <div className="clay-card p-3 space-y-3">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
@@ -638,26 +638,27 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder="e.g., My Custom View"
-                    className="mt-1"
+                    className="mt-1 h-8"
                   />
                 </div>
 
                 <div>
-                  <Label className="mb-2 block">Column Settings - Toggle visibility</Label>
+                  <Label className="mb-1 block text-sm">Column Settings - Toggle visibility</Label>
                   
-                  <div className="grid grid-cols-4 gap-1">
+                  <div className="grid grid-cols-6 gap-0.5">
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`px-2 py-1 rounded border flex items-center gap-1.5 cursor-pointer text-xs ${
+                        className={`px-1 py-0.5 rounded border flex items-center gap-1 cursor-pointer ${
                           column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
+                        style={{ fontSize: '9px' }}
                       >
                         <input
                           type="checkbox"
                           checked={column.visible}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-3 h-3"
+                          className="w-2.5 h-2.5"
                         />
                         <span className={column.visible ? "font-medium" : ""}>
                           {column.label}
@@ -667,62 +668,62 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="clay-card p-3 bg-blue-50/50">
-                  <Label className="mb-2 block font-bold text-base">Preview</Label>
-                  <p className="text-xs text-gray-600 mb-2 italic">Use arrows in headers to reorder columns. Scroll horizontally to see all columns.</p>
-                  <div className="overflow-x-auto border rounded-lg bg-white" style={{ maxWidth: '100%' }}>
-                    <table className="border-collapse" style={{ fontSize: '11px' }}>
+                <div className="clay-card p-2 bg-blue-50/50">
+                  <Label className="mb-1 block font-bold text-sm">Preview</Label>
+                  <p className="text-xs text-gray-600 mb-1 italic">Use arrows to reorder. Scroll horizontally.</p>
+                  <div className="overflow-x-auto border rounded bg-white" style={{ maxHeight: '100px' }}>
+                    <table className="border-collapse" style={{ fontSize: '10px' }}>
                       <thead className="bg-gray-100">
                         <tr className="border-b">
                           {columnSettings.filter(c => c.visible).map((column, index) => (
-                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap">
-                              <div className="flex items-center gap-1">
+                            <th key={column.id} className="px-1.5 py-1 border-r text-left font-medium text-gray-700 whitespace-nowrap">
+                              <div className="flex items-center gap-0.5">
                                 <span>{column.label}</span>
                                 <div className="flex items-center">
                                   <button 
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
                                     disabled={index === 0}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                                   >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                   </button>
                                   <button 
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
                                     disabled={index === columnSettings.filter(c => c.visible).length - 1}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                                   >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                   </button>
                                 </div>
                               </div>
                             </th>
                           ))}
-                          <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
+                          <th className="px-1.5 py-1 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-b hover:bg-gray-50 bg-white">
                           {columnSettings.filter(c => c.visible).map(column => (
-                            <td key={column.id} className="px-2 py-1.5 border-r text-gray-700 whitespace-nowrap">
+                            <td key={column.id} className="px-1.5 py-1 border-r text-gray-700 whitespace-nowrap">
                               {column.id === "client_name" ? "Test" : 
-                               column.id === "lead_source" ? "Website" :
+                               column.id === "lead_source" ? "Web" :
                                column.id === "designer" ? "John" :
                                column.id === "project_manager" ? "Sarah" :
                                column.id === "estimator" ? "Mike" :
                                column.id === "current_task_assigned_to" ? "Carl" :
-                               column.id === "current_task_description" ? "Follow up call" :
-                               column.id === "title" ? "Sample project notes" :
+                               column.id === "current_task_description" ? "Call" :
+                               column.id === "title" ? "Notes" :
                                column.id === "project_type" ? "Sign" :
-                               column.id === "est_inv_at" ? "Location A" :
-                               column.id === "permit_number" ? "P-12345" :
-                               column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
-                               column.id.includes("amount") ? "$5,000" : 
+                               column.id === "est_inv_at" ? "Loc A" :
+                               column.id === "permit_number" ? "P-123" :
+                               column.id.includes("date") && !column.id.includes("days") ? "1/1" : 
+                               column.id.includes("amount") ? "$5k" : 
                                column.id.includes("days") ? "7" : 
                                column.id === "probability" ? "75%" :
                                "-"}
                             </td>
                           ))}
-                          <td className="px-2 py-1.5 text-gray-500 whitespace-nowrap">•••</td>
+                          <td className="px-1.5 py-1 text-gray-500 whitespace-nowrap">•••</td>
                         </tr>
                       </tbody>
                     </table>
@@ -730,11 +731,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none">
-                    <Save className="w-4 h-4 mr-2" />
-                    {editingItem ? "Update Preset" : "Save Preset"}
+                  <Button onClick={saveItem} className="clay-button border-none h-8 text-sm">
+                    <Save className="w-3 h-3 mr-1" />
+                    {editingItem ? "Update" : "Save"}
                   </Button>
-                  <Button variant="outline" onClick={resetForm}>
+                  <Button variant="outline" onClick={resetForm} className="h-8 text-sm">
                     Cancel
                   </Button>
                 </div>
