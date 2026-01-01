@@ -192,7 +192,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setIsSaving(true);
     try {
       const savePromises = Object.entries(changes).map(async ([orderId, updates]) => {
-        await Order.update(orderId, updates);
+        // Clean up date fields - remove empty strings
+        const cleanedUpdates = { ...updates };
+        ['date_needed', 'date_ordered', 'date_received'].forEach(field => {
+          if (field in cleanedUpdates && (cleanedUpdates[field] === "" || cleanedUpdates[field] === null)) {
+            delete cleanedUpdates[field];
+          }
+        });
+        if (Object.keys(cleanedUpdates).length === 0) return;
+        await Order.update(orderId, cleanedUpdates);
         // Trigger notifications for significant changes
         const order = orders.find(o => o.id === orderId);
         if (order && updates.date_ordered && !originalOrdersRef.current[orderId]?.date_ordered) {
