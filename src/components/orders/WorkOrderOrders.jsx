@@ -486,7 +486,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         onSelect={async (date) => {
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
                           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_needed: dateStr } : o));
-                          await Order.update(order.id, { date_needed: dateStr });
+                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_needed: dateStr } }));
                           setOpenDatePopover(null);
                         }}
                       />
@@ -525,7 +525,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
                           const newStatus = date ? "ordered" : "pending";
                           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: dateStr, status: newStatus } : o));
-                          await Order.update(order.id, { date_ordered: dateStr, status: newStatus });
+                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_ordered: dateStr, status: newStatus } }));
                           setOpenDatePopover(null);
                         }}
                       />
@@ -582,7 +582,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
                           const newStatus = date ? "received" : (order.date_ordered ? "ordered" : "pending");
                           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: dateStr, status: newStatus } : o));
-                          await Order.update(order.id, { date_received: dateStr, status: newStatus });
+                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_received: dateStr, status: newStatus } }));
                           setOpenDatePopover(null);
                         }}
                       />
@@ -815,7 +815,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                   }
                   
                   setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: "", status: newStatus } : o));
-                  await Order.update(orderId, { [field]: "", status: newStatus });
+                  setPendingChanges(prev => ({ ...prev, [orderId]: { ...prev[orderId], [field]: "", status: newStatus } }));
                 }
                 setClearDateConfirm(null);
               }}
