@@ -246,7 +246,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const addToList = () => {
     if (!editInput.trim()) return;
-    const newItems = [...editDialog.items, editInput.trim()];
+    let newItems;
+    if (editDialog.storageKey === "salesTaskDescriptions") {
+      newItems = [...editDialog.items, { text: editInput.trim(), page: "" }];
+    } else {
+      newItems = [...editDialog.items, editInput.trim()];
+    }
     if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
     } else if (editDialog.storageKey === "salesProjectTypes") {
