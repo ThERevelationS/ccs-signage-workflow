@@ -64,6 +64,7 @@ import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
+import ClientInfoSection from "./ClientInfoSection";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -1538,6 +1539,12 @@ export default function WorkOrderDetailsDialog({
 
               </div>
               </div>
+
+            {/* Client Information Section */}
+            <ClientInfoSection 
+              workOrder={workOrder} 
+              onUpdate={onUpdate} 
+            />
 
             {/* Time Entries Section - Full Width at Bottom */}
             <div className="clay-card p-4 mb-6">
