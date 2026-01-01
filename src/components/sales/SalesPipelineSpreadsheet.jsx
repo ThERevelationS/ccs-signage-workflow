@@ -1578,7 +1578,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       </Dialog>
 
       <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [], storageKey: "" })}>
-        <DialogContent className="clay-card border-none max-w-md">
+        <DialogContent className={`clay-card border-none ${editDialog.storageKey === "salesTaskDescriptions" ? "max-w-2xl" : "max-w-md"}`}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-blue-600" />
@@ -1600,64 +1600,90 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="space-y-1 max-h-60 overflow-y-auto">
-              {editDialog.items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => moveListItem(idx, 'up')}
-                      disabled={idx === 0}
-                      className="h-4 w-4 p-0"
-                    >
-                      <span className="text-xs">▲</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => moveListItem(idx, 'down')}
-                      disabled={idx === editDialog.items.length - 1}
-                      className="h-4 w-4 p-0"
-                    >
-                      <span className="text-xs">▼</span>
-                    </Button>
-                  </div>
-                  {editingItem.index === idx ? (
-                    <Input
-                      value={editingItem.value}
-                      onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
-                      onBlur={() => {
-                        updateListItem(item, editingItem.value);
-                        setEditingItem({ index: null, value: "" });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+            {editDialog.storageKey === "salesTaskDescriptions" && (
+              <p className="text-xs text-gray-500">
+                Assign a page to show a notification bubble when this task is selected.
+              </p>
+            )}
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {editDialog.items.map((item, idx) => {
+                const isTaskDesc = editDialog.storageKey === "salesTaskDescriptions";
+                const displayText = isTaskDesc ? (item.text || item) : item;
+                const itemPage = isTaskDesc ? (item.page || "") : "";
+                
+                return (
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => moveListItem(idx, 'up')}
+                        disabled={idx === 0}
+                        className="h-4 w-4 p-0"
+                      >
+                        <span className="text-xs">▲</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => moveListItem(idx, 'down')}
+                        disabled={idx === editDialog.items.length - 1}
+                        className="h-4 w-4 p-0"
+                      >
+                        <span className="text-xs">▼</span>
+                      </Button>
+                    </div>
+                    {editingItem.index === idx ? (
+                      <Input
+                        value={editingItem.value}
+                        onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                        onBlur={() => {
                           updateListItem(item, editingItem.value);
                           setEditingItem({ index: null, value: "" });
-                        }
-                      }}
-                      className="flex-1 h-7 text-sm"
-                      autoFocus
-                    />
-                  ) : (
-                    <span 
-                      className="text-sm flex-1 cursor-pointer hover:text-blue-600"
-                      onClick={() => setEditingItem({ index: idx, value: item })}
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updateListItem(item, editingItem.value);
+                            setEditingItem({ index: null, value: "" });
+                          }
+                        }}
+                        className="flex-1 h-7 text-sm"
+                        autoFocus
+                      />
+                    ) : (
+                      <span 
+                        className="text-sm flex-1 cursor-pointer hover:text-blue-600"
+                        onClick={() => setEditingItem({ index: idx, value: displayText })}
+                      >
+                        {displayText}
+                      </span>
+                    )}
+                    {isTaskDesc && (
+                      <Select
+                        value={itemPage}
+                        onValueChange={(val) => updateTaskPage(item, val)}
+                      >
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="Select page" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {WORKFLOW_PAGES.map(page => (
+                            <SelectItem key={page.value} value={page.value}>{page.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeFromList(item)}
+                      className="h-6 w-6"
                     >
-                      {item}
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFromList(item)}
-                    className="h-6 w-6"
-                  >
-                    <Trash2 className="w-3 h-3 text-red-500" />
-                  </Button>
-                </div>
-              ))}
+                      <Trash2 className="w-3 h-3 text-red-500" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </DialogContent>
