@@ -336,6 +336,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setEditDialog({ ...editDialog, items: newItems });
   };
 
+  // Helper to get display text from task description
+  const getTaskDescText = (item) => {
+    if (typeof item === 'string') return item;
+    return item?.text || '';
+  };
+
   const openCorbridgeDialog = (workOrder) => {
     setCorbridgeDialog({ open: true, workOrder });
   };
