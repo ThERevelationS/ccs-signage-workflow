@@ -25,7 +25,7 @@ const TEAM_MEMBERS = [
 const WorkOrder = base44.entities.WorkOrder;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [saving, setSaving] = useState(false);
   const [localData, setLocalData] = useState({});
 
@@ -62,12 +62,12 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   const hasChanges = Object.keys(localData).length > 0;
 
   return (
-    <div className="clay-card p-4 mb-6">
+    <div className="clay-card p-3">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 -m-4 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
+          <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 -m-3 p-3 rounded-lg">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-blue-600" />
               Client Information
             </h3>
             <div className="flex items-center gap-2">
