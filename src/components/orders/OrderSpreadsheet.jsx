@@ -470,22 +470,31 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
 
         // Create order with import flag to suppress notifications
-        await Order.create({
+        const orderData = {
           customer_name: row["Customer"] || "",
           request_type: row["Type"] || requestTypes[0] || "Other",
           description: row["Description"] || "",
           quantity: row["How much?"] || "",
           requestor_email: currentUser?.email || "",
           requestor_name: row["Requestor"] || currentUser?.full_name || "",
-          date_needed: row["Date Needed (Requester fills out this column)"] || "",
-          date_ordered: dateOrdered,
           vendor: row["Vendor (Anyone can fill out this column)"] || "",
-          date_received: dateReceived,
           status: status,
           row_number: maxRowNumber + importedCount + 1,
           work_order_id: workOrderFilter || "",
           is_import: true // Flag to suppress email notifications
-        });
+        };
+        // Only add date fields if they have valid values
+        const dateNeeded = row["Date Needed (Requester fills out this column)"];
+        if (dateNeeded && typeof dateNeeded === 'string' && dateNeeded.trim()) {
+          orderData.date_needed = dateNeeded;
+        }
+        if (dateOrdered && typeof dateOrdered === 'string' && dateOrdered.trim()) {
+          orderData.date_ordered = dateOrdered;
+        }
+        if (dateReceived && typeof dateReceived === 'string' && dateReceived.trim()) {
+          orderData.date_received = dateReceived;
+        }
+        await Order.create(orderData);
         
         existingOrders.add(uniqueKey);
         importedCount++;
