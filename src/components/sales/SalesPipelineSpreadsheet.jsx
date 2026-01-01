@@ -265,7 +265,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const removeFromList = (item) => {
-    const newItems = editDialog.items.filter(i => i !== item);
+    const newItems = editDialog.storageKey === "salesTaskDescriptions"
+      ? editDialog.items.filter(i => i.text !== item.text)
+      : editDialog.items.filter(i => i !== item);
     if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
     } else if (editDialog.storageKey === "salesProjectTypes") {
@@ -278,16 +280,39 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const updateListItem = (oldItem, newItem) => {
-    if (!newItem.trim()) return;
-    const newItems = editDialog.items.map(i => i === oldItem ? newItem.trim() : i);
-    if (editDialog.storageKey === "salesLeadSources") {
-      setLeadSources(newItems);
-    } else if (editDialog.storageKey === "salesProjectTypes") {
-      setProjectTypes(newItems);
-    } else if (editDialog.storageKey === "salesTaskDescriptions") {
+    if (editDialog.storageKey === "salesTaskDescriptions") {
+      if (typeof newItem === 'string' && !newItem.trim()) return;
+      const newItems = editDialog.items.map(i => {
+        if (i.text === oldItem.text) {
+          return typeof newItem === 'string' ? { ...i, text: newItem.trim() } : newItem;
+        }
+        return i;
+      });
       setTaskDescriptions(newItems);
+      localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+      setEditDialog({ ...editDialog, items: newItems });
+    } else {
+      if (!newItem.trim()) return;
+      const newItems = editDialog.items.map(i => i === oldItem ? newItem.trim() : i);
+      if (editDialog.storageKey === "salesLeadSources") {
+        setLeadSources(newItems);
+      } else if (editDialog.storageKey === "salesProjectTypes") {
+        setProjectTypes(newItems);
+      }
+      localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+      setEditDialog({ ...editDialog, items: newItems });
     }
-    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+  };
+
+  const updateTaskPage = (item, page) => {
+    const newItems = editDialog.items.map(i => {
+      if (i.text === item.text) {
+        return { ...i, page };
+      }
+      return i;
+    });
+    setTaskDescriptions(newItems);
+    localStorage.setItem("salesTaskDescriptions", JSON.stringify(newItems));
     setEditDialog({ ...editDialog, items: newItems });
   };
 
