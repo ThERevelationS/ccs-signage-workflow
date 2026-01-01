@@ -977,7 +977,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       </SelectTrigger>
                       <SelectContent>
                         {taskDescriptions.map(desc => (
-                          <SelectItem key={desc} value={desc}>{desc}</SelectItem>
+                          <SelectItem key={getTaskDescText(desc)} value={getTaskDescText(desc)}>{getTaskDescText(desc)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
