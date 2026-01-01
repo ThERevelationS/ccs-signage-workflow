@@ -65,7 +65,14 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
     if (Object.keys(localData).length === 0) return;
     setSaving(true);
     try {
-      await WorkOrder.update(workOrder.id, localData);
+      // Clean up numeric fields - convert empty strings to null
+      const cleanedData = {
+        ...localData,
+        ...(localData.budget_less_than !== undefined && {
+          budget_less_than: localData.budget_less_than ? parseFloat(localData.budget_less_than) : null
+        })
+      };
+      await WorkOrder.update(workOrder.id, cleanedData);
       setLocalData({});
       if (onUpdate) onUpdate();
     } catch (error) {
