@@ -633,7 +633,7 @@ export default function WorkOrderDetailsDialog({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (open) onClose(); }}>
         <DialogContent className="clay-card border-none max-w-[95vw] w-[1400px] max-h-[95vh] overflow-hidden flex flex-col p-0">
           {/* Header */}
           <div className="px-6 border-b border-gray-200 flex-shrink-0">
@@ -1502,7 +1502,7 @@ export default function WorkOrderDetailsDialog({
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { if (open) setShowDeleteDialog(true); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {workOrder.is_rider ? 'Rider' : 'Work Order'}?</AlertDialogTitle>
@@ -1520,7 +1520,7 @@ export default function WorkOrderDetailsDialog({
       </AlertDialog>
 
       {/* Complete Confirmation Dialog */}
-      <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+      <AlertDialog open={showCompleteConfirm} onOpenChange={(open) => { if (open) setShowCompleteConfirm(true); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Complete?</AlertDialogTitle>
