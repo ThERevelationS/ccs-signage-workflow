@@ -849,10 +849,12 @@ export default function WorkOrderDetailsDialog({
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {/* Client Information Section - Collapsible */}
-            <ClientInfoSection 
-              workOrder={workOrder} 
-              onUpdate={onUpdate} 
-            />
+            <div className="mb-6">
+              <ClientInfoSection 
+                workOrder={workOrder} 
+                onUpdate={onUpdate} 
+              />
+            </div>
 
             {/* Tasks - Full Width */}
             <div className="clay-card p-4 mb-6">

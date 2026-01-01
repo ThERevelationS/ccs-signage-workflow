@@ -1083,7 +1083,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       {/* Edit Request Types Dialog */}
       <Dialog open={editingRequestTypes} onOpenChange={setEditingRequestTypes}>
-        <DialogContent className="clay-card border-none max-w-sm">
+        <DialogContent className="clay-card border-none max-w-sm [&>button]:hidden">
           <DialogHeader>
             <DialogTitle>Edit Request Types</DialogTitle>
           </DialogHeader>
@@ -1140,13 +1140,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 </div>
               ))}
             </div>
+            <Button onClick={() => setEditingRequestTypes(false)} className="w-full">
+              <Save className="w-4 h-4 mr-2" />
+              Save & Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Expanded Description Dialog */}
       <Dialog open={expandedDescription !== null} onOpenChange={() => setExpandedDescription(null)}>
-        <DialogContent className="clay-card border-none max-w-lg">
+        <DialogContent className="clay-card border-none max-w-lg [&>button]:hidden">
           <DialogHeader>
             <DialogTitle>Description</DialogTitle>
           </DialogHeader>
@@ -1166,6 +1170,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     {renderWithLinks(orders.find(o => o.id === expandedDescription)?.description || "")}
                   </div>
                 </div>
+                <Button onClick={() => setExpandedDescription(null)} className="w-full">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save & Close
+                </Button>
               </>
             )}
           </div>
@@ -1281,7 +1289,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
-        <DialogContent className="clay-card border-none max-w-sm">
+        <DialogContent className="clay-card border-none max-w-sm [&>button]:hidden">
           <DialogHeader>
             <DialogTitle>Edit Vendors</DialogTitle>
           </DialogHeader>
@@ -1338,6 +1346,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 </div>
               ))}
             </div>
+            <Button onClick={() => setEditingVendors(false)} className="w-full">
+              <Save className="w-4 h-4 mr-2" />
+              Save & Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
