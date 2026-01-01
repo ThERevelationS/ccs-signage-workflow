@@ -453,8 +453,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
         
-        // Skip empty rows
-        if (!row["Customer"] && !row["Description"]) {
+        // Skip empty rows - check all key fields
+        const customer = row["Customer"];
+        const description = row["Description"];
+        const requestType = row["Type"];
+        const quantity = row["How much?"];
+        
+        if (!customer && !description && !requestType && !quantity) {
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
           continue;
         }
