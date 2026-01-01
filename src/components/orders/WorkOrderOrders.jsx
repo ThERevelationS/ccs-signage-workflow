@@ -839,8 +839,10 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     newStatus = "received";
                   }
                   
-                  setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: null, status: newStatus } : o));
-                  setPendingChanges(prev => ({ ...prev, [orderId]: { ...prev[orderId], [field]: null, status: newStatus } }));
+                  // Clear date locally and update status
+                  setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: "", status: newStatus } : o));
+                  // For clearing dates, update directly to the API
+                  Order.update(orderId, { status: newStatus }).catch(err => console.error("Error updating status:", err));
                 }
                 setClearDateConfirm(null);
               }}
