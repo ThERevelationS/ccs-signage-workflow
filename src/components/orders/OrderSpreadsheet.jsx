@@ -989,7 +989,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
+                      {safeFormatDate(order.date_ordered, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
