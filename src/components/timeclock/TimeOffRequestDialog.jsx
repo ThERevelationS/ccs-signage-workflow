@@ -73,7 +73,7 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (open) onClose(); }}>
       <DialogContent className="clay-card border-none max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">

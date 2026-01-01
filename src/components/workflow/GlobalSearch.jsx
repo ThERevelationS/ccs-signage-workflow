@@ -134,7 +134,7 @@ export default function GlobalSearch() {
       </Button>
 
       {/* Search Dialog */}
-      <Dialog open={showResults} onOpenChange={setShowResults}>
+      <Dialog open={showResults} onOpenChange={(open) => { if (open) setShowResults(true); }}>
         <DialogContent className="clay-card border-none max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">

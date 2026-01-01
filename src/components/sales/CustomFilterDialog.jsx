@@ -282,7 +282,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (open) onClose(); }}>
         <DialogContent 
           className="clay-card border-none overflow-y-auto [&>button]:hidden" 
           style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "600px", maxHeight: "90vh" }}
@@ -748,7 +748,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (open) setDeleteConfirm(deleteConfirm); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {activeTab === "filters" ? "Information Filter" : "Preset"}?</AlertDialogTitle>
