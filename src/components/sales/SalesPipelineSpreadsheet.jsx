@@ -1660,8 +1660,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     )}
                     {isTaskDesc && (
                       <Select
-                        value={itemPage}
-                        onValueChange={(val) => updateTaskPage(item, val)}
+                        value={itemPage || "none"}
+                        onValueChange={(val) => updateTaskPage(item, val === "none" ? "" : val)}
                       >
                         <SelectTrigger className="h-7 w-40 text-xs">
                           <SelectValue placeholder="Select page" />
