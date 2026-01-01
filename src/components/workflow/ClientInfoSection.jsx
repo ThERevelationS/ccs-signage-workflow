@@ -16,7 +16,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench } from "lucide-react";
+import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus } from "lucide-react";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
@@ -25,9 +25,24 @@ const TEAM_MEMBERS = [
 const WorkOrder = base44.entities.WorkOrder;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [visibleProducts, setVisibleProducts] = useState(1);
   const [saving, setSaving] = useState(false);
   const [localData, setLocalData] = useState({});
+
+  // Initialize visible products based on existing data
+  React.useEffect(() => {
+    if (workOrder) {
+      let count = 1;
+      for (let i = 6; i >= 1; i--) {
+        if (workOrder[`product_${i}`]) {
+          count = i;
+          break;
+        }
+      }
+      setVisibleProducts(count);
+    }
+  }, [workOrder?.id]);
 
   const getValue = (field) => {
     return localData[field] !== undefined ? localData[field] : (workOrder?.[field] || "");
@@ -449,12 +464,25 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
 
           {/* Products Section */}
           <div className="border-t pt-3">
-            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
-              <Package className="w-4 h-4 text-teal-600" />
-              Products
-            </h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold flex items-center gap-1">
+                <Package className="w-4 h-4 text-teal-600" />
+                Products
+              </h4>
+              {visibleProducts < 6 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVisibleProducts(prev => Math.min(prev + 1, 6))}
+                  className="h-6 px-2 text-xs"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Product
+                </Button>
+              )}
+            </div>
             <div className="grid grid-cols-6 gap-2 mb-2">
-              {[1, 2, 3, 4, 5, 6].map(num => (
+              {[1, 2, 3, 4, 5, 6].slice(0, visibleProducts).map(num => (
                 <div key={num}>
                   <Label className="text-xs">#{num}</Label>
                   <Input

@@ -723,14 +723,6 @@ export default function WorkOrderDetailsDialog({
             </div>
           </div>
 
-          {/* Client Information Section - Collapsible */}
-          <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
-            <ClientInfoSection 
-              workOrder={workOrder} 
-              onUpdate={onUpdate} 
-            />
-          </div>
-
           {/* Work Notes - Spreadsheet Style, Full Width */}
           <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
@@ -856,6 +848,12 @@ export default function WorkOrderDetailsDialog({
 
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Client Information Section - Collapsible */}
+            <ClientInfoSection 
+              workOrder={workOrder} 
+              onUpdate={onUpdate} 
+            />
+
             {/* Tasks - Full Width */}
             <div className="clay-card p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
