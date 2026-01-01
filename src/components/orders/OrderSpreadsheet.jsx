@@ -344,7 +344,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const getFilteredWorkOrders = (searchTerm) => {
-    // Filter out riders - only show main work orders
+    // Filter out riders - only show main work orders (no riders)
     const mainWorkOrders = workOrders.filter(wo => !wo.is_rider);
 
     if (!searchTerm) return mainWorkOrders.slice(0, 10);

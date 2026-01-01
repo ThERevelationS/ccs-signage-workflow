@@ -265,19 +265,19 @@ export default function GlobalSearch() {
                 <div
                   key={wo.id}
                   onClick={() => handleWorkOrderClick(wo)}
-                  className="p-3 rounded-lg clay-card cursor-pointer hover:opacity-80 transition-all"
+                  className={`p-3 rounded-lg clay-card cursor-pointer hover:opacity-80 transition-all ${wo.is_rider ? 'border-l-4 border-purple-400 bg-purple-50/50' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-sm text-gray-800 truncate">
-                          {wo.title}
-                        </h4>
                         {wo.is_rider && (
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium border border-dashed border-purple-300">
-                            Rider
+                          <span className="px-2 py-0.5 bg-purple-200 text-purple-800 text-xs rounded font-bold border border-purple-400">
+                            RIDER
                           </span>
                         )}
+                        <h4 className={`font-semibold text-sm truncate ${wo.is_rider ? 'text-purple-800' : 'text-gray-800'}`}>
+                          {wo.title}
+                        </h4>
                         {wo.asap && (
                           <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
                             ASAP

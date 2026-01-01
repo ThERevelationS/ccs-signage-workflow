@@ -284,8 +284,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     <>
       <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
-          className="clay-card border-none overflow-y-auto [&>button]:hidden" 
-          style={{ maxWidth: activeTab === "columns" && activeSubTab === "create" ? "95vw" : "600px", maxHeight: "90vh" }}
+          className="clay-card border-none overflow-hidden [&>button]:hidden" 
+          style={{ maxWidth: "650px", maxHeight: "95vh" }}
         >
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -632,26 +632,24 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Preset Name</Label>
-                    <Input
-                      value={itemName}
-                      onChange={(e) => setItemName(e.target.value)}
-                      placeholder="e.g., My Custom View"
-                      className="mt-1"
-                    />
-                  </div>
+                <div>
+                  <Label>Preset Name</Label>
+                  <Input
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    placeholder="e.g., My Custom View"
+                    className="mt-1"
+                  />
                 </div>
 
                 <div>
                   <Label className="mb-2 block">Column Settings - Toggle visibility</Label>
                   
-                  <div className="flex flex-wrap gap-1 mb-4">
+                  <div className="grid grid-cols-4 gap-1">
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer text-[10px] ${
+                        className={`px-2 py-1 rounded border flex items-center gap-1.5 cursor-pointer text-xs ${
                           column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
                       >
@@ -659,7 +657,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           type="checkbox"
                           checked={column.visible}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-2.5 h-2.5"
+                          className="w-3 h-3"
                         />
                         <span className={column.visible ? "font-medium" : ""}>
                           {column.label}
@@ -669,67 +667,65 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div>
-                  <Label className="mb-2 block font-bold text-base">Preview - Horizontal Layout</Label>
-                  <div className="border-2 border-blue-300 rounded-lg bg-blue-50/30 p-2">
-                    <p className="text-xs text-gray-600 mb-2 italic">Use arrows in headers to reorder columns.</p>
-                    <div className="overflow-x-auto" style={{ maxWidth: '100%' }}>
-                      <table className="border-collapse" style={{ fontSize: '11px' }}>
-                        <thead className="bg-gray-100">
-                          <tr className="border-b">
-                            {columnSettings.filter(c => c.visible).map((column, index) => (
-                              <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap">
-                                <div className="flex items-center gap-1">
-                                  <span>{column.label}</span>
-                                  <div className="flex items-center">
-                                    <button 
-                                      onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
-                                      disabled={index === 0}
-                                      className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
-                                    >
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                    </button>
-                                    <button 
-                                      onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
-                                      disabled={index === columnSettings.filter(c => c.visible).length - 1}
-                                      className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
-                                    >
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                    </button>
-                                  </div>
+                <div className="clay-card p-3 bg-blue-50/50">
+                  <Label className="mb-2 block font-bold text-base">Preview</Label>
+                  <p className="text-xs text-gray-600 mb-2 italic">Use arrows in headers to reorder columns. Scroll horizontally to see all columns.</p>
+                  <div className="overflow-x-auto border rounded-lg bg-white" style={{ maxWidth: '100%' }}>
+                    <table className="border-collapse" style={{ fontSize: '11px' }}>
+                      <thead className="bg-gray-100">
+                        <tr className="border-b">
+                          {columnSettings.filter(c => c.visible).map((column, index) => (
+                            <th key={column.id} className="px-2 py-2 border-r text-left font-medium text-gray-700 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                <span>{column.label}</span>
+                                <div className="flex items-center">
+                                  <button 
+                                    onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
+                                    disabled={index === 0}
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                  </button>
+                                  <button 
+                                    onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
+                                    disabled={index === columnSettings.filter(c => c.visible).length - 1}
+                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                  </button>
                                 </div>
-                              </th>
-                            ))}
-                            <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b hover:bg-gray-50 bg-white">
-                            {columnSettings.filter(c => c.visible).map(column => (
-                              <td key={column.id} className="px-2 py-1.5 border-r text-gray-700 whitespace-nowrap">
-                                {column.id === "client_name" ? "Test" : 
-                                 column.id === "lead_source" ? "Website" :
-                                 column.id === "designer" ? "John" :
-                                 column.id === "project_manager" ? "Sarah" :
-                                 column.id === "estimator" ? "Mike" :
-                                 column.id === "current_task_assigned_to" ? "Carl" :
-                                 column.id === "current_task_description" ? "Follow up call" :
-                                 column.id === "title" ? "Sample project notes" :
-                                 column.id === "project_type" ? "Sign" :
-                                 column.id === "est_inv_at" ? "Location A" :
-                                 column.id === "permit_number" ? "P-12345" :
-                                 column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
-                                 column.id.includes("amount") ? "$5,000" : 
-                                 column.id.includes("days") ? "7" : 
-                                 column.id === "probability" ? "75%" :
-                                 "-"}
-                              </td>
-                            ))}
-                            <td className="px-2 py-1.5 text-gray-500 whitespace-nowrap">•••</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                              </div>
+                            </th>
+                          ))}
+                          <th className="px-2 py-2 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b hover:bg-gray-50 bg-white">
+                          {columnSettings.filter(c => c.visible).map(column => (
+                            <td key={column.id} className="px-2 py-1.5 border-r text-gray-700 whitespace-nowrap">
+                              {column.id === "client_name" ? "Test" : 
+                               column.id === "lead_source" ? "Website" :
+                               column.id === "designer" ? "John" :
+                               column.id === "project_manager" ? "Sarah" :
+                               column.id === "estimator" ? "Mike" :
+                               column.id === "current_task_assigned_to" ? "Carl" :
+                               column.id === "current_task_description" ? "Follow up call" :
+                               column.id === "title" ? "Sample project notes" :
+                               column.id === "project_type" ? "Sign" :
+                               column.id === "est_inv_at" ? "Location A" :
+                               column.id === "permit_number" ? "P-12345" :
+                               column.id.includes("date") && !column.id.includes("days") ? format(new Date(), "M/d/yy") : 
+                               column.id.includes("amount") ? "$5,000" : 
+                               column.id.includes("days") ? "7" : 
+                               column.id === "probability" ? "75%" :
+                               "-"}
+                            </td>
+                          ))}
+                          <td className="px-2 py-1.5 text-gray-500 whitespace-nowrap">•••</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
