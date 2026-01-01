@@ -284,8 +284,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     <>
       <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
-          className="clay-card border-none overflow-hidden [&>button]:hidden" 
-          style={{ maxWidth: "650px", maxHeight: "95vh" }}
+          className="clay-card border-none [&>button]:hidden" 
+          style={{ maxWidth: "700px", overflow: "visible" }}
         >
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -627,7 +627,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
           {activeSubTab === "create" && activeTab === "columns" && (
             <div className="space-y-3">
-              <div className="clay-card p-3 space-y-3">
+              <div className="clay-card p-4 space-y-3">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
@@ -638,7 +638,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder="e.g., My Custom View"
-                    className="mt-1 h-8"
+                    className="mt-1"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           onChange={() => toggleColumnVisibility(column.id)}
                           className="w-2.5 h-2.5"
                         />
-                        <span className={column.visible ? "font-medium" : ""}>
+                        <span className={`truncate ${column.visible ? "font-medium" : ""}`}>
                           {column.label}
                         </span>
                       </label>
@@ -670,8 +670,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                 <div className="clay-card p-2 bg-blue-50/50">
                   <Label className="mb-1 block font-bold text-sm">Preview</Label>
-                  <p className="text-xs text-gray-600 mb-1 italic">Use arrows to reorder. Scroll horizontally.</p>
-                  <div className="overflow-x-auto border rounded bg-white" style={{ maxHeight: '100px' }}>
+                  <p className="text-xs text-gray-500 mb-1">Arrows reorder columns. Scroll horizontally →</p>
+                  <div className="border rounded-lg bg-white overflow-x-auto" style={{ maxHeight: '100px' }}>
                     <table className="border-collapse" style={{ fontSize: '10px' }}>
                       <thead className="bg-gray-100">
                         <tr className="border-b">
@@ -711,7 +711,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                column.id === "project_manager" ? "Sarah" :
                                column.id === "estimator" ? "Mike" :
                                column.id === "current_task_assigned_to" ? "Carl" :
-                               column.id === "current_task_description" ? "Call" :
+                               column.id === "current_task_description" ? "Follow up" :
                                column.id === "title" ? "Notes" :
                                column.id === "project_type" ? "Sign" :
                                column.id === "est_inv_at" ? "Loc A" :
@@ -731,11 +731,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none h-8 text-sm">
-                    <Save className="w-3 h-3 mr-1" />
-                    {editingItem ? "Update" : "Save"}
+                  <Button onClick={saveItem} className="clay-button border-none">
+                    <Save className="w-4 h-4 mr-2" />
+                    {editingItem ? "Update Preset" : "Save Preset"}
                   </Button>
-                  <Button variant="outline" onClick={resetForm} className="h-8 text-sm">
+                  <Button variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
                 </div>
