@@ -110,7 +110,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   });
 
   const WORKFLOW_PAGES = [
-    { value: "", label: "None" },
+    { value: "none", label: "None" },
     { value: "Estimating", label: "Estimating" },
     { value: "Permitting", label: "Permitting" },
     { value: "Design", label: "Design" },
