@@ -52,6 +52,7 @@ export default function CustomerInfoForm({
   const [newFollowUpText, setNewFollowUpText] = useState("");
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
+  const [visibleProducts, setVisibleProducts] = useState(1);
 
   const [formData, setFormData] = useState({
     designer: "",
@@ -121,6 +122,15 @@ export default function CustomerInfoForm({
         notes: existingForm.notes || [],
         follow_up: existingForm.follow_up || []
       });
+      // Count existing products
+      let count = 1;
+      for (let i = 6; i >= 1; i--) {
+        if (existingForm[`product_${i}`]) {
+          count = i;
+          break;
+        }
+      }
+      setVisibleProducts(count);
     }
   }, [existingForm]);
 
@@ -667,56 +677,31 @@ export default function CustomerInfoForm({
 
           {/* Products Section */}
           <div className="clay-card p-4">
-            <h3 className="font-bold text-lg mb-4 border-b pb-2">Products</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>#1</Label>
-                <Input
-                  value={formData.product_1}
-                  onChange={(e) => handleChange("product_1", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>#4</Label>
-                <Input
-                  value={formData.product_4}
-                  onChange={(e) => handleChange("product_4", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>#2</Label>
-                <Input
-                  value={formData.product_2}
-                  onChange={(e) => handleChange("product_2", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>#5</Label>
-                <Input
-                  value={formData.product_5}
-                  onChange={(e) => handleChange("product_5", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>#3</Label>
-                <Input
-                  value={formData.product_3}
-                  onChange={(e) => handleChange("product_3", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>#6</Label>
-                <Input
-                  value={formData.product_6}
-                  onChange={(e) => handleChange("product_6", e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+            <div className="flex items-center justify-between mb-4 border-b pb-2">
+              <h3 className="font-bold text-lg">Products</h3>
+              {visibleProducts < 6 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVisibleProducts(prev => Math.min(prev + 1, 6))}
+                  className="h-7 px-3"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Product
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].slice(0, visibleProducts).map(num => (
+                <div key={num}>
+                  <Label>#{num}</Label>
+                  <Input
+                    value={formData[`product_${num}`] || ""}
+                    onChange={(e) => handleChange(`product_${num}`, e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              ))}
             </div>
             <div className="mt-4 flex items-center gap-4">
               <span className="font-semibold text-sm">Complete:</span>
