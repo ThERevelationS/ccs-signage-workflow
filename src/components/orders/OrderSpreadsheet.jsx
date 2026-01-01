@@ -64,8 +64,11 @@ import {
   ExternalLink,
   Save,
   Download,
-  Upload
+  Upload,
+  CheckSquare,
+  Square
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
 import {
   Tooltip,
