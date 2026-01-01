@@ -497,15 +497,38 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           is_import: true // Flag to suppress email notifications
         };
         // Only add date fields if they have valid values
+        // Excel dates can be numbers (serial dates) or strings
+        const parseExcelDate = (value) => {
+          if (!value) return null;
+          if (typeof value === 'number') {
+            // Excel serial date - convert to JS date
+            const date = new Date((value - 25569) * 86400 * 1000);
+            if (!isNaN(date.getTime())) {
+              return format(date, "yyyy-MM-dd");
+            }
+          }
+          if (typeof value === 'string' && value.trim()) {
+            // Try to parse string date
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) {
+              return format(parsed, "yyyy-MM-dd");
+            }
+          }
+          return null;
+        };
+        
         const dateNeeded = row["Date Needed (Requester fills out this column)"];
-        if (dateNeeded && typeof dateNeeded === 'string' && dateNeeded.trim()) {
-          orderData.date_needed = dateNeeded;
+        const parsedDateNeeded = parseExcelDate(dateNeeded);
+        if (parsedDateNeeded) {
+          orderData.date_needed = parsedDateNeeded;
         }
-        if (dateOrdered && typeof dateOrdered === 'string' && dateOrdered.trim()) {
-          orderData.date_ordered = dateOrdered;
+        const parsedDateOrdered = parseExcelDate(dateOrdered);
+        if (parsedDateOrdered) {
+          orderData.date_ordered = parsedDateOrdered;
         }
-        if (dateReceived && typeof dateReceived === 'string' && dateReceived.trim()) {
-          orderData.date_received = dateReceived;
+        const parsedDateReceived = parseExcelDate(dateReceived);
+        if (parsedDateReceived) {
+          orderData.date_received = parsedDateReceived;
         }
         await Order.create(orderData);
         
