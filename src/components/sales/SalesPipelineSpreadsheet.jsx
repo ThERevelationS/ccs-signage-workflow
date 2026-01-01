@@ -62,44 +62,63 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   });
   const [taskDescriptions, setTaskDescriptions] = useState(() => {
     const saved = localStorage.getItem('salesTaskDescriptions');
-    return saved ? JSON.parse(saved) : [
-      "Prospect Initiation (Gather Info, Initial Discuss ...)",
-      "Conduct Site Survey",
-      "Research Sign Code for Mock-up",
-      "Follow up with Customer - Pre-Estimating",
-      "Mock up and Send to Customer",
-      "Mock up Only",
-      "Send Mock up to Customer",
-      "Quoting - 3rd Party",
-      "Complete Estimate for Review",
-      "Estimate - To Be Reviewed",
-      "Review Complete - Send to Customer",
-      "Follow up with Customer - Post-Estimate",
-      "On Hold - Follow Up with Customer",
-      "Waiting on Deposit",
-      "WIP - Waiting for Deposit",
-      "WIP - In Final Design Queue",
-      "WIP - Designing",
-      "WIP - Prepare/Submit Permit",
-      "WIP - Follow Up On Status of Accepted Permit",
-      "WIP - Permitting Follow-ups",
-      "WIP - Production/Fabrication",
-      "WIP - Outsourced Fabrication",
-      "WIP - Maintenance/Service Call",
-      "WIP - Installation",
-      "WIP - Outsourced Installation",
-      "WIP - Follow Up with Customer",
-      "WIP - Inspections",
-      "Completed Sale - Electrical Inspection",
-      "Completed Sale - Sign Inspection",
-      "Completed Sales - Post Invoice Tasks",
-      "Completed Sale",
-      "Lost",
-      "Lost - We took too long",
-      "Closed - Attempted Follow-up/No Response",
-      "Closed - Did not Lose"
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migration: convert old string format to new object format
+      if (parsed.length > 0 && typeof parsed[0] === 'string') {
+        return parsed.map(text => ({ text, page: "" }));
+      }
+      return parsed;
+    }
+    return [
+      { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "" },
+      { text: "Conduct Site Survey", page: "" },
+      { text: "Research Sign Code for Mock-up", page: "" },
+      { text: "Follow up with Customer - Pre-Estimating", page: "" },
+      { text: "Mock up and Send to Customer", page: "" },
+      { text: "Mock up Only", page: "" },
+      { text: "Send Mock up to Customer", page: "" },
+      { text: "Quoting - 3rd Party", page: "" },
+      { text: "Complete Estimate for Review", page: "Estimating" },
+      { text: "Estimate - To Be Reviewed", page: "Estimating" },
+      { text: "Review Complete - Send to Customer", page: "" },
+      { text: "Follow up with Customer - Post-Estimate", page: "" },
+      { text: "On Hold - Follow Up with Customer", page: "" },
+      { text: "Waiting on Deposit", page: "" },
+      { text: "WIP - Waiting for Deposit", page: "" },
+      { text: "WIP - In Final Design Queue", page: "Design" },
+      { text: "WIP - Designing", page: "Design" },
+      { text: "WIP - Prepare/Submit Permit", page: "Permitting" },
+      { text: "WIP - Follow Up On Status of Accepted Permit", page: "Permitting" },
+      { text: "WIP - Permitting Follow-ups", page: "Permitting" },
+      { text: "WIP - Production/Fabrication", page: "Production" },
+      { text: "WIP - Outsourced Fabrication", page: "Fabrication" },
+      { text: "WIP - Maintenance/Service Call", page: "" },
+      { text: "WIP - Installation", page: "Installation" },
+      { text: "WIP - Outsourced Installation", page: "Installation" },
+      { text: "WIP - Follow Up with Customer", page: "" },
+      { text: "WIP - Inspections", page: "" },
+      { text: "Completed Sale - Electrical Inspection", page: "CompletedJobs" },
+      { text: "Completed Sale - Sign Inspection", page: "CompletedJobs" },
+      { text: "Completed Sales - Post Invoice Tasks", page: "CompletedJobs" },
+      { text: "Completed Sale", page: "CompletedJobs" },
+      { text: "Lost", page: "" },
+      { text: "Lost - We took too long", page: "" },
+      { text: "Closed - Attempted Follow-up/No Response", page: "" },
+      { text: "Closed - Did not Lose", page: "" }
     ];
   });
+
+  const WORKFLOW_PAGES = [
+    { value: "", label: "None" },
+    { value: "Estimating", label: "Estimating" },
+    { value: "Permitting", label: "Permitting" },
+    { value: "Design", label: "Design" },
+    { value: "Production", label: "Production" },
+    { value: "Fabrication", label: "Fabrication" },
+    { value: "Installation", label: "Installation/Delivery" },
+    { value: "CompletedJobs", label: "Completed Jobs" }
+  ];
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
 
   useEffect(() => {
