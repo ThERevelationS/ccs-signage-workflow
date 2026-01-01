@@ -234,10 +234,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       quantity: "",
       requestor_email: currentUser?.email || "",
       requestor_name: currentUser?.full_name || "",
-      date_needed: "",
-      date_ordered: "",
       vendor: "",
-      date_received: "",
       status: "pending",
       row_number: maxRowNumber + 1,
       work_order_id: workOrderFilter || ""
