@@ -512,8 +512,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
 
         // Create order with import flag to suppress notifications
+        // Get customer name - handle various data types from Excel
+        let customerName = row["Customer"];
+        if (customerName === undefined || customerName === null) {
+          customerName = "";
+        } else if (typeof customerName === 'number') {
+          customerName = String(customerName);
+        } else {
+          customerName = String(customerName).trim();
+        }
+
         const orderData = {
-          customer_name: String(row["Customer"] || ""),
+          customer_name: customerName,
           request_type: String(row["Type"] || requestTypes[0] || "Other"),
           description: String(row["Description"] || ""),
           quantity: String(row["How much?"] ?? ""),
@@ -757,6 +767,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         const val = e.target.value;
                         setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
                         setCustomerSearch(val);
+                        // Show dropdown for work order suggestions, but don't require selection
                         if (val.length > 0) {
                           setShowCustomerDropdown(order.id);
                         } else {
@@ -774,9 +785,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         }
                         setTimeout(() => {
                           setShowCustomerDropdown(null);
-                          if (order.customer_name) {
-                            setEditingCustomerName(null);
-                          }
+                          // Always close edit mode on blur, even if empty (allow any text)
+                          setEditingCustomerName(null);
                         }, 200);
                       }}
                       onFocus={(e) => {
