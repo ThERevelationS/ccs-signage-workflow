@@ -158,9 +158,16 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
           const cleanedChanges = {};
           Object.entries(changes).forEach(([key, value]) => {
             if (value !== undefined) {
-              // For date fields, ensure they are strings (empty string becomes null for API)
+              // For date fields, ensure they are strings (empty string or null becomes null for API)
               if (['date_needed', 'date_ordered', 'date_received'].includes(key)) {
-                cleanedChanges[key] = value === "" ? null : value;
+                if (value === "" || value === null) {
+                  cleanedChanges[key] = null;
+                } else if (value instanceof Date) {
+                  // Convert Date objects to string format
+                  cleanedChanges[key] = format(value, "yyyy-MM-dd");
+                } else {
+                  cleanedChanges[key] = String(value);
+                }
               } else {
                 cleanedChanges[key] = value;
               }
