@@ -21,8 +21,34 @@ import { format, parseISO } from "date-fns";
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  try {
+    // Handle yyyy-MM-dd format
+    if (typeof dateString === 'string' && dateString.includes('-')) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      if (year && month && day) {
+        return new Date(year, month - 1, day);
+      }
+    }
+    // Try parsing as regular date
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+// Safe format date for display
+const safeFormatDate = (dateString, formatStr) => {
+  const date = parseLocalDate(dateString);
+  if (!date) return "-";
+  try {
+    return format(date, formatStr);
+  } catch {
+    return "-";
+  }
 };
 import {
   Plus,
