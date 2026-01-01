@@ -261,10 +261,16 @@ export default function CustomerInfoForm({
     }
     setSaving(true);
     try {
+      // Clean up numeric fields - convert empty strings to null
+      const cleanedData = {
+        ...formData,
+        budget_less_than: formData.budget_less_than ? parseFloat(formData.budget_less_than) : null
+      };
+      
       if (existingForm?.id) {
-        await base44.entities.CustomerInfo.update(existingForm.id, formData);
+        await base44.entities.CustomerInfo.update(existingForm.id, cleanedData);
       } else {
-        await base44.entities.CustomerInfo.create(formData);
+        await base44.entities.CustomerInfo.create(cleanedData);
       }
       if (onSave) onSave();
       onClose();
