@@ -168,7 +168,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const remainingHours = workableHours - totalAllocatedHours;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (open) onClose(); }}>
+    <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">

@@ -342,7 +342,7 @@ export default function FeatureReports() {
         )}
 
         {/* Create/Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (open) setIsDialogOpen(true); }}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
           <DialogContent className="clay-card border-none">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">
@@ -456,7 +456,7 @@ export default function FeatureReports() {
         </Dialog>
 
         {/* Delete Confirmation */}
-        <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (open) setDeleteConfirm(deleteConfirm); }}>
+        <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
           <AlertDialogContent className="clay-card border-none">
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Report?</AlertDialogTitle>

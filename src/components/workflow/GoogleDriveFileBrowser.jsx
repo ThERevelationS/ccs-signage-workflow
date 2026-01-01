@@ -259,7 +259,7 @@ export default function GoogleDriveFileBrowser({
   const isFolder = (file) => file.mimeType === 'application/vnd.google-apps.folder';
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (open) onClose(); }}>
+    <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -445,7 +445,7 @@ export default function GoogleDriveFileBrowser({
         </div>
 
         {/* New Folder Dialog */}
-        <Dialog open={showNewFolderDialog} onOpenChange={(open) => { if (open) setShowNewFolderDialog(true); }}>
+        <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
           <DialogContent className="clay-card border-none max-w-sm">
             <DialogHeader>
               <DialogTitle>Create New Folder</DialogTitle>
