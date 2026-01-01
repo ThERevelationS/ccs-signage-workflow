@@ -479,13 +479,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
         // Create order with import flag to suppress notifications
         const orderData = {
-          customer_name: row["Customer"] || "",
-          request_type: row["Type"] || requestTypes[0] || "Other",
-          description: row["Description"] || "",
-          quantity: row["How much?"] || "",
+          customer_name: String(row["Customer"] || ""),
+          request_type: String(row["Type"] || requestTypes[0] || "Other"),
+          description: String(row["Description"] || ""),
+          quantity: String(row["How much?"] ?? ""),
           requestor_email: currentUser?.email || "",
-          requestor_name: row["Requestor"] || currentUser?.full_name || "",
-          vendor: row["Vendor (Anyone can fill out this column)"] || "",
+          requestor_name: String(row["Requestor"] || currentUser?.full_name || ""),
+          vendor: String(row["Vendor (Anyone can fill out this column)"] || ""),
           status: status,
           row_number: maxRowNumber + importedCount + 1,
           work_order_id: workOrderFilter || "",
