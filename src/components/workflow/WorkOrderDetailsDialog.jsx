@@ -64,8 +64,10 @@ import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -100,6 +102,7 @@ export default function WorkOrderDetailsDialog({
   onUpdate,
   onDelete
 }) {
+  const { currentUser } = useAuth();
   const [allWorkOrders, setAllWorkOrders] = useState([]);
   const [riders, setRiders] = useState([]);
   const [parentWorkOrder, setParentWorkOrder] = useState(null);
@@ -108,6 +111,7 @@ export default function WorkOrderDetailsDialog({
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showCompletedNotes, setShowCompletedNotes] = useState(false);
   const [isEditingDependency, setIsEditingDependency] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
 
   // Edit states
   const [editingField, setEditingField] = useState(null);
@@ -122,8 +126,10 @@ export default function WorkOrderDetailsDialog({
   });
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
+  const [newTaskAssignedTo, setNewTaskAssignedTo] = useState("");
   const [editingTaskIndex, setEditingTaskIndex] = useState(null);
   const [editedTaskText, setEditedTaskText] = useState("");
+  const [editedTaskAssignedTo, setEditedTaskAssignedTo] = useState("");
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
@@ -134,8 +140,14 @@ export default function WorkOrderDetailsDialog({
   useEffect(() => {
     if (isOpen && workOrder) {
       loadRelatedData();
+      loadUsers();
     }
   }, [isOpen, workOrder]);
+
+  const loadUsers = async () => {
+    const users = await AuthorizedEmail.list();
+    setAllUsers(users);
+  };
 
   const loadRelatedData = async () => {
     const all = await WorkOrder.filter({ completed: false });
@@ -255,7 +267,8 @@ export default function WorkOrderDetailsDialog({
     const newTask = {
       text: newTaskText,
       timestamp: new Date().toISOString(),
-      created_by: "Unknown",
+      created_by: currentUser?.full_name || currentUser?.email || "Unknown",
+      assigned_to: newTaskAssignedTo || "",
       completed: false,
       sub_tasks: []
     };
@@ -263,6 +276,7 @@ export default function WorkOrderDetailsDialog({
     // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     setNewTaskText("");
+    setNewTaskAssignedTo("");
     setIsAddingTask(false);
     if (onUpdate) onUpdate();
     // Then persist to database
@@ -440,12 +454,14 @@ export default function WorkOrderDetailsDialog({
     const updatedTasks = [...tasks];
     updatedTasks[taskIndex] = {
       ...updatedTasks[taskIndex],
-      text: editedTaskText
+      text: editedTaskText,
+      assigned_to: editedTaskAssignedTo
     };
     // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     setEditingTaskIndex(null);
     setEditedTaskText("");
+    setEditedTaskAssignedTo("");
     if (onUpdate) onUpdate();
     // Then persist to database
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
@@ -467,6 +483,7 @@ export default function WorkOrderDetailsDialog({
       ...noteData,
       timestamp: new Date().toISOString(),
       id: Date.now(),
+      created_by: currentUser?.full_name || currentUser?.email || "Unknown",
       sub_tasks: []
     };
     const updatedNotes = [...workNotes, newNote];
@@ -709,7 +726,7 @@ export default function WorkOrderDetailsDialog({
           <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-sm">Notes</h3>
-              <Popover open={editingField === 'addNote'} onOpenChange={(open) => open ? setEditingField('addNote') : setEditingField(null)}>
+              <Popover open={editingField === 'addNote'} onOpenChange={(open) => open ? setEditingField('addNote') : setEditingField(null)} modal={true}>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 px-3 text-xs">
                     <Plus className="w-3 h-3 mr-1" />
@@ -773,6 +790,7 @@ export default function WorkOrderDetailsDialog({
                   <tr>
                     <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '80px' }}>Type</th>
                     <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '70px' }}>Date</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '80px' }}>By</th>
                     <th className="text-left px-2 py-1.5 font-medium text-gray-700">Note</th>
                     <th className="text-center px-2 py-1.5 font-medium text-gray-700" style={{ width: '40px' }}></th>
                   </tr>
@@ -795,6 +813,9 @@ export default function WorkOrderDetailsDialog({
                       <td className="px-2 py-1.5 text-gray-500">
                         {format(new Date(note.timestamp), "M/d/yy")}
                       </td>
+                      <td className="px-2 py-1.5 text-gray-600 text-xs">
+                        {note.created_by?.split(' ')[0] || '-'}
+                      </td>
                       <td className="px-2 py-1.5 text-gray-700">
                         {note.text}
                         {note.sub_tasks && note.sub_tasks.length > 0 && (
@@ -814,7 +835,7 @@ export default function WorkOrderDetailsDialog({
                   ))}
                   {workNotes.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-2 py-3 text-center text-gray-400">
+                      <td colSpan={5} className="px-2 py-3 text-center text-gray-400">
                         No notes yet
                       </td>
                     </tr>
@@ -872,13 +893,26 @@ export default function WorkOrderDetailsDialog({
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleAddTask();
-                        if (e.key === 'Escape') {setIsAddingTask(false);setNewTaskText("");}
+                        if (e.key === 'Escape') {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");}
                       }} />
+                    <Select value={newTaskAssignedTo} onValueChange={setNewTaskAssignedTo}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Assign to (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>Unassigned</SelectItem>
+                        {allUsers.map(user => (
+                          <SelectItem key={user.id} value={user.full_name || user.email}>
+                            {user.full_name || user.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <div className="flex gap-1">
                       <Button size="sm" onClick={handleAddTask} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
                         <Check className="w-3 h-3 mr-1" />Save
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => {setIsAddingTask(false);setNewTaskText("");}} className="h-6 px-2 text-xs">
+                      <Button size="sm" variant="ghost" onClick={() => {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");}} className="h-6 px-2 text-xs">
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
@@ -903,13 +937,26 @@ export default function WorkOrderDetailsDialog({
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleEditTask(actualIndex);
-                                if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");}
+                                if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");}
                               }} />
+                            <Select value={editedTaskAssignedTo} onValueChange={setEditedTaskAssignedTo}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Assign to (optional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Unassigned</SelectItem>
+                                {allUsers.map(user => (
+                                  <SelectItem key={user.id} value={user.full_name || user.email}>
+                                    {user.full_name || user.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <div className="flex gap-1">
                               <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
                                 <Check className="w-3 h-3 mr-1" />Save
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");}} className="h-6 px-2 text-xs">
+                              <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");}} className="h-6 px-2 text-xs">
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -918,10 +965,11 @@ export default function WorkOrderDetailsDialog({
                             <div className="flex-1">
                               <div
                                 className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
-                                onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);}}>
+                                onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);setEditedTaskAssignedTo(task.assigned_to || "");}}>
                                 <p className="text-sm text-gray-700">{task.text}</p>
                                 <p className="text-xs text-gray-400 mt-1">
                                   {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                                  {task.assigned_to && <span className="ml-2 text-blue-600">→ {task.assigned_to}</span>}
                                 </p>
                               </div>
                               {/* Sub-tasks - always show all */}
