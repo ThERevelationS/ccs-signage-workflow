@@ -801,84 +801,56 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
               {/* Customer Name with Work Order Link */}
               <td className="px-1 py-0.5 border-r relative" style={{ overflow: 'visible' }}>
-                {order.customer_name && editingCustomerName !== order.id ? (
-                  // Locked state - show customer name with edit button and clickable to open work order
-                  <div className="flex items-center gap-1 h-7">
-                    {order.work_order_id ? (
-                      <button
-                        onClick={() => {
-                          const wo = workOrders.find(w => w.id === order.work_order_id);
-                          if (wo) setSelectedWorkOrder(wo);
-                        }}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline truncate flex-1 text-left"
-                      >
-                        <LinkIcon className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{order.customer_name}</span>
-                      </button>
-                    ) : (
-                      <span className="text-xs truncate flex-1">{order.customer_name}</span>
-                    )}
-                    {isRegistered && (
-                      <button
-                        onClick={() => setEditingCustomerName(order.id)}
-                        className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
-                      >
-                        <Pencil className="w-3 h-3 text-gray-400" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  // Editing state - show input with dropdown
-                  <div className="flex items-center gap-1 h-7">
-                    <Input
-                      value={order.customer_name || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
-                        setCustomerSearch(val);
-                        // Show dropdown for work order suggestions, but don't require selection
-                        if (val.length > 0) {
-                          setShowCustomerDropdown(order.id);
-                        } else {
-                          setShowCustomerDropdown(null);
-                        }
-                      }}
-                      onBlur={() => {
-                        const currentOrder = orders.find(o => o.id === order.id);
-                        if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
-                          pendingChangesRef.current[order.id] = {
-                            ...pendingChangesRef.current[order.id],
-                            customer_name: currentOrder.customer_name
-                          };
-                          setHasUnsavedChanges(true);
-                        }
-                        setTimeout(() => {
-                          setShowCustomerDropdown(null);
-                          // Always close edit mode on blur, even if empty (allow any text)
-                          setEditingCustomerName(null);
-                        }, 200);
-                      }}
-                      onFocus={(e) => {
-                        if (e.target.value.length > 0) {
-                          setCustomerSearch(e.target.value);
-                          setShowCustomerDropdown(order.id);
-                        }
-                      }}
-                      className="h-7 text-xs border-0 bg-transparent px-1 w-full"
-                      placeholder="Customer..."
-                      disabled={!isRegistered}
-                      autoFocus={editingCustomerName === order.id}
-                    />
-                    {editingCustomerName === order.id && (
-                      <button
-                        onClick={() => setEditingCustomerName(null)}
-                        className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
-                      >
-                        <X className="w-3 h-3 text-gray-400" />
-                      </button>
-                    )}
-                  </div>
+                <div className="flex items-center gap-1 h-7">
+                <Input
+                  value={order.customer_name || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
+                    setCustomerSearch(val);
+                    // Show dropdown for work order suggestions if there's text
+                    if (val.length > 1) {
+                      setShowCustomerDropdown(order.id);
+                    } else {
+                      setShowCustomerDropdown(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    const currentOrder = orders.find(o => o.id === order.id);
+                    if (currentOrder && currentOrder.customer_name !== originalOrdersRef.current[order.id]?.customer_name) {
+                      pendingChangesRef.current[order.id] = {
+                        ...pendingChangesRef.current[order.id],
+                        customer_name: currentOrder.customer_name
+                      };
+                      setHasUnsavedChanges(true);
+                    }
+                    setTimeout(() => {
+                      setShowCustomerDropdown(null);
+                    }, 200);
+                  }}
+                  onFocus={(e) => {
+                    if (e.target.value.length > 1) {
+                      setCustomerSearch(e.target.value);
+                      setShowCustomerDropdown(order.id);
+                    }
+                  }}
+                  className="h-7 text-xs border-0 bg-transparent px-1 w-full"
+                  placeholder="Customer..."
+                  disabled={!isRegistered}
+                />
+                {order.work_order_id && (
+                  <button
+                    onClick={() => {
+                      const wo = workOrders.find(w => w.id === order.work_order_id);
+                      if (wo) setSelectedWorkOrder(wo);
+                    }}
+                    className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
+                    title="View linked work order"
+                  >
+                    <LinkIcon className="w-3 h-3 text-blue-500" />
+                  </button>
                 )}
+              </div>
                 {showCustomerDropdown === order.id && getFilteredWorkOrders(customerSearch).length > 0 && (
                   <div 
                     className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
