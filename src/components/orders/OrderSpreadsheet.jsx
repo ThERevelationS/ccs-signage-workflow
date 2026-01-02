@@ -565,6 +565,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           // Only update if there are changes
           if (Object.keys(updates).length > 0) {
             await Order.update(existingOrder.id, updates);
+            
+            // Update local state immediately so UI updates
+            setOrders(prev => prev.map(o => o.id === existingOrder.id ? { ...o, ...updates } : o));
+            originalOrdersRef.current[existingOrder.id] = { ...originalOrdersRef.current[existingOrder.id], ...updates };
+            
             // Small delay to prevent rate limiting
             await new Promise(resolve => setTimeout(resolve, 100));
           }
@@ -638,6 +643,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         const newOrder = await Order.create(orderData);
         
         existingOrdersMap.set(uniqueKey, newOrder);
+        originalOrdersRef.current[newOrder.id] = { ...newOrder };
+        
+        // Add to orders state immediately so UI updates
+        setOrders(prev => [...prev, newOrder]);
+        
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
         
@@ -645,7 +655,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      await loadData();
+      // No need to reload - we've been updating state as we go
       setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
     };
     reader.readAsArrayBuffer(file);
