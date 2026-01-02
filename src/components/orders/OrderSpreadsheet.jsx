@@ -484,11 +484,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
         
+        // Get customer name - try multiple possible column names and handle various data types
+        let customerRaw = row["Customer"] ?? row["Customer Name"] ?? row["customer"] ?? row["customer_name"] ?? "";
+        let customer = "";
+        if (customerRaw !== undefined && customerRaw !== null) {
+          if (typeof customerRaw === 'number') {
+            customer = String(customerRaw);
+          } else {
+            customer = String(customerRaw).trim();
+          }
+        }
+        
         // Skip empty rows - check all key fields
-        const customer = row["Customer"];
-        const description = row["Description"];
-        const requestType = row["Type"];
-        const quantity = row["How much?"];
+        const description = row["Description"] ?? row["description"] ?? "";
+        const requestType = row["Type"] ?? row["Request Type"] ?? row["type"] ?? "";
+        const quantity = row["How much?"] ?? row["Quantity"] ?? row["quantity"] ?? "";
         
         if (!customer && !description && !requestType && !quantity) {
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
@@ -496,7 +506,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
 
         // Check for duplicates - if found, fill in missing fields instead of skipping
-        const uniqueKey = `${row["Customer"] || ""}|${row["Description"] || ""}|${row["Type"] || ""}`.toLowerCase();
+        const uniqueKey = `${customer}|${description}|${requestType}`.toLowerCase();
         const existingOrder = existingOrdersMap.get(uniqueKey);
         
         if (existingOrder) {
@@ -563,36 +573,30 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           continue;
         }
 
-        const dateReceived = row["Date Recieved (Anyone can fill out this column)"] || "";
-        const dateOrdered = row["Ordered Date (Carl Fills out this column)"] || "";
+        const dateReceivedRaw = row["Date Recieved (Anyone can fill out this column)"] ?? row["Date Received"] ?? row["date_received"] ?? "";
+        const dateOrderedRaw = row["Ordered Date (Carl Fills out this column)"] ?? row["Date Ordered"] ?? row["date_ordered"] ?? "";
         
         // Determine status based on dates
         let status = "pending";
-        if (dateReceived) {
+        if (dateReceivedRaw) {
           status = "received";
-        } else if (dateOrdered) {
+        } else if (dateOrderedRaw) {
           status = "ordered";
         }
 
-        // Create order with import flag to suppress notifications
-        // Get customer name - handle various data types from Excel
-        let customerName = row["Customer"];
-        if (customerName === undefined || customerName === null) {
-          customerName = "";
-        } else if (typeof customerName === 'number') {
-          customerName = String(customerName);
-        } else {
-          customerName = String(customerName).trim();
-        }
+        // Get other fields with fallbacks for different column names
+        const requestorRaw = row["Requestor"] ?? row["requestor"] ?? row["Requestor Name"] ?? "";
+        const vendorRaw = row["Vendor (Anyone can fill out this column)"] ?? row["Vendor"] ?? row["vendor"] ?? "";
+        const dateNeededRaw = row["Date Needed (Requester fills out this column)"] ?? row["Date Needed"] ?? row["date_needed"] ?? "";
 
         const orderData = {
-          customer_name: customerName,
-          request_type: String(row["Type"] || requestTypes[0] || "Other"),
-          description: String(row["Description"] || ""),
-          quantity: String(row["How much?"] ?? ""),
+          customer_name: customer,
+          request_type: String(requestType || requestTypes[0] || "Other"),
+          description: String(description || ""),
+          quantity: String(quantity || ""),
           requestor_email: currentUser?.email || "",
-          requestor_name: String(row["Requestor"] || currentUser?.full_name || ""),
-          vendor: String(row["Vendor (Anyone can fill out this column)"] || ""),
+          requestor_name: String(requestorRaw || currentUser?.full_name || ""),
+          vendor: String(vendorRaw || ""),
           status: status,
           row_number: maxRowNumber + importedCount + 1,
           work_order_id: workOrderFilter || "",
@@ -619,16 +623,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           return null;
         };
         
-        const dateNeeded = row["Date Needed (Requester fills out this column)"];
-        const parsedDateNeeded = parseExcelDate(dateNeeded);
+        const parsedDateNeeded = parseExcelDate(dateNeededRaw);
         if (parsedDateNeeded) {
           orderData.date_needed = parsedDateNeeded;
         }
-        const parsedDateOrdered = parseExcelDate(dateOrdered);
+        const parsedDateOrdered = parseExcelDate(dateOrderedRaw);
         if (parsedDateOrdered) {
           orderData.date_ordered = parsedDateOrdered;
         }
-        const parsedDateReceived = parseExcelDate(dateReceived);
+        const parsedDateReceived = parseExcelDate(dateReceivedRaw);
         if (parsedDateReceived) {
           orderData.date_received = parsedDateReceived;
         }
