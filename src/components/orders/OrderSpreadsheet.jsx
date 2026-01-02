@@ -651,8 +651,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
         
-        // Small delay to prevent rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Delay to prevent rate limiting
+        await new Promise(resolve => setTimeout(resolve, 250));
       }
 
       // No need to reload - we've been updating state as we go
