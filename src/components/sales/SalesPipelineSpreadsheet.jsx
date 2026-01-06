@@ -123,6 +123,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   useEffect(() => {
     loadWorkOrders();
+    const interval = setInterval(() => loadWorkOrders(), 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadWorkOrders = async () => {

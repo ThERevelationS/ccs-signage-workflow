@@ -172,6 +172,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   useEffect(() => {
     loadData();
+    const interval = setInterval(() => loadData(false), 5000);
+    return () => clearInterval(interval);
   }, [workOrderFilter]);
 
   // Auto-save every 5 seconds if there are unsaved changes

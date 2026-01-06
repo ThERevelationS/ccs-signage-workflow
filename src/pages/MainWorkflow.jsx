@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Maximize2, Minimize2, RefreshCw, ArrowUpDown } from "lucide-react";
+import { Maximize2, Minimize2, ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
@@ -116,15 +116,6 @@ export default function MainWorkflow() {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              onClick={loadWorkOrders}
-              size="sm"
-              className="clay-button border-none text-gray-800 h-8 px-3"
-              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, rgba(255,255,255,0.9) 100%)' }}
-            >
-              <RefreshCw className="w-4 h-4 mr-1" />
-              <span className="text-sm">Refresh</span>
-            </Button>
             <Button
               onClick={toggleFullScreen}
               size="sm"
