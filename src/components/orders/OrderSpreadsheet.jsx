@@ -231,7 +231,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           }
         });
         if (Object.keys(cleanedUpdates).length === 0) return;
-        await Order.update(orderId, cleanedUpdates);
+        try {
+          await Order.update(orderId, cleanedUpdates);
         // Trigger notifications for significant changes
         const order = orders.find(o => o.id === orderId);
         if (order && updates.date_ordered && !originalOrdersRef.current[orderId]?.date_ordered) {
@@ -242,6 +243,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
         // Update original reference
         originalOrdersRef.current[orderId] = { ...originalOrdersRef.current[orderId], ...updates };
+        } catch (err) {
+          // Order may have been deleted, remove from local state
+          if (err.message?.includes('not found')) {
+            setOrders(prev => prev.filter(o => o.id !== orderId));
+            delete originalOrdersRef.current[orderId];
+          }
+        }
       });
       
       await Promise.all(savePromises);
