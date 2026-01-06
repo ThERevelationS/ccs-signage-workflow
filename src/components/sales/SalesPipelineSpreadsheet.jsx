@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import * as XLSX from "xlsx";
+import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -52,6 +53,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [showForm, setShowForm] = useState(false);
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+
+  const { trackChange } = useCellHistoryTracker("WorkOrder", currentUser);
 
   const [leadSources, setLeadSources] = useState(() => {
     const saved = localStorage.getItem('salesLeadSources');
@@ -168,8 +172,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setShowForm(false);
   };
 
-  const updateWorkOrder = (orderId, field, value) => {
+  const updateWorkOrder = (orderId, field, value, skipHistory = false) => {
+    const currentWo = workOrders.find(wo => wo.id === orderId);
+    const oldValue = currentWo ? currentWo[field] : "";
+    
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
+    
+    // Track cell history
+    if (!skipHistory && oldValue !== value) {
+      trackChange(orderId, field, oldValue, value);
+    }
     
     setPendingChanges(prev => ({
       ...prev,
@@ -629,6 +641,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return setting?.visible !== false;
   };
 
+  const handleContextMenu = (e, wo, fieldName, fieldLabel, currentValue) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      workOrder: wo,
+      fieldName,
+      fieldLabel,
+      currentValue
+    });
+  };
+
+  const clearCell = (woId, fieldName) => {
+    updateWorkOrder(woId, fieldName, "");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -638,7 +666,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }
 
   return (
-    <div className="overflow-visible">
+    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -794,7 +822,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </button>
                 </td>
                 {isColumnVisible("client_name") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}
+                  >
                     <button
                       onClick={() => setSelectedWorkOrder(wo)}
                       className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
@@ -806,7 +837,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("lead_source") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "lead_source", "Source", wo.lead_source)}
+                  >
                     <Select
                       value={wo.lead_source || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
@@ -862,7 +896,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("current_task_assigned_to") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "current_task_assigned_to", "Task Assigned", wo.current_task_assigned_to)}
+                  >
                     <Select
                       value={wo.current_task_assigned_to || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
@@ -881,7 +918,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("designer") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "designer", "Designer", wo.designer)}
+                  >
                     <Select
                       value={wo.designer || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
@@ -900,7 +940,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("project_manager") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "project_manager", "Project Manager", wo.project_manager)}
+                  >
                     <Select
                       value={wo.project_manager || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
@@ -919,7 +962,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("estimator") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "estimator", "Estimator", wo.estimator)}
+                  >
                     <Select
                       value={wo.estimator || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
@@ -965,7 +1011,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("estimate_amount") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "estimate_amount", "Estimate Amount", wo.estimate_amount)}
+                  >
                     <div className="relative flex items-center">
                       <span className="absolute left-1 text-xs text-gray-500">$</span>
                       <Input
@@ -986,7 +1035,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("current_task_description") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "current_task_description", "Task Description", wo.current_task_description)}
+                  >
                     <Select
                       value={wo.current_task_description || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
@@ -1275,7 +1327,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("permit_number") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "permit_number", "Permit Number", wo.permit_number)}
+                  >
                     <Input
                       value={wo.permit_number || ""}
                       onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)}
@@ -1442,7 +1497,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("probability") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "probability", "Probability", wo.probability)}
+                  >
                     <Input
                       type="number"
                       value={wo.probability || ""}
@@ -1494,7 +1552,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("project_type") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "project_type", "Project Type", wo.project_type)}
+                  >
                     <Select
                       value={wo.project_type || ""}
                       onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
@@ -1742,6 +1803,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <CellContextMenu
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
+          entityType="WorkOrder"
+          entityId={contextMenu.workOrder.id}
+          fieldName={contextMenu.fieldName}
+          fieldLabel={contextMenu.fieldLabel}
+          currentValue={contextMenu.currentValue}
+          onClear={() => clearCell(contextMenu.workOrder.id, contextMenu.fieldName)}
+          isRegistered={isRegistered}
+        />
+      )}
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
