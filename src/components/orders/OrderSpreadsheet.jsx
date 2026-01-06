@@ -172,7 +172,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => loadData(false), 5000);
+    const interval = setInterval(() => loadData(false), 10000);
     return () => clearInterval(interval);
   }, [workOrderFilter]);
 

@@ -17,7 +17,7 @@ export default function CompletedJobs() {
 
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 5000);
+    const interval = setInterval(() => loadWorkOrders(false), 10000);
     
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
