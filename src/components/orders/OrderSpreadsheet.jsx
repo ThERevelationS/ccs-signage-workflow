@@ -1011,7 +1011,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Requestor */}
-              <td className="px-1 py-0.5 border-r relative">
+              <td 
+                className="px-1 py-0.5 border-r relative"
+                onContextMenu={(e) => handleContextMenu(e, order, "requestor_name", "Requestor", order.requestor_name)}
+              >
                 <div 
                   className="flex items-center gap-1 cursor-pointer h-7 hover:bg-gray-100 rounded px-1 overflow-hidden"
                   onClick={(e) => {
@@ -1057,7 +1060,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Date Needed */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "date_needed", "Date Needed", order.date_needed)}
+              >
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
@@ -1116,7 +1122,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Ordered Date */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "date_ordered", "Date Ordered", order.date_ordered)}
+              >
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
@@ -1196,7 +1205,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Date Received */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "date_received", "Date Received", order.date_received)}
+              >
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">

@@ -859,7 +859,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("current_task_deadline") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "current_task_deadline", "Deadline", wo.current_task_deadline)}
+                  >
                     <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1057,7 +1060,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("date_initial_contact") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "date_initial_contact", "Initial Contact", wo.date_initial_contact)}
+                  >
                     <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1094,7 +1100,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("site_survey_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "site_survey_date", "Site Survey", wo.site_survey_date)}
+                  >
                     <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1131,7 +1140,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("date_estimate_sent") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "date_estimate_sent", "Estimate Sent", wo.date_estimate_sent)}
+                  >
                     <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1168,7 +1180,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("date_order_created") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "date_order_created", "Order Created", wo.date_order_created)}
+                  >
                     <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1205,7 +1220,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("project_install_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "project_install_date", "Install Date", wo.project_install_date)}
+                  >
                     <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1242,7 +1260,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("permit_submitted_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "permit_submitted_date", "Permit Submitted", wo.permit_submitted_date)}
+                  >
                     <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1279,7 +1300,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("title") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "title", "Notes", wo.title)}
+                  >
                     <button
                       onClick={() => setSelectedWorkOrder(wo)}
                       className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
@@ -1290,7 +1314,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("permit_receipt_confirmed_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "permit_receipt_confirmed_date", "Permit Confirmed", wo.permit_receipt_confirmed_date)}
+                  >
                     <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1342,7 +1369,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("permit_approved_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "permit_approved_date", "Permit Approved", wo.permit_approved_date)}
+                  >
                     <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1386,7 +1416,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
 
                 {isColumnVisible("quote_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "quote_date", "Quote Date", wo.quote_date)}
+                  >
                     <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1423,7 +1456,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("follow_up_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "follow_up_date", "Follow Up Date", wo.follow_up_date)}
+                  >
                     <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1460,7 +1496,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("close_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}
+                  >
                     <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
@@ -1515,7 +1554,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("start_date") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "start_date", "Start Date", wo.start_date)}
+                  >
                     <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
                         <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
