@@ -484,15 +484,125 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       setImportProgress({ show: true, current: 0, total: jsonData.length });
 
+      // Track existing work orders to check for duplicates
+      const existingWorkOrdersMap = new Map();
+      workOrders.forEach(wo => {
+        const key = `${wo.client_name}|${wo.title}`.toLowerCase();
+        existingWorkOrdersMap.set(key, wo);
+      });
+
+      let importedCount = 0;
+
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
+        
+        // Get customer name with type handling
+        let customerRaw = row["Customer"] ?? row["Customer Name"] ?? row["client_name"] ?? "";
+        let customer = "";
+        if (customerRaw !== undefined && customerRaw !== null) {
+          if (typeof customerRaw === 'number') {
+            customer = String(customerRaw);
+          } else {
+            customer = String(customerRaw).trim();
+          }
+        }
+        
+        // Skip empty rows
+        const title = row["Notes"] || row["title"] || "";
+        if (!customer && !title) {
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          continue;
+        }
+
+        // Check for duplicates - if found, fill in missing fields instead of skipping
+        const uniqueKey = `${customer}|${title}`.toLowerCase();
+        const existingWO = existingWorkOrdersMap.get(uniqueKey);
+        
+        if (existingWO) {
+          // Fill in missing information on existing work order
+          const updates = {};
+          
+          if (!existingWO.lead_source && row["Source"]) {
+            updates.lead_source = String(row["Source"]);
+          }
+          if (!existingWO.current_task_assigned_to && row["Current Task Assigned to"]) {
+            updates.current_task_assigned_to = String(row["Current Task Assigned to"]);
+          }
+          if (!existingWO.designer && row["Designer"]) {
+            updates.designer = String(row["Designer"]);
+          }
+          if (!existingWO.project_manager && row["Project Manager"]) {
+            updates.project_manager = String(row["Project Manager"]);
+          }
+          if (!existingWO.estimator && row["Estimator"]) {
+            updates.estimator = String(row["Estimator"]);
+          }
+          if (!existingWO.est_inv_at && row["Est/Inv @"]) {
+            updates.est_inv_at = String(row["Est/Inv @"]);
+          }
+          if (!existingWO.estimate_amount && row["Estimate Amount"]) {
+            updates.estimate_amount = parseFloat(row["Estimate Amount"]) || 0;
+          }
+          if (!existingWO.current_task_description && row["Current Task Description"]) {
+            updates.current_task_description = String(row["Current Task Description"]);
+          }
+          if (!existingWO.permit_number && row["Permit Number"]) {
+            updates.permit_number = String(row["Permit Number"]);
+          }
+          
+          // Parse and fill in dates if missing
+          const parseExcelDateForUpdate = (value) => {
+            if (!value) return null;
+            if (typeof value === 'number') {
+              const date = new Date((value - 25569) * 86400 * 1000);
+              if (!isNaN(date.getTime())) {
+                return format(date, "yyyy-MM-dd");
+              }
+            }
+            if (typeof value === 'string' && value.trim()) {
+              const parsed = new Date(value);
+              if (!isNaN(parsed.getTime())) {
+                return format(parsed, "yyyy-MM-dd");
+              }
+            }
+            return null;
+          };
+          
+          const dateFields = [
+            { key: 'current_task_deadline', column: 'Current Task Deadline' },
+            { key: 'date_initial_contact', column: 'Date Est. Requested/Initial Contact' },
+            { key: 'site_survey_date', column: 'Site Survey' },
+            { key: 'date_estimate_sent', column: 'Date Estimate Sent to Customer' },
+            { key: 'date_order_created', column: 'Date Order Created' },
+            { key: 'project_install_date', column: 'Project Install Date' },
+            { key: 'permit_submitted_date', column: 'Permit Submitted' },
+            { key: 'permit_receipt_confirmed_date', column: 'Date Permit Receipt Confirmed' },
+            { key: 'permit_approved_date', column: 'Date Permit Approved/Received' }
+          ];
+          
+          dateFields.forEach(({ key, column }) => {
+            if (!existingWO[key] && row[column]) {
+              const parsed = parseExcelDateForUpdate(row[column]);
+              if (parsed) updates[key] = parsed;
+            }
+          });
+          
+          // Only update if there are changes
+          if (Object.keys(updates).length > 0) {
+            await WorkOrder.update(existingWO.id, updates);
+            setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? { ...wo, ...updates } : wo));
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          continue;
+        }
         
         // Parse notes into individual entries by date
         const notesText = row["Notes"] || "";
         const parsedNotes = [];
         
         if (notesText) {
-          // Split by date pattern (MM/DD/YYYY or M/D/YYYY)
           const datePattern = /(\d{1,2}\/\d{1,2}\/\d{4})/g;
           const parts = notesText.split(datePattern);
           
@@ -503,9 +613,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             const part = parts[j].trim();
             if (!part) continue;
             
-            // Check if this part is a date
             if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(part)) {
-              // Save previous note if exists
               if (currentNote && currentDate) {
                 parsedNotes.push({
                   text: currentNote.trim(),
@@ -515,17 +623,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   sub_tasks: []
                 });
               }
-              // Convert MM/DD/YYYY to ISO date
               const [month, day, year] = part.split('/').map(Number);
               currentDate = new Date(year, month - 1, day).toISOString();
               currentNote = "";
             } else {
-              // Add text to current note
               currentNote += (currentNote ? " " : "") + part;
             }
           }
           
-          // Save last note
           if (currentNote && currentDate) {
             parsedNotes.push({
               text: currentNote.trim(),
@@ -536,35 +641,60 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             });
           }
         }
+
+        // Parse Excel dates
+        const parseExcelDate = (value) => {
+          if (!value) return "";
+          if (typeof value === 'number') {
+            const date = new Date((value - 25569) * 86400 * 1000);
+            if (!isNaN(date.getTime())) {
+              return format(date, "yyyy-MM-dd");
+            }
+          }
+          if (typeof value === 'string' && value.trim()) {
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) {
+              return format(parsed, "yyyy-MM-dd");
+            }
+          }
+          return "";
+        };
         
-        await WorkOrder.create({
-          title: row["Notes"] || row["Customer"] || "",
-          client_name: row["Customer"] || "",
-          lead_source: row["Source"] || "",
-          current_task_deadline: row["Current Task Deadline"] || "",
-          current_task_assigned_to: row["Current Task Assigned to"] || "",
-          designer: row["Designer"] || "",
-          project_manager: row["Project Manager"] || "",
-          estimator: row["Estimator"] || "",
-          est_inv_at: row["Est/Inv @"] || "",
+        const newWO = await WorkOrder.create({
+          title: String(title),
+          client_name: customer,
+          lead_source: String(row["Source"] || ""),
+          current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
+          current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
+          designer: String(row["Designer"] || ""),
+          project_manager: String(row["Project Manager"] || ""),
+          estimator: String(row["Estimator"] || ""),
+          est_inv_at: String(row["Est/Inv @"] || ""),
           estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
-          current_task_description: row["Current Task Description"] || "",
-          date_initial_contact: row["Date Est. Requested/Initial Contact"] || "",
-          site_survey_date: row["Site Survey"] || "",
-          date_estimate_sent: row["Date Estimate Sent to Customer"] || "",
-          date_order_created: row["Date Order Created"] || "",
-          project_install_date: row["Project Install Date"] || "",
-          permit_submitted_date: row["Permit Submitted"] || "",
-          permit_receipt_confirmed_date: row["Date Permit Receipt Confirmed"] || "",
-          permit_number: row["Permit Number"] || "",
-          permit_approved_date: row["Date Permit Approved/Received"] || "",
+          current_task_description: String(row["Current Task Description"] || ""),
+          date_initial_contact: parseExcelDate(row["Date Est. Requested/Initial Contact"]),
+          site_survey_date: parseExcelDate(row["Site Survey"]),
+          date_estimate_sent: parseExcelDate(row["Date Estimate Sent to Customer"]),
+          date_order_created: parseExcelDate(row["Date Order Created"]),
+          project_install_date: parseExcelDate(row["Project Install Date"]),
+          permit_submitted_date: parseExcelDate(row["Permit Submitted"]),
+          permit_receipt_confirmed_date: parseExcelDate(row["Date Permit Receipt Confirmed"]),
+          permit_number: String(row["Permit Number"] || ""),
+          permit_approved_date: parseExcelDate(row["Date Permit Approved/Received"]),
           in_pipeline: false,
+          sales_status: "lead",
           notes: parsedNotes
         });
+        
+        existingWorkOrdersMap.set(uniqueKey, newWO);
+        setWorkOrders(prev => [newWO, ...prev]);
+        
+        importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+        
+        await new Promise(resolve => setTimeout(resolve, 250));
       }
 
-      await loadWorkOrders();
       setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
     };
     reader.readAsArrayBuffer(file);
