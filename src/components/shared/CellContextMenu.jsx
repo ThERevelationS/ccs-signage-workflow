@@ -19,8 +19,10 @@ export function CellContextMenu({
   isRegistered
 }) {
   const menuRef = useRef(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
+    if (showHistory) return; // Don't close if history dialog is open
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         onClose();
@@ -28,59 +30,54 @@ export function CellContextMenu({
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  }, [onClose, showHistory]);
 
-  const [showHistory, setShowHistory] = useState(false);
+  if (showHistory) {
+    return (
+      <CellHistoryDialog
+        isOpen={true}
+        onClose={onClose}
+        entityType={entityType}
+        entityId={entityId}
+        fieldName={fieldName}
+        fieldLabel={fieldLabel}
+        currentValue={currentValue}
+      />
+    );
+  }
 
   return (
-    <>
-      <div
-        ref={menuRef}
-        className="fixed bg-white border rounded-lg shadow-xl py-1 z-[9999] min-w-[160px]"
-        style={{ top: position.y, left: position.x }}
+    <div
+      ref={menuRef}
+      className="fixed bg-white border rounded-lg shadow-xl py-1 z-[9999] min-w-[160px]"
+      style={{ top: position.y, left: position.x }}
+    >
+      <button
+        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowHistory(true);
+        }}
       >
+        <History className="w-4 h-4 text-blue-600" />
+        View Cell History
+      </button>
+      {isRegistered && (
         <button
-          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+          className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setShowHistory(true);
-          }}
-        >
-          <History className="w-4 h-4 text-blue-600" />
-          View Cell History
-        </button>
-        {isRegistered && (
-          <button
-            className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClear();
-              onClose();
-            }}
-          >
-            <Trash2 className="w-4 h-4" />
-            Clear Cell
-          </button>
-        )}
-      </div>
-
-      {showHistory && (
-        <CellHistoryDialog
-          isOpen={showHistory}
-          onClose={() => {
-            setShowHistory(false);
+            onClear();
             onClose();
           }}
-          entityType={entityType}
-          entityId={entityId}
-          fieldName={fieldName}
-          fieldLabel={fieldLabel}
-          currentValue={currentValue}
-        />
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear Cell
+        </button>
       )}
-    </>
+    </div>
   );
 }
 
@@ -117,68 +114,39 @@ export function CellHistoryDialog({ isOpen, onClose, entityType, entityId, field
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="clay-card border-none max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="clay-card border-none max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-blue-600" />
-            Cell History: {fieldLabel || fieldName}
+          <DialogTitle className="text-base">
+            History: {fieldLabel || fieldName}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="max-h-[60vh] overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
             </div>
           ) : history.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <History className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-              <p>No change history for this cell</p>
-              <p className="text-xs mt-2">Current value: {formatValue(currentValue)}</p>
+            <div className="text-center py-6 text-gray-500 text-sm">
+              No changes recorded
             </div>
           ) : (
-            <div className="space-y-3">
-              {/* Current Value */}
-              <div className="p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-green-700">Current Value</span>
-                </div>
-                <p className="text-sm text-green-800 font-medium break-words">
-                  {formatValue(currentValue)}
-                </p>
-              </div>
-
-              {/* History entries */}
-              {history.map((entry, index) => (
-                <div key={entry.id} className="p-3 rounded-lg bg-gray-50 border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-600">
-                      {entry.changed_by_name || entry.changed_by_email || "Unknown User"}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {format(new Date(entry.created_date), "MMM d, yyyy h:mm a")}
-                    </span>
+            <div className="space-y-2">
+              {history.map((entry) => (
+                <div key={entry.id} className="text-xs border-b pb-2">
+                  <div className="flex justify-between text-gray-500 mb-1">
+                    <span>{entry.changed_by_name || entry.changed_by_email || "Unknown"}</span>
+                    <span>{format(new Date(entry.created_date), "M/d/yy h:mm a")}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 rounded bg-red-50 border border-red-100">
-                      <span className="text-xs text-red-600 font-medium block mb-1">Before</span>
-                      <p className="text-xs text-red-800 break-words">{formatValue(entry.old_value)}</p>
-                    </div>
-                    <div className="p-2 rounded bg-green-50 border border-green-100">
-                      <span className="text-xs text-green-600 font-medium block mb-1">After</span>
-                      <p className="text-xs text-green-800 break-words">{formatValue(entry.new_value)}</p>
-                    </div>
+                  <div>
+                    <span className="text-red-600 line-through">{formatValue(entry.old_value)}</span>
+                    <span className="mx-2">→</span>
+                    <span className="text-green-600">{formatValue(entry.new_value)}</span>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-
-        <div className="pt-3 border-t">
-          <Button onClick={onClose} className="w-full">
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
