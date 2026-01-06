@@ -666,7 +666,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }
 
   return (
-    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}
+    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
