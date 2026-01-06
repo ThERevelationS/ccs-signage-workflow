@@ -750,7 +750,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }
 
   return (
-    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}
+    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
