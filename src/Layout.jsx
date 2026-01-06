@@ -449,7 +449,7 @@ function LayoutContent({ children }) {
         {/* Main content with top padding - reduced in fullscreen */}
         <main 
           className="flex-1 overflow-auto main-scroll-container" 
-          style={{ paddingTop: isCollapsed ? '16px' : '100px' }}
+          style={{ paddingTop: isCollapsed ? '16px' : '110px' }}
         >
           {children}
         </main>
