@@ -22,13 +22,11 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Settings,
   FileText
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
-import TimeClockAdmin from "@/components/timeclock/TimeClockAdmin";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
@@ -235,12 +233,7 @@ export default function TimeClock() {
               <Calendar className="w-4 h-4" />
               Time Off Requests
             </TabsTrigger>
-            {currentUser?.role === "admin" && (
-              <TabsTrigger value="admin" className="gap-2">
-                <Settings className="w-4 h-4" />
-                Admin
-              </TabsTrigger>
-            )}
+
           </TabsList>
 
           <TabsContent value="clock">
@@ -388,11 +381,7 @@ export default function TimeClock() {
             </div>
           </TabsContent>
 
-          {currentUser?.role === "admin" && (
-            <TabsContent value="admin">
-              <TimeClockAdmin />
-            </TabsContent>
-          )}
+
         </Tabs>
       </div>
 

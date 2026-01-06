@@ -62,7 +62,8 @@ export default function UserManagement() {
   const [formData, setFormData] = useState({
     full_name: "",
     role: "user",
-    sales_roles: ["Task Assigned"]
+    sales_roles: ["Task Assigned"],
+    can_import_export: false
   });
 
   useEffect(() => {
@@ -86,7 +87,8 @@ export default function UserManagement() {
     setFormData({
       full_name: user.full_name || "",
       role: user.role || "user",
-      sales_roles: user.sales_roles || ["Task Assigned"]
+      sales_roles: user.sales_roles || ["Task Assigned"],
+      can_import_export: user.can_import_export || false
     });
     setIsDialogOpen(true);
   };
@@ -452,8 +454,8 @@ Return valid HTML that will render beautifully in ALL email clients including da
 
             <div>
               <Label>Sales Pipeline Roles</Label>
-              <div className="mt-2 space-y-2">
-                {["Task Assigned", "Designer", "PM", "Estimator"].map((role) => (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {["Task Assigned", "Designer", "Project Manager", "Estimator", "Installer", "Fabricator", "CNC Router Operator", "CNC Laser Operator", "Painter", "Office Administration", "Accounting"].map((role) => (
                   <div key={role} className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.sales_roles?.includes(role) || false}
@@ -470,6 +472,22 @@ Return valid HTML that will render beautifully in ALL email clients including da
                 ))}
               </div>
               <p className="text-xs text-gray-500 mt-2">Select which sales pipeline roles this user can be assigned to</p>
+            </div>
+
+            <div>
+              <Label>Permissions</Label>
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.can_import_export || false}
+                    onCheckedChange={(checked) => {
+                      setFormData({ ...formData, can_import_export: checked });
+                    }}
+                  />
+                  <label className="text-sm">Can Import/Export Data</label>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Allow this user to import and export data on Order Form and Sales Pipeline</p>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">

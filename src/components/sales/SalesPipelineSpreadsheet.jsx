@@ -910,7 +910,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
-                        {users.filter(u => u.sales_roles?.includes("PM")).map(u => (
+                        {users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")).map(u => (
                           <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                         ))}
                       </SelectContent>

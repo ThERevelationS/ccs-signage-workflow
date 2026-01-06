@@ -676,7 +676,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   React.useImperativeHandle(ref, () => ({
     addNewRow,
     exportToExcel,
-    importFromExcel: () => fileInputRef.current?.click()
+    importFromExcel: () => fileInputRef.current?.click(),
+    canImportExport: () => {
+      // Check if user has import/export permission
+      const user = users.find(u => u.email?.toLowerCase() === currentUser?.email?.toLowerCase());
+      return user?.can_import_export === true || currentUser?.role === "admin";
+    }
   }));
 
   // Filter orders based on search term and status
