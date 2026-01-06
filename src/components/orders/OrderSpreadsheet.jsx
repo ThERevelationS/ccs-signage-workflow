@@ -114,6 +114,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+  const [focusedRowId, setFocusedRowId] = useState(null);
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
@@ -808,15 +809,27 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
         {/* Data Rows */}
         <tbody>
-          {filteredOrders.map((order, index) => (
-            <tr 
-              key={order.id} 
-              className={`border-b hover:bg-gray-50 ${getRowColor(order)}`}
-              style={getRowStyle(order)}
-            >
-              {/* Row Number */}
-              <td className="px-2 py-1.5 border-r text-gray-500">
-                {order.row_number || index + 1}
+          {filteredOrders.map((order, index) => {
+            const isFocused = focusedRowId === order.id;
+            return (
+            <React.Fragment key={order.id}>
+              {isFocused && <tr><td colSpan="11" className="h-2 bg-transparent border-none"></td></tr>}
+              <tr 
+                className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                style={getRowStyle(order)}
+              >
+              {/* Row Number - Clickable Focus Button */}
+              <td className="px-0 py-0 border-r">
+                <button
+                  onClick={() => setFocusedRowId(isFocused ? null : order.id)}
+                  className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${
+                    isFocused 
+                      ? 'bg-purple-500 text-white' 
+                      : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
+                  }`}
+                >
+                  {index + 1}
+                </button>
               </td>
 
               {/* Customer Name with Work Order Link */}
@@ -1219,7 +1232,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </td>
             </tr>
-          ))}
+              {isFocused && <tr><td colSpan="11" className="h-2 bg-transparent border-none"></td></tr>}
+            </React.Fragment>
+          );
+          })}
         </tbody>
       </table>
 

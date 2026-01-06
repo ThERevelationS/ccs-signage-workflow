@@ -51,6 +51,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const [showForm, setShowForm] = useState(false);
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
+  const [focusedRowId, setFocusedRowId] = useState(null);
 
   const [leadSources, setLeadSources] = useState(() => {
     const saved = localStorage.getItem('salesLeadSources');
@@ -713,6 +714,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '10px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
+              <th className="px-1 py-1 border-r text-center font-medium text-gray-700 text-xs" style={{ width: '32px', minWidth: '32px' }}>#</th>
               {isColumnVisible("client_name") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '100px' }}>Customer</th>}
               {isColumnVisible("lead_source") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
                 <div className="flex items-center gap-1">
@@ -765,16 +767,32 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </thead>
 
           <tbody>
-            {filteredWorkOrders.map((wo) => {
+            {filteredWorkOrders.map((wo, index) => {
               const daysFromInitial = calculateDays(wo.date_initial_contact);
               const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
               const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
               const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
               const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
               const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
+              const isFocused = focusedRowId === wo.id;
 
               return (
-              <tr key={wo.id} className="border-b hover:bg-gray-50">
+              <React.Fragment key={wo.id}>
+                {isFocused && <tr><td colSpan="100" className="h-2 bg-transparent border-none"></td></tr>}
+              <tr className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}>
+                {/* Row Number - Clickable Focus Button */}
+                <td className="px-0 py-0 border-r">
+                  <button
+                    onClick={() => setFocusedRowId(isFocused ? null : wo.id)}
+                    className={`w-full h-full px-1 py-0.5 text-center font-medium transition-colors text-xs ${
+                      isFocused 
+                        ? 'bg-purple-500 text-white' 
+                        : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                </td>
                 {isColumnVisible("client_name") && (
                   <td className="px-1 py-0.5 border-r">
                     <button
@@ -1509,6 +1527,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </div>
                 </td>
               </tr>
+                {isFocused && <tr><td colSpan="100" className="h-2 bg-transparent border-none"></td></tr>}
+              </React.Fragment>
               );
             })}
           </tbody>
