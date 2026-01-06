@@ -9,6 +9,8 @@ import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadshee
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
+
 export default function SalesPipeline() {
   const { isRegistered, currentUser } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
@@ -18,10 +20,31 @@ export default function SalesPipeline() {
   const [showColumnFilterDialog, setShowColumnFilterDialog] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
+  const [canImportExport, setCanImportExport] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
     loadActiveFilters();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const checkImportExportPermission = async () => {
+      if (currentUser?.role === "admin") {
+        setCanImportExport(true);
+        return;
+      }
+      if (currentUser?.email) {
+        try {
+          const users = await AuthorizedEmail.filter({ email: currentUser.email.toLowerCase() });
+          if (users.length > 0 && users[0].can_import_export) {
+            setCanImportExport(true);
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+    checkImportExportPermission();
   }, [currentUser]);
 
   const loadActiveFilters = async () => {
@@ -151,25 +174,26 @@ export default function SalesPipeline() {
             </Select>
             </div>
             
-            {isRegistered && (
-              <Button 
-                onClick={() => spreadsheetRef.current?.importFromExcel()}
-                size="sm" 
-                className="h-8 px-2"
-                variant="ghost"
-              >
-                <Upload className="w-3 h-3" />
-              </Button>
+            {canImportExport && (
+              <>
+                <Button 
+                  onClick={() => spreadsheetRef.current?.importFromExcel()}
+                  size="sm" 
+                  className="h-8 px-2"
+                  variant="ghost"
+                >
+                  <Upload className="w-3 h-3" />
+                </Button>
+                <Button 
+                  onClick={() => spreadsheetRef.current?.exportToExcel()}
+                  size="sm" 
+                  className="h-8 px-2"
+                  variant="ghost"
+                >
+                  <Download className="w-3 h-3" />
+                </Button>
+              </>
             )}
-
-            <Button 
-              onClick={() => spreadsheetRef.current?.exportToExcel()}
-              size="sm" 
-              className="h-8 px-2"
-              variant="ghost"
-            >
-              <Download className="w-3 h-3" />
-            </Button>
           </div>
         </div>
 
