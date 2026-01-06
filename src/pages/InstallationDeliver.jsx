@@ -18,6 +18,7 @@ export default function InstallationDeliver() {
 
   useEffect(() => {
     loadWorkOrders(true);
+    const interval = setInterval(() => loadWorkOrders(false), 5000);
     
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -31,6 +32,7 @@ export default function InstallationDeliver() {
     document.addEventListener('keydown', handleKeyDown);
     
     return () => {
+      clearInterval(interval);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('keydown', handleKeyDown);
     };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
-import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
@@ -17,7 +17,7 @@ export default function CompletedJobs() {
 
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 3000);
+    const interval = setInterval(() => loadWorkOrders(false), 5000);
     
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -143,15 +143,6 @@ export default function CompletedJobs() {
         {!isFullScreen && (
           <div className="flex justify-end items-center gap-2 mb-2">
             <div className="flex gap-2">
-              <Button
-                onClick={loadWorkOrders}
-                size="sm"
-                className="clay-button border-none text-gray-800 h-8 px-3"
-                style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, rgba(255,255,255,0.9) 100%)' }}
-              >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                <span className="text-sm">Refresh</span>
-              </Button>
               <Button
                 onClick={toggleFullScreen}
                 size="sm"
