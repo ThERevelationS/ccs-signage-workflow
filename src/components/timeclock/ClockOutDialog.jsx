@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home } from "lucide-react";
+import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -32,6 +33,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const [showSearch, setShowSearch] = useState(false);
   const [totalAllocatedHours, setTotalAllocatedHours] = useState(0);
   const [error, setError] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Calculate total working hours
   const clockInTime = timeEntry ? new Date(timeEntry.clock_in) : new Date();
@@ -154,7 +156,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       lunchMinutes: lunchMins,
       jobAllocations,
       totalHours: workableHours,
-      clockOutTime: clockOutTime.toISOString()
+      clockOutTime: clockOutTime.toISOString(),
+      notes: notes.trim()
     });
   };
 
@@ -393,6 +396,21 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Notes for Admin */}
+          <div className="clay-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-blue-600" />
+              <Label className="font-semibold">Notes for Admin (Optional)</Label>
+            </div>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes about your work day that you'd like admin to see..."
+              rows={3}
+              className="resize-none"
+            />
           </div>
 
           {/* Error Message */}

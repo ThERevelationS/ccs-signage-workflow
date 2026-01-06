@@ -21,11 +21,14 @@ import {
   XCircle,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings,
+  FileText
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
+import TimeClockAdmin from "@/components/timeclock/TimeClockAdmin";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
@@ -99,6 +102,7 @@ export default function TimeClock() {
         lunch_minutes: data.lunchMinutes,
         total_hours: data.totalHours,
         job_allocations: data.jobAllocations,
+        notes: data.notes,
         status: "clocked_out"
       });
       setActiveEntry(null);
@@ -231,6 +235,12 @@ export default function TimeClock() {
               <Calendar className="w-4 h-4" />
               Time Off Requests
             </TabsTrigger>
+            {currentUser?.role === "admin" && (
+              <TabsTrigger value="admin" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Admin
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="clock">
@@ -312,6 +322,16 @@ export default function TimeClock() {
                         </div>
                       </div>
                     )}
+
+                    {entry.notes && (
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                          <FileText className="w-3 h-3" />
+                          Notes:
+                        </div>
+                        <p className="text-sm text-gray-600">{entry.notes}</p>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -367,6 +387,12 @@ export default function TimeClock() {
               )}
             </div>
           </TabsContent>
+
+          {currentUser?.role === "admin" && (
+            <TabsContent value="admin">
+              <TimeClockAdmin />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
