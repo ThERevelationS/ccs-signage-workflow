@@ -95,6 +95,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 
 
 const Order = base44.entities.Order;
@@ -141,7 +142,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
-  
+  const [contextMenu, setContextMenu] = useState(null);
+
+  const { trackChange } = useCellHistoryTracker("Order", currentUser);
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const fileInputRef = useRef(null);
@@ -322,13 +325,20 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return missingFields;
   };
 
-  const updateOrder = (orderId, field, value) => {
+  const updateOrder = (orderId, field, value, skipHistory = false) => {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) return;
+
+    const oldValue = orders[orderIndex][field];
 
     const updatedOrders = [...orders];
     updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
     setOrders(updatedOrders);
+
+    // Track cell history
+    if (!skipHistory && oldValue !== value) {
+      trackChange(orderId, field, oldValue, value);
+    }
 
     // Track changes for batch save
     pendingChangesRef.current[orderId] = {
@@ -715,6 +725,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return (a.row_number || 0) - (b.row_number || 0);
   });
 
+  const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      order,
+      fieldName,
+      fieldLabel,
+      currentValue
+    });
+  };
+
+  const clearCell = (orderId, fieldName) => {
+    updateOrder(orderId, fieldName, "");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -724,7 +750,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }
 
   return (
-    <div className="overflow-visible">
+    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -838,7 +864,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Customer Name with Work Order Link */}
-              <td className="px-1 py-0.5 border-r relative" style={{ overflow: 'visible' }}>
+              <td 
+                className="px-1 py-0.5 border-r relative" 
+                style={{ overflow: 'visible' }}
+                onContextMenu={(e) => handleContextMenu(e, order, "customer_name", "Customer Name", order.customer_name)}
+              >
                 <div className="flex items-center gap-1 h-7">
                 <Input
                   value={order.customer_name || ""}
@@ -919,7 +949,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Request Type */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "request_type", "Request Type", order.request_type)}
+              >
                 <Select
                   value={order.request_type || "Other"}
                   onValueChange={(val) => updateOrder(order.id, "request_type", val)}
@@ -937,7 +970,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Description */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "description", "Description", order.description)}
+              >
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -961,7 +997,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Quantity */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "quantity", "Quantity", order.quantity)}
+              >
                 <Input
                   value={order.quantity || ""}
                   onChange={(e) => updateOrder(order.id, "quantity", e.target.value)}
@@ -1136,7 +1175,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Vendor */}
-              <td className="px-1 py-0.5 border-r">
+              <td 
+                className="px-1 py-0.5 border-r"
+                onContextMenu={(e) => handleContextMenu(e, order, "vendor", "Vendor", order.vendor)}
+              >
                 <Select
                   value={order.vendor || ""}
                   onValueChange={(val) => updateOrder(order.id, "vendor", val)}
@@ -1449,6 +1491,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <CellContextMenu
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
+          entityType="Order"
+          entityId={contextMenu.order.id}
+          fieldName={contextMenu.fieldName}
+          fieldLabel={contextMenu.fieldLabel}
+          currentValue={contextMenu.currentValue}
+          onClear={() => clearCell(contextMenu.order.id, contextMenu.fieldName)}
+          isRegistered={isRegistered}
+        />
+      )}
 
       {/* Edit Vendors Dialog */}
       <Dialog open={editingVendors} onOpenChange={setEditingVendors}>
