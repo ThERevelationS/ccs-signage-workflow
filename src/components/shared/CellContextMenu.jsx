@@ -41,7 +41,9 @@ export function CellContextMenu({
       >
         <button
           className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setShowHistory(true);
           }}
         >
@@ -51,7 +53,9 @@ export function CellContextMenu({
         {isRegistered && (
           <button
             className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
-            onClick={() => {
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               onClear();
               onClose();
             }}

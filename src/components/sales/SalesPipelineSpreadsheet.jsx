@@ -128,12 +128,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(), 10000);
+    const interval = setInterval(() => loadWorkOrders(false), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const loadWorkOrders = async () => {
-    setIsLoading(true);
+  const loadWorkOrders = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const [orders, usersData] = await Promise.all([
         WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
