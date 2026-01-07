@@ -15,7 +15,9 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown, Strikethrough } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
@@ -349,6 +351,29 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setTaskDescriptions(newItems);
     localStorage.setItem("salesTaskDescriptions", JSON.stringify(newItems));
     setEditDialog({ ...editDialog, items: newItems });
+  };
+
+  const updateTaskStyle = (item, field, value) => {
+    const newItems = editDialog.items.map(i => {
+      if (i.text === item.text) {
+        return { ...i, [field]: value };
+      }
+      return i;
+    });
+    setTaskDescriptions(newItems);
+    localStorage.setItem("salesTaskDescriptions", JSON.stringify(newItems));
+    setEditDialog({ ...editDialog, items: newItems });
+  };
+
+  // Get task description styling for a work order
+  const getTaskDescStyle = (taskDescText) => {
+    const taskDesc = taskDescriptions.find(td => td.text === taskDescText);
+    if (!taskDesc) return { backgroundColor: '', opacity: 1, markOut: false };
+    return {
+      backgroundColor: taskDesc.color || '',
+      opacity: (taskDesc.opacity ?? 100) / 100,
+      markOut: taskDesc.markOut ?? false
+    };
   };
 
   const moveListItem = (index, direction) => {
@@ -1138,12 +1163,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
               const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
               const isFocused = focusedRowId === wo.id;
+              const taskStyle = getTaskDescStyle(wo.current_task_description);
 
               return (
               <React.Fragment key={wo.id}>
                 {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
                 <tr 
-                  className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                  className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
+                  style={{ 
+                    backgroundColor: taskStyle.backgroundColor || undefined,
+                    opacity: taskStyle.markOut ? taskStyle.opacity : 1
+                  }}
                 >
                 {/* Row Number - Clickable Focus Button */}
                 <td className="px-0 py-0 border-r">
@@ -2050,7 +2080,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       </Dialog>
 
       <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, field: "", items: [], storageKey: "" })}>
-        <DialogContent className={`clay-card border-none ${editDialog.storageKey === "salesTaskDescriptions" ? "max-w-2xl" : "max-w-md"} [&>button]:hidden`}>
+        <DialogContent className={`clay-card border-none ${editDialog.storageKey === "salesTaskDescriptions" ? "max-w-4xl" : "max-w-md"} [&>button]:hidden`}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-blue-600" />
@@ -2074,7 +2104,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </div>
             {editDialog.storageKey === "salesTaskDescriptions" && (
               <p className="text-xs text-gray-500">
-                Assign a page to show a notification bubble when this task is selected.
+                Assign a page to show on workflow boards. Set color, opacity, and mark out to style rows with this task description.
               </p>
             )}
             <div className="space-y-1 max-h-80 overflow-y-auto">
@@ -2131,19 +2161,59 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       </span>
                     )}
                     {isTaskDesc && (
-                      <Select
-                        value={itemPage || "none"}
-                        onValueChange={(val) => updateTaskPage(item, val === "none" ? "" : val)}
-                      >
-                        <SelectTrigger className="h-7 w-40 text-xs">
-                          <SelectValue placeholder="Select page" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {WORKFLOW_PAGES.map(page => (
-                            <SelectItem key={page.value} value={page.value}>{page.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <>
+                        <Select
+                          value={itemPage || "none"}
+                          onValueChange={(val) => updateTaskPage(item, val === "none" ? "" : val)}
+                        >
+                          <SelectTrigger className="h-7 w-32 text-xs">
+                            <SelectValue placeholder="Page" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {WORKFLOW_PAGES.map(page => (
+                              <SelectItem key={page.value} value={page.value}>{page.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={item.color || ""}
+                          onValueChange={(val) => updateTaskStyle(item, "color", val)}
+                        >
+                          <SelectTrigger className="h-7 w-20 text-xs" style={{ backgroundColor: item.color || undefined }}>
+                            <SelectValue placeholder="Color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TASK_COLORS.map(c => (
+                              <SelectItem key={c.value} value={c.value}>
+                                <div className="flex items-center gap-2">
+                                  {c.value && <div className="w-3 h-3 rounded" style={{ backgroundColor: c.value }} />}
+                                  {c.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-gray-500">{item.opacity ?? 100}%</span>
+                          <input
+                            type="range"
+                            min="20"
+                            max="100"
+                            step="10"
+                            value={item.opacity ?? 100}
+                            onChange={(e) => updateTaskStyle(item, "opacity", parseInt(e.target.value))}
+                            className="w-16 h-4"
+                          />
+                        </div>
+                        <label className="flex items-center gap-1 cursor-pointer" title="Mark out entire row">
+                          <Checkbox
+                            checked={item.markOut ?? false}
+                            onCheckedChange={(checked) => updateTaskStyle(item, "markOut", checked)}
+                            className="h-4 w-4"
+                          />
+                          <Strikethrough className="w-3 h-3 text-gray-500" />
+                        </label>
+                      </>
                     )}
                     <Button
                       variant="ghost"
