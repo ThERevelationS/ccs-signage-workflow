@@ -364,10 +364,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const saveCorbridgeData = async (invoiceNumber, link) => {
-    await WorkOrder.update(corbridgeDialog.workOrder.id, {
+    const updates = {
       corbridge_invoice_number: invoiceNumber,
-      corbridge_link: link
-    });
+      est_inv_at: invoiceNumber
+    };
+    if (link) {
+      updates.corbridge_link = link;
+    }
+    await WorkOrder.update(corbridgeDialog.workOrder.id, updates);
     setCorbridgeDialog({ open: false, workOrder: null });
     loadWorkOrders();
   };
@@ -509,8 +513,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           }
         }
         
-        // Skip empty rows
-        const title = row["Notes"] || row["title"] || "";
+        // Skip empty rows - title is the Notes column
+        const title = row["Notes"] ?? row["title"] ?? "";
         if (!customer && !title) {
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
           continue;
@@ -524,23 +528,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           // Fill in missing information on existing work order
           const updates = {};
           
-          if (!existingWO.lead_source && row["Source"]) {
-            updates.lead_source = String(row["Source"]);
+          // Source column mapping
+          if (!existingWO.lead_source && (row["Source"] ?? row["Lead Source"])) {
+            updates.lead_source = String(row["Source"] ?? row["Lead Source"]);
           }
           if (!existingWO.current_task_assigned_to && row["Current Task Assigned to"]) {
             updates.current_task_assigned_to = String(row["Current Task Assigned to"]);
           }
-          if (!existingWO.designer && row["Designer"]) {
-            updates.designer = String(row["Designer"]);
+          // Designer column mapping
+          if (!existingWO.designer && (row["Designer"] ?? row["designer"])) {
+            updates.designer = String(row["Designer"] ?? row["designer"]);
           }
-          if (!existingWO.project_manager && row["Project Manager"]) {
-            updates.project_manager = String(row["Project Manager"]);
+          // Project Manager column mapping
+          if (!existingWO.project_manager && (row["Project Manager"] ?? row["PM"] ?? row["project_manager"])) {
+            updates.project_manager = String(row["Project Manager"] ?? row["PM"] ?? row["project_manager"]);
           }
-          if (!existingWO.estimator && row["Estimator"]) {
-            updates.estimator = String(row["Estimator"]);
+          // Estimator column mapping
+          if (!existingWO.estimator && (row["Estimator"] ?? row["estimator"])) {
+            updates.estimator = String(row["Estimator"] ?? row["estimator"]);
           }
-          if (!existingWO.est_inv_at && row["Est/Inv @"]) {
-            updates.est_inv_at = String(row["Est/Inv @"]);
+          // Est/Inv # column mapping - store in est_inv_at field
+          if (!existingWO.est_inv_at && (row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"])) {
+            updates.est_inv_at = String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"]);
           }
           if (!existingWO.estimate_amount && row["Estimate Amount"]) {
             updates.estimate_amount = parseFloat(row["Estimate Amount"]) || 0;
@@ -665,13 +674,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         const newWO = await WorkOrder.create({
           title: String(title),
           client_name: customer,
-          lead_source: String(row["Source"] || ""),
+          lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
           current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
-          designer: String(row["Designer"] || ""),
-          project_manager: String(row["Project Manager"] || ""),
-          estimator: String(row["Estimator"] || ""),
-          est_inv_at: String(row["Est/Inv @"] || ""),
+          designer: String(row["Designer"] ?? row["designer"] ?? ""),
+          project_manager: String(row["Project Manager"] ?? row["PM"] ?? row["project_manager"] ?? ""),
+          estimator: String(row["Estimator"] ?? row["estimator"] ?? ""),
+          est_inv_at: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? ""),
           estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
           current_task_description: String(row["Current Task Description"] || ""),
           date_initial_contact: parseExcelDate(row["Date Est. Requested/Initial Contact"]),
@@ -947,8 +956,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("designer") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('designer')}>
                 <div className="flex items-center gap-1">Designer {getSortIcon('designer')}</div>
               </th>}
-              {isColumnVisible("project_manager") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('project_manager')}>
-                <div className="flex items-center gap-1">PM {getSortIcon('project_manager')}</div>
+              {isColumnVisible("project_manager") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('project_manager')}>
+                <div className="flex items-center gap-1">Project Manager {getSortIcon('project_manager')}</div>
               </th>}
               {isColumnVisible("estimator") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('estimator')}>
                 <div className="flex items-center gap-1">Estimator {getSortIcon('estimator')}</div>
@@ -1224,7 +1233,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 {isColumnVisible("est_inv_at") && (
-                  <td className="px-1 py-0.5 border-r">
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "est_inv_at", "Est/Inv #", wo.est_inv_at)}
+                  >
                     <div className="flex items-center gap-1">
                       {wo.corbridge_link ? (
                         <a
@@ -1236,14 +1248,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                           {wo.corbridge_invoice_number || wo.est_inv_at || "Link"}
                         </a>
                       ) : (
-                        <span className="text-xs truncate flex-1">{wo.corbridge_invoice_number || wo.est_inv_at || "-"}</span>
+                        <Input
+                          value={wo.est_inv_at || ""}
+                          onChange={(e) => updateWorkOrder(wo.id, "est_inv_at", e.target.value)}
+                          className="h-7 text-xs border-0 bg-transparent px-1 flex-1"
+                          placeholder="-"
+                          disabled={!isRegistered}
+                        />
                       )}
                       {isRegistered && (
                         <button
                           onClick={() => openCorbridgeDialog(wo)}
                           className="flex-shrink-0"
+                          title="Add link"
                         >
-                          <Pencil className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" />
+                          <LinkIcon className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" />
                         </button>
                       )}
                     </div>
@@ -1895,39 +1914,33 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       <Dialog open={corbridgeDialog.open} onOpenChange={(open) => !open && setCorbridgeDialog({ open: false, workOrder: null })}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
-            <DialogTitle>Corbridge Invoice/Estimate</DialogTitle>
+            <DialogTitle>Est/Inv # Link</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number</label>
               <Input
-                defaultValue={corbridgeDialog.workOrder?.corbridge_invoice_number || ""}
+                defaultValue={corbridgeDialog.workOrder?.corbridge_invoice_number || corbridgeDialog.workOrder?.est_inv_at || ""}
                 onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_invoice_number = e.target.value)}
                 placeholder="Enter number..."
                 className="w-full"
-                required
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Corbridge Link <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium mb-1 block">Link URL (optional)</label>
               <Input
                 defaultValue={corbridgeDialog.workOrder?.corbridge_link || ""}
                 onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_link = e.target.value)}
-                placeholder="Paste the Invoice or Estimate URL here..."
+                placeholder="Paste the URL here (optional)..."
                 className="w-full"
-                required
               />
-              <p className="text-xs text-gray-500 mt-1">Copy the URL from Corbridge and paste it here</p>
+              <p className="text-xs text-gray-500 mt-1">Optional: Add a link to make the number clickable</p>
             </div>
             <Button
               onClick={() => {
                 if (corbridgeDialog.workOrder) {
-                  const invoiceNum = corbridgeDialog.workOrder.corbridge_invoice_number?.trim();
-                  const link = corbridgeDialog.workOrder.corbridge_link?.trim();
-                  if (!invoiceNum || !link) {
-                    alert("Both Invoice/Estimate Number and Corbridge Link are required");
-                    return;
-                  }
+                  const invoiceNum = corbridgeDialog.workOrder.corbridge_invoice_number?.trim() || "";
+                  const link = corbridgeDialog.workOrder.corbridge_link?.trim() || "";
                   saveCorbridgeData(invoiceNum, link);
                 }
               }}
