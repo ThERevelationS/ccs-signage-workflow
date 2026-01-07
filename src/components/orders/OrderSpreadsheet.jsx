@@ -144,8 +144,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [validationError, setValidationError] = useState(null);
   const [editingCustomerName, setEditingCustomerName] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
-  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
+  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0, paused: false });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
+  const importStateRef = useRef({ paused: false, cancelled: false });
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
 
@@ -485,6 +486,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const file = e.target.files?.[0];
     if (!file) return;
 
+    importStateRef.current = { paused: false, cancelled: false };
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       const data = new Uint8Array(event.target.result);
@@ -496,7 +499,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         ? Math.max(...orders.map(o => o.row_number || 0)) 
         : 0;
 
-      setImportProgress({ show: true, current: 0, total: jsonData.length });
+      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
 
       // Track existing orders to check for duplicates - map key to order object
       const existingOrdersMap = new Map();
@@ -508,6 +511,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       let importedCount = 0;
 
       for (let i = 0; i < jsonData.length; i++) {
+        // Check for cancel
+        if (importStateRef.current.cancelled) {
+          setImportProgress({ show: false, current: 0, total: 0, paused: false });
+          return;
+        }
+
+        // Wait while paused
+        while (importStateRef.current.paused) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         const row = jsonData[i];
         
         // Get customer name - try multiple possible column names and handle various data types
@@ -811,8 +825,46 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Importing...</span>
-              <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+              <span className="text-sm font-medium">
+                {importProgress.paused ? 'Import Paused' : 'Importing...'}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+                {importProgress.paused ? (
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      importStateRef.current.paused = false;
+                      setImportProgress(prev => ({ ...prev, paused: false }));
+                    }}
+                    className="h-6 px-2"
+                  >
+                    Resume
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      importStateRef.current.paused = true;
+                      setImportProgress(prev => ({ ...prev, paused: true }));
+                    }}
+                    className="h-6 px-2"
+                  >
+                    Pause
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  onClick={() => {
+                    importStateRef.current.cancelled = true;
+                  }}
+                  className="h-6 px-2"
+                >
+                  Stop
+                </Button>
+              </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}></div>
@@ -835,7 +887,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       )}
 
       {/* Spreadsheet Table */}
-      <div ref={tableContainerRef} className="overflow-auto" style={{ maxHeight: '70vh' }}>
+      <div ref={tableContainerRef} className="overflow-auto" style={{ height: 'calc(100vh - 280px)' }}>
       <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', overflow: 'visible' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
@@ -911,7 +963,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             const isFocused = focusedRowId === order.id;
             return (
             <React.Fragment key={order.id}>
-              {isFocused && <tr><td colSpan="11" className="h-2 bg-transparent border-none"></td></tr>}
+              {isFocused && <tr><td colSpan="11" className="h-3 bg-transparent border-none"></td></tr>}
               <tr 
                 className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
                 style={getRowStyle(order)}
@@ -1358,7 +1410,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </td>
             </tr>
-              {isFocused && <tr><td colSpan="11" className="h-2 bg-transparent border-none"></td></tr>}
+              {isFocused && <tr><td colSpan="11" className="h-3 bg-transparent border-none"></td></tr>}
             </React.Fragment>
           );
           })}

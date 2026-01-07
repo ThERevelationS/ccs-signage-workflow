@@ -197,16 +197,14 @@ export default function SalesPipeline() {
           </div>
         </div>
 
-        <div className="clay-card p-4">
-          <SalesPipelineSpreadsheet 
-            ref={spreadsheetRef}
-            searchTerm={searchTerm} 
-            filterStatus={filterStatus}
-            showButtonsInline={false}
-            activeColumnPreset={activeColumnPreset}
-            customFilters={activeFilters.filter(f => f.type === "filter")}
-          />
-        </div>
+        <SalesPipelineSpreadsheet 
+          ref={spreadsheetRef}
+          searchTerm={searchTerm} 
+          filterStatus={filterStatus}
+          showButtonsInline={false}
+          activeColumnPreset={activeColumnPreset}
+          customFilters={activeFilters.filter(f => f.type === "filter")}
+        />
       </div>
 
       {showNewClientForm && (

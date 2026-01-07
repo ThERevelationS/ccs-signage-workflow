@@ -49,8 +49,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const [pendingChanges, setPendingChanges] = useState({});
   const debounceTimers = useRef({});
-  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0 });
+  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0, paused: false });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
+  const importStateRef = useRef({ paused: false, cancelled: false });
   const [showForm, setShowForm] = useState(false);
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
@@ -481,6 +482,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const file = e.target.files?.[0];
     if (!file) return;
 
+    importStateRef.current = { paused: false, cancelled: false };
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       const data = new Uint8Array(event.target.result);
@@ -488,7 +491,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      setImportProgress({ show: true, current: 0, total: jsonData.length });
+      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
 
       // Track existing work orders to check for duplicates
       const existingWorkOrdersMap = new Map();
@@ -500,6 +503,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       let importedCount = 0;
 
       for (let i = 0; i < jsonData.length; i++) {
+        // Check for cancel
+        if (importStateRef.current.cancelled) {
+          setImportProgress({ show: false, current: 0, total: 0, paused: false });
+          return;
+        }
+
+        // Wait while paused
+        while (importStateRef.current.paused) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         const row = jsonData[i];
         
         // Get customer name with type handling
@@ -936,8 +950,46 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Importing...</span>
-              <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+              <span className="text-sm font-medium">
+                {importProgress.paused ? 'Import Paused' : 'Importing...'}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
+                {importProgress.paused ? (
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      importStateRef.current.paused = false;
+                      setImportProgress(prev => ({ ...prev, paused: false }));
+                    }}
+                    className="h-6 px-2"
+                  >
+                    Resume
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      importStateRef.current.paused = true;
+                      setImportProgress(prev => ({ ...prev, paused: true }));
+                    }}
+                    className="h-6 px-2"
+                  >
+                    Pause
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  onClick={() => {
+                    importStateRef.current.cancelled = true;
+                  }}
+                  className="h-6 px-2"
+                >
+                  Stop
+                </Button>
+              </div>
             </div>
             <Progress value={(importProgress.current / importProgress.total) * 100} className="h-2" />
           </div>
@@ -955,7 +1007,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      <div ref={parentRef} className="overflow-auto" style={{ maxHeight: '70vh' }}>
+      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 280px)' }}>
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100">
             <tr className="border-b sticky top-0 z-10 bg-gray-100">
@@ -1072,10 +1124,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               const isFocused = focusedRowId === wo.id;
 
               return (
-              <tr 
-                key={wo.id}
-                className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
-              >
+              <React.Fragment key={wo.id}>
+                {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
+                <tr 
+                  className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                >
                 {/* Row Number - Clickable Focus Button */}
                 <td className="px-0 py-0 border-r">
                   <button
@@ -1922,6 +1975,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   )}
                 </td>
               </tr>
+              {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
+              </React.Fragment>
               );
             })}
             {/* Bottom spacer for virtual scroll */}
