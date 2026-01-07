@@ -366,7 +366,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   // Get task description styling for a work order
-  const getTaskDescStyle = (taskDescText) => {
+  const getTaskDescStyle = useCallback((taskDescText) => {
+    if (!taskDescText) return { backgroundColor: '', opacity: 1, markOut: false };
     const taskDesc = taskDescriptions.find(td => td.text === taskDescText);
     if (!taskDesc) return { backgroundColor: '', opacity: 1, markOut: false };
     return {
@@ -374,7 +375,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       opacity: (taskDesc.opacity ?? 100) / 100,
       markOut: taskDesc.markOut ?? false
     };
-  };
+  }, [taskDescriptions]);
 
   const moveListItem = (index, direction) => {
     const newItems = [...editDialog.items];
