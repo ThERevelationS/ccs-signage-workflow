@@ -761,6 +761,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     });
   }, [orders, filterStatus, searchTerm, sortConfig]);
 
+  // Virtual scrolling setup
+  const tableContainerRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: filteredOrders.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 32,
+    overscan: 15,
+  });
+
   const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
     e.stopPropagation();
