@@ -852,7 +852,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         </colgroup>
         {/* Header Row */}
         <thead className="bg-gray-100">
-          <tr className="border-b">
+          <tr className="border-b sticky top-0 z-10 bg-gray-100">
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('customer_name')}>
               <div className="flex items-center gap-1">Customer Name {getSortIcon('customer_name')}</div>
