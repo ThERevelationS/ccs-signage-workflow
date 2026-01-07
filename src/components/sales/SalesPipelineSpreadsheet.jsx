@@ -651,6 +651,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               sub_tasks: []
             });
           }
+          
+          // If no date pattern found, add the whole text as a single note
+          if (parsedNotes.length === 0 && notesText.trim()) {
+            parsedNotes.push({
+              text: notesText.trim(),
+              timestamp: new Date().toISOString(),
+              created_by: "Import",
+              completed: false,
+              sub_tasks: []
+            });
+          }
         }
 
         // Parse Excel dates
@@ -1155,9 +1166,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       disabled={!isRegistered}
                     >
                       <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
-                        <SelectValue placeholder="-" />
+                        <SelectValue placeholder="-">{wo.current_task_assigned_to || "-"}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        {/* Show current value if not in user list */}
+                        {wo.current_task_assigned_to && !users.some(u => u.full_name === wo.current_task_assigned_to && u.sales_roles?.includes("Task Assigned")) && (
+                          <SelectItem key={wo.current_task_assigned_to} value={wo.current_task_assigned_to}>{wo.current_task_assigned_to}</SelectItem>
+                        )}
                         {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
                           <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                         ))}
@@ -1177,9 +1192,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       disabled={!isRegistered}
                     >
                       <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
-                        <SelectValue placeholder="-" />
+                        <SelectValue placeholder="-">{wo.designer || "-"}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        {/* Show current value if not in user list */}
+                        {wo.designer && !users.some(u => u.full_name === wo.designer && u.sales_roles?.includes("Designer")) && (
+                          <SelectItem key={wo.designer} value={wo.designer}>{wo.designer}</SelectItem>
+                        )}
                         {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
                           <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                         ))}
@@ -1199,9 +1218,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       disabled={!isRegistered}
                     >
                       <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
-                        <SelectValue placeholder="-" />
+                        <SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        {/* Show current value if not in user list */}
+                        {wo.project_manager && !users.some(u => u.full_name === wo.project_manager && (u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM"))) && (
+                          <SelectItem key={wo.project_manager} value={wo.project_manager}>{wo.project_manager}</SelectItem>
+                        )}
                         {users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")).map(u => (
                           <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                         ))}
@@ -1221,9 +1244,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       disabled={!isRegistered}
                     >
                       <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
-                        <SelectValue placeholder="-" />
+                        <SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        {/* Show current value if not in user list */}
+                        {wo.estimator && !users.some(u => u.full_name === wo.estimator && u.sales_roles?.includes("Estimator")) && (
+                          <SelectItem key={wo.estimator} value={wo.estimator}>{wo.estimator}</SelectItem>
+                        )}
                         {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
                           <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                         ))}
