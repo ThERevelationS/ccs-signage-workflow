@@ -137,7 +137,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   ];
 
   const TASK_COLORS = [
-    { value: "", label: "None" },
+    { value: "none", label: "None" },
     { value: "#fef2f2", label: "Red" },
     { value: "#fef9c3", label: "Yellow" },
     { value: "#dcfce7", label: "Green" },
@@ -2176,8 +2176,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                           </SelectContent>
                         </Select>
                         <Select
-                          value={item.color || ""}
-                          onValueChange={(val) => updateTaskStyle(item, "color", val)}
+                          value={item.color || "none"}
+                          onValueChange={(val) => updateTaskStyle(item, "color", val === "none" ? "" : val)}
                         >
                           <SelectTrigger className="h-7 w-20 text-xs" style={{ backgroundColor: item.color || undefined }}>
                             <SelectValue placeholder="Color" />
@@ -2186,7 +2186,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             {TASK_COLORS.map(c => (
                               <SelectItem key={c.value} value={c.value}>
                                 <div className="flex items-center gap-2">
-                                  {c.value && <div className="w-3 h-3 rounded" style={{ backgroundColor: c.value }} />}
+                                  {c.value !== "none" && <div className="w-3 h-3 rounded" style={{ backgroundColor: c.value }} />}
                                   {c.label}
                                 </div>
                               </SelectItem>
