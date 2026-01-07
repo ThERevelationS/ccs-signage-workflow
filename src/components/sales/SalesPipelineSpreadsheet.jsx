@@ -925,102 +925,102 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       )}
 
       <div ref={parentRef} className="overflow-auto" style={{ maxHeight: '70vh' }}>
-        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '10px', tableLayout: 'auto' }}>
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr className="border-b">
-              <th className="px-1 py-1 border-r text-center font-medium text-gray-700 text-xs" style={{ width: '32px', minWidth: '32px' }}>#</th>
-              {isColumnVisible("client_name") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('client_name')}>
+        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
+          <thead className="bg-gray-100">
+            <tr className="border-b sticky top-0 z-10 bg-gray-100">
+              <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '32px', minWidth: '32px' }}>#</th>
+              {isColumnVisible("client_name") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')}>
                 <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
               </th>}
-              {isColumnVisible("lead_source") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('lead_source')}>
+              {isColumnVisible("lead_source") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')}>
                 <div className="flex items-center gap-1">
                   Source {getSortIcon('lead_source')}
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("lead_source", leadSources, "salesLeadSources"); }} />}
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("lead_source", leadSources, "salesLeadSources"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("current_task_deadline") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('current_task_deadline')}>
+              {isColumnVisible("current_task_deadline") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('current_task_deadline')}>
                 <div className="flex items-center gap-1">Deadline {getSortIcon('current_task_deadline')}</div>
               </th>}
-              {isColumnVisible("current_task_assigned_to") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('current_task_assigned_to')}>
+              {isColumnVisible("current_task_assigned_to") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('current_task_assigned_to')}>
                 <div className="flex items-center gap-1">Task Assigned {getSortIcon('current_task_assigned_to')}</div>
               </th>}
-              {isColumnVisible("designer") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('designer')}>
+              {isColumnVisible("designer") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('designer')}>
                 <div className="flex items-center gap-1">Designer {getSortIcon('designer')}</div>
               </th>}
-              {isColumnVisible("project_manager") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('project_manager')}>
+              {isColumnVisible("project_manager") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('project_manager')}>
                 <div className="flex items-center gap-1">PM {getSortIcon('project_manager')}</div>
               </th>}
-              {isColumnVisible("estimator") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('estimator')}>
+              {isColumnVisible("estimator") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('estimator')}>
                 <div className="flex items-center gap-1">Estimator {getSortIcon('estimator')}</div>
               </th>}
-              {isColumnVisible("est_inv_at") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Estimate/Invoice # Link</th>}
-              {isColumnVisible("estimate_amount") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('estimate_amount')}>
+              {isColumnVisible("est_inv_at") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Est/Inv # Link</th>}
+              {isColumnVisible("estimate_amount") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('estimate_amount')}>
                 <div className="flex items-center gap-1">Amount {getSortIcon('estimate_amount')}</div>
               </th>}
-              {isColumnVisible("current_task_description") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '120px' }} onClick={() => handleSort('current_task_description')}>
+              {isColumnVisible("current_task_description") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '140px' }} onClick={() => handleSort('current_task_description')}>
                 <div className="flex items-center gap-1">
                   Task Desc {getSortIcon('current_task_description')}
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions"); }} />}
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("date_initial_contact") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_initial_contact')}>
+              {isColumnVisible("date_initial_contact") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_initial_contact')}>
                 <div className="flex items-center gap-1">Initial {getSortIcon('date_initial_contact')}</div>
               </th>}
-              {isColumnVisible("site_survey_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('site_survey_date')}>
+              {isColumnVisible("site_survey_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')}>
                 <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
               </th>}
-              {isColumnVisible("date_estimate_sent") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_estimate_sent')}>
+              {isColumnVisible("date_estimate_sent") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_estimate_sent')}>
                 <div className="flex items-center gap-1">Est Sent {getSortIcon('date_estimate_sent')}</div>
               </th>}
-              {isColumnVisible("date_order_created") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_order_created')}>
+              {isColumnVisible("date_order_created") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_order_created')}>
                 <div className="flex items-center gap-1">Order {getSortIcon('date_order_created')}</div>
               </th>}
-              {isColumnVisible("project_install_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('project_install_date')}>
+              {isColumnVisible("project_install_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('project_install_date')}>
                 <div className="flex items-center gap-1">Install {getSortIcon('project_install_date')}</div>
               </th>}
-              {isColumnVisible("permit_submitted_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_submitted_date')}>
+              {isColumnVisible("permit_submitted_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('permit_submitted_date')}>
                 <div className="flex items-center gap-1">Permit Sub {getSortIcon('permit_submitted_date')}</div>
               </th>}
-              {isColumnVisible("title") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('title')}>
+              {isColumnVisible("title") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('title')}>
                 <div className="flex items-center gap-1">Notes {getSortIcon('title')}</div>
               </th>}
-              {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_receipt_confirmed_date')}>
+              {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('permit_receipt_confirmed_date')}>
                 <div className="flex items-center gap-1">Permit Conf {getSortIcon('permit_receipt_confirmed_date')}</div>
               </th>}
-              {isColumnVisible("permit_number") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '60px' }} onClick={() => handleSort('permit_number')}>
+              {isColumnVisible("permit_number") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_number')}>
                 <div className="flex items-center gap-1">Permit # {getSortIcon('permit_number')}</div>
               </th>}
-              {isColumnVisible("permit_approved_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_approved_date')}>
+              {isColumnVisible("permit_approved_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('permit_approved_date')}>
                 <div className="flex items-center gap-1">Permit App {getSortIcon('permit_approved_date')}</div>
               </th>}
-              {isColumnVisible("days_init_today") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
-              {isColumnVisible("days_req_est") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
-              {isColumnVisible("days_est_ord") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
-              {isColumnVisible("days_ord_prm") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
-              {isColumnVisible("days_prm_app") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
-              {isColumnVisible("days_ord_ins") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
-              {isColumnVisible("quote_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('quote_date')}>
+              {isColumnVisible("days_init_today") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
+              {isColumnVisible("days_req_est") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
+              {isColumnVisible("days_est_ord") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
+              {isColumnVisible("days_ord_prm") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
+              {isColumnVisible("days_prm_app") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
+              {isColumnVisible("days_ord_ins") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
+              {isColumnVisible("quote_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('quote_date')}>
                 <div className="flex items-center gap-1">Quote {getSortIcon('quote_date')}</div>
               </th>}
-              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('follow_up_date')}>
+              {isColumnVisible("follow_up_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')}>
                 <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
               </th>}
-              {isColumnVisible("close_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('close_date')}>
+              {isColumnVisible("close_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')}>
                 <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
               </th>}
-              {isColumnVisible("probability") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '50px' }} onClick={() => handleSort('probability')}>
+              {isColumnVisible("probability") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '60px' }} onClick={() => handleSort('probability')}>
                 <div className="flex items-center gap-1">Prob {getSortIcon('probability')}</div>
               </th>}
-              {isColumnVisible("start_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('start_date')}>
+              {isColumnVisible("start_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('start_date')}>
                 <div className="flex items-center gap-1">Start {getSortIcon('start_date')}</div>
               </th>}
-              {isColumnVisible("project_type") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('project_type')}>
+              {isColumnVisible("project_type") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('project_type')}>
                 <div className="flex items-center gap-1">
                   Project Type {getSortIcon('project_type')}
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
+                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
                 </div>
               </th>}
-              <th className="px-1 py-1 text-left font-medium text-gray-700 text-xs" style={{ minWidth: '40px' }}>Act</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '40px' }}></th>
             </tr>
           </thead>
 
@@ -1049,7 +1049,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <td className="px-0 py-0 border-r">
                   <button
                     onClick={() => setFocusedRowId(isFocused ? null : wo.id)}
-                    className={`w-full h-full px-1 py-0.5 text-center font-medium transition-colors text-xs ${
+                    className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${
                       isFocused 
                         ? 'bg-purple-500 text-white' 
                         : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
@@ -1065,7 +1065,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <button
                       onClick={() => setSelectedWorkOrder(wo)}
-                      className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
+                      className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
                     >
                       <LinkIcon className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">{wo.client_name || "Unnamed"}</span>
@@ -1083,7 +1083,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1102,8 +1102,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1145,7 +1145,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1167,7 +1167,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1189,7 +1189,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1211,7 +1211,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1264,7 +1264,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                           const val = e.target.value.replace(/[^0-9.]/g, '');
                           updateWorkOrder(wo.id, "estimate_amount", parseFloat(val) || 0);
                         }}
-                        className="h-6 text-xs border-0 bg-transparent pl-3 pr-1"
+                        className="h-7 text-xs border-0 bg-transparent pl-3 pr-1"
                         placeholder="0"
                         disabled={!isRegistered}
                         min="0"
@@ -1284,7 +1284,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1303,8 +1303,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `initial-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `initial-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_initial_contact ? format(parseLocalDate(wo.date_initial_contact), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_initial_contact ? format(parseLocalDate(wo.date_initial_contact), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1343,8 +1343,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `survey-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.site_survey_date ? format(parseLocalDate(wo.site_survey_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.site_survey_date ? format(parseLocalDate(wo.site_survey_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1383,8 +1383,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `estsent-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `estsent-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_estimate_sent ? format(parseLocalDate(wo.date_estimate_sent), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_estimate_sent ? format(parseLocalDate(wo.date_estimate_sent), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1423,8 +1423,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `ordercreated-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordercreated-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.date_order_created ? format(parseLocalDate(wo.date_order_created), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.date_order_created ? format(parseLocalDate(wo.date_order_created), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1463,8 +1463,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1503,8 +1503,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `permitsub-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitsub-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_submitted_date ? format(parseLocalDate(wo.permit_submitted_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_submitted_date ? format(parseLocalDate(wo.permit_submitted_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1557,8 +1557,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `permitconf-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitconf-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_receipt_confirmed_date ? format(parseLocalDate(wo.permit_receipt_confirmed_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_receipt_confirmed_date ? format(parseLocalDate(wo.permit_receipt_confirmed_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1598,7 +1598,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     <Input
                       value={wo.permit_number || ""}
                       onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)}
-                      className="h-6 text-xs border-0 bg-transparent px-1"
+                      className="h-7 text-xs border-0 bg-transparent px-1"
                       placeholder="-"
                       disabled={!isRegistered}
                     />
@@ -1612,8 +1612,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `permitappr-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `permitappr-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.permit_approved_date ? format(parseLocalDate(wo.permit_approved_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.permit_approved_date ? format(parseLocalDate(wo.permit_approved_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1659,8 +1659,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `quote-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `quote-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.quote_date ? format(parseLocalDate(wo.quote_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.quote_date ? format(parseLocalDate(wo.quote_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1699,8 +1699,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `followup-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `followup-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.follow_up_date ? format(parseLocalDate(wo.follow_up_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.follow_up_date ? format(parseLocalDate(wo.follow_up_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1739,8 +1739,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `close-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `close-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.close_date ? format(parseLocalDate(wo.close_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.close_date ? format(parseLocalDate(wo.close_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1781,7 +1781,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       type="number"
                       value={wo.probability || ""}
                       onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)}
-                      className="h-6 text-xs border-0 bg-transparent px-1"
+                      className="h-7 text-xs border-0 bg-transparent px-1"
                       placeholder="0"
                       min="0"
                       max="100"
@@ -1797,8 +1797,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   >
                     <Popover open={openDatePopover === `start-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `start-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-                          {wo.start_date ? format(parseLocalDate(wo.start_date), "M/d/yy") : "-"}
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          {wo.start_date ? format(parseLocalDate(wo.start_date), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -1840,7 +1840,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)}
                       disabled={!isRegistered}
                     >
-                      <SelectTrigger className="h-6 text-xs border-0 bg-transparent p-0 px-1">
+                      <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1852,19 +1852,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </td>
                 )}
 
-                <td className="px-1 py-0.5">
-                  <div className="flex gap-1">
-                    {isRegistered && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteWorkOrder(wo)}
-                        className="h-6 w-6"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
+                <td className="px-1 py-0.5 text-center">
+                  {isRegistered && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteWorkOrder(wo)}
+                      className="h-6 w-6"
+                    >
+                      <Trash2 className="w-3 h-3 text-red-500" />
+                    </Button>
+                  )}
                 </td>
               </tr>
               );
