@@ -1872,8 +1872,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </div>
                 </td>
               </tr>
-                {isFocused && <tr><td colSpan="100" className="h-2 bg-transparent border-none"></td></tr>}
-              </React.Fragment>
               );
             })}
           </tbody>
