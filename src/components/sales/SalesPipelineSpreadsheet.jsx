@@ -2175,24 +2175,62 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             ))}
                           </SelectContent>
                         </Select>
-                        <Select
-                          value={item.color || "none"}
-                          onValueChange={(val) => updateTaskStyle(item, "color", val === "none" ? "" : val)}
-                        >
-                          <SelectTrigger className="h-7 w-20 text-xs" style={{ backgroundColor: item.color || undefined }}>
-                            <SelectValue placeholder="Color" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TASK_COLORS.map(c => (
-                              <SelectItem key={c.value} value={c.value}>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button 
+                              className="h-7 w-20 text-xs border rounded px-2 flex items-center gap-1 hover:bg-gray-100"
+                              style={{ backgroundColor: item.color || undefined }}
+                            >
+                              {item.color && item.color !== "none" ? (
+                                <>
+                                  <div className="w-3 h-3 rounded border" style={{ backgroundColor: item.color }} />
+                                  <span className="truncate text-[10px]">{TASK_COLORS.find(c => c.value === item.color)?.label || "Custom"}</span>
+                                </>
+                              ) : (
+                                <span className="text-gray-500">Color</span>
+                              )}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2" align="start">
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-gray-600 mb-1">Preset Colors</div>
+                              <div className="grid grid-cols-4 gap-1">
+                                {TASK_COLORS.map(c => (
+                                  <button
+                                    key={c.value}
+                                    onClick={() => updateTaskStyle(item, "color", c.value === "none" ? "" : c.value)}
+                                    className={`w-8 h-8 rounded border-2 flex items-center justify-center transition-all ${
+                                      (item.color || "") === (c.value === "none" ? "" : c.value) 
+                                        ? "border-blue-500 ring-2 ring-blue-200" 
+                                        : "border-gray-200 hover:border-gray-400"
+                                    }`}
+                                    style={{ backgroundColor: c.value === "none" ? "#ffffff" : c.value }}
+                                    title={c.label}
+                                  >
+                                    {c.value === "none" && <span className="text-xs text-gray-400">✕</span>}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="border-t pt-2 mt-2">
+                                <div className="text-xs font-medium text-gray-600 mb-1">Custom Color</div>
                                 <div className="flex items-center gap-2">
-                                  {c.value !== "none" && <div className="w-3 h-3 rounded" style={{ backgroundColor: c.value }} />}
-                                  {c.label}
+                                  <input
+                                    type="color"
+                                    value={item.color || "#ffffff"}
+                                    onChange={(e) => updateTaskStyle(item, "color", e.target.value)}
+                                    className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                                  />
+                                  <Input
+                                    value={item.color || ""}
+                                    onChange={(e) => updateTaskStyle(item, "color", e.target.value)}
+                                    placeholder="#hex or name"
+                                    className="h-7 text-xs flex-1"
+                                  />
                                 </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-gray-500">{item.opacity ?? 100}%</span>
                           <input
