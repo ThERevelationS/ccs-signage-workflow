@@ -80,8 +80,8 @@ export default function OrderForm() {
   };
 
   return (
-    <div className="h-full overflow-auto p-4 sm:p-6">
-      <div className="w-full max-w-[95%] lg:max-w-[90%] xl:max-w-[85%] mx-auto">
+    <div className="h-full overflow-hidden p-4 sm:p-6 flex flex-col">
+      <div className="w-full max-w-[95%] lg:max-w-[90%] xl:max-w-[85%] mx-auto flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 mb-6">
           <div className="clay-card p-3">
             <ClipboardList className="w-6 h-6 text-purple-600" />

@@ -65,8 +65,8 @@ export default function SalesPipeline() {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
-      <div className="w-full max-w-[98%] mx-auto">
+    <div className="h-full overflow-hidden p-4 sm:p-6 flex flex-col">
+      <div className="w-full max-w-[98%] mx-auto flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">

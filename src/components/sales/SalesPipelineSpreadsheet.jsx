@@ -1008,7 +1008,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 280px)' }}>
+      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 220px)' }}>
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100">
             <tr className="border-b sticky top-0 z-10 bg-gray-100">
@@ -1053,8 +1053,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("site_survey_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')}>
                 <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
               </th>}
-              {isColumnVisible("date_estimate_sent") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_estimate_sent')}>
-                <div className="flex items-center gap-1">Est Sent {getSortIcon('date_estimate_sent')}</div>
+              {isColumnVisible("date_estimate_sent") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '120px' }} onClick={() => handleSort('date_estimate_sent')}>
+                <div className="flex items-center gap-1">Date Estimate Sent to Customer {getSortIcon('date_estimate_sent')}</div>
               </th>}
               {isColumnVisible("date_order_created") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_order_created')}>
                 <div className="flex items-center gap-1">Order {getSortIcon('date_order_created')}</div>
