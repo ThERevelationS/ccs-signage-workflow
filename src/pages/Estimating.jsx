@@ -43,11 +43,19 @@ export default function Estimating() {
     };
   }, []);
 
-  // Task descriptions that map to Estimating page
-  const ESTIMATING_TASK_DESCRIPTIONS = [
-    "Complete Estimate for Review",
-    "Estimate - To Be Reviewed"
-  ];
+  // Get task descriptions mapped to Estimating page from localStorage
+  const getEstimatingTaskDescriptions = () => {
+    try {
+      const saved = localStorage.getItem('salesTaskDescriptions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed
+          .filter(item => item.page === "Estimating")
+          .map(item => item.text || item);
+      }
+    } catch (e) {}
+    return ["Complete Estimate for Review", "Estimate - To Be Reviewed"];
+  };
 
   const loadWorkOrders = async () => {
     const orders = await WorkOrder.filter({ 
@@ -55,9 +63,10 @@ export default function Estimating() {
       completed: false,
       deleted: { $ne: true }
     });
+    const taskDescriptions = getEstimatingTaskDescriptions();
     // Filter to only show jobs with task descriptions assigned to Estimating page
     const filtered = orders.filter(wo => 
-      wo.current_task_description && ESTIMATING_TASK_DESCRIPTIONS.some(desc => 
+      wo.current_task_description && taskDescriptions.some(desc => 
         wo.current_task_description.includes(desc)
       )
     );
