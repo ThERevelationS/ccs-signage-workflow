@@ -682,6 +682,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           return "";
         };
         
+        // Also create work_notes from the imported notes text
+        const importedWorkNotes = notesText.trim() ? [{
+          id: Date.now(),
+          type: "other",
+          text: notesText.trim(),
+          timestamp: new Date().toISOString(),
+          created_by: "Import",
+          sub_tasks: []
+        }] : [];
+
         const newWO = await WorkOrder.create({
           title: String(title),
           client_name: customer,
@@ -705,7 +715,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           permit_approved_date: parseExcelDate(row["Date Permit Approved/Received"]),
           in_pipeline: false,
           sales_status: "lead",
-          notes: parsedNotes
+          notes: parsedNotes,
+          work_notes: importedWorkNotes
         });
         
         existingWorkOrdersMap.set(uniqueKey, newWO);
