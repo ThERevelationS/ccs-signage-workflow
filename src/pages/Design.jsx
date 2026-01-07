@@ -38,15 +38,24 @@ export default function Design() {
     };
   }, []);
 
+  // Task descriptions that map to Design page
+  const DESIGN_TASK_DESCRIPTIONS = [
+    "WIP - In Final Design Queue",
+    "WIP - Designing"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
       const allWorkOrders = await WorkOrder.filter(
-        { completed: false },
+        { completed: false, deleted: { $ne: true } },
         "priority"
       );
-      const filtered = allWorkOrders.filter(
-        (wo) => wo.current_stage === 'design' || wo.is_rider && wo.rider_stage === 'design'
+      // Filter to only show jobs with task descriptions assigned to Design page, or riders locked to design
+      const filtered = allWorkOrders.filter(wo => 
+        (wo.current_task_description && DESIGN_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        )) || (wo.is_rider && wo.rider_stage === 'design')
       );
       setWorkOrders(filtered);
     } catch (error) {

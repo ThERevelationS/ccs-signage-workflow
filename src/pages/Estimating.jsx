@@ -43,14 +43,25 @@ export default function Estimating() {
     };
   }, []);
 
+  // Task descriptions that map to Estimating page
+  const ESTIMATING_TASK_DESCRIPTIONS = [
+    "Complete Estimate for Review",
+    "Estimate - To Be Reviewed"
+  ];
+
   const loadWorkOrders = async () => {
     const orders = await WorkOrder.filter({ 
-      current_stage: "estimating", 
       is_rider: false, 
       completed: false,
       deleted: { $ne: true }
     });
-    setWorkOrders(orders.sort((a, b) => (a.priority || 0) - (b.priority || 0)));
+    // Filter to only show jobs with task descriptions assigned to Estimating page
+    const filtered = orders.filter(wo => 
+      wo.current_task_description && ESTIMATING_TASK_DESCRIPTIONS.some(desc => 
+        wo.current_task_description.includes(desc)
+      )
+    );
+    setWorkOrders(filtered.sort((a, b) => (a.priority || 0) - (b.priority || 0)));
     setIsLoading(false);
   };
 

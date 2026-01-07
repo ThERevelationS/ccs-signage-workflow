@@ -38,15 +38,23 @@ export default function Production() {
     };
   }, []);
 
+  // Task descriptions that map to Production page
+  const PRODUCTION_TASK_DESCRIPTIONS = [
+    "WIP - Production/Fabrication"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
       const allWorkOrders = await WorkOrder.filter(
-        { completed: false },
+        { completed: false, deleted: { $ne: true } },
         "priority"
       );
-      const filtered = allWorkOrders.filter(
-        wo => wo.current_stage === 'production' || (wo.is_rider && wo.rider_stage === 'production')
+      // Filter to only show jobs with task descriptions assigned to Production page, or riders locked to production
+      const filtered = allWorkOrders.filter(wo => 
+        (wo.current_task_description && PRODUCTION_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        )) || (wo.is_rider && wo.rider_stage === 'production')
       );
       setWorkOrders(filtered);
     } catch (error) {

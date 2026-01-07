@@ -38,15 +38,25 @@ export default function Permitting() {
     };
   }, []);
 
+  // Task descriptions that map to Permitting page
+  const PERMITTING_TASK_DESCRIPTIONS = [
+    "WIP - Prepare/Submit Permit",
+    "WIP - Follow Up On Status of Accepted Permit",
+    "WIP - Permitting Follow-ups"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
       const allWorkOrders = await WorkOrder.filter(
-        { completed: false },
+        { completed: false, deleted: { $ne: true } },
         "priority"
       );
-      const filtered = allWorkOrders.filter(
-        wo => wo.current_stage === 'permitting' || (wo.is_rider && wo.rider_stage === 'permitting')
+      // Filter to only show jobs with task descriptions assigned to Permitting page, or riders locked to permitting
+      const filtered = allWorkOrders.filter(wo => 
+        (wo.current_task_description && PERMITTING_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        )) || (wo.is_rider && wo.rider_stage === 'permitting')
       );
       setWorkOrders(filtered);
     } catch (error) {
