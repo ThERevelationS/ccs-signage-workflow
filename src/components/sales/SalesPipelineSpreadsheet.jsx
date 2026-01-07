@@ -1024,8 +1024,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <tbody>
-            {filteredWorkOrders.map((wo, index) => {
+          <tbody style={{ position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const index = virtualRow.index;
+              const wo = filteredWorkOrders[index];
               const daysFromInitial = calculateDays(wo.date_initial_contact);
               const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
               const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
@@ -1037,6 +1039,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               return (
               <tr 
                 key={wo.id}
+                data-index={virtualRow.index}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
                 className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
               >
                 {/* Row Number - Clickable Focus Button */}
