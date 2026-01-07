@@ -1024,7 +1024,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <tbody style={{ position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` }}>
+          <tbody>
+            {/* Spacer row for virtual scroll offset */}
+            <tr style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px` }}>
+              <td colSpan={100} />
+            </tr>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const index = virtualRow.index;
               const wo = filteredWorkOrders[index];
@@ -1039,15 +1043,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               return (
               <tr 
                 key={wo.id}
-                data-index={virtualRow.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
                 className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
               >
                 {/* Row Number - Clickable Focus Button */}
