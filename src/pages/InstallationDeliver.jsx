@@ -38,11 +38,19 @@ export default function InstallationDeliver() {
     };
   }, []);
 
-  // Task descriptions that map to Installation page
-  const INSTALLATION_TASK_DESCRIPTIONS = [
-    "WIP - Installation",
-    "WIP - Outsourced Installation"
-  ];
+  // Get task descriptions mapped to Installation page from localStorage
+  const getInstallationTaskDescriptions = () => {
+    try {
+      const saved = localStorage.getItem('salesTaskDescriptions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed
+          .filter(item => item.page === "Installation")
+          .map(item => item.text || item);
+      }
+    } catch (e) {}
+    return ["WIP - Installation", "WIP - Outsourced Installation"];
+  };
 
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
@@ -51,9 +59,10 @@ export default function InstallationDeliver() {
         { completed: false, deleted: { $ne: true } },
         "priority"
       );
+      const taskDescriptions = getInstallationTaskDescriptions();
       // Filter to only show jobs with task descriptions assigned to Installation page, or riders locked to installation
       const filtered = allWorkOrders.filter(wo => 
-        (wo.current_task_description && INSTALLATION_TASK_DESCRIPTIONS.some(desc => 
+        (wo.current_task_description && taskDescriptions.some(desc => 
           wo.current_task_description.includes(desc)
         )) || (wo.is_rider && wo.rider_stage === 'installation')
       );

@@ -38,12 +38,19 @@ export default function Permitting() {
     };
   }, []);
 
-  // Task descriptions that map to Permitting page
-  const PERMITTING_TASK_DESCRIPTIONS = [
-    "WIP - Prepare/Submit Permit",
-    "WIP - Follow Up On Status of Accepted Permit",
-    "WIP - Permitting Follow-ups"
-  ];
+  // Get task descriptions mapped to Permitting page from localStorage
+  const getPermittingTaskDescriptions = () => {
+    try {
+      const saved = localStorage.getItem('salesTaskDescriptions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed
+          .filter(item => item.page === "Permitting")
+          .map(item => item.text || item);
+      }
+    } catch (e) {}
+    return ["WIP - Prepare/Submit Permit", "WIP - Follow Up On Status of Accepted Permit", "WIP - Permitting Follow-ups"];
+  };
 
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
@@ -52,9 +59,10 @@ export default function Permitting() {
         { completed: false, deleted: { $ne: true } },
         "priority"
       );
+      const taskDescriptions = getPermittingTaskDescriptions();
       // Filter to only show jobs with task descriptions assigned to Permitting page, or riders locked to permitting
       const filtered = allWorkOrders.filter(wo => 
-        (wo.current_task_description && PERMITTING_TASK_DESCRIPTIONS.some(desc => 
+        (wo.current_task_description && taskDescriptions.some(desc => 
           wo.current_task_description.includes(desc)
         )) || (wo.is_rider && wo.rider_stage === 'permitting')
       );
