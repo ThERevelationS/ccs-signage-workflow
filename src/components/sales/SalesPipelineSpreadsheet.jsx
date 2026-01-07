@@ -984,7 +984,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 </div>
               </th>}
               {isColumnVisible("date_initial_contact") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('date_initial_contact')}>
-                <div className="flex items-center gap-1">Initial {getSortIcon('date_initial_contact')}</div>
+                <div className="flex items-center gap-1">Est. Req. {getSortIcon('date_initial_contact')}</div>
               </th>}
               {isColumnVisible("site_survey_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')}>
                 <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
