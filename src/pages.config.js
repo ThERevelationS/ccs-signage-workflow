@@ -1,5 +1,4 @@
 import AdminSettings from './pages/AdminSettings';
-import CompletedJobs from './pages/CompletedJobs';
 import CompletedReports from './pages/CompletedReports';
 import Design from './pages/Design';
 import Estimating from './pages/Estimating';
@@ -20,7 +19,6 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AdminSettings": AdminSettings,
-    "CompletedJobs": CompletedJobs,
     "CompletedReports": CompletedReports,
     "Design": Design,
     "Estimating": Estimating,

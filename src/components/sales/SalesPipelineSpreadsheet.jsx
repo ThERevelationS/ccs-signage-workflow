@@ -74,46 +74,53 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const parsed = JSON.parse(saved);
       // Migration: convert old string format to new object format
       if (parsed.length > 0 && typeof parsed[0] === 'string') {
-        return parsed.map(text => ({ text, page: "" }));
+        return parsed.map(text => ({ text, page: "", color: "", opacity: 100, markOut: false }));
       }
-      return parsed;
+      // Migration: add missing color/opacity/markOut fields
+      return parsed.map(item => ({
+        text: item.text || item,
+        page: item.page || "",
+        color: item.color || "",
+        opacity: item.opacity ?? 100,
+        markOut: item.markOut ?? false
+      }));
     }
     return [
-      { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "" },
-      { text: "Conduct Site Survey", page: "" },
-      { text: "Research Sign Code for Mock-up", page: "" },
-      { text: "Follow up with Customer - Pre-Estimating", page: "" },
-      { text: "Mock up and Send to Customer", page: "" },
-      { text: "Mock up Only", page: "" },
-      { text: "Send Mock up to Customer", page: "" },
-      { text: "Quoting - 3rd Party", page: "" },
-      { text: "Complete Estimate for Review", page: "Estimating" },
-      { text: "Estimate - To Be Reviewed", page: "Estimating" },
-      { text: "Review Complete - Send to Customer", page: "" },
-      { text: "Follow up with Customer - Post-Estimate", page: "" },
-      { text: "On Hold - Follow Up with Customer", page: "" },
-      { text: "Waiting on Deposit", page: "" },
-      { text: "WIP - Waiting for Deposit", page: "" },
-      { text: "WIP - In Final Design Queue", page: "Design" },
-      { text: "WIP - Designing", page: "Design" },
-      { text: "WIP - Prepare/Submit Permit", page: "Permitting" },
-      { text: "WIP - Follow Up On Status of Accepted Permit", page: "Permitting" },
-      { text: "WIP - Permitting Follow-ups", page: "Permitting" },
-      { text: "WIP - Production/Fabrication", page: "Production" },
-      { text: "WIP - Outsourced Fabrication", page: "Fabrication" },
-      { text: "WIP - Maintenance/Service Call", page: "" },
-      { text: "WIP - Installation", page: "Installation" },
-      { text: "WIP - Outsourced Installation", page: "Installation" },
-      { text: "WIP - Follow Up with Customer", page: "" },
-      { text: "WIP - Inspections", page: "" },
-      { text: "Completed Sale - Electrical Inspection", page: "CompletedJobs" },
-      { text: "Completed Sale - Sign Inspection", page: "CompletedJobs" },
-      { text: "Completed Sales - Post Invoice Tasks", page: "CompletedJobs" },
-      { text: "Completed Sale", page: "CompletedJobs" },
-      { text: "Lost", page: "" },
-      { text: "Lost - We took too long", page: "" },
-      { text: "Closed - Attempted Follow-up/No Response", page: "" },
-      { text: "Closed - Did not Lose", page: "" }
+      { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Conduct Site Survey", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Research Sign Code for Mock-up", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Follow up with Customer - Pre-Estimating", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Mock up and Send to Customer", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Mock up Only", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Send Mock up to Customer", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Quoting - 3rd Party", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
+      { text: "Estimate - To Be Reviewed", page: "Estimating", color: "", opacity: 100, markOut: false },
+      { text: "Review Complete - Send to Customer", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Follow up with Customer - Post-Estimate", page: "", color: "", opacity: 100, markOut: false },
+      { text: "On Hold - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Waiting on Deposit", page: "", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Waiting for Deposit", page: "", color: "", opacity: 100, markOut: false },
+      { text: "WIP - In Final Design Queue", page: "Design", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Designing", page: "Design", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Follow Up On Status of Accepted Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Permitting Follow-ups", page: "Permitting", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Outsourced Fabrication", page: "Fabrication", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Maintenance/Service Call", page: "", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Installation", page: "Installation", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Outsourced Installation", page: "Installation", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
+      { text: "WIP - Inspections", page: "", color: "", opacity: 100, markOut: false },
+      { text: "Completed Sale - Electrical Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+      { text: "Completed Sale - Sign Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+      { text: "Completed Sales - Post Invoice Tasks", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+      { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+      { text: "Lost", page: "", color: "#fef2f2", opacity: 60, markOut: true },
+      { text: "Lost - We took too long", page: "", color: "#fef2f2", opacity: 60, markOut: true },
+      { text: "Closed - Attempted Follow-up/No Response", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+      { text: "Closed - Did not Lose", page: "", color: "#f1f5f9", opacity: 60, markOut: true }
     ];
   });
 
@@ -124,8 +131,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     { value: "Design", label: "Design" },
     { value: "Production", label: "Production" },
     { value: "Fabrication", label: "Fabrication" },
-    { value: "Installation", label: "Installation/Delivery" },
-    { value: "CompletedJobs", label: "Completed Jobs" }
+    { value: "Installation", label: "Installation/Delivery" }
+  ];
+
+  const TASK_COLORS = [
+    { value: "", label: "None" },
+    { value: "#fef2f2", label: "Red" },
+    { value: "#fef9c3", label: "Yellow" },
+    { value: "#dcfce7", label: "Green" },
+    { value: "#dbeafe", label: "Blue" },
+    { value: "#f3e8ff", label: "Purple" },
+    { value: "#ffedd5", label: "Orange" },
+    { value: "#f1f5f9", label: "Gray" }
   ];
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
 
@@ -1043,7 +1060,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </th>}
               {isColumnVisible("current_task_description") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '140px' }} onClick={() => handleSort('current_task_description')}>
                 <div className="flex items-center gap-1">
-                  Task Desc {getSortIcon('current_task_description')}
+                  Task Description {getSortIcon('current_task_description')}
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions"); }} />}
                 </div>
               </th>}
@@ -1065,9 +1082,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("permit_submitted_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('permit_submitted_date')}>
                 <div className="flex items-center gap-1">Permit Sub {getSortIcon('permit_submitted_date')}</div>
               </th>}
-              {isColumnVisible("title") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('title')}>
-                <div className="flex items-center gap-1">Notes {getSortIcon('title')}</div>
-              </th>}
+
               {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('permit_receipt_confirmed_date')}>
                 <div className="flex items-center gap-1">Permit Conf {getSortIcon('permit_receipt_confirmed_date')}</div>
               </th>}
@@ -1647,19 +1662,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   </td>
                 )}
 
-                {isColumnVisible("title") && (
-                  <td 
-                    className="px-1 py-0.5 border-r"
-                    onContextMenu={(e) => handleContextMenu(e, wo, "title", "Notes", wo.title)}
-                  >
-                    <button
-                      onClick={() => setSelectedWorkOrder(wo)}
-                      className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
-                    >
-                      {wo.title || "View Details"}
-                    </button>
-                  </td>
-                )}
+
 
                 {isColumnVisible("permit_receipt_confirmed_date") && (
                   <td 
