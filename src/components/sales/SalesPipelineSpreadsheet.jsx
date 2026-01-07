@@ -745,22 +745,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
   };
 
-  const handleSort = React.useCallback((key) => {
+  const handleSort = useCallback((key) => {
     setSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
   }, []);
 
-  const getSortIcon = React.useCallback((key) => {
+  const getSortIcon = useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
     return sortConfig.direction === 'asc' 
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
   }, [sortConfig]);
 
-  // Memoized filtered and sorted work orders
-  const filteredWorkOrders = React.useMemo(() => {
+  // Pre-compute sort values for faster sorting
+  const sortedWorkOrders = useMemo(() => {
+    // First filter
     let result = workOrders.filter(wo => {
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
@@ -783,14 +784,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     if (!sortConfig.key) return result;
     
-    return [...result].sort((a, b) => {
-      let aVal = a[sortConfig.key] ?? '';
-      let bVal = b[sortConfig.key] ?? '';
+    // Pre-compute sort keys for performance
+    const key = sortConfig.key;
+    const isDateField = key.includes('date') || key === 'current_task_deadline';
+    const isNumberField = key === 'estimate_amount' || key === 'probability';
+    const dir = sortConfig.direction === 'asc' ? 1 : -1;
+    
+    return result.sort((a, b) => {
+      let aVal = a[key] ?? '';
+      let bVal = b[key] ?? '';
       
-      if (sortConfig.key.includes('date') || sortConfig.key === 'current_task_deadline') {
+      if (isDateField) {
         aVal = aVal ? new Date(aVal).getTime() : 0;
         bVal = bVal ? new Date(bVal).getTime() : 0;
-      } else if (sortConfig.key === 'estimate_amount' || sortConfig.key === 'probability') {
+      } else if (isNumberField) {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
       } else {
@@ -798,11 +805,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         bVal = String(bVal).toLowerCase();
       }
       
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
+      return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
   }, [workOrders, filterStatus, searchTerm, sortConfig, customFilters]);
+
+  const filteredWorkOrders = sortedWorkOrders;
+  
+  // Virtual scrolling setup
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: filteredWorkOrders.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 28, // Approximate row height
+    overscan: 10,
+  });
 
   const isColumnVisible = (columnId) => {
     if (!activeColumnPreset?.column_settings) return true;
