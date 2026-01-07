@@ -66,7 +66,10 @@ import {
   Download,
   Upload,
   CheckSquare,
-  Square
+  Square,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
@@ -116,6 +119,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
@@ -694,36 +698,86 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   }));
 
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUp className="w-3 h-3 text-blue-600" />
+      : <ArrowDown className="w-3 h-3 text-blue-600" />;
+  };
+
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+
+      // Handle null/undefined
+      if (aVal == null) aVal = '';
+      if (bVal == null) bVal = '';
+
+      // Date fields
+      if (sortConfig.key.includes('date')) {
+        aVal = aVal ? new Date(aVal).getTime() : 0;
+        bVal = bVal ? new Date(bVal).getTime() : 0;
+      }
+      // String fields
+      else {
+        aVal = String(aVal).toLowerCase();
+        bVal = String(bVal).toLowerCase();
+      }
+
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
   // Filter orders based on search term and status
-  const filteredOrders = orders.filter(order => {
-    // Status filter
-    if (filterStatus !== "all" && order.status !== filterStatus) {
-      return false;
-    }
-    // Search filter
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      const searchable = [
-        order.customer_name,
-        order.description,
-        order.requestor_name,
-        order.vendor,
-        order.request_type
-      ].filter(Boolean).join(' ').toLowerCase();
-      if (!searchable.includes(search)) {
+  const filteredOrders = (() => {
+    let result = orders.filter(order => {
+      // Status filter
+      if (filterStatus !== "all" && order.status !== filterStatus) {
         return false;
       }
+      // Search filter
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const searchable = [
+          order.customer_name,
+          order.description,
+          order.requestor_name,
+          order.vendor,
+          order.request_type
+        ].filter(Boolean).join(' ').toLowerCase();
+        if (!searchable.includes(search)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Apply custom sort if set, otherwise default sort
+    if (sortConfig.key) {
+      return sortData(result);
     }
-    return true;
-  }).sort((a, b) => {
-    // Sort: pending first, then ordered/received at bottom
-    const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
-    const aOrder = statusOrder[a.status] ?? 0;
-    const bOrder = statusOrder[b.status] ?? 0;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    // Within same status, sort by row_number
-    return (a.row_number || 0) - (b.row_number || 0);
-  });
+
+    // Default sort: pending first, then ordered/received at bottom
+    return result.sort((a, b) => {
+      const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
+      const aOrder = statusOrder[a.status] ?? 0;
+      const bOrder = statusOrder[b.status] ?? 0;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return (a.row_number || 0) - (b.row_number || 0);
+    });
+  })();
 
   const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
@@ -808,33 +862,47 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <thead className="bg-gray-100">
           <tr className="border-b">
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Customer Name</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('customer_name')}>
+              <div className="flex items-center gap-1">Customer Name {getSortIcon('customer_name')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('request_type')}>
               <div className="flex items-center gap-1">
-                Request Type
+                Request Type {getSortIcon('request_type')}
                 {isRegistered && (
-                  <button onClick={() => setEditingRequestTypes(true)} className="hover:bg-gray-200 rounded p-0.5">
+                  <button onClick={(e) => { e.stopPropagation(); setEditingRequestTypes(true); }} className="hover:bg-gray-300 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
               </div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Description</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Qty</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Requestor</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Needed</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Ordered</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('description')}>
+              <div className="flex items-center gap-1">Description {getSortIcon('description')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('quantity')}>
+              <div className="flex items-center gap-1">Qty {getSortIcon('quantity')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('requestor_name')}>
+              <div className="flex items-center gap-1">Requestor {getSortIcon('requestor_name')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_needed')}>
+              <div className="flex items-center gap-1">Needed {getSortIcon('date_needed')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_ordered')}>
+              <div className="flex items-center gap-1">Ordered {getSortIcon('date_ordered')}</div>
+            </th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('vendor')}>
               <div className="flex items-center gap-1">
-                Vendor
+                Vendor {getSortIcon('vendor')}
                 {isRegistered && (
-                  <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
+                  <button onClick={(e) => { e.stopPropagation(); setEditingVendors(true); }} className="hover:bg-gray-300 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
               </div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700">Received</th>
+            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_received')}>
+              <div className="flex items-center gap-1">Received {getSortIcon('date_received')}</div>
+            </th>
             <th className="px-2 py-2 text-left font-medium text-gray-700"></th>
           </tr>
         </thead>

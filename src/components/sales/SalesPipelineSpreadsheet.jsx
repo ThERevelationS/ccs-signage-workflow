@@ -14,7 +14,7 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
@@ -54,6 +54,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   const { trackChange } = useCellHistoryTracker("WorkOrder", currentUser);
 
@@ -743,7 +744,55 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
   };
 
-  const filteredWorkOrders = workOrders.filter(wo => {
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUp className="w-3 h-3 text-blue-600" />
+      : <ArrowDown className="w-3 h-3 text-blue-600" />;
+  };
+
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+    
+    return [...data].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      
+      // Handle null/undefined
+      if (aVal == null) aVal = '';
+      if (bVal == null) bVal = '';
+      
+      // Detect type and sort accordingly
+      // Date fields
+      if (sortConfig.key.includes('date') || sortConfig.key === 'current_task_deadline') {
+        aVal = aVal ? new Date(aVal).getTime() : 0;
+        bVal = bVal ? new Date(bVal).getTime() : 0;
+      }
+      // Number fields
+      else if (sortConfig.key === 'estimate_amount' || sortConfig.key === 'probability') {
+        aVal = parseFloat(aVal) || 0;
+        bVal = parseFloat(bVal) || 0;
+      }
+      // String fields
+      else {
+        aVal = String(aVal).toLowerCase();
+        bVal = String(bVal).toLowerCase();
+      }
+      
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const filteredWorkOrders = sortData(workOrders.filter(wo => {
     if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
       if (wo.sales_status !== filterStatus) return false;
     }
@@ -763,7 +812,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
     
     return true;
-  });
+  }));
 
   const isColumnVisible = (columnId) => {
     if (!activeColumnPreset?.column_settings) return true;
@@ -874,51 +923,95 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
               <th className="px-1 py-1 border-r text-center font-medium text-gray-700 text-xs" style={{ width: '32px', minWidth: '32px' }}>#</th>
-              {isColumnVisible("client_name") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '100px' }}>Customer</th>}
-              {isColumnVisible("lead_source") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
+              {isColumnVisible("client_name") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('client_name')}>
+                <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
+              </th>}
+              {isColumnVisible("lead_source") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('lead_source')}>
                 <div className="flex items-center gap-1">
-                  Source
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("lead_source", leadSources, "salesLeadSources")} />}
+                  Source {getSortIcon('lead_source')}
+                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("lead_source", leadSources, "salesLeadSources"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("current_task_deadline") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Deadline</th>}
-              {isColumnVisible("current_task_assigned_to") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Task Assigned</th>}
-              {isColumnVisible("designer") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Designer</th>}
-              {isColumnVisible("project_manager") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>PM</th>}
-              {isColumnVisible("estimator") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>Estimator</th>}
+              {isColumnVisible("current_task_deadline") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('current_task_deadline')}>
+                <div className="flex items-center gap-1">Deadline {getSortIcon('current_task_deadline')}</div>
+              </th>}
+              {isColumnVisible("current_task_assigned_to") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('current_task_assigned_to')}>
+                <div className="flex items-center gap-1">Task Assigned {getSortIcon('current_task_assigned_to')}</div>
+              </th>}
+              {isColumnVisible("designer") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('designer')}>
+                <div className="flex items-center gap-1">Designer {getSortIcon('designer')}</div>
+              </th>}
+              {isColumnVisible("project_manager") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('project_manager')}>
+                <div className="flex items-center gap-1">PM {getSortIcon('project_manager')}</div>
+              </th>}
+              {isColumnVisible("estimator") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('estimator')}>
+                <div className="flex items-center gap-1">Estimator {getSortIcon('estimator')}</div>
+              </th>}
               {isColumnVisible("est_inv_at") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Estimate/Invoice # Link</th>}
-              {isColumnVisible("estimate_amount") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '100px' }}>Amount</th>}
-              {isColumnVisible("current_task_description") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '120px' }}>
+              {isColumnVisible("estimate_amount") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '100px' }} onClick={() => handleSort('estimate_amount')}>
+                <div className="flex items-center gap-1">Amount {getSortIcon('estimate_amount')}</div>
+              </th>}
+              {isColumnVisible("current_task_description") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '120px' }} onClick={() => handleSort('current_task_description')}>
                 <div className="flex items-center gap-1">
-                  Task Description
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions")} />}
+                  Task Desc {getSortIcon('current_task_description')}
+                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("date_initial_contact") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Initial</th>}
-              {isColumnVisible("site_survey_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Survey</th>}
-              {isColumnVisible("date_estimate_sent") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Est Sent</th>}
-              {isColumnVisible("date_order_created") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Order</th>}
-              {isColumnVisible("project_install_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Install</th>}
-              {isColumnVisible("permit_submitted_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Sub</th>}
-              {isColumnVisible("title") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '90px' }}>Notes</th>}
-              {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit Conf</th>}
-              {isColumnVisible("permit_number") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '60px' }}>Permit #</th>}
-              {isColumnVisible("permit_approved_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Permit App</th>}
+              {isColumnVisible("date_initial_contact") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_initial_contact')}>
+                <div className="flex items-center gap-1">Initial {getSortIcon('date_initial_contact')}</div>
+              </th>}
+              {isColumnVisible("site_survey_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('site_survey_date')}>
+                <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
+              </th>}
+              {isColumnVisible("date_estimate_sent") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_estimate_sent')}>
+                <div className="flex items-center gap-1">Est Sent {getSortIcon('date_estimate_sent')}</div>
+              </th>}
+              {isColumnVisible("date_order_created") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('date_order_created')}>
+                <div className="flex items-center gap-1">Order {getSortIcon('date_order_created')}</div>
+              </th>}
+              {isColumnVisible("project_install_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('project_install_date')}>
+                <div className="flex items-center gap-1">Install {getSortIcon('project_install_date')}</div>
+              </th>}
+              {isColumnVisible("permit_submitted_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_submitted_date')}>
+                <div className="flex items-center gap-1">Permit Sub {getSortIcon('permit_submitted_date')}</div>
+              </th>}
+              {isColumnVisible("title") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '90px' }} onClick={() => handleSort('title')}>
+                <div className="flex items-center gap-1">Notes {getSortIcon('title')}</div>
+              </th>}
+              {isColumnVisible("permit_receipt_confirmed_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_receipt_confirmed_date')}>
+                <div className="flex items-center gap-1">Permit Conf {getSortIcon('permit_receipt_confirmed_date')}</div>
+              </th>}
+              {isColumnVisible("permit_number") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '60px' }} onClick={() => handleSort('permit_number')}>
+                <div className="flex items-center gap-1">Permit # {getSortIcon('permit_number')}</div>
+              </th>}
+              {isColumnVisible("permit_approved_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('permit_approved_date')}>
+                <div className="flex items-center gap-1">Permit App {getSortIcon('permit_approved_date')}</div>
+              </th>}
               {isColumnVisible("days_init_today") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
               {isColumnVisible("days_req_est") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>}
               {isColumnVisible("days_est_ord") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>}
               {isColumnVisible("days_ord_prm") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
               {isColumnVisible("days_prm_app") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
               {isColumnVisible("days_ord_ins") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 bg-yellow-50 text-xs" style={{ minWidth: '80px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
-              {isColumnVisible("quote_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Quote</th>}
-              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Follow Up</th>}
-              {isColumnVisible("close_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Close</th>}
-              {isColumnVisible("probability") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '50px' }}>Prob</th>}
-              {isColumnVisible("start_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '70px' }}>Start</th>}
-              {isColumnVisible("project_type") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs" style={{ minWidth: '80px' }}>
+              {isColumnVisible("quote_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('quote_date')}>
+                <div className="flex items-center gap-1">Quote {getSortIcon('quote_date')}</div>
+              </th>}
+              {isColumnVisible("follow_up_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('follow_up_date')}>
+                <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
+              </th>}
+              {isColumnVisible("close_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('close_date')}>
+                <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
+              </th>}
+              {isColumnVisible("probability") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '50px' }} onClick={() => handleSort('probability')}>
+                <div className="flex items-center gap-1">Prob {getSortIcon('probability')}</div>
+              </th>}
+              {isColumnVisible("start_date") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '70px' }} onClick={() => handleSort('start_date')}>
+                <div className="flex items-center gap-1">Start {getSortIcon('start_date')}</div>
+              </th>}
+              {isColumnVisible("project_type") && <th className="px-1 py-1 border-r text-left font-medium text-gray-700 text-xs cursor-pointer hover:bg-gray-200" style={{ minWidth: '80px' }} onClick={() => handleSort('project_type')}>
                 <div className="flex items-center gap-1">
-                  Project Type
-                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={() => openEditDialog("project_type", projectTypes, "salesProjectTypes")} />}
+                  Project Type {getSortIcon('project_type')}
+                  {isRegistered && <Pencil className="w-2.5 h-2.5 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
                 </div>
               </th>}
               <th className="px-1 py-1 text-left font-medium text-gray-700 text-xs" style={{ minWidth: '40px' }}>Act</th>
