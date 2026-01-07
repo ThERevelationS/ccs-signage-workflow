@@ -11,6 +11,7 @@ import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRig
 import { format } from "date-fns";
 import FinancialsSpreadsheet from "@/components/financials/FinancialsSpreadsheet";
 import FinancialsDashboard from "@/components/financials/FinancialsDashboard";
+import SalesPipelineDashboard from "@/components/financials/SalesPipelineDashboard";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -193,6 +194,10 @@ export default function Financials() {
               <TabsTrigger value="dashboard" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="sales" className="gap-2">
+                <DollarSign className="w-4 h-4" />
+                Sales Pipeline
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -444,12 +449,14 @@ export default function Financials() {
               filterEstimator={filterEstimator}
             />
           </div>
-        ) : (
+        ) : activeTab === "dashboard" ? (
           <FinancialsDashboard 
             workOrders={filteredWorkOrders}
             dateRange={{ start: dateRangeStart, end: dateRangeEnd }}
             reportPeriod={reportPeriod}
           />
+        ) : (
+          <SalesPipelineDashboard workOrders={filteredWorkOrders} />
         )}
       </div>
 

@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -35,6 +35,8 @@ const TEAM_MEMBERS = [
   "Chris"
 ];
 
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
+
 export default function WorkOrderForm({ 
   isOpen, 
   onClose, 
@@ -46,6 +48,7 @@ export default function WorkOrderForm({
 }) {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
+  const [authorizedUsers, setAuthorizedUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [customName, setCustomName] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -138,11 +141,15 @@ export default function WorkOrderForm({
     sms_complete: false,
     
     // Follow up
-    follow_up: []
-  });
+    follow_up: [],
+
+    // Sales rep
+    sales_rep: ""
+    });
 
   useEffect(() => {
     loadUsers();
+    loadAuthorizedUsers();
     if (workOrder) {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
@@ -188,9 +195,27 @@ export default function WorkOrderForm({
   }, [workOrder, isRider, parentWorkOrder, lockedStage]);
 
   const loadUsers = async () => {
-    const usersList = await User.list();
-    setUsers(usersList);
+    try {
+      const usersList = await base44.entities.User.list();
+      setUsers(usersList);
+    } catch (e) {
+      console.error("Error loading users:", e);
+    }
   };
+
+  const loadAuthorizedUsers = async () => {
+    try {
+      const authUsers = await AuthorizedEmail.list();
+      setAuthorizedUsers(authUsers);
+    } catch (e) {
+      console.error("Error loading authorized users:", e);
+    }
+  };
+
+  // Get salespersons from authorized users with sales roles
+  const salespersons = authorizedUsers.filter(u => 
+    u.sales_roles?.includes("Sales Rep") || u.sales_roles?.includes("Salesperson")
+  );
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -1025,8 +1050,8 @@ export default function WorkOrderForm({
             </div>
           </div>
 
-          {/* Stage and Assignment */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Stage, Assignment, and Salesperson */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label className="text-gray-700 font-medium">{isRider && !workOrder ? "Select Stage for Rider" : "Current Stage"}</Label>
               <Select value={formData.current_stage} onValueChange={(value) => handleChange("current_stage", value)} disabled={isRider && workOrder}>
@@ -1066,6 +1091,25 @@ export default function WorkOrderForm({
                   </SelectContent>
                 </Select>
               )}
+            </div>
+            <div>
+              <Label className="text-gray-700 font-medium">Salesperson</Label>
+              <Select value={formData.sales_rep || ""} onValueChange={(value) => handleChange("sales_rep", value)}>
+                <SelectTrigger className="clay-button border-none mt-1">
+                  <SelectValue placeholder="Select salesperson" />
+                </SelectTrigger>
+                <SelectContent className="clay-card border-none">
+                  {salespersons.length > 0 ? (
+                    salespersons.map((person) => (
+                      <SelectItem key={person.email} value={person.full_name}>{person.full_name}</SelectItem>
+                    ))
+                  ) : (
+                    TEAM_MEMBERS.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
