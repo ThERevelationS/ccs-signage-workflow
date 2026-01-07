@@ -38,13 +38,20 @@ export default function Fabrication() {
     };
   }, []);
 
+  // Task descriptions that map to Fabrication page
+  const FABRICATION_TASK_DESCRIPTIONS = [
+    "WIP - Outsourced Fabrication"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
-      // Changed sort order from "-priority" to "priority" to align with reordering logic
-      const allWorkOrders = await WorkOrder.filter({ completed: false }, "priority");
-      const filtered = allWorkOrders.filter(
-        wo => wo.current_stage === 'fabrication' || (wo.is_rider && wo.rider_stage === 'fabrication')
+      const allWorkOrders = await WorkOrder.filter({ completed: false, deleted: { $ne: true } }, "priority");
+      // Filter to only show jobs with task descriptions assigned to Fabrication page, or riders locked to fabrication
+      const filtered = allWorkOrders.filter(wo => 
+        (wo.current_task_description && FABRICATION_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        )) || (wo.is_rider && wo.rider_stage === 'fabrication')
       );
       setWorkOrders(filtered);
     } catch (error) {

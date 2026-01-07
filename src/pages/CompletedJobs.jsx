@@ -37,11 +37,26 @@ export default function CompletedJobs() {
     };
   }, []);
 
+  // Task descriptions that map to Completed Jobs page
+  const COMPLETED_TASK_DESCRIPTIONS = [
+    "Completed Sale - Electrical Inspection",
+    "Completed Sale - Sign Inspection",
+    "Completed Sales - Post Invoice Tasks",
+    "Completed Sale"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
-      const completed = await WorkOrder.filter({ completed: true }, "-updated_date");
-      setWorkOrders(completed);
+      // Get actually completed jobs OR jobs with completed task descriptions
+      const allWorkOrders = await WorkOrder.filter({ deleted: { $ne: true } }, "-updated_date");
+      const filtered = allWorkOrders.filter(wo => 
+        wo.completed === true || 
+        (wo.current_task_description && COMPLETED_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        ))
+      );
+      setWorkOrders(filtered);
     } catch (error) {
       console.error("Error loading completed work orders:", error);
     } finally {

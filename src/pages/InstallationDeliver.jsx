@@ -38,16 +38,24 @@ export default function InstallationDeliver() {
     };
   }, []);
 
+  // Task descriptions that map to Installation page
+  const INSTALLATION_TASK_DESCRIPTIONS = [
+    "WIP - Installation",
+    "WIP - Outsourced Installation"
+  ];
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
-      // Changed sort order from "-priority" to "priority" as per outline
       const allWorkOrders = await WorkOrder.filter(
-        { completed: false },
+        { completed: false, deleted: { $ne: true } },
         "priority"
       );
-      const filtered = allWorkOrders.filter(
-        wo => wo.current_stage === 'installation' || (wo.is_rider && wo.rider_stage === 'installation')
+      // Filter to only show jobs with task descriptions assigned to Installation page, or riders locked to installation
+      const filtered = allWorkOrders.filter(wo => 
+        (wo.current_task_description && INSTALLATION_TASK_DESCRIPTIONS.some(desc => 
+          wo.current_task_description.includes(desc)
+        )) || (wo.is_rider && wo.rider_stage === 'installation')
       );
       setWorkOrders(filtered);
     } catch (error) {
