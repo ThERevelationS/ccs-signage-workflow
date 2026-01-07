@@ -809,15 +809,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [workOrders, filterStatus, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
-  
-  // Virtual scrolling setup
-  const parentRef = useRef(null);
-  const rowVirtualizer = useVirtualizer({
-    count: filteredWorkOrders.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 28, // Approximate row height
-    overscan: 10,
-  });
 
   const isColumnVisible = (columnId) => {
     if (!activeColumnPreset?.column_settings) return true;
