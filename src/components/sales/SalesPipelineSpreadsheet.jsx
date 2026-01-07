@@ -129,7 +129,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(false), 30000);
+    const interval = setInterval(() => loadWorkOrders(false), 60000); // Reduced frequency
     return () => clearInterval(interval);
   }, []);
 
@@ -744,44 +744,55 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
   };
 
-  const handleSort = (key) => {
+  const handleSort = React.useCallback((key) => {
     setSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
-  };
+  }, []);
 
-  const getSortIcon = (key) => {
+  const getSortIcon = React.useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
     return sortConfig.direction === 'asc' 
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
-  };
+  }, [sortConfig]);
 
-  const sortData = (data) => {
-    if (!sortConfig.key) return data;
+  // Memoized filtered and sorted work orders
+  const filteredWorkOrders = React.useMemo(() => {
+    let result = workOrders.filter(wo => {
+      if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
+        if (wo.sales_status !== filterStatus) return false;
+      }
+      
+      if (filterStatus.startsWith("custom_")) {
+        const filterId = filterStatus.replace("custom_", "");
+        const customFilter = customFilters.find(f => f.id === filterId);
+        if (customFilter && !applyCustomFilter(wo, customFilter.conditions)) return false;
+      }
+      
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
+        if (!searchable.includes(search)) return false;
+      }
+      
+      return true;
+    });
+
+    if (!sortConfig.key) return result;
     
-    return [...data].sort((a, b) => {
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
+    return [...result].sort((a, b) => {
+      let aVal = a[sortConfig.key] ?? '';
+      let bVal = b[sortConfig.key] ?? '';
       
-      // Handle null/undefined
-      if (aVal == null) aVal = '';
-      if (bVal == null) bVal = '';
-      
-      // Detect type and sort accordingly
-      // Date fields
       if (sortConfig.key.includes('date') || sortConfig.key === 'current_task_deadline') {
         aVal = aVal ? new Date(aVal).getTime() : 0;
         bVal = bVal ? new Date(bVal).getTime() : 0;
-      }
-      // Number fields
-      else if (sortConfig.key === 'estimate_amount' || sortConfig.key === 'probability') {
+      } else if (sortConfig.key === 'estimate_amount' || sortConfig.key === 'probability') {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
-      }
-      // String fields
-      else {
+      } else {
         aVal = String(aVal).toLowerCase();
         bVal = String(bVal).toLowerCase();
       }
@@ -790,29 +801,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  };
-
-  const filteredWorkOrders = sortData(workOrders.filter(wo => {
-    if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
-      if (wo.sales_status !== filterStatus) return false;
-    }
-    
-    if (filterStatus.startsWith("custom_")) {
-      const filterId = filterStatus.replace("custom_", "");
-      const customFilter = customFilters.find(f => f.id === filterId);
-      if (customFilter && !applyCustomFilter(wo, customFilter.conditions)) {
-        return false;
-      }
-    }
-    
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
-      if (!searchable.includes(search)) return false;
-    }
-    
-    return true;
-  }));
+  }, [workOrders, filterStatus, searchTerm, sortConfig, customFilters]);
 
   const isColumnVisible = (columnId) => {
     if (!activeColumnPreset?.column_settings) return true;

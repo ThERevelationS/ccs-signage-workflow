@@ -180,7 +180,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => loadData(false), 30000);
+    const interval = setInterval(() => loadData(false), 60000); // Reduced frequency
     return () => clearInterval(interval);
   }, [workOrderFilter]);
 
@@ -368,7 +368,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setDeleteConfirm(null);
   };
 
-  const getFilteredWorkOrders = (searchTerm) => {
+  const getFilteredWorkOrders = React.useCallback((searchTerm) => {
     // Filter out riders - only show main work orders (no riders)
     const mainWorkOrders = workOrders.filter(wo => !wo.is_rider);
 
@@ -385,7 +385,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       return terms.every(term => searchable.includes(term));
     }).slice(0, 10);
-  };
+  }, [workOrders]);
 
   const saveRequestTypes = (types) => {
     setRequestTypes(types);
@@ -698,56 +698,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   }));
 
-  const handleSort = (key) => {
+  const handleSort = React.useCallback((key) => {
     setSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
-  };
+  }, []);
 
-  const getSortIcon = (key) => {
+  const getSortIcon = React.useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
     return sortConfig.direction === 'asc' 
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
-  };
+  }, [sortConfig]);
 
-  const sortData = (data) => {
-    if (!sortConfig.key) return data;
-
-    return [...data].sort((a, b) => {
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
-
-      // Handle null/undefined
-      if (aVal == null) aVal = '';
-      if (bVal == null) bVal = '';
-
-      // Date fields
-      if (sortConfig.key.includes('date')) {
-        aVal = aVal ? new Date(aVal).getTime() : 0;
-        bVal = bVal ? new Date(bVal).getTime() : 0;
-      }
-      // String fields
-      else {
-        aVal = String(aVal).toLowerCase();
-        bVal = String(bVal).toLowerCase();
-      }
-
-      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  };
-
-  // Filter orders based on search term and status
-  const filteredOrders = (() => {
+  // Memoized filtered and sorted orders
+  const filteredOrders = React.useMemo(() => {
     let result = orders.filter(order => {
-      // Status filter
-      if (filterStatus !== "all" && order.status !== filterStatus) {
-        return false;
-      }
-      // Search filter
+      if (filterStatus !== "all" && order.status !== filterStatus) return false;
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const searchable = [
@@ -757,19 +725,30 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           order.vendor,
           order.request_type
         ].filter(Boolean).join(' ').toLowerCase();
-        if (!searchable.includes(search)) {
-          return false;
-        }
+        if (!searchable.includes(search)) return false;
       }
       return true;
     });
 
-    // Apply custom sort if set, otherwise default sort
     if (sortConfig.key) {
-      return sortData(result);
+      return [...result].sort((a, b) => {
+        let aVal = a[sortConfig.key] ?? '';
+        let bVal = b[sortConfig.key] ?? '';
+
+        if (sortConfig.key.includes('date')) {
+          aVal = aVal ? new Date(aVal).getTime() : 0;
+          bVal = bVal ? new Date(bVal).getTime() : 0;
+        } else {
+          aVal = String(aVal).toLowerCase();
+          bVal = String(bVal).toLowerCase();
+        }
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
     }
 
-    // Default sort: pending first, then ordered/received at bottom
     return result.sort((a, b) => {
       const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
       const aOrder = statusOrder[a.status] ?? 0;
@@ -777,7 +756,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       if (aOrder !== bOrder) return aOrder - bOrder;
       return (a.row_number || 0) - (b.row_number || 0);
     });
-  })();
+  }, [orders, filterStatus, searchTerm, sortConfig]);
 
   const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
