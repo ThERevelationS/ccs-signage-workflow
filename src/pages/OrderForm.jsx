@@ -92,77 +92,75 @@ export default function OrderForm() {
           </div>
         </div>
 
-        <div className="clay-card p-4">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Search orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-64"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={handleFilterChange}>
-                <SelectTrigger className="w-36">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="ordered">Ordered</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-64"
+              />
             </div>
+            <Select value={filterStatus} onValueChange={handleFilterChange}>
+              <SelectTrigger className="w-36">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="ordered">Ordered</SelectItem>
+                <SelectItem value="received">Received</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="flex items-center gap-2">
-              {isRegistered && (
+          <div className="flex items-center gap-2">
+            {isRegistered && (
+              <Button 
+                onClick={() => spreadsheetRef.current?.addNewRow()}
+                size="sm" 
+                className="h-8 px-3"
+                variant="ghost"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            )}
+            
+            {canImportExport && (
+              <>
                 <Button 
-                  onClick={() => spreadsheetRef.current?.addNewRow()}
+                  onClick={() => spreadsheetRef.current?.importFromExcel()}
                   size="sm" 
                   className="h-8 px-3"
                   variant="ghost"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
+                  <Upload className="w-4 h-4 mr-1" />
+                  Import
                 </Button>
-              )}
-              
-              {canImportExport && (
-                <>
-                  <Button 
-                    onClick={() => spreadsheetRef.current?.importFromExcel()}
-                    size="sm" 
-                    className="h-8 px-3"
-                    variant="ghost"
-                  >
-                    <Upload className="w-4 h-4 mr-1" />
-                    Import
-                  </Button>
-                  <Button 
-                    onClick={() => spreadsheetRef.current?.exportToExcel()}
-                    size="sm" 
-                    className="h-8 px-3"
-                    variant="ghost"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    Export
-                  </Button>
-                </>
-              )}
-            </div>
+                <Button 
+                  onClick={() => spreadsheetRef.current?.exportToExcel()}
+                  size="sm" 
+                  className="h-8 px-3"
+                  variant="ghost"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Export
+                </Button>
+              </>
+            )}
           </div>
-
-          <OrderSpreadsheet 
-            ref={spreadsheetRef}
-            searchTerm={searchTerm} 
-            filterStatus={filterStatus}
-            showButtonsInline={false}
-          />
         </div>
+
+        <OrderSpreadsheet 
+          ref={spreadsheetRef}
+          searchTerm={searchTerm} 
+          filterStatus={filterStatus}
+          showButtonsInline={false}
+        />
       </div>
     </div>
   );
