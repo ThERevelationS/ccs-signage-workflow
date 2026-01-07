@@ -698,22 +698,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   }));
 
-  const handleSort = React.useCallback((key) => {
+  const handleSort = useCallback((key) => {
     setSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
   }, []);
 
-  const getSortIcon = React.useCallback((key) => {
+  const getSortIcon = useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
     return sortConfig.direction === 'asc' 
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
   }, [sortConfig]);
 
-  // Memoized filtered and sorted orders
-  const filteredOrders = React.useMemo(() => {
+  // Memoized filtered and sorted orders with optimized sorting
+  const filteredOrders = useMemo(() => {
     let result = orders.filter(order => {
       if (filterStatus !== "all" && order.status !== filterStatus) return false;
       if (searchTerm) {
@@ -731,11 +731,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     });
 
     if (sortConfig.key) {
-      return [...result].sort((a, b) => {
-        let aVal = a[sortConfig.key] ?? '';
-        let bVal = b[sortConfig.key] ?? '';
+      const key = sortConfig.key;
+      const isDateField = key.includes('date');
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
+      
+      return result.sort((a, b) => {
+        let aVal = a[key] ?? '';
+        let bVal = b[key] ?? '';
 
-        if (sortConfig.key.includes('date')) {
+        if (isDateField) {
           aVal = aVal ? new Date(aVal).getTime() : 0;
           bVal = bVal ? new Date(bVal).getTime() : 0;
         } else {
@@ -743,9 +747,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           bVal = String(bVal).toLowerCase();
         }
 
-        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
+        return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
       });
     }
 
