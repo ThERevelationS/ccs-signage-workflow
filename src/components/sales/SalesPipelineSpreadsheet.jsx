@@ -365,14 +365,31 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setEditDialog({ ...editDialog, items: newItems });
   };
 
+  // Convert hex color to rgba with opacity
+  const hexToRgba = (hex, opacity) => {
+    if (!hex) return '';
+    // Remove # if present
+    hex = hex.replace('#', '');
+    // Handle shorthand hex
+    if (hex.length === 3) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return hex; // Return original if not valid hex
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
   // Get task description styling for a work order
   const getTaskDescStyle = useCallback((taskDescText) => {
-    if (!taskDescText) return { backgroundColor: '', opacity: 1, markOut: false };
+    if (!taskDescText) return { backgroundColor: '', markOut: false };
     const taskDesc = taskDescriptions.find(td => td.text === taskDescText);
-    if (!taskDesc) return { backgroundColor: '', opacity: 1, markOut: false };
+    if (!taskDesc) return { backgroundColor: '', markOut: false };
+    const opacity = (taskDesc.opacity ?? 100) / 100;
+    const bgColor = taskDesc.color ? hexToRgba(taskDesc.color, opacity) : '';
     return {
-      backgroundColor: taskDesc.color || '',
-      opacity: (taskDesc.opacity ?? 100) / 100,
+      backgroundColor: bgColor,
       markOut: taskDesc.markOut ?? false
     };
   }, [taskDescriptions]);
@@ -1172,8 +1189,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <tr 
                   className={`border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
                   style={{ 
-                    backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined,
-                    opacity: taskStyle.opacity
+                    backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined
                   }}
                 >
                 {/* Row Number - Clickable Focus Button */}
@@ -2180,9 +2196,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                           <PopoverTrigger asChild>
                             <button 
                               className="h-7 w-20 text-xs border rounded px-2 flex items-center gap-1 hover:bg-gray-100"
-                              style={{ backgroundColor: item.color || undefined }}
                             >
-                              {item.color && item.color !== "none" ? (
+                              {item.color ? (
                                 <>
                                   <div className="w-3 h-3 rounded border" style={{ backgroundColor: item.color }} />
                                   <span className="truncate text-[10px]">{TASK_COLORS.find(c => c.value === item.color)?.label || "Custom"}</span>
@@ -2224,7 +2239,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                                   <Input
                                     value={item.color || ""}
                                     onChange={(e) => updateTaskStyle(item, "color", e.target.value)}
-                                    placeholder="#hex or name"
+                                    placeholder="#hex"
                                     className="h-7 text-xs flex-1"
                                   />
                                 </div>
