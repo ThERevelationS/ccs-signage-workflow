@@ -1024,8 +1024,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <tbody>
-            {filteredWorkOrders.map((wo, index) => {
+          <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const index = virtualRow.index;
+              const wo = filteredWorkOrders[index];
               const daysFromInitial = calculateDays(wo.date_initial_contact);
               const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
               const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
@@ -1035,9 +1037,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               const isFocused = focusedRowId === wo.id;
 
               return (
-              <React.Fragment key={wo.id}>
-                {isFocused && <tr><td colSpan="100" className="h-2 bg-transparent border-none"></td></tr>}
-              <tr className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}>
+              <tr 
+                key={wo.id}
+                data-index={virtualRow.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+                className={`border-b hover:bg-gray-50 ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+              >
                 {/* Row Number - Clickable Focus Button */}
                 <td className="px-0 py-0 border-r">
                   <button
