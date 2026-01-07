@@ -1040,7 +1040,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <tr 
                 key={wo.id}
                 data-index={virtualRow.index}
-                ref={rowVirtualizer.measureElement}
                 style={{
                   position: 'absolute',
                   top: 0,
