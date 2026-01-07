@@ -1024,8 +1024,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          <tbody>
+            {filteredWorkOrders.map((wo, index) => {
               const index = virtualRow.index;
               const wo = filteredWorkOrders[index];
               const daysFromInitial = calculateDays(wo.date_initial_contact);
