@@ -901,7 +901,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
         {/* Data Rows */}
         <tbody>
-          {filteredOrders.map((order, index) => {
+          {/* Top spacer for virtual scroll */}
+          <tr style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px` }}>
+            <td colSpan={11} />
+          </tr>
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const index = virtualRow.index;
+            const order = filteredOrders[index];
             const isFocused = focusedRowId === order.id;
             return (
             <React.Fragment key={order.id}>
