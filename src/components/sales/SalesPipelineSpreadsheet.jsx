@@ -562,8 +562,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             updates.estimator = String(row["Estimator"] ?? row["estimator"]);
           }
           // Est/Inv # column mapping - store in est_inv_at field
-          if (!existingWO.est_inv_at && (row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"])) {
-            updates.est_inv_at = String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"]);
+          const estInvValue = row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"];
+          if (!existingWO.est_inv_at && estInvValue != null && estInvValue !== "") {
+            updates.est_inv_at = String(estInvValue);
           }
           if (!existingWO.estimate_amount && row["Estimate Amount"]) {
             updates.estimate_amount = parseFloat(row["Estimate Amount"]) || 0;
@@ -715,7 +716,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           designer: String(row["Designer"] ?? row["designer"] ?? ""),
           project_manager: String(row["Project Manager"] ?? row["PM"] ?? row["project_manager"] ?? ""),
           estimator: String(row["Estimator"] ?? row["estimator"] ?? ""),
-          est_inv_at: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? ""),
+          est_inv_at: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"] ?? ""),
           estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
           current_task_description: String(row["Current Task Description"] || ""),
           date_initial_contact: parseExcelDate(row["Date Est. Requested/Initial Contact"]),
