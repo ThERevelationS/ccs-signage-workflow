@@ -1362,8 +1362,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             </React.Fragment>
           );
           })}
+          {/* Bottom spacer for virtual scroll */}
+          <tr style={{ height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end || 0)}px` }}>
+            <td colSpan={11} />
+          </tr>
         </tbody>
       </table>
+      </div>
 
       {/* Edit Request Types Dialog */}
       <Dialog open={editingRequestTypes} onOpenChange={setEditingRequestTypes}>
