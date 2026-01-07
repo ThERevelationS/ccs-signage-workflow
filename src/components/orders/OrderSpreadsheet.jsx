@@ -1658,6 +1658,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         </DialogContent>
       </Dialog>
     </div>
+    </div>
   );
 });
 
