@@ -62,7 +62,7 @@ const ALL_COLUMNS = [
   { id: "est_inv_at", label: "Estimate/Invoice # Link", visible: true },
   { id: "estimate_amount", label: "Amount", visible: true },
   { id: "current_task_description", label: "Task Description", visible: true },
-  { id: "date_initial_contact", label: "Initial", visible: true },
+  { id: "date_initial_contact", label: "Est. Requested", visible: true },
   { id: "site_survey_date", label: "Survey", visible: true },
   { id: "date_estimate_sent", label: "Est Sent", visible: true },
   { id: "date_order_created", label: "Order", visible: true },
