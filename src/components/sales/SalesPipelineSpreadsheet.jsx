@@ -1869,6 +1869,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </tr>
               );
             })}
+            {/* Bottom spacer for virtual scroll */}
+            <tr style={{ height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end || 0)}px` }}>
+              <td colSpan={100} />
+            </tr>
           </tbody>
         </table>
       </div>
