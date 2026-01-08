@@ -272,11 +272,12 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent 
         className="clay-card border-none max-w-md max-h-[80vh] overflow-hidden flex flex-col"
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
