@@ -77,7 +77,8 @@ export function ColumnHeaderContextMenu({
   onCustomSort,
   onClearSort,
   currentSortKey,
-  currentSortDirection
+  currentSortDirection,
+  allValues = []
 }) {
   const menuRef = useRef(null);
   const [showCustomSort, setShowCustomSort] = useState(false);
@@ -127,6 +128,7 @@ export function ColumnHeaderContextMenu({
         fieldName={fieldName}
         fieldLabel={fieldLabel}
         columnType={columnType}
+        allValues={allValues}
         onApply={(config) => {
           onCustomSort(fieldName, config);
           setShowCustomSort(false);
@@ -218,7 +220,7 @@ export function ColumnHeaderContextMenu({
   );
 }
 
-function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, onApply, allValues = [] }) {
+function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, onApply, allValues = [], onInteractOutside }) {
   const [direction, setDirection] = useState('asc');
   const [filterType, setFilterType] = useState('all'); // all, selected, range
   const [selectedValues, setSelectedValues] = useState([]);
