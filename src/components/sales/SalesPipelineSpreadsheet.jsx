@@ -694,7 +694,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
         
         // Parse notes into individual entries by date
-        const notesText = row["Notes"] || "";
+        const notesRaw = row["Notes"] ?? "";
+        const notesText = typeof notesRaw === 'string' ? notesRaw : String(notesRaw);
         const parsedNotes = [];
         
         if (notesText) {
