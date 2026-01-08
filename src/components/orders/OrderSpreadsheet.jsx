@@ -906,10 +906,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <thead className="bg-gray-100">
           <tr className="border-b sticky top-0 z-10 bg-gray-100">
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('customer_name')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'customer_name' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('customer_name')}>
               <div className="flex items-center gap-1">Customer Name {getSortIcon('customer_name')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('request_type')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'request_type' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('request_type')}>
               <div className="flex items-center gap-1">
                 Request Type {getSortIcon('request_type')}
                 {isRegistered && (
@@ -919,22 +919,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('description')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('description')}>
               <div className="flex items-center gap-1">Description {getSortIcon('description')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('quantity')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quantity' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('quantity')}>
               <div className="flex items-center gap-1">Qty {getSortIcon('quantity')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('requestor_name')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'requestor_name' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('requestor_name')}>
               <div className="flex items-center gap-1">Requestor {getSortIcon('requestor_name')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_needed')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_needed' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_needed')}>
               <div className="flex items-center gap-1">Needed {getSortIcon('date_needed')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_ordered')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_ordered' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_ordered')}>
               <div className="flex items-center gap-1">Ordered {getSortIcon('date_ordered')}</div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('vendor')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'vendor' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('vendor')}>
               <div className="flex items-center gap-1">
                 Vendor {getSortIcon('vendor')}
                 {isRegistered && (
@@ -944,7 +944,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </div>
             </th>
-            <th className="px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200" onClick={() => handleSort('date_received')}>
+            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_received' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_received')}>
               <div className="flex items-center gap-1">Received {getSortIcon('date_received')}</div>
             </th>
             <th className="px-2 py-2 text-left font-medium text-gray-700"></th>
