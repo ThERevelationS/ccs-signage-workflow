@@ -88,8 +88,14 @@ export function ColumnHeaderContextMenu({
         onClose();
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // Use a small timeout to prevent immediate closing
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 100);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [onClose, showCustomSort]);
 
   const columnType = getColumnType(fieldName);
@@ -212,6 +218,10 @@ export function ColumnHeaderContextMenu({
 }
 
 function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, onApply, allValues = [] }) {
+  // Prevent clicks inside dialog from bubbling up
+  const handleDialogClick = (e) => {
+    e.stopPropagation();
+  };
   const [direction, setDirection] = useState('asc');
   const [filterType, setFilterType] = useState('all'); // all, selected, range
   const [selectedValues, setSelectedValues] = useState([]);
@@ -271,7 +281,12 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="clay-card border-none max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent 
+        className="clay-card border-none max-w-md max-h-[80vh] overflow-hidden flex flex-col"
+        onClick={handleDialogClick}
+        onPointerDown={handleDialogClick}
+        onMouseDown={handleDialogClick}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-purple-600" />
