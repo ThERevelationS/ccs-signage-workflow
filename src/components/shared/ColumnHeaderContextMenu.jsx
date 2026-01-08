@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -342,16 +343,26 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
           {/* Value Selection for text/select columns */}
           {filterType === 'selected' && (columnType === 'text' || columnType === 'select') && (
             <div className="space-y-2 border rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Search className="w-4 h-4 text-gray-400" />
-                <Input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search values..."
-                  className="h-8"
-                />
-              </div>
-              <div className="flex gap-2 mb-2">
+              <Label className="text-xs text-gray-600">Select values to show:</Label>
+              <Select
+                value=""
+                onValueChange={(val) => {
+                  if (val && !selectedValues.includes(val)) {
+                    setSelectedValues(prev => [...prev, val]);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Add a value..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueValues.filter(v => !selectedValues.includes(v)).map(value => (
+                    <SelectItem key={value} value={value}>{value}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={handleSelectAll} className="h-7 text-xs">
                   Select All
                 </Button>
@@ -359,21 +370,27 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
                   Clear All
                 </Button>
               </div>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {filteredUniqueValues.length > 0 ? (
-                  filteredUniqueValues.map(value => (
-                    <label key={value} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
-                      <Checkbox
-                        checked={selectedValues.includes(value)}
-                        onCheckedChange={() => toggleValue(value)}
-                      />
-                      <span className="text-sm truncate">{value}</span>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-2">No values available</p>
-                )}
-              </div>
+              
+              {selectedValues.length > 0 && (
+                <div className="max-h-32 overflow-y-auto space-y-1 border-t pt-2">
+                  <Label className="text-xs text-gray-500">Selected ({selectedValues.length}):</Label>
+                  {selectedValues.map(value => (
+                    <div key={value} className="flex items-center justify-between p-1.5 bg-blue-50 rounded text-sm">
+                      <span className="truncate">{value}</span>
+                      <button 
+                        onClick={() => setSelectedValues(prev => prev.filter(v => v !== value))}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {selectedValues.length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-2">No values selected - showing all</p>
+              )}
             </div>
           )}
 
