@@ -239,11 +239,7 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
     return [...new Set(values)].sort();
   }, [allValues, fieldName]);
 
-  const filteredUniqueValues = React.useMemo(() => {
-    if (!searchTerm) return uniqueValues;
-    const lower = searchTerm.toLowerCase();
-    return uniqueValues.filter(v => v.toLowerCase().includes(lower));
-  }, [uniqueValues, searchTerm]);
+
 
   const handleSelectAll = () => {
     setSelectedValues([...uniqueValues]);
