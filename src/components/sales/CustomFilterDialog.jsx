@@ -560,48 +560,26 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                         {condition.operator !== "empty" && condition.operator !== "not_empty" && (
                           <>
-                            {isUserField ? (
+                            {hasDropdownOptions ? (
                               <Select
                                 value={condition.value}
                                 onValueChange={(value) => updateCondition(index, "value", value)}
                               >
                                 <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select user" />
+                                  <SelectValue placeholder={isUserField ? "Select user" : "Select value"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {getUsersForRole(selectedField.role).map(u => (
+                                  {isUserField && getUsersForRole(selectedField.role).map(u => (
                                     <SelectItem key={u.email} value={u.full_name}>
                                       {u.full_name}
                                     </SelectItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
-                            ) : isSelectField ? (
-                              <Select
-                                value={condition.value}
-                                onValueChange={(value) => updateCondition(index, "value", value)}
-                              >
-                                <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select value" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {selectedField.options.map(opt => (
+                                  {isSelectField && selectedField.options.map(opt => (
                                     <SelectItem key={opt} value={opt}>
                                       {opt.charAt(0).toUpperCase() + opt.slice(1).replace(/_/g, ' ')}
                                     </SelectItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
-                            ) : selectedField?.type === "localStorage" ? (
-                              <Select
-                                value={condition.value}
-                                onValueChange={(value) => updateCondition(index, "value", value)}
-                              >
-                                <SelectTrigger className="flex-1">
-                                  <SelectValue placeholder="Select value" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getLocalStorageOptions(selectedField.storageKey).map(opt => (
+                                  {isLocalStorageField && getLocalStorageOptions(selectedField.storageKey).map(opt => (
                                     <SelectItem key={opt} value={opt}>
                                       {opt}
                                     </SelectItem>
