@@ -1012,7 +1012,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }
 
   return (
-    <div className="overflow-visible" onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}>
+    <div className="overflow-visible" onClick={(e) => { 
+      // Don't close menus if clicking inside a dialog/popover
+      if (e.target.closest('[role="dialog"]') || e.target.closest('[data-radix-popper-content-wrapper]')) return;
+      contextMenu && setContextMenu(null); 
+      headerContextMenu && setHeaderContextMenu(null); 
+    }}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
