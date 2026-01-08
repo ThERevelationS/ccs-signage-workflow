@@ -43,6 +43,8 @@ const FILTER_FIELDS = [
 ];
 
 const OPERATORS = [
+  { value: "is", label: "Is" },
+  { value: "is_not", label: "Is Not" },
   { value: "equals", label: "Equals" },
   { value: "contains", label: "Contains" },
   { value: "greater_than", label: "Greater Than" },
