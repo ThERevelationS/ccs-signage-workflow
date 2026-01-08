@@ -52,7 +52,8 @@ import {
   Loader2,
   ArrowUpDown,
   SortAsc,
-  Clock
+  Clock,
+  Activity
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
@@ -60,6 +61,7 @@ import UserManagement from "../components/admin/UserManagement";
 import ProjectTrash from "../components/admin/ProjectTrash";
 import OrderTrash from "../components/admin/OrderTrash";
 import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
+import ActivityFeed from "../components/admin/ActivityFeed";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -533,6 +535,10 @@ export default function AdminSettings() {
                             <Clock className="w-6 h-6 mr-3" />
                             Time Clock
                           </TabsTrigger>
+                          <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                            <Activity className="w-6 h-6 mr-3" />
+                            Activity Feed
+                          </TabsTrigger>
                         </TabsList>
 
           <TabsContent value="groups">
@@ -556,6 +562,10 @@ export default function AdminSettings() {
 
                         <TabsContent value="timeclock">
                           <TimeClockAdmin />
+                        </TabsContent>
+
+                        <TabsContent value="activity">
+                          <ActivityFeed />
                         </TabsContent>
 
           <TabsContent value="automations">
