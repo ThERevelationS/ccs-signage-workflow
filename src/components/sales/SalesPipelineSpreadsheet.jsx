@@ -778,7 +778,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }] : [];
 
         const newWO = await WorkOrder.create({
-          title: String(title),
+          title: customer || "Unnamed",
           client_name: customer,
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
