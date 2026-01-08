@@ -843,6 +843,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const condValue = condition.value;
       
       switch (condition.operator) {
+        case "is":
+          return fieldValue == condValue;
+        case "is_not":
+          return fieldValue != condValue;
         case "equals":
           return fieldValue == condValue;
         case "contains":
