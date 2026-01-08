@@ -219,14 +219,9 @@ export function ColumnHeaderContextMenu({
 }
 
 function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, onApply, allValues = [] }) {
-  // Prevent clicks inside dialog from bubbling up
-  const handleDialogClick = (e) => {
-    e.stopPropagation();
-  };
   const [direction, setDirection] = useState('asc');
   const [filterType, setFilterType] = useState('all'); // all, selected, range
   const [selectedValues, setSelectedValues] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
   const [numberFrom, setNumberFrom] = useState('');
@@ -284,9 +279,8 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="clay-card border-none max-w-md max-h-[80vh] overflow-hidden flex flex-col"
-        onClick={handleDialogClick}
-        onPointerDown={handleDialogClick}
-        onMouseDown={handleDialogClick}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
