@@ -25,6 +25,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import * as XLSX from "xlsx";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
+import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -58,7 +59,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [headerContextMenu, setHeaderContextMenu] = useState(null);
+
+  // Use the column sorting hook with user-specific storage
+  const { 
+    sortConfig, 
+    handleSort: handleColumnSort, 
+    handleCustomSort, 
+    clearSort 
+  } = useColumnSorting('salesPipeline', currentUser?.email);
 
   const { trackChange } = useCellHistoryTracker("WorkOrder", currentUser);
 
@@ -852,11 +861,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleSort = useCallback((key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  }, []);
+    const newDirection = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    handleColumnSort(key, newDirection);
+  }, [sortConfig, handleColumnSort]);
 
   const getSortIcon = useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
@@ -864,6 +871,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
   }, [sortConfig]);
+
+  const handleHeaderContextMenu = (e, fieldName, fieldLabel) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setHeaderContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      fieldName,
+      fieldLabel
+    });
+  };
 
   // Pre-compute sort values for faster sorting
   const sortedWorkOrders = useMemo(() => {
@@ -887,6 +905,42 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return true;
     });
+
+    // Apply custom filter from column sorting
+    if (sortConfig.customFilter && sortConfig.customFilter.filterType !== 'all') {
+      const filter = sortConfig.customFilter;
+      
+      if (filter.filterType === 'selected' && filter.selectedValues?.length > 0) {
+        result = result.filter(item => {
+          const value = item[sortConfig.key];
+          return value != null && filter.selectedValues.includes(String(value));
+        });
+      }
+      
+      if (filter.filterType === 'range' && filter.dateRange) {
+        const { from, to } = filter.dateRange;
+        result = result.filter(item => {
+          const value = item[sortConfig.key];
+          if (!value) return false;
+          const date = new Date(value);
+          if (isNaN(date.getTime())) return false;
+          if (from && date < new Date(from)) return false;
+          if (to && date > new Date(to)) return false;
+          return true;
+        });
+      }
+      
+      if (filter.filterType === 'range' && filter.numberRange) {
+        const { from, to } = filter.numberRange;
+        result = result.filter(item => {
+          const value = parseFloat(item[sortConfig.key]);
+          if (isNaN(value)) return false;
+          if (from !== null && value < from) return false;
+          if (to !== null && value > to) return false;
+          return true;
+        });
+      }
+    }
 
     if (!sortConfig.key) return result;
     
@@ -958,7 +1012,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }
 
   return (
-    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}>
+    <div className="overflow-visible" onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -1073,66 +1127,66 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           <thead className="bg-gray-100">
             <tr className="border-b sticky top-0 z-10 bg-gray-100">
               <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '32px', minWidth: '32px' }}>#</th>
-              {isColumnVisible("client_name") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')}>
+              {isColumnVisible("client_name") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
                 <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
               </th>}
-              {isColumnVisible("lead_source") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')}>
+              {isColumnVisible("lead_source") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')} onContextMenu={(e) => handleHeaderContextMenu(e, 'lead_source', 'Source')}>
                 <div className="flex items-center gap-1">
                   Source {getSortIcon('lead_source')}
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("lead_source", leadSources, "salesLeadSources"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("current_task_deadline") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_deadline' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('current_task_deadline')}>
+              {isColumnVisible("current_task_deadline") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_deadline' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('current_task_deadline')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_deadline', 'Deadline')}>
                 <div className="flex items-center gap-1">Deadline {getSortIcon('current_task_deadline')}</div>
               </th>}
-              {isColumnVisible("current_task_assigned_to") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_assigned_to' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('current_task_assigned_to')}>
+              {isColumnVisible("current_task_assigned_to") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_assigned_to' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('current_task_assigned_to')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_assigned_to', 'Task Assigned')}>
                 <div className="flex items-center gap-1">Task Assigned {getSortIcon('current_task_assigned_to')}</div>
               </th>}
-              {isColumnVisible("designer") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'designer' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('designer')}>
+              {isColumnVisible("designer") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'designer' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('designer')} onContextMenu={(e) => handleHeaderContextMenu(e, 'designer', 'Designer')}>
                 <div className="flex items-center gap-1">Designer {getSortIcon('designer')}</div>
               </th>}
-              {isColumnVisible("project_manager") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_manager' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('project_manager')}>
+              {isColumnVisible("project_manager") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_manager' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('project_manager')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_manager', 'Project Manager')}>
                 <div className="flex items-center gap-1">Project Manager {getSortIcon('project_manager')}</div>
               </th>}
-              {isColumnVisible("estimator") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimator' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimator')}>
+              {isColumnVisible("estimator") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimator' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimator')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimator', 'Estimator')}>
                 <div className="flex items-center gap-1">Estimator {getSortIcon('estimator')}</div>
               </th>}
               {isColumnVisible("est_inv_at") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Est/Inv # Link</th>}
-              {isColumnVisible("estimate_amount") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimate_amount' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimate_amount')}>
+              {isColumnVisible("estimate_amount") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimate_amount' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimate_amount')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimate_amount', 'Estimate Amount')}>
                 <div className="flex items-center gap-1">Amount {getSortIcon('estimate_amount')}</div>
               </th>}
-              {isColumnVisible("current_task_description") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '140px' }} onClick={() => handleSort('current_task_description')}>
+              {isColumnVisible("current_task_description") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '140px' }} onClick={() => handleSort('current_task_description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_description', 'Task Description')}>
                 <div className="flex items-center gap-1">
                   Task Description {getSortIcon('current_task_description')}
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions"); }} />}
                 </div>
               </th>}
-              {isColumnVisible("date_initial_contact") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_initial_contact' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_initial_contact')}>
+              {isColumnVisible("date_initial_contact") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_initial_contact' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_initial_contact')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_initial_contact', 'Est. Requested')}>
                 <div className="flex items-center gap-1">Est. Req. {getSortIcon('date_initial_contact')}</div>
               </th>}
-              {isColumnVisible("site_survey_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'site_survey_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')}>
+              {isColumnVisible("site_survey_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'site_survey_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'site_survey_date', 'Site Survey')}>
                 <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
               </th>}
-              {isColumnVisible("date_estimate_sent") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_estimate_sent' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('date_estimate_sent')}>
+              {isColumnVisible("date_estimate_sent") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_estimate_sent' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('date_estimate_sent')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_estimate_sent', 'Estimate Sent')}>
                 <div className="flex items-center gap-1">Date Estimate Sent to Customer {getSortIcon('date_estimate_sent')}</div>
               </th>}
-              {isColumnVisible("date_order_created") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_order_created' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_order_created')}>
+              {isColumnVisible("date_order_created") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_order_created' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_order_created')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_order_created', 'Order Created')}>
                 <div className="flex items-center gap-1">Order {getSortIcon('date_order_created')}</div>
               </th>}
-              {isColumnVisible("project_install_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_install_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('project_install_date')}>
+              {isColumnVisible("project_install_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_install_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('project_install_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_install_date', 'Install Date')}>
                 <div className="flex items-center gap-1">Install {getSortIcon('project_install_date')}</div>
               </th>}
-              {isColumnVisible("permit_submitted_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_submitted_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_submitted_date')}>
+              {isColumnVisible("permit_submitted_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_submitted_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_submitted_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_submitted_date', 'Permit Submitted')}>
                 <div className="flex items-center gap-1">Permit Sub {getSortIcon('permit_submitted_date')}</div>
               </th>}
 
-              {isColumnVisible("permit_receipt_confirmed_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_receipt_confirmed_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_receipt_confirmed_date')}>
+              {isColumnVisible("permit_receipt_confirmed_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_receipt_confirmed_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_receipt_confirmed_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_receipt_confirmed_date', 'Permit Confirmed')}>
                 <div className="flex items-center gap-1">Permit Conf {getSortIcon('permit_receipt_confirmed_date')}</div>
               </th>}
-              {isColumnVisible("permit_number") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_number' ? 'bg-blue-100' : ''}`} style={{ minWidth: '70px' }} onClick={() => handleSort('permit_number')}>
+              {isColumnVisible("permit_number") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_number' ? 'bg-blue-100' : ''}`} style={{ minWidth: '70px' }} onClick={() => handleSort('permit_number')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_number', 'Permit Number')}>
                 <div className="flex items-center gap-1">Permit # {getSortIcon('permit_number')}</div>
               </th>}
-              {isColumnVisible("permit_approved_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_approved_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_approved_date')}>
+              {isColumnVisible("permit_approved_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_approved_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_approved_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_approved_date', 'Permit Approved')}>
                 <div className="flex items-center gap-1">Permit App {getSortIcon('permit_approved_date')}</div>
               </th>}
               {isColumnVisible("days_init_today") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>}
@@ -1141,22 +1195,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("days_ord_prm") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
               {isColumnVisible("days_prm_app") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
               {isColumnVisible("days_ord_ins") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
-              {isColumnVisible("quote_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quote_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('quote_date')}>
+              {isColumnVisible("quote_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quote_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('quote_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'quote_date', 'Quote Date')}>
                 <div className="flex items-center gap-1">Quote {getSortIcon('quote_date')}</div>
               </th>}
-              {isColumnVisible("follow_up_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')}>
+              {isColumnVisible("follow_up_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
                 <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
               </th>}
-              {isColumnVisible("close_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')}>
+              {isColumnVisible("close_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'close_date', 'Close Date')}>
                 <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
               </th>}
-              {isColumnVisible("probability") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'probability' ? 'bg-blue-100' : ''}`} style={{ minWidth: '60px' }} onClick={() => handleSort('probability')}>
+              {isColumnVisible("probability") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'probability' ? 'bg-blue-100' : ''}`} style={{ minWidth: '60px' }} onClick={() => handleSort('probability')} onContextMenu={(e) => handleHeaderContextMenu(e, 'probability', 'Probability')}>
                 <div className="flex items-center gap-1">Prob {getSortIcon('probability')}</div>
               </th>}
-              {isColumnVisible("start_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'start_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('start_date')}>
+              {isColumnVisible("start_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'start_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('start_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'start_date', 'Start Date')}>
                 <div className="flex items-center gap-1">Start {getSortIcon('start_date')}</div>
               </th>}
-              {isColumnVisible("project_type") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_type' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('project_type')}>
+              {isColumnVisible("project_type") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_type' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('project_type')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_type', 'Project Type')}>
                 <div className="flex items-center gap-1">
                   Project Type {getSortIcon('project_type')}
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
@@ -2329,6 +2383,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           currentValue={contextMenu.currentValue}
           onClear={() => clearCell(contextMenu.workOrder.id, contextMenu.fieldName)}
           isRegistered={isRegistered}
+        />
+      )}
+
+      {/* Header Context Menu */}
+      {headerContextMenu && (
+        <ColumnHeaderContextMenu
+          position={{ x: headerContextMenu.x, y: headerContextMenu.y }}
+          onClose={() => setHeaderContextMenu(null)}
+          fieldName={headerContextMenu.fieldName}
+          fieldLabel={headerContextMenu.fieldLabel}
+          onSort={(key, dir) => handleColumnSort(key, dir)}
+          onCustomSort={handleCustomSort}
+          onClearSort={clearSort}
+          currentSortKey={sortConfig.key}
+          currentSortDirection={sortConfig.direction}
+          allValues={workOrders}
         />
       )}
 
