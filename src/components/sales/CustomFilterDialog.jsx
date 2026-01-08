@@ -518,6 +518,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     const selectedField = FILTER_FIELDS.find(f => f.value === condition.field);
                     const isUserField = selectedField?.type === "user";
                     const isSelectField = selectedField?.type === "select";
+                    const isLocalStorageField = selectedField?.type === "localStorage";
+                    const hasDropdownOptions = isUserField || isSelectField || isLocalStorageField;
                     
                     return (
                       <div key={index} className="flex gap-2 mt-2">
