@@ -588,6 +588,22 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                   ))}
                                 </SelectContent>
                               </Select>
+                            ) : selectedField?.type === "localStorage" ? (
+                              <Select
+                                value={condition.value}
+                                onValueChange={(value) => updateCondition(index, "value", value)}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue placeholder="Select value" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getLocalStorageOptions(selectedField.storageKey).map(opt => (
+                                    <SelectItem key={opt} value={opt}>
+                                      {opt}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             ) : (
                               <Input
                                 value={condition.value}
