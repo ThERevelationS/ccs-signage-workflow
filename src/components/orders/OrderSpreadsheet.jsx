@@ -100,6 +100,7 @@ import {
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
+import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 
 
 const Order = base44.entities.Order;
@@ -120,7 +121,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [headerContextMenu, setHeaderContextMenu] = useState(null);
+
+  // Use the column sorting hook with user-specific storage
+  const { 
+    sortConfig, 
+    handleSort: handleColumnSort, 
+    handleCustomSort, 
+    clearSort,
+    applySortAndFilter 
+  } = useColumnSorting('orderForm', currentUser?.email);
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
@@ -714,11 +724,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }));
 
   const handleSort = useCallback((key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  }, []);
+    const newDirection = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    handleColumnSort(key, newDirection);
+  }, [sortConfig, handleColumnSort]);
 
   const getSortIcon = useCallback((key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 text-gray-400" />;
@@ -726,6 +734,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       ? <ArrowUp className="w-3 h-3 text-blue-600" />
       : <ArrowDown className="w-3 h-3 text-blue-600" />;
   }, [sortConfig]);
+
+  const handleHeaderContextMenu = (e, fieldName, fieldLabel) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setHeaderContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      fieldName,
+      fieldLabel
+    });
+  };
 
   // Memoized filtered and sorted orders with optimized sorting
   const filteredOrders = useMemo(() => {
@@ -744,6 +763,42 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       }
       return true;
     });
+
+    // Apply custom filter from column sorting
+    if (sortConfig.customFilter && sortConfig.customFilter.filterType !== 'all') {
+      const filter = sortConfig.customFilter;
+      
+      if (filter.filterType === 'selected' && filter.selectedValues?.length > 0) {
+        result = result.filter(item => {
+          const value = item[sortConfig.key];
+          return value != null && filter.selectedValues.includes(String(value));
+        });
+      }
+      
+      if (filter.filterType === 'range' && filter.dateRange) {
+        const { from, to } = filter.dateRange;
+        result = result.filter(item => {
+          const value = item[sortConfig.key];
+          if (!value) return false;
+          const date = new Date(value);
+          if (isNaN(date.getTime())) return false;
+          if (from && date < new Date(from)) return false;
+          if (to && date > new Date(to)) return false;
+          return true;
+        });
+      }
+      
+      if (filter.filterType === 'range' && filter.numberRange) {
+        const { from, to } = filter.numberRange;
+        result = result.filter(item => {
+          const value = parseFloat(item[sortConfig.key]);
+          if (isNaN(value)) return false;
+          if (from !== null && value < from) return false;
+          if (to !== null && value > to) return false;
+          return true;
+        });
+      }
+    }
 
     if (sortConfig.key) {
       const key = sortConfig.key;
@@ -810,7 +865,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }
 
   return (
-    <div className="overflow-visible" onClick={() => contextMenu && setContextMenu(null)}>
+    <div className="overflow-visible" onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}>
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -906,10 +961,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <thead className="bg-gray-100">
           <tr className="border-b sticky top-0 z-10 bg-gray-100">
             <th className="px-2 py-2 border-r text-left font-medium text-gray-700">#</th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'customer_name' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('customer_name')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'customer_name' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('customer_name')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'customer_name', 'Customer Name')}
+            >
               <div className="flex items-center gap-1">Customer Name {getSortIcon('customer_name')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'request_type' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('request_type')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'request_type' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('request_type')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'request_type', 'Request Type')}
+            >
               <div className="flex items-center gap-1">
                 Request Type {getSortIcon('request_type')}
                 {isRegistered && (
@@ -919,22 +982,46 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('description')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('description')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'description', 'Description')}
+            >
               <div className="flex items-center gap-1">Description {getSortIcon('description')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quantity' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('quantity')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quantity' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('quantity')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'quantity', 'Quantity')}
+            >
               <div className="flex items-center gap-1">Qty {getSortIcon('quantity')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'requestor_name' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('requestor_name')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'requestor_name' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('requestor_name')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'requestor_name', 'Requestor')}
+            >
               <div className="flex items-center gap-1">Requestor {getSortIcon('requestor_name')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_needed' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_needed')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_needed' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('date_needed')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'date_needed', 'Date Needed')}
+            >
               <div className="flex items-center gap-1">Needed {getSortIcon('date_needed')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_ordered' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_ordered')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_ordered' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('date_ordered')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'date_ordered', 'Date Ordered')}
+            >
               <div className="flex items-center gap-1">Ordered {getSortIcon('date_ordered')}</div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'vendor' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('vendor')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'vendor' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('vendor')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'vendor', 'Vendor')}
+            >
               <div className="flex items-center gap-1">
                 Vendor {getSortIcon('vendor')}
                 {isRegistered && (
@@ -944,7 +1031,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 )}
               </div>
             </th>
-            <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_received' ? 'bg-blue-100' : ''}`} onClick={() => handleSort('date_received')}>
+            <th 
+              className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_received' ? 'bg-blue-100' : ''}`} 
+              onClick={() => handleSort('date_received')}
+              onContextMenu={(e) => handleHeaderContextMenu(e, 'date_received', 'Date Received')}
+            >
               <div className="flex items-center gap-1">Received {getSortIcon('date_received')}</div>
             </th>
             <th className="px-2 py-2 text-left font-medium text-gray-700"></th>
@@ -1640,6 +1731,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           currentValue={contextMenu.currentValue}
           onClear={() => clearCell(contextMenu.order.id, contextMenu.fieldName)}
           isRegistered={isRegistered}
+        />
+      )}
+
+      {/* Header Context Menu */}
+      {headerContextMenu && (
+        <ColumnHeaderContextMenu
+          position={{ x: headerContextMenu.x, y: headerContextMenu.y }}
+          onClose={() => setHeaderContextMenu(null)}
+          fieldName={headerContextMenu.fieldName}
+          fieldLabel={headerContextMenu.fieldLabel}
+          onSort={(key, dir) => handleColumnSort(key, dir)}
+          onCustomSort={handleCustomSort}
+          onClearSort={clearSort}
+          currentSortKey={sortConfig.key}
+          currentSortDirection={sortConfig.direction}
+          allValues={orders}
         />
       )}
 
