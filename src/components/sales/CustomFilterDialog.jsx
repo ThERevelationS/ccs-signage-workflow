@@ -141,6 +141,17 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     return users.filter(u => u.sales_roles?.includes(role));
   };
 
+  const getLocalStorageOptions = (storageKey) => {
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    // Handle task descriptions which are objects with text property
+    if (storageKey === "salesTaskDescriptions") {
+      return parsed.map(item => typeof item === 'string' ? item : item.text);
+    }
+    return parsed;
+  };
+
   const addCondition = () => {
     setFilterConditions([...filterConditions, { field: "", operator: "equals", value: "" }]);
   };
