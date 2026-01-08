@@ -800,8 +800,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           permit_approved_date: parseExcelDate(row["Date Permit Approved/Received"]),
           in_pipeline: false,
           sales_status: "lead",
-          notes: parsedNotes,
-          work_notes: importedWorkNotes
+          notes: [],
+          work_notes: []
         });
         
         existingWorkOrdersMap.set(uniqueKey, newWO);
