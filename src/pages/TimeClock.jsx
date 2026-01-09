@@ -339,15 +339,59 @@ export default function TimeClock() {
                       </div>
                     )}
 
-                    {entry.notes && (
-                      <div className="mt-3 pt-3 border-t">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                    {/* Notes Section - Always show with edit capability */}
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
                           <FileText className="w-3 h-3" />
                           Notes:
                         </div>
-                        <p className="text-sm text-gray-600">{entry.notes}</p>
+                        {entry.status === "clocked_out" && editingNotes !== entry.id && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs"
+                            onClick={() => startEditingNotes(entry)}
+                          >
+                            <Pencil className="w-3 h-3 mr-1" />
+                            {entry.notes ? "Edit" : "Add"}
+                          </Button>
+                        )}
                       </div>
-                    )}
+                      {editingNotes === entry.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editNotesText}
+                            onChange={(e) => setEditNotesText(e.target.value)}
+                            placeholder="Add notes about this time entry..."
+                            className="text-sm min-h-[60px]"
+                          />
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              className="h-7 px-3 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleSaveNotes(entry.id)}
+                            >
+                              <Save className="w-3 h-3 mr-1" />
+                              Save
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="h-7 px-3"
+                              onClick={() => { setEditingNotes(null); setEditNotesText(""); }}
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : entry.notes ? (
+                        <p className="text-sm text-gray-600">{entry.notes}</p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No notes</p>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
