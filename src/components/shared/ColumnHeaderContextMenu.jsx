@@ -9,7 +9,9 @@ import {
   X,
   Filter,
   Check,
-  Search
+  Search,
+  Pencil,
+  Palette
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
