@@ -220,6 +220,57 @@ export function ColumnHeaderContextMenu({
           </button>
         </>
       )}
+
+      {/* Admin-only options */}
+      {isAdmin && onAction && (
+        <>
+          {(fieldName === 'lead_source' || fieldName === 'current_task_description' || fieldName === 'current_task_deadline') && (
+            <div className="border-t my-1" />
+          )}
+          
+          {fieldName === 'lead_source' && (
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAction('edit_lead_sources');
+              }}
+            >
+              <Pencil className="w-4 h-4 text-blue-600" />
+              Edit Lead Sources
+            </button>
+          )}
+          
+          {fieldName === 'current_task_description' && (
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAction('edit_task_descriptions');
+              }}
+            >
+              <Pencil className="w-4 h-4 text-blue-600" />
+              Edit Task Descriptions
+            </button>
+          )}
+          
+          {fieldName === 'current_task_deadline' && (
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAction('due_date_gradient');
+              }}
+            >
+              <Palette className="w-4 h-4 text-purple-600" />
+              Due Date Gradient
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
