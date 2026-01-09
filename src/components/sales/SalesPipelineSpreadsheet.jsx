@@ -393,7 +393,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return i;
     });
     setTaskDescriptions(newItems);
-    localStorage.setItem("salesTaskDescriptions", JSON.stringify(newItems));
+    saveGlobalSetting('salesTaskDescriptions', { items: newItems });
     setEditDialog({ ...editDialog, items: newItems });
   };
 
@@ -405,7 +405,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return i;
     });
     setTaskDescriptions(newItems);
-    localStorage.setItem("salesTaskDescriptions", JSON.stringify(newItems));
+    saveGlobalSetting('salesTaskDescriptions', { items: newItems });
     setEditDialog({ ...editDialog, items: newItems });
   };
 
