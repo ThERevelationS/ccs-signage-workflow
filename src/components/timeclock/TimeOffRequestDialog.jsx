@@ -99,7 +99,7 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
-            Request Time Off
+            {existingRequest ? "Edit Time Off Request" : "Request Time Off"}
           </DialogTitle>
         </DialogHeader>
 
