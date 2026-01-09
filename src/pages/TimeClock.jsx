@@ -46,6 +46,9 @@ export default function TimeClock() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [activeTab, setActiveTab] = useState("clock");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [editingNotes, setEditingNotes] = useState(null);
+  const [editNotesText, setEditNotesText] = useState("");
+  const [editingTimeOff, setEditingTimeOff] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
