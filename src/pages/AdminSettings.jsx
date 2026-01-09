@@ -146,7 +146,9 @@ const TEMPLATE_VARIABLES = [
   "{{title}}", "{{client_name}}", "{{description}}", "{{current_stage}}",
   "{{assigned_to}}", "{{due_date}}", "{{created_by}}", "{{is_rider}}",
   "{{is_asap}}", "{{previous_stage}}", "{{new_stage}}", "{{task_text}}",
-  "{{note_text}}", "{{note_type}}", "{{changed_by}}", "{{timestamp}}"
+  "{{note_text}}", "{{note_type}}", "{{changed_by}}", "{{timestamp}}",
+  "{{employee_name}}", "{{clock_in_time}}", "{{clock_out_time}}", "{{total_hours}}",
+  "{{time_off_type}}", "{{time_off_dates}}", "{{time_off_hours}}", "{{time_off_reason}}"
 ];
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
