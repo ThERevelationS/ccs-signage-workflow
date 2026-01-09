@@ -1375,11 +1375,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 {isColumnVisible("current_task_deadline") && (
                   <td 
                     className="px-1 py-0.5 border-r"
+                    style={{ backgroundColor: getDeadlineCellColor(wo.current_task_deadline) }}
                     onContextMenu={(e) => handleContextMenu(e, wo, "current_task_deadline", "Deadline", wo.current_task_deadline)}
                   >
                     <Popover open={openDatePopover === `deadline-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}>
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100/50 rounded">
                           {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
                         </button>
                       </PopoverTrigger>
