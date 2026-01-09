@@ -370,17 +370,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         return i;
       });
       setTaskDescriptions(newItems);
-      localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
+      saveGlobalSetting('salesTaskDescriptions', { items: newItems });
       setEditDialog({ ...editDialog, items: newItems });
     } else {
       if (!newItem.trim()) return;
       const newItems = editDialog.items.map(i => i === oldItem ? newItem.trim() : i);
       if (editDialog.storageKey === "salesLeadSources") {
         setLeadSources(newItems);
+        saveGlobalSetting('salesLeadSources', { items: newItems });
       } else if (editDialog.storageKey === "salesProjectTypes") {
         setProjectTypes(newItems);
       }
-      localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
       setEditDialog({ ...editDialog, items: newItems });
     }
   };
