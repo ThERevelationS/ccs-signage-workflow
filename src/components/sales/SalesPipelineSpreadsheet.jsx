@@ -60,6 +60,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [headerContextMenu, setHeaderContextMenu] = useState(null);
+  const [showGradientDialog, setShowGradientDialog] = useState(false);
+  const [deadlineGradientSettings, setDeadlineGradientSettings] = useState(() => {
+    const saved = localStorage.getItem('deadlineGradientSettings');
+    return saved ? JSON.parse(saved) : {
+      enabled: true,
+      baseColor: "#ffffff",
+      dueColor: "#fecaca",
+      gradientDays: 14
+    };
+  });
 
   // Use the column sorting hook with user-specific storage
   const { 
