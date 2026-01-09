@@ -145,62 +145,55 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     return users.filter(u => u.sales_roles?.includes(role));
   };
 
+  const [globalOptionsCache, setGlobalOptionsCache] = useState({});
+
+  const loadGlobalOptions = useCallback(async () => {
+    try {
+      const settings = await GlobalSettings.list();
+      const cache = {};
+      
+      const leadSourcesSetting = settings.find(s => s.setting_key === 'salesLeadSources');
+      cache.salesLeadSources = leadSourcesSetting?.setting_value?.items || ["Walk-in", "Phone", "Email", "Referral", "Website"];
+      
+      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+      if (taskDescSetting?.setting_value?.items) {
+        cache.salesTaskDescriptions = taskDescSetting.setting_value.items.map(item => 
+          typeof item === 'string' ? item : item.text
+        );
+      } else {
+        cache.salesTaskDescriptions = [
+          "Prospect Initiation (Gather Info, Initial Discuss ...)",
+          "Conduct Site Survey",
+          "Complete Estimate for Review",
+          "WIP - Designing",
+          "WIP - Installation",
+          "Completed Sale"
+        ];
+      }
+      
+      setGlobalOptionsCache(cache);
+    } catch (error) {
+      console.error("Error loading global options:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGlobalOptions();
+  }, [loadGlobalOptions]);
+
   const getLocalStorageOptions = (storageKey) => {
-    const saved = localStorage.getItem(storageKey);
+    if (globalOptionsCache[storageKey]) {
+      return globalOptionsCache[storageKey];
+    }
     
-    // Default values for each storage key
+    // Fallback defaults
     const defaults = {
       salesLeadSources: ["Walk-in", "Phone", "Email", "Referral", "Website"],
       salesProjectTypes: ["Signage", "Wraps", "Decals", "Banners", "Other"],
-      salesTaskDescriptions: [
-        "Prospect Initiation (Gather Info, Initial Discuss ...)",
-        "Conduct Site Survey",
-        "Research Sign Code for Mock-up",
-        "Follow up with Customer - Pre-Estimating",
-        "Mock up and Send to Customer",
-        "Mock up Only",
-        "Send Mock up to Customer",
-        "Quoting - 3rd Party",
-        "Complete Estimate for Review",
-        "Estimate - To Be Reviewed",
-        "Review Complete - Send to Customer",
-        "Follow up with Customer - Post-Estimate",
-        "On Hold - Follow Up with Customer",
-        "Waiting on Deposit",
-        "WIP - Waiting for Deposit",
-        "WIP - In Final Design Queue",
-        "WIP - Designing",
-        "WIP - Prepare/Submit Permit",
-        "WIP - Follow Up On Status of Accepted Permit",
-        "WIP - Permitting Follow-ups",
-        "WIP - Production/Fabrication",
-        "WIP - Outsourced Fabrication",
-        "WIP - Maintenance/Service Call",
-        "WIP - Installation",
-        "WIP - Outsourced Installation",
-        "WIP - Follow Up with Customer",
-        "WIP - Inspections",
-        "Completed Sale - Electrical Inspection",
-        "Completed Sale - Sign Inspection",
-        "Completed Sales - Post Invoice Tasks",
-        "Completed Sale",
-        "Lost",
-        "Lost - We took too long",
-        "Closed - Attempted Follow-up/No Response",
-        "Closed - Did not Lose"
-      ]
+      salesTaskDescriptions: ["Prospect Initiation", "Conduct Site Survey", "Completed Sale"]
     };
     
-    if (!saved) {
-      return defaults[storageKey] || [];
-    }
-    
-    const parsed = JSON.parse(saved);
-    // Handle task descriptions which are objects with text property
-    if (storageKey === "salesTaskDescriptions") {
-      return parsed.map(item => typeof item === 'string' ? item : item.text);
-    }
-    return parsed;
+    return defaults[storageKey] || [];
   };
 
   const addCondition = () => {
