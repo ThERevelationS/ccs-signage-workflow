@@ -22,8 +22,12 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  Pencil,
+  Save,
+  X
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
