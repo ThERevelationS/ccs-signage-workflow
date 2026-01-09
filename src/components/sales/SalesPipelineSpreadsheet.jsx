@@ -350,12 +350,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       : editDialog.items.filter(i => i !== item);
     if (editDialog.storageKey === "salesLeadSources") {
       setLeadSources(newItems);
+      saveGlobalSetting('salesLeadSources', { items: newItems });
     } else if (editDialog.storageKey === "salesProjectTypes") {
       setProjectTypes(newItems);
     } else if (editDialog.storageKey === "salesTaskDescriptions") {
       setTaskDescriptions(newItems);
+      saveGlobalSetting('salesTaskDescriptions', { items: newItems });
     }
-    localStorage.setItem(editDialog.storageKey, JSON.stringify(newItems));
     setEditDialog({ ...editDialog, items: newItems });
   };
 
