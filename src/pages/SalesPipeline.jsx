@@ -163,13 +163,17 @@ export default function SalesPipeline() {
                     {preset.name}
                   </SelectItem>
                 ))}
-                <div className="h-px bg-gray-800 my-2 mx-2"></div>
-                <SelectItem value="manage_columns">
-                  <div className="flex items-center gap-2 font-bold">
-                    <Settings className="w-4 h-4" />
-                    Manage Custom Column Filters
-                  </div>
-                </SelectItem>
+                {currentUser?.role === "admin" && (
+                  <>
+                    <div className="h-px bg-gray-800 my-2 mx-2"></div>
+                    <SelectItem value="manage_columns">
+                      <div className="flex items-center gap-2 font-bold">
+                        <Settings className="w-4 h-4" />
+                        Manage Custom Column Filters
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
             </div>
