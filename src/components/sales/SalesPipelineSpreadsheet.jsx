@@ -143,10 +143,58 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
 
   useEffect(() => {
+    loadGlobalSettings();
     loadWorkOrders();
     const interval = setInterval(() => loadWorkOrders(false), 60000); // Reduced frequency
     return () => clearInterval(interval);
   }, []);
+
+  const loadGlobalSettings = async () => {
+    try {
+      const settings = await GlobalSettings.list();
+      
+      const leadSourcesSetting = settings.find(s => s.setting_key === 'salesLeadSources');
+      if (leadSourcesSetting?.setting_value?.items) {
+        setLeadSources(leadSourcesSetting.setting_value.items);
+      }
+      
+      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+      if (taskDescSetting?.setting_value?.items) {
+        // Migration: ensure all items have required fields
+        const items = taskDescSetting.setting_value.items.map(item => ({
+          text: item.text || item,
+          page: item.page || "",
+          color: item.color || "",
+          opacity: item.opacity ?? 100,
+          markOut: item.markOut ?? false
+        }));
+        setTaskDescriptions(items);
+      }
+      
+      const gradientSetting = settings.find(s => s.setting_key === 'deadlineGradientSettings');
+      if (gradientSetting?.setting_value) {
+        setDeadlineGradientSettings(gradientSetting.setting_value);
+      }
+      
+      setGlobalSettingsLoaded(true);
+    } catch (error) {
+      console.error("Error loading global settings:", error);
+      setGlobalSettingsLoaded(true);
+    }
+  };
+
+  const saveGlobalSetting = async (key, value) => {
+    try {
+      const settings = await GlobalSettings.filter({ setting_key: key });
+      if (settings.length > 0) {
+        await GlobalSettings.update(settings[0].id, { setting_value: value });
+      } else {
+        await GlobalSettings.create({ setting_key: key, setting_value: value });
+      }
+    } catch (error) {
+      console.error("Error saving global setting:", error);
+    }
+  };
 
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
