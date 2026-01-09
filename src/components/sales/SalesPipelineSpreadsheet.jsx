@@ -943,6 +943,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
   };
 
+  const handleHeaderContextMenuAction = (action) => {
+    if (action === 'edit_lead_sources') {
+      openEditDialog("lead_source", leadSources, "salesLeadSources");
+    } else if (action === 'edit_task_descriptions') {
+      openEditDialog("task_description", taskDescriptions, "salesTaskDescriptions");
+    } else if (action === 'due_date_gradient') {
+      setShowGradientDialog(true);
+    }
+    setHeaderContextMenu(null);
+  };
+
   // Pre-compute sort values for faster sorting
   const sortedWorkOrders = useMemo(() => {
     // First filter
