@@ -29,6 +29,7 @@ import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/C
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100" },
