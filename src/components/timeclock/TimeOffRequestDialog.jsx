@@ -180,7 +180,7 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Submitting..." : "Submit Request"}
+              {isSubmitting ? "Saving..." : existingRequest ? "Update Request" : "Submit Request"}
             </Button>
           </div>
         </div>
