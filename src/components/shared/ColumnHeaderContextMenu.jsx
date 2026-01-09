@@ -78,7 +78,9 @@ export function ColumnHeaderContextMenu({
   onClearSort,
   currentSortKey,
   currentSortDirection,
-  allValues = []
+  allValues = [],
+  isAdmin = false,
+  onAction
 }) {
   const menuRef = useRef(null);
   const [showCustomSort, setShowCustomSort] = useState(false);
