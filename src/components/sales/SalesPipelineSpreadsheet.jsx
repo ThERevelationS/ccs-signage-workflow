@@ -801,7 +801,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           in_pipeline: false,
           sales_status: "lead",
           notes: [],
-          work_notes: []
+          work_notes: importedWorkNotes
         });
         
         existingWorkOrdersMap.set(uniqueKey, newWO);
