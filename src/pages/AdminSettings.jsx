@@ -100,7 +100,14 @@ const TRIGGER_TYPES = [
   { value: "order_date_needed_changed", label: "Date Needed Changed", category: "Order Fields" },
   { value: "order_date_ordered_changed", label: "Date Ordered Changed", category: "Order Fields" },
   { value: "order_vendor_changed", label: "Vendor Changed", category: "Order Fields" },
-  { value: "order_date_received_changed", label: "Date Received Changed", category: "Order Fields" }
+  { value: "order_date_received_changed", label: "Date Received Changed", category: "Order Fields" },
+  { value: "time_clock_in", label: "Employee Clocked In", category: "Time Clock" },
+  { value: "time_clock_out", label: "Employee Clocked Out", category: "Time Clock" },
+  { value: "time_entry_notes_updated", label: "Time Entry Notes Updated", category: "Time Clock" },
+  { value: "time_off_requested", label: "Time Off Requested", category: "Time Clock" },
+  { value: "time_off_approved", label: "Time Off Approved", category: "Time Clock" },
+  { value: "time_off_denied", label: "Time Off Denied", category: "Time Clock" },
+  { value: "time_off_updated", label: "Time Off Request Updated", category: "Time Clock" }
 ];
 
 const ACTION_TYPES = [
