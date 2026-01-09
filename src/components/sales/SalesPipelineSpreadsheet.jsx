@@ -413,6 +413,51 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     };
   }, [taskDescriptions]);
 
+  // Get deadline cell color based on gradient settings
+  const getDeadlineCellColor = useCallback((deadlineDate) => {
+    if (!deadlineGradientSettings.enabled || !deadlineDate) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadline = parseLocalDate(deadlineDate);
+    if (!deadline) return '';
+    
+    const daysUntilDue = differenceInDays(deadline, today);
+    
+    // If past due, use the due color
+    if (daysUntilDue <= 0) return deadlineGradientSettings.dueColor;
+    
+    // If beyond gradient range, use base color
+    if (daysUntilDue >= deadlineGradientSettings.gradientDays) return deadlineGradientSettings.baseColor;
+    
+    // Calculate gradient position (0 = due date, 1 = base)
+    const ratio = daysUntilDue / deadlineGradientSettings.gradientDays;
+    
+    // Interpolate between dueColor and baseColor
+    const parseHex = (hex) => {
+      hex = hex.replace('#', '');
+      return {
+        r: parseInt(hex.substring(0, 2), 16),
+        g: parseInt(hex.substring(2, 4), 16),
+        b: parseInt(hex.substring(4, 6), 16)
+      };
+    };
+    
+    const base = parseHex(deadlineGradientSettings.baseColor);
+    const due = parseHex(deadlineGradientSettings.dueColor);
+    
+    const r = Math.round(due.r + (base.r - due.r) * ratio);
+    const g = Math.round(due.g + (base.g - due.g) * ratio);
+    const b = Math.round(due.b + (base.b - due.b) * ratio);
+    
+    return `rgb(${r}, ${g}, ${b})`;
+  }, [deadlineGradientSettings]);
+
+  const saveGradientSettings = (settings) => {
+    setDeadlineGradientSettings(settings);
+    localStorage.setItem('deadlineGradientSettings', JSON.stringify(settings));
+  };
+
   const moveListItem = (index, direction) => {
     const newItems = [...editDialog.items];
     if (direction === 'up' && index > 0) {
