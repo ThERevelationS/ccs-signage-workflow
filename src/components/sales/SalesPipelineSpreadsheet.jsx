@@ -478,7 +478,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const saveGradientSettings = (settings) => {
     setDeadlineGradientSettings(settings);
-    localStorage.setItem('deadlineGradientSettings', JSON.stringify(settings));
+    saveGlobalSetting('deadlineGradientSettings', settings);
   };
 
   const moveListItem = (index, direction) => {
