@@ -142,6 +142,22 @@ export default function TimeClock() {
 
   const elapsed = getElapsedTime();
 
+  const handleSaveNotes = async (entryId) => {
+    try {
+      await TimeEntry.update(entryId, { notes: editNotesText });
+      setEditingNotes(null);
+      setEditNotesText("");
+      loadData();
+    } catch (err) {
+      console.error("Error saving notes:", err);
+    }
+  };
+
+  const startEditingNotes = (entry) => {
+    setEditingNotes(entry.id);
+    setEditNotesText(entry.notes || "");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
