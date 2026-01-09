@@ -1209,7 +1209,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("lead_source") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')} onContextMenu={(e) => handleHeaderContextMenu(e, 'lead_source', 'Source')}>
                 <div className="flex items-center gap-1">
                   Source {getSortIcon('lead_source')}
-                  {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("lead_source", leadSources, "salesLeadSources"); }} />}
                 </div>
               </th>}
               {isColumnVisible("current_task_deadline") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_deadline' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('current_task_deadline')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_deadline', 'Deadline')}>
