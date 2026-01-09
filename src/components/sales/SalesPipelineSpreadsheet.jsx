@@ -80,69 +80,45 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const { trackChange } = useCellHistoryTracker("WorkOrder", currentUser);
 
-  const [leadSources, setLeadSources] = useState(() => {
-    const saved = localStorage.getItem('salesLeadSources');
-    return saved ? JSON.parse(saved) : ["Walk-in", "Phone", "Email", "Referral", "Website"];
-  });
-  const [projectTypes, setProjectTypes] = useState(() => {
-    const saved = localStorage.getItem('salesProjectTypes');
-    return saved ? JSON.parse(saved) : ["Signage", "Wraps", "Decals", "Banners", "Other"];
-  });
-  const [taskDescriptions, setTaskDescriptions] = useState(() => {
-    const saved = localStorage.getItem('salesTaskDescriptions');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Migration: convert old string format to new object format
-      if (parsed.length > 0 && typeof parsed[0] === 'string') {
-        return parsed.map(text => ({ text, page: "", color: "", opacity: 100, markOut: false }));
-      }
-      // Migration: add missing color/opacity/markOut fields
-      return parsed.map(item => ({
-        text: item.text || item,
-        page: item.page || "",
-        color: item.color || "",
-        opacity: item.opacity ?? 100,
-        markOut: item.markOut ?? false
-      }));
-    }
-    return [
-      { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Conduct Site Survey", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Research Sign Code for Mock-up", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Follow up with Customer - Pre-Estimating", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Mock up and Send to Customer", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Mock up Only", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Send Mock up to Customer", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Quoting - 3rd Party", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
-      { text: "Estimate - To Be Reviewed", page: "Estimating", color: "", opacity: 100, markOut: false },
-      { text: "Review Complete - Send to Customer", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Follow up with Customer - Post-Estimate", page: "", color: "", opacity: 100, markOut: false },
-      { text: "On Hold - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Waiting on Deposit", page: "", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Waiting for Deposit", page: "", color: "", opacity: 100, markOut: false },
-      { text: "WIP - In Final Design Queue", page: "Design", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Designing", page: "Design", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Follow Up On Status of Accepted Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Permitting Follow-ups", page: "Permitting", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Outsourced Fabrication", page: "Fabrication", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Maintenance/Service Call", page: "", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Installation", page: "Installation", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Outsourced Installation", page: "Installation", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
-      { text: "WIP - Inspections", page: "", color: "", opacity: 100, markOut: false },
-      { text: "Completed Sale - Electrical Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
-      { text: "Completed Sale - Sign Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
-      { text: "Completed Sales - Post Invoice Tasks", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
-      { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
-      { text: "Lost", page: "", color: "#fef2f2", opacity: 60, markOut: true },
-      { text: "Lost - We took too long", page: "", color: "#fef2f2", opacity: 60, markOut: true },
-      { text: "Closed - Attempted Follow-up/No Response", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
-      { text: "Closed - Did not Lose", page: "", color: "#f1f5f9", opacity: 60, markOut: true }
-    ];
-  });
+  const [leadSources, setLeadSources] = useState(["Walk-in", "Phone", "Email", "Referral", "Website"]);
+  const [projectTypes, setProjectTypes] = useState(["Signage", "Wraps", "Decals", "Banners", "Other"]);
+  const [taskDescriptions, setTaskDescriptions] = useState([
+    { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Conduct Site Survey", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Research Sign Code for Mock-up", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Follow up with Customer - Pre-Estimating", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Mock up and Send to Customer", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Mock up Only", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Send Mock up to Customer", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Quoting - 3rd Party", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
+    { text: "Estimate - To Be Reviewed", page: "Estimating", color: "", opacity: 100, markOut: false },
+    { text: "Review Complete - Send to Customer", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Follow up with Customer - Post-Estimate", page: "", color: "", opacity: 100, markOut: false },
+    { text: "On Hold - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Waiting on Deposit", page: "", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Waiting for Deposit", page: "", color: "", opacity: 100, markOut: false },
+    { text: "WIP - In Final Design Queue", page: "Design", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Designing", page: "Design", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Follow Up On Status of Accepted Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Permitting Follow-ups", page: "Permitting", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Outsourced Fabrication", page: "Fabrication", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Maintenance/Service Call", page: "", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Installation", page: "Installation", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Outsourced Installation", page: "Installation", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Follow Up with Customer", page: "", color: "", opacity: 100, markOut: false },
+    { text: "WIP - Inspections", page: "", color: "", opacity: 100, markOut: false },
+    { text: "Completed Sale - Electrical Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+    { text: "Completed Sale - Sign Inspection", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+    { text: "Completed Sales - Post Invoice Tasks", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+    { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+    { text: "Lost", page: "", color: "#fef2f2", opacity: 60, markOut: true },
+    { text: "Lost - We took too long", page: "", color: "#fef2f2", opacity: 60, markOut: true },
+    { text: "Closed - Attempted Follow-up/No Response", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+    { text: "Closed - Did not Lose", page: "", color: "#f1f5f9", opacity: 60, markOut: true }
+  ]);
 
   const WORKFLOW_PAGES = [
     { value: "none", label: "None" },
