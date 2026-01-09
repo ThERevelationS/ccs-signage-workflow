@@ -482,6 +482,16 @@ export default function TimeClock() {
           onSubmit={loadData}
         />
       )}
+
+      {editingTimeOff && (
+        <TimeOffRequestDialog
+          isOpen={!!editingTimeOff}
+          onClose={() => setEditingTimeOff(null)}
+          currentUser={currentUser}
+          onSubmit={loadData}
+          existingRequest={editingTimeOff}
+        />
+      )}
     </div>
   );
 }
