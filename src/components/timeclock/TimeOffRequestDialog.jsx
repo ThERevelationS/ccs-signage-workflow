@@ -64,16 +64,26 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
 
     setIsSubmitting(true);
     try {
-      await TimeOffRequest.create({
-        user_email: currentUser?.email,
-        user_name: currentUser?.full_name || currentUser?.email,
-        request_type: requestType,
-        start_date: startDate,
-        end_date: endDate,
-        hours_requested: calculateHours(),
-        reason,
-        status: "pending"
-      });
+      if (existingRequest) {
+        await TimeOffRequest.update(existingRequest.id, {
+          request_type: requestType,
+          start_date: startDate,
+          end_date: endDate,
+          hours_requested: calculateHours(),
+          reason
+        });
+      } else {
+        await TimeOffRequest.create({
+          user_email: currentUser?.email,
+          user_name: currentUser?.full_name || currentUser?.email,
+          request_type: requestType,
+          start_date: startDate,
+          end_date: endDate,
+          hours_requested: calculateHours(),
+          reason,
+          status: "pending"
+        });
+      }
       
       if (onSubmit) onSubmit();
       onClose();
