@@ -429,15 +429,27 @@ export default function TimeClock() {
                           <p className="text-sm text-gray-500 mt-1">{request.reason}</p>
                         )}
                       </div>
-                      <Badge className={
-                        request.status === "approved" ? "bg-green-100 text-green-700" :
-                        request.status === "denied" ? "bg-red-100 text-red-700" :
-                        "bg-yellow-100 text-yellow-700"
-                      }>
-                        {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
-                        {request.status === "denied" && <XCircle className="w-3 h-3 mr-1" />}
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {request.status === "pending" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-2"
+                            onClick={() => setEditingTimeOff(request)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Badge className={
+                          request.status === "approved" ? "bg-green-100 text-green-700" :
+                          request.status === "denied" ? "bg-red-100 text-red-700" :
+                          "bg-yellow-100 text-yellow-700"
+                        }>
+                          {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
+                          {request.status === "denied" && <XCircle className="w-3 h-3 mr-1" />}
+                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        </Badge>
+                      </div>
                     </div>
                     {request.admin_notes && (
                       <p className="text-sm text-gray-500 mt-2 italic">Admin: {request.admin_notes}</p>
