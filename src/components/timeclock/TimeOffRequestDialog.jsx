@@ -20,14 +20,25 @@ const REQUEST_TYPES = [
   { value: "other", label: "Other" }
 ];
 
-export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onSubmit }) {
-  const [requestType, setRequestType] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [hoursPerDay, setHoursPerDay] = useState(8);
-  const [reason, setReason] = useState("");
+export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onSubmit, existingRequest }) {
+  const [requestType, setRequestType] = useState(existingRequest?.request_type || "");
+  const [startDate, setStartDate] = useState(existingRequest?.start_date || "");
+  const [endDate, setEndDate] = useState(existingRequest?.end_date || "");
+  const [hoursPerDay, setHoursPerDay] = useState(existingRequest ? Math.round(existingRequest.hours_requested / (differenceInBusinessDays(new Date(existingRequest.end_date), new Date(existingRequest.start_date)) + 1)) || 8 : 8);
+  const [reason, setReason] = useState(existingRequest?.reason || "");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (existingRequest) {
+      setRequestType(existingRequest.request_type || "");
+      setStartDate(existingRequest.start_date || "");
+      setEndDate(existingRequest.end_date || "");
+      setReason(existingRequest.reason || "");
+      const days = differenceInBusinessDays(new Date(existingRequest.end_date), new Date(existingRequest.start_date)) + 1;
+      setHoursPerDay(days > 0 ? Math.round(existingRequest.hours_requested / days) : 8);
+    }
+  }, [existingRequest]);
 
   const calculateHours = () => {
     if (!startDate || !endDate) return 0;
