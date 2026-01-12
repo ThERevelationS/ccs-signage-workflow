@@ -645,11 +645,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
 
-      // Track existing work orders to check for duplicates
+      // Track existing work orders to check for duplicates - use client_name as primary key
       const existingWorkOrdersMap = new Map();
       workOrders.forEach(wo => {
-        const key = `${wo.client_name}|${wo.title}`.toLowerCase();
-        existingWorkOrdersMap.set(key, wo);
+        // Key by client_name only to prevent duplicate customers
+        if (wo.client_name) {
+          const key = wo.client_name.toLowerCase().trim();
+          existingWorkOrdersMap.set(key, wo);
+        }
       });
 
       let importedCount = 0;
@@ -686,9 +689,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           continue;
         }
 
-        // Check for duplicates - if found, fill in missing fields instead of skipping
-        const uniqueKey = `${customer}|${title}`.toLowerCase();
-        const existingWO = existingWorkOrdersMap.get(uniqueKey);
+        // Check for duplicates by customer name - if found, fill in missing fields instead of creating duplicate
+        const uniqueKey = customer.toLowerCase().trim();
+        const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
         
         if (existingWO) {
           // Fill in missing information on existing work order
@@ -887,7 +890,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           work_notes: importedWorkNotes
         });
         
-        existingWorkOrdersMap.set(uniqueKey, newWO);
+        if (uniqueKey) {
+          existingWorkOrdersMap.set(uniqueKey, newWO);
+        }
         setWorkOrders(prev => [newWO, ...prev]);
         
         importedCount++;
