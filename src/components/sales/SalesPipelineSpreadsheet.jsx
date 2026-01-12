@@ -2288,15 +2288,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   Assign a page to show on workflow boards. Set color, opacity, and mark out to style rows with this task description.
                 </p>
                 {/* Header Row */}
-                <div className="flex items-center gap-2 p-2 bg-gray-200 rounded font-medium text-xs text-gray-700 sticky top-0">
-                  <div className="w-8"></div>
-                  <span className="flex-1">Task Description</span>
-                  <span className="w-32 text-center">Page</span>
-                  <span className="w-20 text-center">Color</span>
-                  <span className="w-20 text-center">Opacity</span>
-                  <span className="w-10 text-center" title="Mark out row">Mark</span>
-                  <span className="w-10 text-center" title="Show on Monday Morning Meeting">WIP</span>
-                  <div className="w-6"></div>
+                <div className="flex items-center gap-0 p-2 bg-gray-200 rounded font-medium text-xs text-gray-700 sticky top-0">
+                  <div className="w-8 text-center border-r border-gray-400 pr-2"></div>
+                  <span className="flex-1 text-center border-r border-gray-400 px-2">Task Description</span>
+                  <span className="w-32 text-center border-r border-gray-400 px-2">Page</span>
+                  <span className="w-20 text-center border-r border-gray-400 px-2">Color</span>
+                  <span className="w-20 text-center border-r border-gray-400 px-2">Opacity</span>
+                  <span className="w-10 text-center border-r border-gray-400 px-1" title="Mark out row">Mark</span>
+                  <span className="w-10 text-center border-r border-gray-400 px-1" title="Show on Monday Morning Meeting">WIP</span>
+                  <div className="w-6 text-center px-1"></div>
                 </div>
               </>
             )}

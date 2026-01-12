@@ -16,6 +16,9 @@ const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
+// Pages that map to SIPs
+const SIPS_PAGE_VALUES = ["SIPs"];
+
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -57,12 +60,30 @@ export default function SIPs() {
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const [orders, usersData] = await Promise.all([
+      const [orders, usersData, settings] = await Promise.all([
         WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
-        AuthorizedEmail.list()
+        AuthorizedEmail.list(),
+        GlobalSettings.list()
       ]);
-      // Filter for SIPs only - items where current_task_assigned_to is "SIPs"
-      const sipOrders = orders.filter(wo => wo.current_task_assigned_to === "SIPs");
+      
+      // Get task descriptions that have SIPs page assigned
+      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+      const sipTaskDescriptions = [];
+      if (taskDescSetting?.setting_value?.items) {
+        taskDescSetting.setting_value.items.forEach(item => {
+          if (item.page === "SIPs") {
+            sipTaskDescriptions.push(item.text);
+          }
+        });
+      }
+      
+      // Filter for SIPs - items where:
+      // 1. current_task_assigned_to is "SIPs", OR
+      // 2. current_task_description has SIPs page assigned in settings
+      const sipOrders = orders.filter(wo => 
+        wo.current_task_assigned_to === "SIPs" ||
+        (wo.current_task_description && sipTaskDescriptions.includes(wo.current_task_description))
+      );
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
     } catch (error) {
