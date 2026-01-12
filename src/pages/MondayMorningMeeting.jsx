@@ -13,6 +13,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -38,6 +39,7 @@ export default function MondayMorningMeeting() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
@@ -53,12 +55,31 @@ export default function MondayMorningMeeting() {
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const [orders, usersData] = await Promise.all([
+      const [orders, usersData, settings] = await Promise.all([
         WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
-        AuthorizedEmail.list()
+        AuthorizedEmail.list(),
+        GlobalSettings.list()
       ]);
-      // Filter for Monday Morning Meeting only - items where current_task_assigned_to is "Monday Morning Meeting"
-      const mmmOrders = orders.filter(wo => wo.current_task_assigned_to === "Monday Morning Meeting");
+      
+      // Get WIP task descriptions from settings
+      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+      const wipDescriptions = [];
+      if (taskDescSetting?.setting_value?.items) {
+        taskDescSetting.setting_value.items.forEach(item => {
+          if (item.wip) {
+            wipDescriptions.push(item.text);
+          }
+        });
+      }
+      setWipTaskDescriptions(wipDescriptions);
+      
+      // Filter for Monday Morning Meeting - items where:
+      // 1. current_task_assigned_to is "Monday Morning Meeting", OR
+      // 2. current_task_description has WIP checked in settings
+      const mmmOrders = orders.filter(wo => 
+        wo.current_task_assigned_to === "Monday Morning Meeting" ||
+        (wo.current_task_description && wipDescriptions.includes(wo.current_task_description))
+      );
       setWorkOrders(mmmOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
     } catch (error) {

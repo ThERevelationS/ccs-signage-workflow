@@ -168,7 +168,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           page: item.page || "",
           color: item.color || "",
           opacity: item.opacity ?? 100,
-          markOut: item.markOut ?? false
+          markOut: item.markOut ?? false,
+          wip: item.wip ?? false
         }));
         setTaskDescriptions(items);
       }
@@ -329,7 +330,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!editInput.trim()) return;
     let newItems;
     if (editDialog.storageKey === "salesTaskDescriptions") {
-      newItems = [...editDialog.items, { text: editInput.trim(), page: "", color: "", opacity: 100, markOut: false }];
+      newItems = [...editDialog.items, { text: editInput.trim(), page: "", color: "", opacity: 100, markOut: false, wip: false }];
     } else {
       newItems = [...editDialog.items, editInput.trim()];
     }
@@ -2282,9 +2283,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </Button>
             </div>
             {editDialog.storageKey === "salesTaskDescriptions" && (
-              <p className="text-xs text-gray-500">
-                Assign a page to show on workflow boards. Set color, opacity, and mark out to style rows with this task description.
-              </p>
+              <>
+                <p className="text-xs text-gray-500 mb-2">
+                  Assign a page to show on workflow boards. Set color, opacity, and mark out to style rows with this task description.
+                </p>
+                {/* Header Row */}
+                <div className="flex items-center gap-2 p-2 bg-gray-200 rounded font-medium text-xs text-gray-700 sticky top-0">
+                  <div className="w-8"></div>
+                  <span className="flex-1">Task Description</span>
+                  <span className="w-32 text-center">Page</span>
+                  <span className="w-20 text-center">Color</span>
+                  <span className="w-20 text-center">Opacity</span>
+                  <span className="w-10 text-center" title="Mark out row">Mark</span>
+                  <span className="w-10 text-center" title="Show on Monday Morning Meeting">WIP</span>
+                  <div className="w-6"></div>
+                </div>
+              </>
             )}
             <div className="space-y-1 max-h-80 overflow-y-auto">
               {editDialog.items.map((item, idx) => {
@@ -2421,13 +2435,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             className="w-16 h-4"
                           />
                         </div>
-                        <label className="flex items-center gap-1 cursor-pointer" title="Mark out entire row">
+                        <label className="flex items-center justify-center w-10 cursor-pointer" title="Mark out entire row">
                           <Checkbox
                             checked={item.markOut ?? false}
                             onCheckedChange={(checked) => updateTaskStyle(item, "markOut", checked)}
                             className="h-4 w-4"
                           />
-                          <Strikethrough className="w-3 h-3 text-gray-500" />
+                        </label>
+                        <label className="flex items-center justify-center w-10 cursor-pointer" title="Show on Monday Morning Meeting">
+                          <Checkbox
+                            checked={item.wip ?? false}
+                            onCheckedChange={(checked) => updateTaskStyle(item, "wip", checked)}
+                            className="h-4 w-4"
+                          />
                         </label>
                       </>
                     )}

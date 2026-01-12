@@ -8,6 +8,7 @@ import Financials from './pages/Financials';
 import Home from './pages/Home';
 import InstallationDeliver from './pages/InstallationDeliver';
 import MainWorkflow from './pages/MainWorkflow';
+import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -15,7 +16,6 @@ import Production from './pages/Production';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
-import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +30,7 @@ export const PAGES = {
     "Home": Home,
     "InstallationDeliver": InstallationDeliver,
     "MainWorkflow": MainWorkflow,
+    "MondayMorningMeeting": MondayMorningMeeting,
     "OrderForm": OrderForm,
     "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
@@ -37,7 +38,6 @@ export const PAGES = {
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
-    "MondayMorningMeeting": MondayMorningMeeting,
 }
 
 export const pagesConfig = {
