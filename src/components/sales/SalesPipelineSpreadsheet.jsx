@@ -2207,6 +2207,36 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onClose={() => setSelectedWorkOrder(null)}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
+          onMove={async (wo, newStage) => {
+            await WorkOrder.update(wo.id, { current_stage: newStage });
+            loadWorkOrders();
+          }}
+          onSplit={async (wo) => {
+            // Create a rider work order
+            const rider = await WorkOrder.create({
+              title: `${wo.title} - Rider`,
+              client_name: wo.client_name,
+              description: wo.description,
+              is_rider: true,
+              parent_work_order_id: wo.id,
+              current_stage: wo.current_stage,
+              rider_stage: wo.current_stage,
+              sales_status: wo.sales_status
+            });
+            loadWorkOrders();
+          }}
+          onComplete={async (wo) => {
+            await WorkOrder.update(wo.id, { completed: true });
+            setWorkOrders(workOrders.filter(w => w.id !== wo.id));
+          }}
+          onDelete={async (wo) => {
+            await WorkOrder.update(wo.id, {
+              deleted: true,
+              deleted_at: new Date().toISOString(),
+              deleted_by: currentUser?.email || "unknown"
+            });
+            setWorkOrders(workOrders.filter(w => w.id !== wo.id));
+          }}
         />
       )}
 

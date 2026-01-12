@@ -377,6 +377,34 @@ export default function MondayMorningMeeting() {
           onClose={() => setSelectedWorkOrder(null)}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
+          onMove={async (wo, newStage) => {
+            await WorkOrder.update(wo.id, { current_stage: newStage });
+            loadWorkOrders();
+          }}
+          onSplit={async (wo) => {
+            const rider = await WorkOrder.create({
+              title: `${wo.title} - Rider`,
+              client_name: wo.client_name,
+              description: wo.description,
+              is_rider: true,
+              parent_work_order_id: wo.id,
+              current_stage: wo.current_stage,
+              rider_stage: wo.current_stage
+            });
+            loadWorkOrders();
+          }}
+          onComplete={async (wo) => {
+            await WorkOrder.update(wo.id, { completed: true });
+            loadWorkOrders();
+          }}
+          onDelete={async (wo) => {
+            await WorkOrder.update(wo.id, {
+              deleted: true,
+              deleted_at: new Date().toISOString(),
+              deleted_by: "user"
+            });
+            loadWorkOrders();
+          }}
         />
       )}
 
