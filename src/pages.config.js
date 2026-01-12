@@ -12,9 +12,9 @@ import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
+import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
-import SIPs from './pages/SIPs';
 import __Layout from './Layout.jsx';
 
 
@@ -33,9 +33,9 @@ export const PAGES = {
     "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
+    "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
-    "SIPs": SIPs,
 }
 
 export const pagesConfig = {

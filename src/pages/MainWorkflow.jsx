@@ -47,8 +47,10 @@ export default function MainWorkflow() {
 
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
-    const allWorkOrders = await WorkOrder.filter({ completed: false }, "-priority");
-    const withDates = allWorkOrders.filter(wo => wo.start_date && wo.due_date);
+    // Use list with limit instead of filter to avoid timeout
+    const allWorkOrders = await WorkOrder.list("-updated_date", 500);
+    const activeOrders = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
+    const withDates = activeOrders.filter(wo => wo.start_date && wo.due_date);
     
     // Separate parent work orders and riders
     // A work order is considered a rider if its `is_rider` property is true.
