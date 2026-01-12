@@ -127,7 +127,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     { value: "Design", label: "Design" },
     { value: "Production", label: "Production" },
     { value: "Fabrication", label: "Fabrication" },
-    { value: "Installation", label: "Installation/Delivery" }
+    { value: "Installation", label: "Installation/Delivery" },
+    { value: "SIPs", label: "SIPs" },
+    { value: "MondayMorningMeeting", label: "Monday Morning Meeting" }
   ];
 
   const TASK_COLORS = [

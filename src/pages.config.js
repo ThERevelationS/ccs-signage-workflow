@@ -15,6 +15,7 @@ import Production from './pages/Production';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
+import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
+    "MondayMorningMeeting": MondayMorningMeeting,
 }
 
 export const pagesConfig = {
