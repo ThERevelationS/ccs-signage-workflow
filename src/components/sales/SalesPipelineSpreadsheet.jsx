@@ -2288,15 +2288,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   Assign a page to show on workflow boards. Set color, opacity, and mark out to style rows with this task description.
                 </p>
                 {/* Header Row */}
-                <div className="flex items-center gap-0 p-2 bg-gray-200 rounded font-medium text-xs text-gray-700 sticky top-0">
-                  <div className="w-8 text-center border-r border-gray-400 pr-2"></div>
-                  <span className="flex-1 text-center border-r border-gray-400 px-2">Task Description</span>
-                  <span className="w-32 text-center border-r border-gray-400 px-2">Page</span>
-                  <span className="w-20 text-center border-r border-gray-400 px-2">Color</span>
-                  <span className="w-20 text-center border-r border-gray-400 px-2">Opacity</span>
-                  <span className="w-10 text-center border-r border-gray-400 px-1" title="Mark out row">Mark</span>
-                  <span className="w-10 text-center border-r border-gray-400 px-1" title="Show on Monday Morning Meeting">WIP</span>
-                  <div className="w-6 text-center px-1"></div>
+                <div className="flex items-center p-2 bg-gray-200 rounded font-medium text-xs text-gray-700 sticky top-0 border border-gray-300">
+                  <div className="w-[32px] flex-shrink-0 text-center border-r border-gray-400">↕</div>
+                  <div className="flex-1 text-center border-r border-gray-400 min-w-[150px]">Task Description</div>
+                  <div className="w-[128px] flex-shrink-0 text-center border-r border-gray-400">Page</div>
+                  <div className="w-[80px] flex-shrink-0 text-center border-r border-gray-400">Color</div>
+                  <div className="w-[72px] flex-shrink-0 text-center border-r border-gray-400">Opacity</div>
+                  <div className="w-[40px] flex-shrink-0 text-center border-r border-gray-400" title="Mark out row">Mark</div>
+                  <div className="w-[40px] flex-shrink-0 text-center border-r border-gray-400" title="Show on Monday Morning Meeting">WIP</div>
+                  <div className="w-[24px] flex-shrink-0 text-center"></div>
                 </div>
               </>
             )}
@@ -2307,8 +2307,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 const itemPage = isTaskDesc ? (item.page || "") : "";
                 
                 return (
-                  <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                    <div className="flex flex-col gap-1">
+                  <div key={idx} className={`flex items-center p-2 rounded border ${isTaskDesc ? 'border-gray-200' : 'bg-gray-50'}`}>
+                    <div className="w-[32px] flex-shrink-0 flex flex-col items-center gap-0.5 border-r border-gray-200 pr-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -2329,37 +2329,40 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       </Button>
                     </div>
                     {editingItem.index === idx ? (
-                      <Input
-                        value={editingItem.value}
-                        onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
-                        onBlur={() => {
-                          updateListItem(item, editingItem.value);
-                          setEditingItem({ index: null, value: "" });
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                      <div className="flex-1 min-w-[150px] border-r border-gray-200 px-1">
+                        <Input
+                          value={editingItem.value}
+                          onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                          onBlur={() => {
                             updateListItem(item, editingItem.value);
                             setEditingItem({ index: null, value: "" });
-                          }
-                        }}
-                        className="flex-1 h-7 text-sm"
-                        autoFocus
-                      />
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateListItem(item, editingItem.value);
+                              setEditingItem({ index: null, value: "" });
+                            }
+                          }}
+                          className="h-7 text-sm w-full"
+                          autoFocus
+                        />
+                      </div>
                     ) : (
-                      <span 
-                        className="text-sm flex-1 cursor-pointer hover:text-blue-600"
+                      <div 
+                        className={`text-sm flex-1 min-w-[150px] cursor-pointer hover:text-blue-600 px-1 ${isTaskDesc ? 'border-r border-gray-200' : ''}`}
                         onClick={() => setEditingItem({ index: idx, value: displayText })}
                       >
                         {displayText}
-                      </span>
+                      </div>
                     )}
                     {isTaskDesc && (
                       <>
+                        <div className="w-[128px] flex-shrink-0 border-r border-gray-200 px-1">
                         <Select
                           value={itemPage || "none"}
                           onValueChange={(val) => updateTaskPage(item, val === "none" ? "" : val)}
                         >
-                          <SelectTrigger className="h-7 w-32 text-xs">
+                          <SelectTrigger className="h-7 text-xs w-full">
                             <SelectValue placeholder="Page" />
                           </SelectTrigger>
                           <SelectContent>
@@ -2368,6 +2371,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             ))}
                           </SelectContent>
                         </Select>
+                        </div>
+                        <div className="w-[80px] flex-shrink-0 border-r border-gray-200 px-1">
                         <Popover>
                           <PopoverTrigger asChild>
                             <button 
@@ -2423,8 +2428,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             </div>
                           </PopoverContent>
                         </Popover>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500">{item.opacity ?? 100}%</span>
+                        </div>
+                        <div className="w-[72px] flex-shrink-0 flex items-center gap-1 border-r border-gray-200 px-1">
+                          <span className="text-[10px] text-gray-500">{item.opacity ?? 100}%</span>
                           <input
                             type="range"
                             min="20"
@@ -2432,33 +2438,35 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             step="10"
                             value={item.opacity ?? 100}
                             onChange={(e) => updateTaskStyle(item, "opacity", parseInt(e.target.value))}
-                            className="w-16 h-4"
+                            className="w-8 h-4"
                           />
                         </div>
-                        <label className="flex items-center justify-center w-10 cursor-pointer" title="Mark out entire row">
+                        <div className="w-[40px] flex-shrink-0 flex items-center justify-center border-r border-gray-200">
                           <Checkbox
                             checked={item.markOut ?? false}
                             onCheckedChange={(checked) => updateTaskStyle(item, "markOut", checked)}
                             className="h-4 w-4"
                           />
-                        </label>
-                        <label className="flex items-center justify-center w-10 cursor-pointer" title="Show on Monday Morning Meeting">
+                        </div>
+                        <div className="w-[40px] flex-shrink-0 flex items-center justify-center border-r border-gray-200">
                           <Checkbox
                             checked={item.wip ?? false}
                             onCheckedChange={(checked) => updateTaskStyle(item, "wip", checked)}
                             className="h-4 w-4"
                           />
-                        </label>
+                        </div>
                       </>
                     )}
+                    <div className="w-[24px] flex-shrink-0 flex items-center justify-center">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => removeFromList(item)}
-                      className="h-6 w-6"
+                      className="h-6 w-6 p-0"
                     >
                       <Trash2 className="w-3 h-3 text-red-500" />
                     </Button>
+                    </div>
                   </div>
                 );
               })}

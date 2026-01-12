@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Loader2, Link as LinkIcon, ClipboardList, Check, X } from "lucide-react";
+import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import SipChecklistDialog from "@/components/workflow/SipChecklistDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -380,88 +380,19 @@ export default function MondayMorningMeeting() {
         />
       )}
 
-      {/* Checklist Dialog - Large and Easy to Read */}
-      <Dialog open={checklistDialog.open} onOpenChange={(open) => !open && setChecklistDialog({ open: false, workOrder: null })}>
-        <DialogContent className="clay-card border-none max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-              <ClipboardList className="w-7 h-7 text-orange-600" />
-              Monday Morning Checklist - {checklistDialog.workOrder?.client_name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 mt-4">
-            {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Progress</span>
-                <span className="font-bold text-lg">
-                  {mmmChecklist.filter(i => i.checked).length} / {mmmChecklist.length} Complete
-                </span>
-              </div>
-              <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-orange-500 to-yellow-500 transition-all duration-300"
-                  style={{ width: `${(mmmChecklist.filter(i => i.checked).length / mmmChecklist.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Checklist Items - Large and Easy to Read */}
-            <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-              {mmmChecklist.map((item, index) => (
-                <div 
-                  key={item.id}
-                  onClick={() => isRegistered && toggleChecklistItem(item.id)}
-                  className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${
-                    item.checked 
-                      ? 'bg-green-50 border-green-300' 
-                      : 'bg-white border-gray-200 hover:border-orange-300 hover:bg-orange-50'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    item.checked ? 'bg-green-500' : 'bg-gray-200'
-                  }`}>
-                    {item.checked ? (
-                      <Check className="w-5 h-5 text-white" />
-                    ) : (
-                      <span className="text-gray-500 font-bold">{index + 1}</span>
-                    )}
-                  </div>
-                  <span className={`text-xl font-medium flex-1 ${
-                    item.checked ? 'text-green-700 line-through' : 'text-gray-800'
-                  }`}>
-                    {item.text}
-                  </span>
-                  {item.checked && (
-                    <span className="text-green-600 text-sm font-medium">✓ Done</span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button 
-                variant="outline" 
-                onClick={() => setChecklistDialog({ open: false, workOrder: null })}
-                className="flex-1 h-12 text-lg"
-              >
-                <X className="w-5 h-5 mr-2" />
-                Cancel
-              </Button>
-              <Button 
-                onClick={saveChecklist}
-                className="flex-1 h-12 text-lg bg-orange-600 hover:bg-orange-700"
-                disabled={!isRegistered}
-              >
-                <Check className="w-5 h-5 mr-2" />
-                Save Checklist
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Checklist Dialog with full features */}
+      <SipChecklistDialog
+        isOpen={checklistDialog.open}
+        onClose={() => setChecklistDialog({ open: false, workOrder: null })}
+        workOrder={checklistDialog.workOrder}
+        checklist={mmmChecklist}
+        setChecklist={setMmmChecklist}
+        onSave={saveChecklist}
+        isRegistered={isRegistered}
+        title="Monday Morning Checklist"
+        checklistField="mmm_checklist"
+        accentColor="orange"
+      />
     </div>
   );
 }
