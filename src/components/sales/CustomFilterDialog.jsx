@@ -57,6 +57,7 @@ const OPERATORS = [
 
 const ALL_COLUMNS = [
   { id: "client_name", label: "Customer", visible: true },
+  { id: "description", label: "Job Description", visible: true },
   { id: "lead_source", label: "Source", visible: true },
   { id: "current_task_deadline", label: "Deadline", visible: true },
   { id: "current_task_assigned_to", label: "Task Assigned", visible: true },

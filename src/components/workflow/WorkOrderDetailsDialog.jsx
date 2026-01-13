@@ -496,9 +496,12 @@ export default function WorkOrderDetailsDialog({
 
   const handleDeleteWorkNote = async (noteId) => {
     const updatedNotes = workNotes.filter((n) => n.id !== noteId);
+    // Optimistic update - update UI immediately
+    Object.assign(workOrder, { work_notes: updatedNotes });
+    if (onUpdate) onUpdate();
+    // Then persist to database
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
     await ActivityActions.noteDeleted(workOrder);
-    if (onUpdate) onUpdate();
   };
 
   const handleAddSubTask = async (noteId, subTaskText) => {

@@ -73,6 +73,8 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
         })
       };
       await WorkOrder.update(workOrder.id, cleanedData);
+      // Update workOrder object directly so UI reflects changes immediately
+      Object.assign(workOrder, cleanedData);
       setLocalData({});
       if (onUpdate) onUpdate();
     } catch (error) {

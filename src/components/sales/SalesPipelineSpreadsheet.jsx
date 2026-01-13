@@ -66,6 +66,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     enabled: true,
     baseColor: "#ffffff",
     dueColor: "#fecaca",
+    overdueColor: "#ef4444",
     gradientDays: 14
   });
   const [globalSettingsLoaded, setGlobalSettingsLoaded] = useState(false);
@@ -214,11 +215,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setIsLoading(false);
   };
 
-  const calculateDays = (fromDate, toDate = new Date()) => {
+  const calculateDays = (fromDate, toDate) => {
     if (!fromDate) return null;
+    // If toDate is not provided or is falsy, use today
+    const useToday = toDate === undefined || toDate === null || toDate === '';
     try {
-      const from = new Date(fromDate);
-      const to = typeof toDate === 'string' ? new Date(toDate) : toDate;
+      const from = parseLocalDate(fromDate);
+      if (!from || isNaN(from.getTime())) return null;
+      
+      let to;
+      if (useToday) {
+        to = new Date();
+        to.setHours(0, 0, 0, 0);
+      } else {
+        to = parseLocalDate(toDate);
+        if (!to || isNaN(to.getTime())) return null;
+      }
+      
       return differenceInDays(to, from);
     } catch {
       return null;
@@ -449,11 +462,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     today.setHours(0, 0, 0, 0);
     const deadline = parseLocalDate(deadlineDate);
     if (!deadline) return '';
+    deadline.setHours(0, 0, 0, 0);
     
     const daysUntilDue = differenceInDays(deadline, today);
     
-    // If past due, use the due color
-    if (daysUntilDue <= 0) return deadlineGradientSettings.dueColor;
+    // If past due (negative days), use the overdue color
+    if (daysUntilDue < 0) return deadlineGradientSettings.overdueColor || '#ef4444';
+    
+    // If due today, use the due color
+    if (daysUntilDue === 0) return deadlineGradientSettings.dueColor;
     
     // If beyond gradient range, use base color
     if (daysUntilDue >= deadlineGradientSettings.gradientDays) return deadlineGradientSettings.baseColor;
@@ -646,12 +663,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
 
-      // Track existing work orders to check for duplicates - use client_name as primary key
+      // Track existing work orders to check for duplicates - use client_name + description as key
       const existingWorkOrdersMap = new Map();
       workOrders.forEach(wo => {
-        // Key by client_name only to prevent duplicate customers
+        // Key by client_name + description to allow same customer with different projects
         if (wo.client_name) {
-          const key = wo.client_name.toLowerCase().trim();
+          const clientKey = wo.client_name.toLowerCase().trim();
+          const descKey = (wo.description || '').toLowerCase().trim();
+          const key = `${clientKey}|||${descKey}`;
           existingWorkOrdersMap.set(key, wo);
         }
       });
@@ -690,8 +709,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           continue;
         }
 
-        // Check for duplicates by customer name - if found, fill in missing fields instead of creating duplicate
-        const uniqueKey = customer.toLowerCase().trim();
+        // Get job description for duplicate check
+        const jobDesc = row["Job Description"] ?? row["Description"] ?? row["description"] ?? "";
+        const jobDescStr = typeof jobDesc === 'string' ? jobDesc.trim() : String(jobDesc || '').trim();
+        
+        // Check for duplicates by customer name + description - if found, fill in missing fields instead of creating duplicate
+        const clientKey = customer.toLowerCase().trim();
+        const descKey = jobDescStr.toLowerCase().trim();
+        const uniqueKey = clientKey ? `${clientKey}|||${descKey}` : null;
         const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
         
         if (existingWO) {
@@ -867,6 +892,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         const newWO = await WorkOrder.create({
           title: customer || "Unnamed",
           client_name: customer,
+          description: jobDescStr,
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
           current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
@@ -1240,6 +1266,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("client_name") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
                 <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
               </th>}
+              {isColumnVisible("description") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '150px' }} onClick={() => handleSort('description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'description', 'Job Description')}>
+                <div className="flex items-center gap-1">Job Description {getSortIcon('description')}</div>
+              </th>}
               {isColumnVisible("lead_source") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')} onContextMenu={(e) => handleHeaderContextMenu(e, 'lead_source', 'Source')}>
                 <div className="flex items-center gap-1">
                   Source {getSortIcon('lead_source')}
@@ -1379,6 +1408,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                       <LinkIcon className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">{wo.client_name || "Unnamed"}</span>
                     </button>
+                  </td>
+                )}
+
+                {isColumnVisible("description") && (
+                  <td 
+                    className="px-1 py-0.5 border-r"
+                    onContextMenu={(e) => handleContextMenu(e, wo, "description", "Job Description", wo.description)}
+                  >
+                    <Input
+                      value={wo.description || ""}
+                      onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)}
+                      className="h-7 text-xs border-0 bg-transparent px-1"
+                      placeholder="-"
+                      disabled={!isRegistered}
+                    />
                   </td>
                 )}
 
@@ -2606,7 +2650,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </div>
             
             <div>
-              <label className="text-sm font-medium block mb-2">Due Date Color (At/past deadline)</label>
+              <label className="text-sm font-medium block mb-2">Due Today Color</label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -2617,6 +2661,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <Input
                   value={deadlineGradientSettings.dueColor}
                   onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, dueColor: e.target.value })}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium block mb-2">Overdue Color (Past deadline)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={deadlineGradientSettings.overdueColor || "#ef4444"}
+                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, overdueColor: e.target.value })}
+                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
+                />
+                <Input
+                  value={deadlineGradientSettings.overdueColor || "#ef4444"}
+                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, overdueColor: e.target.value })}
                   className="flex-1"
                 />
               </div>
