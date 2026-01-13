@@ -1614,9 +1614,9 @@ export default function WorkOrderDetailsDialog({
             created_by: "Template",
             completed: false,
             sub_tasks: (t.sub_tasks || []).map(st => ({
-              text: st,
+              text: typeof st === 'string' ? st : (st.text || ''),
               completed: false,
-              id: Date.now() + Math.random()
+              details: (typeof st === 'object' && st.details) ? st.details.map(d => ({ text: d, completed: false })) : []
             }))
           }));
           const updatedTasks = [...tasks, ...newTasks];
