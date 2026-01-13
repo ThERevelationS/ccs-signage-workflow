@@ -121,6 +121,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
+  const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const [headerContextMenu, setHeaderContextMenu] = useState(null);
 
   // Use the column sorting hook with user-specific storage
@@ -865,7 +866,29 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }
 
   return (
-    <div className="overflow-visible" onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}>
+    <div 
+      className="overflow-visible" 
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (focusedRowIndex !== null && filteredOrders.length > 0) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const newIndex = Math.min(focusedRowIndex + 1, filteredOrders.length - 1);
+            setFocusedRowIndex(newIndex);
+            setFocusedRowId(filteredOrders[newIndex].id);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const newIndex = Math.max(focusedRowIndex - 1, 0);
+            setFocusedRowIndex(newIndex);
+            setFocusedRowId(filteredOrders[newIndex].id);
+          } else if (e.key === 'Escape') {
+            setFocusedRowId(null);
+            setFocusedRowIndex(null);
+          }
+        }
+      }}
+      onClick={() => { contextMenu && setContextMenu(null); headerContextMenu && setHeaderContextMenu(null); }}
+    >
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
@@ -1062,7 +1085,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               {/* Row Number - Clickable Focus Button */}
               <td className="px-0 py-0 border-r">
                 <button
-                  onClick={() => setFocusedRowId(isFocused ? null : order.id)}
+                  onClick={() => {
+                    if (isFocused) {
+                      setFocusedRowId(null);
+                      setFocusedRowIndex(null);
+                    } else {
+                      setFocusedRowId(order.id);
+                      setFocusedRowIndex(index);
+                    }
+                  }}
                   className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${
                     isFocused 
                       ? 'bg-purple-500 text-white' 

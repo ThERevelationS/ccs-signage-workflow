@@ -65,6 +65,7 @@ import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
 import ClientInfoSection from "./ClientInfoSection";
+import CreateRiderDialog from "./CreateRiderDialog";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -137,6 +138,7 @@ export default function WorkOrderDetailsDialog({
   const [showDriveBrowser, setShowDriveBrowser] = useState(false);
   const [addingDetailFor, setAddingDetailFor] = useState(null); // { taskIndex, subTaskIndex }
   const [newDetailText, setNewDetailText] = useState("");
+  const [showCreateRiderDialog, setShowCreateRiderDialog] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -1494,16 +1496,16 @@ export default function WorkOrderDetailsDialog({
 
                   <h3 className="font-semibold text-sm mb-2">Actions</h3>
                   <div className="space-y-2">
-                    {!workOrder.is_rider && onSplit &&
+                    {!workOrder.is_rider && (
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
-                      onClick={() => {onSplit(workOrder);onClose();}}>
+                      onClick={() => setShowCreateRiderDialog(true)}>
 
                         <Plus className="w-4 h-4 mr-2" />
                         Create Rider
                       </Button>
-                    }
+                    )}
 
                     {onComplete && !workOrder.completed &&
                     <Button
@@ -1625,6 +1627,17 @@ export default function WorkOrderDetailsDialog({
           const updatedTasks = [...tasks, ...newTasks];
           await WorkOrder.update(workOrder.id, { notes: updatedTasks });
           if (onUpdate) onUpdate();
+        }}
+      />
+
+      {/* Create Rider Dialog */}
+      <CreateRiderDialog
+        isOpen={showCreateRiderDialog}
+        onClose={() => setShowCreateRiderDialog(false)}
+        parentWorkOrder={workOrder}
+        onCreated={(rider) => {
+          if (onUpdate) onUpdate();
+          loadRelatedData();
         }}
       />
 
