@@ -26,6 +26,7 @@ import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
 
 const navigationItems = [
+  { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, color: "#E0D4F7" },
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
   { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, color: "#B2DFDB" },
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D4E9F7" },
