@@ -1036,7 +1036,7 @@ export default function WorkOrderDetailsDialog({
                                       )}
                                       {/* Add Detail - hover reveal */}
                                       {addingDetailFor?.taskIndex === actualIndex && addingDetailFor?.subTaskIndex === subIdx ? (
-                                        <div className="ml-6 mt-1 flex gap-1">
+                                        <div className="ml-6 mt-1 space-y-1">
                                           <Input
                                             value={newDetailText}
                                             onChange={(e) => setNewDetailText(e.target.value)}
@@ -1045,14 +1045,29 @@ export default function WorkOrderDetailsDialog({
                                             autoFocus
                                             onKeyDown={(e) => {
                                               if (e.key === 'Enter') handleAddTaskDetail(actualIndex, subIdx);
-                                              if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");}
+                                              if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");}
                                             }} />
-                                          <Button size="sm" onClick={() => handleAddTaskDetail(actualIndex, subIdx)} className="h-5 px-2">
-                                            <Check className="w-3 h-3" />
-                                          </Button>
-                                          <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");}} className="h-5 px-2">
-                                            <X className="w-3 h-3" />
-                                          </Button>
+                                          <Select value={newDetailAssignedTo} onValueChange={setNewDetailAssignedTo}>
+                                            <SelectTrigger className="h-5 text-xs">
+                                              <SelectValue placeholder="Assign to (optional)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value={null}>Unassigned</SelectItem>
+                                              {allUsers.map(user => (
+                                                <SelectItem key={user.id} value={user.full_name || user.email}>
+                                                  {user.full_name || user.email}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                          <div className="flex gap-1">
+                                            <Button size="sm" onClick={() => handleAddTaskDetail(actualIndex, subIdx)} className="h-5 px-2">
+                                              <Check className="w-3 h-3" />
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");}} className="h-5 px-2">
+                                              <X className="w-3 h-3" />
+                                            </Button>
+                                          </div>
                                         </div>
                                       ) : (
                                         <div className="ml-6 mt-0.5 hover-btn-detail">
