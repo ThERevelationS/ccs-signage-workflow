@@ -112,9 +112,9 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
     let checklistContext = null;
     if (taskTargetContext) {
       if (taskTargetContext.detailIndex !== null && taskTargetContext.detailIndex !== undefined) {
-        checklistContext = `${taskTargetContext.itemId}-detail-${taskTargetContext.detailIndex}`;
+        checklistContext = String(taskTargetContext.itemId) + "-detail-" + String(taskTargetContext.detailIndex);
       } else if (taskTargetContext.itemId) {
-        checklistContext = `${taskTargetContext.itemId}`;
+        checklistContext = String(taskTargetContext.itemId);
       }
     }
     
@@ -123,13 +123,17 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
       timestamp: new Date().toISOString(),
       created_by: "SIP Meeting",
       completed: false,
-      checklist_context: checklistContext,
       sub_tasks: subTasks.map(st => ({
         text: st.text,
         completed: false,
         details: st.details
       }))
     };
+    
+    // Only add checklist_context if it exists
+    if (checklistContext) {
+      task.checklist_context = checklistContext;
+    }
 
     const newRiderData = applyTo === "new-rider" ? {
       title: newRiderTitle,
