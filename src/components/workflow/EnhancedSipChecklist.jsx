@@ -627,7 +627,6 @@ export default function EnhancedSipChecklist({
   
   // Popup states
   const [showTaskCreation, setShowTaskCreation] = useState(false);
-  const [showTasksPopup, setShowTasksPopup] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
   const [expandedTasks, setExpandedTasks] = useState({});
   const [expandedRiders, setExpandedRiders] = useState({});
@@ -639,7 +638,6 @@ export default function EnhancedSipChecklist({
   const [addingDetailFor, setAddingDetailFor] = useState(null);
   const [newDetailText, setNewDetailText] = useState("");
   const [taskTargetContext, setTaskTargetContext] = useState(null); // { itemId, detailIndex?, text }
-  const [showTaskCreation, setShowTaskCreation] = useState(false);
 
   // Template states
   const [newTemplateName, setNewTemplateName] = useState("");

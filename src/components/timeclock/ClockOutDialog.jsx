@@ -88,6 +88,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       work_order_title: workOrder.title,
       client_name: workOrder.client_name,
       hours: 0,
+      minutes: 0,
       is_inhouse: false,
       inhouse_task: ""
     }]);
@@ -101,6 +102,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       work_order_title: "In House Projects",
       client_name: "Internal",
       hours: 0,
+      minutes: 0,
       is_inhouse: true,
       inhouse_task: ""
     }]);
