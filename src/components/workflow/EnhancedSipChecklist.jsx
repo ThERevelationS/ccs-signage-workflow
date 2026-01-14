@@ -763,7 +763,8 @@ export default function EnhancedSipChecklist({
           rider_stage: newRiderData.stage,
           assigned_to: newRiderData.assignedTo || "",
           due_date: newRiderData.dueDate || "",
-          notes: [task]
+          notes: [task],
+          in_pipeline: true
         });
         setRiders([...riders, newRider]);
       }
@@ -1525,7 +1526,8 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
           rider_stage: newRiderData.stage,
           assigned_to: newRiderData.assignedTo || "",
           due_date: newRiderData.dueDate || "",
-          notes: [task]
+          notes: [task],
+          in_pipeline: true
         });
         setRiders([...riders, newRider]);
       }

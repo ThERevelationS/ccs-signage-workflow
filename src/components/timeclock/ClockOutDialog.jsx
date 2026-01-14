@@ -44,11 +44,15 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const workableHours = Math.max(0, workableMinutes / 60);
   
   const lunchEntered = lunchMinutes !== "" && lunchMinutes !== null;
-  const jobsEntered = jobAllocations.length > 0 && jobAllocations.every(j => j.hours > 0);
+  const jobsEntered = jobAllocations.length > 0 && jobAllocations.every(j => (j.minutes || 0) > 0);
+
+  // Calculate total allocated minutes
+  const totalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
+  const remainingMinutes = workableMinutes - lunchMins - totalAllocatedMinutes;
 
   useEffect(() => {
-    const total = jobAllocations.reduce((sum, job) => sum + (parseFloat(job.hours) || 0), 0);
-    setTotalAllocatedHours(total);
+    const totalMins = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
+    setTotalAllocatedHours(totalMins / 60);
   }, [jobAllocations]);
 
   useEffect(() => {
@@ -133,10 +137,11 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       return;
     }
 
-    // Validate total hours match exactly (100% used)
-    const diff = Math.abs(totalAllocatedHours - workableHours);
-    if (diff > 0.01) {
-      setError(`All time must be allocated. You have ${remainingHours.toFixed(2)} hours remaining.`);
+    // Validate total minutes match (allow 5 min tolerance)
+    const actualWorkableMinutes = workableMinutes - lunchMins;
+    const diff = Math.abs(totalAllocatedMinutes - actualWorkableMinutes);
+    if (diff > 5) {
+      setError(`All time must be allocated. You have ${formatDuration(remainingMinutes)} remaining.`);
       return;
     }
 
@@ -146,8 +151,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
         setError("Please select a task for all In House Projects");
         return;
       }
-      if (!job.hours || job.hours <= 0) {
-        setError("All job allocations must have hours greater than 0");
+      if (!job.minutes || job.minutes <= 0) {
+        setError("All job allocations must have minutes greater than 0");
         return;
       }
     }
@@ -168,7 +173,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
     return `${hrs}h ${mins}m`;
   };
 
-  const remainingHours = workableHours - totalAllocatedHours;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
@@ -350,25 +355,28 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                     )}
 
                     <div className="mt-2 flex items-center gap-2">
-                      <Label className={`text-xs ${!job.hours || job.hours <= 0 ? 'text-red-600' : ''}`}>Hours:</Label>
+                      <Label className={`text-xs ${!job.minutes || job.minutes <= 0 ? 'text-red-600' : ''}`}>Minutes:</Label>
                       <Input
                         type="number"
                         min="0"
-                        step="0.25"
-                        value={job.hours || ""}
+                        step="5"
+                        value={job.minutes || ""}
                         onChange={(e) => {
-                          let val = parseFloat(e.target.value) || 0;
-                          // Auto-round down if exceeds remaining workable hours
-                          const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseFloat(j.hours) || 0) : sum, 0);
-                          const maxAllowed = Math.max(0, workableHours - otherAllocations);
+                          let val = parseInt(e.target.value) || 0;
+                          // Auto-round down if exceeds remaining workable minutes
+                          const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
+                          const maxAllowed = Math.max(0, workableMinutes - lunchMins - otherAllocations);
                           if (val > maxAllowed) {
-                            val = Math.floor(maxAllowed * 100) / 100; // Round down to 2 decimals
+                            val = maxAllowed;
                           }
-                          updateAllocation(index, "hours", val);
+                          updateAllocation(index, "minutes", val);
+                          // Also update hours for backend compatibility
+                          updateAllocation(index, "hours", val / 60);
                         }}
                         placeholder="0"
-                        className={`w-24 h-8 ${!job.hours || job.hours <= 0 ? 'border-red-400 text-red-600' : ''}`}
+                        className={`w-24 h-8 ${!job.minutes || job.minutes <= 0 ? 'border-red-400 text-red-600' : ''}`}
                       />
+                      <span className="text-xs text-gray-500">({((job.minutes || 0) / 60).toFixed(2)} hrs)</span>
                     </div>
                   </div>
                 ))
@@ -379,19 +387,19 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
             {jobAllocations.length > 0 && (
               <div className="mt-4 pt-3 border-t">
                 <div className="flex justify-between text-sm">
-                  <span>Workable Hours:</span>
-                  <span className="font-bold">{workableHours.toFixed(2)} hrs</span>
+                  <span>Workable Time:</span>
+                  <span className="font-bold">{formatDuration(workableMinutes - lunchMins)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Total Allocated:</span>
-                  <span className={`font-bold ${Math.abs(remainingHours) < 0.1 ? 'text-green-600' : 'text-orange-600'}`}>
-                    {totalAllocatedHours.toFixed(2)} hrs
+                  <span className={`font-bold ${Math.abs(remainingMinutes) < 5 ? 'text-green-600' : 'text-orange-600'}`}>
+                    {formatDuration(totalAllocatedMinutes)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Remaining:</span>
-                  <span className={`font-bold ${remainingHours < 0 ? 'text-red-600' : remainingHours > 0.1 ? 'text-orange-600' : 'text-green-600'}`}>
-                    {remainingHours.toFixed(2)} hrs
+                  <span className={`font-bold ${remainingMinutes < 0 ? 'text-red-600' : remainingMinutes > 5 ? 'text-orange-600' : 'text-green-600'}`}>
+                    {formatDuration(remainingMinutes)}
                   </span>
                 </div>
               </div>
