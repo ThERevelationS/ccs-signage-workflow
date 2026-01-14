@@ -1028,6 +1028,11 @@ export default function WorkOrderDetailsDialog({
                                                 onCheckedChange={() => handleToggleTaskDetail(actualIndex, subIdx, detailIdx)}
                                                 className="h-2.5 w-2.5" />
                                               <span className={`${detail.completed ? "line-through text-gray-400" : "text-gray-500"}`} style={{ fontSize: '11px' }}>{detail.text}</span>
+                                              {detail.assigned_to && (
+                                                <Badge variant="outline" className="text-[9px] text-blue-600 px-1 py-0">
+                                                  → {detail.assigned_to}
+                                                </Badge>
+                                              )}
                                               <Button
                                                 variant="ghost"
                                                 size="icon"
