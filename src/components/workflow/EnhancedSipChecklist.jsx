@@ -54,6 +54,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
   useEffect(() => {
     if (isOpen) {
       setTaskText("");
+      setTaskAssignedTo("");
       setSubTasks([]);
       setNewSubTaskText("");
       setApplyTo("main");
