@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import SipChecklistDialog from "@/components/workflow/SipChecklistDialog";
+import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -48,7 +48,6 @@ export default function SIPs() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
-  const [sipChecklist, setSipChecklist] = useState([]);
   const parentRef = useRef(null);
 
   useEffect(() => {
@@ -102,23 +101,7 @@ export default function SIPs() {
   };
 
   const openChecklist = (wo) => {
-    // Load existing checklist from work order or use defaults
-    const existingChecklist = wo.sip_checklist || DEFAULT_SIP_CHECKLIST;
-    setSipChecklist(existingChecklist);
     setChecklistDialog({ open: true, workOrder: wo });
-  };
-
-  const toggleChecklistItem = (itemId) => {
-    setSipChecklist(prev => 
-      prev.map(item => item.id === itemId ? { ...item, checked: !item.checked } : item)
-    );
-  };
-
-  const saveChecklist = async () => {
-    if (checklistDialog.workOrder) {
-      await updateWorkOrder(checklistDialog.workOrder.id, "sip_checklist", sipChecklist);
-      setChecklistDialog({ open: false, workOrder: null });
-    }
   };
 
   const getChecklistProgress = (wo) => {
@@ -411,14 +394,12 @@ export default function SIPs() {
         />
       )}
 
-      {/* Checklist Dialog with full features */}
-      <SipChecklistDialog
+      {/* Enhanced Checklist Dialog */}
+      <EnhancedSipChecklist
         isOpen={checklistDialog.open}
         onClose={() => setChecklistDialog({ open: false, workOrder: null })}
         workOrder={checklistDialog.workOrder}
-        checklist={sipChecklist}
-        setChecklist={setSipChecklist}
-        onSave={saveChecklist}
+        onUpdate={() => loadWorkOrders(false)}
         isRegistered={isRegistered}
         title="SIP Checklist"
         checklistField="sip_checklist"
