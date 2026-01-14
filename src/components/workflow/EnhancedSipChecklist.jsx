@@ -894,12 +894,14 @@ export default function EnhancedSipChecklist({
 
   // Get tasks for a specific checklist item context
   const getTasksForContext = (itemId, detailIndex = null) => {
-    const contextKey = detailIndex !== null ? `${itemId}-detail-${detailIndex}` : `${itemId}`;
+    const contextKey = detailIndex !== null 
+      ? String(itemId) + "-detail-" + String(detailIndex) 
+      : String(itemId);
     const allTasks = [];
     
     // Check main tasks
     mainTasks.forEach((task, idx) => {
-      if (task.checklist_context && task.checklist_context === contextKey) {
+      if (task.checklist_context && String(task.checklist_context) === contextKey) {
         allTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
       }
     });
@@ -907,7 +909,7 @@ export default function EnhancedSipChecklist({
     // Check rider tasks
     riders.forEach(rider => {
       (rider.notes || []).forEach((task, idx) => {
-        if (task.checklist_context && task.checklist_context === contextKey) {
+        if (task.checklist_context && String(task.checklist_context) === contextKey) {
           allTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
         }
       });
