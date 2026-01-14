@@ -1242,7 +1242,8 @@ export default function EnhancedSipChecklist({
 
                     {/* Tasks for this checklist item (not detail-specific) */}
                     {(() => {
-                      const itemTasks = getTasksForContext(item.id);
+                      // Only get tasks that match THIS item's ID (not detail-specific)
+                      const itemTasks = getTasksForContext(item.id, null);
                       if (itemTasks.length === 0) return null;
                       return (
                         <div className="ml-6 mt-1 space-y-1">
