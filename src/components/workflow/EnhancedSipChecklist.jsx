@@ -657,15 +657,15 @@ export default function EnhancedSipChecklist({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Fetch fresh work order data to get latest notes
-      const [freshWorkOrder, allWorkOrders, usersData, templatesData] = await Promise.all([
-        WorkOrder.filter({ id: workOrder.id }),
+      // Fetch fresh data
+      const [allWorkOrders, usersData, templatesData] = await Promise.all([
         WorkOrder.filter({ deleted: { $ne: true } }),
         AuthorizedEmail.list(),
         SipChecklistTemplate.list()
       ]);
 
-      const currentWorkOrder = freshWorkOrder[0] || workOrder;
+      // Find the current work order from fresh data
+      const currentWorkOrder = allWorkOrders.find(wo => wo.id === workOrder.id) || workOrder;
 
       // Find riders for this work order
       const workOrderRiders = allWorkOrders.filter(
