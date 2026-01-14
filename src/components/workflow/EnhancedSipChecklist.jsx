@@ -702,7 +702,7 @@ export default function EnhancedSipChecklist({
       // Build the task object - keep checklist_context if it exists
       const taskToSave = { ...task };
       
-      console.log("Saving task with checklist_context:", taskToSave.checklist_context, "task:", taskToSave);
+      console.log("handleApplyTask - Saving task:", JSON.stringify(taskToSave));
       
       if (applyTo === "main") {
         // Fetch the LATEST work order data first to avoid overwriting
@@ -710,12 +710,15 @@ export default function EnhancedSipChecklist({
         const freshWorkOrder = freshWorkOrders[0];
         const currentNotes = freshWorkOrder?.notes || [];
         
-        // Add to main job tasks
+        // Add to main job tasks - ensure checklist_context is preserved
         const updatedTasks = [...currentNotes, taskToSave];
+        
+        console.log("handleApplyTask - About to save notes:", JSON.stringify(updatedTasks));
+        
         await WorkOrder.update(workOrder.id, { notes: updatedTasks });
         setMainTasks(updatedTasks);
         
-        console.log("Saved to main - total tasks now:", updatedTasks.length);
+        console.log("handleApplyTask - Saved to main - total tasks now:", updatedTasks.length);
       } else if (applyTo.startsWith("rider-")) {
         // Add to existing rider
         const riderId = applyTo.replace("rider-", "");
