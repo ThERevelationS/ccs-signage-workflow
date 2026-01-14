@@ -62,6 +62,7 @@ import ProjectTrash from "../components/admin/ProjectTrash";
 import OrderTrash from "../components/admin/OrderTrash";
 import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
 import ActivityFeed from "../components/admin/ActivityFeed";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -155,6 +156,9 @@ const TEMPLATE_VARIABLES = [
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
 export default function AdminSettings() {
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "admin";
+  
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -525,65 +529,70 @@ export default function AdminSettings() {
 
 
         <Tabs defaultValue="automations" className="space-y-6">
-          <TabsList className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
-                          <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Zap className="w-6 h-6 mr-3" />
-                            Automations
-                          </TabsTrigger>
-                          <TabsTrigger value="groups" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Mail className="w-6 h-6 mr-3" />
-                            Email Groups
-                          </TabsTrigger>
-                          <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Users className="w-6 h-6 mr-3" />
-                            Users
-                          </TabsTrigger>
-                          <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Trash2 className="w-6 h-6 mr-3" />
-                            Client Trash
-                          </TabsTrigger>
-                          <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Trash2 className="w-6 h-6 mr-3" />
-                            Order Trash
-                          </TabsTrigger>
-                          <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Clock className="w-6 h-6 mr-3" />
-                            Time Clock
-                          </TabsTrigger>
-                          <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                            <Activity className="w-6 h-6 mr-3" />
-                            Activity Feed
-                          </TabsTrigger>
-                        </TabsList>
+          <TabsList className="clay-card border-none p-2 flex-wrap" style={{ background: '#FEE2E2' }}>
+            <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+              <Zap className="w-6 h-6 mr-3" />
+              Automations
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+              <Users className="w-6 h-6 mr-3" />
+              Users
+            </TabsTrigger>
+            {isAdmin && (
+              <>
+                <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                  <Trash2 className="w-6 h-6 mr-3" />
+                  Client Trash
+                </TabsTrigger>
+                <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                  <Trash2 className="w-6 h-6 mr-3" />
+                  Order Trash
+                </TabsTrigger>
+                <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                  <Clock className="w-6 h-6 mr-3" />
+                  Time Clock
+                </TabsTrigger>
+              </>
+            )}
+            <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+              <Activity className="w-6 h-6 mr-3" />
+              Activity Feed
+            </TabsTrigger>
+          </TabsList>
 
-          <TabsContent value="groups">
-                          <div className="space-y-6">
-                            <GmailConnector />
-                            <EmailGroupsManager />
-                          </div>
-                        </TabsContent>
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
 
-                        <TabsContent value="users">
-                          <UserManagement />
-                        </TabsContent>
+          {isAdmin && (
+            <>
+              <TabsContent value="project_trash">
+                <ProjectTrash />
+              </TabsContent>
 
-                        <TabsContent value="project_trash">
-                          <ProjectTrash />
-                        </TabsContent>
+              <TabsContent value="order_trash">
+                <OrderTrash />
+              </TabsContent>
 
-                        <TabsContent value="order_trash">
-                          <OrderTrash />
-                        </TabsContent>
+              <TabsContent value="timeclock">
+                <TimeClockAdmin />
+              </TabsContent>
+            </>
+          )}
 
-                        <TabsContent value="timeclock">
-                          <TimeClockAdmin />
-                        </TabsContent>
-
-                        <TabsContent value="activity">
-                          <ActivityFeed />
-                        </TabsContent>
+          <TabsContent value="activity">
+            <ActivityFeed />
+          </TabsContent>
 
           <TabsContent value="automations">
+            {/* Email Groups Section - moved under Automations */}
+            <div className="mb-8">
+              <GmailConnector />
+              <div className="mt-6">
+                <EmailGroupsManager />
+              </div>
+            </div>
+
             <div className="flex justify-between items-center mb-4">
               {/* Sort Controls */}
               <div className="flex items-center gap-2">
