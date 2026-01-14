@@ -689,15 +689,12 @@ export default function EnhancedSipChecklist({
   const handleApplyTask = async (task, applyTo, newRiderData) => {
     setIsSaving(true);
     try {
-      // Ensure checklist_context is included in the task
-      const taskWithContext = {
-        ...task,
-        checklist_context: task.checklist_context || null
-      };
+      // Build the task object - keep checklist_context if it exists
+      const taskToSave = { ...task };
       
       if (applyTo === "main") {
         // Add to main job tasks
-        const updatedTasks = [...mainTasks, taskWithContext];
+        const updatedTasks = [...mainTasks, taskToSave];
         await WorkOrder.update(workOrder.id, { notes: updatedTasks });
         setMainTasks(updatedTasks);
       } else if (applyTo.startsWith("rider-")) {
@@ -705,7 +702,7 @@ export default function EnhancedSipChecklist({
         const riderId = applyTo.replace("rider-", "");
         const rider = riders.find(r => r.id === riderId);
         if (rider) {
-          const updatedTasks = [...(rider.notes || []), taskWithContext];
+          const updatedTasks = [...(rider.notes || []), taskToSave];
           await WorkOrder.update(riderId, { notes: updatedTasks });
           setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
         }
@@ -721,7 +718,7 @@ export default function EnhancedSipChecklist({
           rider_stage: newRiderData.stage,
           assigned_to: newRiderData.assignedTo || "",
           due_date: newRiderData.dueDate || "",
-          notes: [taskWithContext],
+          notes: [taskToSave],
           in_pipeline: true
         });
         setRiders([...riders, newRider]);
