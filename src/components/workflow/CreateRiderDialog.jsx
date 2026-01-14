@@ -314,7 +314,8 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
         rider_stage: stage,
         assigned_to: assignedTo || "",
         due_date: dueDate || "",
-        notes: formattedNotes
+        notes: formattedNotes,
+        in_pipeline: true
       };
 
       const rider = await WorkOrder.create(riderData);
