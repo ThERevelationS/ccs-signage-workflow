@@ -617,6 +617,11 @@ export default function EnhancedSipChecklist({
   const [newItemText, setNewItemText] = useState("");
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemText, setEditingItemText] = useState("");
+  const [addingSubListFor, setAddingSubListFor] = useState(null);
+  const [newSubListText, setNewSubListText] = useState("");
+  const [addingDetailFor, setAddingDetailFor] = useState(null);
+  const [newDetailText, setNewDetailText] = useState("");
+  const [taskTargetContext, setTaskTargetContext] = useState(null); // { itemId, subListIndex?, detailIndex?, text }
 
   // Template states
   const [newTemplateName, setNewTemplateName] = useState("");
@@ -815,6 +820,90 @@ export default function EnhancedSipChecklist({
     setChecklist(newChecklist);
   };
 
+  const addSubList = (itemId) => {
+    if (!newSubListText.trim()) return;
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          sub_lists: [...(item.sub_lists || []), { text: newSubListText.trim(), checked: false, details: [] }]
+        };
+      }
+      return item;
+    }));
+    setNewSubListText("");
+    setAddingSubListFor(null);
+  };
+
+  const toggleSubList = (itemId, subIndex) => {
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newSubLists = [...(item.sub_lists || [])];
+        newSubLists[subIndex] = { ...newSubLists[subIndex], checked: !newSubLists[subIndex].checked };
+        return { ...item, sub_lists: newSubLists };
+      }
+      return item;
+    }));
+  };
+
+  const deleteSubList = (itemId, subIndex) => {
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, sub_lists: (item.sub_lists || []).filter((_, i) => i !== subIndex) };
+      }
+      return item;
+    }));
+  };
+
+  const addDetail = (itemId, subIndex) => {
+    if (!newDetailText.trim()) return;
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newSubLists = [...(item.sub_lists || [])];
+        newSubLists[subIndex] = {
+          ...newSubLists[subIndex],
+          details: [...(newSubLists[subIndex].details || []), { text: newDetailText.trim(), checked: false }]
+        };
+        return { ...item, sub_lists: newSubLists };
+      }
+      return item;
+    }));
+    setNewDetailText("");
+    setAddingDetailFor(null);
+  };
+
+  const toggleDetail = (itemId, subIndex, detailIndex) => {
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newSubLists = [...(item.sub_lists || [])];
+        const newDetails = [...(newSubLists[subIndex].details || [])];
+        newDetails[detailIndex] = { ...newDetails[detailIndex], checked: !newDetails[detailIndex].checked };
+        newSubLists[subIndex] = { ...newSubLists[subIndex], details: newDetails };
+        return { ...item, sub_lists: newSubLists };
+      }
+      return item;
+    }));
+  };
+
+  const deleteDetail = (itemId, subIndex, detailIndex) => {
+    setChecklist(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newSubLists = [...(item.sub_lists || [])];
+        newSubLists[subIndex] = {
+          ...newSubLists[subIndex],
+          details: (newSubLists[subIndex].details || []).filter((_, i) => i !== detailIndex)
+        };
+        return { ...item, sub_lists: newSubLists };
+      }
+      return item;
+    }));
+  };
+
+  const openTasksForItem = (itemId, text, subListIndex = null, detailIndex = null) => {
+    setTaskTargetContext({ itemId, subListIndex, detailIndex, text });
+    setShowTasksPopup(true);
+  };
+
   const applyTemplate = (template) => {
     const newChecklist = template.items.map(item => ({
       ...item,
@@ -1001,12 +1090,12 @@ export default function EnhancedSipChecklist({
             {/* Checklist Tab */}
             <TabsContent value="checklist" className="flex-1 overflow-hidden flex flex-col mt-4">
               {/* Progress */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
                   <span>Progress</span>
                   <span className="font-bold">{completedCount} / {checklist.length}</span>
                 </div>
-                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className={`h-full bg-gradient-to-r ${colors.gradient} transition-all`}
                     style={{ width: `${progressPercent}%` }}
@@ -1016,128 +1105,137 @@ export default function EnhancedSipChecklist({
 
               {/* Add New Item */}
               {isRegistered && (
-                <div className="flex gap-2 mb-4">
+                <div className="flex gap-2 mb-3">
                   <Input
                     value={newItemText}
                     onChange={(e) => setNewItemText(e.target.value)}
-                    placeholder="Add new checklist item..."
-                    className="flex-1"
+                    placeholder="Add checklist item..."
+                    className="flex-1 h-8 text-sm"
                     onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
                   />
-                  <Button onClick={addChecklistItem} size="sm" className={colors.bg}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add
+                  <Button onClick={addChecklistItem} size="sm" className={`h-8 ${colors.bg}`}>
+                    <Plus className="w-3 h-3" />
                   </Button>
                 </div>
               )}
 
-              <div className="flex-1 overflow-y-auto space-y-2">
+              <div className="flex-1 overflow-y-auto space-y-1">
                 {checklist.map((item, index) => (
                   <div 
                     key={item.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
-                      item.checked ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'
-                    }`}
+                    className="group/item [&_.hover-btn]:opacity-0 [&_.hover-btn]:h-0 [&_.hover-btn]:overflow-hidden [&:hover_.hover-btn]:opacity-100 [&:hover_.hover-btn]:h-auto"
                   >
-                    {/* Reorder buttons */}
-                    {isRegistered && (
-                      <div className="flex flex-col gap-0.5">
-                        <button 
-                          onClick={() => moveItem(index, 'up')}
-                          disabled={index === 0}
-                          className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                        >
-                          ▲
-                        </button>
-                        <button 
-                          onClick={() => moveItem(index, 'down')}
-                          disabled={index === checklist.length - 1}
-                          className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                        >
-                          ▼
-                        </button>
-                      </div>
-                    )}
+                    <div className={`flex items-center gap-2 p-2 rounded-lg border ${
+                      item.checked ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                    }`}>
+                      {/* Reorder */}
+                      {isRegistered && (
+                        <div className="flex flex-col text-[10px] text-gray-400">
+                          <button onClick={() => moveItem(index, 'up')} disabled={index === 0} className="hover:text-gray-600 disabled:opacity-30">▲</button>
+                          <button onClick={() => moveItem(index, 'down')} disabled={index === checklist.length - 1} className="hover:text-gray-600 disabled:opacity-30">▼</button>
+                        </div>
+                      )}
 
-                    <div 
-                      onClick={() => isRegistered && toggleChecklistItem(item.id)}
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer ${
-                        item.checked ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
-                    >
-                      {item.checked ? <Check className="w-4 h-4 text-white" /> : <span className="text-gray-500 text-sm">{index + 1}</span>}
+                      <Checkbox
+                        checked={item.checked}
+                        onCheckedChange={() => isRegistered && toggleChecklistItem(item.id)}
+                        disabled={!isRegistered}
+                        className="h-4 w-4"
+                      />
+
+                      {editingItemId === item.id ? (
+                        <div className="flex-1 flex gap-1">
+                          <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="flex-1 h-6 text-xs" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                          <Button size="sm" onClick={saveEditItem} className="h-6 px-2"><Check className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingItemId(null)} className="h-6 px-1"><X className="w-3 h-3" /></Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className={`flex-1 text-sm cursor-pointer ${item.checked ? 'text-green-700 line-through' : ''}`} onClick={() => isRegistered && toggleChecklistItem(item.id)}>
+                            {item.text}
+                          </span>
+                          {(item.sub_lists?.length > 0) && <span className="text-xs text-gray-400">{item.sub_lists.length}</span>}
+                          {isRegistered && (
+                            <div className="flex gap-0.5">
+                              <button onClick={() => startEditItem(item)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                              <button onClick={() => deleteChecklistItem(item.id)} className="p-1 hover:bg-red-100 rounded"><Trash2 className="w-3 h-3 text-red-400" /></button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
 
-                    {editingItemId === item.id ? (
-                      <div className="flex-1 flex gap-2">
-                        <Input
-                          value={editingItemText}
-                          onChange={(e) => setEditingItemText(e.target.value)}
-                          className="flex-1"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveEditItem();
-                            if (e.key === 'Escape') setEditingItemId(null);
-                          }}
-                        />
-                        <Button size="sm" onClick={saveEditItem} className="bg-green-600 hover:bg-green-700">
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingItemId(null)}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span 
-                          className={`flex-1 cursor-pointer ${item.checked ? 'text-green-700 line-through' : ''}`}
-                          onClick={() => isRegistered && toggleChecklistItem(item.id)}
-                        >
-                          {item.text}
-                        </span>
-                        {isRegistered && (
-                          <div className="flex gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => startEditItem(item)}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Pencil className="w-3 h-3 text-gray-500" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => deleteChecklistItem(item.id)}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Trash2 className="w-3 h-3 text-red-500" />
-                            </Button>
+                    {/* Sub-lists */}
+                    {item.sub_lists?.map((subList, subIdx) => (
+                      <div key={subIdx} className="ml-6 mt-1 group/sub [&_.hover-btn-sub]:opacity-0 [&_.hover-btn-sub]:h-0 [&_.hover-btn-sub]:overflow-hidden [&:hover_.hover-btn-sub]:opacity-100 [&:hover_.hover-btn-sub]:h-auto">
+                        <div className={`flex items-center gap-2 p-1.5 rounded border ${subList.checked ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
+                          <Checkbox checked={subList.checked} onCheckedChange={() => isRegistered && toggleSubList(item.id, subIdx)} disabled={!isRegistered} className="h-3 w-3" />
+                          <span className={`flex-1 text-xs ${subList.checked ? 'text-green-600 line-through' : 'text-gray-700'}`}>{subList.text}</span>
+                          {(subList.details?.length > 0) && <span className="text-[10px] text-gray-400">{subList.details.length}</span>}
+                          {isRegistered && (
+                            <button onClick={() => deleteSubList(item.id, subIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2.5 h-2.5 text-red-400" /></button>
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        {subList.details?.map((detail, detailIdx) => (
+                          <div key={detailIdx} className="ml-4 mt-0.5 group/detail [&_.hover-btn-detail]:opacity-0 [&_.hover-btn-detail]:h-0 [&_.hover-btn-detail]:overflow-hidden [&:hover_.hover-btn-detail]:opacity-100 [&:hover_.hover-btn-detail]:h-auto">
+                            <div className={`flex items-center gap-2 p-1 rounded ${detail.checked ? 'bg-green-50/30' : ''}`}>
+                              <Checkbox checked={detail.checked} onCheckedChange={() => isRegistered && toggleDetail(item.id, subIdx, detailIdx)} disabled={!isRegistered} className="h-2.5 w-2.5" />
+                              <span className={`flex-1 text-[11px] ${detail.checked ? 'text-green-600 line-through' : 'text-gray-600'}`}>{detail.text}</span>
+                              {isRegistered && (
+                                <button onClick={() => deleteDetail(item.id, subIdx, detailIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2 h-2 text-red-400" /></button>
+                              )}
+                            </div>
+                            {/* Add Tasks for Detail - hover reveal */}
+                            {isRegistered && (
+                              <div className="hover-btn-detail ml-4 mt-0.5">
+                                <button onClick={() => openTasksForItem(item.id, detail.text, subIdx, detailIdx)} className="text-[10px] text-blue-500 hover:underline">+ Tasks</button>
+                              </div>
+                            )}
                           </div>
+                        ))}
+
+                        {/* Add Detail - hover reveal */}
+                        {isRegistered && (
+                          addingDetailFor === `${item.id}-${subIdx}` ? (
+                            <div className="ml-4 mt-1 flex gap-1">
+                              <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-5 text-[10px] flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') addDetail(item.id, subIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
+                              <Button size="sm" className="h-5 px-1.5" onClick={() => addDetail(item.id, subIdx)}><Plus className="w-2.5 h-2.5" /></Button>
+                            </div>
+                          ) : (
+                            <div className="hover-btn-sub ml-4 mt-0.5 flex gap-2">
+                              <button onClick={() => setAddingDetailFor(`${item.id}-${subIdx}`)} className="text-[10px] text-blue-500 hover:underline">+ Detail</button>
+                              <button onClick={() => openTasksForItem(item.id, subList.text, subIdx)} className="text-[10px] text-purple-500 hover:underline">+ Tasks</button>
+                            </div>
+                          )
                         )}
-                      </>
+                      </div>
+                    ))}
+
+                    {/* Add Sub-list - hover reveal */}
+                    {isRegistered && (
+                      addingSubListFor === item.id ? (
+                        <div className="ml-6 mt-1 flex gap-1">
+                          <Input value={newSubListText} onChange={(e) => setNewSubListText(e.target.value)} placeholder="Sub-item..." className="h-6 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') addSubList(item.id); if (e.key === 'Escape') { setAddingSubListFor(null); setNewSubListText(""); }}} />
+                          <Button size="sm" className="h-6 px-2" onClick={() => addSubList(item.id)}><Plus className="w-3 h-3" /></Button>
+                        </div>
+                      ) : (
+                        <div className="hover-btn ml-6 mt-1 flex gap-2">
+                          <button onClick={() => setAddingSubListFor(item.id)} className="text-xs text-blue-500 hover:underline">+ Sub-item</button>
+                          <button onClick={() => openTasksForItem(item.id, item.text)} className="text-xs text-purple-500 hover:underline">+ Tasks</button>
+                        </div>
+                      )
                     )}
                   </div>
                 ))}
 
                 {checklist.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-6 text-gray-500 text-sm">
                     No checklist items. Add items above or apply a template.
                   </div>
                 )}
               </div>
-
-              {/* Add Tasks Button */}
-              {isRegistered && (
-                <Button
-                  onClick={() => setShowTasksPopup(true)}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Tasks
-                </Button>
-              )}
             </TabsContent>
 
             {/* Templates Tab */}
@@ -1312,7 +1410,7 @@ export default function EnhancedSipChecklist({
       {/* Tasks Popup */}
       <TasksPopup
         isOpen={showTasksPopup}
-        onClose={() => setShowTasksPopup(false)}
+        onClose={() => { setShowTasksPopup(false); setTaskTargetContext(null); }}
         workOrder={workOrder}
         mainTasks={mainTasks}
         setMainTasks={setMainTasks}
@@ -1322,6 +1420,7 @@ export default function EnhancedSipChecklist({
         isRegistered={isRegistered}
         onUpdate={onUpdate}
         colors={colors}
+        taskTargetContext={taskTargetContext}
       />
 
       {/* Move Task Popup */}
@@ -1343,7 +1442,7 @@ export default function EnhancedSipChecklist({
 }
 
 // Tasks Popup Component
-function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, riders, setRiders, users, isRegistered, onUpdate, colors }) {
+function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, riders, setRiders, users, isRegistered, onUpdate, colors, taskTargetContext }) {
   const [showTaskCreation, setShowTaskCreation] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
   const [expandedTasks, setExpandedTasks] = useState({});
@@ -1529,6 +1628,14 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
               Tasks - {workOrder?.client_name}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Context indicator */}
+          {taskTargetContext && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mt-2">
+              <span className="text-xs text-purple-600">Adding tasks for: </span>
+              <span className="text-sm font-medium text-purple-800">{taskTargetContext.text}</span>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto space-y-4 mt-4">
             {/* Add Task Button */}
