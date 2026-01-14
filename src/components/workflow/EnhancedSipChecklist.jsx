@@ -910,30 +910,30 @@ export default function EnhancedSipChecklist({
   
   // Get tasks for a specific checklist item context
   const getTasksForContext = (itemId, detailIndex = null) => {
-    const contextKey = detailIndex !== null 
-      ? String(itemId) + "-detail-" + String(detailIndex) 
-      : String(itemId);
-    const allTasks = [];
+    // Build the context key to match
+    const contextKey = detailIndex !== null && detailIndex !== undefined
+      ? `${itemId}-detail-${detailIndex}` 
+      : `${itemId}`;
+    
+    const matchedTasks = [];
     
     // Check main tasks
     mainTasks.forEach((task, idx) => {
-      const taskContext = task.checklist_context;
-      if (taskContext && String(taskContext) === contextKey) {
-        allTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
+      if (task.checklist_context && String(task.checklist_context) === contextKey) {
+        matchedTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
       }
     });
     
     // Check rider tasks
     riders.forEach(rider => {
       (rider.notes || []).forEach((task, idx) => {
-        const taskContext = task.checklist_context;
-        if (taskContext && String(taskContext) === contextKey) {
-          allTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
+        if (task.checklist_context && String(task.checklist_context) === contextKey) {
+          matchedTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
         }
       });
     });
     
-    return allTasks;
+    return matchedTasks;
   };
 
   const applyTemplate = (template) => {
