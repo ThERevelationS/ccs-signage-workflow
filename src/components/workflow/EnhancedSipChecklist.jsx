@@ -219,16 +219,31 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
           <div>
             <Label>Sub-tasks</Label>
             <div className="mt-1 space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  value={newSubTaskText}
-                  onChange={(e) => setNewSubTaskText(e.target.value)}
-                  placeholder="Add a sub-task..."
-                  onKeyDown={(e) => e.key === 'Enter' && addSubTask()}
-                />
-                <Button size="sm" onClick={addSubTask} disabled={!newSubTaskText.trim()}>
-                  <Plus className="w-4 h-4" />
-                </Button>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubTaskText}
+                    onChange={(e) => setNewSubTaskText(e.target.value)}
+                    placeholder="Add a sub-task..."
+                    onKeyDown={(e) => e.key === 'Enter' && addSubTask()}
+                  />
+                  <Button size="sm" onClick={addSubTask} disabled={!newSubTaskText.trim()}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Select value={newSubTaskAssignedTo} onValueChange={setNewSubTaskAssignedTo}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Assign sub-task to (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Unassigned</SelectItem>
+                    {users.map(u => (
+                      <SelectItem key={u.id} value={u.full_name || u.email}>
+                        {u.full_name || u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {subTasks.length > 0 && (
