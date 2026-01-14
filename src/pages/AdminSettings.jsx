@@ -281,6 +281,11 @@ export default function AdminSettings() {
 
   const getTriggerNeedsStage = (type) => ["stage_entered", "stage_exited"].includes(type);
   const getTriggerNeedsFromTo = (type) => type === "stage_changed";
+  const getTriggerIsOrderType = (type) => type && type.startsWith("order_");
+
+  // Order-specific filter options
+  const ORDER_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
+  const ORDER_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
   const groupedTriggers = TRIGGER_TYPES.reduce((acc, trigger) => {
     if (!acc[trigger.category]) acc[trigger.category] = [];
@@ -801,7 +806,7 @@ export default function AdminSettings() {
                         </div>
                       )}
 
-                      {trigger.trigger_type && (
+                      {trigger.trigger_type && !getTriggerIsOrderType(trigger.trigger_type) && (
                         <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-orange-100">
                           <div className="flex items-center gap-1">
                             <Switch checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
@@ -824,6 +829,96 @@ export default function AdminSettings() {
                                 <SelectItem value="all">All</SelectItem>
                                 <SelectItem value="workorders">Work Orders Only</SelectItem>
                                 <SelectItem value="riders">Riders Only</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Order-specific filters */}
+                      {getTriggerIsOrderType(trigger.trigger_type) && (
+                        <div className="mt-3 p-3 bg-orange-50/50 rounded-lg border border-orange-100 space-y-3">
+                          <div className="text-xs font-medium text-orange-700 mb-2">Order Filters (optional - leave empty for all)</div>
+                          
+                          {/* Request Type Filter */}
+                          <div>
+                            <Label className="text-xs text-gray-600">Request Type</Label>
+                            <Select 
+                              value={trigger.trigger_condition.request_type || ""} 
+                              onValueChange={(val) => updateTrigger(index, "request_type", val || undefined)}
+                            >
+                              <SelectTrigger className="mt-1 h-8 text-sm">
+                                <SelectValue placeholder="Any request type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Any</SelectItem>
+                                {ORDER_REQUEST_TYPES.map(t => (
+                                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Vendor Filter */}
+                          <div>
+                            <Label className="text-xs text-gray-600">Vendor</Label>
+                            <Select 
+                              value={trigger.trigger_condition.vendor || ""} 
+                              onValueChange={(val) => updateTrigger(index, "vendor", val || undefined)}
+                            >
+                              <SelectTrigger className="mt-1 h-8 text-sm">
+                                <SelectValue placeholder="Any vendor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Any</SelectItem>
+                                {ORDER_VENDORS.map(v => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Quantity Filter */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-gray-600">Min Quantity</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="Any"
+                                value={trigger.trigger_condition.min_quantity || ""}
+                                onChange={(e) => updateTrigger(index, "min_quantity", e.target.value ? parseInt(e.target.value) : undefined)}
+                                className="mt-1 h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600">Max Quantity</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="Any"
+                                value={trigger.trigger_condition.max_quantity || ""}
+                                onChange={(e) => updateTrigger(index, "max_quantity", e.target.value ? parseInt(e.target.value) : undefined)}
+                                className="mt-1 h-8 text-sm"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Requestor Filter */}
+                          <div>
+                            <Label className="text-xs text-gray-600">Requestor</Label>
+                            <Select 
+                              value={trigger.trigger_condition.requestor || ""} 
+                              onValueChange={(val) => updateTrigger(index, "requestor", val || undefined)}
+                            >
+                              <SelectTrigger className="mt-1 h-8 text-sm">
+                                <SelectValue placeholder="Any requestor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={null}>Any</SelectItem>
+                                {TEAM_MEMBERS.map(m => (
+                                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
