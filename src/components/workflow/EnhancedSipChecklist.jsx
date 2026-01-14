@@ -689,7 +689,8 @@ export default function EnhancedSipChecklist({
       const freshNotes = currentWorkOrder.notes || [];
       setMainTasks(freshNotes);
       
-      console.log("Loaded fresh data - notes count:", freshNotes.length, "notes:", freshNotes);
+      console.log("loadData - Loaded fresh notes:", JSON.stringify(freshNotes));
+      console.log("loadData - Notes with checklist_context:", freshNotes.filter(n => n.checklist_context));
     } catch (error) {
       console.error("Error loading data:", error);
     }
