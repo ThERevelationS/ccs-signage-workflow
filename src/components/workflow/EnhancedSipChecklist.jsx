@@ -889,6 +889,25 @@ export default function EnhancedSipChecklist({
     setShowTaskCreation(true);
   };
 
+  // Get ALL tasks (not filtered by context) - show all tasks under each checklist section
+  const getAllTasks = () => {
+    const allTasks = [];
+    
+    // Check main tasks
+    mainTasks.forEach((task, idx) => {
+      allTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
+    });
+    
+    // Check rider tasks
+    riders.forEach(rider => {
+      (rider.notes || []).forEach((task, idx) => {
+        allTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
+      });
+    });
+    
+    return allTasks;
+  };
+  
   // Get tasks for a specific checklist item context
   const getTasksForContext = (itemId, detailIndex = null) => {
     const contextKey = detailIndex !== null 
