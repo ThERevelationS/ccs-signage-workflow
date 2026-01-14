@@ -105,6 +105,8 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
     }));
   };
 
+  const [taskAssignedTo, setTaskAssignedTo] = useState("");
+
   const handleApply = () => {
     if (!taskText.trim()) return;
     
@@ -125,10 +127,15 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
       timestamp: new Date().toISOString(),
       created_by: "SIP Meeting",
       completed: false,
+      assigned_to: taskAssignedTo || "",
       sub_tasks: subTasks.map(st => ({
         text: st.text,
         completed: false,
-        details: st.details
+        assigned_to: st.assigned_to || "",
+        details: st.details.map(d => ({
+          ...d,
+          assigned_to: d.assigned_to || ""
+        }))
       })),
       checklist_context: checklistContext // Always include, even if null
     };
