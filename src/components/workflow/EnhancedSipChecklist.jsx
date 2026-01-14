@@ -895,7 +895,7 @@ export default function EnhancedSipChecklist({
     
     // Check main tasks
     mainTasks.forEach((task, idx) => {
-      if (task.checklist_context === contextKey) {
+      if (task.checklist_context && task.checklist_context === contextKey) {
         allTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
       }
     });
@@ -903,7 +903,7 @@ export default function EnhancedSipChecklist({
     // Check rider tasks
     riders.forEach(rider => {
       (rider.notes || []).forEach((task, idx) => {
-        if (task.checklist_context === contextKey) {
+        if (task.checklist_context && task.checklist_context === contextKey) {
           allTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
         }
       });
