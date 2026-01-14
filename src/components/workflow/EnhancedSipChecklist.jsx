@@ -65,14 +65,18 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
     }
   }, [isOpen, workOrder]);
 
+  const [newSubTaskAssignedTo, setNewSubTaskAssignedTo] = useState("");
+
   const addSubTask = () => {
     if (!newSubTaskText.trim()) return;
     setSubTasks([...subTasks, {
       id: Date.now(),
       text: newSubTaskText.trim(),
+      assigned_to: newSubTaskAssignedTo || "",
       details: []
     }]);
     setNewSubTaskText("");
+    setNewSubTaskAssignedTo("");
   };
 
   const removeSubTask = (id) => {
