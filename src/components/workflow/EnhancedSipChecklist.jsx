@@ -702,17 +702,30 @@ export default function EnhancedSipChecklist({
       // Build the task object - keep checklist_context if it exists
       const taskToSave = { ...task };
       
+      console.log("Saving task with checklist_context:", taskToSave.checklist_context, "task:", taskToSave);
+      
       if (applyTo === "main") {
+        // Fetch the LATEST work order data first to avoid overwriting
+        const freshWorkOrders = await WorkOrder.filter({ id: workOrder.id });
+        const freshWorkOrder = freshWorkOrders[0];
+        const currentNotes = freshWorkOrder?.notes || [];
+        
         // Add to main job tasks
-        const updatedTasks = [...mainTasks, taskToSave];
+        const updatedTasks = [...currentNotes, taskToSave];
         await WorkOrder.update(workOrder.id, { notes: updatedTasks });
         setMainTasks(updatedTasks);
+        
+        console.log("Saved to main - total tasks now:", updatedTasks.length);
       } else if (applyTo.startsWith("rider-")) {
         // Add to existing rider
         const riderId = applyTo.replace("rider-", "");
-        const rider = riders.find(r => r.id === riderId);
-        if (rider) {
-          const updatedTasks = [...(rider.notes || []), taskToSave];
+        
+        // Fetch fresh rider data
+        const freshRiders = await WorkOrder.filter({ id: riderId });
+        const freshRider = freshRiders[0];
+        
+        if (freshRider) {
+          const updatedTasks = [...(freshRider.notes || []), taskToSave];
           await WorkOrder.update(riderId, { notes: updatedTasks });
           setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
         }
