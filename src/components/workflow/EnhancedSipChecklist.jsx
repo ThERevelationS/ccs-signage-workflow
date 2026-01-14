@@ -35,7 +35,7 @@ const STAGES = [
 ];
 
 // Task creation popup
-function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users }) {
+function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users, taskTargetContext }) {
   const [taskText, setTaskText] = useState("");
   const [subTasks, setSubTasks] = useState([]);
   const [newSubTaskText, setNewSubTaskText] = useState("");
@@ -108,11 +108,22 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users 
   const handleApply = () => {
     if (!taskText.trim()) return;
     
+    // Build checklist context key if applicable
+    let checklistContext = null;
+    if (taskTargetContext) {
+      if (taskTargetContext.detailIndex !== null && taskTargetContext.detailIndex !== undefined) {
+        checklistContext = `${taskTargetContext.itemId}-detail-${taskTargetContext.detailIndex}`;
+      } else if (taskTargetContext.itemId) {
+        checklistContext = `${taskTargetContext.itemId}`;
+      }
+    }
+    
     const task = {
       text: taskText.trim(),
       timestamp: new Date().toISOString(),
       created_by: "SIP Meeting",
       completed: false,
+      checklist_context: checklistContext,
       sub_tasks: subTasks.map(st => ({
         text: st.text,
         completed: false,
@@ -151,6 +162,14 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users 
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {/* Context indicator */}
+          {taskTargetContext && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2">
+              <span className="text-xs text-purple-600">Creating task for: </span>
+              <span className="text-sm font-medium text-purple-800">{taskTargetContext.text}</span>
+            </div>
+          )}
+
           {/* Task Text */}
           <div>
             <Label>Task</Label>
@@ -617,11 +636,10 @@ export default function EnhancedSipChecklist({
   const [newItemText, setNewItemText] = useState("");
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemText, setEditingItemText] = useState("");
-  const [addingSubListFor, setAddingSubListFor] = useState(null);
-  const [newSubListText, setNewSubListText] = useState("");
   const [addingDetailFor, setAddingDetailFor] = useState(null);
   const [newDetailText, setNewDetailText] = useState("");
-  const [taskTargetContext, setTaskTargetContext] = useState(null); // { itemId, subListIndex?, detailIndex?, text }
+  const [taskTargetContext, setTaskTargetContext] = useState(null); // { itemId, detailIndex?, text }
+  const [showTaskCreation, setShowTaskCreation] = useState(false);
 
   // Template states
   const [newTemplateName, setNewTemplateName] = useState("");
@@ -691,7 +709,8 @@ export default function EnhancedSipChecklist({
           rider_stage: newRiderData.stage,
           assigned_to: newRiderData.assignedTo || "",
           due_date: newRiderData.dueDate || "",
-          notes: [task]
+          notes: [task],
+          in_pipeline: true
         });
         setRiders([...riders, newRider]);
       }
@@ -820,51 +839,14 @@ export default function EnhancedSipChecklist({
     setChecklist(newChecklist);
   };
 
-  const addSubList = (itemId) => {
-    if (!newSubListText.trim()) return;
+  const addDetail = (itemId) => {
+    if (!newDetailText.trim()) return;
     setChecklist(prev => prev.map(item => {
       if (item.id === itemId) {
         return {
           ...item,
-          sub_lists: [...(item.sub_lists || []), { text: newSubListText.trim(), checked: false, details: [] }]
+          details: [...(item.details || []), { text: newDetailText.trim(), checked: false }]
         };
-      }
-      return item;
-    }));
-    setNewSubListText("");
-    setAddingSubListFor(null);
-  };
-
-  const toggleSubList = (itemId, subIndex) => {
-    setChecklist(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newSubLists = [...(item.sub_lists || [])];
-        newSubLists[subIndex] = { ...newSubLists[subIndex], checked: !newSubLists[subIndex].checked };
-        return { ...item, sub_lists: newSubLists };
-      }
-      return item;
-    }));
-  };
-
-  const deleteSubList = (itemId, subIndex) => {
-    setChecklist(prev => prev.map(item => {
-      if (item.id === itemId) {
-        return { ...item, sub_lists: (item.sub_lists || []).filter((_, i) => i !== subIndex) };
-      }
-      return item;
-    }));
-  };
-
-  const addDetail = (itemId, subIndex) => {
-    if (!newDetailText.trim()) return;
-    setChecklist(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newSubLists = [...(item.sub_lists || [])];
-        newSubLists[subIndex] = {
-          ...newSubLists[subIndex],
-          details: [...(newSubLists[subIndex].details || []), { text: newDetailText.trim(), checked: false }]
-        };
-        return { ...item, sub_lists: newSubLists };
       }
       return item;
     }));
@@ -872,36 +854,53 @@ export default function EnhancedSipChecklist({
     setAddingDetailFor(null);
   };
 
-  const toggleDetail = (itemId, subIndex, detailIndex) => {
+  const toggleDetail = (itemId, detailIndex) => {
     setChecklist(prev => prev.map(item => {
       if (item.id === itemId) {
-        const newSubLists = [...(item.sub_lists || [])];
-        const newDetails = [...(newSubLists[subIndex].details || [])];
+        const newDetails = [...(item.details || [])];
         newDetails[detailIndex] = { ...newDetails[detailIndex], checked: !newDetails[detailIndex].checked };
-        newSubLists[subIndex] = { ...newSubLists[subIndex], details: newDetails };
-        return { ...item, sub_lists: newSubLists };
+        return { ...item, details: newDetails };
       }
       return item;
     }));
   };
 
-  const deleteDetail = (itemId, subIndex, detailIndex) => {
+  const deleteDetail = (itemId, detailIndex) => {
     setChecklist(prev => prev.map(item => {
       if (item.id === itemId) {
-        const newSubLists = [...(item.sub_lists || [])];
-        newSubLists[subIndex] = {
-          ...newSubLists[subIndex],
-          details: (newSubLists[subIndex].details || []).filter((_, i) => i !== detailIndex)
-        };
-        return { ...item, sub_lists: newSubLists };
+        return { ...item, details: (item.details || []).filter((_, i) => i !== detailIndex) };
       }
       return item;
     }));
   };
 
-  const openTasksForItem = (itemId, text, subListIndex = null, detailIndex = null) => {
-    setTaskTargetContext({ itemId, subListIndex, detailIndex, text });
-    setShowTasksPopup(true);
+  const openTaskCreationForItem = (itemId, text, detailIndex = null) => {
+    setTaskTargetContext({ itemId, detailIndex, text });
+    setShowTaskCreation(true);
+  };
+
+  // Get tasks for a specific checklist item context
+  const getTasksForContext = (itemId, detailIndex = null) => {
+    const contextKey = detailIndex !== null ? `${itemId}-detail-${detailIndex}` : `${itemId}`;
+    const allTasks = [];
+    
+    // Check main tasks
+    mainTasks.forEach((task, idx) => {
+      if (task.checklist_context === contextKey) {
+        allTasks.push({ ...task, sourceType: 'main', sourceId: null, index: idx });
+      }
+    });
+    
+    // Check rider tasks
+    riders.forEach(rider => {
+      (rider.notes || []).forEach((task, idx) => {
+        if (task.checklist_context === contextKey) {
+          allTasks.push({ ...task, sourceType: 'rider', sourceId: rider.id, index: idx, riderTitle: rider.title });
+        }
+      });
+    });
+    
+    return allTasks;
   };
 
   const applyTemplate = (template) => {
@@ -1154,7 +1153,7 @@ export default function EnhancedSipChecklist({
                           <span className={`flex-1 text-sm cursor-pointer ${item.checked ? 'text-green-700 line-through' : ''}`} onClick={() => isRegistered && toggleChecklistItem(item.id)}>
                             {item.text}
                           </span>
-                          {(item.sub_lists?.length > 0) && <span className="text-xs text-gray-400">{item.sub_lists.length}</span>}
+                          {(item.details?.length > 0) && <span className="text-xs text-gray-400">{item.details.length}</span>}
                           {isRegistered && (
                             <div className="flex gap-0.5">
                               <button onClick={() => startEditItem(item)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
@@ -1165,65 +1164,73 @@ export default function EnhancedSipChecklist({
                       )}
                     </div>
 
-                    {/* Sub-lists */}
-                    {item.sub_lists?.map((subList, subIdx) => (
-                      <div key={subIdx} className="ml-6 mt-1 group/sub [&_.hover-btn-sub]:opacity-0 [&_.hover-btn-sub]:h-0 [&_.hover-btn-sub]:overflow-hidden [&:hover_.hover-btn-sub]:opacity-100 [&:hover_.hover-btn-sub]:h-auto">
-                        <div className={`flex items-center gap-2 p-1.5 rounded border ${subList.checked ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
-                          <Checkbox checked={subList.checked} onCheckedChange={() => isRegistered && toggleSubList(item.id, subIdx)} disabled={!isRegistered} className="h-3 w-3" />
-                          <span className={`flex-1 text-xs ${subList.checked ? 'text-green-600 line-through' : 'text-gray-700'}`}>{subList.text}</span>
-                          {(subList.details?.length > 0) && <span className="text-[10px] text-gray-400">{subList.details.length}</span>}
+                    {/* Checklist Details */}
+                    {item.details?.map((detail, detailIdx) => (
+                      <div key={detailIdx} className="ml-6 mt-1 group/detail [&_.hover-btn-detail]:opacity-0 [&_.hover-btn-detail]:h-0 [&_.hover-btn-detail]:overflow-hidden [&:hover_.hover-btn-detail]:opacity-100 [&:hover_.hover-btn-detail]:h-auto">
+                        <div className={`flex items-center gap-2 p-1.5 rounded border ${detail.checked ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
+                          <Checkbox checked={detail.checked} onCheckedChange={() => isRegistered && toggleDetail(item.id, detailIdx)} disabled={!isRegistered} className="h-3 w-3" />
+                          <span className={`flex-1 text-xs ${detail.checked ? 'text-green-600 line-through' : 'text-gray-700'}`}>{detail.text}</span>
                           {isRegistered && (
-                            <button onClick={() => deleteSubList(item.id, subIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2.5 h-2.5 text-red-400" /></button>
+                            <button onClick={() => deleteDetail(item.id, detailIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2.5 h-2.5 text-red-400" /></button>
                           )}
                         </div>
-
-                        {/* Details */}
-                        {subList.details?.map((detail, detailIdx) => (
-                          <div key={detailIdx} className="ml-4 mt-0.5 group/detail [&_.hover-btn-detail]:opacity-0 [&_.hover-btn-detail]:h-0 [&_.hover-btn-detail]:overflow-hidden [&:hover_.hover-btn-detail]:opacity-100 [&:hover_.hover-btn-detail]:h-auto">
-                            <div className={`flex items-center gap-2 p-1 rounded ${detail.checked ? 'bg-green-50/30' : ''}`}>
-                              <Checkbox checked={detail.checked} onCheckedChange={() => isRegistered && toggleDetail(item.id, subIdx, detailIdx)} disabled={!isRegistered} className="h-2.5 w-2.5" />
-                              <span className={`flex-1 text-[11px] ${detail.checked ? 'text-green-600 line-through' : 'text-gray-600'}`}>{detail.text}</span>
-                              {isRegistered && (
-                                <button onClick={() => deleteDetail(item.id, subIdx, detailIdx)} className="p-0.5 hover:bg-red-100 rounded"><X className="w-2 h-2 text-red-400" /></button>
-                              )}
+                        
+                        {/* Tasks for this detail */}
+                        {(() => {
+                          const detailTasks = getTasksForContext(item.id, detailIdx);
+                          if (detailTasks.length === 0) return null;
+                          return (
+                            <div className="ml-4 mt-1 space-y-1">
+                              {detailTasks.map((task, tIdx) => (
+                                <div key={tIdx} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+                                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} disabled={!isRegistered} className="h-3 w-3" />
+                                  <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
+                                  {task.riderTitle && <Badge variant="outline" className="text-[10px] text-purple-600">{task.riderTitle}</Badge>}
+                                  {task.sub_tasks?.length > 0 && <Badge variant="outline" className="text-[10px]">{task.sub_tasks.length}</Badge>}
+                                </div>
+                              ))}
                             </div>
-                            {/* Add Tasks for Detail - hover reveal */}
-                            {isRegistered && (
-                              <div className="hover-btn-detail ml-4 mt-0.5">
-                                <button onClick={() => openTasksForItem(item.id, detail.text, subIdx, detailIdx)} className="text-[10px] text-blue-500 hover:underline">+ Tasks</button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-
-                        {/* Add Detail - hover reveal */}
+                          );
+                        })()}
+                        
+                        {/* Add Tasks for Detail - hover reveal */}
                         {isRegistered && (
-                          addingDetailFor === `${item.id}-${subIdx}` ? (
-                            <div className="ml-4 mt-1 flex gap-1">
-                              <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-5 text-[10px] flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') addDetail(item.id, subIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
-                              <Button size="sm" className="h-5 px-1.5" onClick={() => addDetail(item.id, subIdx)}><Plus className="w-2.5 h-2.5" /></Button>
-                            </div>
-                          ) : (
-                            <div className="hover-btn-sub ml-4 mt-0.5 flex gap-2">
-                              <button onClick={() => setAddingDetailFor(`${item.id}-${subIdx}`)} className="text-[10px] text-blue-500 hover:underline">+ Detail</button>
-                              <button onClick={() => openTasksForItem(item.id, subList.text, subIdx)} className="text-[10px] text-purple-500 hover:underline">+ Tasks</button>
-                            </div>
-                          )
+                          <div className="hover-btn-detail ml-4 mt-0.5">
+                            <button onClick={() => openTaskCreationForItem(item.id, detail.text, detailIdx)} className="text-[10px] text-purple-500 hover:underline">+ Tasks</button>
+                          </div>
                         )}
                       </div>
                     ))}
 
-                    {/* Add Sub-list - hover reveal */}
+                    {/* Tasks for this checklist item (not detail-specific) */}
+                    {(() => {
+                      const itemTasks = getTasksForContext(item.id);
+                      if (itemTasks.length === 0) return null;
+                      return (
+                        <div className="ml-6 mt-1 space-y-1">
+                          {itemTasks.map((task, tIdx) => (
+                            <div key={tIdx} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+                              <Checkbox checked={task.completed} onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} disabled={!isRegistered} className="h-3 w-3" />
+                              <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
+                              {task.riderTitle && <Badge variant="outline" className="text-[10px] text-purple-600">{task.riderTitle}</Badge>}
+                              {task.sub_tasks?.length > 0 && <Badge variant="outline" className="text-[10px]">{task.sub_tasks.length}</Badge>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Add Detail / Tasks - hover reveal */}
                     {isRegistered && (
-                      addingSubListFor === item.id ? (
+                      addingDetailFor === item.id ? (
                         <div className="ml-6 mt-1 flex gap-1">
-                          <Input value={newSubListText} onChange={(e) => setNewSubListText(e.target.value)} placeholder="Sub-item..." className="h-6 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') addSubList(item.id); if (e.key === 'Escape') { setAddingSubListFor(null); setNewSubListText(""); }}} />
-                          <Button size="sm" className="h-6 px-2" onClick={() => addSubList(item.id)}><Plus className="w-3 h-3" /></Button>
+                          <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Checklist detail..." className="h-6 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') addDetail(item.id); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
+                          <Button size="sm" className="h-6 px-2" onClick={() => addDetail(item.id)}><Plus className="w-3 h-3" /></Button>
                         </div>
                       ) : (
                         <div className="hover-btn ml-6 mt-1 flex gap-2">
-                          <button onClick={() => setAddingSubListFor(item.id)} className="text-xs text-blue-500 hover:underline">+ Sub-item</button>
-                          <button onClick={() => openTasksForItem(item.id, item.text)} className="text-xs text-purple-500 hover:underline">+ Tasks</button>
+                          <button onClick={() => setAddingDetailFor(item.id)} className="text-xs text-blue-500 hover:underline">+ Checklist Details</button>
+                          <button onClick={() => openTaskCreationForItem(item.id, item.text)} className="text-xs text-purple-500 hover:underline">+ Tasks</button>
                         </div>
                       )
                     )}
@@ -1407,19 +1414,14 @@ export default function EnhancedSipChecklist({
         </DialogContent>
       </Dialog>
 
-      {/* Tasks Popup */}
-      <TasksPopup
-        isOpen={showTasksPopup}
-        onClose={() => { setShowTasksPopup(false); setTaskTargetContext(null); }}
+      {/* Task Creation Popup - opens directly when clicking + Tasks */}
+      <TaskCreationPopup
+        isOpen={showTaskCreation}
+        onClose={() => { setShowTaskCreation(false); setTaskTargetContext(null); }}
+        onApply={handleApplyTask}
         workOrder={workOrder}
-        mainTasks={mainTasks}
-        setMainTasks={setMainTasks}
         riders={riders}
-        setRiders={setRiders}
         users={users}
-        isRegistered={isRegistered}
-        onUpdate={onUpdate}
-        colors={colors}
         taskTargetContext={taskTargetContext}
       />
 
