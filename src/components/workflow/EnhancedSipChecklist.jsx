@@ -118,6 +118,8 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
       }
     }
     
+    console.log("TaskCreationPopup - taskTargetContext:", taskTargetContext, "checklistContext:", checklistContext);
+    
     const task = {
       text: taskText.trim(),
       timestamp: new Date().toISOString(),
@@ -127,13 +129,11 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
         text: st.text,
         completed: false,
         details: st.details
-      }))
+      })),
+      checklist_context: checklistContext // Always include, even if null
     };
     
-    // Add checklist_context if it exists
-    if (checklistContext) {
-      task.checklist_context = checklistContext;
-    }
+    console.log("TaskCreationPopup - task being created:", task);
 
     const newRiderData = applyTo === "new-rider" ? {
       title: newRiderTitle,
