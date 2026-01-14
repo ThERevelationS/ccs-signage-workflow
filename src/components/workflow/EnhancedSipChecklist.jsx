@@ -261,6 +261,9 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
                           }
                         </button>
                         <span className="flex-1 text-sm">{subTask.text}</span>
+                        {subTask.assigned_to && (
+                          <Badge variant="outline" className="text-xs text-blue-600">→ {subTask.assigned_to}</Badge>
+                        )}
                         {subTask.details.length > 0 && (
                           <span className="text-xs text-gray-400">{subTask.details.length} details</span>
                         )}
