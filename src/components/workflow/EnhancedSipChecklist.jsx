@@ -1285,6 +1285,33 @@ export default function EnhancedSipChecklist({
                     No checklist items. Add items above or apply a template.
                   </div>
                 )}
+
+                {/* Show all tasks at bottom if any exist */}
+                {(() => {
+                  const allTasks = getAllTasks();
+                  if (allTasks.length === 0) return null;
+                  return (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="text-sm font-medium text-gray-700 mb-2">All Tasks ({allTasks.length})</div>
+                      <div className="space-y-1">
+                        {allTasks.map((task, tIdx) => (
+                          <div key={`all-task-${tIdx}`} className={`flex items-center gap-2 p-2 rounded border text-sm ${task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                            <Checkbox 
+                              checked={task.completed || false} 
+                              onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} 
+                              disabled={!isRegistered} 
+                              className="h-4 w-4" 
+                            />
+                            <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
+                            {task.sourceType === 'rider' && <Badge variant="outline" className="text-xs text-purple-600">{task.riderTitle}</Badge>}
+                            {task.sourceType === 'main' && <Badge variant="outline" className="text-xs text-blue-600">Main</Badge>}
+                            {task.sub_tasks?.length > 0 && <Badge variant="outline" className="text-xs">{task.sub_tasks.length} sub</Badge>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </TabsContent>
 
