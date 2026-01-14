@@ -368,7 +368,7 @@ export default function WorkOrderDetailsDialog({
           if (stIdx === subTaskIndex) {
             return {
               ...st,
-              details: [...(st.details || []), { text: newDetailText, completed: false }]
+              details: [...(st.details || []), { text: newDetailText, completed: false, assigned_to: newDetailAssignedTo || "" }]
             };
           }
           return st;
@@ -380,6 +380,7 @@ export default function WorkOrderDetailsDialog({
     
     Object.assign(workOrder, { notes: updatedTasks });
     setNewDetailText("");
+    setNewDetailAssignedTo("");
     setAddingDetailFor(null);
     if (onUpdate) onUpdate();
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
