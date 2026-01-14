@@ -64,7 +64,7 @@ export default function Permitting() {
       const filtered = allWorkOrders.filter(wo => 
         (wo.current_task_description && taskDescriptions.some(desc => 
           wo.current_task_description.includes(desc)
-        )) || (wo.is_rider && wo.rider_stage === 'permitting')
+        )) || (wo.is_rider && wo.rider_stage === 'permitting' && wo.in_pipeline !== false)
       );
       setWorkOrders(filtered);
     } catch (error) {
