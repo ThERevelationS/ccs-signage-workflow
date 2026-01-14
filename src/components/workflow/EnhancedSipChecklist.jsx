@@ -193,6 +193,24 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
             />
           </div>
 
+          {/* Task Assignment */}
+          <div>
+            <Label>Assign To (optional)</Label>
+            <Select value={taskAssignedTo} onValueChange={setTaskAssignedTo}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select user..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>Unassigned</SelectItem>
+                {users.map(u => (
+                  <SelectItem key={u.id} value={u.full_name || u.email}>
+                    {u.full_name || u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Sub-tasks */}
           <div>
             <Label>Sub-tasks</Label>
