@@ -1196,7 +1196,7 @@ export default function EnhancedSipChecklist({
                           return (
                             <div className="ml-4 mt-1 space-y-1">
                               {detailTasks.map((task, tIdx) => (
-                                <div key={tIdx} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+                                <div key={`detail-task-${item.id}-${detailIdx}-${tIdx}`} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
                                   <Checkbox 
                                     checked={task.completed || false} 
                                     onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} 
