@@ -110,11 +110,11 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
     
     // Build checklist context key if applicable
     let checklistContext = null;
-    if (taskTargetContext) {
+    if (taskTargetContext && taskTargetContext.itemId !== null && taskTargetContext.itemId !== undefined) {
       if (taskTargetContext.detailIndex !== null && taskTargetContext.detailIndex !== undefined) {
-        checklistContext = String(taskTargetContext.itemId) + "-detail-" + String(taskTargetContext.detailIndex);
-      } else if (taskTargetContext.itemId) {
-        checklistContext = String(taskTargetContext.itemId);
+        checklistContext = `${taskTargetContext.itemId}-detail-${taskTargetContext.detailIndex}`;
+      } else {
+        checklistContext = `${taskTargetContext.itemId}`;
       }
     }
     
@@ -130,7 +130,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
       }))
     };
     
-    // Only add checklist_context if it exists
+    // Add checklist_context if it exists
     if (checklistContext) {
       task.checklist_context = checklistContext;
     }
