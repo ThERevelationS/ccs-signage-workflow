@@ -597,7 +597,7 @@ export default function EnhancedSipChecklist({
   checklistField = "sip_checklist",
   accentColor = "blue"
 }) {
-  const [activeTab, setActiveTab] = useState("tasks");
+  const [activeTab, setActiveTab] = useState("checklist");
   const [templates, setTemplates] = useState([]);
   const [checklist, setChecklist] = useState([]);
   const [mainTasks, setMainTasks] = useState([]);
@@ -608,12 +608,20 @@ export default function EnhancedSipChecklist({
   
   // Popup states
   const [showTaskCreation, setShowTaskCreation] = useState(false);
+  const [showTasksPopup, setShowTasksPopup] = useState(false);
   const [showMoveTask, setShowMoveTask] = useState(null);
   const [expandedTasks, setExpandedTasks] = useState({});
   const [expandedRiders, setExpandedRiders] = useState({});
 
+  // Checklist editing states
+  const [newItemText, setNewItemText] = useState("");
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingItemText, setEditingItemText] = useState("");
+
   // Template states
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [editingTemplateName, setEditingTemplateName] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -768,6 +776,112 @@ export default function EnhancedSipChecklist({
     );
   };
 
+  const addChecklistItem = () => {
+    if (!newItemText.trim()) return;
+    const newItem = {
+      id: Date.now(),
+      text: newItemText.trim(),
+      checked: false
+    };
+    setChecklist(prev => [...prev, newItem]);
+    setNewItemText("");
+  };
+
+  const deleteChecklistItem = (itemId) => {
+    setChecklist(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const startEditItem = (item) => {
+    setEditingItemId(item.id);
+    setEditingItemText(item.text);
+  };
+
+  const saveEditItem = () => {
+    if (!editingItemText.trim()) return;
+    setChecklist(prev => 
+      prev.map(item => item.id === editingItemId ? { ...item, text: editingItemText.trim() } : item)
+    );
+    setEditingItemId(null);
+    setEditingItemText("");
+  };
+
+  const moveItem = (index, direction) => {
+    const newChecklist = [...checklist];
+    if (direction === 'up' && index > 0) {
+      [newChecklist[index], newChecklist[index - 1]] = [newChecklist[index - 1], newChecklist[index]];
+    } else if (direction === 'down' && index < newChecklist.length - 1) {
+      [newChecklist[index], newChecklist[index + 1]] = [newChecklist[index + 1], newChecklist[index]];
+    }
+    setChecklist(newChecklist);
+  };
+
+  const applyTemplate = (template) => {
+    const newChecklist = template.items.map(item => ({
+      ...item,
+      checked: false
+    }));
+    setChecklist(newChecklist);
+  };
+
+  const saveAsTemplate = async () => {
+    if (!newTemplateName.trim()) return;
+    try {
+      const templateItems = checklist.map(item => ({
+        id: item.id,
+        text: item.text
+      }));
+      await SipChecklistTemplate.create({
+        name: newTemplateName.trim(),
+        items: templateItems,
+        is_default: false
+      });
+      setNewTemplateName("");
+      const templatesData = await SipChecklistTemplate.list();
+      setTemplates(templatesData);
+    } catch (error) {
+      console.error("Error saving template:", error);
+    }
+  };
+
+  const deleteTemplate = async (templateId) => {
+    try {
+      await SipChecklistTemplate.delete(templateId);
+      const templatesData = await SipChecklistTemplate.list();
+      setTemplates(templatesData);
+    } catch (error) {
+      console.error("Error deleting template:", error);
+    }
+  };
+
+  const setDefaultTemplate = async (template) => {
+    try {
+      for (const t of templates) {
+        if (t.is_default) {
+          await SipChecklistTemplate.update(t.id, { is_default: false });
+        }
+      }
+      await SipChecklistTemplate.update(template.id, { is_default: true });
+      const templatesData = await SipChecklistTemplate.list();
+      setTemplates(templatesData);
+    } catch (error) {
+      console.error("Error setting default template:", error);
+    }
+  };
+
+  const updateTemplateItems = async (template) => {
+    try {
+      const templateItems = checklist.map(item => ({
+        id: item.id,
+        text: item.text
+      }));
+      await SipChecklistTemplate.update(template.id, { items: templateItems });
+      const templatesData = await SipChecklistTemplate.list();
+      setTemplates(templatesData);
+    } catch (error) {
+      console.error("Error updating template items:", error);
+    }
+  };
+
   const saveChecklist = async () => {
     setIsSaving(true);
     try {
@@ -879,69 +993,10 @@ export default function EnhancedSipChecklist({
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="checklist">Checklist</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
-
-            {/* Tasks Tab */}
-            <TabsContent value="tasks" className="flex-1 overflow-hidden flex flex-col mt-4">
-              {/* Add Task Button */}
-              {isRegistered && (
-                <Button
-                  onClick={() => setShowTaskCreation(true)}
-                  className={`mb-4 ${colors.bg}`}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Task
-                </Button>
-              )}
-
-              <div className="flex-1 overflow-y-auto space-y-4">
-                {/* Main Job Tasks */}
-                <div className="border rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium">Main Job Tasks</span>
-                    <Badge variant="outline">{mainTasks.length}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {mainTasks.map((task, idx) => renderTaskItem(task, idx, "main", null))}
-                    {mainTasks.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-2">No tasks</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Rider Tasks */}
-                {riders.map(rider => (
-                  <div key={rider.id} className="border rounded-lg p-3 border-purple-200 bg-purple-50/30">
-                    <div 
-                      className="flex items-center gap-2 mb-2 cursor-pointer"
-                      onClick={() => setExpandedRiders(prev => ({ ...prev, [rider.id]: !prev[rider.id] }))}
-                    >
-                      {expandedRiders[rider.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      <LinkIcon className="w-4 h-4 text-purple-600" />
-                      <span className="font-medium text-purple-800">{rider.title}</span>
-                      <Badge variant="outline" className="text-purple-600">{rider.notes?.length || 0}</Badge>
-                      <span className="text-xs text-purple-500 ml-auto">
-                        {STAGES.find(s => s.value === rider.current_stage)?.label}
-                        {rider.assigned_to && ` • ${rider.assigned_to}`}
-                      </span>
-                    </div>
-                    {expandedRiders[rider.id] && (
-                      <div className="space-y-2 mt-2">
-                        {(rider.notes || []).map((task, idx) => renderTaskItem(task, idx, "rider", rider.id))}
-                        {(!rider.notes || rider.notes.length === 0) && (
-                          <p className="text-sm text-gray-400 text-center py-2">No tasks</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
 
             {/* Checklist Tab */}
             <TabsContent value="checklist" className="flex-1 overflow-hidden flex flex-col mt-4">
@@ -959,6 +1014,23 @@ export default function EnhancedSipChecklist({
                 </div>
               </div>
 
+              {/* Add New Item */}
+              {isRegistered && (
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newItemText}
+                    onChange={(e) => setNewItemText(e.target.value)}
+                    placeholder="Add new checklist item..."
+                    className="flex-1"
+                    onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
+                  />
+                  <Button onClick={addChecklistItem} size="sm" className={colors.bg}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              )}
+
               <div className="flex-1 overflow-y-auto space-y-2">
                 {checklist.map((item, index) => (
                   <div 
@@ -967,6 +1039,26 @@ export default function EnhancedSipChecklist({
                       item.checked ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'
                     }`}
                   >
+                    {/* Reorder buttons */}
+                    {isRegistered && (
+                      <div className="flex flex-col gap-0.5">
+                        <button 
+                          onClick={() => moveItem(index, 'up')}
+                          disabled={index === 0}
+                          className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        >
+                          ▲
+                        </button>
+                        <button 
+                          onClick={() => moveItem(index, 'down')}
+                          disabled={index === checklist.length - 1}
+                          className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    )}
+
                     <div 
                       onClick={() => isRegistered && toggleChecklistItem(item.id)}
                       className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer ${
@@ -975,32 +1067,224 @@ export default function EnhancedSipChecklist({
                     >
                       {item.checked ? <Check className="w-4 h-4 text-white" /> : <span className="text-gray-500 text-sm">{index + 1}</span>}
                     </div>
-                    <span className={`flex-1 ${item.checked ? 'text-green-700 line-through' : ''}`}>
-                      {item.text}
-                    </span>
+
+                    {editingItemId === item.id ? (
+                      <div className="flex-1 flex gap-2">
+                        <Input
+                          value={editingItemText}
+                          onChange={(e) => setEditingItemText(e.target.value)}
+                          className="flex-1"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveEditItem();
+                            if (e.key === 'Escape') setEditingItemId(null);
+                          }}
+                        />
+                        <Button size="sm" onClick={saveEditItem} className="bg-green-600 hover:bg-green-700">
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingItemId(null)}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span 
+                          className={`flex-1 cursor-pointer ${item.checked ? 'text-green-700 line-through' : ''}`}
+                          onClick={() => isRegistered && toggleChecklistItem(item.id)}
+                        >
+                          {item.text}
+                        </span>
+                        {isRegistered && (
+                          <div className="flex gap-1">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => startEditItem(item)}
+                              className="h-7 w-7 p-0"
+                            >
+                              <Pencil className="w-3 h-3 text-gray-500" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => deleteChecklistItem(item.id)}
+                              className="h-7 w-7 p-0"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-500" />
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 ))}
+
+                {checklist.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No checklist items. Add items above or apply a template.
+                  </div>
+                )}
               </div>
+
+              {/* Add Tasks Button */}
+              {isRegistered && (
+                <Button
+                  onClick={() => setShowTasksPopup(true)}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Tasks
+                </Button>
+              )}
             </TabsContent>
 
             {/* Templates Tab */}
-            <TabsContent value="templates" className="flex-1 overflow-y-auto mt-4">
-              <div className="space-y-4">
+            <TabsContent value="templates" className="flex-1 overflow-hidden flex flex-col mt-4">
+              {/* Save Current as Template */}
+              {isRegistered && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium mb-2 flex items-center gap-2">
+                    <Save className="w-4 h-4" />
+                    Save Current Checklist as Template
+                  </h3>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newTemplateName}
+                      onChange={(e) => setNewTemplateName(e.target.value)}
+                      placeholder="Template name..."
+                      className="flex-1"
+                      onKeyDown={(e) => e.key === 'Enter' && saveAsTemplate()}
+                    />
+                    <Button onClick={saveAsTemplate} size="sm" className={colors.bg}>
+                      <Save className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Template List */}
+              <div className="flex-1 overflow-y-auto space-y-2">
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Available Templates
+                </h3>
+
+                {templates.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No templates saved yet. Create your first template above.
+                  </div>
+                )}
+
                 {templates.map(template => (
-                  <div key={template.id} className="border rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      {template.is_default && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
-                      <span className="font-medium">{template.name}</span>
-                      <span className="text-xs text-gray-500">{template.items?.length || 0} items</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setChecklist(template.items?.map(i => ({ ...i, checked: false })) || [])}
-                        className="ml-auto h-7"
-                      >
-                        <Copy className="w-3 h-3 mr-1" />
-                        Apply
-                      </Button>
+                  <div 
+                    key={template.id}
+                    className="p-3 border-2 rounded-lg border-gray-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      {template.is_default && (
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      )}
+                      
+                      {editingTemplate?.id === template.id ? (
+                        <div className="flex-1 flex gap-2">
+                          <Input
+                            value={editingTemplateName}
+                            onChange={(e) => setEditingTemplateName(e.target.value)}
+                            className="flex-1 h-8"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                SipChecklistTemplate.update(template.id, { name: editingTemplateName.trim() }).then(() => {
+                                  SipChecklistTemplate.list().then(setTemplates);
+                                });
+                                setEditingTemplate(null);
+                              }
+                              if (e.key === 'Escape') setEditingTemplate(null);
+                            }}
+                          />
+                          <Button size="sm" onClick={() => {
+                            SipChecklistTemplate.update(template.id, { name: editingTemplateName.trim() }).then(() => {
+                              SipChecklistTemplate.list().then(setTemplates);
+                            });
+                            setEditingTemplate(null);
+                          }} className="h-8">
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTemplate(null)} className="h-8">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium flex-1">{template.name}</span>
+                          <span className="text-xs text-gray-500">{template.items?.length || 0} items</span>
+                        </>
+                      )}
+
+                      {!editingTemplate && isRegistered && (
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => applyTemplate(template)}
+                            className="h-8"
+                            title="Apply template"
+                          >
+                            <Copy className="w-4 h-4 mr-1" />
+                            Apply
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => setDefaultTemplate(template)}
+                            className="h-8 w-8 p-0"
+                            title="Set as default"
+                          >
+                            <Star className={`w-4 h-4 ${template.is_default ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'}`} />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => updateTemplateItems(template)}
+                            className="h-8 w-8 p-0"
+                            title="Update template with current checklist"
+                          >
+                            <Save className="w-4 h-4 text-blue-500" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => { setEditingTemplate(template); setEditingTemplateName(template.name); }}
+                            className="h-8 w-8 p-0"
+                            title="Edit name"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-500" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => deleteTemplate(template.id)}
+                            className="h-8 w-8 p-0"
+                            title="Delete template"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preview items */}
+                    <div className="mt-2 text-xs text-gray-500">
+                      {template.items?.slice(0, 3).map((item, i) => (
+                        <span key={item.id}>
+                          {i > 0 && " • "}
+                          {item.text}
+                        </span>
+                      ))}
+                      {template.items?.length > 3 && ` • +${template.items.length - 3} more`}
                     </div>
                   </div>
                 ))}
@@ -1020,6 +1304,290 @@ export default function EnhancedSipChecklist({
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Save & Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tasks Popup */}
+      <TasksPopup
+        isOpen={showTasksPopup}
+        onClose={() => setShowTasksPopup(false)}
+        workOrder={workOrder}
+        mainTasks={mainTasks}
+        setMainTasks={setMainTasks}
+        riders={riders}
+        setRiders={setRiders}
+        users={users}
+        isRegistered={isRegistered}
+        onUpdate={onUpdate}
+        colors={colors}
+      />
+
+      {/* Move Task Popup */}
+      {showMoveTask && (
+        <MoveTaskPopup
+          isOpen={true}
+          onClose={() => setShowMoveTask(null)}
+          task={showMoveTask.task}
+          workOrder={workOrder}
+          riders={riders}
+          users={users}
+          onMove={(task, moveTo, newRiderData) => 
+            handleMoveTask(task, moveTo, newRiderData, showMoveTask.sourceType, showMoveTask.sourceId)
+          }
+        />
+      )}
+    </>
+  );
+}
+
+// Tasks Popup Component
+function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, riders, setRiders, users, isRegistered, onUpdate, colors }) {
+  const [showTaskCreation, setShowTaskCreation] = useState(false);
+  const [showMoveTask, setShowMoveTask] = useState(null);
+  const [expandedTasks, setExpandedTasks] = useState({});
+  const [expandedRiders, setExpandedRiders] = useState({});
+
+  const handleApplyTask = async (task, applyTo, newRiderData) => {
+    try {
+      if (applyTo === "main") {
+        const updatedTasks = [...mainTasks, task];
+        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+        setMainTasks(updatedTasks);
+      } else if (applyTo.startsWith("rider-")) {
+        const riderId = applyTo.replace("rider-", "");
+        const rider = riders.find(r => r.id === riderId);
+        if (rider) {
+          const updatedTasks = [...(rider.notes || []), task];
+          await WorkOrder.update(riderId, { notes: updatedTasks });
+          setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
+        }
+      } else if (applyTo === "new-rider" && newRiderData) {
+        const newRider = await WorkOrder.create({
+          title: newRiderData.title,
+          client_name: workOrder.client_name,
+          description: workOrder.description,
+          is_rider: true,
+          parent_work_order_id: workOrder.id,
+          current_stage: newRiderData.stage,
+          rider_stage: newRiderData.stage,
+          assigned_to: newRiderData.assignedTo || "",
+          due_date: newRiderData.dueDate || "",
+          notes: [task]
+        });
+        setRiders([...riders, newRider]);
+      }
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error applying task:", error);
+    }
+  };
+
+  const handleMoveTask = async (task, moveTo, newRiderData, sourceType, sourceId) => {
+    try {
+      // Remove from source
+      if (sourceType === "main") {
+        const updatedTasks = mainTasks.filter(t => t.text !== task.text || t.timestamp !== task.timestamp);
+        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+        setMainTasks(updatedTasks);
+      } else if (sourceType === "rider") {
+        const rider = riders.find(r => r.id === sourceId);
+        if (rider) {
+          const updatedTasks = (rider.notes || []).filter(t => t.text !== task.text || t.timestamp !== task.timestamp);
+          await WorkOrder.update(sourceId, { notes: updatedTasks });
+          setRiders(riders.map(r => r.id === sourceId ? { ...r, notes: updatedTasks } : r));
+        }
+      }
+
+      // Add to destination
+      if (moveTo === "main") {
+        const updatedTasks = [...mainTasks.filter(t => t.text !== task.text || t.timestamp !== task.timestamp), task];
+        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+        setMainTasks(updatedTasks);
+      } else if (moveTo.startsWith("rider-")) {
+        const riderId = moveTo.replace("rider-", "");
+        const rider = riders.find(r => r.id === riderId);
+        if (rider) {
+          const updatedTasks = [...(rider.notes || []), task];
+          await WorkOrder.update(riderId, { notes: updatedTasks });
+          setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
+        }
+      } else if (moveTo === "new-rider" && newRiderData) {
+        const newRider = await WorkOrder.create({
+          title: newRiderData.title,
+          client_name: workOrder.client_name,
+          description: workOrder.description,
+          is_rider: true,
+          parent_work_order_id: workOrder.id,
+          current_stage: newRiderData.stage,
+          rider_stage: newRiderData.stage,
+          assigned_to: newRiderData.assignedTo || "",
+          due_date: newRiderData.dueDate || "",
+          notes: [task]
+        });
+        setRiders([...riders, newRider]);
+      }
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error moving task:", error);
+    }
+  };
+
+  const toggleTaskComplete = async (taskIndex, sourceType, sourceId) => {
+    if (sourceType === "main") {
+      const updatedTasks = mainTasks.map((t, i) => 
+        i === taskIndex ? { ...t, completed: !t.completed } : t
+      );
+      setMainTasks(updatedTasks);
+      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+    } else {
+      const rider = riders.find(r => r.id === sourceId);
+      if (rider) {
+        const updatedTasks = (rider.notes || []).map((t, i) => 
+          i === taskIndex ? { ...t, completed: !t.completed } : t
+        );
+        setRiders(riders.map(r => r.id === sourceId ? { ...r, notes: updatedTasks } : r));
+        await WorkOrder.update(sourceId, { notes: updatedTasks });
+      }
+    }
+  };
+
+  const renderTaskItem = (task, index, sourceType, sourceId) => {
+    const taskKey = `${sourceType}-${sourceId || 'main'}-${index}`;
+    const isExpanded = expandedTasks[taskKey];
+
+    return (
+      <div key={taskKey} className={`border rounded-lg ${task.completed ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+        <div className="flex items-center gap-2 p-2">
+          <Checkbox
+            checked={task.completed}
+            onCheckedChange={() => toggleTaskComplete(index, sourceType, sourceId)}
+            disabled={!isRegistered}
+          />
+          <button
+            onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !prev[taskKey] }))}
+            className="p-0.5"
+          >
+            {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </button>
+          <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}>
+            {task.text}
+          </span>
+          {task.sub_tasks?.length > 0 && (
+            <Badge variant="outline" className="text-xs">{task.sub_tasks.length}</Badge>
+          )}
+          {isRegistered && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowMoveTask({ task, sourceType, sourceId })}
+              className="h-6 px-2"
+            >
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+          )}
+        </div>
+
+        {isExpanded && task.sub_tasks?.length > 0 && (
+          <div className="px-8 pb-2 space-y-1">
+            {task.sub_tasks.map((subTask, stIdx) => (
+              <div key={stIdx}>
+                <div className="flex items-center gap-2 py-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                  <span className={`text-xs ${subTask.completed ? 'line-through text-gray-400' : 'text-gray-600'}`}>
+                    {subTask.text}
+                  </span>
+                </div>
+                {subTask.details?.length > 0 && (
+                  <div className="ml-4 space-y-0.5">
+                    {subTask.details.map((detail, dIdx) => (
+                      <div key={dIdx} className="flex items-center gap-2 py-0.5">
+                        <div className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span className={`text-xs ${detail.completed ? 'line-through text-gray-400' : 'text-gray-500'}`}>
+                          {detail.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="clay-card border-none max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-blue-600" />
+              Tasks - {workOrder?.client_name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 mt-4">
+            {/* Add Task Button */}
+            {isRegistered && (
+              <Button
+                onClick={() => setShowTaskCreation(true)}
+                className={colors.bg}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Task
+              </Button>
+            )}
+
+            {/* Main Job Tasks */}
+            <div className="border rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-blue-600" />
+                <span className="font-medium">Main Job Tasks</span>
+                <Badge variant="outline">{mainTasks.length}</Badge>
+              </div>
+              <div className="space-y-2">
+                {mainTasks.map((task, idx) => renderTaskItem(task, idx, "main", null))}
+                {mainTasks.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-2">No tasks</p>
+                )}
+              </div>
+            </div>
+
+            {/* Rider Tasks */}
+            {riders.map(rider => (
+              <div key={rider.id} className="border rounded-lg p-3 border-purple-200 bg-purple-50/30">
+                <div 
+                  className="flex items-center gap-2 mb-2 cursor-pointer"
+                  onClick={() => setExpandedRiders(prev => ({ ...prev, [rider.id]: !prev[rider.id] }))}
+                >
+                  {expandedRiders[rider.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  <LinkIcon className="w-4 h-4 text-purple-600" />
+                  <span className="font-medium text-purple-800">{rider.title}</span>
+                  <Badge variant="outline" className="text-purple-600">{rider.notes?.length || 0}</Badge>
+                  <span className="text-xs text-purple-500 ml-auto">
+                    {STAGES.find(s => s.value === rider.current_stage)?.label}
+                    {rider.assigned_to && ` • ${rider.assigned_to}`}
+                  </span>
+                </div>
+                {expandedRiders[rider.id] && (
+                  <div className="space-y-2 mt-2">
+                    {(rider.notes || []).map((task, idx) => renderTaskItem(task, idx, "rider", rider.id))}
+                    {(!rider.notes || rider.notes.length === 0) && (
+                      <p className="text-sm text-gray-400 text-center py-2">No tasks</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t mt-4">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Close
             </Button>
           </div>
         </DialogContent>
