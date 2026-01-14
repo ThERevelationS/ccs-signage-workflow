@@ -16,6 +16,7 @@ import Production from './pages/Production';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
+import MyWorkflow from './pages/MyWorkflow';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
+    "MyWorkflow": MyWorkflow,
 }
 
 export const pagesConfig = {
