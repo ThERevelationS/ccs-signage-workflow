@@ -1182,7 +1182,12 @@ export default function EnhancedSipChecklist({
                             <div className="ml-4 mt-1 space-y-1">
                               {detailTasks.map((task, tIdx) => (
                                 <div key={tIdx} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} disabled={!isRegistered} className="h-3 w-3" />
+                                  <Checkbox 
+                                    checked={task.completed || false} 
+                                    onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} 
+                                    disabled={!isRegistered} 
+                                    className="h-3 w-3" 
+                                  />
                                   <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
                                   {task.riderTitle && <Badge variant="outline" className="text-[10px] text-purple-600">{task.riderTitle}</Badge>}
                                   {task.sub_tasks?.length > 0 && <Badge variant="outline" className="text-[10px]">{task.sub_tasks.length}</Badge>}
@@ -1209,7 +1214,12 @@ export default function EnhancedSipChecklist({
                         <div className="ml-6 mt-1 space-y-1">
                           {itemTasks.map((task, tIdx) => (
                             <div key={tIdx} className={`flex items-center gap-2 p-1.5 rounded border text-xs ${task.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                              <Checkbox checked={task.completed} onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} disabled={!isRegistered} className="h-3 w-3" />
+                              <Checkbox 
+                                checked={task.completed || false} 
+                                onCheckedChange={() => toggleTaskComplete(task.index, task.sourceType, task.sourceId)} 
+                                disabled={!isRegistered} 
+                                className="h-3 w-3" 
+                              />
                               <span className={`flex-1 ${task.completed ? 'line-through text-gray-500' : ''}`}>{task.text}</span>
                               {task.riderTitle && <Badge variant="outline" className="text-[10px] text-purple-600">{task.riderTitle}</Badge>}
                               {task.sub_tasks?.length > 0 && <Badge variant="outline" className="text-[10px]">{task.sub_tasks.length}</Badge>}
