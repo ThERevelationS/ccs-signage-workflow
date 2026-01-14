@@ -1005,6 +1005,11 @@ export default function WorkOrderDetailsDialog({
                                           onCheckedChange={() => handleToggleTaskSubTask(actualIndex, subIdx)}
                                           className="h-3 w-3" />
                                         <span className={subTask.completed ? "line-through text-gray-400" : "text-gray-600"}>{subTask.text}</span>
+                                        {subTask.assigned_to && (
+                                          <Badge variant="outline" className="text-[10px] text-blue-600 px-1 py-0">
+                                            → {subTask.assigned_to}
+                                          </Badge>
+                                        )}
                                         <Button
                                           variant="ghost"
                                           size="icon"
