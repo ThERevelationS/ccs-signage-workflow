@@ -287,6 +287,9 @@ export default function WorkOrderDetailsDialog({
     await ActivityActions.taskAdded(workOrder, newTaskText);
   };
 
+  const [newSubTaskAssignedTo, setNewSubTaskAssignedTo] = useState("");
+  const [newDetailAssignedTo, setNewDetailAssignedTo] = useState("");
+
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
     
@@ -297,9 +300,11 @@ export default function WorkOrderDetailsDialog({
           timestamp: task.timestamp,
           created_by: task.created_by,
           completed: task.completed || false,
+          assigned_to: task.assigned_to,
           sub_tasks: [...(task.sub_tasks || []), { 
             text: newSubTaskText, 
-            completed: false
+            completed: false,
+            assigned_to: newSubTaskAssignedTo || ""
           }]
         };
       }
@@ -308,12 +313,14 @@ export default function WorkOrderDetailsDialog({
         timestamp: task.timestamp,
         created_by: task.created_by,
         completed: task.completed || false,
+        assigned_to: task.assigned_to,
         sub_tasks: task.sub_tasks || []
       };
     });
     // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     setNewSubTaskText("");
+    setNewSubTaskAssignedTo("");
     setAddingSubTaskFor(null);
     if (onUpdate) onUpdate();
     // Then persist to database
