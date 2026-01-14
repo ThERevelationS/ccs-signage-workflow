@@ -653,11 +653,15 @@ export default function EnhancedSipChecklist({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [allWorkOrders, usersData, templatesData] = await Promise.all([
+      // Fetch fresh work order data to get latest notes
+      const [freshWorkOrder, allWorkOrders, usersData, templatesData] = await Promise.all([
+        WorkOrder.filter({ id: workOrder.id }),
         WorkOrder.filter({ deleted: { $ne: true } }),
         AuthorizedEmail.list(),
         SipChecklistTemplate.list()
       ]);
+
+      const currentWorkOrder = freshWorkOrder[0] || workOrder;
 
       // Find riders for this work order
       const workOrderRiders = allWorkOrders.filter(
@@ -667,11 +671,11 @@ export default function EnhancedSipChecklist({
       setUsers(usersData);
       setTemplates(templatesData);
 
-      // Load checklist from work order
-      setChecklist(workOrder[checklistField] || []);
+      // Load checklist from fresh work order data
+      setChecklist(currentWorkOrder[checklistField] || []);
       
-      // Load main job tasks (from notes)
-      setMainTasks(workOrder.notes || []);
+      // Load main job tasks (from notes) - use fresh data
+      setMainTasks(currentWorkOrder.notes || []);
     } catch (error) {
       console.error("Error loading data:", error);
     }
