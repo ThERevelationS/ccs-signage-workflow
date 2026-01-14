@@ -362,16 +362,17 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                         <Input
                           type="number"
                           min="0"
-                          value={Math.floor((job.minutes || 0) / 60) || ""}
+                          value={job.minutes ? Math.floor(job.minutes / 60) : ""}
                           onChange={(e) => {
                             const hrs = parseInt(e.target.value) || 0;
-                            const mins = (job.minutes || 0) % 60;
-                            let totalMins = hrs * 60 + mins;
+                            const currentMins = job.minutes ? job.minutes % 60 : 0;
+                            let totalMins = hrs * 60 + currentMins;
                             const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
                             const maxAllowed = Math.max(0, workableMinutes - lunchMins - otherAllocations);
                             if (totalMins > maxAllowed) totalMins = maxAllowed;
-                            updateAllocation(index, "minutes", totalMins);
-                            updateAllocation(index, "hours", totalMins / 60);
+                            const updated = [...jobAllocations];
+                            updated[index] = { ...updated[index], minutes: totalMins, hours: totalMins / 60 };
+                            setJobAllocations(updated);
                           }}
                           placeholder="0"
                           className={`w-16 h-8 text-center ${!job.minutes || job.minutes <= 0 ? 'border-red-400 text-red-600' : ''}`}
@@ -384,16 +385,17 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                           min="0"
                           max="59"
                           step="5"
-                          value={(job.minutes || 0) % 60 || ""}
+                          value={job.minutes ? job.minutes % 60 : ""}
                           onChange={(e) => {
                             const mins = Math.min(59, parseInt(e.target.value) || 0);
-                            const hrs = Math.floor((job.minutes || 0) / 60);
-                            let totalMins = hrs * 60 + mins;
+                            const currentHrs = job.minutes ? Math.floor(job.minutes / 60) : 0;
+                            let totalMins = currentHrs * 60 + mins;
                             const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
                             const maxAllowed = Math.max(0, workableMinutes - lunchMins - otherAllocations);
                             if (totalMins > maxAllowed) totalMins = maxAllowed;
-                            updateAllocation(index, "minutes", totalMins);
-                            updateAllocation(index, "hours", totalMins / 60);
+                            const updated = [...jobAllocations];
+                            updated[index] = { ...updated[index], minutes: totalMins, hours: totalMins / 60 };
+                            setJobAllocations(updated);
                           }}
                           placeholder="0"
                           className={`w-16 h-8 text-center ${!job.minutes || job.minutes <= 0 ? 'border-red-400 text-red-600' : ''}`}
