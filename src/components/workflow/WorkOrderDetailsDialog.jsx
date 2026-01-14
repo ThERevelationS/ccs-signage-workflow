@@ -1073,7 +1073,7 @@ export default function WorkOrderDetailsDialog({
                               )}
                               {/* Add sub-task - hover reveal */}
                               {addingSubTaskFor === actualIndex ? (
-                                <div className="ml-4 mt-2 flex gap-1">
+                                <div className="ml-4 mt-2 space-y-1">
                                   <Input
                                     value={newSubTaskText}
                                     onChange={(e) => setNewSubTaskText(e.target.value)}
@@ -1082,14 +1082,29 @@ export default function WorkOrderDetailsDialog({
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleAddTaskSubTask(actualIndex);
-                                      if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");}
+                                      if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");}
                                     }} />
-                                  <Button size="sm" onClick={() => handleAddTaskSubTask(actualIndex)} className="h-6 px-2">
-                                    <Check className="w-3 h-3" />
-                                  </Button>
-                                  <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");}} className="h-6 px-2">
-                                    <X className="w-3 h-3" />
-                                  </Button>
+                                  <Select value={newSubTaskAssignedTo} onValueChange={setNewSubTaskAssignedTo}>
+                                    <SelectTrigger className="h-6 text-xs">
+                                      <SelectValue placeholder="Assign to (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value={null}>Unassigned</SelectItem>
+                                      {allUsers.map(user => (
+                                        <SelectItem key={user.id} value={user.full_name || user.email}>
+                                          {user.full_name || user.email}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="flex gap-1">
+                                    <Button size="sm" onClick={() => handleAddTaskSubTask(actualIndex)} className="h-6 px-2">
+                                      <Check className="w-3 h-3" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");}} className="h-6 px-2">
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="ml-4 mt-1 hover-btn">
