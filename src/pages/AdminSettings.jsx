@@ -530,38 +530,34 @@ export default function AdminSettings() {
 
 
         <Tabs defaultValue="automations" className="space-y-6">
-          <TabsList className="clay-card border-none p-2 flex-wrap" style={{ background: '#FEE2E2' }}>
-            <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-              <Zap className="w-6 h-6 mr-3" />
+          <TabsList className="clay-card border-none p-2 w-full" style={{ background: '#FEE2E2' }}>
+            <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <Zap className="w-4 h-4 mr-2" />
               Automations
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-              <Users className="w-6 h-6 mr-3" />
+            <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <Users className="w-4 h-4 mr-2" />
               Users
             </TabsTrigger>
             {isAdmin && (
               <>
-                <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                  <Trash2 className="w-6 h-6 mr-3" />
+                <TabsTrigger value="project_trash" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Client Trash
                 </TabsTrigger>
-                <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                  <Trash2 className="w-6 h-6 mr-3" />
+                <TabsTrigger value="order_trash" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
                   Order Trash
                 </TabsTrigger>
-                <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                  <Clock className="w-6 h-6 mr-3" />
+                <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <Clock className="w-4 h-4 mr-2" />
                   Time Clock
-                </TabsTrigger>
-                <TabsTrigger value="pto" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-                  <Calendar className="w-6 h-6 mr-3" />
-                  PTO Policies
                 </TabsTrigger>
               </>
             )}
-            <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
-              <Activity className="w-6 h-6 mr-3" />
-              Activity Feed
+            <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+              <Activity className="w-4 h-4 mr-2" />
+              Activity
             </TabsTrigger>
           </TabsList>
 
@@ -580,11 +576,18 @@ export default function AdminSettings() {
               </TabsContent>
 
               <TabsContent value="timeclock">
-                <TimeClockAdmin />
-              </TabsContent>
-
-              <TabsContent value="pto">
-                <PTOManagement />
+                <Tabs defaultValue="entries" className="space-y-4">
+                  <TabsList>
+                    <TabsTrigger value="entries">Time Entries</TabsTrigger>
+                    <TabsTrigger value="pto">PTO Policies</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="entries">
+                    <TimeClockAdmin />
+                  </TabsContent>
+                  <TabsContent value="pto">
+                    <PTOManagement />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </>
           )}
