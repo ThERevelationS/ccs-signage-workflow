@@ -62,6 +62,7 @@ import ProjectTrash from "../components/admin/ProjectTrash";
 import OrderTrash from "../components/admin/OrderTrash";
 import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
 import ActivityFeed from "../components/admin/ActivityFeed";
+import PTOManagement from "../components/admin/PTOManagement";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -552,6 +553,10 @@ export default function AdminSettings() {
                   <Clock className="w-6 h-6 mr-3" />
                   Time Clock
                 </TabsTrigger>
+                <TabsTrigger value="pto" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
+                  <Calendar className="w-6 h-6 mr-3" />
+                  PTO Policies
+                </TabsTrigger>
               </>
             )}
             <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-6 py-3 text-base">
@@ -576,6 +581,10 @@ export default function AdminSettings() {
 
               <TabsContent value="timeclock">
                 <TimeClockAdmin />
+              </TabsContent>
+
+              <TabsContent value="pto">
+                <PTOManagement />
               </TabsContent>
             </>
           )}

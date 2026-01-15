@@ -352,7 +352,8 @@ function LayoutContent({ children }) {
           style={{ 
             background: darkMode ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(22, 33, 62, 0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
             backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            minHeight: 'auto'
           }}
         >
           <div className="px-4 py-2">
@@ -381,22 +382,22 @@ function LayoutContent({ children }) {
               </button>
 
               {/* Desktop Navigation Links */}
-              <div className="hidden lg:flex items-center gap-2 flex-wrap flex-1 ml-4">
+              <div className="hidden lg:flex items-center gap-1 flex-wrap flex-1 ml-4 max-w-[calc(100%-400px)]">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   return (
                     <Link
                       key={item.title}
                       to={item.url}
-                      className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap border-2 ${
+                      className={`px-2 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
                         isActive ? 'clay-card border-purple-300 shadow-md' : 'hover:clay-card border-gray-200 hover:border-gray-300'
                       }`}
                       style={isActive ? { 
                         background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
                       } : {}}
                     >
-                      <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                      <span className={`font-bold text-sm ${isActive ? 'text-purple-900' : 'text-gray-700'}`}>
+                      <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
+                      <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : 'text-gray-700'}`}>
                         {item.title}
                       </span>
                     </Link>
@@ -451,7 +452,7 @@ function LayoutContent({ children }) {
         {/* Main content with top padding - reduced in fullscreen */}
         <main 
           className="flex-1 overflow-auto main-scroll-container" 
-          style={{ paddingTop: isCollapsed ? '16px' : '110px' }}
+          style={{ paddingTop: isCollapsed ? '16px' : '120px', minHeight: '100vh' }}
         >
           {children}
         </main>
