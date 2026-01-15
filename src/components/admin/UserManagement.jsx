@@ -409,10 +409,10 @@ Return valid HTML that will render beautifully in ALL email clients including da
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleSendPasswordReset(user)}
+                    onClick={() => handleGeneratePassword(user)}
                     disabled={sendingPasswordReset === user.id}
                     className="h-8 w-8"
-                    title="Send Password Reset"
+                    title="Generate New Password"
                   >
                     {sendingPasswordReset === user.id ? (
                       <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
