@@ -1341,29 +1341,6 @@ export default function WorkOrderDetailsDialog({
                   <Popover>
                     <PopoverTrigger asChild>
                       <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
-                        <User className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">Assigned:</span>
-                        <span className="text-gray-600">{workOrder.assigned_to || 'Unassigned'}</span>
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="clay-card w-64">
-                      <Label>Assigned To</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          value={editValues.assigned_to || workOrder.assigned_to || ''}
-                          onChange={(e) => setEditValues({ ...editValues, assigned_to: e.target.value })}
-                          placeholder="Enter name" />
-
-                        <Button size="sm" onClick={() => saveEdit('assigned_to')}>
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded transition-colors">
                         <Calendar className="w-4 h-4 text-orange-600" />
                         <span className="font-medium">Due:</span>
                         <span className="text-gray-600">

@@ -75,8 +75,9 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
       await WorkOrder.update(workOrder.id, cleanedData);
       // Update workOrder object directly so UI reflects changes immediately
       Object.assign(workOrder, cleanedData);
+      // Keep local data in sync with saved values (don't clear it, merge it)
+      // This ensures the UI shows the saved values
       setLocalData({});
-      if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error saving:", error);
     }

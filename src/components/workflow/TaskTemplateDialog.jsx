@@ -81,8 +81,10 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
     await loadTemplates();
   };
 
-  const handleUseTemplate = (template) => {
-    onUseTemplate(template);
+  const handleUseTemplate = async (e, template) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await onUseTemplate(template);
     onClose();
   };
 
@@ -178,7 +180,8 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleUseTemplate(template)}
+                          type="button"
+                          onClick={(e) => handleUseTemplate(e, template)}
                           className="h-7 w-7">
                           <Check className="w-3 h-3 text-green-600" />
                         </Button>
