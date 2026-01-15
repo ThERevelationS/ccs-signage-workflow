@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { 
   Clock, 
@@ -10,11 +11,13 @@ import {
   Square, 
   User,
   Loader2,
-  QrCode
+  QrCode,
+  Camera
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import QRScanner from "@/components/timeclock/QRScanner";
+import FaceRecognition from "@/components/timeclock/FaceRecognition";
 
 const TimeEntry = base44.entities.TimeEntry;
 
@@ -151,43 +154,78 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         </div>
       )}
 
-      {/* QR Scanner Section */}
-      <QRScanner onScan={handleQRScan} allUsers={allUsers} />
-
+      {/* Authentication Methods */}
       <div className="clay-card p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
         </h2>
 
-        {/* User Selection */}
-        <div className="mb-6">
-          <Label className="text-sm font-medium mb-2 block">Enter Your Username</Label>
-          <div className="flex gap-2 max-w-md">
-            <div className="relative flex-1">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleUsernameSubmit()}
-                placeholder="Type your username..."
-                className="pl-10"
-              />
+        <Tabs defaultValue="username" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="username" className="gap-2">
+              <User className="w-4 h-4" />
+              Username
+            </TabsTrigger>
+            <TabsTrigger value="qr" className="gap-2">
+              <QrCode className="w-4 h-4" />
+              QR Code
+            </TabsTrigger>
+            <TabsTrigger value="face" className="gap-2">
+              <Camera className="w-4 h-4" />
+              Face ID
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="username">
+            <div className="mb-6">
+              <Label className="text-sm font-medium mb-2 block">Enter Your Username</Label>
+              <div className="flex gap-2 max-w-md">
+                <div className="relative flex-1">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleUsernameSubmit()}
+                    placeholder="Type your username..."
+                    className="pl-10"
+                  />
+                </div>
+                <Button onClick={handleUsernameSubmit} className="bg-purple-600 hover:bg-purple-700">
+                  Go
+                </Button>
+                {selectedUser && (
+                  <Button variant="outline" onClick={handleClear}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              {selectedUser && (
+                <p className="text-green-600 text-sm mt-1">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
+              )}
             </div>
-            <Button onClick={handleUsernameSubmit} className="bg-purple-600 hover:bg-purple-700">
-              Go
-            </Button>
+          </TabsContent>
+
+          <TabsContent value="qr">
+            <QRScanner onScan={handleQRScan} allUsers={allUsers} inline />
             {selectedUser && (
-              <Button variant="outline" onClick={handleClear}>
-                Clear
-              </Button>
+              <p className="text-green-600 text-sm mt-2 text-center">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
             )}
-          </div>
-          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-          {selectedUser && (
-            <p className="text-green-600 text-sm mt-1">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="face">
+            <FaceRecognition 
+              allUsers={allUsers} 
+              onRecognized={(user) => {
+                setSelectedUser(user);
+                setUsernameInput(user.username || "");
+                setError("");
+                checkActiveEntry(user.email);
+              }}
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Clock Status */}
         {selectedUser && (
