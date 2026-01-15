@@ -100,23 +100,60 @@ export default function UserManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleGeneratePassword = async (user) => {
-    // Generate a simple temporary password
-    const tempPassword = Math.random().toString(36).substring(2, 8);
+  const handleSendPasswordReset = async (user) => {
+    if (!user.email) return;
     
     setSendingPasswordReset(user.id);
     try {
+      // Generate a reset token
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 24);
+      
       await base44.entities.AuthorizedEmail.update(user.id, {
-        password_hash: tempPassword
+        password_reset_token: resetToken,
+        password_reset_expires: expires.toISOString()
       });
       
-      // Copy to clipboard and show alert
-      await navigator.clipboard.writeText(tempPassword);
-      alert(`New password generated for ${user.full_name || user.email}:\n\n${tempPassword}\n\n(Copied to clipboard - share this with the user)`);
-      loadUsers();
+      // Build the reset link
+      const appUrl = window.location.origin;
+      const resetLink = `${appUrl}/ResetPassword?token=${resetToken}`;
+      
+      // Send email with reset link
+      const emailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%); padding: 30px; border-radius: 16px; text-align: center;">
+            <h1 style="color: #1F2937; margin: 0 0 10px 0;">🔐 Password Reset</h1>
+            <p style="color: #374151; margin: 0;">Sign Shop Time Clock</p>
+          </div>
+          
+          <div style="background: #FFFFFF; padding: 30px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="color: #1F2937; font-size: 16px;">Hi ${user.full_name || 'there'},</p>
+            <p style="color: #374151;">Click the button below to set your Time Clock password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}" style="background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;">
+                Set My Password
+              </a>
+            </div>
+            
+            <p style="color: #6B7280; font-size: 14px;">This link will expire in 24 hours.</p>
+            <p style="color: #6B7280; font-size: 14px;">If the button doesn't work, copy and paste this link:</p>
+            <p style="color: #7C3AED; font-size: 12px; word-break: break-all;">${resetLink}</p>
+          </div>
+        </div>
+      `;
+
+      await sendGmail({
+        to: user.email,
+        subject: "Set Your Time Clock Password",
+        body: emailBody
+      });
+
+      alert(`Password reset email sent to ${user.email}`);
     } catch (err) {
-      console.error("Error generating password:", err);
-      alert("Failed to generate password");
+      console.error("Error sending password reset:", err);
+      alert("Failed to send password reset email");
     }
     setSendingPasswordReset(null);
   };
@@ -409,10 +446,10 @@ Return valid HTML that will render beautifully in ALL email clients including da
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleGeneratePassword(user)}
+                    onClick={() => handleSendPasswordReset(user)}
                     disabled={sendingPasswordReset === user.id}
                     className="h-8 w-8"
-                    title="Generate New Password"
+                    title="Send Password Reset Email"
                   >
                     {sendingPasswordReset === user.id ? (
                       <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
