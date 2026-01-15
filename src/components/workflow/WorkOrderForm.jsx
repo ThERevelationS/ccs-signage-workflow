@@ -449,7 +449,7 @@ export default function WorkOrderForm({
       if (extractResult.status === "success" && extractResult.output) {
         const data = extractResult.output;
         
-        // Map extracted data to form fields
+        // Map extracted data to form fields - more comprehensive mapping
         setFormData(prev => ({
           ...prev,
           designer: data.designer || prev.designer,
@@ -461,9 +461,11 @@ export default function WorkOrderForm({
           client_name: data.customer_name || prev.client_name,
           representative: data.representative || prev.representative,
           install_location: data.address || prev.install_location,
+          address_line_2: data.address_line_2 || prev.address_line_2,
           contact_phone: data.contact_phone || prev.contact_phone,
           contact_email: data.email || prev.contact_email,
           billing_address: data.billing_address || prev.billing_address,
+          billing_address_line_2: data.billing_address_line_2 || prev.billing_address_line_2,
           additional_contact: data.additional_contact || prev.additional_contact,
           permitting: data.permitting || prev.permitting,
           township_city: data.township_city || prev.township_city,
@@ -504,7 +506,12 @@ export default function WorkOrderForm({
           cf_complete: data.cf_complete ?? prev.cf_complete,
           cc_complete: data.cc_complete ?? prev.cc_complete,
           sms_complete: data.sms_complete ?? prev.sms_complete,
-          title: data.customer_name ? `${data.customer_name} - Work Order` : prev.title,
+          // Build title from customer name and project description
+          title: data.customer_name 
+            ? `${data.customer_name}${data.project_description ? ' - ' + data.project_description : ' - Work Order'}` 
+            : prev.title,
+          description: data.project_description || prev.description,
+          estimate_amount: data.estimate_amount || prev.estimate_amount,
           notes: data.notes_text ? [...prev.notes, {
             text: data.notes_text,
             timestamp: new Date().toISOString(),
