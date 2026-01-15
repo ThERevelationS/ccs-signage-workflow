@@ -25,19 +25,29 @@ import {
   FileText,
   Pencil,
   Save,
-  X
+  X,
+  LogIn,
+  LogOut,
+  Lock
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
 import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
+import QuickClockSection from "@/components/timeclock/QuickClockSection";
+import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function TimeClock() {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser: authUser, isRegistered } = useAuth();
+  const [allUsers, setAllUsers] = useState([]);
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  
   const [activeEntry, setActiveEntry] = useState(null);
   const [timeEntries, setTimeEntries] = useState([]);
   const [timeOffRequests, setTimeOffRequests] = useState([]);
@@ -57,27 +67,42 @@ export default function TimeClock() {
   }, []);
 
   useEffect(() => {
-    if (currentUser?.email) {
+    loadAllUsers();
+  }, []);
+
+  useEffect(() => {
+    if (loggedInUser?.email) {
       loadData();
     }
-  }, [currentUser]);
+  }, [loggedInUser]);
+
+  const loadAllUsers = async () => {
+    setIsLoading(true);
+    try {
+      const users = await AuthorizedEmail.list();
+      setAllUsers(users);
+    } catch (err) {
+      console.error("Error loading users:", err);
+    }
+    setIsLoading(false);
+  };
 
   const loadData = async () => {
+    if (!loggedInUser?.email) return;
+    
     setIsLoading(true);
     try {
       const [entries, requests] = await Promise.all([
-        TimeEntry.filter({ user_email: currentUser.email }),
-        TimeOffRequest.filter({ user_email: currentUser.email })
+        TimeEntry.filter({ user_email: loggedInUser.email }),
+        TimeOffRequest.filter({ user_email: loggedInUser.email })
       ]);
       
-      // Sort by date descending
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
       requests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       
       setTimeEntries(entries);
       setTimeOffRequests(requests);
       
-      // Check for active clock-in
       const active = entries.find(e => e.status === "clocked_in");
       setActiveEntry(active || null);
     } catch (err) {
@@ -86,11 +111,23 @@ export default function TimeClock() {
     setIsLoading(false);
   };
 
+  const handleLogin = (user) => {
+    setLoggedInUser(user);
+    setShowLoginDialog(false);
+  };
+
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    setTimeEntries([]);
+    setTimeOffRequests([]);
+    setActiveEntry(null);
+  };
+
   const handleClockIn = async () => {
     try {
       const entry = await TimeEntry.create({
-        user_email: currentUser.email,
-        user_name: currentUser.full_name || currentUser.email,
+        user_email: loggedInUser.email,
+        user_name: loggedInUser.full_name || loggedInUser.email,
         clock_in: new Date().toISOString(),
         status: "clocked_in"
       });
@@ -159,7 +196,7 @@ export default function TimeClock() {
     setEditNotesText(entry.notes || "");
   };
 
-  if (isLoading) {
+  if (isLoading && allUsers.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
@@ -181,293 +218,285 @@ export default function TimeClock() {
               <p className="text-gray-600 text-sm">Track your work hours</p>
             </div>
           </div>
-          <Button onClick={() => setShowTimeOffRequest(true)} variant="outline" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            Request Time Off
-          </Button>
+          
+          {loggedInUser ? (
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setShowTimeOffRequest(true)} variant="outline" className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Request Time Off
+              </Button>
+              <Button onClick={handleLogout} variant="outline" className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={() => setShowLoginDialog(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
+              <LogIn className="w-4 h-4" />
+              Login for Full Access
+            </Button>
+          )}
         </div>
 
         {/* Current Time Display */}
         <div className="clay-card p-6 mb-6 text-center">
           <p className="text-sm text-gray-500 mb-1">{format(currentTime, "EEEE, MMMM d, yyyy")}</p>
           <p className="text-4xl font-bold text-gray-800">{format(currentTime, "h:mm:ss a")}</p>
-          
-          {currentUser && (
-            <p className="text-sm text-gray-600 mt-2 flex items-center justify-center gap-2">
-              <User className="w-4 h-4" />
-              {currentUser.full_name || currentUser.email}
+        </div>
+
+        {/* Quick Clock In/Out Section - Always Visible */}
+        <QuickClockSection allUsers={allUsers} currentTime={currentTime} />
+
+        {/* Login Required Section */}
+        {!loggedInUser ? (
+          <div className="clay-card p-8 text-center">
+            <Lock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold mb-2">Login Required</h3>
+            <p className="text-gray-500 mb-4">
+              Login to view your time history, time off requests, and PTO balance
             </p>
-          )}
-        </div>
-
-        {/* Clock In/Out Card */}
-        <div className="clay-card p-6 mb-6">
-          {activeEntry ? (
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full mb-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="font-medium">Clocked In</span>
-              </div>
-              
-              <p className="text-sm text-gray-500 mb-2">
-                Since {format(new Date(activeEntry.clock_in), "h:mm a")}
-              </p>
-              
-              <div className="text-5xl font-mono font-bold text-purple-600 mb-6">
-                {elapsed?.formatted}
-              </div>
-              
-              <Button 
-                onClick={() => setShowClockOut(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-lg gap-2"
-              >
-                <Square className="w-5 h-5" />
-                Clock Out
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-full mb-4">
-                <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                <span className="font-medium">Not Clocked In</span>
-              </div>
-              
-              <p className="text-gray-500 mb-6">Ready to start your day?</p>
-              
-              <Button 
-                onClick={handleClockIn}
-                disabled={!isRegistered}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg gap-2"
-              >
-                <Play className="w-5 h-5" />
-                Clock In
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="clock" className="gap-2">
-              <History className="w-4 h-4" />
-              Time History
-            </TabsTrigger>
-            <TabsTrigger value="timeoff" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              Time Off Requests
-            </TabsTrigger>
-            <TabsTrigger value="balance" className="gap-2">
-              <Briefcase className="w-4 h-4" />
-              My PTO Balance
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="clock">
-            {/* Weekly Summary */}
-            <div className="clay-card p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <Button variant="ghost" size="sm" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <h3 className="font-semibold">
-                  Week of {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
-                </h3>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-purple-600">{weeklyHours.toFixed(2)} hrs</p>
-                <p className="text-sm text-gray-500">Total this week</p>
-              </div>
-            </div>
-
-            {/* Time Entries List */}
-            <div className="space-y-3">
-              {weeklyEntries.length === 0 ? (
-                <div className="clay-card p-6 text-center text-gray-500">
-                  <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No time entries for this week</p>
+            <Button onClick={() => setShowLoginDialog(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
+              <LogIn className="w-4 h-4" />
+              Login
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Logged In User Info */}
+            <div className="clay-card p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-purple-600" />
+                <div>
+                  <p className="font-semibold">{loggedInUser.full_name || loggedInUser.email}</p>
+                  <p className="text-sm text-gray-500">@{loggedInUser.username}</p>
                 </div>
-              ) : (
-                weeklyEntries.map(entry => (
-                  <div key={entry.id} className="clay-card p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold">{format(parseISO(entry.clock_in), "EEEE, MMM d")}</p>
-                        <p className="text-sm text-gray-500">
-                          {format(parseISO(entry.clock_in), "h:mm a")} 
-                          {entry.clock_out && ` - ${format(parseISO(entry.clock_out), "h:mm a")}`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        {entry.status === "clocked_in" ? (
-                          <Badge className="bg-green-100 text-green-700">Active</Badge>
-                        ) : (
-                          <p className="text-lg font-bold text-purple-600">{entry.total_hours?.toFixed(2)} hrs</p>
-                        )}
-                      </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="clock" className="gap-2">
+                  <History className="w-4 h-4" />
+                  Time History
+                </TabsTrigger>
+                <TabsTrigger value="timeoff" className="gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Time Off Requests
+                </TabsTrigger>
+                <TabsTrigger value="balance" className="gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  My PTO Balance
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="clock">
+                {/* Weekly Summary */}
+                <div className="clay-card p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <h3 className="font-semibold">
+                      Week of {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+                    </h3>
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-purple-600">{weeklyHours.toFixed(2)} hrs</p>
+                    <p className="text-sm text-gray-500">Total this week</p>
+                  </div>
+                </div>
+
+                {/* Time Entries List */}
+                <div className="space-y-3">
+                  {weeklyEntries.length === 0 ? (
+                    <div className="clay-card p-6 text-center text-gray-500">
+                      <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No time entries for this week</p>
                     </div>
-
-                    {entry.lunch_minutes > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Coffee className="w-3 h-3" />
-                        Lunch: {entry.lunch_minutes} min
-                      </div>
-                    )}
-
-                    {entry.job_allocations && entry.job_allocations.length > 0 && (
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs font-medium text-gray-500 mb-2">Job Allocations:</p>
-                        <div className="space-y-1">
-                          {entry.job_allocations.map((job, i) => (
-                            <div key={i} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
-                              <div className="flex items-center gap-2">
-                                {job.is_inhouse ? (
-                                  <>
-                                    <Home className="w-3 h-3 text-amber-600" />
-                                    <span>{job.inhouse_task}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Briefcase className="w-3 h-3 text-purple-600" />
-                                    <span>{job.client_name}</span>
-                                  </>
-                                )}
-                              </div>
-                              <span className="font-medium">{job.hours?.toFixed(2)} hrs</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Notes Section - Always show with edit capability */}
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <FileText className="w-3 h-3" />
-                          Notes:
-                        </div>
-                        {entry.status === "clocked_out" && editingNotes !== entry.id && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-6 px-2 text-xs"
-                            onClick={() => startEditingNotes(entry)}
-                          >
-                            <Pencil className="w-3 h-3 mr-1" />
-                            {entry.notes ? "Edit" : "Add"}
-                          </Button>
-                        )}
-                      </div>
-                      {editingNotes === entry.id ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={editNotesText}
-                            onChange={(e) => setEditNotesText(e.target.value)}
-                            placeholder="Add notes about this time entry..."
-                            className="text-sm min-h-[60px]"
-                          />
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              className="h-7 px-3 bg-green-600 hover:bg-green-700"
-                              onClick={() => handleSaveNotes(entry.id)}
-                            >
-                              <Save className="w-3 h-3 mr-1" />
-                              Save
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="h-7 px-3"
-                              onClick={() => { setEditingNotes(null); setEditNotesText(""); }}
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Cancel
-                            </Button>
+                  ) : (
+                    weeklyEntries.map(entry => (
+                      <div key={entry.id} className="clay-card p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="font-semibold">{format(parseISO(entry.clock_in), "EEEE, MMM d")}</p>
+                            <p className="text-sm text-gray-500">
+                              {format(parseISO(entry.clock_in), "h:mm a")} 
+                              {entry.clock_out && ` - ${format(parseISO(entry.clock_out), "h:mm a")}`}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            {entry.status === "clocked_in" ? (
+                              <Badge className="bg-green-100 text-green-700">Active</Badge>
+                            ) : (
+                              <p className="text-lg font-bold text-purple-600">{entry.total_hours?.toFixed(2)} hrs</p>
+                            )}
                           </div>
                         </div>
-                      ) : entry.notes ? (
-                        <p className="text-sm text-gray-600">{entry.notes}</p>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">No notes</p>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="timeoff">
-            <div className="space-y-3">
-              {timeOffRequests.length === 0 ? (
-                <div className="clay-card p-6 text-center text-gray-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No time off requests</p>
-                  <Button 
-                    onClick={() => setShowTimeOffRequest(true)} 
-                    variant="outline" 
-                    className="mt-4"
-                  >
-                    Request Time Off
-                  </Button>
+                        {entry.lunch_minutes > 0 && (
+                          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                            <Coffee className="w-3 h-3" />
+                            Lunch: {entry.lunch_minutes} min
+                          </div>
+                        )}
+
+                        {entry.job_allocations && entry.job_allocations.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-medium text-gray-500 mb-2">Job Allocations:</p>
+                            <div className="space-y-1">
+                              {entry.job_allocations.map((job, i) => (
+                                <div key={i} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                                  <div className="flex items-center gap-2">
+                                    {job.is_inhouse ? (
+                                      <>
+                                        <Home className="w-3 h-3 text-amber-600" />
+                                        <span>{job.inhouse_task}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Briefcase className="w-3 h-3 text-purple-600" />
+                                        <span>{job.client_name}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <span className="font-medium">{job.hours?.toFixed(2)} hrs</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Notes Section */}
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <FileText className="w-3 h-3" />
+                              Notes:
+                            </div>
+                            {entry.status === "clocked_out" && editingNotes !== entry.id && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs"
+                                onClick={() => startEditingNotes(entry)}
+                              >
+                                <Pencil className="w-3 h-3 mr-1" />
+                                {entry.notes ? "Edit" : "Add"}
+                              </Button>
+                            )}
+                          </div>
+                          {editingNotes === entry.id ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={editNotesText}
+                                onChange={(e) => setEditNotesText(e.target.value)}
+                                placeholder="Add notes about this time entry..."
+                                className="text-sm min-h-[60px]"
+                              />
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  className="h-7 px-3 bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleSaveNotes(entry.id)}
+                                >
+                                  <Save className="w-3 h-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="h-7 px-3"
+                                  onClick={() => { setEditingNotes(null); setEditNotesText(""); }}
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : entry.notes ? (
+                            <p className="text-sm text-gray-600">{entry.notes}</p>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No notes</p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ) : (
-                timeOffRequests.map(request => (
-                  <div key={request.id} className="clay-card p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold capitalize">{request.request_type.replace("_", " ")}</p>
-                        <p className="text-sm text-gray-500">
-                          {format(parseISO(request.start_date), "MMM d, yyyy")}
-                          {request.end_date !== request.start_date && 
-                            ` - ${format(parseISO(request.end_date), "MMM d, yyyy")}`
-                          }
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">{request.hours_requested} hours</p>
-                        {request.reason && (
-                          <p className="text-sm text-gray-500 mt-1">{request.reason}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {request.status === "pending" && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2"
-                            onClick={() => setEditingTimeOff(request)}
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </Button>
-                        )}
-                        <Badge className={
-                          request.status === "approved" ? "bg-green-100 text-green-700" :
-                          request.status === "denied" ? "bg-red-100 text-red-700" :
-                          "bg-yellow-100 text-yellow-700"
-                        }>
-                          {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
-                          {request.status === "denied" && <XCircle className="w-3 h-3 mr-1" />}
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </Badge>
-                      </div>
-                    </div>
-                    {request.admin_notes && (
-                      <p className="text-sm text-gray-500 mt-2 italic">Admin: {request.admin_notes}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="balance">
-            <PTOBalanceView currentUser={currentUser} />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="timeoff">
+                <div className="space-y-3">
+                  {timeOffRequests.length === 0 ? (
+                    <div className="clay-card p-6 text-center text-gray-500">
+                      <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No time off requests</p>
+                      <Button 
+                        onClick={() => setShowTimeOffRequest(true)} 
+                        variant="outline" 
+                        className="mt-4"
+                      >
+                        Request Time Off
+                      </Button>
+                    </div>
+                  ) : (
+                    timeOffRequests.map(request => (
+                      <div key={request.id} className="clay-card p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold capitalize">{request.request_type.replace("_", " ")}</p>
+                            <p className="text-sm text-gray-500">
+                              {format(parseISO(request.start_date), "MMM d, yyyy")}
+                              {request.end_date !== request.start_date && 
+                                ` - ${format(parseISO(request.end_date), "MMM d, yyyy")}`
+                              }
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">{request.hours_requested} hours</p>
+                            {request.reason && (
+                              <p className="text-sm text-gray-500 mt-1">{request.reason}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {request.status === "pending" && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 px-2"
+                                onClick={() => setEditingTimeOff(request)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            )}
+                            <Badge className={
+                              request.status === "approved" ? "bg-green-100 text-green-700" :
+                              request.status === "denied" ? "bg-red-100 text-red-700" :
+                              "bg-yellow-100 text-yellow-700"
+                            }>
+                              {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
+                              {request.status === "denied" && <XCircle className="w-3 h-3 mr-1" />}
+                              {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                            </Badge>
+                          </div>
+                        </div>
+                        {request.admin_notes && (
+                          <p className="text-sm text-gray-500 mt-2 italic">Admin: {request.admin_notes}</p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="balance">
+                <PTOBalanceView currentUser={loggedInUser} />
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </div>
 
       {/* Dialogs */}
@@ -480,11 +509,11 @@ export default function TimeClock() {
         />
       )}
 
-      {showTimeOffRequest && (
+      {showTimeOffRequest && loggedInUser && (
         <TimeOffRequestDialog
           isOpen={showTimeOffRequest}
           onClose={() => setShowTimeOffRequest(false)}
-          currentUser={currentUser}
+          currentUser={loggedInUser}
           onSubmit={loadData}
         />
       )}
@@ -493,11 +522,18 @@ export default function TimeClock() {
         <TimeOffRequestDialog
           isOpen={!!editingTimeOff}
           onClose={() => setEditingTimeOff(null)}
-          currentUser={currentUser}
+          currentUser={loggedInUser}
           onSubmit={loadData}
           existingRequest={editingTimeOff}
         />
       )}
+
+      <TimeClockLoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        onLogin={handleLogin}
+        allUsers={allUsers}
+      />
     </div>
   );
 }
