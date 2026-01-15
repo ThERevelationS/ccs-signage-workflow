@@ -54,6 +54,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const handleClose = () => {
     setFaceDescriptors([]);
     setSaved(false);
+    setShowCamera(false);
     onClose();
   };
 

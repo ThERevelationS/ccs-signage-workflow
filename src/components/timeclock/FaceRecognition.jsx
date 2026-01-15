@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Camera, 
@@ -23,12 +23,17 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [scanStatus, setScanStatus] = useState("");
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
   const [videoReady, setVideoReady] = useState(false);
+  const [cameraStarted, setCameraStarted] = useState(false);
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    loadModels();
+    mountedRef.current = true;
+    initializeCamera();
+    
     return () => {
+      mountedRef.current = false;
       stopCamera();
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
@@ -36,46 +41,93 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     };
   }, []);
 
-  const loadModels = async () => {
+  const initializeCamera = async () => {
     setIsLoading(true);
     setError("");
+    
     try {
+      // First start camera
+      await startCamera();
+      
+      // Then load models
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
       ]);
-      setIsModelLoaded(true);
-      await startCamera();
+      
+      if (mountedRef.current) {
+        setIsModelLoaded(true);
+      }
     } catch (err) {
-      console.error("Error loading face models:", err);
-      setError("Failed to load face recognition models. Please refresh.");
+      console.error("Error initializing:", err);
+      if (mountedRef.current) {
+        setError("Failed to initialize. Please refresh and allow camera access.");
+      }
     }
-    setIsLoading(false);
+    
+    if (mountedRef.current) {
+      setIsLoading(false);
+    }
   };
 
   const startCamera = async () => {
     try {
       setVideoReady(false);
+      setCameraStarted(false);
+      
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" }
+        video: { 
+          width: { ideal: 640 }, 
+          height: { ideal: 480 }, 
+          facingMode: "user" 
+        }
       });
+      
+      if (!mountedRef.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current.play();
-            // Wait a moment for video to stabilize
-            setTimeout(() => setVideoReady(true), 500);
-          } catch (err) {
-            console.error("Video play error:", err);
-          }
+        
+        // Use loadeddata event instead of loadedmetadata
+        videoRef.current.onloadeddata = () => {
+          if (!mountedRef.current) return;
+          
+          videoRef.current.play()
+            .then(() => {
+              if (mountedRef.current) {
+                setCameraStarted(true);
+                setTimeout(() => {
+                  if (mountedRef.current) {
+                    setVideoReady(true);
+                    setScanStatus("Camera ready. Click 'Capture Face' when ready.");
+                  }
+                }, 1000);
+              }
+            })
+            .catch(err => {
+              console.error("Video play error:", err);
+              if (mountedRef.current) {
+                setError("Could not start video. Please refresh.");
+              }
+            });
         };
       }
     } catch (err) {
       console.error("Camera access error:", err);
-      setError("Could not access camera. Please allow camera permissions.");
+      if (mountedRef.current) {
+        setError("Could not access camera. Please allow camera permissions and refresh.");
+      }
     }
   };
 
@@ -192,12 +244,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("");
   };
 
-  if (isLoading) {
+  if (isLoading && !cameraStarted) {
     return (
-      <div className="clay-card p-6 mb-6">
+      <div className="p-6">
         <div className="flex flex-col items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-3" />
-          <p className="text-gray-600">Loading face recognition...</p>
+          <p className="text-gray-600">Starting camera & loading models...</p>
           <p className="text-xs text-gray-400 mt-1">This may take a moment on first load</p>
         </div>
       </div>
@@ -206,11 +258,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   if (error) {
     return (
-      <div className="clay-card p-6 mb-6">
+      <div className="p-6">
         <div className="flex flex-col items-center justify-center py-8">
           <UserX className="w-8 h-8 text-red-500 mb-3" />
-          <p className="text-red-600">{error}</p>
-          <Button onClick={loadModels} className="mt-4 gap-2">
+          <p className="text-red-600 text-center">{error}</p>
+          <Button onClick={initializeCamera} className="mt-4 gap-2">
             <RefreshCw className="w-4 h-4" />
             Retry
           </Button>
@@ -220,7 +272,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   }
 
   return (
-    <div className="clay-card p-6 mb-6">
+    <div className="p-4">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <Camera className="w-5 h-5 text-purple-600" />
         {isEnrollment ? "Face Enrollment" : "Face Recognition Clock In"}
@@ -228,21 +280,32 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
       <div className="flex flex-col items-center">
         {/* Video Preview */}
-        <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4" style={{ width: '320px', height: '240px' }}>
+        <div className="relative rounded-2xl overflow-hidden bg-black mb-4" style={{ width: '320px', height: '240px' }}>
+          {!cameraStarted && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
+            </div>
+          )}
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            width={320}
-            height={240}
-            style={{ width: '320px', height: '240px', objectFit: 'cover', display: 'block' }}
+            width="320"
+            height="240"
+            style={{ 
+              width: '320px', 
+              height: '240px', 
+              objectFit: 'cover', 
+              display: 'block',
+              transform: 'scaleX(-1)'
+            }}
           />
           <canvas
             ref={canvasRef}
-            width={320}
-            height={240}
-            style={{ position: 'absolute', top: 0, left: 0, width: '320px', height: '240px' }}
+            width="320"
+            height="240"
+            style={{ position: 'absolute', top: 0, left: 0, width: '320px', height: '240px', pointerEvents: 'none' }}
           />
           
           {/* Scanning overlay */}
