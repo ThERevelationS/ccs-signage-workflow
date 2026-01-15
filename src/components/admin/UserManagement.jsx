@@ -98,7 +98,7 @@ export default function UserManagement() {
     setFormData({
       full_name: user.full_name || "",
       username: user.username || "",
-      password_hash: user.password_hash || "",
+      password_hash: "", // Don't show existing password
       role: user.role || "user",
       sales_roles: user.sales_roles || ["Task Assigned"],
       can_import_export: user.can_import_export || false
@@ -166,7 +166,12 @@ export default function UserManagement() {
 
   const handleSave = async () => {
     if (editingUser) {
-      await base44.entities.AuthorizedEmail.update(editingUser.id, formData);
+      // Only update password if a new one was entered
+      const dataToSave = { ...formData };
+      if (!dataToSave.password_hash) {
+        delete dataToSave.password_hash;
+      }
+      await base44.entities.AuthorizedEmail.update(editingUser.id, dataToSave);
       await loadUsers();
     }
     setIsDialogOpen(false);
@@ -542,13 +547,13 @@ Return valid HTML that will render beautifully in ALL email clients including da
               <div>
                 <Label>Password (for Time Clock)</Label>
                 <Input
-                  type="text"
+                  type="password"
                   value={formData.password_hash}
                   onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
-                  placeholder="Set password"
+                  placeholder={formData.password_hash ? "••••••••" : "Set password"}
                   className="mt-1"
                 />
-                <p className="text-xs text-gray-500 mt-1">Used for full access login</p>
+                <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password</p>
               </div>
             </div>
 
