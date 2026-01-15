@@ -41,9 +41,11 @@ import {
   Loader2,
   Briefcase,
   Key,
-  Send
+  Send,
+  QrCode
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import UserQRCode from "@/components/timeclock/UserQRCode";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -443,6 +445,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {user.username && <UserQRCode user={user} />}
                   <Button
                     variant="ghost"
                     size="icon"

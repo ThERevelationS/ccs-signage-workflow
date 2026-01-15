@@ -9,10 +9,12 @@ import {
   Play, 
   Square, 
   User,
-  Loader2 
+  Loader2,
+  QrCode
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
+import QRScanner from "@/components/timeclock/QRScanner";
 
 const TimeEntry = base44.entities.TimeEntry;
 
@@ -53,6 +55,13 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     setSelectedUser(null);
     setActiveEntry(null);
     setError("");
+  };
+
+  const handleQRScan = (user) => {
+    setSelectedUser(user);
+    setUsernameInput(user.username || "");
+    setError("");
+    checkActiveEntry(user.email);
   };
 
   const checkActiveEntry = async (email) => {
@@ -141,6 +150,9 @@ export default function QuickClockSection({ allUsers, currentTime }) {
           </div>
         </div>
       )}
+
+      {/* QR Scanner Section */}
+      <QRScanner onScan={handleQRScan} allUsers={allUsers} />
 
       <div className="clay-card p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
