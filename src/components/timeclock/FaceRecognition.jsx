@@ -209,7 +209,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           />
           <canvas
             ref={canvasRef}
-            className="absolute top-0 left-0 w-80 h-60"
+            style={{ position: 'absolute', top: 0, left: 0, width: '320px', height: '240px' }}
           />
           
           {/* Scanning overlay */}
