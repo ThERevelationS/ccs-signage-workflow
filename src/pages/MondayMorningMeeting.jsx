@@ -116,7 +116,7 @@ export default function MondayMorningMeeting() {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* Header */}
         <div className="clay-card p-6 mb-6">
           <div className="flex items-center justify-between">
@@ -128,8 +128,8 @@ export default function MondayMorningMeeting() {
         </div>
 
         {/* Spreadsheet */}
-        <div className="clay-card p-4 overflow-auto">
-          <table className="w-full border-collapse" style={{ fontSize: '16px' }}>
+        <div className="clay-card p-4 w-full overflow-x-auto">
+          <table className="w-full border-collapse" style={{ fontSize: '16px', minWidth: '100%', tableLayout: 'auto' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th className="px-3 py-4 border-r text-center font-bold text-gray-700" style={{ width: '50px' }}>#</th>

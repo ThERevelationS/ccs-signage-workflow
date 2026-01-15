@@ -4,7 +4,9 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronDown, ChevronRight, User, Calendar, ClipboardList, Link as LinkIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Loader2, User, Calendar as CalendarIcon, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
@@ -42,7 +44,6 @@ export default function MyWorkflow() {
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
-  const [expandedCards, setExpandedCards] = useState({});
 
   useEffect(() => {
     if (currentUser) {
@@ -203,7 +204,7 @@ export default function MyWorkflow() {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
         {/* Header */}
         <div className="clay-card p-6 mb-6">
           <div className="flex items-center gap-4">
@@ -212,171 +213,154 @@ export default function MyWorkflow() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-800">My Workflow</h1>
-              <p className="text-gray-500 mt-1">Tasks and jobs assigned to {userName}</p>
+              <p className="text-gray-500 mt-1">Tasks and jobs assigned to {userName} - {workOrders.length} items</p>
             </div>
           </div>
         </div>
 
-        {/* Work Orders with My Tasks */}
-        <div className="space-y-4">
-          {workOrders.map(wo => {
-            const myTasks = getMyTasksForWorkOrder(wo);
-            const isExpanded = expandedCards[wo.id] !== false; // Default to expanded
-            const isAssignedToJob = wo.assigned_to === userName;
-            
-            return (
-              <div key={wo.id} className="clay-card overflow-hidden">
-                {/* Header */}
-                <div 
-                  className="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => setExpandedCards(prev => ({ ...prev, [wo.id]: !isExpanded }))}
-                  style={{ background: `linear-gradient(135deg, ${stageColors[wo.current_stage]}40 0%, white 100%)` }}
-                >
-                  <button className="p-1">
-                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                  </button>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg">{wo.client_name}</h3>
-                      {wo.is_rider && (
-                        <Badge className="rounded-full text-xs" style={{ background: 'linear-gradient(135deg, #FFD6E8 0%, #E0D4F7 100%)', color: '#7C3AED' }}>
-                          Rider
-                        </Badge>
-                      )}
-                      {wo.asap && <Badge className="bg-red-600 text-white text-xs">ASAP</Badge>}
-                    </div>
-                    <p className="text-sm text-gray-600">{wo.title}</p>
-                  </div>
-                  
-                  <Badge style={{ backgroundColor: stageColors[wo.current_stage] }} className="text-xs">
-                    {stageDisplayNames[wo.current_stage]}
-                  </Badge>
-                  
-                  {wo.due_date && (
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <Calendar className="w-4 h-4" />
-                      {format(parseLocalDate(wo.due_date), "MMM d")}
-                    </div>
-                  )}
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => { e.stopPropagation(); setSelectedWorkOrder(wo); }}
-                    className="flex items-center gap-1"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                    Details
-                  </Button>
-                </div>
+        {/* Spreadsheet Table */}
+        <div className="clay-card p-4 w-full">
+          <table className="w-full border-collapse" style={{ fontSize: '16px', tableLayout: 'fixed' }}>
+            <thead className="bg-gray-100">
+              <tr className="border-b">
+                <th className="px-3 py-4 border-r text-center font-bold text-gray-700" style={{ width: '50px' }}>#</th>
+                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ width: '200px' }}>Customer</th>
+                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ width: '120px' }}>Stage</th>
+                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ width: '120px' }}>Due Date</th>
+                <th className="px-3 py-4 text-left font-bold text-gray-700">My Assigned Tasks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workOrders.map((wo, index) => {
+                const myTasks = getMyTasksForWorkOrder(wo);
+                const isAssignedToJob = wo.assigned_to === userName;
                 
-                {/* Expanded Content */}
-                {isExpanded && (
-                  <div className="px-6 pb-4 border-t">
-                    {isAssignedToJob && (
-                      <div className="mt-3 mb-2 text-sm text-purple-700 font-medium flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        You are assigned to this job
+                return (
+                  <tr 
+                    key={wo.id} 
+                    className="border-b hover:bg-gray-50"
+                  >
+                    {/* Row Number */}
+                    <td className="px-3 py-3 border-r text-center font-bold text-gray-600 text-lg">
+                      {index + 1}
+                    </td>
+
+                    {/* Customer */}
+                    <td className="px-3 py-3 border-r">
+                      <button
+                        onClick={() => setSelectedWorkOrder(wo)}
+                        className="text-base text-left hover:text-blue-600 flex items-center gap-2 font-medium"
+                      >
+                        <LinkIcon className="w-4 h-4 flex-shrink-0 text-blue-500" />
+                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                      </button>
+                      {wo.title && <p className="text-xs text-gray-500 mt-1 truncate">{wo.title}</p>}
+                      {wo.asap && <Badge className="bg-red-600 text-white text-xs mt-1">ASAP</Badge>}
+                    </td>
+
+                    {/* Stage */}
+                    <td className="px-3 py-3 border-r">
+                      <Badge style={{ backgroundColor: stageColors[wo.current_stage] }} className="text-xs font-medium">
+                        {stageDisplayNames[wo.current_stage]}
+                      </Badge>
+                    </td>
+
+                    {/* Due Date */}
+                    <td className="px-3 py-3 border-r">
+                      <span className="text-base font-medium">
+                        {wo.due_date ? format(parseLocalDate(wo.due_date), "MM/dd/yy") : "-"}
+                      </span>
+                    </td>
+
+                    {/* My Assigned Tasks */}
+                    <td className="px-3 py-3">
+                      <div className="space-y-2">
+                        {isAssignedToJob && (
+                          <div className="text-sm text-purple-700 font-medium flex items-center gap-2 bg-purple-50 px-2 py-1 rounded">
+                            <User className="w-3 h-3" />
+                            Assigned to entire job
+                          </div>
+                        )}
+                        {myTasks.map((item, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`flex items-center gap-2 p-2 rounded border ${
+                              (item.type === 'task' && item.task.completed) ||
+                              (item.type === 'subtask' && item.subTask.completed) ||
+                              (item.type === 'detail' && item.detail.completed)
+                                ? 'bg-green-50 border-green-200' 
+                                : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            {item.type === 'task' && (
+                              <>
+                                <Checkbox
+                                  checked={item.task.completed}
+                                  onCheckedChange={() => toggleTaskComplete(wo.id, item.taskIndex)}
+                                  disabled={!isRegistered}
+                                  className="h-4 w-4"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm ${item.task.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                    {item.task.text}
+                                  </p>
+                                  <p className="text-xs text-gray-400">Task</p>
+                                </div>
+                              </>
+                            )}
+                            {item.type === 'subtask' && (
+                              <>
+                                <Checkbox
+                                  checked={item.subTask.completed}
+                                  onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, item.subTaskIndex)}
+                                  disabled={!isRegistered}
+                                  className="h-4 w-4"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm ${item.subTask.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                    {item.subTask.text}
+                                  </p>
+                                  <p className="text-xs text-gray-400">Sub-task of: {item.task.text}</p>
+                                </div>
+                              </>
+                            )}
+                            {item.type === 'detail' && (
+                              <>
+                                <Checkbox
+                                  checked={item.detail.completed}
+                                  onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, item.subTaskIndex, item.detailIndex)}
+                                  disabled={!isRegistered}
+                                  className="h-4 w-4"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm ${item.detail.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                    {item.detail.text}
+                                  </p>
+                                  <p className="text-xs text-gray-400">Detail: {item.subTask.text}</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                        {!isAssignedToJob && myTasks.length === 0 && (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </div>
-                    )}
-                    
-                    {myTasks.length > 0 && (
-                      <div className="mt-3">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <ClipboardList className="w-4 h-4" />
-                          My Tasks ({myTasks.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {myTasks.map((item, idx) => (
-                            <div 
-                              key={idx} 
-                              className={`p-3 rounded-lg border ${
-                                item.type === 'task' && item.task.completed ? 'bg-green-50 border-green-200' :
-                                item.type === 'subtask' && item.subTask.completed ? 'bg-green-50 border-green-200' :
-                                item.type === 'detail' && item.detail.completed ? 'bg-green-50 border-green-200' :
-                                'bg-white border-gray-200'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                {item.type === 'task' && (
-                                  <>
-                                    <Checkbox
-                                      checked={item.task.completed}
-                                      onCheckedChange={() => toggleTaskComplete(wo.id, item.taskIndex)}
-                                      disabled={!isRegistered}
-                                    />
-                                    <div className="flex-1">
-                                      <p className={`font-medium ${item.task.completed ? 'line-through text-gray-500' : ''}`}>
-                                        {item.task.text}
-                                      </p>
-                                      <p className="text-xs text-gray-400">
-                                        Task • {format(new Date(item.task.timestamp), "MMM d")}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                                
-                                {item.type === 'subtask' && (
-                                  <>
-                                    <Checkbox
-                                      checked={item.subTask.completed}
-                                      onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, item.subTaskIndex)}
-                                      disabled={!isRegistered}
-                                    />
-                                    <div className="flex-1">
-                                      <p className={`font-medium ${item.subTask.completed ? 'line-through text-gray-500' : ''}`}>
-                                        {item.subTask.text}
-                                      </p>
-                                      <p className="text-xs text-gray-400">
-                                        Sub-task of: {item.task.text}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                                
-                                {item.type === 'detail' && (
-                                  <>
-                                    <Checkbox
-                                      checked={item.detail.completed}
-                                      onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, item.subTaskIndex, item.detailIndex)}
-                                      disabled={!isRegistered}
-                                    />
-                                    <div className="flex-1">
-                                      <p className={`font-medium ${item.detail.completed ? 'line-through text-gray-500' : ''}`}>
-                                        {item.detail.text}
-                                      </p>
-                                      <p className="text-xs text-gray-400">
-                                        Detail of: {item.subTask.text} → {item.task.text}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {!isAssignedToJob && myTasks.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-4">
-                        No specific tasks assigned
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          
-          {workOrders.length === 0 && (
-            <div className="clay-card p-12 text-center">
-              <User className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600">No tasks assigned to you</h3>
-              <p className="text-gray-400 mt-2">When tasks are assigned to you, they'll appear here.</p>
-            </div>
-          )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {workOrders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-3 py-12 text-center text-gray-500 text-lg">
+                    <User className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                    <p className="font-semibold">No tasks assigned to you</p>
+                    <p className="text-sm mt-2">When tasks are assigned to you, they'll appear here.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
       
