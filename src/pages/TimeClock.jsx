@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
+import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
@@ -256,7 +257,10 @@ export default function TimeClock() {
               <Calendar className="w-4 h-4" />
               Time Off Requests
             </TabsTrigger>
-
+            <TabsTrigger value="balance" className="gap-2">
+              <Briefcase className="w-4 h-4" />
+              My PTO Balance
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="clock">
@@ -460,7 +464,9 @@ export default function TimeClock() {
             </div>
           </TabsContent>
 
-
+          <TabsContent value="balance">
+            <PTOBalanceView currentUser={currentUser} />
+          </TabsContent>
         </Tabs>
       </div>
 
