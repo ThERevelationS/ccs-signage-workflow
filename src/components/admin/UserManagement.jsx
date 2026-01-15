@@ -91,11 +91,64 @@ export default function UserManagement() {
     setEditingUser(user);
     setFormData({
       full_name: user.full_name || "",
+      username: user.username || "",
+      password_hash: user.password_hash || "",
       role: user.role || "user",
       sales_roles: user.sales_roles || ["Task Assigned"],
       can_import_export: user.can_import_export || false
     });
     setIsDialogOpen(true);
+  };
+
+  const handleSendPasswordReset = async (user) => {
+    if (!user.email) return;
+    
+    setSendingPasswordReset(user.id);
+    try {
+      // Generate a simple reset token
+      const resetToken = Math.random().toString(36).substring(2, 15);
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 24);
+      
+      await base44.entities.AuthorizedEmail.update(user.id, {
+        password_reset_token: resetToken,
+        password_reset_expires: expires.toISOString()
+      });
+      
+      // Send email with reset instructions
+      const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
+      const resetLink = `${appUrl}/TimeClock?reset=${resetToken}`;
+      
+      const emailContent = await base44.integrations.Core.InvokeLLM({
+        prompt: `Create a simple HTML password reset email for the Sign Shop Time Clock system.
+
+Details:
+- User: ${user.full_name || user.email}
+- The user should set their password by contacting their administrator
+- Include the reset token: ${resetToken}
+- Keep it brief and professional
+- Use white background, dark text, and inline CSS`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            subject: { type: "string" },
+            body: { type: "string" }
+          }
+        }
+      });
+
+      await sendGmail({
+        to: user.email,
+        subject: emailContent.subject || "Time Clock Password Setup",
+        body: emailContent.body
+      });
+
+      alert(`Password reset email sent to ${user.email}`);
+    } catch (err) {
+      console.error("Error sending password reset:", err);
+      alert("Failed to send password reset email");
+    }
+    setSendingPasswordReset(null);
   };
 
   const handleSave = async () => {
