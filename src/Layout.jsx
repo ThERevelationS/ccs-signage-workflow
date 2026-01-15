@@ -405,6 +405,23 @@ const getDarkModeStyles = () => `
     background: #1e293b !important;
   }
   
+  /* Task boxes and upload buttons with inline styles */
+  .dark-mode div[style*="background: linear-gradient(135deg, rgba(255,255,255"] {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(22, 33, 62, 0.8)) !important;
+  }
+  
+  .dark-mode div[style*="background: linear-gradient(145deg, rgba(255,255,255"] {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(22, 33, 62, 0.8)) !important;
+  }
+  
+  .dark-mode div[style*="background: linear-gradient(135deg, rgba(255, 255, 255"] {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(22, 33, 62, 0.8)) !important;
+  }
+  
+  .dark-mode div[style*="rgba(240,240,240"] {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(22, 33, 62, 0.8)) !important;
+  }
+  
   /* Ensure form elements in dialogs are styled */
   .dark-mode [role="dialog"] input,
   .dark-mode [role="dialog"] textarea,
