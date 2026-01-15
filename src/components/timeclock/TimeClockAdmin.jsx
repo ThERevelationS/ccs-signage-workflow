@@ -41,8 +41,8 @@ export default function TimeClockAdmin() {
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [customStartDate, setCustomStartDate] = useState(null);
-  const [customEndDate, setCustomEndDate] = useState(null);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingEntry, setEditingEntry] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -70,7 +70,7 @@ export default function TimeClockAdmin() {
   const getDateRange = () => {
     if (dateRange === "custom" && customStartDate && customEndDate) {
       return {
-        start: new Date(customStartDate),
+        start: new Date(customStartDate + "T00:00:00"),
         end: new Date(customEndDate + "T23:59:59")
       };
     } else if (dateRange === "week") {
@@ -91,6 +91,12 @@ export default function TimeClockAdmin() {
   // Filter entries
   const filteredEntries = timeEntries.filter(entry => {
     const entryDate = parseISO(entry.clock_in);
+    
+    // For custom range, only filter if both dates are set
+    if (dateRange === "custom") {
+      if (!customStartDate || !customEndDate) return true; // Show all if dates not set
+    }
+    
     if (!isWithinInterval(entryDate, { start, end })) return false;
     if (selectedUser !== "all" && entry.user_email !== selectedUser) return false;
     if (searchTerm) {
@@ -225,14 +231,21 @@ export default function TimeClockAdmin() {
 
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-4 h-4 text-gray-500" />
-          <Select value={dateRange} onValueChange={(val) => {
-            setDateRange(val);
-            if (val !== "custom") {
-              setCustomStartDate(null);
-              setCustomEndDate(null);
-            }
-          }}>
-            <SelectTrigger className="w-32">
+          <Select 
+            value={dateRange} 
+            onValueChange={(val) => {
+              setDateRange(val);
+              if (val === "custom") {
+                // Set default custom dates to current month
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                setCustomStartDate(format(firstDay, "yyyy-MM-dd"));
+                setCustomEndDate(format(lastDay, "yyyy-MM-dd"));
+              }
+            }}
+          >
+            <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -244,19 +257,20 @@ export default function TimeClockAdmin() {
         </div>
 
         {dateRange === "custom" ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
+            <Label className="text-sm text-purple-700 font-medium">From:</Label>
             <Input
               type="date"
-              value={customStartDate || ""}
+              value={customStartDate}
               onChange={(e) => setCustomStartDate(e.target.value)}
-              className="w-36 h-9"
+              className="w-40 h-9 bg-white"
             />
-            <span className="text-gray-500">to</span>
+            <Label className="text-sm text-purple-700 font-medium">To:</Label>
             <Input
               type="date"
-              value={customEndDate || ""}
+              value={customEndDate}
               onChange={(e) => setCustomEndDate(e.target.value)}
-              className="w-36 h-9"
+              className="w-40 h-9 bg-white"
             />
           </div>
         ) : (
