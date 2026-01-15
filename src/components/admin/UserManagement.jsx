@@ -419,6 +419,9 @@ Return valid HTML that will render beautifully in ALL email clients including da
                       {getRoleBadge(user.role)}
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
+                    {user.username && (
+                      <span className="text-xs text-purple-600">@{user.username}</span>
+                    )}
                     {user.sales_roles && user.sales_roles.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
                         <Briefcase className="w-3 h-3 text-gray-400" />
