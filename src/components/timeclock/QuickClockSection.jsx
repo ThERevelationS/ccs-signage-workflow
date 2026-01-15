@@ -115,24 +115,35 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
         {/* User Selection */}
         <div className="mb-6">
-          <Label className="text-sm font-medium mb-2 block">Select Your Username</Label>
-          <Select value={selectedUsername} onValueChange={setSelectedUsername}>
-            <SelectTrigger className="w-full max-w-md">
-              <User className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Choose your username..." />
-            </SelectTrigger>
-            <SelectContent>
-              {usersWithUsernames.map(user => (
-                <SelectItem key={user.id} value={user.username}>
-                  {user.username} - {user.full_name || user.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-sm font-medium mb-2 block">Enter Your Username</Label>
+          <div className="flex gap-2 max-w-md">
+            <div className="relative flex-1">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleUsernameSubmit()}
+                placeholder="Type your username..."
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={handleUsernameSubmit} className="bg-purple-600 hover:bg-purple-700">
+              Go
+            </Button>
+            {selectedUser && (
+              <Button variant="outline" onClick={handleClear}>
+                Clear
+              </Button>
+            )}
+          </div>
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          {selectedUser && (
+            <p className="text-green-600 text-sm mt-1">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
+          )}
         </div>
 
         {/* Clock Status */}
-        {selectedUsername && (
+        {selectedUser && (
           <div className="text-center">
             {isLoading ? (
               <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
