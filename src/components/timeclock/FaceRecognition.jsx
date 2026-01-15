@@ -205,7 +205,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             autoPlay
             muted
             playsInline
-            className="w-80 h-60 object-cover"
+            style={{ width: '320px', height: '240px', objectFit: 'cover' }}
           />
           <canvas
             ref={canvasRef}
