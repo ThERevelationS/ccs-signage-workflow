@@ -22,6 +22,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [recognizedUser, setRecognizedUser] = useState(null);
   const [scanStatus, setScanStatus] = useState("");
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
+  const [videoReady, setVideoReady] = useState(false);
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
 
@@ -55,14 +56,21 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   const startCamera = async () => {
     try {
+      setVideoReady(false);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch(console.error);
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current.play();
+            // Wait a moment for video to stabilize
+            setTimeout(() => setVideoReady(true), 500);
+          } catch (err) {
+            console.error("Video play error:", err);
+          }
         };
       }
     } catch (err) {
@@ -79,14 +87,28 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   };
 
   const detectFace = async () => {
-    if (!videoRef.current || !isModelLoaded) return null;
+    if (!videoRef.current || !isModelLoaded || !videoReady) {
+      console.log("Not ready - model:", isModelLoaded, "video:", videoReady);
+      return null;
+    }
     
-    const detection = await faceapi
-      .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceDescriptor();
+    // Make sure video has valid dimensions
+    if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+      console.log("Video dimensions not ready");
+      return null;
+    }
     
-    return detection;
+    try {
+      const detection = await faceapi
+        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+      
+      return detection;
+    } catch (err) {
+      console.error("Face detection error:", err);
+      return null;
+    }
   };
 
   const findMatchingUser = (descriptor) => {
@@ -144,6 +166,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   // Enrollment mode - capture face for registration
   const captureForEnrollment = async () => {
+    if (!videoReady) {
+      setScanStatus("Camera not ready. Please wait...");
+      return;
+    }
+    
     setScanStatus("Capturing face...");
     const detection = await detectFace();
     
@@ -156,7 +183,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         onEnrollCapture(newDescriptors);
       }
     } else {
-      setScanStatus("No face detected. Please look at the camera and try again.");
+      setScanStatus("No face detected. Please look directly at the camera and ensure good lighting.");
     }
   };
 
@@ -254,10 +281,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
               <Button 
                 onClick={captureForEnrollment}
                 className="gap-2 bg-purple-600 hover:bg-purple-700"
-                disabled={capturedDescriptors.length >= 3}
+                disabled={capturedDescriptors.length >= 3 || !videoReady}
               >
                 <Camera className="w-4 h-4" />
-                Capture Face ({capturedDescriptors.length}/3)
+                {!videoReady ? "Camera Loading..." : `Capture Face (${capturedDescriptors.length}/3)`}
               </Button>
               {capturedDescriptors.length > 0 && (
                 <Button variant="outline" onClick={resetEnrollment}>
