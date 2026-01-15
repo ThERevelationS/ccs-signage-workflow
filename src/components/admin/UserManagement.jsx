@@ -39,7 +39,9 @@ import {
   UserPlus,
   Crown,
   Loader2,
-  Briefcase
+  Briefcase,
+  Key,
+  Send
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
