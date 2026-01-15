@@ -61,7 +61,9 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch(console.error);
+        };
       }
     } catch (err) {
       console.error("Camera access error:", err);

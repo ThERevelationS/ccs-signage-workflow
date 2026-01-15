@@ -449,7 +449,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {user.username && <UserQRCode user={user} />}
+                  <UserQRCode user={user} />
                   <Button
                     variant="ghost"
                     size="icon"

@@ -66,11 +66,13 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
           </div>
         ) : (
           <>
-            <FaceRecognition 
-              allUsers={[]} 
-              isEnrollment={true}
-              onEnrollCapture={handleCapture}
-            />
+            {isOpen && (
+              <FaceRecognition 
+                allUsers={[]} 
+                isEnrollment={true}
+                onEnrollCapture={handleCapture}
+              />
+              )}
 
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={handleClose} className="flex-1">
