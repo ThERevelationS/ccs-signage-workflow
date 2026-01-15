@@ -501,6 +501,30 @@ Return valid HTML that will render beautifully in ALL email clients including da
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Username (for Time Clock)</Label>
+                <Input
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                  placeholder="e.g., jsmith"
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Used for quick clock in/out</p>
+              </div>
+              <div>
+                <Label>Password (for Time Clock)</Label>
+                <Input
+                  type="text"
+                  value={formData.password_hash}
+                  onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
+                  placeholder="Set password"
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Used for full access login</p>
+              </div>
+            </div>
+
             <div>
               <Label>Role</Label>
               <Select
