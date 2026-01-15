@@ -78,11 +78,11 @@ export default function SalesPipeline() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2">
             {isRegistered && (
               <Button 
                 onClick={() => setShowNewClientForm(true)}
-                className="clay-button border-none text-gray-800"
+                className="clay-button border-none text-gray-800 h-9"
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -90,14 +90,17 @@ export default function SalesPipeline() {
               </Button>
             )}
 
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search leads..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-64"
-              />
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Search</span>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search leads..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-64 h-9"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col">
@@ -109,7 +112,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 h-9">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -152,7 +155,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 h-9">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
@@ -179,11 +182,11 @@ export default function SalesPipeline() {
             </div>
             
             {canImportExport && (
-              <>
+              <div className="flex items-center gap-1 h-9">
                 <Button 
                   onClick={() => spreadsheetRef.current?.importFromExcel()}
                   size="sm" 
-                  className="h-8 px-2"
+                  className="h-9 px-2"
                   variant="ghost"
                 >
                   <Upload className="w-3 h-3" />
@@ -191,12 +194,12 @@ export default function SalesPipeline() {
                 <Button 
                   onClick={() => spreadsheetRef.current?.exportToExcel()}
                   size="sm" 
-                  className="h-8 px-2"
+                  className="h-9 px-2"
                   variant="ghost"
                 >
                   <Download className="w-3 h-3" />
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
