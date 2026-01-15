@@ -163,6 +163,13 @@ export default function AdminSettings() {
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Password protection state
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [allUsers, setAllUsers] = useState([]);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -183,6 +190,33 @@ export default function AdminSettings() {
     setEmailGroups(groups);
   };
 
+  const loadAllUsers = async () => {
+    const users = await base44.entities.AuthorizedEmail.list();
+    setAllUsers(users);
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!passwordInput.trim()) {
+      setPasswordError("Please enter your password");
+      return;
+    }
+    
+    setIsVerifying(true);
+    setPasswordError("");
+    
+    // Find current user in AuthorizedEmail by email
+    const currentUserRecord = allUsers.find(u => u.email === currentUser?.email);
+    
+    if (currentUserRecord && currentUserRecord.password_hash === passwordInput) {
+      setIsUnlocked(true);
+      setPasswordInput("");
+    } else {
+      setPasswordError("Incorrect password");
+    }
+    
+    setIsVerifying(false);
+  };
+
   const loadAutomations = async () => {
     setIsLoading(true);
     const rules = await AutomationRule.list("-created_date");
@@ -193,6 +227,7 @@ export default function AdminSettings() {
   useEffect(() => {
     loadAutomations();
     loadEmailGroups();
+    loadAllUsers();
   }, []);
 
   const openNewRule = async () => {
@@ -523,6 +558,55 @@ export default function AdminSettings() {
         return null;
     }
   };
+
+  // Password protection screen
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen p-6 flex items-center justify-center">
+        <div className="clay-card p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              <Settings className="w-8 h-8 text-purple-700" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">Admin Settings</h2>
+            <p className="text-sm text-gray-500 mt-1">Enter your password to access admin settings</p>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                placeholder="Enter your Time Clock password"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setPasswordError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                className="mt-1"
+              />
+              {passwordError && (
+                <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+              )}
+            </div>
+            
+            <Button
+              onClick={handlePasswordSubmit}
+              disabled={isVerifying}
+              className="w-full clay-button border-none"
+              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+            >
+              {isVerifying ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Unlock Admin Settings
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6">
