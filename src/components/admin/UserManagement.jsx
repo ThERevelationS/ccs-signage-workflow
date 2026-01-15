@@ -42,10 +42,13 @@ import {
   Briefcase,
   Key,
   Send,
-  QrCode
+  QrCode,
+  Camera,
+  Scan
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
+import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -72,6 +75,7 @@ export default function UserManagement() {
     can_import_export: false
   });
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
+  const [faceEnrollUser, setFaceEnrollUser] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -449,6 +453,19 @@ Return valid HTML that will render beautifully in ALL email clients including da
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => setFaceEnrollUser(user)}
+                    className="h-8 w-8"
+                    title={user.face_descriptors?.length ? "Re-enroll Face ID" : "Enroll Face ID"}
+                  >
+                    {user.face_descriptors?.length ? (
+                      <Scan className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Camera className="w-4 h-4 text-gray-400" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleSendPasswordReset(user)}
                     disabled={sendingPasswordReset === user.id}
                     className="h-8 w-8"
@@ -636,6 +653,14 @@ Return valid HTML that will render beautifully in ALL email clients including da
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Face Enrollment Dialog */}
+      <FaceEnrollmentDialog
+        isOpen={!!faceEnrollUser}
+        onClose={() => setFaceEnrollUser(null)}
+        user={faceEnrollUser}
+        onSuccess={loadUsers}
+      />
     </div>
   );
 }
