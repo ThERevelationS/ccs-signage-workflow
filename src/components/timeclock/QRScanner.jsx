@@ -3,7 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, QrCode } from "lucide-react";
 
-export default function QRScanner({ onScan, allUsers }) {
+export default function QRScanner({ onScan, allUsers, inline = false }) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
   const scannerRef = useRef(null);
@@ -67,13 +67,9 @@ export default function QRScanner({ onScan, allUsers }) {
     };
   }, []);
 
-  return (
-    <div className="clay-card p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <QrCode className="w-5 h-5 text-purple-600" />
-          <h3 className="font-semibold">QR Badge Scanner</h3>
-        </div>
+  const content = (
+    <>
+      <div className="flex items-center justify-center mb-3">
         <Button
           variant={isScanning ? "destructive" : "default"}
           size="sm"
@@ -98,11 +94,11 @@ export default function QRScanner({ onScan, allUsers }) {
         id="qr-reader" 
         ref={scannerRef}
         className={`rounded-xl overflow-hidden ${isScanning ? 'block' : 'hidden'}`}
-        style={{ width: '100%' }}
+        style={{ width: '100%', maxWidth: '320px', margin: '0 auto' }}
       />
       
       {!isScanning && (
-        <div className="bg-gray-100 rounded-xl p-8 text-center">
+        <div className="bg-gray-100 rounded-xl p-8 text-center max-w-xs mx-auto">
           <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
           <p className="text-gray-500 text-sm">Click "Start Scanner" to scan QR badges</p>
         </div>
@@ -111,6 +107,20 @@ export default function QRScanner({ onScan, allUsers }) {
       {error && (
         <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
       )}
+    </>
+  );
+
+  if (inline) {
+    return <div className="py-4">{content}</div>;
+  }
+
+  return (
+    <div className="clay-card p-4 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <QrCode className="w-5 h-5 text-purple-600" />
+        <h3 className="font-semibold">QR Badge Scanner</h3>
+      </div>
+      {content}
     </div>
   );
 }
