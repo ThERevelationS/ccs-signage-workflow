@@ -191,8 +191,8 @@ export default function QuickClockSection({ allUsers, currentTime }) {
           </div>
         )}
 
-        {!selectedUsername && (
-          <p className="text-center text-gray-500">Select your username above to clock in or out</p>
+        {!selectedUser && (
+          <p className="text-center text-gray-500">Enter your username above to clock in or out</p>
         )}
       </div>
 
