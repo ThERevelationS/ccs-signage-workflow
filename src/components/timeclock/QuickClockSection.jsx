@@ -23,6 +23,12 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [error, setError] = useState("");
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (type, userName, time) => {
+    setNotification({ type, userName, time });
+    setTimeout(() => setNotification(null), 15000);
+  };
 
   const handleUsernameSubmit = () => {
     const trimmed = usernameInput.trim().toLowerCase();
@@ -64,13 +70,15 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     if (!selectedUser) return;
     setIsLoading(true);
     try {
+      const clockInTime = new Date();
       const entry = await TimeEntry.create({
         user_email: selectedUser.email,
         user_name: selectedUser.full_name || selectedUser.email,
-        clock_in: new Date().toISOString(),
+        clock_in: clockInTime.toISOString(),
         status: "clocked_in"
       });
       setActiveEntry(entry);
+      showNotification("in", selectedUser.full_name || selectedUser.email, format(clockInTime, "h:mm a"));
     } catch (err) {
       console.error("Clock in error:", err);
     }
@@ -79,6 +87,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   const handleClockOut = async (data) => {
     try {
+      const clockOutTime = new Date(data.clockOutTime);
       await TimeEntry.update(activeEntry.id, {
         clock_out: data.clockOutTime,
         lunch_minutes: data.lunchMinutes,
@@ -87,6 +96,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         notes: data.notes,
         status: "clocked_out"
       });
+      showNotification("out", selectedUser?.full_name || selectedUser?.email || "User", format(clockOutTime, "h:mm a"));
       setActiveEntry(null);
       setShowClockOut(false);
     } catch (err) {
@@ -107,6 +117,31 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   return (
     <>
+      {/* Notification Bubble */}
+      {notification && (
+        <div 
+          className={`fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-2xl shadow-lg transition-all duration-500 ${
+            notification.type === "in" 
+              ? "bg-green-500 text-white" 
+              : "bg-red-500 text-white"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {notification.type === "in" ? (
+              <Play className="w-5 h-5" />
+            ) : (
+              <Square className="w-5 h-5" />
+            )}
+            <div>
+              <p className="font-bold">{notification.userName}</p>
+              <p className="text-sm opacity-90">
+                Clocked {notification.type === "in" ? "In" : "Out"} at {notification.time}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="clay-card p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
