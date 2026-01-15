@@ -17,27 +17,37 @@ import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 const TimeEntry = base44.entities.TimeEntry;
 
 export default function QuickClockSection({ allUsers, currentTime }) {
-  const [selectedUsername, setSelectedUsername] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
   const [activeEntry, setActiveEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [error, setError] = useState("");
 
-  // Get users with usernames
-  const usersWithUsernames = allUsers.filter(u => u.username);
-
-  useEffect(() => {
-    if (selectedUsername) {
-      const user = allUsers.find(u => u.username === selectedUsername);
+  const handleUsernameSubmit = () => {
+    const trimmed = usernameInput.trim().toLowerCase();
+    if (!trimmed) {
+      setError("Please enter a username");
+      return;
+    }
+    const user = allUsers.find(u => u.username?.toLowerCase() === trimmed);
+    if (user) {
       setSelectedUser(user);
-      if (user) {
-        checkActiveEntry(user.email);
-      }
+      setError("");
+      checkActiveEntry(user.email);
     } else {
+      setError("Username not found");
       setSelectedUser(null);
       setActiveEntry(null);
     }
-  }, [selectedUsername, allUsers]);
+  };
+
+  const handleClear = () => {
+    setUsernameInput("");
+    setSelectedUser(null);
+    setActiveEntry(null);
+    setError("");
+  };
 
   const checkActiveEntry = async (email) => {
     setIsLoading(true);
