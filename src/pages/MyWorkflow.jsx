@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
@@ -15,14 +15,14 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const WorkOrder = base44.entities.WorkOrder;
 
 const stageColors = {
-  estimating: "#FFF9C4",
-  sales: "#B2DFDB",
-  permitting: "#FFE4D6",
-  design: "#D4E9F7",
-  production: "#C8F4E9",
-  fabrication: "#FFD6E8",
-  installation: "#E0D4F7",
-  completed: "#C8F4E9"
+  estimating: { bg: "#FEF3C7", text: "#92400E" },
+  sales: { bg: "#D1FAE5", text: "#065F46" },
+  permitting: { bg: "#FED7AA", text: "#9A3412" },
+  design: { bg: "#BFDBFE", text: "#1E40AF" },
+  production: { bg: "#A7F3D0", text: "#047857" },
+  fabrication: { bg: "#FBCFE8", text: "#9D174D" },
+  installation: { bg: "#DDD6FE", text: "#5B21B6" },
+  completed: { bg: "#A7F3D0", text: "#047857" }
 };
 
 const stageDisplayNames = {
@@ -54,6 +54,8 @@ export default function MyWorkflow() {
   const [addingDetailFor, setAddingDetailFor] = useState(null);
   const [newDetailText, setNewDetailText] = useState("");
   const [newDetailAssignedTo, setNewDetailAssignedTo] = useState("");
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTaskText, setEditTaskText] = useState("");
 
   useEffect(() => {
     if (currentUser) {
@@ -284,6 +286,52 @@ export default function MyWorkflow() {
     await WorkOrder.update(workOrderId, { notes: updatedTasks });
   };
 
+  const handleEditTask = async (workOrderId, taskIndex, newText) => {
+    if (!newText.trim()) return;
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+
+    const updatedTasks = (wo.notes || []).map((task, idx) => {
+      if (idx === taskIndex) {
+        return { ...task, text: newText };
+      }
+      return task;
+    });
+
+    setWorkOrders(prev => prev.map(w =>
+      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
+    ));
+    setEditingTask(null);
+    setEditTaskText("");
+    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+  };
+
+  const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
+    if (!newText.trim()) return;
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+
+    const updatedTasks = (wo.notes || []).map((task, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return { ...st, text: newText };
+          }
+          return st;
+        });
+        return { ...task, sub_tasks: updatedSubTasks };
+      }
+      return task;
+    });
+
+    setWorkOrders(prev => prev.map(w =>
+      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
+    ));
+    setEditingTask(null);
+    setEditTaskText("");
+    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+  };
+
   const getMyTasksForWorkOrder = (wo) => {
     const userName = currentUser?.full_name || currentUser?.email;
     const myTasks = [];
@@ -326,28 +374,28 @@ export default function MyWorkflow() {
     <div className="min-h-screen p-6">
       <div className="w-full">
         {/* Header */}
-        <div className="clay-card p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
-              <User className="w-6 h-6 text-purple-700" />
+        <div className="clay-card p-3 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              <User className="w-4 h-4 text-purple-700" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">My Workflow</h1>
-              <p className="text-gray-500 mt-1">Tasks and jobs assigned to {userName} - {workOrders.length} items</p>
+              <h1 className="text-xl font-bold text-gray-800">My Workflow</h1>
+              <p className="text-gray-500 text-xs">{userName} - {workOrders.length} items</p>
             </div>
           </div>
         </div>
 
         {/* Spreadsheet Table */}
-        <div className="clay-card p-4 w-full">
-          <table className="w-full border-collapse" style={{ fontSize: '16px' }}>
+        <div className="clay-card p-2 w-full">
+          <table className="w-full border-collapse" style={{ fontSize: '13px' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
-                <th className="px-3 py-4 border-r text-center font-bold text-gray-700" style={{ width: '50px' }}>#</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700">Customer</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ width: '120px' }}>Stage</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ width: '120px' }}>Due Date</th>
-                <th className="px-3 py-4 text-left font-bold text-gray-700">My Assigned Tasks</th>
+                <th className="px-2 py-2 border-r text-center font-bold text-gray-700" style={{ width: '35px' }}>#</th>
+                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '150px' }}>Customer</th>
+                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '90px' }}>Stage</th>
+                <th className="px-2 py-2 border-r text-left font-bold text-gray-700" style={{ width: '80px' }}>Due</th>
+                <th className="px-2 py-2 text-left font-bold text-gray-700">My Assigned Tasks</th>
               </tr>
             </thead>
             <tbody>
@@ -360,152 +408,199 @@ export default function MyWorkflow() {
                     className="border-b hover:bg-gray-50"
                   >
                     {/* Row Number */}
-                    <td className="px-3 py-3 border-r text-center font-bold text-gray-600 text-lg">
+                    <td className="px-2 py-1 border-r text-center font-medium text-gray-500 text-xs">
                       {index + 1}
                     </td>
 
                     {/* Customer */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-1 border-r">
                       <button
                         onClick={() => setSelectedWorkOrder(wo)}
-                        className="text-base text-left hover:text-blue-600 flex items-center gap-2 font-medium"
+                        className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium"
                       >
-                        <LinkIcon className="w-4 h-4 flex-shrink-0 text-blue-500" />
+                        <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
-                      {wo.title && <p className="text-xs text-gray-500 mt-1 truncate">{wo.title}</p>}
-                      {wo.asap && <Badge className="bg-red-600 text-white text-xs mt-1">ASAP</Badge>}
+                      {wo.asap && <Badge className="bg-red-600 text-white text-[10px] px-1 py-0">ASAP</Badge>}
                     </td>
 
                     {/* Stage */}
-                    <td className="px-3 py-3 border-r">
-                      <Badge style={{ backgroundColor: stageColors[wo.current_stage] }} className="text-xs font-medium">
+                    <td className="px-2 py-1 border-r">
+                      <Badge 
+                        style={{ 
+                          backgroundColor: stageColors[wo.current_stage]?.bg || '#E5E7EB', 
+                          color: stageColors[wo.current_stage]?.text || '#374151' 
+                        }} 
+                        className="text-[10px] font-semibold px-1.5 py-0.5"
+                      >
                         {stageDisplayNames[wo.current_stage]}
                       </Badge>
                     </td>
 
                     {/* Due Date */}
-                    <td className="px-3 py-3 border-r">
-                      <span className="text-base font-medium">
-                        {wo.due_date ? format(parseLocalDate(wo.due_date), "MM/dd/yy") : "-"}
+                    <td className="px-2 py-1 border-r">
+                      <span className="text-xs">
+                        {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "-"}
                       </span>
                     </td>
 
                     {/* My Assigned Tasks */}
-                    <td className="px-3 py-3">
-                      <div className="space-y-2">
+                    <td className="px-2 py-1">
+                      <div className="space-y-1">
                         {myTasks.map((item, idx) => {
                           const taskKey = `${wo.id}-${item.taskIndex}`;
                           const isExpanded = expandedTasks[taskKey] !== false;
+                          const isEditingThisTask = editingTask?.woId === wo.id && editingTask?.taskIndex === item.taskIndex && editingTask?.type === 'task';
                           
                           return (
                             <div key={idx} className="group">
                               {item.type === 'task' && (
-                                <div className={`p-2 rounded border ${item.task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                                  <div className="flex items-center gap-2">
+                                <div className={`p-1 rounded border ${item.task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                                  <div className="flex items-center gap-1">
                                     <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
-                                      {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                      {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                     </button>
                                     <Checkbox
                                       checked={item.task.completed}
                                       onCheckedChange={() => toggleTaskComplete(wo.id, item.taskIndex)}
                                       disabled={!isRegistered}
-                                      className="h-4 w-4"
+                                      className="h-3 w-3"
                                     />
                                     <div className="flex-1 min-w-0">
-                                      <p className={`text-sm ${item.task.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
-                                        {item.task.text}
-                                      </p>
+                                      {isEditingThisTask ? (
+                                        <div className="flex gap-1">
+                                          <Input 
+                                            value={editTaskText} 
+                                            onChange={(e) => setEditTaskText(e.target.value)} 
+                                            className="h-5 text-xs" 
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') handleEditTask(wo.id, item.taskIndex, editTaskText);
+                                              if (e.key === 'Escape') { setEditingTask(null); setEditTaskText(""); }
+                                            }}
+                                          />
+                                          <Button size="sm" onClick={() => handleEditTask(wo.id, item.taskIndex, editTaskText)} className="h-5 px-1"><Check className="w-2.5 h-2.5" /></Button>
+                                          <Button size="sm" variant="ghost" onClick={() => { setEditingTask(null); setEditTaskText(""); }} className="h-5 px-1"><X className="w-2.5 h-2.5" /></Button>
+                                        </div>
+                                      ) : (
+                                        <p className={`text-xs ${item.task.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                          {item.task.text}
+                                        </p>
+                                      )}
                                     </div>
+                                    {!isEditingThisTask && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => { setEditingTask({ woId: wo.id, taskIndex: item.taskIndex, type: 'task' }); setEditTaskText(item.task.text); }}
+                                        className="h-4 w-4 opacity-0 group-hover:opacity-100"
+                                      >
+                                        <Pencil className="w-2.5 h-2.5 text-blue-500" />
+                                      </Button>
+                                    )}
                                   </div>
                                   
                                   {isExpanded && (
-                                    <div className="ml-8 mt-2 space-y-1">
+                                    <div className="ml-6 mt-1 space-y-0.5">
                                       {/* Show all sub-tasks */}
-                                      {(item.task.sub_tasks || []).map((st, stIdx) => (
+                                      {(item.task.sub_tasks || []).map((st, stIdx) => {
+                                        const isEditingThisSubTask = editingTask?.woId === wo.id && editingTask?.taskIndex === item.taskIndex && editingTask?.subTaskIndex === stIdx && editingTask?.type === 'subtask';
+                                        return (
                                         <div key={stIdx} className="group/subtask">
-                                          <div className="flex items-center gap-2 text-xs p-1 rounded hover:bg-gray-50">
+                                          <div className="flex items-center gap-1 text-[11px] p-0.5 rounded hover:bg-gray-50">
                                             <Checkbox
                                               checked={st.completed}
                                               onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, stIdx)}
-                                              className="h-3 w-3"
+                                              className="h-2.5 w-2.5"
                                             />
-                                            <span className={st.completed ? "line-through text-gray-400" : "text-gray-600"}>{st.text}</span>
-                                            {st.assigned_to && <Badge variant="outline" className="text-[10px] text-blue-600 px-1 py-0">→ {st.assigned_to}</Badge>}
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteSubTask(wo.id, item.taskIndex, stIdx)} className="h-4 w-4 ml-auto opacity-0 group-hover/subtask:opacity-100">
+                                            {isEditingThisSubTask ? (
+                                              <div className="flex gap-1 flex-1">
+                                                <Input 
+                                                  value={editTaskText} 
+                                                  onChange={(e) => setEditTaskText(e.target.value)} 
+                                                  className="h-4 text-[10px]" 
+                                                  autoFocus
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleEditSubTask(wo.id, item.taskIndex, stIdx, editTaskText);
+                                                    if (e.key === 'Escape') { setEditingTask(null); setEditTaskText(""); }
+                                                  }}
+                                                />
+                                                <Button size="sm" onClick={() => handleEditSubTask(wo.id, item.taskIndex, stIdx, editTaskText)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
+                                              </div>
+                                            ) : (
+                                              <>
+                                                <span className={st.completed ? "line-through text-gray-400" : "text-gray-600"}>{st.text}</span>
+                                                {st.assigned_to && <Badge variant="outline" className="text-[9px] text-blue-600 px-0.5 py-0">→ {st.assigned_to}</Badge>}
+                                                <Button 
+                                                  variant="ghost" 
+                                                  size="icon" 
+                                                  onClick={() => { setEditingTask({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx, type: 'subtask' }); setEditTaskText(st.text); }}
+                                                  className="h-3 w-3 opacity-0 group-hover/subtask:opacity-100"
+                                                >
+                                                  <Pencil className="w-2 h-2 text-blue-500" />
+                                                </Button>
+                                              </>
+                                            )}
+                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteSubTask(wo.id, item.taskIndex, stIdx)} className="h-3 w-3 ml-auto opacity-0 group-hover/subtask:opacity-100">
                                               <Trash2 className="w-2 h-2 text-red-500" />
                                             </Button>
                                           </div>
                                           {/* Details */}
                                           {(st.details || []).map((d, dIdx) => (
-                                            <div key={dIdx} className="flex items-center gap-2 ml-5 text-xs group/detail">
-                                              <Checkbox checked={d.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2.5 w-2.5" />
+                                            <div key={dIdx} className="flex items-center gap-1 ml-4 text-[10px] group/detail">
+                                              <Checkbox checked={d.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2 w-2" />
                                               <span className={d.completed ? "line-through text-gray-400" : "text-gray-500"}>{d.text}</span>
-                                              {d.assigned_to && <Badge variant="outline" className="text-[9px] text-blue-600 px-1 py-0">→ {d.assigned_to}</Badge>}
-                                              <Button variant="ghost" size="icon" onClick={() => handleDeleteDetail(wo.id, item.taskIndex, stIdx, dIdx)} className="h-3 w-3 ml-auto opacity-0 group-hover/detail:opacity-100">
-                                                <X className="w-2 h-2 text-red-500" />
+                                              {d.assigned_to && <Badge variant="outline" className="text-[8px] text-blue-600 px-0.5 py-0">→ {d.assigned_to}</Badge>}
+                                              <Button variant="ghost" size="icon" onClick={() => handleDeleteDetail(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2.5 w-2.5 ml-auto opacity-0 group-hover/detail:opacity-100">
+                                                <X className="w-1.5 h-1.5 text-red-500" />
                                               </Button>
                                             </div>
                                           ))}
                                           {/* Add Detail */}
                                           {addingDetailFor?.woId === wo.id && addingDetailFor?.taskIndex === item.taskIndex && addingDetailFor?.subTaskIndex === stIdx ? (
-                                            <div className="ml-5 mt-1 space-y-1">
-                                              <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-5 text-xs" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddDetail(wo.id, item.taskIndex, stIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
-                                              <Select value={newDetailAssignedTo} onValueChange={setNewDetailAssignedTo}>
-                                                <SelectTrigger className="h-5 text-xs"><SelectValue placeholder="Assign to..." /></SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value={null}>Unassigned</SelectItem>
-                                                  {allUsers.map(u => <SelectItem key={u.id} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}
-                                                </SelectContent>
-                                              </Select>
+                                            <div className="ml-4 mt-0.5 space-y-0.5">
+                                              <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-4 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddDetail(wo.id, item.taskIndex, stIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
                                               <div className="flex gap-1">
-                                                <Button size="sm" onClick={() => handleAddDetail(wo.id, item.taskIndex, stIdx)} className="h-5 px-2"><Check className="w-3 h-3" /></Button>
-                                                <Button size="sm" variant="ghost" onClick={() => { setAddingDetailFor(null); setNewDetailText(""); }} className="h-5 px-2"><X className="w-3 h-3" /></Button>
+                                                <Button size="sm" onClick={() => handleAddDetail(wo.id, item.taskIndex, stIdx)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
+                                                <Button size="sm" variant="ghost" onClick={() => { setAddingDetailFor(null); setNewDetailText(""); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
                                               </div>
                                             </div>
                                           ) : (
-                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-5 h-4 px-1 text-xs opacity-0 group-hover/subtask:opacity-100"><Plus className="w-2 h-2 mr-0.5" />Detail</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] opacity-0 group-hover/subtask:opacity-100"><Plus className="w-1.5 h-1.5" />Detail</Button>
                                           )}
                                         </div>
-                                      ))}
+                                      )})}
                                       {/* Add Sub-task */}
                                       {addingSubTaskFor?.woId === wo.id && addingSubTaskFor?.taskIndex === item.taskIndex ? (
-                                        <div className="mt-1 space-y-1">
-                                          <Input value={newSubTaskText} onChange={(e) => setNewSubTaskText(e.target.value)} placeholder="Sub-task..." className="h-6 text-xs" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubTask(wo.id, item.taskIndex); if (e.key === 'Escape') { setAddingSubTaskFor(null); setNewSubTaskText(""); }}} />
-                                          <Select value={newSubTaskAssignedTo} onValueChange={setNewSubTaskAssignedTo}>
-                                            <SelectTrigger className="h-6 text-xs"><SelectValue placeholder="Assign to..." /></SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value={null}>Unassigned</SelectItem>
-                                              {allUsers.map(u => <SelectItem key={u.id} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}
-                                            </SelectContent>
-                                          </Select>
+                                        <div className="mt-0.5 space-y-0.5">
+                                          <Input value={newSubTaskText} onChange={(e) => setNewSubTaskText(e.target.value)} placeholder="Sub-task..." className="h-5 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubTask(wo.id, item.taskIndex); if (e.key === 'Escape') { setAddingSubTaskFor(null); setNewSubTaskText(""); }}} />
                                           <div className="flex gap-1">
-                                            <Button size="sm" onClick={() => handleAddSubTask(wo.id, item.taskIndex)} className="h-6 px-2"><Check className="w-3 h-3" /></Button>
-                                            <Button size="sm" variant="ghost" onClick={() => { setAddingSubTaskFor(null); setNewSubTaskText(""); }} className="h-6 px-2"><X className="w-3 h-3" /></Button>
+                                            <Button size="sm" onClick={() => handleAddSubTask(wo.id, item.taskIndex)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setAddingSubTaskFor(null); setNewSubTaskText(""); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
                                           </div>
                                         </div>
                                       ) : (
-                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-5 px-2 text-xs opacity-0 group-hover:opacity-100"><Plus className="w-2 h-2 mr-1" />Sub-task</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] opacity-0 group-hover:opacity-100"><Plus className="w-2 h-2" />Sub-task</Button>
                                       )}
                                     </div>
                                   )}
                                 </div>
                               )}
                               {item.type === 'subtask' && (
-                                <div className={`flex items-center gap-2 p-2 rounded border ${item.subTask.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                                  <Checkbox checked={item.subTask.completed} onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, item.subTaskIndex)} disabled={!isRegistered} className="h-4 w-4" />
+                                <div className={`flex items-center gap-1 p-1 rounded border ${item.subTask.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                                  <Checkbox checked={item.subTask.completed} onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, item.subTaskIndex)} disabled={!isRegistered} className="h-3 w-3" />
                                   <div className="flex-1 min-w-0">
-                                    <p className={`text-sm ${item.subTask.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.subTask.text}</p>
-                                    <p className="text-xs text-gray-400">Sub-task of: {item.task.text}</p>
+                                    <p className={`text-xs ${item.subTask.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.subTask.text}</p>
+                                    <p className="text-[10px] text-gray-400">↳ {item.task.text}</p>
                                   </div>
                                 </div>
                               )}
                               {item.type === 'detail' && (
-                                <div className={`flex items-center gap-2 p-2 rounded border ${item.detail.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                                  <Checkbox checked={item.detail.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, item.subTaskIndex, item.detailIndex)} disabled={!isRegistered} className="h-4 w-4" />
+                                <div className={`flex items-center gap-1 p-1 rounded border ${item.detail.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                                  <Checkbox checked={item.detail.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, item.subTaskIndex, item.detailIndex)} disabled={!isRegistered} className="h-3 w-3" />
                                   <div className="flex-1 min-w-0">
-                                    <p className={`text-sm ${item.detail.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.detail.text}</p>
-                                    <p className="text-xs text-gray-400">Detail: {item.subTask.text}</p>
+                                    <p className={`text-xs ${item.detail.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.detail.text}</p>
+                                    <p className="text-[10px] text-gray-400">↳ {item.subTask.text}</p>
                                   </div>
                                 </div>
                               )}
@@ -513,7 +608,7 @@ export default function MyWorkflow() {
                           );
                         })}
                         {myTasks.length === 0 && (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-xs text-gray-400">-</span>
                         )}
                       </div>
                     </td>
@@ -522,10 +617,10 @@ export default function MyWorkflow() {
               })}
               {workOrders.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-12 text-center text-gray-500 text-lg">
-                    <User className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                  <td colSpan={5} className="px-2 py-6 text-center text-gray-500 text-sm">
+                    <User className="w-8 h-8 mx-auto text-gray-300 mb-2" />
                     <p className="font-semibold">No tasks assigned to you</p>
-                    <p className="text-sm mt-2">When tasks are assigned to you, they'll appear here.</p>
+                    <p className="text-xs mt-1">When tasks are assigned to you, they'll appear here.</p>
                   </td>
                 </tr>
               )}
