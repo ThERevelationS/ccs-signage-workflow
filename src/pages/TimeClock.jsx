@@ -167,6 +167,10 @@ export default function TimeClock() {
 
   const weeklyHours = weeklyEntries.reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
 
+  // Calculate overtime (OH law: OT only for hours WORKED over 40, PTO doesn't count)
+  const regularHours = Math.min(weeklyHours, 40);
+  const overtimeHours = Math.max(0, weeklyHours - 40);
+
   // Calculate elapsed time for active entry
   const getElapsedTime = () => {
     if (!activeEntry) return null;
@@ -307,6 +311,17 @@ export default function TimeClock() {
                   <div className="text-center">
                     <p className="text-3xl font-bold text-purple-600">{weeklyHours.toFixed(2)} hrs</p>
                     <p className="text-sm text-gray-500">Total this week</p>
+                    {overtimeHours > 0 && (
+                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-full">
+                        <span className="text-sm font-semibold">🕐 {overtimeHours.toFixed(2)} hrs overtime</span>
+                      </div>
+                    )}
+                    {weeklyHours > 0 && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Regular: {regularHours.toFixed(2)} hrs
+                        {overtimeHours > 0 && ` | OT: ${overtimeHours.toFixed(2)} hrs`}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -318,7 +333,15 @@ export default function TimeClock() {
                       <p>No time entries for this week</p>
                     </div>
                   ) : (
-                    weeklyEntries.map(entry => (
+                    weeklyEntries.map((entry, index) => {
+                      // Calculate running total up to this entry to determine OT
+                      const entriesUpToThis = weeklyEntries.slice(index);
+                      const hoursBeforeThis = entriesUpToThis.slice(1).reduce((sum, e) => sum + (e.total_hours || 0), 0);
+                      const entryHours = entry.total_hours || 0;
+                      const entryRegular = Math.min(entryHours, Math.max(0, 40 - hoursBeforeThis));
+                      const entryOT = Math.max(0, entryHours - entryRegular);
+                      
+                      return (
                       <div key={entry.id} className="clay-card p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
@@ -332,7 +355,12 @@ export default function TimeClock() {
                             {entry.status === "clocked_in" ? (
                               <Badge className="bg-green-100 text-green-700">Active</Badge>
                             ) : (
-                              <p className="text-lg font-bold text-purple-600">{entry.total_hours?.toFixed(2)} hrs</p>
+                              <div>
+                                <p className="text-lg font-bold text-purple-600">{entryHours.toFixed(2)} hrs</p>
+                                {entryOT > 0 && (
+                                  <p className="text-xs text-amber-600 font-medium">({entryOT.toFixed(2)} OT)</p>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -424,7 +452,7 @@ export default function TimeClock() {
                           )}
                         </div>
                       </div>
-                    ))
+                    );})
                   )}
                 </div>
               </TabsContent>
