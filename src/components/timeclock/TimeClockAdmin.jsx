@@ -41,6 +41,8 @@ export default function TimeClockAdmin() {
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [customStartDate, setCustomStartDate] = useState(null);
+  const [customEndDate, setCustomEndDate] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingEntry, setEditingEntry] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -66,7 +68,12 @@ export default function TimeClockAdmin() {
 
   // Calculate date range
   const getDateRange = () => {
-    if (dateRange === "week") {
+    if (dateRange === "custom" && customStartDate && customEndDate) {
+      return {
+        start: new Date(customStartDate),
+        end: new Date(customEndDate + "T23:59:59")
+      };
+    } else if (dateRange === "week") {
       return {
         start: startOfWeek(currentDate, { weekStartsOn: 0 }),
         end: endOfWeek(currentDate, { weekStartsOn: 0 })
@@ -218,31 +225,56 @@ export default function TimeClockAdmin() {
 
         <div className="flex items-center gap-2">
           <CalendarIcon className="w-4 h-4 text-gray-500" />
-          <Select value={dateRange} onValueChange={setDateRange}>
+          <Select value={dateRange} onValueChange={(val) => {
+            setDateRange(val);
+            if (val !== "custom") {
+              setCustomStartDate(null);
+              setCustomEndDate(null);
+            }
+          }}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Weekly</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => navigateDate(-1)}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-[200px] text-center">
-            {dateRange === "week" 
-              ? `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`
-              : format(currentDate, "MMMM yyyy")
-            }
-          </span>
-          <Button variant="ghost" size="sm" onClick={() => navigateDate(1)}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+        {dateRange === "custom" ? (
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={customStartDate || ""}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="w-36 h-9"
+            />
+            <span className="text-gray-500">to</span>
+            <Input
+              type="date"
+              value={customEndDate || ""}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="w-36 h-9"
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigateDate(-1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[200px] text-center">
+              {dateRange === "week" 
+                ? `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`
+                : format(currentDate, "MMMM yyyy")
+              }
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => navigateDate(1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
 
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
