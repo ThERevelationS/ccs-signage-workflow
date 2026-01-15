@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { 
   Clock, 
@@ -11,86 +10,224 @@ import {
   Square, 
   User,
   Loader2,
-  QrCode,
-  Camera
+  Camera,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
-import QRScanner from "@/components/timeclock/QRScanner";
-import FaceRecognition from "@/components/timeclock/FaceRecognition";
+import * as faceapi from "face-api.js";
+import { Html5Qrcode } from "html5-qrcode";
 
 const TimeEntry = base44.entities.TimeEntry;
+const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
 
 export default function QuickClockSection({ allUsers, currentTime }) {
-  const [usernameInput, setUsernameInput] = useState("");
   const [activeEntry, setActiveEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [error, setError] = useState("");
   const [notification, setNotification] = useState(null);
+  
+  // Recognition state
+  const [isRecognizing, setIsRecognizing] = useState(false);
+  const [recognitionMode, setRecognitionMode] = useState(null); // "in" or "out"
+  const [recognitionStatus, setRecognitionStatus] = useState("");
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  
+  // Refs
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const qrScannerRef = useRef(null);
+  const scanIntervalRef = useRef(null);
+  const modelsLoadedRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      stopRecognition();
+    };
+  }, []);
 
   const showNotification = (type, userName, time) => {
     setNotification({ type, userName, time });
     setTimeout(() => setNotification(null), 15000);
   };
 
-  const handleUsernameSubmit = () => {
-    const trimmed = usernameInput.trim().toLowerCase();
-    if (!trimmed) {
-      setError("Please enter a username");
-      return;
-    }
-    const user = allUsers.find(u => u.username?.toLowerCase() === trimmed);
-    if (user) {
-      setSelectedUser(user);
-      setError("");
-      checkActiveEntry(user.email);
-    } else {
-      setError("Username not found");
-      setSelectedUser(null);
-      setActiveEntry(null);
+  const loadFaceModels = async () => {
+    if (modelsLoadedRef.current) return true;
+    try {
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+      ]);
+      modelsLoadedRef.current = true;
+      return true;
+    } catch (err) {
+      console.error("Error loading face models:", err);
+      return false;
     }
   };
 
-  const handleClear = () => {
+  const startRecognition = async (mode) => {
+    setRecognitionMode(mode);
+    setIsRecognizing(true);
+    setRecognitionStatus("Starting camera...");
+    setShowManualEntry(false);
     setUsernameInput("");
+    setUsernameError("");
+
+    try {
+      // Start video stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: "user" }
+      });
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await new Promise(resolve => {
+          videoRef.current.onloadedmetadata = resolve;
+        });
+      }
+
+      // Load face models in background
+      loadFaceModels();
+
+      // Start QR scanner
+      try {
+        qrScannerRef.current = new Html5Qrcode("hybrid-qr-reader");
+        await qrScannerRef.current.start(
+          { facingMode: "user" },
+          { fps: 10, qrbox: { width: 200, height: 200 } },
+          (decodedText) => {
+            if (decodedText.startsWith("TIMECLOCK:")) {
+              const email = decodedText.replace("TIMECLOCK:", "");
+              const user = allUsers.find(u => u.email === email);
+              if (user) {
+                handleUserRecognized(user);
+              }
+            }
+          },
+          () => {}
+        );
+      } catch (qrErr) {
+        console.log("QR scanner using same stream");
+      }
+
+      setRecognitionStatus("Look at camera or show QR badge...");
+
+      // Start face detection loop
+      scanIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || !modelsLoadedRef.current) return;
+
+        try {
+          const detection = await faceapi
+            .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+          if (detection) {
+            // Try to match face
+            const user = findMatchingUser(detection.descriptor);
+            if (user) {
+              handleUserRecognized(user);
+            }
+          }
+        } catch (err) {
+          // Ignore detection errors
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error("Camera error:", err);
+      setRecognitionStatus("Camera access denied");
+      setShowManualEntry(true);
+    }
+  };
+
+  const findMatchingUser = (descriptor) => {
+    let bestMatch = null;
+    let bestDistance = 0.55; // Threshold
+
+    for (const user of allUsers) {
+      if (!user.face_descriptors || user.face_descriptors.length === 0) continue;
+      
+      for (const storedDescriptor of user.face_descriptors) {
+        const distance = faceapi.euclideanDistance(descriptor, new Float32Array(storedDescriptor));
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestMatch = user;
+        }
+      }
+    }
+    
+    return bestMatch;
+  };
+
+  const handleUserRecognized = async (user) => {
+    stopRecognition();
+    setSelectedUser(user);
+    setRecognitionStatus(`Welcome, ${user.full_name || user.email}!`);
+
+    if (recognitionMode === "in") {
+      await performClockIn(user);
+    } else {
+      // Check for active entry then show clock out dialog
+      const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
+      if (entries.length > 0) {
+        setActiveEntry(entries[0]);
+        setShowClockOut(true);
+      } else {
+        setRecognitionStatus("No active clock-in found");
+        setTimeout(() => resetState(), 2000);
+      }
+    }
+  };
+
+  const stopRecognition = () => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    
+    if (qrScannerRef.current?.isScanning) {
+      qrScannerRef.current.stop().catch(() => {});
+      qrScannerRef.current = null;
+    }
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    setIsRecognizing(false);
+  };
+
+  const resetState = () => {
+    stopRecognition();
     setSelectedUser(null);
     setActiveEntry(null);
-    setError("");
+    setRecognitionMode(null);
+    setRecognitionStatus("");
+    setShowManualEntry(false);
+    setUsernameInput("");
+    setUsernameError("");
   };
 
-  const handleQRScan = (user) => {
-    setSelectedUser(user);
-    setUsernameInput(user.username || "");
-    setError("");
-    checkActiveEntry(user.email);
-  };
-
-  const checkActiveEntry = async (email) => {
-    setIsLoading(true);
-    try {
-      const entries = await TimeEntry.filter({ user_email: email, status: "clocked_in" });
-      setActiveEntry(entries.length > 0 ? entries[0] : null);
-    } catch (err) {
-      console.error("Error checking active entry:", err);
-    }
-    setIsLoading(false);
-  };
-
-  const handleClockIn = async () => {
-    if (!selectedUser) return;
+  const performClockIn = async (user) => {
     setIsLoading(true);
     try {
       const clockInTime = new Date();
       const entry = await TimeEntry.create({
-        user_email: selectedUser.email,
-        user_name: selectedUser.full_name || selectedUser.email,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
         clock_in: clockInTime.toISOString(),
         status: "clocked_in"
       });
-      setActiveEntry(entry);
-      showNotification("in", selectedUser.full_name || selectedUser.email, format(clockInTime, "h:mm a"));
+      showNotification("in", user.full_name || user.email, format(clockInTime, "h:mm a"));
+      setTimeout(() => resetState(), 2000);
     } catch (err) {
       console.error("Clock in error:", err);
     }
@@ -108,23 +245,27 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         notes: data.notes,
         status: "clocked_out"
       });
-      showNotification("out", selectedUser?.full_name || selectedUser?.email || "User", format(clockOutTime, "h:mm a"));
-      setActiveEntry(null);
+      showNotification("out", selectedUser?.full_name || "User", format(clockOutTime, "h:mm a"));
       setShowClockOut(false);
+      setTimeout(() => resetState(), 2000);
     } catch (err) {
       console.error("Clock out error:", err);
     }
   };
 
-  // Calculate elapsed time
-  const getElapsedTime = () => {
-    if (!activeEntry) return null;
-    const start = new Date(activeEntry.clock_in);
-    const diff = currentTime - start;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const handleManualSubmit = async () => {
+    const trimmed = usernameInput.trim().toLowerCase();
+    if (!trimmed) {
+      setUsernameError("Please enter a username");
+      return;
+    }
+    
+    const user = allUsers.find(u => u.username?.toLowerCase() === trimmed);
+    if (user) {
+      handleUserRecognized(user);
+    } else {
+      setUsernameError("Username not found");
+    }
   };
 
   return (
@@ -154,137 +295,136 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         </div>
       )}
 
-      {/* Authentication Methods */}
       <div className="clay-card p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
         </h2>
 
-        <Tabs defaultValue="username" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="username" className="gap-2">
-              <User className="w-4 h-4" />
-              Username
-            </TabsTrigger>
-            <TabsTrigger value="qr" className="gap-2">
-              <QrCode className="w-4 h-4" />
-              QR Code
-            </TabsTrigger>
-            <TabsTrigger value="face" className="gap-2">
-              <Camera className="w-4 h-4" />
-              Face ID
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="username">
-            <div className="mb-6">
-              <Label className="text-sm font-medium mb-2 block">Enter Your Username</Label>
-              <div className="flex gap-2 max-w-md">
-                <div className="relative flex-1">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleUsernameSubmit()}
-                    placeholder="Type your username..."
-                    className="pl-10"
-                  />
-                </div>
-                <Button onClick={handleUsernameSubmit} className="bg-purple-600 hover:bg-purple-700">
-                  Go
-                </Button>
-                {selectedUser && (
-                  <Button variant="outline" onClick={handleClear}>
-                    Clear
-                  </Button>
-                )}
-              </div>
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              {selectedUser && (
-                <p className="text-green-600 text-sm mt-1">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
-              )}
+        {/* Main View - Clock In/Out Buttons */}
+        {!isRecognizing && !showClockOut && (
+          <div className="flex flex-col items-center gap-6">
+            <p className="text-gray-600 text-center">
+              Tap a button below, then look at the camera or show your QR badge
+            </p>
+            
+            <div className="flex gap-6">
+              <Button 
+                onClick={() => startRecognition("in")}
+                className="bg-green-600 hover:bg-green-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg"
+              >
+                <Play className="w-8 h-8" />
+                Clock In
+              </Button>
+              
+              <Button 
+                onClick={() => startRecognition("out")}
+                className="bg-red-600 hover:bg-red-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg"
+              >
+                <Square className="w-8 h-8" />
+                Clock Out
+              </Button>
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="qr">
-            <QRScanner onScan={handleQRScan} allUsers={allUsers} inline />
-            {selectedUser && (
-              <p className="text-green-600 text-sm mt-2 text-center">Welcome, {selectedUser.full_name || selectedUser.email}!</p>
-            )}
-          </TabsContent>
+        {/* Recognition View */}
+        {isRecognizing && (
+          <div className="flex flex-col items-center">
+            <div className="relative mb-4">
+              {/* Video feed */}
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-80 h-60 object-cover rounded-2xl bg-gray-900"
+              />
+              
+              {/* Hidden QR reader element */}
+              <div id="hybrid-qr-reader" className="hidden" />
+              
+              {/* Scanning overlay */}
+              <div className={`absolute inset-0 border-4 rounded-2xl animate-pulse ${
+                recognitionMode === "in" ? "border-green-500" : "border-red-500"
+              }`} />
+              
+              {/* Cancel button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={resetState}
+                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
 
-          <TabsContent value="face">
-            <FaceRecognition 
-              allUsers={allUsers} 
-              onRecognized={(user) => {
-                setSelectedUser(user);
-                setUsernameInput(user.username || "");
-                setError("");
-                checkActiveEntry(user.email);
-              }}
-            />
-          </TabsContent>
-        </Tabs>
+            {/* Status */}
+            <div className={`px-4 py-2 rounded-full mb-4 ${
+              recognitionMode === "in" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            }`}>
+              <p className="font-medium flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                {recognitionMode === "in" ? "Clocking In..." : "Clocking Out..."}
+              </p>
+            </div>
 
-        {/* Clock Status */}
-        {selectedUser && (
-          <div className="text-center">
-            {isLoading ? (
-              <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto" />
-            ) : activeEntry ? (
-              <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full mb-4">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="font-medium">Clocked In</span>
-                </div>
-                
-                <p className="text-sm text-gray-500 mb-2">
-                  Since {format(new Date(activeEntry.clock_in), "h:mm a")}
-                </p>
-                
-                <div className="text-5xl font-mono font-bold text-purple-600 mb-6">
-                  {getElapsedTime()}
-                </div>
-                
-                <Button 
-                  onClick={() => setShowClockOut(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-lg gap-2"
-                >
-                  <Square className="w-5 h-5" />
-                  Clock Out
-                </Button>
-              </div>
+            <p className="text-gray-600 mb-4">{recognitionStatus}</p>
+
+            {/* Manual entry fallback */}
+            {!showManualEntry ? (
+              <Button 
+                variant="link" 
+                onClick={() => setShowManualEntry(true)}
+                className="text-purple-600"
+              >
+                Enter username manually instead
+              </Button>
             ) : (
-              <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-full mb-4">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                  <span className="font-medium">Not Clocked In</span>
+              <div className="w-full max-w-xs space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      value={usernameInput}
+                      onChange={(e) => {
+                        setUsernameInput(e.target.value);
+                        setUsernameError("");
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
+                      placeholder="Enter username..."
+                      className="pl-10"
+                      autoFocus
+                    />
+                  </div>
+                  <Button onClick={handleManualSubmit} className="bg-purple-600 hover:bg-purple-700">
+                    Go
+                  </Button>
                 </div>
-                
-                <p className="text-gray-500 mb-6">Ready to start your day?</p>
-                
-                <Button 
-                  onClick={handleClockIn}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg gap-2"
-                >
-                  <Play className="w-5 h-5" />
-                  Clock In
-                </Button>
+                {usernameError && (
+                  <p className="text-red-500 text-sm text-center">{usernameError}</p>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {!selectedUser && (
-          <p className="text-center text-gray-500">Enter your username above to clock in or out</p>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          </div>
         )}
       </div>
 
       {showClockOut && activeEntry && (
         <ClockOutDialog
           isOpen={showClockOut}
-          onClose={() => setShowClockOut(false)}
+          onClose={() => {
+            setShowClockOut(false);
+            resetState();
+          }}
           timeEntry={activeEntry}
           onClockOut={handleClockOut}
         />
