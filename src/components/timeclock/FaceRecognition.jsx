@@ -228,16 +228,20 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
       <div className="flex flex-col items-center">
         {/* Video Preview */}
-        <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4">
+        <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4" style={{ width: '320px', height: '240px' }}>
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            style={{ width: '320px', height: '240px', objectFit: 'cover' }}
+            width={320}
+            height={240}
+            style={{ width: '320px', height: '240px', objectFit: 'cover', display: 'block' }}
           />
           <canvas
             ref={canvasRef}
+            width={320}
+            height={240}
             style={{ position: 'absolute', top: 0, left: 0, width: '320px', height: '240px' }}
           />
           

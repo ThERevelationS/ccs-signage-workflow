@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,17 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [faceDescriptors, setFaceDescriptors] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+
+  // Delay showing camera until dialog is fully mounted
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => setShowCamera(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowCamera(false);
+    }
+  }, [isOpen]);
 
   const handleCapture = (descriptors) => {
     setFaceDescriptors(descriptors);
@@ -66,13 +77,18 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
           </div>
         ) : (
           <>
-            {isOpen && (
+            {showCamera ? (
               <FaceRecognition 
                 allUsers={[]} 
                 isEnrollment={true}
                 onEnrollCapture={handleCapture}
               />
-              )}
+            ) : (
+              <div className="flex flex-col items-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-3" />
+                <p className="text-gray-600">Initializing camera...</p>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={handleClose} className="flex-1">
