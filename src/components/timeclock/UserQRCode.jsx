@@ -16,6 +16,11 @@ export default function UserQRCode({ user }) {
   // Create a unique code for the user - using email as identifier
   const qrValue = `TIMECLOCK:${user.email}`;
   
+  // Don't render if user has no email
+  if (!user?.email) {
+    return null;
+  }
+  
   const handleDownload = () => {
     const svg = qrRef.current?.querySelector("svg");
     if (!svg) return;
