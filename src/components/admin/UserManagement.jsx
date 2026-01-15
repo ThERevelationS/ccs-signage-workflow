@@ -63,10 +63,13 @@ export default function UserManagement() {
 
   const [formData, setFormData] = useState({
     full_name: "",
+    username: "",
+    password_hash: "",
     role: "user",
     sales_roles: ["Task Assigned"],
     can_import_export: false
   });
+  const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
 
   useEffect(() => {
     loadUsers();
