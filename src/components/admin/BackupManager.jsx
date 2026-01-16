@@ -30,7 +30,8 @@ import {
   Wallet,
   FolderOpen,
   Save,
-  X
+  X,
+  Settings
 } from "lucide-react";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
 
