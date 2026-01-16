@@ -71,6 +71,9 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   };
 
   const startRecognition = async (mode) => {
+    // Prevent double-starts
+    if (isRecognizing) return;
+    
     setRecognitionMode(mode);
     setIsRecognizing(true);
     setRecognitionStatus("Starting camera...");
@@ -83,6 +86,13 @@ export default function QuickClockSection({ allUsers, currentTime }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }
       });
+      
+      // Check if component is still in recognition mode
+      if (!isRecognizing) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      
       streamRef.current = stream;
       
       if (videoRef.current) {
@@ -90,31 +100,36 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         await new Promise(resolve => {
           videoRef.current.onloadedmetadata = resolve;
         });
+        await videoRef.current.play();
       }
 
       // Load face models in background
       loadFaceModels();
 
-      // Start QR scanner
-      try {
-        qrScannerRef.current = new Html5Qrcode("hybrid-qr-reader");
-        await qrScannerRef.current.start(
-          { facingMode: "user" },
-          { fps: 10, qrbox: { width: 200, height: 200 } },
-          (decodedText) => {
-            if (decodedText.startsWith("TIMECLOCK:")) {
-              const email = decodedText.replace("TIMECLOCK:", "");
-              const user = allUsers.find(u => u.email === email);
-              if (user) {
-                handleUserRecognized(user);
+      // Start QR scanner - delay slightly to avoid conflicts
+      setTimeout(async () => {
+        try {
+          if (!qrScannerRef.current) {
+            qrScannerRef.current = new Html5Qrcode("hybrid-qr-reader");
+          }
+          await qrScannerRef.current.start(
+            { facingMode: "user" },
+            { fps: 5, qrbox: { width: 200, height: 200 } },
+            (decodedText) => {
+              if (decodedText.startsWith("TIMECLOCK:")) {
+                const email = decodedText.replace("TIMECLOCK:", "");
+                const user = allUsers.find(u => u.email === email);
+                if (user) {
+                  handleUserRecognized(user);
+                }
               }
-            }
-          },
-          () => {}
-        );
-      } catch (qrErr) {
-        console.log("QR scanner using same stream");
-      }
+            },
+            () => {}
+          );
+        } catch (qrErr) {
+          console.log("QR scanner error (may already be running):", qrErr);
+        }
+      }, 500);
 
       setRecognitionStatus("Look at camera or show QR badge...");
 
@@ -167,18 +182,38 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   };
 
   const handleUserRecognized = async (user) => {
-    stopRecognition();
+    // Stop scanning but keep UI visible
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    if (qrScannerRef.current?.isScanning) {
+      qrScannerRef.current.stop().catch(() => {});
+      qrScannerRef.current = null;
+    }
+    
     setSelectedUser(user);
     setRecognitionStatus(`Welcome, ${user.full_name || user.email}!`);
-    setIsRecognizing(false);
 
     if (recognitionMode === "in") {
+      setIsRecognizing(false);
+      // Stop video stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
       await performClockIn(user);
     } else {
       // Check for active entry then show clock out dialog
       setIsLoading(true);
       const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
       setIsLoading(false);
+      setIsRecognizing(false);
+      // Stop video stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
       if (entries.length > 0) {
         setActiveEntry(entries[0]);
         setShowClockOut(true);
