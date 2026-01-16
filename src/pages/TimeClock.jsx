@@ -294,6 +294,10 @@ export default function TimeClock() {
                   <Briefcase className="w-4 h-4" />
                   My PTO Balance
                 </TabsTrigger>
+                <TabsTrigger value="settings" className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="clock">
