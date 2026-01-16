@@ -112,75 +112,38 @@ export default function BackupManager() {
     setIsSavingSettings(false);
   };
 
-  const loadFolders = async (parentId = 'root') => {
-    setIsLoadingFolders(true);
-    try {
-      const response = await backupToGoogleDrive({ action: 'listFolders', parentId });
-      setFolders(response.data.folders || []);
-    } catch (err) {
-      console.error("Error loading folders:", err);
-      setFolders([]);
-    }
-    setIsLoadingFolders(false);
-  };
-
-  const openFolderPicker = () => {
-    setShowFolderPicker(true);
-    setFolderPath([{ id: 'root', name: 'My Drive' }]);
-    loadFolders('root');
-  };
-
-  const navigateToFolder = (folder) => {
-    setFolderPath([...folderPath, folder]);
-    loadFolders(folder.id);
-  };
-
-  const navigateToPathIndex = (index) => {
-    const newPath = folderPath.slice(0, index + 1);
-    setFolderPath(newPath);
-    loadFolders(newPath[newPath.length - 1].id);
-  };
-
-  const selectFolder = (folder) => {
-    setSettings(prev => ({
-      ...prev,
-      folderId: folder.id,
-      folderName: folder.name
-    }));
-    setShowFolderPicker(false);
-  };
-
-  const selectCurrentFolder = () => {
-    const currentFolder = folderPath[folderPath.length - 1];
-    setSettings(prev => ({
-      ...prev,
-      folderId: currentFolder.id === 'root' ? null : currentFolder.id,
-      folderName: currentFolder.name
-    }));
-    setShowFolderPicker(false);
-  };
-
   const createFolder = async () => {
     if (!newFolderName.trim()) return;
     
     setIsCreatingFolder(true);
+    setError(null);
     try {
-      const parentId = folderPath[folderPath.length - 1].id;
       const response = await backupToGoogleDrive({ 
         action: 'createFolder', 
-        folderName: newFolderName,
-        parentId: parentId === 'root' ? null : parentId
+        folderName: newFolderName.trim()
       });
       
       if (response.data.folder) {
-        // Refresh folder list
-        loadFolders(parentId);
-        setNewFolderName('');
+        setSettings(prev => ({
+          ...prev,
+          folderId: response.data.folder.id,
+          folderName: response.data.folder.name
+        }));
+        setShowFolderDialog(false);
+        setNewFolderName('SignShop Backups');
       }
     } catch (err) {
-      setError("Failed to create folder: " + err.message);
+      setError("Failed to create folder: " + (err.response?.data?.error || err.message));
     }
     setIsCreatingFolder(false);
+  };
+
+  const clearFolder = () => {
+    setSettings(prev => ({
+      ...prev,
+      folderId: null,
+      folderName: null
+    }));
   };
 
   const handleToggle = (id) => {
