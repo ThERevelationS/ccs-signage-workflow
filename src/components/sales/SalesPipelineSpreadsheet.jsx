@@ -677,6 +677,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       });
 
       let importedCount = 0;
+      const BATCH_SIZE = 5; // Process in batches to avoid rate limits
+      const BATCH_DELAY = 1000; // 1 second between batches
 
       for (let i = 0; i < jsonData.length; i++) {
         // Check for cancel
@@ -817,9 +819,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
           
-          // Only pause every 10 rows to prevent UI freeze
-          if ((i + 1) % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 50));
+          // Pause between batches to avoid rate limits
+          if ((i + 1) % BATCH_SIZE === 0) {
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
           }
           continue;
         }
@@ -944,9 +946,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
         
-        // Shorter delay - only pause every 10 rows to prevent UI freeze
-        if ((i + 1) % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+        // Pause between batches to avoid rate limits
+        if ((i + 1) % BATCH_SIZE === 0) {
+          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
         }
       }
 
