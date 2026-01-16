@@ -430,91 +430,45 @@ export default function BackupManager() {
         )}
       </div>
 
-      {/* Folder Picker Dialog */}
-      <Dialog open={showFolderPicker} onOpenChange={setShowFolderPicker}>
-        <DialogContent className="clay-card border-none max-w-lg">
+      {/* Create Folder Dialog */}
+      <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
+        <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
-            <DialogTitle>Select Backup Folder</DialogTitle>
+            <DialogTitle>Create Backup Folder</DialogTitle>
           </DialogHeader>
 
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-sm text-gray-600 flex-wrap mb-4">
-            {folderPath.map((folder, index) => (
-              <React.Fragment key={folder.id}>
-                {index > 0 && <ChevronRight className="w-4 h-4" />}
-                <button
-                  onClick={() => navigateToPathIndex(index)}
-                  className="hover:text-purple-600 hover:underline"
-                >
-                  {folder.name}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-gray-600">
+              Create a new folder in your Google Drive root to store backups.
+            </p>
+            
+            <div>
+              <Label>Folder Name</Label>
+              <Input
+                placeholder="SignShop Backups"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && createFolder()}
+                className="mt-1"
+              />
+            </div>
 
-          {/* Create Folder */}
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="New folder name..."
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && createFolder()}
-            />
-            <Button 
-              onClick={createFolder} 
-              disabled={!newFolderName.trim() || isCreatingFolder}
-              variant="outline"
-            >
-              {isCreatingFolder ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <FolderPlus className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-
-          {/* Folder List */}
-          <div className="border rounded-lg max-h-64 overflow-y-auto">
-            {isLoadingFolders ? (
-              <div className="p-8 text-center">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600" />
-              </div>
-            ) : folders.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No subfolders found
-              </div>
-            ) : (
-              folders.map(folder => (
-                <div
-                  key={folder.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-b-0"
-                >
-                  <button
-                    onClick={() => navigateToFolder(folder)}
-                    className="flex items-center gap-2 flex-1 text-left"
-                  >
-                    <FolderOpen className="w-5 h-5 text-yellow-500" />
-                    <span>{folder.name}</span>
-                  </button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => selectFolder(folder)}
-                  >
-                    Select
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => setShowFolderPicker(false)}>
-              Cancel
-            </Button>
-            <Button onClick={selectCurrentFolder}>
-              Use Current Folder
-            </Button>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowFolderDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={createFolder} 
+                disabled={!newFolderName.trim() || isCreatingFolder}
+              >
+                {isCreatingFolder ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <FolderPlus className="w-4 h-4 mr-2" />
+                )}
+                Create Folder
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
