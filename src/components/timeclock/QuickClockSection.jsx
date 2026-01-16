@@ -72,7 +72,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   const startRecognition = async (mode) => {
     // Prevent double-starts
-    if (isRecognizing) return;
+    if (streamRef.current) return;
     
     setRecognitionMode(mode);
     setIsRecognizing(true);
@@ -86,12 +86,6 @@ export default function QuickClockSection({ allUsers, currentTime }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }
       });
-      
-      // Check if component is still in recognition mode
-      if (!isRecognizing) {
-        stream.getTracks().forEach(track => track.stop());
-        return;
-      }
       
       streamRef.current = stream;
       
