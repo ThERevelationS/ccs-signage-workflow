@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
       return await response.json();
     };
     
-    // Backup each selected data type
+    // Backup each selected data type - each gets its own folder
     if (typesToBackup.includes('users')) {
       try {
         const users = await base44.asServiceRole.entities.AuthorizedEmail.list();
@@ -284,8 +284,8 @@ Deno.serve(async (req) => {
           can_import_export: u.can_import_export,
           created_date: u.created_date
         }));
-        const result = await uploadToGoogleDrive(sanitizedUsers, 'Users_Backup');
-        results.push({ type: 'users', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(sanitizedUsers, 'Users_Backup', 'SignShop Users Backup');
+        results.push({ type: 'users', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'users', error: e.message });
       }
@@ -298,8 +298,8 @@ Deno.serve(async (req) => {
           ...e,
           job_allocations: JSON.stringify(e.job_allocations || [])
         }));
-        const result = await uploadToGoogleDrive(formattedEntries, 'TimeEntries_Backup');
-        results.push({ type: 'timeclock', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(formattedEntries, 'TimeEntries_Backup', 'SignShop Time Clock Backup');
+        results.push({ type: 'timeclock', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'timeclock', error: e.message });
       }
@@ -308,8 +308,8 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('orders')) {
       try {
         const orders = await base44.asServiceRole.entities.Order.list();
-        const result = await uploadToGoogleDrive(orders, 'Orders_Backup');
-        results.push({ type: 'orders', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(orders, 'Orders_Backup', 'SignShop Orders Backup');
+        results.push({ type: 'orders', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'orders', error: e.message });
       }
@@ -348,8 +348,8 @@ Deno.serve(async (req) => {
           updated_date: wo.updated_date,
           created_by: wo.created_by
         }));
-        const result = await uploadToGoogleDrive(formattedWO, 'WorkOrders_Backup');
-        results.push({ type: 'workorders', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(formattedWO, 'WorkOrders_Backup', 'SignShop Work Orders Backup');
+        results.push({ type: 'workorders', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'workorders', error: e.message });
       }
@@ -358,8 +358,8 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('timeoff')) {
       try {
         const timeOffRequests = await base44.asServiceRole.entities.TimeOffRequest.list();
-        const result = await uploadToGoogleDrive(timeOffRequests, 'TimeOffRequests_Backup');
-        results.push({ type: 'timeoff', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(timeOffRequests, 'TimeOffRequests_Backup', 'SignShop Time Off Backup');
+        results.push({ type: 'timeoff', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'timeoff', error: e.message });
       }
@@ -372,8 +372,8 @@ Deno.serve(async (req) => {
           ...p,
           balances: JSON.stringify(p.balances || [])
         }));
-        const result = await uploadToGoogleDrive(formattedPTO, 'PTOBalances_Backup');
-        results.push({ type: 'pto', filename: result.name, id: result.id, skipped: result.skipped });
+        const result = await uploadToGoogleDrive(formattedPTO, 'PTOBalances_Backup', 'SignShop PTO Backup');
+        results.push({ type: 'pto', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
         results.push({ type: 'pto', error: e.message });
       }
