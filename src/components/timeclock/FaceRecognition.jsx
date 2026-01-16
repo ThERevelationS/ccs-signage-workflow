@@ -19,24 +19,22 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
   
-  const [status, setStatus] = useState("init"); // init, loading, ready, error
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [recognizedUser, setRecognizedUser] = useState(null);
-  const [scanStatus, setScanStatus] = useState("");
+  const [scanStatus, setScanStatus] = useState("Initializing...");
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
 
+  // Start camera
   useEffect(() => {
     let mounted = true;
     
-    const init = async () => {
-      setStatus("loading");
-      
-      // Step 1: Get camera
+    const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 320, height: 240, facingMode: "user" }
+          video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" }
         });
         
         if (!mounted) {
@@ -48,23 +46,42 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          // Wait for video to be ready before playing
-          await new Promise((resolve) => {
-            videoRef.current.onloadedmetadata = () => {
-              videoRef.current.play().then(resolve).catch(resolve);
-            };
-          });
         }
       } catch (err) {
         console.error("Camera error:", err);
         if (mounted) {
           setErrorMsg("Camera access denied. Please allow camera permissions.");
-          setStatus("error");
         }
-        return;
       }
-      
-      // Step 2: Load face models
+    };
+    
+    startCamera();
+    
+    return () => {
+      mounted = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Handle video playing
+  const handleVideoPlaying = () => {
+    setCameraReady(true);
+    setScanStatus("Loading face models...");
+  };
+
+  // Load models after camera is ready
+  useEffect(() => {
+    if (!cameraReady) return;
+    
+    let mounted = true;
+    
+    const loadModels = async () => {
       try {
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -74,30 +91,20 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         if (mounted) {
           setModelsLoaded(true);
-          setStatus("ready");
-          setScanStatus("Camera ready. Position your face and click Capture.");
+          setScanStatus("Ready! Position your face and click Capture.");
         }
       } catch (err) {
         console.error("Model load error:", err);
         if (mounted) {
           setErrorMsg("Failed to load face recognition models.");
-          setStatus("error");
         }
       }
     };
     
-    init();
+    loadModels();
     
-    return () => {
-      mounted = false;
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-      }
-    };
-  }, []);
+    return () => { mounted = false; };
+  }, [cameraReady]);
 
   const detectFace = async () => {
     if (!videoRef.current || !modelsLoaded) return null;
@@ -186,17 +193,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Camera ready.");
   };
 
-  if (status === "loading" || status === "init") {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-10 h-10 animate-spin text-purple-600 mb-4" />
-        <p className="text-gray-600 font-medium">Starting camera...</p>
-        <p className="text-xs text-gray-400 mt-1">Please allow camera access if prompted</p>
-      </div>
-    );
-  }
-
-  if (status === "error") {
+  if (errorMsg) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <UserX className="w-10 h-10 text-red-500 mb-4" />
@@ -223,6 +220,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           autoPlay
           muted
           playsInline
+          onPlaying={handleVideoPlaying}
           style={{ 
             width: "100%", 
             height: "100%", 
@@ -231,6 +229,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             display: "block"
           }}
         />
+        {!cameraReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-400 mb-2" />
+            <p className="text-white text-sm">Starting camera...</p>
+          </div>
+        )}
         <canvas ref={canvasRef} width={320} height={240} className="absolute inset-0 pointer-events-none" />
         
         {isScanning && (
@@ -266,7 +270,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           <div className="flex gap-3">
             <Button 
               onClick={captureForEnrollment}
-              disabled={capturedDescriptors.length >= 3}
+              disabled={capturedDescriptors.length >= 3 || !modelsLoaded}
               className="gap-2 bg-purple-600 hover:bg-purple-700"
             >
               <Camera className="w-4 h-4" />
