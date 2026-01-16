@@ -170,18 +170,21 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     stopRecognition();
     setSelectedUser(user);
     setRecognitionStatus(`Welcome, ${user.full_name || user.email}!`);
+    setIsRecognizing(false);
 
     if (recognitionMode === "in") {
       await performClockIn(user);
     } else {
       // Check for active entry then show clock out dialog
+      setIsLoading(true);
       const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
+      setIsLoading(false);
       if (entries.length > 0) {
         setActiveEntry(entries[0]);
         setShowClockOut(true);
       } else {
         setRecognitionStatus("No active clock-in found");
-        setTimeout(() => resetState(), 2000);
+        setTimeout(() => resetState(), 3000);
       }
     }
   };
@@ -220,18 +223,22 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     setIsLoading(true);
     try {
       const clockInTime = new Date();
-      const entry = await TimeEntry.create({
+      await TimeEntry.create({
         user_email: user.email,
         user_name: user.full_name || user.email,
         clock_in: clockInTime.toISOString(),
         status: "clocked_in"
       });
+      setIsLoading(false);
       showNotification("in", user.full_name || user.email, format(clockInTime, "h:mm a"));
-      setTimeout(() => resetState(), 2000);
+      // Keep showing success for longer before resetting
+      setTimeout(() => resetState(), 5000);
     } catch (err) {
       console.error("Clock in error:", err);
+      setIsLoading(false);
+      setRecognitionStatus("Error clocking in. Please try again.");
+      setTimeout(() => resetState(), 3000);
     }
-    setIsLoading(false);
   };
 
   const handleClockOut = async (data) => {
@@ -270,26 +277,33 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   return (
     <>
-      {/* Notification Bubble */}
+      {/* Notification Bubble - Large and Prominent */}
       {notification && (
         <div 
-          className={`fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-2xl shadow-lg transition-all duration-500 ${
-            notification.type === "in" 
-              ? "bg-green-500 text-white" 
-              : "bg-red-500 text-white"
-          }`}
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50`}
+          onClick={() => setNotification(null)}
         >
-          <div className="flex items-center gap-3">
-            {notification.type === "in" ? (
-              <Play className="w-5 h-5" />
-            ) : (
-              <Square className="w-5 h-5" />
-            )}
-            <div>
-              <p className="font-bold">{notification.userName}</p>
-              <p className="text-sm opacity-90">
-                Clocked {notification.type === "in" ? "In" : "Out"} at {notification.time}
-              </p>
+          <div 
+            className={`px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${
+              notification.type === "in" 
+                ? "bg-green-500 text-white" 
+                : "bg-orange-500 text-white"
+            }`}
+          >
+            <div className="flex flex-col items-center gap-4">
+              {notification.type === "in" ? (
+                <Play className="w-16 h-16" />
+              ) : (
+                <Square className="w-16 h-16" />
+              )}
+              <div>
+                <p className="text-3xl font-bold mb-2">{notification.userName}</p>
+                <p className="text-xl">
+                  Successfully Clocked {notification.type === "in" ? "In" : "Out"}
+                </p>
+                <p className="text-2xl font-semibold mt-2">{notification.time}</p>
+              </div>
+              <p className="text-sm opacity-75 mt-4">Tap anywhere to dismiss</p>
             </div>
           </div>
         </div>
@@ -430,7 +444,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
         )}
       </div>
 
-      {showClockOut && activeEntry && (
+      {showClockOut && activeEntry && selectedUser && (
         <ClockOutDialog
           isOpen={showClockOut}
           onClose={() => {
@@ -438,6 +452,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
             resetState();
           }}
           timeEntry={activeEntry}
+          userName={selectedUser.full_name || selectedUser.email}
           onClockOut={handleClockOut}
         />
       )}
