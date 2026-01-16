@@ -88,11 +88,11 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                   {/* Parent work order bar */}
                   <div className="relative h-5 flex items-center">
                     <div className="w-full h-px bg-gray-200" />
-                    {wo.start_date && wo.due_date && (
+                    {wo.due_date && (
                       <div
                         className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
                         style={{
-                          ...getBarPosition(wo.start_date, wo.due_date),
+                          ...getBarPosition(wo.start_date || wo.created_date, wo.due_date),
                           background: `linear-gradient(135deg, ${stageColors[wo.current_stage]}ee 0%, ${stageColors[wo.current_stage]}aa 100%)`,
                           boxShadow: '1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)'
                         }}
@@ -109,11 +109,11 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                   {wo.riders && wo.riders.map((rider, index) => (
                     <div key={rider.id} className="relative h-4 flex items-center pl-4">
                       <div className="w-full h-px bg-gray-200" />
-                      {rider.start_date && rider.due_date && (
+                      {rider.due_date && (
                         <div
                           className="absolute h-4 rounded-md flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
                           style={{
-                            ...getBarPosition(rider.start_date, rider.due_date),
+                            ...getBarPosition(rider.start_date || rider.created_date, rider.due_date),
                             background: `linear-gradient(135deg, ${stageColors[rider.rider_stage || rider.current_stage]}dd 0%, ${stageColors[rider.rider_stage || rider.current_stage]}88 100%)`,
                             boxShadow: '1px 1px 2px rgba(0,0,0,0.1)',
                             border: '1px dashed rgba(124, 58, 237, 0.3)'
