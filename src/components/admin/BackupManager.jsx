@@ -59,8 +59,6 @@ export default function BackupManager() {
   
   // Settings
   const [settings, setSettings] = useState({
-    folderId: null,
-    folderName: null,
     dataTypes: [],
     schedule: 'none',
     scheduleTime: '02:00',
@@ -70,10 +68,6 @@ export default function BackupManager() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
-  
-  // Folder input
-  const [showFolderDialog, setShowFolderDialog] = useState(false);
-  const [folderInput, setFolderInput] = useState('');
 
   useEffect(() => {
     loadSettings();
