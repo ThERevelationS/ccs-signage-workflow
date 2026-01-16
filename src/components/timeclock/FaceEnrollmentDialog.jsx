@@ -16,15 +16,12 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [faceDescriptors, setFaceDescriptors] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
+  const [cameraKey, setCameraKey] = useState(0);
 
-  // Delay showing camera until dialog is fully mounted
+  // Reset camera key when dialog opens to force fresh mount
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => setShowCamera(true), 300);
-      return () => clearTimeout(timer);
-    } else {
-      setShowCamera(false);
+      setCameraKey(prev => prev + 1);
     }
   }, [isOpen]);
 
@@ -54,7 +51,6 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const handleClose = () => {
     setFaceDescriptors([]);
     setSaved(false);
-    setShowCamera(false);
     onClose();
   };
 
@@ -78,18 +74,12 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
           </div>
         ) : (
           <>
-            {showCamera ? (
-              <FaceRecognition 
-                allUsers={[]} 
-                isEnrollment={true}
-                onEnrollCapture={handleCapture}
-              />
-            ) : (
-              <div className="flex flex-col items-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-3" />
-                <p className="text-gray-600">Initializing camera...</p>
-              </div>
-            )}
+            <FaceRecognition 
+              key={cameraKey}
+              allUsers={[]} 
+              isEnrollment={true}
+              onEnrollCapture={handleCapture}
+            />
 
             <div className="flex gap-3 pt-4">
               <Button variant="outline" onClick={handleClose} className="flex-1">
