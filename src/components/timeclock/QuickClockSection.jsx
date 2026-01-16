@@ -196,20 +196,18 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     }
     setIsRecognizing(false);
 
-    if (recognitionMode === "in") {
-      await performClockIn(user);
+    // Check if user is currently clocked in
+    setIsLoading(true);
+    const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
+    setIsLoading(false);
+    
+    if (entries.length > 0) {
+      // User is clocked in, show clock out dialog
+      setActiveEntry(entries[0]);
+      setShowClockOut(true);
     } else {
-      // Check for active entry then show clock out dialog
-      setIsLoading(true);
-      const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
-      setIsLoading(false);
-      if (entries.length > 0) {
-        setActiveEntry(entries[0]);
-        setShowClockOut(true);
-      } else {
-        setRecognitionStatus("No active clock-in found");
-        setTimeout(() => resetState(), 3000);
-      }
+      // User is not clocked in, clock them in
+      await performClockIn(user);
     }
   };
 
