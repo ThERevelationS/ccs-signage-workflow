@@ -28,7 +28,8 @@ import {
   X,
   LogIn,
   LogOut,
-  Lock
+  Lock,
+  Settings
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
