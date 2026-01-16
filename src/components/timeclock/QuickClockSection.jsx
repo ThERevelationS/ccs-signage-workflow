@@ -347,15 +347,26 @@ export default function QuickClockSection({ allUsers, currentTime }) {
             <button 
               onClick={() => startRecognition("auto")}
               disabled={isLoading}
-              className="flex rounded-2xl overflow-hidden shadow-lg disabled:opacity-50"
+              className="relative w-64 h-32 rounded-2xl shadow-lg disabled:opacity-50 overflow-hidden hover:scale-105 transition-transform"
             >
-              <div className="bg-green-600 hover:bg-green-700 text-white px-8 py-8 text-xl flex items-center gap-2 transition-colors">
-                <Play className="w-7 h-7" />
-                In
+              {/* Green half (top-left) */}
+              <div 
+                className="absolute inset-0 bg-green-600"
+                style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
+              />
+              {/* Red half (bottom-right) */}
+              <div 
+                className="absolute inset-0 bg-red-600"
+                style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }}
+              />
+              {/* Labels */}
+              <div className="absolute top-4 left-6 text-white flex items-center gap-2">
+                <Play className="w-6 h-6" />
+                <span className="text-xl font-bold">In</span>
               </div>
-              <div className="bg-red-600 hover:bg-red-700 text-white px-8 py-8 text-xl flex items-center gap-2 transition-colors">
-                Out
-                <Square className="w-7 h-7" />
+              <div className="absolute bottom-4 right-6 text-white flex items-center gap-2">
+                <span className="text-xl font-bold">Out</span>
+                <Square className="w-6 h-6" />
               </div>
             </button>
             {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
