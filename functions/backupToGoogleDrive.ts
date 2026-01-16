@@ -415,21 +415,26 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Save the folder cache for future backups
+    const existingFolderCache = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupFolderCache' });
+    if (existingFolderCache.length > 0) {
+      await base44.asServiceRole.entities.GlobalSettings.update(existingFolderCache[0].id, { setting_value: folderCache });
+    } else {
+      await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'backupFolderCache', setting_value: folderCache });
+    }
+
     const successCount = results.filter(r => !r.error && !r.skipped).length;
     const errorCount = results.filter(r => r.error).length;
     const skippedCount = results.filter(r => r.skipped).length;
-    const uploadedToRoot = results.some(r => r.uploadedToRoot);
 
     let message = `Backed up ${successCount} data sets to Google Drive`;
     if (skippedCount > 0) message += ` (${skippedCount} skipped - no data)`;
     if (errorCount > 0) message += ` (${errorCount} failed)`;
-    if (uploadedToRoot) message += ` - Note: Files uploaded to root (folder access denied)`;
 
     return Response.json({ 
       success: errorCount === 0 && successCount > 0, 
       message,
-      results,
-      debug: { typesToBackup, targetFolderId, resultsCount: results.length }
+      results
     });
     
   } catch (error) {
