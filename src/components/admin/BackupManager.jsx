@@ -1,7 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { 
   HardDrive, 
   Loader2, 
@@ -12,7 +27,12 @@ import {
   ClipboardList,
   Briefcase,
   Calendar,
-  Wallet
+  Wallet,
+  FolderOpen,
+  ChevronRight,
+  FolderPlus,
+  Settings,
+  Save
 } from "lucide-react";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
 
@@ -25,11 +45,146 @@ const DATA_TYPES = [
   { id: 'pto', label: 'PTO Balances', icon: Wallet, description: 'Employee PTO balances' },
 ];
 
+const SCHEDULE_OPTIONS = [
+  { value: 'none', label: 'Manual only (no schedule)' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+];
+
 export default function BackupManager() {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Settings
+  const [settings, setSettings] = useState({
+    folderId: null,
+    folderName: null,
+    dataTypes: [],
+    schedule: 'none',
+    scheduleTime: '02:00',
+    scheduleDayOfWeek: 0,
+    scheduleDayOfMonth: 1
+  });
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  
+  // Folder picker
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [folders, setFolders] = useState([]);
+  const [folderPath, setFolderPath] = useState([{ id: 'root', name: 'My Drive' }]);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setIsLoadingSettings(true);
+    try {
+      const response = await backupToGoogleDrive({ action: 'getSettings' });
+      if (response.data.settings) {
+        setSettings(prev => ({ ...prev, ...response.data.settings }));
+        setSelectedTypes(response.data.settings.dataTypes || []);
+      }
+    } catch (err) {
+      console.error("Error loading settings:", err);
+    }
+    setIsLoadingSettings(false);
+  };
+
+  const saveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const newSettings = {
+        ...settings,
+        dataTypes: selectedTypes
+      };
+      await backupToGoogleDrive({ action: 'saveSettings', settings: newSettings });
+      setSettings(newSettings);
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 3000);
+    } catch (err) {
+      setError("Failed to save settings: " + err.message);
+    }
+    setIsSavingSettings(false);
+  };
+
+  const loadFolders = async (parentId = 'root') => {
+    setIsLoadingFolders(true);
+    try {
+      const response = await backupToGoogleDrive({ action: 'listFolders', parentId });
+      setFolders(response.data.folders || []);
+    } catch (err) {
+      console.error("Error loading folders:", err);
+      setFolders([]);
+    }
+    setIsLoadingFolders(false);
+  };
+
+  const openFolderPicker = () => {
+    setShowFolderPicker(true);
+    setFolderPath([{ id: 'root', name: 'My Drive' }]);
+    loadFolders('root');
+  };
+
+  const navigateToFolder = (folder) => {
+    setFolderPath([...folderPath, folder]);
+    loadFolders(folder.id);
+  };
+
+  const navigateToPathIndex = (index) => {
+    const newPath = folderPath.slice(0, index + 1);
+    setFolderPath(newPath);
+    loadFolders(newPath[newPath.length - 1].id);
+  };
+
+  const selectFolder = (folder) => {
+    setSettings(prev => ({
+      ...prev,
+      folderId: folder.id,
+      folderName: folder.name
+    }));
+    setShowFolderPicker(false);
+  };
+
+  const selectCurrentFolder = () => {
+    const currentFolder = folderPath[folderPath.length - 1];
+    setSettings(prev => ({
+      ...prev,
+      folderId: currentFolder.id === 'root' ? null : currentFolder.id,
+      folderName: currentFolder.name
+    }));
+    setShowFolderPicker(false);
+  };
+
+  const createFolder = async () => {
+    if (!newFolderName.trim()) return;
+    
+    setIsCreatingFolder(true);
+    try {
+      const parentId = folderPath[folderPath.length - 1].id;
+      const response = await backupToGoogleDrive({ 
+        action: 'createFolder', 
+        folderName: newFolderName,
+        parentId: parentId === 'root' ? null : parentId
+      });
+      
+      if (response.data.folder) {
+        // Refresh folder list
+        loadFolders(parentId);
+        setNewFolderName('');
+      }
+    } catch (err) {
+      setError("Failed to create folder: " + err.message);
+    }
+    setIsCreatingFolder(false);
+  };
 
   const handleToggle = (id) => {
     setSelectedTypes(prev => 
@@ -55,7 +210,10 @@ export default function BackupManager() {
     setError(null);
 
     try {
-      const response = await backupToGoogleDrive({ dataTypes: selectedTypes });
+      const response = await backupToGoogleDrive({ 
+        dataTypes: selectedTypes,
+        folderId: settings.folderId
+      });
       
       if (response.data.error) {
         setError(response.data.error);
@@ -69,16 +227,139 @@ export default function BackupManager() {
     setIsBackingUp(false);
   };
 
+  if (isLoadingSettings) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Settings Card */}
+      <div className="clay-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+            <Settings className="w-6 h-6 text-purple-700" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Backup Settings</h3>
+            <p className="text-sm text-gray-500">Configure where and when backups are saved</p>
+          </div>
+        </div>
+
+        {/* Folder Selection */}
+        <div className="mb-6">
+          <Label className="text-sm font-medium mb-2 block">Backup Location</Label>
+          <div className="flex gap-2">
+            <div className="flex-1 p-3 rounded-lg border bg-gray-50 flex items-center gap-2">
+              <FolderOpen className="w-5 h-5 text-gray-500" />
+              <span className="text-gray-700">
+                {settings.folderName || 'Root folder (My Drive)'}
+              </span>
+            </div>
+            <Button onClick={openFolderPicker} variant="outline">
+              Change
+            </Button>
+          </div>
+        </div>
+
+        {/* Schedule */}
+        <div className="mb-6">
+          <Label className="text-sm font-medium mb-2 block">Automatic Backup Schedule</Label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Select
+              value={settings.schedule}
+              onValueChange={(val) => setSettings(prev => ({ ...prev, schedule: val }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SCHEDULE_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {settings.schedule !== 'none' && (
+              <Input
+                type="time"
+                value={settings.scheduleTime}
+                onChange={(e) => setSettings(prev => ({ ...prev, scheduleTime: e.target.value }))}
+              />
+            )}
+
+            {settings.schedule === 'weekly' && (
+              <Select
+                value={String(settings.scheduleDayOfWeek)}
+                onValueChange={(val) => setSettings(prev => ({ ...prev, scheduleDayOfWeek: parseInt(val) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Sunday</SelectItem>
+                  <SelectItem value="1">Monday</SelectItem>
+                  <SelectItem value="2">Tuesday</SelectItem>
+                  <SelectItem value="3">Wednesday</SelectItem>
+                  <SelectItem value="4">Thursday</SelectItem>
+                  <SelectItem value="5">Friday</SelectItem>
+                  <SelectItem value="6">Saturday</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {settings.schedule === 'monthly' && (
+              <Select
+                value={String(settings.scheduleDayOfMonth)}
+                onValueChange={(val) => setSettings(prev => ({ ...prev, scheduleDayOfMonth: parseInt(val) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 28 }, (_, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>Day {i + 1}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          {settings.schedule !== 'none' && (
+            <p className="text-xs text-amber-600 mt-2">
+              Note: After saving, contact support to enable the scheduled automation.
+            </p>
+          )}
+        </div>
+
+        <Button 
+          onClick={saveSettings}
+          disabled={isSavingSettings}
+          className="clay-button border-none text-gray-800 gap-2"
+          style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+        >
+          {isSavingSettings ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : settingsSaved ? (
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {settingsSaved ? 'Saved!' : 'Save Settings'}
+        </Button>
+      </div>
+
+      {/* Manual Backup Card */}
       <div className="clay-card p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
             <HardDrive className="w-6 h-6 text-teal-700" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">Google Drive Backup</h3>
-            <p className="text-sm text-gray-500">Export data to Excel files in your Google Drive</p>
+            <h3 className="text-lg font-semibold text-gray-800">Manual Backup</h3>
+            <p className="text-sm text-gray-500">Run a backup now to Google Drive</p>
           </div>
         </div>
 
@@ -133,7 +414,7 @@ export default function BackupManager() {
           ) : (
             <>
               <HardDrive className="w-4 h-4 mr-2" />
-              Backup to Google Drive ({selectedTypes.length} selected)
+              Backup Now ({selectedTypes.length} selected)
             </>
           )}
         </Button>
@@ -157,8 +438,21 @@ export default function BackupManager() {
             <div className="space-y-2">
               {result.results?.map((r, i) => (
                 <div key={i} className="text-sm text-green-600 flex items-center gap-2">
-                  <CheckCircle2 className="w-3 h-3" />
-                  {r.filename}
+                  {r.error ? (
+                    <>
+                      <AlertTriangle className="w-3 h-3 text-red-500" />
+                      <span className="text-red-600">{r.type}: {r.error}</span>
+                    </>
+                  ) : r.skipped ? (
+                    <>
+                      <span className="text-gray-500">{r.filename} (skipped - no data)</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3 h-3" />
+                      {r.filename}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -166,12 +460,94 @@ export default function BackupManager() {
         )}
       </div>
 
-      <div className="clay-card p-4 bg-blue-50">
-        <p className="text-sm text-blue-700">
-          <strong>Note:</strong> Backups are saved to your connected Google Drive account as Excel files. 
-          Each backup includes a timestamp in the filename for easy organization.
-        </p>
-      </div>
+      {/* Folder Picker Dialog */}
+      <Dialog open={showFolderPicker} onOpenChange={setShowFolderPicker}>
+        <DialogContent className="clay-card border-none max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Select Backup Folder</DialogTitle>
+          </DialogHeader>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-sm text-gray-600 flex-wrap mb-4">
+            {folderPath.map((folder, index) => (
+              <React.Fragment key={folder.id}>
+                {index > 0 && <ChevronRight className="w-4 h-4" />}
+                <button
+                  onClick={() => navigateToPathIndex(index)}
+                  className="hover:text-purple-600 hover:underline"
+                >
+                  {folder.name}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Create Folder */}
+          <div className="flex gap-2 mb-4">
+            <Input
+              placeholder="New folder name..."
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && createFolder()}
+            />
+            <Button 
+              onClick={createFolder} 
+              disabled={!newFolderName.trim() || isCreatingFolder}
+              variant="outline"
+            >
+              {isCreatingFolder ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <FolderPlus className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Folder List */}
+          <div className="border rounded-lg max-h-64 overflow-y-auto">
+            {isLoadingFolders ? (
+              <div className="p-8 text-center">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600" />
+              </div>
+            ) : folders.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                No subfolders found
+              </div>
+            ) : (
+              folders.map(folder => (
+                <div
+                  key={folder.id}
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-b-0"
+                >
+                  <button
+                    onClick={() => navigateToFolder(folder)}
+                    className="flex items-center gap-2 flex-1 text-left"
+                  >
+                    <FolderOpen className="w-5 h-5 text-yellow-500" />
+                    <span>{folder.name}</span>
+                  </button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => selectFolder(folder)}
+                  >
+                    Select
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={() => setShowFolderPicker(false)}>
+              Cancel
+            </Button>
+            <Button onClick={selectCurrentFolder}>
+              Use Current Folder
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
