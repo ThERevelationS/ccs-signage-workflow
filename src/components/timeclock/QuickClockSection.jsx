@@ -311,17 +311,27 @@ export default function QuickClockSection({ allUsers, currentTime }) {
             <div className="flex gap-6">
               <Button 
                 onClick={() => startRecognition("in")}
-                className="bg-green-600 hover:bg-green-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg"
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg disabled:opacity-50"
               >
-                <Play className="w-8 h-8" />
+                {isLoading && recognitionMode === "in" ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  <Play className="w-8 h-8" />
+                )}
                 Clock In
               </Button>
               
               <Button 
                 onClick={() => startRecognition("out")}
-                className="bg-red-600 hover:bg-red-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg"
+                disabled={isLoading}
+                className="bg-red-600 hover:bg-red-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg disabled:opacity-50"
               >
-                <Square className="w-8 h-8" />
+                {isLoading && recognitionMode === "out" ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  <Square className="w-8 h-8" />
+                )}
                 Clock Out
               </Button>
             </div>
@@ -365,12 +375,14 @@ export default function QuickClockSection({ allUsers, currentTime }) {
               recognitionMode === "in" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
             }`}>
               <p className="font-medium flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                {recognitionMode === "in" ? "Clocking In..." : "Clocking Out..."}
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {recognitionMode === "in" ? "Clocking In - Scanning..." : "Clocking Out - Scanning..."}
               </p>
             </div>
 
-            <p className="text-gray-600 mb-4">{recognitionStatus}</p>
+            <p className="text-gray-600 mb-4 flex items-center gap-2">
+              {recognitionStatus}
+            </p>
 
             {/* Manual entry fallback */}
             {!showManualEntry ? (
