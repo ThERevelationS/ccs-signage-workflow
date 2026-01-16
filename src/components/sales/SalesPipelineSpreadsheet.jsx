@@ -813,10 +813,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             const updatedWO = { ...existingWO, ...updates };
             existingWorkOrdersMap.set(uniqueKey, updatedWO);
             setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? updatedWO : wo));
-            await new Promise(resolve => setTimeout(resolve, 100));
           }
           
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          
+          // Only pause every 10 rows to prevent UI freeze
+          if ((i + 1) % 10 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
           continue;
         }
         
@@ -940,7 +944,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
         
-        await new Promise(resolve => setTimeout(resolve, 250));
+        // Shorter delay - only pause every 10 rows to prevent UI freeze
+        if ((i + 1) % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
 
       setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
