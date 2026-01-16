@@ -29,7 +29,6 @@ import {
   Calendar,
   Wallet,
   FolderOpen,
-  ChevronRight,
   FolderPlus,
   Settings,
   Save
