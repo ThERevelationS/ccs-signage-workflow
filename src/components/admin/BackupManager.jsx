@@ -423,47 +423,6 @@ export default function BackupManager() {
         )}
       </div>
 
-      {/* Set Folder Dialog */}
-      <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
-        <DialogContent className="clay-card border-none max-w-md">
-          <DialogHeader>
-            <DialogTitle>Set Backup Folder</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-gray-600">
-              Paste a Google Drive folder link or folder ID where backups should be saved.
-            </p>
-            
-            <div>
-              <Label>Folder Link or ID</Label>
-              <Input
-                placeholder="https://drive.google.com/drive/folders/..."
-                value={folderInput}
-                onChange={(e) => setFolderInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && saveFolder()}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Example: https://drive.google.com/drive/folders/1ABC123...
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowFolderDialog(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={saveFolder} 
-                disabled={!folderInput.trim()}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
