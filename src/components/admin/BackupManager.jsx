@@ -110,30 +110,40 @@ export default function BackupManager() {
     setIsSavingSettings(false);
   };
 
-  const createFolder = async () => {
-    if (!newFolderName.trim()) return;
+  // Extract folder ID from Google Drive URL or use direct ID
+  const extractFolderId = (input) => {
+    if (!input) return null;
+    const trimmed = input.trim();
     
-    setIsCreatingFolder(true);
-    setError(null);
-    try {
-      const response = await backupToGoogleDrive({ 
-        action: 'createFolder', 
-        folderName: newFolderName.trim()
-      });
-      
-      if (response.data.folder) {
-        setSettings(prev => ({
-          ...prev,
-          folderId: response.data.folder.id,
-          folderName: response.data.folder.name
-        }));
-        setShowFolderDialog(false);
-        setNewFolderName('SignShop Backups');
-      }
-    } catch (err) {
-      setError("Failed to create folder: " + (err.response?.data?.error || err.message));
+    // Match various Google Drive folder URL formats
+    const patterns = [
+      /\/folders\/([a-zA-Z0-9_-]+)/,
+      /id=([a-zA-Z0-9_-]+)/,
+      /^([a-zA-Z0-9_-]{20,})$/ // Direct folder ID
+    ];
+    
+    for (const pattern of patterns) {
+      const match = trimmed.match(pattern);
+      if (match) return match[1];
     }
-    setIsCreatingFolder(false);
+    return null;
+  };
+
+  const saveFolder = () => {
+    const folderId = extractFolderId(folderInput);
+    if (!folderId) {
+      setError("Invalid folder link or ID. Please paste a valid Google Drive folder URL.");
+      return;
+    }
+    
+    setSettings(prev => ({
+      ...prev,
+      folderId: folderId,
+      folderName: 'Custom Folder'
+    }));
+    setShowFolderDialog(false);
+    setFolderInput('');
+    setError(null);
   };
 
   const clearFolder = () => {
