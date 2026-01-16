@@ -171,6 +171,7 @@ Deno.serve(async (req) => {
         base64Data +
         closeDelim;
       
+      // If a folder ID is specified but it's not app-created, upload to root instead
       const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
         method: 'POST',
         headers: {
@@ -183,6 +184,41 @@ Deno.serve(async (req) => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Drive upload failed for ${filename}:`, errorText);
+        
+        // If folder access denied, try uploading to root
+        if (errorText.includes('notFound') || errorText.includes('403') || errorText.includes('forbidden')) {
+          console.log(`Retrying upload to root for ${filename}`);
+          delete metadata.parents;
+          
+          const retryBody = 
+            delimiter +
+            'Content-Type: application/json\r\n\r\n' +
+            JSON.stringify(metadata) +
+            delimiter +
+            'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n' +
+            'Content-Transfer-Encoding: base64\r\n\r\n' +
+            base64Data +
+            closeDelim;
+          
+          const retryResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': `multipart/related; boundary="${boundary}"`
+            },
+            body: retryBody
+          });
+          
+          if (!retryResponse.ok) {
+            const retryError = await retryResponse.text();
+            throw new Error(`Drive upload failed: ${retryError}`);
+          }
+          
+          const result = await retryResponse.json();
+          result.uploadedToRoot = true;
+          return result;
+        }
+        
         throw new Error(`Drive upload failed for ${filename}: ${errorText}`);
       }
       
