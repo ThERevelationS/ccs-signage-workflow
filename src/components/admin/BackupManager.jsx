@@ -104,50 +104,6 @@ export default function BackupManager() {
     setIsSavingSettings(false);
   };
 
-  // Extract folder ID from Google Drive URL or use direct ID
-  const extractFolderId = (input) => {
-    if (!input) return null;
-    const trimmed = input.trim();
-    
-    // Match various Google Drive folder URL formats
-    const patterns = [
-      /\/folders\/([a-zA-Z0-9_-]+)/,
-      /id=([a-zA-Z0-9_-]+)/,
-      /^([a-zA-Z0-9_-]{20,})$/ // Direct folder ID
-    ];
-    
-    for (const pattern of patterns) {
-      const match = trimmed.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  const saveFolder = () => {
-    const folderId = extractFolderId(folderInput);
-    if (!folderId) {
-      setError("Invalid folder link or ID. Please paste a valid Google Drive folder URL.");
-      return;
-    }
-    
-    setSettings(prev => ({
-      ...prev,
-      folderId: folderId,
-      folderName: 'Custom Folder'
-    }));
-    setShowFolderDialog(false);
-    setFolderInput('');
-    setError(null);
-  };
-
-  const clearFolder = () => {
-    setSettings(prev => ({
-      ...prev,
-      folderId: null,
-      folderName: null
-    }));
-  };
-
   const handleToggle = (id) => {
     setSelectedTypes(prev => 
       prev.includes(id) 
