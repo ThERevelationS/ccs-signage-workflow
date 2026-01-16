@@ -106,12 +106,18 @@ Deno.serve(async (req) => {
       return Response.json({ settings: existing[0]?.setting_value || null });
     }
 
+    // Action: Get backup history
+    if (action === 'getHistory') {
+      const logs = await base44.asServiceRole.entities.BackupLog.list('-created_date', 50);
+      return Response.json({ logs });
+    }
+
     // Default action: Perform backup
     // Get data types to backup - for scheduled, use saved settings
     let typesToBackup = dataTypes;
     if (!typesToBackup || typesToBackup.length === 0) {
       const settings = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupSettings' });
-      typesToBackup = settings[0]?.setting_value?.dataTypes || ['users', 'timeclock', 'orders', 'workorders', 'timeoff', 'pto'];
+      typesToBackup = settings[0]?.setting_value?.dataTypes || ['users', 'timeclock', 'orders', 'workorders', 'timeoff', 'pto', 'salespipeline', 'orderform'];
     }
     
     const results = [];
@@ -415,6 +421,94 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Sales Pipeline Export (same format as UI export)
+    if (typesToBackup.includes('salespipeline')) {
+      try {
+        const workOrdersForExport = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } });
+        
+        const calculateDays = (fromDate, toDate) => {
+          if (!fromDate) return null;
+          const from = new Date(fromDate);
+          if (isNaN(from.getTime())) return null;
+          let to;
+          if (!toDate) {
+            to = new Date();
+          } else {
+            to = new Date(toDate);
+            if (isNaN(to.getTime())) return null;
+          }
+          return Math.floor((to - from) / (1000 * 60 * 60 * 24));
+        };
+        
+        const exportData = workOrdersForExport.map(wo => {
+          const daysFromInitial = calculateDays(wo.date_initial_contact, null);
+          const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
+          const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
+          const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
+          const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
+          const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
+          
+          return {
+            "Customer": wo.client_name || "",
+            "Source": wo.lead_source || "",
+            "Current Task Deadline": wo.current_task_deadline || "",
+            "Current Task Assigned to": wo.current_task_assigned_to || "",
+            "Designer": wo.designer || "",
+            "Project Manager": wo.project_manager || "",
+            "Estimator": wo.estimator || "",
+            "Est/Inv @": wo.est_inv_at || wo.corbridge_invoice_number || "",
+            "Estimate Amount": wo.estimate_amount || null,
+            "Current Task Description": wo.current_task_description || "",
+            "Date Est. Requested/Initial Contact": wo.date_initial_contact || "",
+            "Site Survey": wo.site_survey_date || "",
+            "Date Estimate Sent to Customer": wo.date_estimate_sent || "",
+            "Date Order Created": wo.date_order_created || "",
+            "Project Install Date": wo.project_install_date || "",
+            "Permit Submitted": wo.permit_submitted_date || "",
+            "Notes": wo.title || "",
+            "Date Permit Receipt Confirmed": wo.permit_receipt_confirmed_date || "",
+            "Permit Number": wo.permit_number || "",
+            "Date Permit Approved/Received": wo.permit_approved_date || "",
+            "Days from Initial Request to today": daysFromInitial,
+            "Days Est. Sent from Date Requested": daysEstSent,
+            "Days from Est. Sent to Date Order Created": daysEstToOrder,
+            "Days from Order Created to Permit Submitted": daysOrderToPermit,
+            "Days from Permit Submitted to Permit Approved": daysPermitToApproved,
+            "Days from Project Install Date from Order Created": daysOrderToInstall
+          };
+        });
+        
+        const result = await uploadToGoogleDrive(exportData, 'SalesPipeline_Export', 'SignShop Sales Pipeline Backup');
+        results.push({ type: 'salespipeline', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
+      } catch (e) {
+        results.push({ type: 'salespipeline', error: e.message });
+      }
+    }
+
+    // Order Form Export (same format as UI export)
+    if (typesToBackup.includes('orderform')) {
+      try {
+        const ordersForExport = await base44.asServiceRole.entities.Order.filter({ deleted: { $ne: true } });
+        
+        const exportData = ordersForExport.map(order => ({
+          "Customer": order.customer_name || "",
+          "Type": order.request_type || "",
+          "Description": order.description || "",
+          "How much?": order.quantity || "",
+          "Requestor": order.requestor_name || "",
+          "Date Needed (Requester fills out this column)": order.date_needed || "",
+          "Ordered Date (Carl Fills out this column)": order.date_ordered || "",
+          "Vendor (Anyone can fill out this column)": order.vendor || "",
+          "Date Recieved (Anyone can fill out this column)": order.date_received || ""
+        }));
+        
+        const result = await uploadToGoogleDrive(exportData, 'OrderForm_Export', 'SignShop Order Form Backup');
+        results.push({ type: 'orderform', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
+      } catch (e) {
+        results.push({ type: 'orderform', error: e.message });
+      }
+    }
+
     // Save the folder cache for future backups
     const existingFolderCache = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupFolderCache' });
     if (existingFolderCache.length > 0) {
@@ -430,6 +524,26 @@ Deno.serve(async (req) => {
     let message = `Backed up ${successCount} data sets to Google Drive`;
     if (skippedCount > 0) message += ` (${skippedCount} skipped - no data)`;
     if (errorCount > 0) message += ` (${errorCount} failed)`;
+
+    // Log the backup
+    try {
+      await base44.asServiceRole.entities.BackupLog.create({
+        backup_type: isScheduledBackup ? 'scheduled' : 'manual',
+        data_types: typesToBackup,
+        results: results.map(r => ({
+          type: r.type,
+          filename: r.filename || r.name,
+          success: !r.error && !r.skipped,
+          error: r.error || null,
+          skipped: r.skipped || false
+        })),
+        success_count: successCount,
+        error_count: errorCount,
+        triggered_by: isScheduledBackup ? 'system' : (user?.email || 'unknown')
+      });
+    } catch (logError) {
+      console.error("Error logging backup:", logError);
+    }
 
     return Response.json({ 
       success: errorCount === 0 && successCount > 0, 
