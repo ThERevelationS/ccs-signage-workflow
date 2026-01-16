@@ -336,11 +336,19 @@ Deno.serve(async (req) => {
 
     const successCount = results.filter(r => !r.error && !r.skipped).length;
     const errorCount = results.filter(r => r.error).length;
+    const skippedCount = results.filter(r => r.skipped).length;
+    const uploadedToRoot = results.some(r => r.uploadedToRoot);
+
+    let message = `Backed up ${successCount} data sets to Google Drive`;
+    if (skippedCount > 0) message += ` (${skippedCount} skipped - no data)`;
+    if (errorCount > 0) message += ` (${errorCount} failed)`;
+    if (uploadedToRoot) message += ` - Note: Files uploaded to root (folder access denied)`;
 
     return Response.json({ 
-      success: errorCount === 0, 
-      message: `Backed up ${successCount} data sets to Google Drive${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
-      results 
+      success: errorCount === 0 && successCount > 0, 
+      message,
+      results,
+      debug: { typesToBackup, targetFolderId, resultsCount: results.length }
     });
     
   } catch (error) {
