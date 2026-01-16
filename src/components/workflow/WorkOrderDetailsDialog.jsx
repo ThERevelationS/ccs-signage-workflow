@@ -510,9 +510,10 @@ export default function WorkOrderDetailsDialog({
 
   const handleDeleteWorkNote = async (noteId) => {
     const updatedNotes = workNotes.filter((n) => n.id !== noteId);
-    // Optimistic update - update UI immediately
+    // Optimistic update - update UI immediately by modifying workOrder directly
     Object.assign(workOrder, { work_notes: updatedNotes });
-    if (onUpdate) onUpdate();
+    // Force re-render by using a small state update trick - no need to call onUpdate which refreshes parent
+    setEditingField(prev => prev); // Trigger re-render
     // Then persist to database
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
     await ActivityActions.noteDeleted(workOrder);
@@ -1662,8 +1663,11 @@ export default function WorkOrderDetailsDialog({
             }))
           }));
           const updatedTasks = [...tasks, ...newTasks];
+          // Optimistic update - update UI immediately without full refresh
+          Object.assign(workOrder, { notes: updatedTasks });
+          setShowTemplateDialog(false);
+          // Then persist to database (don't call onUpdate to avoid page refresh)
           await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-          if (onUpdate) onUpdate();
         }}
       />
 
