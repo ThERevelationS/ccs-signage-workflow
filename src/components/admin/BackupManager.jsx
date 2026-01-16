@@ -219,10 +219,20 @@ export default function BackupManager() {
                 {settings.folderName || 'Root folder (My Drive)'}
               </span>
             </div>
-            <Button onClick={openFolderPicker} variant="outline">
-              Change
-            </Button>
+            {settings.folderId ? (
+              <Button onClick={clearFolder} variant="outline">
+                Clear
+              </Button>
+            ) : (
+              <Button onClick={() => setShowFolderDialog(true)} variant="outline">
+                <FolderPlus className="w-4 h-4 mr-2" />
+                Create Folder
+              </Button>
+            )}
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Due to Google Drive API limitations, you can create a new folder for backups. Files will be saved there.
+          </p>
         </div>
 
         {/* Schedule */}
