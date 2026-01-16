@@ -182,14 +182,23 @@ Deno.serve(async (req) => {
       }
       const base64Data = btoa(binary);
       
+      // Get or create the specific folder for this backup type
+      let uploadFolderId = targetFolderId;
+      if (folderName) {
+        const typeFolderId = await getOrCreateFolder(folderName, targetFolderId);
+        if (typeFolderId) {
+          uploadFolderId = typeFolderId;
+        }
+      }
+      
       // Create file metadata with folder if specified
       const metadata = {
         name: `${filename}_${timestamp}.xlsx`,
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       };
       
-      if (targetFolderId) {
-        metadata.parents = [targetFolderId];
+      if (uploadFolderId) {
+        metadata.parents = [uploadFolderId];
       }
       
       // Upload to Google Drive using multipart upload
