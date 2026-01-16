@@ -433,27 +433,30 @@ export default function BackupManager() {
         )}
       </div>
 
-      {/* Create Folder Dialog */}
+      {/* Set Folder Dialog */}
       <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Backup Folder</DialogTitle>
+            <DialogTitle>Set Backup Folder</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
             <p className="text-sm text-gray-600">
-              Create a new folder in your Google Drive root to store backups.
+              Paste a Google Drive folder link or folder ID where backups should be saved.
             </p>
             
             <div>
-              <Label>Folder Name</Label>
+              <Label>Folder Link or ID</Label>
               <Input
-                placeholder="SignShop Backups"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && createFolder()}
+                placeholder="https://drive.google.com/drive/folders/..."
+                value={folderInput}
+                onChange={(e) => setFolderInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveFolder()}
                 className="mt-1"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Example: https://drive.google.com/drive/folders/1ABC123...
+              </p>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -461,15 +464,11 @@ export default function BackupManager() {
                 Cancel
               </Button>
               <Button 
-                onClick={createFolder} 
-                disabled={!newFolderName.trim() || isCreatingFolder}
+                onClick={saveFolder} 
+                disabled={!folderInput.trim()}
               >
-                {isCreatingFolder ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                )}
-                Create Folder
+                <Save className="w-4 h-4 mr-2" />
+                Save
               </Button>
             </div>
           </div>
