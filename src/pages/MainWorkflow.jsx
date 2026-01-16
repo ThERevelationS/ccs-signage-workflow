@@ -50,7 +50,8 @@ export default function MainWorkflow() {
     // Use list with limit instead of filter to avoid timeout
     const allWorkOrders = await WorkOrder.list("-updated_date", 500);
     const activeOrders = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
-    const withDates = activeOrders.filter(wo => wo.start_date && wo.due_date);
+    // Show work orders with at least a due_date (start_date is optional - will default to created_date)
+    const withDates = activeOrders.filter(wo => wo.due_date);
     
     // Separate parent work orders and riders
     // A work order is considered a rider if its `is_rider` property is true.
