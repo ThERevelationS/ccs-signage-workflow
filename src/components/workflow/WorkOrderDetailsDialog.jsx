@@ -508,12 +508,15 @@ export default function WorkOrderDetailsDialog({
     await loadRelatedData();
   };
 
+  // Local state to force re-render when notes change
+  const [localNotesVersion, setLocalNotesVersion] = useState(0);
+
   const handleDeleteWorkNote = async (noteId) => {
     const updatedNotes = workNotes.filter((n) => n.id !== noteId);
     // Optimistic update - update UI immediately by modifying workOrder directly
     Object.assign(workOrder, { work_notes: updatedNotes });
-    // Force re-render by using a small state update trick - no need to call onUpdate which refreshes parent
-    setEditingField(prev => prev); // Trigger re-render
+    // Force re-render by incrementing version
+    setLocalNotesVersion(v => v + 1);
     // Then persist to database
     await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
     await ActivityActions.noteDeleted(workOrder);
