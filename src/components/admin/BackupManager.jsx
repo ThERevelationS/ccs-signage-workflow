@@ -72,12 +72,9 @@ export default function BackupManager() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   
-  // Folder picker
-  const [showFolderPicker, setShowFolderPicker] = useState(false);
-  const [folders, setFolders] = useState([]);
-  const [folderPath, setFolderPath] = useState([{ id: 'root', name: 'My Drive' }]);
-  const [isLoadingFolders, setIsLoadingFolders] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  // Folder creation
+  const [showFolderDialog, setShowFolderDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('SignShop Backups');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   useEffect(() => {
