@@ -71,64 +71,89 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     }
   };
 
-  const startCamera = async () => {
-    try {
-      setVideoReady(false);
-      setCameraStarted(false);
-      
-      // Stop any existing stream first
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640 }, 
-          height: { ideal: 480 }, 
-          facingMode: "user" 
-        }
-      });
-      
-      if (!mountedRef.current) {
-        stream.getTracks().forEach(track => track.stop());
-        return;
-      }
-      
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+  const startCamera = () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        setVideoReady(false);
+        setCameraStarted(false);
         
-        // Use loadeddata event instead of loadedmetadata
-        videoRef.current.onloadeddata = () => {
-          if (!mountedRef.current) return;
+        // Stop any existing stream first
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        
+        console.log("Requesting camera access...");
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            width: { ideal: 320 }, 
+            height: { ideal: 240 }, 
+            facingMode: "user" 
+          }
+        });
+        
+        console.log("Camera stream obtained");
+        
+        if (!mountedRef.current) {
+          stream.getTracks().forEach(track => track.stop());
+          return resolve();
+        }
+        
+        streamRef.current = stream;
+        
+        const video = videoRef.current;
+        if (!video) {
+          console.error("Video ref not available");
+          return reject(new Error("Video element not found"));
+        }
+        
+        video.srcObject = stream;
+        
+        // Wait for video to be ready
+        const handleCanPlay = async () => {
+          console.log("Video can play");
+          video.removeEventListener('canplay', handleCanPlay);
           
-          videoRef.current.play()
-            .then(() => {
-              if (mountedRef.current) {
-                setCameraStarted(true);
-                setTimeout(() => {
-                  if (mountedRef.current) {
-                    setVideoReady(true);
-                    setScanStatus("Camera ready. Click 'Capture Face' when ready.");
-                  }
-                }, 1000);
-              }
-            })
-            .catch(err => {
-              console.error("Video play error:", err);
-              if (mountedRef.current) {
-                setError("Could not start video. Please refresh.");
-              }
-            });
+          try {
+            await video.play();
+            console.log("Video playing, dimensions:", video.videoWidth, video.videoHeight);
+            
+            if (mountedRef.current) {
+              setCameraStarted(true);
+              setVideoReady(true);
+              setScanStatus("Camera ready. Click 'Capture Face' when ready.");
+            }
+            resolve();
+          } catch (playErr) {
+            console.error("Video play error:", playErr);
+            if (mountedRef.current) {
+              setError("Could not start video. Please refresh.");
+            }
+            reject(playErr);
+          }
         };
+        
+        video.addEventListener('canplay', handleCanPlay);
+        
+        // Timeout fallback
+        setTimeout(() => {
+          if (!cameraStarted && mountedRef.current) {
+            console.log("Camera timeout - forcing ready state");
+            video.removeEventListener('canplay', handleCanPlay);
+            setCameraStarted(true);
+            setVideoReady(true);
+            setScanStatus("Camera ready. Click 'Capture Face' when ready.");
+            resolve();
+          }
+        }, 3000);
+        
+      } catch (err) {
+        console.error("Camera access error:", err);
+        if (mountedRef.current) {
+          setError("Could not access camera. Please allow camera permissions and refresh.");
+        }
+        reject(err);
       }
-    } catch (err) {
-      console.error("Camera access error:", err);
-      if (mountedRef.current) {
-        setError("Could not access camera. Please allow camera permissions and refresh.");
-      }
-    }
+    });
   };
 
   const stopCamera = () => {
