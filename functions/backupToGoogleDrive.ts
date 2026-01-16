@@ -124,8 +124,44 @@ Deno.serve(async (req) => {
     const results = [];
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').slice(0, -5);
     
+    // Cache for created folders (key: folderName, value: folderId)
+    const folderCache = {};
+    
+    // Helper to get or create a folder for each backup type
+    const getOrCreateFolder = async (folderName, parentId) => {
+      if (folderCache[folderName]) {
+        return folderCache[folderName];
+      }
+      
+      // Create the folder
+      const metadata = {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: parentId ? [parentId] : undefined
+      };
+      
+      const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(metadata)
+      });
+      
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`Failed to create folder ${folderName}:`, errText);
+        return null;
+      }
+      
+      const folder = await response.json();
+      folderCache[folderName] = folder.id;
+      return folder.id;
+    };
+    
     // Helper to create Excel file and upload to Drive
-    const uploadToGoogleDrive = async (data, filename) => {
+    const uploadToGoogleDrive = async (data, filename, folderName) => {
       if (!data || data.length === 0) {
         return { name: `${filename}_${timestamp}.xlsx`, skipped: true, reason: 'No data' };
       }
