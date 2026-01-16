@@ -51,7 +51,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   const showNotification = (type, userName, time) => {
     setNotification({ type, userName, time });
-    setTimeout(() => setNotification(null), 15000);
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const loadFaceModels = async () => {
