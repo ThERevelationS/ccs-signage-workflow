@@ -30,17 +30,22 @@ import {
   Wallet,
   FolderOpen,
   Save,
-  Settings
+  Settings,
+  History,
+  FileSpreadsheet
 } from "lucide-react";
+import { format } from "date-fns";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
 
 const DATA_TYPES = [
   { id: 'users', label: 'User Data', icon: Users, description: 'Employee accounts and settings' },
   { id: 'timeclock', label: 'Time Clock Entries', icon: Clock, description: 'All clock in/out records' },
-  { id: 'orders', label: 'Order Form Data', icon: ClipboardList, description: 'Material and supply orders' },
-  { id: 'workorders', label: 'Client/Project Data', icon: Briefcase, description: 'Work orders and projects' },
+  { id: 'orders', label: 'Order Form Data', icon: ClipboardList, description: 'Material and supply orders (raw data)' },
+  { id: 'workorders', label: 'Client/Project Data', icon: Briefcase, description: 'Work orders and projects (raw data)' },
   { id: 'timeoff', label: 'Time Off Requests', icon: Calendar, description: 'PTO and leave requests' },
   { id: 'pto', label: 'PTO Balances', icon: Wallet, description: 'Employee PTO balances' },
+  { id: 'salespipeline', label: 'Sales Pipeline Export', icon: Briefcase, description: 'Same format as Sales Pipeline export button' },
+  { id: 'orderform', label: 'Order Form Export', icon: ClipboardList, description: 'Same format as Order Form export button' },
 ];
 
 const SCHEDULE_OPTIONS = [
@@ -67,9 +72,14 @@ export default function BackupManager() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  
+  // Backup history
+  const [backupHistory, setBackupHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     loadSettings();
+    loadHistory();
   }, []);
 
   const loadSettings = async () => {
@@ -84,6 +94,19 @@ export default function BackupManager() {
       console.error("Error loading settings:", err);
     }
     setIsLoadingSettings(false);
+  };
+
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const response = await backupToGoogleDrive({ action: 'getHistory' });
+      if (response.data.logs) {
+        setBackupHistory(response.data.logs);
+      }
+    } catch (err) {
+      console.error("Error loading backup history:", err);
+    }
+    setIsLoadingHistory(false);
   };
 
   const saveSettings = async () => {
@@ -135,13 +158,15 @@ export default function BackupManager() {
         setError(response.data.error);
       } else {
         setResult(response.data);
+        // Reload history after successful backup
+        loadHistory();
       }
-    } catch (err) {
+      } catch (err) {
       setError(err.message || "Backup failed");
-    }
-    
-    setIsBackingUp(false);
-  };
+      }
+
+      setIsBackingUp(false);
+      };
 
   if (isLoadingSettings) {
     return (
@@ -239,8 +264,8 @@ export default function BackupManager() {
             )}
           </div>
           {settings.schedule !== 'none' && (
-            <p className="text-xs text-amber-600 mt-2">
-              Note: After saving, contact support to enable the scheduled automation.
+            <p className="text-xs text-gray-500 mt-2">
+              Scheduled backups will run automatically based on your settings.
             </p>
           )}
         </div>
@@ -348,29 +373,103 @@ export default function BackupManager() {
             </div>
             <div className="space-y-2">
               {result.results?.map((r, i) => (
-                <div key={i} className="text-sm text-green-600 flex items-center gap-2">
-                  {r.error ? (
-                    <>
-                      <AlertTriangle className="w-3 h-3 text-red-500" />
-                      <span className="text-red-600">{r.type}: {r.error}</span>
-                    </>
-                  ) : r.skipped ? (
-                    <>
-                      <span className="text-gray-500">{r.filename} (skipped - no data)</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-3 h-3" />
-                      {r.filename}
-                    </>
-                  )}
+                    <div key={i} className="text-sm text-green-600 flex items-center gap-2">
+                      {r.error ? (
+                        <>
+                          <AlertTriangle className="w-3 h-3 text-red-500" />
+                          <span className="text-red-600">{r.type}: {r.error}</span>
+                        </>
+                      ) : r.skipped ? (
+                        <>
+                          <span className="text-gray-500">{r.filename} (skipped - no data)</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          {r.filename}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              )}
+              </div>
+
+              {/* Backup History Card */}
+              <div className="clay-card p-6">
+              <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}>
+              <History className="w-6 h-6 text-orange-700" />
+              </div>
+              <div>
+              <h3 className="text-lg font-semibold text-gray-800">Backup History</h3>
+              <p className="text-sm text-gray-500">Recent backup activity log</p>
+              </div>
+              </div>
+
+              {isLoadingHistory ? (
+              <div className="flex items-center justify-center p-8">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              </div>
+              ) : backupHistory.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+              No backup history yet. Run your first backup above.
+              </div>
+              ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+              {backupHistory.map((log, idx) => (
+                <div key={log.id || idx} className={`p-3 rounded-lg border ${log.error_count > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {log.backup_type === 'scheduled' ? (
+                        <Clock className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <HardDrive className="w-4 h-4 text-purple-600" />
+                      )}
+                      <span className="font-medium text-sm">
+                        {log.backup_type === 'scheduled' ? 'Scheduled Backup' : 'Manual Backup'}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {log.created_date ? format(new Date(log.created_date), "MMM d, yyyy h:mm a") : "Unknown date"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="text-green-700">
+                      <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                      {log.success_count || 0} succeeded
+                    </span>
+                    {log.error_count > 0 && (
+                      <span className="text-red-700">
+                        <AlertTriangle className="w-3 h-3 inline mr-1" />
+                        {log.error_count} failed
+                      </span>
+                    )}
+                    <span className="text-gray-500">
+                      by {log.triggered_by === 'system' ? 'System' : log.triggered_by}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {log.results?.map((r, i) => (
+                      <span 
+                        key={i} 
+                        className={`text-xs px-2 py-0.5 rounded ${
+                          r.error ? 'bg-red-200 text-red-800' : 
+                          r.skipped ? 'bg-gray-200 text-gray-600' : 
+                          'bg-green-200 text-green-800'
+                        }`}
+                        title={r.error || r.filename || r.type}
+                      >
+                        {r.type}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-    </div>
-  );
-}
+              </div>
+              )}
+              </div>
+              </div>
+              );
+              }
