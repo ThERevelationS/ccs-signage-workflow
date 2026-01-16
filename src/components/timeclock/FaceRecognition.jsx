@@ -48,7 +48,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+          // Wait for video to be ready before playing
+          await new Promise((resolve) => {
+            videoRef.current.onloadedmetadata = () => {
+              videoRef.current.play().then(resolve).catch(resolve);
+            };
+          });
         }
       } catch (err) {
         console.error("Camera error:", err);
@@ -212,15 +217,19 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       </div>
 
       {/* Video */}
-      <div className="relative rounded-2xl overflow-hidden bg-black mb-4" style={{ width: 320, height: 240 }}>
+      <div className="relative rounded-2xl overflow-hidden bg-gray-900 mb-4" style={{ width: 320, height: 240 }}>
         <video
           ref={videoRef}
           autoPlay
           muted
           playsInline
-          width={320}
-          height={240}
-          style={{ width: 320, height: 240, objectFit: "cover", transform: "scaleX(-1)" }}
+          style={{ 
+            width: "100%", 
+            height: "100%", 
+            objectFit: "cover", 
+            transform: "scaleX(-1)",
+            display: "block"
+          }}
         />
         <canvas ref={canvasRef} width={320} height={240} className="absolute inset-0 pointer-events-none" />
         
