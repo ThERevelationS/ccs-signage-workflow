@@ -395,12 +395,10 @@ export default function QuickClockSection({ allUsers, currentTime }) {
             </div>
 
             {/* Status */}
-            <div className={`px-4 py-2 rounded-full mb-4 ${
-              recognitionMode === "in" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}>
+            <div className="px-4 py-2 rounded-full mb-4 bg-purple-100 text-purple-700">
               <p className="font-medium flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {recognitionMode === "in" ? "Clocking In - Scanning..." : "Clocking Out - Scanning..."}
+                Scanning...
               </p>
             </div>
 
