@@ -225,13 +225,7 @@ Deno.serve(async (req) => {
       const base64Data = btoa(binary);
       
       // Get or create the specific folder for this backup type
-      let uploadFolderId = targetFolderId;
-      if (folderName) {
-        const typeFolderId = await getOrCreateFolder(folderName, targetFolderId);
-        if (typeFolderId) {
-          uploadFolderId = typeFolderId;
-        }
-      }
+      const uploadFolderId = await getOrCreateFolder(folderName);
       
       // Create file metadata with folder if specified
       const metadata = {
