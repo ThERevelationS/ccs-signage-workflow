@@ -213,29 +213,19 @@ export default function BackupManager() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-800">Backup Settings</h3>
-            <p className="text-sm text-gray-500">Configure where and when backups are saved</p>
+            <p className="text-sm text-gray-500">Configure when backups are saved</p>
           </div>
         </div>
 
-        {/* Folder Selection */}
-        <div className="mb-6">
-          <Label className="text-sm font-medium mb-2 block">Backup Location</Label>
-          <div className="flex gap-2">
-            <div className="flex-1 p-3 rounded-lg border bg-gray-50 flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-gray-500" />
-              <span className="text-gray-700 truncate">
-                {settings.folderId ? `Folder: ${settings.folderId.substring(0, 20)}...` : 'Root folder (My Drive)'}
-              </span>
-            </div>
-            <Button onClick={() => setShowFolderDialog(true)} variant="outline">
-              {settings.folderId ? 'Change' : 'Set Folder'}
-            </Button>
-            {settings.folderId && (
-              <Button onClick={clearFolder} variant="outline" size="icon">
-                <X className="w-4 h-4" />
-              </Button>
-            )}
+        {/* Backup Location Info */}
+        <div className="mb-6 p-3 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="flex items-center gap-2 text-blue-700">
+            <FolderOpen className="w-5 h-5" />
+            <span className="font-medium">Backup Location</span>
           </div>
+          <p className="text-sm text-blue-600 mt-1">
+            Each data type is automatically saved to its own folder in Google Drive (e.g., "SignShop Users Backup", "SignShop Work Orders Backup"). Folders are created automatically if they don't exist.
+          </p>
         </div>
 
         {/* Schedule */}
