@@ -29,9 +29,8 @@ import {
   Calendar,
   Wallet,
   FolderOpen,
-  FolderPlus,
-  Settings,
-  Save
+  Save,
+  X
 } from "lucide-react";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
 
