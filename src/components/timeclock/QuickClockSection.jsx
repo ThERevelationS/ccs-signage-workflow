@@ -189,25 +189,20 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     setSelectedUser(user);
     setRecognitionStatus(`Welcome, ${user.full_name || user.email}!`);
 
+    // Stop video stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsRecognizing(false);
+
     if (recognitionMode === "in") {
-      setIsRecognizing(false);
-      // Stop video stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
       await performClockIn(user);
     } else {
       // Check for active entry then show clock out dialog
       setIsLoading(true);
       const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
       setIsLoading(false);
-      setIsRecognizing(false);
-      // Stop video stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
       if (entries.length > 0) {
         setActiveEntry(entries[0]);
         setShowClockOut(true);
