@@ -234,6 +234,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     stopRecognition();
     setSelectedUser(null);
     setActiveEntry(null);
+    setShowClockOut(false);
     setRecognitionMode(null);
     setRecognitionStatus("");
     setShowManualEntry(false);
