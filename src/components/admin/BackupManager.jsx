@@ -129,8 +129,7 @@ export default function BackupManager() {
 
     try {
       const response = await backupToGoogleDrive({ 
-        dataTypes: selectedTypes,
-        folderId: settings.folderId
+        dataTypes: selectedTypes
       });
       
       if (response.data.error) {
