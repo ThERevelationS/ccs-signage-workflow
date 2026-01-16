@@ -339,18 +339,18 @@ export default function QuickClockSection({ allUsers, currentTime }) {
           Quick Clock In/Out
         </h2>
 
-        {/* Main View - Clock In/Out Buttons */}
+        {/* Main View - Split Clock In/Out Button */}
         {!isRecognizing && !showClockOut && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
-              Tap a button below, then look at the camera or show your QR badge
+              Tap a side below, then look at the camera or show your QR badge
             </p>
             
-            <div className="flex gap-6">
-              <Button 
+            <div className="flex rounded-2xl overflow-hidden shadow-lg">
+              <button 
                 onClick={() => startRecognition("in")}
                 disabled={isLoading}
-                className="bg-green-600 hover:bg-green-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg disabled:opacity-50"
+                className="bg-green-600 hover:bg-green-700 text-white px-10 py-8 text-xl flex items-center gap-3 transition-colors disabled:opacity-50"
               >
                 {isLoading && recognitionMode === "in" ? (
                   <Loader2 className="w-8 h-8 animate-spin" />
@@ -358,12 +358,12 @@ export default function QuickClockSection({ allUsers, currentTime }) {
                   <Play className="w-8 h-8" />
                 )}
                 Clock In
-              </Button>
-              
-              <Button 
+              </button>
+              <div className="w-px bg-white/30" />
+              <button 
                 onClick={() => startRecognition("out")}
                 disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 text-white px-12 py-8 text-xl gap-3 rounded-2xl shadow-lg disabled:opacity-50"
+                className="bg-red-600 hover:bg-red-700 text-white px-10 py-8 text-xl flex items-center gap-3 transition-colors disabled:opacity-50"
               >
                 {isLoading && recognitionMode === "out" ? (
                   <Loader2 className="w-8 h-8 animate-spin" />
@@ -371,7 +371,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
                   <Square className="w-8 h-8" />
                 )}
                 Clock Out
-              </Button>
+              </button>
             </div>
           </div>
         )}
