@@ -64,6 +64,7 @@ import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
 import ActivityFeed from "../components/admin/ActivityFeed";
 import PTOManagement from "../components/admin/PTOManagement";
 import BackupManager from "../components/admin/BackupManager";
+import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
