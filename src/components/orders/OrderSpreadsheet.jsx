@@ -561,20 +561,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         const existingOrder = existingOrdersMap.get(uniqueKey);
         
         if (existingOrder) {
-          // Fill in missing information on existing order
+          // Update ALL columns from import if different (not just missing)
           const updates = {};
           
-          if (!existingOrder.quantity && row["How much?"]) {
-            updates.quantity = String(row["How much?"]);
-          }
-          if (!existingOrder.requestor_name && row["Requestor"]) {
-            updates.requestor_name = String(row["Requestor"]);
-          }
-          if (!existingOrder.vendor && row["Vendor (Anyone can fill out this column)"]) {
-            updates.vendor = String(row["Vendor (Anyone can fill out this column)"]);
-          }
-          
-          // Parse and fill in dates if missing
+          // Parse Excel dates helper
           const parseExcelDateForUpdate = (value) => {
             if (!value) return null;
             if (typeof value === 'number') {
@@ -592,36 +582,64 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             return null;
           };
           
-          const dateNeeded = parseExcelDateForUpdate(row["Date Needed (Requester fills out this column)"]);
-          const dateOrdered = parseExcelDateForUpdate(row["Ordered Date (Carl Fills out this column)"]);
-          const dateReceived = parseExcelDateForUpdate(row["Date Recieved (Anyone can fill out this column)"]);
+          // Helper to check and update string fields
+          const checkStringField = (dbField, ...columns) => {
+            for (const col of columns) {
+              if (row[col] != null && row[col] !== "") {
+                const newVal = String(row[col]).trim();
+                if (newVal && newVal !== (existingOrder[dbField] || "")) {
+                  updates[dbField] = newVal;
+                }
+                return;
+              }
+            }
+          };
           
-          if (!existingOrder.date_needed && dateNeeded) {
-            updates.date_needed = dateNeeded;
-          }
-          if (!existingOrder.date_ordered && dateOrdered) {
-            updates.date_ordered = dateOrdered;
-          }
-          if (!existingOrder.date_received && dateReceived) {
-            updates.date_received = dateReceived;
+          // Helper to check and update date fields
+          const checkDateField = (dbField, ...columns) => {
+            for (const col of columns) {
+              if (row[col] != null && row[col] !== "") {
+                const parsed = parseExcelDateForUpdate(row[col]);
+                if (parsed && parsed !== (existingOrder[dbField] || "")) {
+                  updates[dbField] = parsed;
+                }
+                return;
+              }
+            }
+          };
+          
+          // Check all text fields
+          checkStringField('quantity', 'How much?', 'Quantity', 'quantity');
+          checkStringField('requestor_name', 'Requestor', 'requestor', 'Requestor Name');
+          checkStringField('vendor', 'Vendor (Anyone can fill out this column)', 'Vendor', 'vendor');
+          checkStringField('request_type', 'Type', 'Request Type', 'type');
+          checkStringField('description', 'Description', 'description');
+          
+          // Check all date fields
+          checkDateField('date_needed', 'Date Needed (Requester fills out this column)', 'Date Needed', 'date_needed');
+          checkDateField('date_ordered', 'Ordered Date (Carl Fills out this column)', 'Date Ordered', 'date_ordered');
+          checkDateField('date_received', 'Date Recieved (Anyone can fill out this column)', 'Date Received', 'date_received');
+          
+          // Update status based on dates
+          const finalDateReceived = updates.date_received || existingOrder.date_received;
+          const finalDateOrdered = updates.date_ordered || existingOrder.date_ordered;
+          
+          if (finalDateReceived) {
+            if (existingOrder.status !== "received") updates.status = "received";
+          } else if (finalDateOrdered) {
+            if (existingOrder.status !== "ordered") updates.status = "ordered";
           }
           
-          // Update status if dates were added
-          if (updates.date_received && !existingOrder.date_received) {
-            updates.status = "received";
-          } else if (updates.date_ordered && !existingOrder.date_ordered && !existingOrder.date_received) {
-            updates.status = "ordered";
-          }
-          
-          // Only update if there are changes
+          // Only update if there are actual changes
           if (Object.keys(updates).length > 0) {
             await Order.update(existingOrder.id, updates);
             
-            // Update local state immediately so UI updates
-            setOrders(prev => prev.map(o => o.id === existingOrder.id ? { ...o, ...updates } : o));
+            // Update local state and map
+            const updatedOrder = { ...existingOrder, ...updates };
+            existingOrdersMap.set(uniqueKey, updatedOrder);
+            setOrders(prev => prev.map(o => o.id === existingOrder.id ? updatedOrder : o));
             originalOrdersRef.current[existingOrder.id] = { ...originalOrdersRef.current[existingOrder.id], ...updates };
             
-            // Small delay to prevent rate limiting
             await new Promise(resolve => setTimeout(resolve, 100));
           }
           

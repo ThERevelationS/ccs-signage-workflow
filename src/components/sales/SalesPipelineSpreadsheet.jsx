@@ -721,44 +721,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
         
         if (existingWO) {
-          // Fill in missing information on existing work order
+          // Update ALL columns from import if different (not just missing)
           const updates = {};
           
-          // Source column mapping
-          if (!existingWO.lead_source && (row["Source"] ?? row["Lead Source"])) {
-            updates.lead_source = String(row["Source"] ?? row["Lead Source"]);
-          }
-          if (!existingWO.current_task_assigned_to && row["Current Task Assigned to"]) {
-            updates.current_task_assigned_to = String(row["Current Task Assigned to"]);
-          }
-          // Designer column mapping
-          if (!existingWO.designer && (row["Designer"] ?? row["designer"])) {
-            updates.designer = String(row["Designer"] ?? row["designer"]);
-          }
-          // Project Manager column mapping
-          if (!existingWO.project_manager && (row["Project Manager"] ?? row["PM"] ?? row["project_manager"])) {
-            updates.project_manager = String(row["Project Manager"] ?? row["PM"] ?? row["project_manager"]);
-          }
-          // Estimator column mapping
-          if (!existingWO.estimator && (row["Estimator"] ?? row["estimator"])) {
-            updates.estimator = String(row["Estimator"] ?? row["estimator"]);
-          }
-          // Est/Inv # column mapping - store in est_inv_at field
-          const estInvValue = row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"];
-          if (!existingWO.est_inv_at && estInvValue != null && estInvValue !== "") {
-            updates.est_inv_at = String(estInvValue);
-          }
-          if (!existingWO.estimate_amount && row["Estimate Amount"]) {
-            updates.estimate_amount = parseFloat(row["Estimate Amount"]) || 0;
-          }
-          if (!existingWO.current_task_description && row["Current Task Description"]) {
-            updates.current_task_description = String(row["Current Task Description"]);
-          }
-          if (!existingWO.permit_number && row["Permit Number"]) {
-            updates.permit_number = String(row["Permit Number"]);
-          }
-          
-          // Parse and fill in dates if missing
+          // Parse Excel dates helper
           const parseExcelDateForUpdate = (value) => {
             if (!value) return null;
             if (typeof value === 'number') {
@@ -776,29 +742,77 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             return null;
           };
           
-          const dateFields = [
-            { key: 'current_task_deadline', column: 'Current Task Deadline' },
-            { key: 'date_initial_contact', column: 'Date Est. Requested/Initial Contact' },
-            { key: 'site_survey_date', column: 'Site Survey' },
-            { key: 'date_estimate_sent', column: 'Date Estimate Sent to Customer' },
-            { key: 'date_order_created', column: 'Date Order Created' },
-            { key: 'project_install_date', column: 'Project Install Date' },
-            { key: 'permit_submitted_date', column: 'Permit Submitted' },
-            { key: 'permit_receipt_confirmed_date', column: 'Date Permit Receipt Confirmed' },
-            { key: 'permit_approved_date', column: 'Date Permit Approved/Received' }
-          ];
-          
-          dateFields.forEach(({ key, column }) => {
-            if (!existingWO[key] && row[column]) {
-              const parsed = parseExcelDateForUpdate(row[column]);
-              if (parsed) updates[key] = parsed;
+          // Helper to check and update string fields
+          const checkStringField = (dbField, ...columns) => {
+            for (const col of columns) {
+              if (row[col] != null && row[col] !== "") {
+                const newVal = String(row[col]).trim();
+                if (newVal && newVal !== (existingWO[dbField] || "")) {
+                  updates[dbField] = newVal;
+                }
+                return;
+              }
             }
-          });
+          };
           
-          // Only update if there are changes
+          // Helper to check and update number fields
+          const checkNumberField = (dbField, ...columns) => {
+            for (const col of columns) {
+              if (row[col] != null && row[col] !== "") {
+                const newVal = parseFloat(row[col]) || 0;
+                if (newVal !== (existingWO[dbField] || 0)) {
+                  updates[dbField] = newVal;
+                }
+                return;
+              }
+            }
+          };
+          
+          // Helper to check and update date fields
+          const checkDateField = (dbField, ...columns) => {
+            for (const col of columns) {
+              if (row[col] != null && row[col] !== "") {
+                const parsed = parseExcelDateForUpdate(row[col]);
+                if (parsed && parsed !== (existingWO[dbField] || "")) {
+                  updates[dbField] = parsed;
+                }
+                return;
+              }
+            }
+          };
+          
+          // Check all text fields
+          checkStringField('lead_source', 'Source', 'Lead Source');
+          checkStringField('current_task_assigned_to', 'Current Task Assigned to');
+          checkStringField('designer', 'Designer', 'designer');
+          checkStringField('project_manager', 'Project Manager', 'PM', 'project_manager');
+          checkStringField('estimator', 'Estimator', 'estimator');
+          checkStringField('est_inv_at', 'Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number');
+          checkStringField('current_task_description', 'Current Task Description');
+          checkStringField('permit_number', 'Permit Number');
+          checkStringField('title', 'Notes');
+          
+          // Check number fields
+          checkNumberField('estimate_amount', 'Estimate Amount');
+          
+          // Check all date fields
+          checkDateField('current_task_deadline', 'Current Task Deadline');
+          checkDateField('date_initial_contact', 'Date Est. Requested/Initial Contact');
+          checkDateField('site_survey_date', 'Site Survey');
+          checkDateField('date_estimate_sent', 'Date Estimate Sent to Customer');
+          checkDateField('date_order_created', 'Date Order Created');
+          checkDateField('project_install_date', 'Project Install Date');
+          checkDateField('permit_submitted_date', 'Permit Submitted');
+          checkDateField('permit_receipt_confirmed_date', 'Date Permit Receipt Confirmed');
+          checkDateField('permit_approved_date', 'Date Permit Approved/Received');
+          
+          // Only update if there are actual changes
           if (Object.keys(updates).length > 0) {
             await WorkOrder.update(existingWO.id, updates);
-            setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? { ...wo, ...updates } : wo));
+            // Update local state and map
+            const updatedWO = { ...existingWO, ...updates };
+            existingWorkOrdersMap.set(uniqueKey, updatedWO);
+            setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? updatedWO : wo));
             await new Promise(resolve => setTimeout(resolve, 100));
           }
           
