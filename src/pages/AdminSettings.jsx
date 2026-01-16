@@ -654,12 +654,16 @@ export default function AdminSettings() {
                   <TabsList>
                     <TabsTrigger value="entries">Time Entries</TabsTrigger>
                     <TabsTrigger value="pto">PTO Policies</TabsTrigger>
+                    <TabsTrigger value="overtime">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <TabsContent value="entries">
                     <TimeClockAdmin />
                   </TabsContent>
                   <TabsContent value="pto">
                     <PTOManagement />
+                  </TabsContent>
+                  <TabsContent value="overtime">
+                    <OvertimeRulesManager />
                   </TabsContent>
                 </Tabs>
               </TabsContent>
