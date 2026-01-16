@@ -107,13 +107,6 @@ Deno.serve(async (req) => {
     }
 
     // Default action: Perform backup
-    // Get saved folder ID if not provided
-    let targetFolderId = folderId;
-    if (!targetFolderId) {
-      const settings = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupSettings' });
-      targetFolderId = settings[0]?.setting_value?.folderId;
-    }
-
     // Get data types to backup - for scheduled, use saved settings
     let typesToBackup = dataTypes;
     if (!typesToBackup || typesToBackup.length === 0) {
@@ -124,20 +117,69 @@ Deno.serve(async (req) => {
     const results = [];
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').slice(0, -5);
     
-    // Cache for created folders (key: folderName, value: folderId)
+    // Cache for folder IDs (key: folderName, value: folderId)
     const folderCache = {};
     
+    // Get saved folder cache from settings to reuse existing folders
+    const backupSettings = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupFolderCache' });
+    const savedFolderCache = backupSettings[0]?.setting_value || {};
+    Object.assign(folderCache, savedFolderCache);
+    
+    // Helper to find existing folder by name (only searches app-created files)
+    const findExistingFolder = async (folderName) => {
+      try {
+        const searchResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(folderName)}'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id,name)`,
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          }
+        );
+        
+        if (searchResponse.ok) {
+          const data = await searchResponse.json();
+          if (data.files && data.files.length > 0) {
+            return data.files[0].id;
+          }
+        }
+      } catch (e) {
+        console.log(`Could not search for folder ${folderName}:`, e.message);
+      }
+      return null;
+    };
+    
     // Helper to get or create a folder for each backup type
-    const getOrCreateFolder = async (folderName, parentId) => {
+    const getOrCreateFolder = async (folderName) => {
+      // Check cache first
       if (folderCache[folderName]) {
-        return folderCache[folderName];
+        // Verify the cached folder still exists
+        try {
+          const verifyResponse = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${folderCache[folderName]}?fields=id,trashed`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          );
+          if (verifyResponse.ok) {
+            const data = await verifyResponse.json();
+            if (!data.trashed) {
+              return folderCache[folderName];
+            }
+          }
+        } catch (e) {
+          console.log(`Cached folder ${folderName} no longer valid`);
+        }
+        delete folderCache[folderName];
       }
       
-      // Create the folder
+      // Try to find existing folder
+      const existingId = await findExistingFolder(folderName);
+      if (existingId) {
+        folderCache[folderName] = existingId;
+        return existingId;
+      }
+      
+      // Create new folder
       const metadata = {
         name: folderName,
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: parentId ? [parentId] : undefined
+        mimeType: 'application/vnd.google-apps.folder'
       };
       
       const response = await fetch('https://www.googleapis.com/drive/v3/files', {
