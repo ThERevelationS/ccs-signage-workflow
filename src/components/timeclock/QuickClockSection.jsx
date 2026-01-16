@@ -339,40 +339,28 @@ export default function QuickClockSection({ allUsers, currentTime }) {
           Quick Clock In/Out
         </h2>
 
-        {/* Main View - Split Clock In/Out Button */}
+        {/* Main View - Single Clock In/Out Button */}
         {!isRecognizing && !showClockOut && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
-              Tap a side below, then look at the camera or show your QR badge
+              Tap the button, then look at the camera or show your QR badge
             </p>
             
-            <div className="flex rounded-2xl overflow-hidden shadow-lg">
-              <button 
-                onClick={() => startRecognition("in")}
-                disabled={isLoading}
-                className="bg-green-600 hover:bg-green-700 text-white px-10 py-8 text-xl flex items-center gap-3 transition-colors disabled:opacity-50"
-              >
-                {isLoading && recognitionMode === "in" ? (
-                  <Loader2 className="w-8 h-8 animate-spin" />
-                ) : (
-                  <Play className="w-8 h-8" />
-                )}
-                Clock In
-              </button>
-              <div className="w-px bg-white/30" />
-              <button 
-                onClick={() => startRecognition("out")}
-                disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 text-white px-10 py-8 text-xl flex items-center gap-3 transition-colors disabled:opacity-50"
-              >
-                {isLoading && recognitionMode === "out" ? (
-                  <Loader2 className="w-8 h-8 animate-spin" />
-                ) : (
-                  <Square className="w-8 h-8" />
-                )}
-                Clock Out
-              </button>
-            </div>
+            <button 
+              onClick={() => startRecognition("auto")}
+              disabled={isLoading}
+              className="flex rounded-2xl overflow-hidden shadow-lg disabled:opacity-50"
+            >
+              <div className="bg-green-600 hover:bg-green-700 text-white px-8 py-8 text-xl flex items-center gap-2 transition-colors">
+                <Play className="w-7 h-7" />
+                In
+              </div>
+              <div className="bg-red-600 hover:bg-red-700 text-white px-8 py-8 text-xl flex items-center gap-2 transition-colors">
+                Out
+                <Square className="w-7 h-7" />
+              </div>
+            </button>
+            {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
           </div>
         )}
 
