@@ -528,6 +528,18 @@ export default function TimeClock() {
               <TabsContent value="balance">
                 <PTOBalanceView currentUser={loggedInUser} />
               </TabsContent>
+
+              <TabsContent value="settings">
+                <UserSettingsTab 
+                  currentUser={loggedInUser} 
+                  onUserUpdated={async () => {
+                    const users = await AuthorizedEmail.list();
+                    setAllUsers(users);
+                    const updated = users.find(u => u.id === loggedInUser.id);
+                    if (updated) setLoggedInUser(updated);
+                  }} 
+                />
+              </TabsContent>
             </Tabs>
           </>
         )}
