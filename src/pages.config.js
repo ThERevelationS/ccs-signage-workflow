@@ -18,6 +18,7 @@ import ResetPassword from './pages/ResetPassword';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
+import UserSettings from './pages/UserSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +43,7 @@ export const PAGES = {
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
+    "UserSettings": UserSettings,
 }
 
 export const pagesConfig = {
