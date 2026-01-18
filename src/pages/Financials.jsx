@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, Table, X } from "lucide-react";
+import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, Table, X, Maximize2, Minimize2 } from "lucide-react";
 import { format } from "date-fns";
 import FinancialsSpreadsheet from "@/components/financials/FinancialsSpreadsheet";
 import FinancialsDashboard from "@/components/financials/FinancialsDashboard";
@@ -45,8 +45,17 @@ export default function Financials() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   
   const spreadsheetRef = useRef(null);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     loadActiveFilters();
@@ -430,6 +439,21 @@ export default function Financials() {
             >
               <Download className="w-3 h-3" />
               Export
+            </Button>
+
+            <Button
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen();
+                } else {
+                  document.exitFullscreen();
+                }
+              }}
+              size="sm"
+              className="clay-button border-none text-gray-800 h-8 px-3"
+              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
+            >
+              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
           </div>
         </div>
