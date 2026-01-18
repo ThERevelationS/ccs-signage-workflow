@@ -49,6 +49,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
+import UserHRDataForm from "@/components/user/UserHRDataForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -507,132 +509,159 @@ Return valid HTML that will render beautifully in ALL email clients including da
 
       {/* Edit User Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="clay-card border-none">
+        <DialogContent className="clay-card border-none max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Edit User</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Edit User: {editingUser?.full_name || editingUser?.email}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 mt-4">
-            <div>
-              <Label>Email</Label>
-              <Input
-                value={editingUser?.email || ""}
-                disabled
-                className="mt-1 bg-gray-100"
-              />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-            </div>
+          <Tabs defaultValue="account" className="flex-1 overflow-hidden flex flex-col">
+            <TabsList className="mb-4">
+              <TabsTrigger value="account">Account</TabsTrigger>
+              <TabsTrigger value="hr">HR Data</TabsTrigger>
+            </TabsList>
 
-            <div>
-              <Label>Full Name</Label>
-              <Input
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="Enter full name"
-                className="mt-1"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Username (for Time Clock)</Label>
-                <Input
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
-                  placeholder="e.g., jsmith"
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">Used for quick clock in/out</p>
-              </div>
-              <div>
-                <Label>Password (for Time Clock)</Label>
-                <Input
-                  type="password"
-                  value={formData.password_hash}
-                  onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
-                  placeholder={formData.password_hash ? "••••••••" : "Set password"}
-                  className="mt-1"
-                />
-                <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password</p>
-              </div>
-            </div>
-
-            <div>
-              <Label>Role</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(val) => setFormData({ ...formData, role: val })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">
-                    <div className="flex items-center gap-2">
-                      <UserIcon className="w-4 h-4" />
-                      User
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4" />
-                      Admin
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Sales Pipeline Roles</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {["Task Assigned", "Designer", "Project Manager", "Estimator", "Installer", "Fabricator", "CNC Router Operator", "CNC Laser Operator", "Painter", "Office Administration", "Accounting"].map((role) => (
-                  <div key={role} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.sales_roles?.includes(role) || false}
-                      onCheckedChange={(checked) => {
-                        const currentRoles = formData.sales_roles || [];
-                        const newRoles = checked
-                          ? [...currentRoles, role]
-                          : currentRoles.filter(r => r !== role);
-                        setFormData({ ...formData, sales_roles: newRoles });
-                      }}
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="account" className="mt-0">
+                <div className="space-y-4">
+                  <div>
+                    <Label>Email</Label>
+                    <Input
+                      value={editingUser?.email || ""}
+                      disabled
+                      className="mt-1 bg-gray-100"
                     />
-                    <label className="text-sm">{role}</label>
+                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                   </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Select which sales pipeline roles this user can be assigned to</p>
-            </div>
 
-            <div>
-              <Label>Permissions</Label>
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={formData.can_import_export || false}
-                    onCheckedChange={(checked) => {
-                      setFormData({ ...formData, can_import_export: checked });
-                    }}
-                  />
-                  <label className="text-sm">Can Import/Export Data</label>
+                  <div>
+                    <Label>Full Name</Label>
+                    <Input
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      placeholder="Enter full name"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Username (for Time Clock)</Label>
+                      <Input
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                        placeholder="e.g., jsmith"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Used for quick clock in/out</p>
+                    </div>
+                    <div>
+                      <Label>Password (for Time Clock)</Label>
+                      <Input
+                        type="password"
+                        value={formData.password_hash}
+                        onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
+                        placeholder={formData.password_hash ? "••••••••" : "Set password"}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Role</Label>
+                    <Select
+                      value={formData.role}
+                      onValueChange={(val) => setFormData({ ...formData, role: val })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="w-4 h-4" />
+                            User
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Crown className="w-4 h-4" />
+                            Admin
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Sales Pipeline Roles</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {["Task Assigned", "Designer", "Project Manager", "Estimator", "Installer", "Fabricator", "CNC Router Operator", "CNC Laser Operator", "Painter", "Office Administration", "Accounting"].map((role) => (
+                        <div key={role} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.sales_roles?.includes(role) || false}
+                            onCheckedChange={(checked) => {
+                              const currentRoles = formData.sales_roles || [];
+                              const newRoles = checked
+                                ? [...currentRoles, role]
+                                : currentRoles.filter(r => r !== role);
+                              setFormData({ ...formData, sales_roles: newRoles });
+                            }}
+                          />
+                          <label className="text-sm">{role}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Select which sales pipeline roles this user can be assigned to</p>
+                  </div>
+
+                  <div>
+                    <Label>Permissions</Label>
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.can_import_export || false}
+                          onCheckedChange={(checked) => {
+                            setFormData({ ...formData, can_import_export: checked });
+                          }}
+                        />
+                        <label className="text-sm">Can Import/Export Data</label>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Allow this user to import and export data on Order Form and Sales Pipeline</p>
+                  </div>
                 </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Allow this user to import and export data on Order Form and Sales Pipeline</p>
-            </div>
+              </TabsContent>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="clay-button border-none"
-                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
-              >
-                Save Changes
-              </Button>
+              <TabsContent value="hr" className="mt-0">
+                <div className="p-4 mb-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-800">
+                    <strong>Admin Access Only:</strong> This HR data is confidential and only accessible by office administrators.
+                  </p>
+                </div>
+                {editingUser && (
+                  <UserHRDataForm 
+                    userData={editingUser} 
+                    onUpdate={loadUsers}
+                    section="all"
+                    isAdmin={true}
+                  />
+                )}
+              </TabsContent>
             </div>
+          </Tabs>
+
+          <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="clay-button border-none"
+              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+            >
+              Save Changes
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
