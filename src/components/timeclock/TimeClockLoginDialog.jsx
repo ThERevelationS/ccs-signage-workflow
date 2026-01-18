@@ -69,6 +69,9 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
                 onChange={(e) => { setUsername(e.target.value); setError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 className="pl-10"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
               />
             </div>
           </div>
@@ -84,6 +87,9 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 className="pl-10"
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
               />
             </div>
           </div>

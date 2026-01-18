@@ -170,6 +170,7 @@ export default function AdminSettings() {
   
   // Password protection state
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [allUsers, setAllUsers] = useState([]);
@@ -209,22 +210,25 @@ export default function AdminSettings() {
   };
 
   const handlePasswordSubmit = async () => {
-    if (!passwordInput.trim()) {
-      setPasswordError("Please enter your password");
+    if (!usernameInput.trim() || !passwordInput.trim()) {
+      setPasswordError("Please enter both username and password");
       return;
     }
     
     setIsVerifying(true);
     setPasswordError("");
     
-    // Find current user in AuthorizedEmail by email
-    const currentUserRecord = allUsers.find(u => u.email === currentUser?.email);
+    // Find user by username
+    const userRecord = allUsers.find(u => u.username?.toLowerCase() === usernameInput.toLowerCase().trim());
     
-    if (currentUserRecord && currentUserRecord.password_hash === passwordInput) {
+    if (userRecord && userRecord.password_hash === passwordInput && userRecord.role === 'admin') {
       setIsUnlocked(true);
+      setUsernameInput("");
       setPasswordInput("");
+    } else if (userRecord && userRecord.password_hash === passwordInput) {
+      setPasswordError("Access denied - admin privileges required");
     } else {
-      setPasswordError("Incorrect password");
+      setPasswordError("Invalid username or password");
     }
     
     setIsVerifying(false);
@@ -582,10 +586,27 @@ export default function AdminSettings() {
               <Settings className="w-8 h-8 text-purple-700" />
             </div>
             <h2 className="text-xl font-bold text-gray-800">Admin Settings</h2>
-            <p className="text-sm text-gray-500 mt-1">Enter your password to access admin settings</p>
+            <p className="text-sm text-gray-500 mt-1">Enter your username and password to access admin settings</p>
           </div>
           
           <div className="space-y-4">
+            <div>
+              <Label>Username</Label>
+              <Input
+                type="text"
+                placeholder="Enter your username"
+                value={usernameInput}
+                onChange={(e) => {
+                  setUsernameInput(e.target.value);
+                  setPasswordError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                className="mt-1"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+              />
+            </div>
             <div>
               <Label>Password</Label>
               <Input
@@ -598,6 +619,9 @@ export default function AdminSettings() {
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
                 className="mt-1"
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
               />
               {passwordError && (
                 <p className="text-red-500 text-sm mt-1">{passwordError}</p>
