@@ -56,7 +56,8 @@ export default function WorkOrderForm({
   parentWorkOrder = null,
   lockedStage = null,
   initialData = null, // For duplicating - prefill form with this data
-  existingWorkOrders = [] // For duplicate detection
+  existingWorkOrders = [], // For duplicate detection
+  key // Force re-render when duplicating
 }) {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
