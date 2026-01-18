@@ -233,14 +233,14 @@ Design requirements:
 4. Add a prominent CTA button with SOLID bright purple background (#7C3AED) and WHITE text - NOT transparent or gradient
 5. The button must have: background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;
 6. Use DARK text colors (#1F2937 or #374151) on WHITE backgrounds for maximum readability
-7. Include a fun emoji relevant to sign-making (like 🎨 or ✨ or 🪧)
+7. DO NOT include any emojis in the subject line or body - use plain text only
 8. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
 9. Use inline CSS styles for email compatibility
 10. CRITICAL: All text must be dark on light backgrounds, button text must be white on purple
 
 The tone should be excited and welcoming. Make them feel special!
 
-Return valid HTML that will render beautifully in ALL email clients including dark mode.`,
+Return valid HTML that will render beautifully in ALL email clients including dark mode. NO EMOJIS.`,
           response_json_schema: {
             type: "object",
             properties: {
