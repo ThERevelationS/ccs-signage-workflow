@@ -10,6 +10,7 @@ import InstallationDeliver from './pages/InstallationDeliver';
 import MainWorkflow from './pages/MainWorkflow';
 import MondayMorningMeeting from './pages/MondayMorningMeeting';
 import MyWorkflow from './pages/MyWorkflow';
+import NewUserSetup from './pages/NewUserSetup';
 import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -19,7 +20,6 @@ import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
-import NewUserSetup from './pages/NewUserSetup';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +36,7 @@ export const PAGES = {
     "MainWorkflow": MainWorkflow,
     "MondayMorningMeeting": MondayMorningMeeting,
     "MyWorkflow": MyWorkflow,
+    "NewUserSetup": NewUserSetup,
     "OrderForm": OrderForm,
     "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
@@ -45,7 +46,6 @@ export const PAGES = {
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
-    "NewUserSetup": NewUserSetup,
 }
 
 export const pagesConfig = {

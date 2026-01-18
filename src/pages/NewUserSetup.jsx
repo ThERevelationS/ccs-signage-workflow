@@ -11,15 +11,17 @@ import {
   Lock, 
   Camera,
   ArrowRight,
-  Shield
+  Shield,
+  ClipboardList
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
+import UserHRDataForm from "@/components/user/UserHRDataForm";
 
 export default function NewUserSetup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
-  const [step, setStep] = useState(1); // 1: verify, 2: credentials, 3: face, 4: complete
+  const [step, setStep] = useState(1); // 1: verify, 2: credentials, 3: face, 4: hr data, 5: complete
   
   // Form state
   const [username, setUsername] = useState("");
@@ -143,7 +145,7 @@ export default function NewUserSetup() {
     setShowFaceEnroll(false);
   };
 
-  const handleComplete = async () => {
+  const handleSaveCredentialsAndFace = async () => {
     setSaving(true);
     setFormError("");
     
@@ -152,12 +154,10 @@ export default function NewUserSetup() {
       await base44.entities.AuthorizedEmail.update(user.id, {
         username: username.toLowerCase().trim(),
         password_hash: password,
-        face_descriptors: faceDescriptors.length > 0 ? faceDescriptors : undefined,
-        onboarding_complete: true,
-        onboarding_token: null, // Clear the token
-        onboarding_expires: null
+        face_descriptors: faceDescriptors.length > 0 ? faceDescriptors : undefined
       });
       
+      // Move to HR data step
       setStep(4);
     } catch (err) {
       console.error("Error saving:", err);
@@ -165,6 +165,34 @@ export default function NewUserSetup() {
     }
     
     setSaving(false);
+  };
+
+  const handleComplete = async () => {
+    setSaving(true);
+    setFormError("");
+    
+    try {
+      // Mark onboarding as complete
+      await base44.entities.AuthorizedEmail.update(user.id, {
+        onboarding_complete: true,
+        onboarding_token: null,
+        onboarding_expires: null
+      });
+      
+      setStep(5);
+    } catch (err) {
+      console.error("Error completing setup:", err);
+      setFormError("Failed to complete setup. Please try again.");
+    }
+    
+    setSaving(false);
+  };
+
+  const reloadUser = async () => {
+    const updated = await base44.entities.AuthorizedEmail.filter({ id: user.id });
+    if (updated.length > 0) {
+      setUser(updated[0]);
+    }
   };
 
   if (loading) {
@@ -190,8 +218,8 @@ export default function NewUserSetup() {
     );
   }
 
-  // Step 4: Complete
-  if (step === 4) {
+  // Step 5: Complete
+  if (step === 5) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         <div className="clay-card p-8 max-w-md w-full text-center">
@@ -220,8 +248,8 @@ export default function NewUserSetup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
-      <div className="clay-card p-8 max-w-md w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className={`clay-card p-8 w-full ${step === 4 ? 'max-w-3xl' : 'max-w-md'}`}>
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
@@ -233,7 +261,7 @@ export default function NewUserSetup() {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <React.Fragment key={s}>
               <div 
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
@@ -244,8 +272,8 @@ export default function NewUserSetup() {
               >
                 {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
               </div>
-              {s < 3 && (
-                <div className={`w-12 h-1 rounded ${step > s ? 'bg-purple-600' : 'bg-gray-200'}`} />
+              {s < 4 && (
+                <div className={`w-8 h-1 rounded ${step > s ? 'bg-purple-600' : 'bg-gray-200'}`} />
               )}
             </React.Fragment>
           ))}
@@ -378,7 +406,7 @@ export default function NewUserSetup() {
                 </Button>
 
                 <Button
-                  onClick={handleComplete}
+                  onClick={handleSaveCredentialsAndFace}
                   disabled={saving}
                   className="w-full clay-button border-none text-gray-800"
                   style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
@@ -386,7 +414,8 @@ export default function NewUserSetup() {
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  {faceDescriptors.length > 0 ? "Complete Setup" : "Skip & Complete Setup"}
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             ) : (
@@ -404,7 +433,58 @@ export default function NewUserSetup() {
             )}
           </div>
         )}
+
+        {/* Step 4: HR Data */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Please fill out your personal information for HR records. This information is kept confidential.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* HR Data Form - Full width below the card */}
+      {step === 4 && (
+        <div className="clay-card p-6 max-w-3xl w-full mt-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-xl" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              <ClipboardList className="w-5 h-5 text-purple-700" />
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800">Personal Information</h3>
+              <p className="text-sm text-gray-500">For HR records only</p>
+            </div>
+          </div>
+
+          <UserHRDataForm 
+            userData={user} 
+            onUpdate={reloadUser}
+            section="all"
+            isAdmin={false}
+          />
+
+          <div className="mt-6 pt-4 border-t flex justify-end gap-3">
+            <Button
+              onClick={handleComplete}
+              disabled={saving}
+              className="clay-button border-none text-gray-800"
+              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Complete Setup
+            </Button>
+          </div>
+
+          {formError && (
+            <p className="text-red-500 text-sm mt-2">{formError}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
