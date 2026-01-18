@@ -256,9 +256,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleDuplicateClient = (wo) => {
-    // Remove id and system fields, keep all other data
-    const { id, created_date, updated_date, created_by, ...dataToClone } = wo;
-    setDuplicateData(dataToClone);
+    // Clone all data for prefilling
+    setDuplicateData({ ...wo });
     setShowForm(true);
   };
 
