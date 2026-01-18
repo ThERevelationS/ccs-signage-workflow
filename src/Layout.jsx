@@ -741,20 +741,33 @@ function LayoutContent({ children }) {
                                           </Link>
                                         )}
                                         {isUserAdmin(currentUser) && (
-                                          <Link
-                                            to={createPageUrl("AdminSettings")}
-                                            className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-                                            style={{ 
-                                              background: 'rgba(191, 219, 254, 0.8)',
-                                              color: '#1e40af'
-                                            }}
-                                          >
-                                            <Settings className="w-3 h-3" />
-                                            <span>Admin</span>
-                                          </Link>
+                                              <Link
+                                                to={createPageUrl("AdminSettings")}
+                                                className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
+                                                style={{ 
+                                                  background: 'rgba(191, 219, 254, 0.8)',
+                                                  color: '#1e40af'
+                                                }}
+                                              >
+                                                <Settings className="w-3 h-3" />
+                                                <span>Admin</span>
+                                              </Link>
+                                            )}
+                                            {isRegistered && (
+                                              <Link
+                                                to={createPageUrl("UserSettings")}
+                                                className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
+                                                style={{ 
+                                                  background: 'rgba(191, 219, 254, 0.8)',
+                                                  color: '#1e40af'
+                                                }}
+                                              >
+                                                <User className="w-3 h-3" />
+                                                <span>My Info</span>
+                                              </Link>
+                                            )}
+                                          </div>
                                         )}
-                                      </div>
-                                    )}
       </div>
     </>
   );
