@@ -67,6 +67,7 @@ import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
 import ClientInfoSection from "./ClientInfoSection";
 import CreateRiderDialog from "./CreateRiderDialog";
+import WorkOrderForm from "./WorkOrderForm";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -140,7 +141,6 @@ export default function WorkOrderDetailsDialog({
   const [addingDetailFor, setAddingDetailFor] = useState(null); // { taskIndex, subTaskIndex }
   const [newDetailText, setNewDetailText] = useState("");
   const [showCreateRiderDialog, setShowCreateRiderDialog] = useState(false);
-  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const [showDuplicateForm, setShowDuplicateForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null);
 
@@ -1500,33 +1500,6 @@ export default function WorkOrderDetailsDialog({
               {/* Right Column - Actions */}
               <div className="space-y-4">
                 <div className="clay-card p-4">
-                  {/* Move to Stage - inside Actions */}
-                  {!workOrder.is_rider && onMove && (
-                    <>
-                      <h3 className="font-semibold text-sm mb-2">Move to Stage</h3>
-                      <div className="grid grid-cols-2 gap-1.5 mb-4">
-                        {Object.keys(stageDisplayNames).map((stage) =>
-                          <Button
-                            key={stage}
-                            className="clay-button text-xs justify-start"
-                            variant="ghost"
-                            size="sm"
-                            disabled={workOrder.current_stage === stage}
-                            onClick={() => {onMove(workOrder, stage);onClose();}}
-                            style={{
-                              background: workOrder.current_stage === stage ?
-                              `linear-gradient(135deg, ${stageColors[stage]} 0%, rgba(255,255,255,0.9) 100%)` :
-                              undefined,
-                              opacity: workOrder.current_stage === stage ? 0.5 : 1
-                            }}>
-                            <ArrowRight className="w-3 h-3 mr-1" />
-                            {stageDisplayNames[stage]}
-                          </Button>
-                        )}
-                      </div>
-                    </>
-                  )}
-
                   <h3 className="font-semibold text-sm mb-2">Actions</h3>
                   <div className="space-y-2">
                     {!workOrder.is_rider && (
@@ -1554,7 +1527,20 @@ export default function WorkOrderDetailsDialog({
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
-                      onClick={() => setShowDuplicateConfirm(true)}>
+                      onClick={() => {
+                        // Copy all fields from current work order for duplicating
+                        const { id, created_date, updated_date, created_by, notes, work_notes, follow_up, ...dataWithoutId } = workOrder;
+                        setDuplicateData({
+                          ...dataWithoutId,
+                          title: "", // Clear title so user must enter new one
+                          description: "", // Clear description
+                          notes: [],
+                          work_notes: [],
+                          follow_up: [],
+                          current_stage: "estimating"
+                        });
+                        setShowDuplicateForm(true);
+                      }}>
                       <Copy className="w-4 h-4 mr-2 text-blue-600" />
                       Duplicate Client
                     </Button>
@@ -1685,186 +1671,22 @@ export default function WorkOrderDetailsDialog({
         }}
       />
 
-      {/* Duplicate Confirmation Dialog */}
-      <AlertDialog open={showDuplicateConfirm} onOpenChange={setShowDuplicateConfirm}>
-        <AlertDialogContent className="clay-card border-none">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Duplicate Client?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will create a new work order with the basic client information from "{workOrder.client_name}". 
-              You can then apply a different project to this client.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                setDuplicateData({
-                  title: "",
-                  client_name: workOrder.client_name,
-                  contact_name: workOrder.contact_name || "",
-                  contact_email: workOrder.contact_email || "",
-                  contact_phone: workOrder.contact_phone || "",
-                  representative: workOrder.representative || "",
-                  additional_contact: workOrder.additional_contact || "",
-                  install_location: workOrder.install_location || "",
-                  address_line_2: workOrder.address_line_2 || "",
-                  billing_address: workOrder.billing_address || "",
-                  billing_address_line_2: workOrder.billing_address_line_2 || "",
-                  township_city: workOrder.township_city || "",
-                  county: workOrder.county || "",
-                  current_stage: "estimating"
-                });
-                setShowDuplicateConfirm(false);
-                setShowDuplicateForm(true);
-              }} 
-              className="bg-blue-600 text-white hover:bg-blue-700">
-              Yes, Duplicate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Duplicate Form Dialog */}
-      <Dialog open={showDuplicateForm} onOpenChange={setShowDuplicateForm}>
-        <DialogContent className="clay-card border-none max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Copy className="w-5 h-5 text-blue-600" />
-              New Work Order (Duplicated Client)
-            </DialogTitle>
-          </DialogHeader>
-          
-          {duplicateData && (
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-              <div>
-                <Label className="text-sm font-medium">Project Title *</Label>
-                <Input
-                  value={duplicateData.title}
-                  onChange={(e) => setDuplicateData({ ...duplicateData, title: e.target.value })}
-                  placeholder="Enter new project title..."
-                  className="mt-1"
-                  autoFocus
-                />
-              </div>
-
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium text-gray-700 mb-3">Client Information (copied)</p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Client Name</Label>
-                    <Input
-                      value={duplicateData.client_name}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, client_name: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Contact Name</Label>
-                    <Input
-                      value={duplicateData.contact_name}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, contact_name: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Contact Email</Label>
-                    <Input
-                      value={duplicateData.contact_email}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, contact_email: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Contact Phone</Label>
-                    <Input
-                      value={duplicateData.contact_phone}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, contact_phone: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Representative</Label>
-                    <Input
-                      value={duplicateData.representative}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, representative: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Additional Contact</Label>
-                    <Input
-                      value={duplicateData.additional_contact}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, additional_contact: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <Label className="text-xs text-gray-500">Install Location</Label>
-                  <Input
-                    value={duplicateData.install_location}
-                    onChange={(e) => setDuplicateData({ ...duplicateData, install_location: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-                <div className="mt-2">
-                  <Label className="text-xs text-gray-500">Address Line 2</Label>
-                  <Input
-                    value={duplicateData.address_line_2}
-                    onChange={(e) => setDuplicateData({ ...duplicateData, address_line_2: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <div>
-                    <Label className="text-xs text-gray-500">Township/City</Label>
-                    <Input
-                      value={duplicateData.township_city}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, township_city: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">County</Label>
-                    <Input
-                      value={duplicateData.county}
-                      onChange={(e) => setDuplicateData({ ...duplicateData, county: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setShowDuplicateForm(false)} className="flex-1">
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={async () => {
-                    if (!duplicateData.title.trim()) {
-                      alert("Please enter a project title");
-                      return;
-                    }
-                    await WorkOrder.create(duplicateData);
-                    setShowDuplicateForm(false);
-                    setDuplicateData(null);
-                    if (onUpdate) onUpdate();
-                    onClose();
-                  }} 
-                  className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700"
-                  disabled={!duplicateData.title.trim()}
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Work Order
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Duplicate Client - Full Form */}
+      {showDuplicateForm && (
+        <WorkOrderForm
+          key={workOrder.id + '-duplicate'}
+          isOpen={showDuplicateForm}
+          onClose={() => { setShowDuplicateForm(false); setDuplicateData(null); }}
+          onSave={async (data) => {
+            await WorkOrder.create(data);
+            setShowDuplicateForm(false);
+            setDuplicateData(null);
+            if (onUpdate) onUpdate();
+          }}
+          initialData={duplicateData}
+          existingWorkOrders={allWorkOrders}
+        />
+      )}
 
       {/* Google Drive File Browser */}
       <GoogleDriveFileBrowser
