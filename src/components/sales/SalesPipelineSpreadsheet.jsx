@@ -2363,6 +2363,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       {showForm && (
         <WorkOrderForm
+          key={duplicateData?.id || 'new'}
           isOpen={showForm}
           onClose={() => { setShowForm(false); setDuplicateData(null); }}
           onSave={handleSaveNew}
