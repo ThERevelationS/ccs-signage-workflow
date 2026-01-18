@@ -185,7 +185,34 @@ export default function WorkOrderForm({
     return defaultData;
   };
   
-  const [formData, setFormData] = useState(getInitialFormData);
+  const [formData, setFormData] = useState(getInitialFormData());
+  
+  // Reset form when dialog opens with new initialData (for duplicating)
+  useEffect(() => {
+    if (isOpen && initialData && !workOrder) {
+      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      let notes = dataWithoutId.notes || [];
+      if (typeof notes === 'string' && notes.trim()) {
+        notes = [{
+          text: notes,
+          timestamp: new Date().toISOString(),
+          created_by: "Duplicated"
+        }];
+      }
+      setFormData({
+        ...getInitialFormData(),
+        ...dataWithoutId,
+        notes: notes,
+        follow_up: dataWithoutId.follow_up || [],
+        start_date: todayDate
+      });
+      
+      if (dataWithoutId.assigned_to && !TEAM_MEMBERS.includes(dataWithoutId.assigned_to)) {
+        setShowCustomInput(true);
+        setCustomName(dataWithoutId.assigned_to);
+      }
+    }
+  }, [isOpen, initialData]);
 
   useEffect(() => {
     loadUsers();
