@@ -223,8 +223,8 @@ export default function UserManagement() {
       let emailSent = false;
       let emailErrorMsg = "";
       try {
-        // Build the unique registration link
-        const appUrl = window.location.origin;
+        // Build the unique registration link - always use production URL
+        const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
         const registrationLink = `${appUrl}/NewUserSetup?token=${onboardingToken}`;
         
         // Generate personalized email using AI
