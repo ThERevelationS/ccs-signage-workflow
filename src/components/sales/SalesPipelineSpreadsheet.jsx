@@ -15,7 +15,7 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown, Strikethrough } from "lucide-react";
+import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown, Strikethrough, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,6 +57,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
   const [showForm, setShowForm] = useState(false);
+  const [duplicateData, setDuplicateData] = useState(null); // For duplicating a client
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
@@ -251,6 +252,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
     setWorkOrders([newOrder, ...workOrders]);
     setShowForm(false);
+    setDuplicateData(null);
+  };
+
+  const handleDuplicateClient = (wo) => {
+    // Remove id and system fields, keep all other data
+    const { id, created_date, updated_date, created_by, ...dataToClone } = wo;
+    setDuplicateData(dataToClone);
+    setShowForm(true);
   };
 
   const updateWorkOrder = (orderId, field, value, skipHistory = false) => {
@@ -2279,14 +2288,26 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
                 <td className="px-1 py-0.5 text-center">
                   {isRegistered && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteWorkOrder(wo)}
-                      className="h-6 w-6"
-                    >
-                      <Trash2 className="w-3 h-3 text-red-500" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDuplicateClient(wo)}
+                        className="h-6 w-6"
+                        title="Duplicate client"
+                      >
+                        <Copy className="w-3 h-3 text-blue-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteWorkOrder(wo)}
+                        className="h-6 w-6"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3 text-red-500" />
+                      </Button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -2344,8 +2365,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       {showForm && (
         <WorkOrderForm
           isOpen={showForm}
-          onClose={() => setShowForm(false)}
+          onClose={() => { setShowForm(false); setDuplicateData(null); }}
           onSave={handleSaveNew}
+          initialData={duplicateData}
+          existingWorkOrders={workOrders}
         />
       )}
 
