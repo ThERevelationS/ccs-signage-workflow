@@ -190,6 +190,13 @@ export default function WorkOrderForm({
   useEffect(() => {
     loadUsers();
     loadAuthorizedUsers();
+    
+    // Handle custom name for initialData (duplicating)
+    if (initialData && initialData.assigned_to && !TEAM_MEMBERS.includes(initialData.assigned_to)) {
+      setShowCustomInput(true);
+      setCustomName(initialData.assigned_to);
+    }
+    
     if (workOrder) {
       let notes = workOrder.notes || [];
       if (typeof notes === 'string' && notes.trim()) {
