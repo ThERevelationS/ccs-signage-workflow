@@ -203,20 +203,31 @@ export default function UserManagement() {
       
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
       
-      // Add to authorized emails list
+      // Generate a unique onboarding token
+      const onboardingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7); // Token valid for 7 days
+      
+      // Add to authorized emails list with onboarding token
       await base44.entities.AuthorizedEmail.create({
         email,
         full_name: fullName || null,
         role: inviteRole,
-        sales_roles: ["Task Assigned"]
+        sales_roles: ["Task Assigned"],
+        onboarding_token: onboardingToken,
+        onboarding_expires: expires.toISOString(),
+        onboarding_complete: false
       });
 
       // Send invitation email via Gmail
       let emailSent = false;
       let emailErrorMsg = "";
       try {
+        // Build the unique registration link
+        const appUrl = window.location.origin;
+        const registrationLink = `${appUrl}/NewUserSetup?token=${onboardingToken}`;
+        
         // Generate personalized email using AI
-        const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
         const aiEmail = await base44.integrations.Core.InvokeLLM({
           prompt: `Create a beautifully designed HTML invitation email for someone joining a sign shop workflow management tool called "Sign Shop Workflow".
 
@@ -224,19 +235,22 @@ Details:
 - Recipient name: ${fullName ? fullName.split(' ')[0] : 'there'}
 - Their email: ${email}
 - Role: ${inviteRole === 'admin' ? 'Admin' : 'Team Member'}
-- App link: ${appUrl}
+- Registration link (MUST USE THIS EXACT LINK): ${registrationLink}
 
 Design requirements:
 1. Use a WHITE background for the main email body - this ensures compatibility with dark mode email clients
 2. Include a stylish header with the app name "Sign Shop Workflow" 
 3. Use a card-style container with WHITE background, rounded corners and subtle shadow
 4. Add a prominent CTA button with SOLID bright purple background (#7C3AED) and WHITE text - NOT transparent or gradient
-5. The button must have: background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;
-6. Use DARK text colors (#1F2937 or #374151) on WHITE backgrounds for maximum readability
-7. DO NOT include any emojis in the subject line or body - use plain text only
-8. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
-9. Use inline CSS styles for email compatibility
-10. CRITICAL: All text must be dark on light backgrounds, button text must be white on purple
+5. The button must link to the EXACT registration link provided above
+6. The button must have: background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;
+7. Use DARK text colors (#1F2937 or #374151) on WHITE backgrounds for maximum readability
+8. DO NOT include any emojis in the subject line or body - use plain text only
+9. Keep the message brief, friendly, and welcoming - 2-3 short paragraphs max
+10. Use inline CSS styles for email compatibility
+11. CRITICAL: All text must be dark on light backgrounds, button text must be white on purple
+12. Mention that they need to complete their registration by clicking the button
+13. The link expires in 7 days
 
 The tone should be excited and welcoming. Make them feel special!
 
