@@ -16,7 +16,17 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
@@ -44,7 +54,9 @@ export default function WorkOrderForm({
   workOrder = null,
   isRider = false,
   parentWorkOrder = null,
-  lockedStage = null
+  lockedStage = null,
+  initialData = null, // For duplicating - prefill form with this data
+  existingWorkOrders = [] // For duplicate detection
 }) {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
@@ -61,6 +73,7 @@ export default function WorkOrderForm({
   const [newFollowUpText, setNewFollowUpText] = useState("");
   const [showCompletedFollowUp, setShowCompletedFollowUp] = useState(false);
   const [scanningForm, setScanningForm] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
@@ -174,6 +187,29 @@ export default function WorkOrderForm({
         setShowCustomInput(true);
         setCustomName(workOrder.assigned_to);
       }
+    } else if (initialData) {
+      // Duplicating - prefill with initial data but clear id and dates
+      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      let notes = dataWithoutId.notes || [];
+      if (typeof notes === 'string' && notes.trim()) {
+        notes = [{
+          text: notes,
+          timestamp: new Date().toISOString(),
+          created_by: currentUser?.email || "Unknown"
+        }];
+      }
+      setFormData({
+        ...formData,
+        ...dataWithoutId,
+        notes: notes,
+        follow_up: dataWithoutId.follow_up || [],
+        start_date: todayDate
+      });
+      
+      if (dataWithoutId.assigned_to && !TEAM_MEMBERS.includes(dataWithoutId.assigned_to)) {
+        setShowCustomInput(true);
+        setCustomName(dataWithoutId.assigned_to);
+      }
     } else if (isRider && parentWorkOrder) {
       setFormData({
         ...formData,
@@ -192,7 +228,7 @@ export default function WorkOrderForm({
         rider_stage: lockedStage || "permitting"
       });
     }
-  }, [workOrder, isRider, parentWorkOrder, lockedStage]);
+  }, [workOrder, isRider, parentWorkOrder, lockedStage, initialData]);
 
   const loadUsers = async () => {
     try {
@@ -536,8 +572,37 @@ export default function WorkOrderForm({
     setScanningForm(false);
   };
 
+  // Check for duplicates
+  const checkForDuplicate = () => {
+    const clientName = (formData.client_name || "").toLowerCase().trim();
+    const description = (formData.description || "").toLowerCase().trim();
+    
+    if (!clientName) return null;
+    
+    // Find matching work orders (excluding the current one if editing)
+    const matches = existingWorkOrders.filter(wo => {
+      if (workOrder && wo.id === workOrder.id) return false; // Skip self when editing
+      
+      const woClientName = (wo.client_name || "").toLowerCase().trim();
+      const woDescription = (wo.description || "").toLowerCase().trim();
+      
+      // Both must match for it to be a duplicate
+      return clientName === woClientName && description === woDescription;
+    });
+    
+    return matches.length > 0 ? matches[0] : null;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check for duplicates before saving
+    const duplicate = checkForDuplicate();
+    if (duplicate) {
+      setDuplicateWarning(duplicate);
+      return;
+    }
+    
     const submitData = isRider && !workOrder 
       ? { ...formData, rider_stage: formData.current_stage }
       : formData;
@@ -1300,6 +1365,38 @@ export default function WorkOrderForm({
           </div>
         </form>
       </DialogContent>
+
+      {/* Duplicate Warning Dialog */}
+      <AlertDialog open={!!duplicateWarning} onOpenChange={() => setDuplicateWarning(null)}>
+        <AlertDialogContent className="clay-card border-none max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+              <X className="w-5 h-5" />
+              Duplicate Client Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>A client with the same name and description already exists:</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+                  <p className="font-medium text-gray-900">Customer: {duplicateWarning?.client_name}</p>
+                  <p className="text-sm text-gray-600">Description: {duplicateWarning?.description || "(no description)"}</p>
+                  {duplicateWarning?.title && (
+                    <p className="text-sm text-gray-600">Title: {duplicateWarning?.title}</p>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700">
+                  Please change the <strong>Customer Name</strong> or <strong>Description</strong> to make this client unique.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">
+              Go Back and Edit
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
