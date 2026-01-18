@@ -77,88 +77,115 @@ export default function WorkOrderForm({
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
-  const [formData, setFormData] = useState({
-    // Basic work order fields
-    title: "",
-    client_name: "",
-    description: "",
-    image_url: "",
-    current_stage: "estimating",
-    assigned_to: "",
-    notes: [],
-    due_date: "",
-    start_date: todayDate,
-    is_rider: isRider,
-    parent_work_order_id: parentWorkOrder?.id || null,
-    rider_stage: null,
-    
-    // Customer Information fields from PDF
-    designer: "",
-    surveyor: "",
-    site_survey_date: "",
-    site_survey_time: "",
-    site_survey_am_pm: "",
-    representative: "",
-    contact_phone: "",
-    contact_email: "",
-    install_location: "",
-    address_line_2: "",
-    billing_address: "",
-    billing_address_line_2: "",
-    additional_contact: "",
-    
-    // Permitting
-    permitting: "",
-    township_city: "",
-    county: "",
-    permit_code: "",
-    permit_class: "",
-    property_owner: "",
-    pud: "",
-    parcel_number: "",
-    electrical_ibi: false,
-    electrical_nkyei: false,
-    electrical_nec: false,
-    electrical_city: false,
-    electrical_county: false,
-    
-    // Customer type
-    customer_is_building_owner: false,
-    customer_is_tenant: false,
-    customer_is_marketing_co: false,
-    business_co_coo_reminder: false,
-    business_co_coo_date: "",
-    
-    // Service details
-    install_yes: false,
-    install_no: false,
-    budget_less_than: "",
-    removal_yes: false,
-    removal_no: false,
-    service_repair: "",
-    origination: "",
-    patch: "",
-    paint: "",
-    color: "",
-    
-    // Products
-    product_1: "",
-    product_2: "",
-    product_3: "",
-    product_4: "",
-    product_5: "",
-    product_6: "",
-    cb_complete: false,
-    cf_complete: false,
-    cc_complete: false,
-    sms_complete: false,
-    
-    // Follow up
-    follow_up: [],
+  // Initialize form data - if initialData is provided, use it for prefilling
+  const getInitialFormData = () => {
+    const defaultData = {
+      // Basic work order fields
+      title: "",
+      client_name: "",
+      description: "",
+      image_url: "",
+      current_stage: "estimating",
+      assigned_to: "",
+      notes: [],
+      due_date: "",
+      start_date: todayDate,
+      is_rider: isRider,
+      parent_work_order_id: parentWorkOrder?.id || null,
+      rider_stage: null,
+      
+      // Customer Information fields from PDF
+      designer: "",
+      surveyor: "",
+      site_survey_date: "",
+      site_survey_time: "",
+      site_survey_am_pm: "",
+      representative: "",
+      contact_phone: "",
+      contact_email: "",
+      install_location: "",
+      address_line_2: "",
+      billing_address: "",
+      billing_address_line_2: "",
+      additional_contact: "",
+      
+      // Permitting
+      permitting: "",
+      township_city: "",
+      county: "",
+      permit_code: "",
+      permit_class: "",
+      property_owner: "",
+      pud: "",
+      parcel_number: "",
+      electrical_ibi: false,
+      electrical_nkyei: false,
+      electrical_nec: false,
+      electrical_city: false,
+      electrical_county: false,
+      
+      // Customer type
+      customer_is_building_owner: false,
+      customer_is_tenant: false,
+      customer_is_marketing_co: false,
+      business_co_coo_reminder: false,
+      business_co_coo_date: "",
+      
+      // Service details
+      install_yes: false,
+      install_no: false,
+      budget_less_than: "",
+      removal_yes: false,
+      removal_no: false,
+      service_repair: "",
+      origination: "",
+      patch: "",
+      paint: "",
+      color: "",
+      
+      // Products
+      product_1: "",
+      product_2: "",
+      product_3: "",
+      product_4: "",
+      product_5: "",
+      product_6: "",
+      cb_complete: false,
+      cf_complete: false,
+      cc_complete: false,
+      sms_complete: false,
+      
+      // Follow up
+      follow_up: [],
 
-    // Sales rep
-    sales_rep: ""
-    });
+      // Sales rep
+      sales_rep: ""
+    };
+    
+    // If initialData provided (for duplicating), merge it
+    if (initialData) {
+      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
+      let notes = dataWithoutId.notes || [];
+      if (typeof notes === 'string' && notes.trim()) {
+        notes = [{
+          text: notes,
+          timestamp: new Date().toISOString(),
+          created_by: "Duplicated"
+        }];
+      }
+      return {
+        ...defaultData,
+        ...dataWithoutId,
+        notes: notes,
+        follow_up: dataWithoutId.follow_up || [],
+        start_date: todayDate
+      };
+    }
+    
+    return defaultData;
+  };
+  
+  const [formData, setFormData] = useState(getInitialFormData);
 
   useEffect(() => {
     loadUsers();
