@@ -214,29 +214,6 @@ export default function WorkOrderForm({
         setShowCustomInput(true);
         setCustomName(workOrder.assigned_to);
       }
-    } else if (initialData) {
-      // Duplicating - prefill with initial data but clear id and dates
-      const { id, created_date, updated_date, created_by, ...dataWithoutId } = initialData;
-      let notes = dataWithoutId.notes || [];
-      if (typeof notes === 'string' && notes.trim()) {
-        notes = [{
-          text: notes,
-          timestamp: new Date().toISOString(),
-          created_by: currentUser?.email || "Unknown"
-        }];
-      }
-      setFormData({
-        ...formData,
-        ...dataWithoutId,
-        notes: notes,
-        follow_up: dataWithoutId.follow_up || [],
-        start_date: todayDate
-      });
-      
-      if (dataWithoutId.assigned_to && !TEAM_MEMBERS.includes(dataWithoutId.assigned_to)) {
-        setShowCustomInput(true);
-        setCustomName(dataWithoutId.assigned_to);
-      }
     } else if (isRider && parentWorkOrder) {
       setFormData({
         ...formData,
