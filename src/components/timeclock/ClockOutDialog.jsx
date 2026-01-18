@@ -48,7 +48,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
 
   // Calculate total allocated minutes
   const totalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
-  const remainingMinutes = workableMinutes - lunchMins - totalAllocatedMinutes;
+  // workableMinutes already has lunch subtracted, so don't subtract again
+  const remainingMinutes = workableMinutes - totalAllocatedMinutes;
 
   useEffect(() => {
     const totalMins = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
@@ -140,8 +141,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
     }
 
     // Validate total minutes match (allow 5 min tolerance)
-    const actualWorkableMinutes = workableMinutes - lunchMins;
-    const diff = Math.abs(totalAllocatedMinutes - actualWorkableMinutes);
+    // workableMinutes already has lunch subtracted
+    const diff = Math.abs(totalAllocatedMinutes - workableMinutes);
     if (diff > 5) {
       setError(`All time must be allocated. You have ${formatDuration(remainingMinutes)} remaining.`);
       return;
@@ -368,7 +369,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                             const currentMins = job.minutes ? job.minutes % 60 : 0;
                             let totalMins = hrs * 60 + currentMins;
                             const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
-                            const maxAllowed = Math.max(0, workableMinutes - lunchMins - otherAllocations);
+                            // workableMinutes already has lunch subtracted
+                            const maxAllowed = Math.max(0, workableMinutes - otherAllocations);
                             if (totalMins > maxAllowed) totalMins = maxAllowed;
                             const updated = [...jobAllocations];
                             updated[index] = { ...updated[index], minutes: totalMins, hours: totalMins / 60 };
@@ -391,7 +393,8 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
                             const currentHrs = job.minutes ? Math.floor(job.minutes / 60) : 0;
                             let totalMins = currentHrs * 60 + mins;
                             const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
-                            const maxAllowed = Math.max(0, workableMinutes - lunchMins - otherAllocations);
+                            // workableMinutes already has lunch subtracted
+                            const maxAllowed = Math.max(0, workableMinutes - otherAllocations);
                             if (totalMins > maxAllowed) totalMins = maxAllowed;
                             const updated = [...jobAllocations];
                             updated[index] = { ...updated[index], minutes: totalMins, hours: totalMins / 60 };
@@ -413,19 +416,19 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
             {jobAllocations.length > 0 && (
               <div className="mt-4 pt-3 border-t">
                 <div className="flex justify-between text-sm">
-                  <span>Workable Time:</span>
-                  <span className="font-bold">{formatDuration(workableMinutes - lunchMins)}</span>
+                  <span>Workable Time (after lunch):</span>
+                  <span className="font-bold">{formatDuration(workableMinutes)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Total Allocated:</span>
-                  <span className={`font-bold ${Math.abs(remainingMinutes) < 5 ? 'text-green-600' : 'text-orange-600'}`}>
+                  <span className={`font-bold ${Math.abs(remainingMinutes) <= 5 ? 'text-green-600' : 'text-orange-600'}`}>
                     {formatDuration(totalAllocatedMinutes)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Remaining:</span>
                   <span className={`font-bold ${remainingMinutes < 0 ? 'text-red-600' : remainingMinutes > 5 ? 'text-orange-600' : 'text-green-600'}`}>
-                    {formatDuration(remainingMinutes)}
+                    {formatDuration(Math.abs(remainingMinutes))}{remainingMinutes < 0 ? ' over' : ''}
                   </span>
                 </div>
               </div>

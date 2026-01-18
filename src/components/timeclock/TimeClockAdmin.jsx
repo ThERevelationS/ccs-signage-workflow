@@ -415,7 +415,7 @@ export default function TimeClockAdmin() {
                               <span className="truncate max-w-[100px]">
                                 {job.is_inhouse ? job.inhouse_task : job.client_name}
                               </span>
-                              <span className="text-gray-500">{job.hours}h</span>
+                              <span className="text-gray-500">{(job.hours || (job.minutes ? job.minutes / 60 : 0)).toFixed(2)}h</span>
                             </div>
                           ))}
                           {entry.job_allocations.length > 2 && (
