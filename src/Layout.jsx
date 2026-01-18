@@ -17,8 +17,7 @@ import {
   User,
   Lightbulb,
   ClipboardList,
-  Moon,
-  Sun,
+
   Menu,
   X,
   ChevronDown,
@@ -463,7 +462,7 @@ function LayoutContent({ children }) {
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
-  const { currentUser, isRegistered, logout, getUserFirstName, darkMode, toggleDarkMode } = useAuth();
+  const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
   
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
@@ -576,7 +575,7 @@ function LayoutContent({ children }) {
         }
       `}</style>
       
-      <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'} ${darkMode ? 'dark-mode' : ''}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
@@ -590,21 +589,25 @@ function LayoutContent({ children }) {
           <nav 
             className="side-nav fixed top-0 left-0 bottom-0 z-50 w-56 flex flex-col"
             style={{ 
-              background: darkMode ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(22, 33, 62, 0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
               backdropFilter: 'blur(10px)',
               boxShadow: '4px 0 20px rgba(0,0,0,0.08)',
             }}
           >
             <div className="p-3">
-              {/* Logo */}
+              {/* Logo with nav toggle */}
               <div className="clay-card px-3 py-2 flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" 
+                <button
+                  onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:opacity-80 transition-opacity"
                   style={{ 
                     background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
                     boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
-                  }}>
-                  <Home className="w-4 h-4 text-purple-700" />
-                </div>
+                  }}
+                  title="Switch to Top Bar"
+                >
+                  <PanelTop className="w-4 h-4 text-purple-700" />
+                </button>
                 <div>
                   <h2 className="font-bold text-gray-800 text-sm leading-tight">Sign Shop</h2>
                   <p className="text-xs text-gray-500">Workflow</p>
@@ -682,7 +685,7 @@ function LayoutContent({ children }) {
             className={`top-nav fixed top-0 left-0 right-0 z-50 ${isCollapsed ? (isHovered ? 'show' : 'collapsed') : ''}`}
             onMouseLeave={() => isCollapsed && setIsHovered(false)}
             style={{ 
-              background: darkMode ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(22, 33, 62, 0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
               backdropFilter: 'blur(10px)',
               boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
               minHeight: 'auto'
@@ -690,15 +693,19 @@ function LayoutContent({ children }) {
           >
             <div className="px-4 py-2">
               <div className="flex items-center justify-between">
-                {/* Logo */}
+                {/* Logo with nav toggle */}
                 <div className="clay-card px-3 py-2 flex items-center gap-2 sm:gap-3 sm:px-4">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center" 
+                  <button
+                    onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center hover:opacity-80 transition-opacity"
                     style={{ 
                       background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
                       boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
-                    }}>
-                    <Home className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700" />
-                  </div>
+                    }}
+                    title="Switch to Sidebar"
+                  >
+                    <PanelLeft className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700" />
+                  </button>
                   <div className="hidden sm:block">
                     <h2 className="font-bold text-gray-800 text-lg leading-tight">Sign Shop</h2>
                     <p className="text-xs text-gray-500">Workflow Manager</p>
@@ -758,7 +765,7 @@ function LayoutContent({ children }) {
                     </button>
                     
                     {meetingsDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 py-1 rounded-lg border border-gray-200 shadow-lg z-50 min-w-[160px]" style={{ background: darkMode ? '#1e293b' : 'white' }}>
+                      <div className="absolute top-full left-0 mt-1 py-1 rounded-lg border border-gray-200 shadow-lg z-50 min-w-[160px]" style={{ background: 'white' }}>
                         {meetingsDropdownItems.map((item) => {
                           const isActive = location.pathname === item.url;
                           return (
@@ -854,29 +861,6 @@ function LayoutContent({ children }) {
               title="Toggle Fullscreen"
             >
               <Maximize2 className="w-3 h-3" />
-            </button>
-            {/* Nav Layout Toggle */}
-            <button
-              onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-              className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-              style={{ 
-                background: 'rgba(191, 219, 254, 0.8)',
-                color: '#1e40af'
-              }}
-              title={navLayout === "top" ? "Switch to Sidebar" : "Switch to Top Bar"}
-            >
-              {navLayout === "top" ? <PanelLeft className="w-3 h-3" /> : <PanelTop className="w-3 h-3" />}
-            </button>
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-              style={{ 
-                background: 'rgba(191, 219, 254, 0.8)',
-                color: '#1e40af'
-              }}
-            >
-              {darkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
             </button>
             {isRegistered && (
               <Link
