@@ -713,9 +713,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           }
         }
         
-        // Skip empty rows - title is the Notes column
-        const title = row["Notes"] ?? row["title"] ?? "";
-        if (!customer && !title) {
+        // Skip empty rows
+        if (!customer) {
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
           continue;
         }
@@ -922,6 +921,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           title: customer || "Unnamed",
           client_name: customer,
           description: jobDescStr,
+          // Notes from Excel go into work_notes, NOT into title/description
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
           current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
