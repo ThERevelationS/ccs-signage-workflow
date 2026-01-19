@@ -13,7 +13,10 @@ import * as faceapi from "face-api.js";
 
 const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
 
-export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture }) {
+export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
+  // Support both old and new prop names
+  const isEnrollMode = isEnrollment || mode === "enroll";
+  const handleEnrollCapture = onEnrollCapture || onFaceDetected;
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -181,7 +184,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       setScanStatus(`Captured ${newDescriptors.length}/3. ${newDescriptors.length < 3 ? "Move slightly and capture again." : "Ready to save!"}`);
       
       if (newDescriptors.length >= 3) {
-        onEnrollCapture?.(newDescriptors);
+        handleEnrollCapture?.(newDescriptors);
       }
     } else {
       setScanStatus("No face detected. Look directly at camera with good lighting.");
@@ -257,7 +260,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       </p>
 
       {/* Controls */}
-      {isEnrollment ? (
+      {isEnrollMode ? (
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-2">
             {[1, 2, 3].map(i => (
@@ -283,6 +286,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           <p className="text-xs text-gray-500 text-center max-w-xs">
             Capture 3 samples. Move your head slightly between captures.
           </p>
+          {onCancel && (
+            <Button variant="outline" onClick={onCancel} className="mt-2">
+              Cancel
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex gap-3">

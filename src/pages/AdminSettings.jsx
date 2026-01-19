@@ -53,9 +53,7 @@ import {
   ArrowUpDown,
   SortAsc,
   Clock,
-  Activity,
-  Maximize2,
-  Minimize2
+  Activity
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
@@ -181,15 +179,6 @@ export default function AdminSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sortBy, setSortBy] = useState("name"); // "name", "trigger", "action", "enabled"
   const [sortDirection, setSortDirection] = useState("asc");
-  const [isFullScreen, setIsFullScreen] = useState(false);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -649,23 +638,6 @@ export default function AdminSettings() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <Button
-            onClick={() => {
-              if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-              } else {
-                document.exitFullscreen();
-              }
-            }}
-            size="sm"
-            className="clay-button border-none text-gray-800 h-8 px-3"
-            style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
-          >
-            {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </Button>
-        </div>
-
         <Tabs defaultValue="automations" className="space-y-6">
           <TabsList className="clay-card border-none p-2 w-full flex-wrap" style={{ background: '#FEE2E2' }}>
             <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
