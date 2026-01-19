@@ -209,16 +209,6 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
           </Select>
         </div>
 
-        <div>
-          <Label>Nationality</Label>
-          <Input
-            value={hrData.nationality || ""}
-            onChange={(e) => updateField("nationality", e.target.value)}
-            placeholder="Nationality"
-            className="mt-1"
-          />
-        </div>
-
         {isAdmin && (
           <>
             <div>
@@ -360,7 +350,17 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
           <Input
             value={(hrData.certifications || []).join(", ")}
             onChange={(e) => updateField("certifications", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
-            placeholder="e.g., OSHA, CDL, Forklift"
+            placeholder="e.g., CDL, Forklift, Crane Operator"
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label>OSHA Training (comma separated)</Label>
+          <Input
+            value={(hrData.osha_training || []).join(", ")}
+            onChange={(e) => updateField("osha_training", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+            placeholder="e.g., OSHA 10, OSHA 30, Fall Protection"
             className="mt-1"
           />
         </div>
@@ -438,33 +438,6 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
             placeholder="e.g., 32"
             className="mt-1"
           />
-        </div>
-
-        <div>
-          <Label>Pants Length (Inseam)</Label>
-          <Input
-            value={hrData.clothing_sizes?.pants_length || ""}
-            onChange={(e) => updateClothingSize("pants_length", e.target.value)}
-            placeholder="e.g., 32"
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label>Hat Size</Label>
-          <Select
-            value={hrData.clothing_sizes?.hat || ""}
-            onValueChange={(val) => updateClothingSize("hat", val)}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {HAT_SIZES.map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div>

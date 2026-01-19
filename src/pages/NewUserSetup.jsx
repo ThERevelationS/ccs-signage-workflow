@@ -24,6 +24,7 @@ export default function NewUserSetup() {
   const [step, setStep] = useState(1); // 1: verify, 2: credentials, 3: face, 4: hr data, 5: complete
   
   // Form state
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -81,6 +82,9 @@ export default function NewUserSetup() {
       }
       
       setUser(foundUser);
+      // Pre-fill name
+      setFullName(foundUser.full_name || "");
+      
       // Pre-fill username if user already has one, otherwise suggest from name
       if (foundUser.username) {
         setUsername(foundUser.username);
@@ -106,6 +110,11 @@ export default function NewUserSetup() {
 
   const handleCredentialsSubmit = async () => {
     setFormError("");
+    
+    if (!fullName.trim()) {
+      setFormError("Please enter your full name");
+      return;
+    }
     
     if (!username.trim()) {
       setFormError("Please enter a username");
@@ -159,6 +168,7 @@ export default function NewUserSetup() {
     try {
       // Update user with credentials and face data
       await base44.entities.AuthorizedEmail.update(user.id, {
+        full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
         password_hash: password,
         face_descriptors: faceDescriptors.length > 0 ? faceDescriptors : undefined
@@ -307,6 +317,22 @@ export default function NewUserSetup() {
 
         {step === 2 && (
           <div className="space-y-4">
+            <div>
+              <Label className="flex items-center gap-2">
+                <User className="w-4 h-4 text-gray-500" />
+                Full Name
+              </Label>
+              <Input
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setFormError("");
+                }}
+                className="mt-1"
+              />
+            </div>
+
             <div>
               <Label className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />

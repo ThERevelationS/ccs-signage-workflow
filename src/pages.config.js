@@ -16,11 +16,11 @@ import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
 import ResetPassword from './pages/ResetPassword';
+import ResourcePlanning from './pages/ResourcePlanning';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
-import ResourcePlanning from './pages/ResourcePlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -43,11 +43,11 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
     "ResetPassword": ResetPassword,
+    "ResourcePlanning": ResourcePlanning,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
-    "ResourcePlanning": ResourcePlanning,
 }
 
 export const pagesConfig = {
