@@ -68,6 +68,7 @@ import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
 import ClientInfoSection from "./ClientInfoSection";
 import CreateRiderDialog from "./CreateRiderDialog";
 import WorkOrderForm from "./WorkOrderForm";
+import WorkOrderFiles from "./WorkOrderFiles";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -1446,6 +1447,9 @@ export default function WorkOrderDetailsDialog({
                     </Button>
                   </PopoverContent>
                 </Popover>
+
+                {/* Uploaded Files */}
+                <WorkOrderFiles workOrder={workOrder} onUpdate={onUpdate} />
 
                 {/* Google Drive - Compact */}
                 <div className="clay-card p-3">
