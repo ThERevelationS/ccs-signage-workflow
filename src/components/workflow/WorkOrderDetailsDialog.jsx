@@ -70,6 +70,9 @@ import CreateRiderDialog from "./CreateRiderDialog";
 import WorkOrderForm from "./WorkOrderForm";
 import WorkOrderFiles from "./WorkOrderFiles";
 import { useAuth } from "@/components/auth/EmailGate";
+import ProjectHealthBadge, { calculateProjectHealth } from "./ProjectHealthBadge";
+import TaskDependencyManager from "./TaskDependencyManager";
+import MilestoneManager from "./MilestoneManager";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -273,12 +276,16 @@ export default function WorkOrderDetailsDialog({
   const handleAddTask = async () => {
     if (!newTaskText.trim()) return;
     const newTask = {
+      id: Date.now().toString(),
       text: newTaskText,
       timestamp: new Date().toISOString(),
       created_by: currentUser?.full_name || currentUser?.email || "Unknown",
       assigned_to: newTaskAssignedTo || "",
       completed: false,
-      sub_tasks: []
+      sub_tasks: [],
+      depends_on: [],
+      estimated_hours: 0,
+      is_milestone: false
     };
     const updatedTasks = [...tasks, newTask];
     // Optimistic update - update UI immediately
@@ -715,6 +722,7 @@ export default function WorkOrderDetailsDialog({
                         {workOrder.asap &&
                     <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
                     }
+                        <ProjectHealthBadge workOrder={workOrder} />
                       </>
                   }
                 </div>
@@ -1001,7 +1009,26 @@ export default function WorkOrderDetailsDialog({
                                 <p className="text-xs text-gray-400 mt-1">
                                   {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
                                   {task.assigned_to && <span className="ml-2 text-blue-600">→ {task.assigned_to}</span>}
+                                  {task.estimated_hours > 0 && <span className="ml-2 text-purple-600">({task.estimated_hours}h)</span>}
                                 </p>
+                                {/* Task Dependencies */}
+                                {tasks.length > 1 && (
+                                  <div className="mt-1">
+                                    <TaskDependencyManager
+                                      tasks={tasks}
+                                      currentTaskId={task.id}
+                                      currentTaskIndex={actualIndex}
+                                      onUpdateDependencies={async (newDeps) => {
+                                        const updatedTasks = [...tasks];
+                                        updatedTasks[actualIndex] = { ...updatedTasks[actualIndex], depends_on: newDeps };
+                                        Object.assign(workOrder, { notes: updatedTasks });
+                                        if (onUpdate) onUpdate();
+                                        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+                                      }}
+                                      compact
+                                    />
+                                  </div>
+                                )}
                               </div>
                               {/* Sub-tasks - always show all */}
                               {task.sub_tasks && task.sub_tasks.length > 0 && (
@@ -1379,6 +1406,20 @@ export default function WorkOrderDetailsDialog({
                       {stageDisplayNames[workOrder.current_stage]}
                     </Badge>
                   </div>
+                </div>
+
+                {/* Milestones */}
+                <div className="clay-card p-4">
+                  <MilestoneManager
+                    milestones={workOrder.milestones || []}
+                    tasks={tasks}
+                    onUpdate={async (newMilestones) => {
+                      await WorkOrder.update(workOrder.id, { milestones: newMilestones });
+                      Object.assign(workOrder, { milestones: newMilestones });
+                      if (onUpdate) onUpdate();
+                    }}
+                    compact
+                  />
                 </div>
 
                 {/* Relationships */}
