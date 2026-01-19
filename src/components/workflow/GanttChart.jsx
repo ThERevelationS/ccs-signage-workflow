@@ -1,5 +1,6 @@
 import React from "react";
 import { format, differenceInDays, addDays, startOfWeek } from "date-fns";
+import ProjectHealthBadge from "./ProjectHealthBadge";
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -77,8 +78,11 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                   className="py-1 px-2 rounded-lg cursor-pointer hover:bg-white/50 transition-colors"
                   onClick={() => onWorkOrderClick && onWorkOrderClick(wo)}
                 >
-                  <div className="font-medium text-xs text-gray-800 truncate leading-tight">
-                    {wo.title}
+                  <div className="flex items-center gap-1">
+                    <div className="font-medium text-xs text-gray-800 truncate leading-tight flex-1">
+                      {wo.title}
+                    </div>
+                    <ProjectHealthBadge workOrder={wo} size="sm" showTooltip={false} />
                   </div>
                   <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.client_name}</div>
                 </div>

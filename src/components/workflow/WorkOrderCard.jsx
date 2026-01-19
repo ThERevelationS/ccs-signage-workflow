@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
+import ProjectHealthBadge from "./ProjectHealthBadge";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -795,6 +796,7 @@ export default function WorkOrderCard({
                       RIDER
                     </Badge>
                   }
+                  <ProjectHealthBadge workOrder={workOrder} size="sm" />
                 </div>
               </div>
 
