@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Maximize2, Minimize2, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
@@ -18,7 +18,6 @@ const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production',
 
 export default function MainWorkflow() {
   const [workOrders, setWorkOrders] = useState([]);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState("due_date");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
@@ -27,21 +26,8 @@ export default function MainWorkflow() {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     
-    const handleFullscreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && document.fullscreenElement) {
-        document.exitFullscreen();
-      }
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('keydown', handleKeyDown);
-    
     return () => {
       clearInterval(interval);
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -87,22 +73,8 @@ export default function MainWorkflow() {
     return sorted;
   };
 
-  const toggleFullScreen = () => {
-    if (!isFullScreen) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-    setIsFullScreen(!isFullScreen);
-  };
-
   return (
     <div className="min-h-screen p-4">
-      {isFullScreen && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm z-50 pointer-events-none">
-          To exit press ESC
-        </div>
-      )}
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
           <div className="flex gap-2 items-center">
@@ -119,14 +91,6 @@ export default function MainWorkflow() {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              onClick={toggleFullScreen}
-              size="sm"
-              className="clay-button border-none text-gray-800 h-8 px-3"
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
-            >
-              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </Button>
           </div>
         </div>
         <div className="clay-card p-4">
