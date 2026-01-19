@@ -77,6 +77,7 @@ export default function UserManagement() {
     can_import_export: false
   });
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
+  const [sendingOnboardingEmail, setSendingOnboardingEmail] = useState(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
 
   useEffect(() => {
@@ -164,6 +165,84 @@ export default function UserManagement() {
       alert("Failed to send password reset email");
     }
     setSendingPasswordReset(null);
+  };
+
+  const handleResendOnboarding = async (user) => {
+    if (!user.email) return;
+    
+    setSendingOnboardingEmail(user.id);
+    try {
+      // Generate a fresh onboarding token
+      const onboardingToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7); // Token valid for 7 days
+      
+      // Update user with new token and reset onboarding status
+      await base44.entities.AuthorizedEmail.update(user.id, {
+        onboarding_token: onboardingToken,
+        onboarding_expires: expires.toISOString(),
+        onboarding_complete: false
+      });
+      
+      // Build the unique registration link - always use production URL
+      const appUrl = "https://clay-flow-signage-suite-387da97c.base44.app";
+      const registrationLink = `${appUrl}/NewUserSetup?token=${onboardingToken}`;
+      
+      const fullName = user.full_name || '';
+      
+      // Generate personalized email using AI
+      const aiEmail = await base44.integrations.Core.InvokeLLM({
+        prompt: `Create a beautifully designed HTML invitation email for someone joining a sign shop workflow management tool called "Sign Shop Workflow".
+
+Details:
+- Recipient name: ${fullName ? fullName.split(' ')[0] : 'there'}
+- Their email: ${user.email}
+- Role: ${user.role === 'admin' ? 'Admin' : 'Team Member'}
+- Registration link (MUST USE THIS EXACT LINK): ${registrationLink}
+- This is a RESEND of their registration link
+
+Design requirements:
+1. Use a WHITE background for the main email body - this ensures compatibility with dark mode email clients
+2. Include a stylish header with the app name "Sign Shop Workflow" 
+3. Use a card-style container with WHITE background, rounded corners and subtle shadow
+4. Add a prominent CTA button with SOLID bright purple background (#7C3AED) and WHITE text - NOT transparent or gradient
+5. The button must link to the EXACT registration link provided above
+6. The button must have: background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;
+7. Use DARK text colors (#1F2937 or #374151) on WHITE backgrounds for maximum readability
+8. DO NOT include any emojis in the subject line or body - use plain text only
+9. Keep the message brief, friendly - mention this is a new registration link in case the previous one expired
+10. Use inline CSS styles for email compatibility
+11. CRITICAL: All text must be dark on light backgrounds, button text must be white on purple
+12. Mention that they need to complete their registration by clicking the button
+13. The link expires in 7 days
+14. If they already have information saved, it will be pre-filled for them
+
+The tone should be helpful and welcoming.
+
+Return valid HTML that will render beautifully in ALL email clients including dark mode. NO EMOJIS.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            subject: { type: "string" },
+            body: { type: "string" }
+          },
+          required: ["subject", "body"]
+        }
+      });
+
+      await sendGmail({
+        to: user.email,
+        subject: aiEmail.subject || "Complete Your Sign Shop Workflow Registration",
+        body: aiEmail.body
+      });
+
+      alert(`New registration email sent to ${user.email}`);
+      loadUsers();
+    } catch (err) {
+      console.error("Error sending onboarding email:", err);
+      alert("Failed to send registration email");
+    }
+    setSendingOnboardingEmail(null);
   };
 
   const handleSave = async () => {
@@ -496,6 +575,20 @@ Return valid HTML that will render beautifully in ALL email clients including da
                       <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
                     ) : (
                       <Key className="w-4 h-4 text-purple-600" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleResendOnboarding(user)}
+                    disabled={sendingOnboardingEmail === user.id}
+                    className="h-8 w-8"
+                    title="Resend New User Setup Form"
+                  >
+                    {sendingOnboardingEmail === user.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+                    ) : (
+                      <Send className="w-4 h-4 text-teal-600" />
                     )}
                   </Button>
                   <Button
