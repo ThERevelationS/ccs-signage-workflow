@@ -1,0 +1,415 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format, startOfWeek, endOfWeek, addWeeks, eachDayOfInterval, differenceInDays } from "date-fns";
+import { 
+  Users, 
+  Clock, 
+  AlertTriangle, 
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  BarChart3,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Settings,
+  Save
+} from "lucide-react";
+
+const WorkOrder = base44.entities.WorkOrder;
+const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const UserCapacity = base44.entities.UserCapacity;
+
+export default function ResourcePlanning() {
+  const { currentUser, isRegistered } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [userCapacities, setUserCapacities] = useState([]);
+  const [workOrders, setWorkOrders] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingCapacity, setEditingCapacity] = useState(null);
+  const [capacityForm, setCapacityForm] = useState({ weekly_hours_capacity: 40, daily_hours_capacity: 8 });
+  
+  useEffect(() => {
+    loadData();
+  }, []);
+  
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [usersData, capacitiesData, ordersData] = await Promise.all([
+        AuthorizedEmail.list(),
+        UserCapacity.list(),
+        WorkOrder.filter({ completed: false, deleted: { $ne: true } })
+      ]);
+      setUsers(usersData);
+      setUserCapacities(capacitiesData);
+      setWorkOrders(ordersData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+    setIsLoading(false);
+  };
+  
+  // Calculate allocations for each user
+  const userAllocations = useMemo(() => {
+    const weekEnd = endOfWeek(selectedWeek, { weekStartsOn: 1 });
+    const weekDays = eachDayOfInterval({ start: selectedWeek, end: weekEnd });
+    
+    return users.map(user => {
+      const capacity = userCapacities.find(c => c.user_email === user.email);
+      const weeklyCapacity = capacity?.weekly_hours_capacity || 40;
+      const dailyCapacity = capacity?.daily_hours_capacity || 8;
+      
+      // Find all tasks assigned to this user
+      let totalHours = 0;
+      const assignedTasks = [];
+      
+      workOrders.forEach(wo => {
+        const tasks = wo.notes || [];
+        tasks.forEach(task => {
+          if (task.assigned_to === user.full_name || task.assigned_to === user.email) {
+            if (!task.completed) {
+              const hours = task.estimated_hours || 2;
+              totalHours += hours;
+              assignedTasks.push({
+                workOrderId: wo.id,
+                workOrderTitle: wo.title,
+                clientName: wo.client_name,
+                taskText: task.text,
+                hours,
+                dueDate: task.due_date || wo.due_date
+              });
+            }
+          }
+        });
+      });
+      
+      // Check for time off this week
+      const timeOff = capacity?.time_off_dates?.filter(to => {
+        const start = new Date(to.start_date);
+        const end = new Date(to.end_date);
+        return weekDays.some(d => d >= start && d <= end);
+      }) || [];
+      
+      const timeOffDays = timeOff.reduce((acc, to) => {
+        const start = new Date(to.start_date);
+        const end = new Date(to.end_date);
+        return acc + weekDays.filter(d => d >= start && d <= end).length;
+      }, 0);
+      
+      const adjustedCapacity = weeklyCapacity - (timeOffDays * dailyCapacity);
+      const utilizationPercent = adjustedCapacity > 0 ? (totalHours / adjustedCapacity) * 100 : 0;
+      
+      return {
+        user,
+        capacity: {
+          weekly: weeklyCapacity,
+          daily: dailyCapacity,
+          adjusted: adjustedCapacity
+        },
+        allocated: totalHours,
+        available: Math.max(0, adjustedCapacity - totalHours),
+        utilizationPercent,
+        tasks: assignedTasks,
+        timeOff,
+        isOverallocated: totalHours > adjustedCapacity,
+        isUnderutilized: utilizationPercent < 50 && totalHours > 0
+      };
+    });
+  }, [users, userCapacities, workOrders, selectedWeek]);
+  
+  // Summary stats
+  const summaryStats = useMemo(() => {
+    const totalCapacity = userAllocations.reduce((acc, a) => acc + a.capacity.adjusted, 0);
+    const totalAllocated = userAllocations.reduce((acc, a) => acc + a.allocated, 0);
+    const overallocatedCount = userAllocations.filter(a => a.isOverallocated).length;
+    const underutilizedCount = userAllocations.filter(a => a.isUnderutilized).length;
+    
+    return {
+      totalCapacity,
+      totalAllocated,
+      totalAvailable: totalCapacity - totalAllocated,
+      utilizationPercent: totalCapacity > 0 ? (totalAllocated / totalCapacity) * 100 : 0,
+      overallocatedCount,
+      underutilizedCount
+    };
+  }, [userAllocations]);
+  
+  const getUtilizationColor = (percent) => {
+    if (percent > 100) return "bg-red-500";
+    if (percent > 85) return "bg-orange-500";
+    if (percent > 50) return "bg-green-500";
+    return "bg-blue-500";
+  };
+  
+  const navigateWeek = (direction) => {
+    setSelectedWeek(prev => addWeeks(prev, direction));
+  };
+  
+  const handleSaveCapacity = async () => {
+    if (!editingCapacity) return;
+    
+    try {
+      const existing = userCapacities.find(c => c.user_email === editingCapacity.email);
+      if (existing) {
+        await UserCapacity.update(existing.id, capacityForm);
+      } else {
+        await UserCapacity.create({
+          user_email: editingCapacity.email,
+          user_name: editingCapacity.full_name,
+          ...capacityForm
+        });
+      }
+      await loadData();
+      setEditingCapacity(null);
+    } catch (error) {
+      console.error("Error saving capacity:", error);
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Resource Planning</h1>
+          <p className="text-gray-500">Manage team capacity and workload</p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 clay-card px-4 py-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigateWeek(-1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[180px] text-center">
+              {format(selectedWeek, "MMM d")} - {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "MMM d, yyyy")}
+            </span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigateWeek(1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <Card className="clay-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500">Total Capacity</p>
+                <p className="text-2xl font-bold">{summaryStats.totalCapacity}h</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="clay-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500">Allocated</p>
+                <p className="text-2xl font-bold">{summaryStats.totalAllocated.toFixed(1)}h</p>
+              </div>
+              <Clock className="w-8 h-8 text-purple-500" />
+            </div>
+            <Progress 
+              value={Math.min(summaryStats.utilizationPercent, 100)} 
+              className="h-2 mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">{Math.round(summaryStats.utilizationPercent)}% utilized</p>
+          </CardContent>
+        </Card>
+        
+        <Card className={`clay-card ${summaryStats.overallocatedCount > 0 ? 'border-red-300' : ''}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500">Overallocated</p>
+                <p className="text-2xl font-bold">{summaryStats.overallocatedCount}</p>
+              </div>
+              <AlertTriangle className={`w-8 h-8 ${summaryStats.overallocatedCount > 0 ? 'text-red-500' : 'text-gray-300'}`} />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="clay-card">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500">Available</p>
+                <p className="text-2xl font-bold">{Math.max(0, summaryStats.totalAvailable).toFixed(1)}h</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Team Members */}
+      <div className="clay-card p-4">
+        <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+          <Users className="w-5 h-5 text-purple-600" />
+          Team Workload
+        </h2>
+        
+        <div className="space-y-4">
+          {userAllocations.map(allocation => (
+            <div 
+              key={allocation.user.id}
+              className={`p-4 rounded-xl border ${
+                allocation.isOverallocated 
+                  ? 'bg-red-50 border-red-200' 
+                  : 'bg-white border-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white font-bold">
+                    {(allocation.user.full_name || allocation.user.email)[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="font-medium">
+                      {allocation.user.full_name || allocation.user.email}
+                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {allocation.isOverallocated && (
+                        <Badge variant="outline" className="text-xs text-red-600 border-red-300">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Overallocated
+                        </Badge>
+                      )}
+                      {allocation.timeOff.length > 0 && (
+                        <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Time Off
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-sm font-medium">
+                      {allocation.allocated.toFixed(1)}h / {allocation.capacity.adjusted}h
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {Math.round(allocation.utilizationPercent)}% utilized
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const cap = userCapacities.find(c => c.user_email === allocation.user.email);
+                      setCapacityForm({
+                        weekly_hours_capacity: cap?.weekly_hours_capacity || 40,
+                        daily_hours_capacity: cap?.daily_hours_capacity || 8
+                      });
+                      setEditingCapacity(allocation.user);
+                    }}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <Progress 
+                value={Math.min(allocation.utilizationPercent, 100)} 
+                className={`h-3 ${allocation.isOverallocated ? '[&>div]:bg-red-500' : ''}`}
+              />
+              
+              {allocation.tasks.length > 0 && (
+                <div className="mt-3 pt-3 border-t">
+                  <div className="text-xs text-gray-500 mb-2">{allocation.tasks.length} assigned tasks:</div>
+                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                    {allocation.tasks.map((task, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs p-2 bg-gray-50 rounded">
+                        <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate font-medium">{task.taskText}</div>
+                          <div className="truncate text-gray-400">{task.workOrderTitle}</div>
+                        </div>
+                        <span className="text-gray-500 flex-shrink-0">{task.hours}h</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Capacity Edit Dialog */}
+      <Dialog open={!!editingCapacity} onOpenChange={() => setEditingCapacity(null)}>
+        <DialogContent className="clay-card border-none max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-purple-600" />
+              Edit Capacity - {editingCapacity?.full_name || editingCapacity?.email}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Weekly Hours Capacity</label>
+              <Input
+                type="number"
+                value={capacityForm.weekly_hours_capacity}
+                onChange={(e) => setCapacityForm({ ...capacityForm, weekly_hours_capacity: parseInt(e.target.value) || 40 })}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Daily Hours Capacity</label>
+              <Input
+                type="number"
+                value={capacityForm.daily_hours_capacity}
+                onChange={(e) => setCapacityForm({ ...capacityForm, daily_hours_capacity: parseInt(e.target.value) || 8 })}
+                className="mt-1"
+              />
+            </div>
+            
+            <Button onClick={handleSaveCapacity} className="w-full">
+              <Save className="w-4 h-4 mr-2" />
+              Save Capacity
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

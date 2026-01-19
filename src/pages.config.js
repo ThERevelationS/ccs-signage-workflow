@@ -20,6 +20,7 @@ import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
+import ResourcePlanning from './pages/ResourcePlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "SalesPipeline": SalesPipeline,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
+    "ResourcePlanning": ResourcePlanning,
 }
 
 export const pagesConfig = {
