@@ -63,6 +63,7 @@ import UserManagement from "../components/admin/UserManagement";
 import ProjectTrash from "../components/admin/ProjectTrash";
 import OrderTrash from "../components/admin/OrderTrash";
 import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
+import TimeClockReportsDashboard from "../components/timeclock/TimeClockReportsDashboard";
 import ActivityFeed from "../components/admin/ActivityFeed";
 import PTOManagement from "../components/admin/PTOManagement";
 import BackupManager from "../components/admin/BackupManager";
@@ -703,11 +704,15 @@ export default function AdminSettings() {
                 <Tabs defaultValue="entries" className="space-y-4">
                   <TabsList>
                     <TabsTrigger value="entries">Time Entries</TabsTrigger>
+                    <TabsTrigger value="reports">Reports</TabsTrigger>
                     <TabsTrigger value="pto">PTO Policies</TabsTrigger>
                     <TabsTrigger value="overtime">Overtime Rules</TabsTrigger>
                   </TabsList>
                   <TabsContent value="entries">
                     <TimeClockAdmin />
+                  </TabsContent>
+                  <TabsContent value="reports">
+                    <TimeClockReportsDashboard />
                   </TabsContent>
                   <TabsContent value="pto">
                     <PTOManagement />
