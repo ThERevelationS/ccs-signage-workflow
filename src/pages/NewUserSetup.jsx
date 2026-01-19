@@ -81,13 +81,20 @@ export default function NewUserSetup() {
       }
       
       setUser(foundUser);
-      // Pre-fill username suggestion from name
-      if (foundUser.full_name) {
+      // Pre-fill username if user already has one, otherwise suggest from name
+      if (foundUser.username) {
+        setUsername(foundUser.username);
+      } else if (foundUser.full_name) {
         const nameParts = foundUser.full_name.toLowerCase().split(" ");
         const suggestedUsername = nameParts.length > 1 
           ? nameParts[0][0] + nameParts[nameParts.length - 1]
           : nameParts[0];
         setUsername(suggestedUsername.replace(/[^a-z0-9]/g, ''));
+      }
+      
+      // Pre-fill face descriptors if user already has them
+      if (foundUser.face_descriptors?.length > 0) {
+        setFaceDescriptors(foundUser.face_descriptors);
       }
     } catch (err) {
       console.error("Error validating token:", err);
