@@ -66,6 +66,7 @@ import ActivityFeed from "../components/admin/ActivityFeed";
 import PTOManagement from "../components/admin/PTOManagement";
 import BackupManager from "../components/admin/BackupManager";
 import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
+import SalesPipelineDefaultSort from "../components/admin/SalesPipelineDefaultSort";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -703,6 +704,7 @@ export default function AdminSettings() {
                     <TabsTrigger value="backup">Data Backup</TabsTrigger>
                     <TabsTrigger value="client_trash">Client Trash</TabsTrigger>
                     <TabsTrigger value="order_trash">Order Trash</TabsTrigger>
+                    <TabsTrigger value="default_sort">Default Sort</TabsTrigger>
                   </TabsList>
                   <TabsContent value="backup">
                     <BackupManager />
@@ -712,6 +714,9 @@ export default function AdminSettings() {
                   </TabsContent>
                   <TabsContent value="order_trash">
                     <OrderTrash />
+                  </TabsContent>
+                  <TabsContent value="default_sort">
+                    <SalesPipelineDefaultSort />
                   </TabsContent>
                 </Tabs>
               </TabsContent>
