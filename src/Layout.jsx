@@ -801,20 +801,30 @@ function LayoutContent({ children }) {
                       <div className="absolute top-full left-0 mt-1 py-1 rounded-lg border border-gray-200 shadow-lg z-50 min-w-[160px]" style={{ background: 'white' }}>
                         {meetingsDropdownItems.map((item) => {
                           const isActive = location.pathname === item.url;
+                          const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                           return (
                             <Link
                               key={item.title}
                               to={item.url}
-                              onClick={() => setMeetingsDropdownOpen(false)}
+                              onClick={(e) => {
+                                if (e.ctrlKey || e.metaKey) {
+                                  e.preventDefault();
+                                  const pageName = item.url.split('/').pop();
+                                  addPage(pageName, item.title);
+                                }
+                                setMeetingsDropdownOpen(false);
+                              }}
                               className={`px-3 py-2 flex items-center gap-2 transition-colors ${
-                                isActive ? 'bg-purple-50' : 'hover:bg-gray-50'
+                                isActive ? 'bg-purple-50' : isInSplit ? 'bg-purple-50' : 'hover:bg-gray-50'
                               }`}
                               style={isActive ? { background: `linear-gradient(135deg, ${item.color}40 0%, rgba(255,255,255,0.9) 100%)` } : {}}
+                              title="Ctrl+Click to open in split view"
                             >
-                              <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                              <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : 'text-gray-700'}`}>
+                              <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                              <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                                 {item.title}
                               </span>
+                              {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
                             </Link>
                           );
                         })}
