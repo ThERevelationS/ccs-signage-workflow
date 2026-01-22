@@ -850,7 +850,7 @@ function LayoutContent({ children }) {
 
         {/* Floating Buttons - hidden in fullscreen */}
         {!isCollapsed && (
-          <div className="fixed bottom-3 left-3 z-50 flex gap-1" style={{ marginLeft: isSideNav ? '224px' : '0' }}>
+          <div className="fixed bottom-3 left-3 z-50 flex gap-1 opacity-20 hover:opacity-100 transition-opacity duration-200" style={{ marginLeft: isSideNav ? '224px' : '0' }}>
             {/* Full Screen Toggle */}
             <button
               onClick={toggleFullScreen}
