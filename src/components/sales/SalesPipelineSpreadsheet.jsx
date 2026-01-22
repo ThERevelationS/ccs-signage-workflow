@@ -2449,7 +2449,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   <div className="w-[80px] flex-shrink-0 text-center border-r border-gray-400">Color</div>
                   <div className="w-[72px] flex-shrink-0 text-center border-r border-gray-400">Opacity</div>
                   <div className="w-[40px] flex-shrink-0 text-center border-r border-gray-400" title="Mark out row">Mark</div>
-                  <div className="w-[40px] flex-shrink-0 text-center border-r border-gray-400" title="Show on Monday Morning Meeting">WIP</div>
+                  <div className="w-[56px] flex-shrink-0 text-center border-r border-gray-400" title="WIP items appear on SIPs page">WIP/SIP</div>
                   <div className="w-[24px] flex-shrink-0 text-center"></div>
                 </div>
               </>
@@ -2602,7 +2602,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                             className="h-4 w-4"
                           />
                         </div>
-                        <div className="w-[40px] flex-shrink-0 flex items-center justify-center border-r border-gray-200">
+                        <div className="w-[56px] flex-shrink-0 flex items-center justify-center border-r border-gray-200">
                           <Checkbox
                             checked={item.wip ?? false}
                             onCheckedChange={(checked) => updateTaskStyle(item, "wip", checked)}

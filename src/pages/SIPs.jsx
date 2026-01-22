@@ -16,9 +16,6 @@ const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-// Pages that map to SIPs
-const SIPS_PAGE_VALUES = ["SIPs"];
-
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -48,6 +45,7 @@ export default function SIPs() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
+  const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
   const parentRef = useRef(null);
 
   useEffect(() => {
@@ -65,23 +63,30 @@ export default function SIPs() {
         GlobalSettings.list()
       ]);
       
-      // Get task descriptions that have SIPs page assigned
+      // Get task descriptions that have SIPs page assigned OR have WIP flag
       const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const sipTaskDescriptions = [];
+      const wipDescs = [];
       if (taskDescSetting?.setting_value?.items) {
         taskDescSetting.setting_value.items.forEach(item => {
           if (item.page === "SIPs") {
             sipTaskDescriptions.push(item.text);
           }
+          if (item.wip) {
+            wipDescs.push(item.text);
+          }
         });
       }
+      setWipTaskDescriptions(wipDescs);
       
       // Filter for SIPs - items where:
       // 1. current_task_assigned_to is "SIPs", OR
-      // 2. current_task_description has SIPs page assigned in settings
+      // 2. current_task_description has SIPs page assigned in settings, OR
+      // 3. current_task_description has WIP flag checked in settings
       const sipOrders = orders.filter(wo => 
         wo.current_task_assigned_to === "SIPs" ||
-        (wo.current_task_description && sipTaskDescriptions.includes(wo.current_task_description))
+        (wo.current_task_description && sipTaskDescriptions.includes(wo.current_task_description)) ||
+        (wo.current_task_description && wipDescs.includes(wo.current_task_description))
       );
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
@@ -99,6 +104,26 @@ export default function SIPs() {
       console.error("Error updating work order:", error);
     }
   };
+
+  // Check if a work order is a WIP item (has WIP task description)
+  const isWipItem = (wo) => {
+    return wo.current_task_description && wipTaskDescriptions.includes(wo.current_task_description);
+  };
+
+  // Toggle sip_completed flag on work order
+  const toggleSipCompleted = async (wo) => {
+    const newValue = !wo.sip_completed;
+    setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, sip_completed: newValue } : w));
+    try {
+      await WorkOrder.update(wo.id, { sip_completed: newValue });
+    } catch (error) {
+      console.error("Error updating work order:", error);
+    }
+  };
+
+  // Separate active WIP items (not completed on SIPs) and completed WIP items
+  const activeWorkOrders = workOrders.filter(wo => !isWipItem(wo) || !wo.sip_completed);
+  const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
 
   const openChecklist = (wo) => {
     setChecklistDialog({ open: true, workOrder: wo });
@@ -132,78 +157,85 @@ export default function SIPs() {
         </div>
 
         {/* Spreadsheet */}
-        <div className="clay-card p-4 w-full overflow-x-auto">
-          <table className="w-full border-collapse" style={{ fontSize: '16px', minWidth: '100%', tableLayout: 'auto' }}>
+        <div className="clay-card p-4 w-full">
+          <table className="w-full border-collapse" style={{ fontSize: '14px', tableLayout: 'fixed' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
-                <th className="px-3 py-4 border-r text-center font-bold text-gray-700" style={{ width: '50px' }}>#</th>
-                <th className="px-3 py-4 border-r text-center font-bold text-gray-700" style={{ width: '100px' }}>Checklist</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '200px' }}>Customer</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Deadline</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '140px' }}>Task Assigned</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Designer</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '140px' }}>Project Manager</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Estimator</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '130px' }}>Est/Inv # Link</th>
-                <th className="px-3 py-4 border-r text-left font-bold text-gray-700" style={{ minWidth: '110px' }}>Amount</th>
-                <th className="px-3 py-4 text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Survey</th>
+                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '40px' }}>✓</th>
+                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '40px' }}>#</th>
+                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '70px' }}>Checklist</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '15%' }}>Customer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '85px' }}>Deadline</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Task Assigned</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Designer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>PM</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Estimator</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '90px' }}>Est/Inv #</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '80px' }}>Amount</th>
+                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ width: '85px' }}>Survey</th>
               </tr>
             </thead>
             <tbody>
-              {workOrders.map((wo, index) => {
+              {activeWorkOrders.map((wo, index) => {
                 const progress = getChecklistProgress(wo);
                 const progressPercent = (progress.completed / progress.total) * 100;
+                
+                const isWip = isWipItem(wo);
                 
                 return (
                   <tr 
                     key={wo.id} 
-                    className="border-b hover:bg-gray-50"
-                    style={{ height: '63px' }} // 50% larger than 42px standard
+                    className={`border-b hover:bg-gray-50 ${isWip ? 'bg-blue-50/30' : ''}`}
+                    style={{ height: '50px' }}
                   >
+                    {/* Completed Checkbox */}
+                    <td className="px-2 py-2 border-r text-center">
+                      <Checkbox
+                        checked={wo.sip_completed || false}
+                        onCheckedChange={() => toggleSipCompleted(wo)}
+                        disabled={!isRegistered}
+                        className="h-5 w-5"
+                      />
+                    </td>
+
                     {/* Row Number */}
-                    <td className="px-3 py-3 border-r text-center font-bold text-gray-600 text-lg">
+                    <td className="px-2 py-2 border-r text-center font-bold text-gray-600 text-sm">
                       {index + 1}
                     </td>
 
                     {/* Checklist Button */}
-                    <td className="px-3 py-3 border-r text-center">
+                    <td className="px-2 py-2 border-r text-center">
                       <Button
                         variant="outline"
                         onClick={() => openChecklist(wo)}
-                        className="h-12 w-full flex flex-col items-center justify-center gap-1 hover:bg-blue-50"
+                        className="h-10 w-full flex flex-col items-center justify-center gap-0.5 hover:bg-blue-50 p-1"
                       >
-                        <ClipboardList className="w-5 h-5 text-blue-600" />
+                        <ClipboardList className="w-4 h-4 text-blue-600" />
                         <span className="text-xs font-medium">
                           {progress.completed}/{progress.total}
                         </span>
-                        <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-600 transition-all"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
                       </Button>
                     </td>
 
                     {/* Customer */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <button
                         onClick={() => setSelectedWorkOrder(wo)}
-                        className="text-base text-left hover:text-blue-600 flex items-center gap-2 font-medium"
+                        className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
                       >
-                        <LinkIcon className="w-4 h-4 flex-shrink-0 text-blue-500" />
+                        <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
                     </td>
 
                     {/* Deadline */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <Popover 
                         open={openDatePopover === `deadline-${wo.id}`} 
                         onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}
                       >
                         <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-10 w-full text-base text-left px-2 hover:bg-gray-100 rounded font-medium">
+                          <button className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium">
                             {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
                           </button>
                         </PopoverTrigger>
@@ -221,13 +253,13 @@ export default function SIPs() {
                     </td>
 
                     {/* Task Assigned */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <Select
                         value={wo.current_task_assigned_to || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)}
                         disabled={!isRegistered}
                       >
-                        <SelectTrigger className="h-10 text-base border-0 bg-transparent px-2 font-medium">
+                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
                           <SelectValue placeholder="-">{wo.current_task_assigned_to || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -240,13 +272,13 @@ export default function SIPs() {
                     </td>
 
                     {/* Designer */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <Select
                         value={wo.designer || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)}
                         disabled={!isRegistered}
                       >
-                        <SelectTrigger className="h-10 text-base border-0 bg-transparent px-2 font-medium">
+                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
                           <SelectValue placeholder="-">{wo.designer || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -258,13 +290,13 @@ export default function SIPs() {
                     </td>
 
                     {/* Project Manager */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <Select
                         value={wo.project_manager || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)}
                         disabled={!isRegistered}
                       >
-                        <SelectTrigger className="h-10 text-base border-0 bg-transparent px-2 font-medium">
+                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
                           <SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -276,13 +308,13 @@ export default function SIPs() {
                     </td>
 
                     {/* Estimator */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       <Select
                         value={wo.estimator || ""}
                         onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)}
                         disabled={!isRegistered}
                       >
-                        <SelectTrigger className="h-10 text-base border-0 bg-transparent px-2 font-medium">
+                        <SelectTrigger className="h-8 text-sm border-0 bg-transparent px-1 font-medium">
                           <SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -294,38 +326,38 @@ export default function SIPs() {
                     </td>
 
                     {/* Est/Inv # Link */}
-                    <td className="px-3 py-3 border-r">
+                    <td className="px-2 py-2 border-r">
                       {wo.corbridge_link ? (
                         <a
                           href={wo.corbridge_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-base text-blue-600 hover:underline font-medium"
+                          className="text-sm text-blue-600 hover:underline font-medium truncate block"
                         >
                           {wo.corbridge_invoice_number || wo.est_inv_at || "Link"}
                         </a>
                       ) : (
-                        <span className="text-base text-gray-700 font-medium">
+                        <span className="text-sm text-gray-700 font-medium truncate block">
                           {wo.est_inv_at || "-"}
                         </span>
                       )}
                     </td>
 
                     {/* Amount */}
-                    <td className="px-3 py-3 border-r">
-                      <span className="text-base font-medium">
+                    <td className="px-2 py-2 border-r">
+                      <span className="text-sm font-medium">
                         {wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "-"}
                       </span>
                     </td>
 
                     {/* Survey Date */}
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-2">
                       <Popover 
                         open={openDatePopover === `survey-${wo.id}`} 
                         onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}
                       >
                         <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-10 w-full text-base text-left px-2 hover:bg-gray-100 rounded font-medium">
+                          <button className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium">
                             {wo.site_survey_date ? format(parseLocalDate(wo.site_survey_date), "MM/dd/yy") : "-"}
                           </button>
                         </PopoverTrigger>
@@ -344,16 +376,68 @@ export default function SIPs() {
                   </tr>
                 );
               })}
-              {workOrders.length === 0 && (
+              {activeWorkOrders.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-3 py-12 text-center text-gray-500 text-lg">
-                    No items assigned to SIPs. Assign "SIPs" to the Task Assigned column on the Sales Pipeline to see items here.
+                  <td colSpan={12} className="px-3 py-12 text-center text-gray-500 text-base">
+                    No items assigned to SIPs. Assign "SIPs" to the Task Assigned column or check WIP/SIP on a task description to see items here.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Completed WIP Items Section */}
+        {completedWipItems.length > 0 && (
+          <div className="clay-card p-4 w-full mt-6">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">Completed WIP Items ({completedWipItems.length})</h3>
+            <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
+              <thead className="bg-gray-50">
+                <tr className="border-b">
+                  <th className="px-2 py-2 border-r text-center font-medium text-gray-600" style={{ width: '50px' }}>Completed</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '20%' }}>Customer</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '20%' }}>Task Description</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '80px' }}>Deadline</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '15%' }}>Designer</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '15%' }}>PM</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600" style={{ width: '80px' }}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {completedWipItems.map((wo) => (
+                  <tr key={wo.id} className="border-b hover:bg-gray-50 bg-green-50/30">
+                    <td className="px-2 py-2 border-r text-center">
+                      <Checkbox
+                        checked={true}
+                        onCheckedChange={() => toggleSipCompleted(wo)}
+                        disabled={!isRegistered}
+                        className="h-4 w-4"
+                      />
+                    </td>
+                    <td className="px-2 py-2 border-r">
+                      <button
+                        onClick={() => setSelectedWorkOrder(wo)}
+                        className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium truncate"
+                      >
+                        <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
+                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                      </button>
+                    </td>
+                    <td className="px-2 py-2 border-r text-xs truncate">{wo.current_task_description || "-"}</td>
+                    <td className="px-2 py-2 border-r text-xs">
+                      {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
+                    </td>
+                    <td className="px-2 py-2 border-r text-xs truncate">{wo.designer || "-"}</td>
+                    <td className="px-2 py-2 border-r text-xs truncate">{wo.project_manager || "-"}</td>
+                    <td className="px-2 py-2 text-xs">
+                      {wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Work Order Details Dialog */}
