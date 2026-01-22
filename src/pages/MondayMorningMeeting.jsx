@@ -115,7 +115,7 @@ export default function MondayMorningMeeting() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="h-full overflow-auto p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-6 mb-6">

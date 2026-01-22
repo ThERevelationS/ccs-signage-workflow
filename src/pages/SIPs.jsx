@@ -146,7 +146,7 @@ export default function SIPs() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="h-full overflow-auto p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-6 mb-6">
@@ -159,32 +159,31 @@ export default function SIPs() {
         </div>
 
         {/* Spreadsheet */}
-        <div className="clay-card p-4 w-full">
-          <table className="w-full border-collapse" style={{ fontSize: '14px', tableLayout: 'fixed' }}>
+        <div className="clay-card p-4 w-full overflow-x-auto">
+          <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th 
                   className="px-2 py-3 border-r text-center font-bold text-white" 
                   style={{ 
-                    width: '44px',
-                    minWidth: '44px',
+                    minWidth: '50px',
                     background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                     fontSize: '14px'
                   }}
                 >
                   #
                 </th>
-                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '40px' }}>✓</th>
-                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '70px' }}>Checklist</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '15%' }}>Customer</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '85px' }}>Deadline</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Task Assigned</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Designer</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>PM</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '10%' }}>Estimator</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '90px' }}>Est/Inv #</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '80px' }}>Amount</th>
-                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ width: '85px' }}>Survey</th>
+                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '50px' }}>✓</th>
+                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '80px' }}>Checklist</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '180px' }}>Customer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Deadline</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '130px' }}>Task Assigned</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Designer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>PM</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Estimator</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Est/Inv #</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Amount</th>
+                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Survey</th>
               </tr>
             </thead>
             <tbody>
