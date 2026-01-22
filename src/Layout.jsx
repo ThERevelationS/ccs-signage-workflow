@@ -890,11 +890,12 @@ function LayoutContent({ children }) {
 
         {/* Main content */}
         <main 
-          className="flex-1 overflow-auto main-scroll-container" 
+          className="flex-1 main-scroll-container" 
           style={{ 
             paddingTop: isSideNav ? '0' : (isCollapsed ? '16px' : '80px'),
             marginLeft: isSideNav ? '224px' : '0',
-            minHeight: '100vh'
+            height: '100vh',
+            overflow: 'hidden'
           }}
         >
           <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
