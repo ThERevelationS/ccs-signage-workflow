@@ -639,32 +639,34 @@ export default function AdminSettings() {
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
         <Tabs defaultValue="automations" className="space-y-6">
-          <TabsList className="clay-card border-none p-2 w-full flex-wrap" style={{ background: '#FEE2E2' }}>
-            <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-              <Zap className="w-4 h-4 mr-2" />
-              Automations
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-              <Users className="w-4 h-4 mr-2" />
-              Users
-            </TabsTrigger>
-            {isAdmin && (
-              <>
-                <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Time Clock
-                </TabsTrigger>
-                <TabsTrigger value="backend" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Backend Functions
-                </TabsTrigger>
-              </>
-            )}
-            <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-              <Activity className="w-4 h-4 mr-2" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+          <div className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
+            <TabsList className="bg-transparent w-full flex flex-wrap gap-1">
+              <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                <Zap className="w-4 h-4 mr-2" />
+                Automations
+              </TabsTrigger>
+              <TabsTrigger value="users" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                <Users className="w-4 h-4 mr-2" />
+                Users
+              </TabsTrigger>
+              {isAdmin && (
+                <>
+                  <TabsTrigger value="timeclock" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <Clock className="w-4 h-4 mr-2" />
+                    Time Clock
+                  </TabsTrigger>
+                  <TabsTrigger value="backend" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Backend Functions
+                  </TabsTrigger>
+                </>
+              )}
+              <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                <Activity className="w-4 h-4 mr-2" />
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="users">
             <UserManagement />

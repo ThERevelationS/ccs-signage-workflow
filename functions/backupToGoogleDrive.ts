@@ -113,11 +113,14 @@ Deno.serve(async (req) => {
     }
 
     // Default action: Perform backup
-    // Get data types to backup - for scheduled, use saved settings
+    // Get data types to backup - for scheduled backups, ALWAYS backup everything
+    // For manual backups, use the dataTypes passed in
     let typesToBackup = dataTypes;
-    if (!typesToBackup || typesToBackup.length === 0) {
-      const settings = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupSettings' });
-      typesToBackup = settings[0]?.setting_value?.dataTypes || ['users', 'timeclock', 'orders', 'workorders', 'timeoff', 'pto', 'salespipeline', 'orderform'];
+    const isManualBackup = typesToBackup && typesToBackup.length > 0;
+    
+    if (!isManualBackup) {
+      // Scheduled backup - always backup everything
+      typesToBackup = ['users', 'timeclock', 'orders', 'workorders', 'timeoff', 'pto', 'salespipeline', 'orderform'];
     }
     
     const results = [];
@@ -359,7 +362,8 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('workorders')) {
       try {
-        const workOrders = await base44.asServiceRole.entities.WorkOrder.list();
+        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.list();
+        const workOrders = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         const formattedWO = workOrders.map(wo => ({
           id: wo.id,
           title: wo.title,
@@ -424,7 +428,8 @@ Deno.serve(async (req) => {
     // Sales Pipeline Export (same format as UI export)
     if (typesToBackup.includes('salespipeline')) {
       try {
-        const workOrdersForExport = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } });
+        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } });
+        const workOrdersForExport = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         
         const calculateDays = (fromDate, toDate) => {
           if (!fromDate) return null;
@@ -525,10 +530,10 @@ Deno.serve(async (req) => {
     if (skippedCount > 0) message += ` (${skippedCount} skipped - no data)`;
     if (errorCount > 0) message += ` (${errorCount} failed)`;
 
-    // Log the backup
+    // Log the backup - differentiate manual vs scheduled in the log
     try {
       await base44.asServiceRole.entities.BackupLog.create({
-        backup_type: isScheduledBackup ? 'scheduled' : 'manual',
+        backup_type: isManualBackup ? 'manual' : 'scheduled',
         data_types: typesToBackup,
         results: results.map(r => ({
           type: r.type,

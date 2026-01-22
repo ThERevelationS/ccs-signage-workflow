@@ -264,8 +264,8 @@ export default function BackupManager() {
             )}
           </div>
           {settings.schedule !== 'none' && (
-            <p className="text-xs text-gray-500 mt-2">
-              Scheduled backups will run automatically based on your settings.
+            <p className="text-xs text-blue-600 mt-2 p-2 bg-blue-50 rounded">
+              <strong>Note:</strong> Scheduled backups automatically backup ALL data types (Users, Time Clock, Orders, Work Orders, Time Off, PTO, Sales Pipeline, Order Form).
             </p>
           )}
         </div>
@@ -419,7 +419,7 @@ export default function BackupManager() {
               ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
               {backupHistory.map((log, idx) => (
-                <div key={log.id || idx} className={`p-3 rounded-lg border ${log.error_count > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                <div key={log.id || idx} className={`p-3 rounded-lg border ${log.error_count > 0 ? 'bg-red-50 border-red-200' : log.backup_type === 'scheduled' ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       {log.backup_type === 'scheduled' ? (
@@ -427,8 +427,8 @@ export default function BackupManager() {
                       ) : (
                         <HardDrive className="w-4 h-4 text-purple-600" />
                       )}
-                      <span className="font-medium text-sm">
-                        {log.backup_type === 'scheduled' ? 'Scheduled Backup' : 'Manual Backup'}
+                      <span className={`font-medium text-sm ${log.backup_type === 'scheduled' ? 'text-blue-700' : 'text-purple-700'}`}>
+                        {log.backup_type === 'scheduled' ? 'Scheduled Backup (All Data)' : 'Manual Backup'}
                       </span>
                     </div>
                     <span className="text-xs text-gray-500">
