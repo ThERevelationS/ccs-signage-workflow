@@ -73,7 +73,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
       {/* Main page */}
       <div 
         className="h-full border-r border-gray-300"
-        style={{ width: `${100 / totalPanes}%`, overflow: 'hidden' }}
+        style={{ width: `${100 / totalPanes}%`, overflow: 'auto' }}
       >
         {children}
       </div>
