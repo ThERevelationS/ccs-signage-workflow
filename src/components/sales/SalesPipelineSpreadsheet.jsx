@@ -923,10 +923,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           sub_tasks: []
         }] : [];
 
+        // IMPORTANT: Ensure notes text does NOT get put into description field
+        // description should only contain job description, not notes
+        const descriptionValue = jobDescStr;
+        // Validate that description doesn't look like notes (contains date patterns like 1/15/2024)
+        const looksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(descriptionValue) && descriptionValue.length > 100;
+        
         const newWO = await WorkOrder.create({
           title: customer || "Unnamed",
           client_name: customer,
-          description: jobDescStr,
+          description: looksLikeNotes ? "" : descriptionValue, // Clear if it looks like notes data
           // Notes from Excel go into work_notes, NOT into title/description
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
