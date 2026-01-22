@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
+import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -46,6 +48,8 @@ export default function SIPs() {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
   const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
+  const [focusedRowId, setFocusedRowId] = useState(null);
+  const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const parentRef = useRef(null);
 
   useEffect(() => {
@@ -162,11 +166,12 @@ export default function SIPs() {
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th 
-                  className="px-3 py-3 border-r text-center font-bold text-white" 
+                  className="px-2 py-3 border-r text-center font-bold text-white" 
                   style={{ 
-                    width: '60px',
+                    width: '44px',
+                    minWidth: '44px',
                     background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                    fontSize: '16px'
+                    fontSize: '14px'
                   }}
                 >
                   #
@@ -193,19 +198,33 @@ export default function SIPs() {
                 
                 return (
                   <tr 
-                    key={wo.id} 
-                    className={`border-b hover:bg-gray-50 ${isWip ? 'bg-blue-50/30' : ''}`}
+                    className={`border-b ${focusedRowIndex !== index ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowIndex !== index ? 'bg-blue-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
                     style={{ height: '50px' }}
                   >
-                    {/* Row Number */}
-                    <td 
-                      className="px-3 py-2 border-r text-center font-bold text-white"
-                      style={{ 
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                        fontSize: '16px'
-                      }}
-                    >
-                      {index + 1}
+                    {/* Row Number - Clickable Focus Button */}
+                    <td className="px-0 py-0 border-r">
+                      <button
+                        onClick={() => {
+                          if (focusedRowIndex === index) {
+                            setFocusedRowId(null);
+                            setFocusedRowIndex(null);
+                          } else {
+                            setFocusedRowId(wo.id);
+                            setFocusedRowIndex(index);
+                          }
+                        }}
+                        className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
+                          focusedRowIndex === index 
+                            ? 'bg-purple-500 text-white' 
+                            : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
+                        }`}
+                        style={focusedRowIndex !== index ? { 
+                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                          color: 'white'
+                        } : undefined}
+                      >
+                        {index + 1}
+                      </button>
                     </td>
 
                     {/* Completed Checkbox */}
@@ -389,7 +408,8 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                );
+                  {focusedRowIndex === index && <tr><td colSpan={12} className="h-3 bg-transparent border-none"></td></tr>}
+                </React.Fragment>);
               })}
               {activeWorkOrders.length === 0 && (
                 <tr>
@@ -429,16 +449,16 @@ export default function SIPs() {
                         className="h-4 w-4"
                       />
                     </td>
-                    <td className="px-2 py-2 border-r">
+                    <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
                       <button
                         onClick={() => setSelectedWorkOrder(wo)}
-                        className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium truncate"
+                        className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"
                       >
                         <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
-                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                        <span className="truncate block">{wo.client_name || "Unnamed"}</span>
                       </button>
                     </td>
-                    <td className="px-2 py-2 border-r text-xs truncate">{wo.current_task_description || "-"}</td>
+                    <td className="px-2 py-2 border-r text-xs" style={{ maxWidth: '150px' }}><span className="truncate block">{wo.current_task_description || "-"}</span></td>
                     <td className="px-2 py-2 border-r text-xs">
                       {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
                     </td>
