@@ -24,10 +24,17 @@ export function useMultiPageView() {
   const [additionalPages, setAdditionalPages] = useState([]);
 
   const addPage = (pageName, pageTitle) => {
+    // If page is already in split view, remove it (toggle behavior)
+    const existingIndex = additionalPages.findIndex(p => p.name === pageName);
+    if (existingIndex !== -1) {
+      setAdditionalPages(prev => prev.filter(p => p.name !== pageName));
+      return;
+    }
+    
     if (additionalPages.length >= 2) {
       // Already have 2 additional pages (3 total with main), replace the last one
       setAdditionalPages(prev => [...prev.slice(0, 1), { name: pageName, title: pageTitle }]);
-    } else if (!additionalPages.find(p => p.name === pageName)) {
+    } else {
       setAdditionalPages(prev => [...prev, { name: pageName, title: pageTitle }]);
     }
   };
