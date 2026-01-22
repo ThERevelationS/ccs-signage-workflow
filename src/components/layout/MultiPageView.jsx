@@ -1,23 +1,23 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { X, Loader2, Columns } from "lucide-react";
 
-// Dynamic page imports
+// Dynamic page imports - keys must match the URL paths (lowercase)
 const pageComponents = {
-  MyWorkflow: lazy(() => import("@/pages/MyWorkflow")),
-  MainWorkflow: lazy(() => import("@/pages/MainWorkflow")),
-  SalesPipeline: lazy(() => import("@/pages/SalesPipeline")),
-  Estimating: lazy(() => import("@/pages/Estimating")),
-  Permitting: lazy(() => import("@/pages/Permitting")),
-  Design: lazy(() => import("@/pages/Design")),
-  Production: lazy(() => import("@/pages/Production")),
-  Fabrication: lazy(() => import("@/pages/Fabrication")),
-  InstallationDeliver: lazy(() => import("@/pages/InstallationDeliver")),
-  OrderForm: lazy(() => import("@/pages/OrderForm")),
-  ResourcePlanning: lazy(() => import("@/pages/ResourcePlanning")),
-  SIPs: lazy(() => import("@/pages/SIPs")),
-  MondayMorningMeeting: lazy(() => import("@/pages/MondayMorningMeeting")),
-  Financials: lazy(() => import("@/pages/Financials")),
-  TimeClock: lazy(() => import("@/pages/TimeClock")),
+  myworkflow: lazy(() => import("@/pages/MyWorkflow")),
+  mainworkflow: lazy(() => import("@/pages/MainWorkflow")),
+  salespipeline: lazy(() => import("@/pages/SalesPipeline")),
+  estimating: lazy(() => import("@/pages/Estimating")),
+  permitting: lazy(() => import("@/pages/Permitting")),
+  design: lazy(() => import("@/pages/Design")),
+  production: lazy(() => import("@/pages/Production")),
+  fabrication: lazy(() => import("@/pages/Fabrication")),
+  installationdeliver: lazy(() => import("@/pages/InstallationDeliver")),
+  orderform: lazy(() => import("@/pages/OrderForm")),
+  resourceplanning: lazy(() => import("@/pages/ResourcePlanning")),
+  sips: lazy(() => import("@/pages/SIPs")),
+  mondaymorningmeeting: lazy(() => import("@/pages/MondayMorningMeeting")),
+  financials: lazy(() => import("@/pages/Financials")),
+  timeclock: lazy(() => import("@/pages/TimeClock")),
 };
 
 export function useMultiPageView() {
