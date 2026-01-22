@@ -725,9 +725,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           continue;
         }
 
-        // Get job description for duplicate check
+        // Get job description for duplicate check - but NOT from "Notes" column
+        // CRITICAL: Description and Notes are different fields - don't mix them up
         const jobDesc = row["Job Description"] ?? row["Description"] ?? row["description"] ?? "";
         const jobDescStr = typeof jobDesc === 'string' ? jobDesc.trim() : String(jobDesc || '').trim();
+        
+        // Validate that job description doesn't look like notes (contains date patterns)
+        const descLooksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(jobDescStr) && jobDescStr.length > 100;
         
         // Check for duplicates by customer name + description - if found, fill in missing fields instead of creating duplicate
         const clientKey = customer.toLowerCase().trim();
