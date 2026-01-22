@@ -53,7 +53,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const [pendingChanges, setPendingChanges] = useState({});
   const debounceTimers = useRef({});
-  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0, paused: false });
+  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0, paused: false, currentItem: "" });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
   const [showForm, setShowForm] = useState(false);
@@ -676,7 +676,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
+      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false, currentItem: "Starting import..." });
 
       // Track existing work orders to check for duplicates - use client_name + description as key
       const existingWorkOrdersMap = new Map();
@@ -721,9 +721,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         
         // Skip empty rows
         if (!customer) {
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: "Skipping empty row..." });
           continue;
         }
+        
+        // Update progress with current customer being processed
+        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: customer });
 
         // Get job description for duplicate check - but NOT from "Notes" column
         // CRITICAL: Description and Notes are different fields - don't mix them up
@@ -839,7 +842,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? updatedWO : wo));
           }
           
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Updated: ${customer}` });
           
           // Pause between batches to avoid rate limits
           if ((i + 1) % BATCH_SIZE === 0) {
@@ -973,7 +976,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         setWorkOrders(prev => [newWO, ...prev]);
         
         importedCount++;
-        setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Created: ${customer}` });
         
         // Pause between batches to avoid rate limits
         if ((i + 1) % BATCH_SIZE === 0) {
@@ -981,7 +984,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
       }
 
-      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
+      setImportProgress({ show: true, current: jsonData.length, total: jsonData.length, currentItem: "Import complete!" });
+      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0, currentItem: "" }), 1500);
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
@@ -1279,9 +1283,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                {importProgress.paused ? 'Import Paused' : 'Importing...'}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">
+                  {importProgress.paused ? 'Import Paused' : 'Importing...'}
+                </span>
+                {importProgress.currentItem && (
+                  <span className="text-xs text-gray-600 truncate max-w-[300px]">
+                    {importProgress.currentItem}
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
                 {importProgress.paused ? (
