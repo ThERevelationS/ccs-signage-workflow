@@ -936,11 +936,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         // Validate that description doesn't look like notes (contains date patterns like 1/15/2024)
         const looksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(descriptionValue) && descriptionValue.length > 100;
         
-        const newWO = await WorkOrder.create({
+        // Queue for bulk creation
+        itemsToCreate.push({
           title: customer || "Unnamed",
           client_name: customer,
-          description: looksLikeNotes ? "" : descriptionValue, // Clear if it looks like notes data
-          // Notes from Excel go into work_notes, NOT into title/description
+          description: looksLikeNotes ? "" : descriptionValue,
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
           current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
@@ -962,19 +962,83 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           in_pipeline: false,
           sales_status: "lead",
           notes: [],
-          work_notes: importedWorkNotes
+          work_notes: importedWorkNotes,
+          _uniqueKey: uniqueKey,
+          _customer: customer
         });
         
-        if (uniqueKey) {
-          existingWorkOrdersMap.set(uniqueKey, newWO);
+        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Queued: ${customer}` });
+      }
+
+      // Process updates in batches
+      setImportProgress({ show: true, current: 0, total: itemsToUpdate.length + itemsToCreate.length, currentItem: "Processing updates..." });
+      
+      for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
+        if (importStateRef.current.cancelled) {
+          setImportProgress({ show: false, current: 0, total: 0, paused: false });
+          return;
         }
-        setWorkOrders(prev => [newWO, ...prev]);
+        while (importStateRef.current.paused) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
         
-        importedCount++;
-        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Created: ${customer}` });
+        const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(async (item) => {
+          await WorkOrder.update(item.id, item.updates);
+          const updatedWO = { ...item.existingWO, ...item.updates };
+          existingWorkOrdersMap.set(item.uniqueKey, updatedWO);
+        }));
         
-        // Pause between batches to avoid rate limits
-        if ((i + 1) % BATCH_SIZE === 0) {
+        setImportProgress({ show: true, current: i + batch.length, total: itemsToUpdate.length + itemsToCreate.length, currentItem: `Updated ${i + batch.length} of ${itemsToUpdate.length}` });
+        
+        if (i + BATCH_SIZE < itemsToUpdate.length) {
+          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+        }
+      }
+      
+      // Update local state for all updated items
+      if (itemsToUpdate.length > 0) {
+        setWorkOrders(prev => {
+          const updatedMap = new Map(itemsToUpdate.map(item => [item.id, { ...item.existingWO, ...item.updates }]));
+          return prev.map(wo => updatedMap.has(wo.id) ? updatedMap.get(wo.id) : wo);
+        });
+      }
+
+      // Process creates in batches using bulkCreate
+      for (let i = 0; i < itemsToCreate.length; i += BATCH_SIZE) {
+        if (importStateRef.current.cancelled) {
+          setImportProgress({ show: false, current: 0, total: 0, paused: false });
+          return;
+        }
+        while (importStateRef.current.paused) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        const batch = itemsToCreate.slice(i, i + BATCH_SIZE);
+        // Remove internal tracking fields before creating
+        const cleanBatch = batch.map(({ _uniqueKey, _customer, ...data }) => data);
+        
+        const createdItems = await WorkOrder.bulkCreate(cleanBatch);
+        
+        // Update tracking map and local state
+        createdItems.forEach((newWO, idx) => {
+          const originalItem = batch[idx];
+          if (originalItem._uniqueKey) {
+            existingWorkOrdersMap.set(originalItem._uniqueKey, newWO);
+          }
+        });
+        
+        setWorkOrders(prev => [...createdItems, ...prev]);
+        importedCount += createdItems.length;
+        
+        setImportProgress({ 
+          show: true, 
+          current: itemsToUpdate.length + i + batch.length, 
+          total: itemsToUpdate.length + itemsToCreate.length, 
+          currentItem: `Created ${i + batch.length} of ${itemsToCreate.length}` 
+        });
+        
+        if (i + BATCH_SIZE < itemsToCreate.length) {
           await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
         }
       }
