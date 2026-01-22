@@ -72,12 +72,10 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
 
       {/* Main page */}
       <div 
-        className="h-full overflow-auto border-r border-gray-300"
-        style={{ width: `${100 / totalPanes}%` }}
+        className="h-full border-r border-gray-300"
+        style={{ width: `${100 / totalPanes}%`, overflow: 'hidden' }}
       >
-        <div style={{ transform: `scale(${1})`, transformOrigin: 'top left', width: '100%', height: '100%' }}>
-          {children}
-        </div>
+        {children}
       </div>
 
       {/* Additional pages */}
@@ -86,11 +84,11 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
         return (
           <div 
             key={page.name}
-            className={`h-full overflow-auto relative ${index < additionalPages.length - 1 ? 'border-r border-gray-300' : ''}`}
-            style={{ width: `${100 / totalPanes}%` }}
+            className={`h-full relative flex flex-col ${index < additionalPages.length - 1 ? 'border-r border-gray-300' : ''}`}
+            style={{ width: `${100 / totalPanes}%`, overflow: 'hidden' }}
           >
             {/* Page header with close button */}
-            <div className="sticky top-0 z-10 bg-purple-100 px-3 py-1.5 flex items-center justify-between border-b border-purple-200">
+            <div className="flex-shrink-0 bg-purple-100 px-3 py-1.5 flex items-center justify-between border-b border-purple-200">
               <div className="flex items-center gap-2">
                 <Columns className="w-3.5 h-3.5 text-purple-600" />
                 <span className="text-xs font-medium text-purple-800">{page.title}</span>
@@ -104,7 +102,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
             </div>
             
             {/* Page content */}
-            <div style={{ transform: `scale(${1})`, transformOrigin: 'top left', width: '100%' }}>
+            <div className="flex-1 overflow-hidden">
               <Suspense fallback={
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
