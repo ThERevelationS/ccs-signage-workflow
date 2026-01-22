@@ -749,21 +749,25 @@ function LayoutContent({ children }) {
                 <div className="hidden lg:flex items-center gap-1 flex-wrap flex-1 ml-4 max-w-[calc(100%-400px)]">
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
+                    const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                     return (
                       <Link
                         key={item.title}
                         to={item.url}
+                        onClick={(e) => handleNavClick(e, item)}
                         className={`px-2 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
-                          isActive ? 'clay-card border-purple-300 shadow-md' : 'hover:clay-card border-gray-200 hover:border-gray-300'
+                          isActive ? 'clay-card border-purple-300 shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card border-gray-200 hover:border-gray-300'
                         }`}
                         style={isActive ? { 
                           background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
                         } : {}}
+                        title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : '#9CA3AF' }} />
-                        <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : 'text-gray-700'}`}>
+                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                        <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                           {item.title}
                         </span>
+                        {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
                       </Link>
                     );
                   })}
