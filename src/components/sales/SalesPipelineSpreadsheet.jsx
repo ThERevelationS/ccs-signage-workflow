@@ -691,8 +691,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       });
 
       let importedCount = 0;
-      const BATCH_SIZE = 10; // Process in larger batches for speed
-      const BATCH_DELAY = 500; // 0.5 seconds between batches
+      const BATCH_SIZE = 25; // Process in larger batches for speed
+      const BATCH_DELAY = 300; // 0.3 seconds between batches
+      
+      // Collect items to bulk create
+      const itemsToCreate = [];
+      const itemsToUpdate = [];
 
       for (let i = 0; i < jsonData.length; i++) {
         // Check for cancel
