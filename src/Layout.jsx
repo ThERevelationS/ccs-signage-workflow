@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   ClipboardCheck, 
@@ -25,10 +25,16 @@ import {
   Maximize2,
   Minimize2,
   PanelLeft,
-  PanelTop
+  PanelTop,
+  Columns
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
+import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
+
+// Context for multi-page view
+const MultiPageContext = createContext(null);
+export const useMultiPage = () => useContext(MultiPageContext);
 
 const navigationItems = [
   { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, color: "#E0D4F7" },
