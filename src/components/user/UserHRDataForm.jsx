@@ -395,7 +395,7 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
         Clothing Sizes
       </h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <Label>Shirt Size</Label>
           <Select

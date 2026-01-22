@@ -29,6 +29,9 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  const [countdown, setCountdown] = useState(null);
+  const [autoCapturing, setAutoCapturing] = useState(false);
+  const countdownIntervalRef = useRef(null);
 
   // Start camera
   useEffect(() => {
@@ -68,6 +71,9 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       }
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
       }
     };
   }, []);
@@ -181,18 +187,93 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     if (detection) {
       const newDescriptors = [...capturedDescriptors, Array.from(detection.descriptor)];
       setCapturedDescriptors(newDescriptors);
-      setScanStatus(`Captured ${newDescriptors.length}/3. ${newDescriptors.length < 3 ? "Move slightly and capture again." : "Ready to save!"}`);
       
       if (newDescriptors.length >= 3) {
+        setScanStatus("Ready to save!");
+        setAutoCapturing(false);
         handleEnrollCapture?.(newDescriptors);
+      } else {
+        setScanStatus(`Captured ${newDescriptors.length}/3. Move slightly...`);
+        // Auto-start next countdown
+        startCountdown(newDescriptors);
       }
     } else {
-      setScanStatus("No face detected. Look directly at camera with good lighting.");
+      setScanStatus("No face detected. Look directly at camera.");
+      // Retry countdown
+      if (autoCapturing) {
+        startCountdown(capturedDescriptors);
+      }
     }
+  };
+
+  const startCountdown = (currentDescriptors) => {
+    if (currentDescriptors.length >= 3) return;
+    
+    setAutoCapturing(true);
+    setCountdown(3);
+    
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+          // Capture after countdown
+          setTimeout(() => captureForEnrollmentAuto(currentDescriptors), 100);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const captureForEnrollmentAuto = async (currentDescriptors) => {
+    setScanStatus("Capturing...");
+    const detection = await detectFace();
+    
+    if (detection) {
+      const newDescriptors = [...currentDescriptors, Array.from(detection.descriptor)];
+      setCapturedDescriptors(newDescriptors);
+      
+      if (newDescriptors.length >= 3) {
+        setScanStatus("Ready to save!");
+        setAutoCapturing(false);
+        handleEnrollCapture?.(newDescriptors);
+      } else {
+        setScanStatus(`Captured ${newDescriptors.length}/3. Move slightly...`);
+        // Auto-start next countdown
+        setTimeout(() => startCountdown(newDescriptors), 500);
+      }
+    } else {
+      setScanStatus("No face detected. Retrying...");
+      // Retry countdown
+      setTimeout(() => startCountdown(currentDescriptors), 500);
+    }
+  };
+
+  const startAutoEnrollment = () => {
+    setCapturedDescriptors([]);
+    setScanStatus("Starting auto-capture...");
+    startCountdown([]);
+  };
+
+  const stopAutoEnrollment = () => {
+    setAutoCapturing(false);
+    setCountdown(null);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setScanStatus("Auto-capture stopped.");
   };
 
   const resetEnrollment = () => {
     setCapturedDescriptors([]);
+    setAutoCapturing(false);
+    setCountdown(null);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
     setScanStatus("Camera ready.");
   };
 
@@ -244,6 +325,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           <div className="absolute inset-0 border-4 border-purple-500 animate-pulse rounded-2xl" />
         )}
         
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="text-7xl font-bold text-white drop-shadow-lg animate-pulse">
+              {countdown}
+            </div>
+          </div>
+        )}
+        
         {recognizedUser && (
           <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
             <div className="bg-white/90 px-4 py-2 rounded-full flex items-center gap-2">
@@ -271,20 +360,30 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             ))}
           </div>
           <div className="flex gap-3">
-            <Button 
-              onClick={captureForEnrollment}
-              disabled={capturedDescriptors.length >= 3 || !modelsLoaded}
-              className="gap-2 bg-purple-600 hover:bg-purple-700"
-            >
-              <Camera className="w-4 h-4" />
-              Capture ({capturedDescriptors.length}/3)
-            </Button>
-            {capturedDescriptors.length > 0 && (
+            {!autoCapturing ? (
+              <Button 
+                onClick={startAutoEnrollment}
+                disabled={capturedDescriptors.length >= 3 || !modelsLoaded}
+                className="gap-2 bg-purple-600 hover:bg-purple-700"
+              >
+                <Camera className="w-4 h-4" />
+                Start Auto-Capture
+              </Button>
+            ) : (
+              <Button 
+                onClick={stopAutoEnrollment}
+                variant="outline"
+                className="gap-2"
+              >
+                Stop
+              </Button>
+            )}
+            {capturedDescriptors.length > 0 && !autoCapturing && (
               <Button variant="outline" onClick={resetEnrollment}>Reset</Button>
             )}
           </div>
           <p className="text-xs text-gray-500 text-center max-w-xs">
-            Capture 3 samples. Move your head slightly between captures.
+            Auto-captures 3 photos with a 3-second countdown. Move your head slightly between captures.
           </p>
           {onCancel && (
             <Button variant="outline" onClick={onCancel} className="mt-2">

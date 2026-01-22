@@ -161,8 +161,17 @@ export default function SIPs() {
           <table className="w-full border-collapse" style={{ fontSize: '14px', tableLayout: 'fixed' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
+                <th 
+                  className="px-3 py-3 border-r text-center font-bold text-white" 
+                  style={{ 
+                    width: '60px',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    fontSize: '16px'
+                  }}
+                >
+                  #
+                </th>
                 <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '40px' }}>✓</th>
-                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '40px' }}>#</th>
                 <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ width: '70px' }}>Checklist</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '15%' }}>Customer</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ width: '85px' }}>Deadline</th>
@@ -188,6 +197,17 @@ export default function SIPs() {
                     className={`border-b hover:bg-gray-50 ${isWip ? 'bg-blue-50/30' : ''}`}
                     style={{ height: '50px' }}
                   >
+                    {/* Row Number */}
+                    <td 
+                      className="px-3 py-2 border-r text-center font-bold text-white"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        fontSize: '16px'
+                      }}
+                    >
+                      {index + 1}
+                    </td>
+
                     {/* Completed Checkbox */}
                     <td className="px-2 py-2 border-r text-center">
                       <Checkbox
@@ -196,11 +216,6 @@ export default function SIPs() {
                         disabled={!isRegistered}
                         className="h-5 w-5"
                       />
-                    </td>
-
-                    {/* Row Number */}
-                    <td className="px-2 py-2 border-r text-center font-bold text-gray-600 text-sm">
-                      {index + 1}
                     </td>
 
                     {/* Checklist Button */}
