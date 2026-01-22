@@ -75,7 +75,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
 
       {/* Additional pages */}
       {additionalPages.map((page, index) => {
-        const PageComponent = pageComponents[page.name];
+        const PageComponent = pageComponents[page.name.toLowerCase()];
         return (
           <div 
             key={page.name}
