@@ -11,8 +11,6 @@ import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
-import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -197,6 +195,8 @@ export default function SIPs() {
                 const isWip = isWipItem(wo);
                 
                 return (
+                  <React.Fragment key={wo.id}>
+                  {focusedRowIndex === index && <tr><td colSpan={12} className="h-3 bg-transparent border-none"></td></tr>}
                   <tr 
                     className={`border-b ${focusedRowIndex !== index ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowIndex !== index ? 'bg-blue-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
                     style={{ height: '50px' }}
