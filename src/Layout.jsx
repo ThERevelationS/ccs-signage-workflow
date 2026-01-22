@@ -873,7 +873,15 @@ function LayoutContent({ children }) {
             minHeight: '100vh'
           }}
         >
-          {children}
+          <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
+            <MultiPageContainer 
+              additionalPages={additionalPages} 
+              onRemovePage={removePage}
+              onClearAll={clearPages}
+            >
+              {children}
+            </MultiPageContainer>
+          </MultiPageContext.Provider>
         </main>
 
         {/* Floating Buttons - hidden in fullscreen */}
