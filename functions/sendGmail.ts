@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
     try {
@@ -10,42 +10,12 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Missing required fields: to, subject, body' }, { status: 400 });
         }
 
-        // Get any user with Gmail connected (use as the sender account)
-        const allUsers = await base44.asServiceRole.entities.User.list();
-        const gmailUser = allUsers.find(u => u.gmail_connected && u.gmail_refresh_token);
-        
-        if (!gmailUser) {
-            return Response.json({ error: 'No Gmail account connected. Please connect a Gmail account in Admin Settings.' }, { status: 400 });
+        // Get access token from platform's Gmail connector
+        const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+
+        if (!accessToken) {
+            return Response.json({ error: 'Gmail not connected. Please connect Gmail in Admin Settings.' }, { status: 400 });
         }
-
-        const refreshToken = gmailUser.gmail_refresh_token;
-        const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-        const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-
-        // Get a new access token using the refresh token
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                client_id: clientId,
-                client_secret: clientSecret,
-                refresh_token: refreshToken,
-                grant_type: 'refresh_token'
-            })
-        });
-
-        const tokens = await tokenResponse.json();
-
-        if (tokens.error) {
-            // If refresh token is invalid, mark Gmail as disconnected
-            await base44.asServiceRole.entities.User.update(gmailUser.id, {
-                gmail_connected: false,
-                gmail_refresh_token: null
-            });
-            return Response.json({ error: 'Gmail authorization expired. Please reconnect your Gmail account.' }, { status: 401 });
-        }
-
-        const accessToken = tokens.access_token;
 
         // Create the email in RFC 2822 format
         const emailLines = [

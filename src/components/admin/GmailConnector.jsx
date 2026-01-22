@@ -1,75 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, CheckCircle2, XCircle, Loader2, Send } from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Loader2, Send, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { gmailAuthInitiate } from "@/functions/gmailAuthInitiate";
+import { checkGmailConnection } from "@/functions/checkGmailConnection";
+import { sendGmail } from "@/functions/sendGmail";
 
 export default function GmailConnector() {
   const [isConnected, setIsConnected] = useState(false);
+  const [connectedEmail, setConnectedEmail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     checkConnectionStatus();
-
-    // Listen for successful connection from popup
-    const handleMessage = (event) => {
-      if (event.data === 'gmail_connected') {
-        setIsConnected(true);
-        setIsConnecting(false);
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const checkConnectionStatus = async () => {
     setIsLoading(true);
-    const user = await base44.auth.me();
-    setIsConnected(user?.gmail_connected === true);
-    setIsLoading(false);
-  };
-
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    const response = await gmailAuthInitiate();
-    if (response.data?.authUrl) {
-      // Open in popup
-      const popup = window.open(
-        response.data.authUrl,
-        'Gmail Authorization',
-        'width=500,height=600,scrollbars=yes'
-      );
-      
-      // Check if popup was blocked
-      if (!popup) {
-        alert('Please allow popups to connect Gmail');
-        setIsConnecting(false);
-      }
-    } else {
-      setIsConnecting(false);
+    try {
+      const response = await checkGmailConnection();
+      setIsConnected(response.data?.connected === true);
+      setConnectedEmail(response.data?.email || null);
+    } catch (error) {
+      setIsConnected(false);
     }
-  };
-
-  const handleDisconnect = async () => {
-    await base44.auth.updateMe({
-      gmail_connected: false,
-      gmail_refresh_token: null
-    });
-    setIsConnected(false);
+    setIsLoading(false);
   };
 
   const handleTestEmail = async () => {
     setIsTesting(true);
     try {
-      await base44.functions.invoke('sendGmail', {
-        to: 'brett@cincisigns.com',
+      const user = await base44.auth.me();
+      await sendGmail({
+        to: user.email,
         subject: 'Test Email from Sign Shop Workflow',
         body: 'This is a test email to confirm your Gmail integration is working correctly.'
       });
-      alert('Test email sent to brett@cincisigns.com!');
+      alert(`Test email sent to ${user.email}!`);
     } catch (error) {
       alert('Failed to send test email: ' + error.message);
     }
@@ -94,7 +62,11 @@ export default function GmailConnector() {
           </div>
           <div>
             <h4 className="font-medium text-gray-800">Gmail Integration</h4>
-            <p className="text-sm text-gray-500">Send email notifications via your Gmail account</p>
+            <p className="text-sm text-gray-500">
+              {isConnected && connectedEmail 
+                ? `Connected as ${connectedEmail}` 
+                : 'Send email notifications via Gmail'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -117,35 +89,29 @@ export default function GmailConnector() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleDisconnect}
-                className="text-red-600 hover:text-red-700"
+                onClick={checkConnectionStatus}
+                className="text-gray-600 hover:text-gray-700"
               >
-                Disconnect
+                <RefreshCw className="w-4 h-4" />
               </Button>
             </>
           ) : (
             <>
-              <Badge className="bg-gray-100 text-gray-600 flex items-center gap-1">
+              <Badge className="bg-red-100 text-red-600 flex items-center gap-1">
                 <XCircle className="w-3 h-3" />
                 Not Connected
               </Badge>
+              <p className="text-sm text-gray-500">
+                Reconnect via Base44 Dashboard → App Connectors
+              </p>
               <Button
-                onClick={handleConnect}
-                disabled={isConnecting}
-                className="clay-button border-none"
-                style={{ background: 'linear-gradient(135deg, #EA4335 0%, #FBBC05 100%)' }}
+                variant="outline"
+                size="sm"
+                onClick={checkConnectionStatus}
+                className="text-gray-600 hover:text-gray-700"
               >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    Connect Gmail
-                  </>
-                )}
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Refresh
               </Button>
             </>
           )}
