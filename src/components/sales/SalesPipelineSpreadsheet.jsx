@@ -735,7 +735,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         
         // Check for duplicates by customer name + description - if found, fill in missing fields instead of creating duplicate
         const clientKey = customer.toLowerCase().trim();
-        const descKey = jobDescStr.toLowerCase().trim();
+        // Don't use description for key if it looks like notes data
+        const descKey = descLooksLikeNotes ? '' : jobDescStr.toLowerCase().trim();
         const uniqueKey = clientKey ? `${clientKey}|||${descKey}` : null;
         const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
         
