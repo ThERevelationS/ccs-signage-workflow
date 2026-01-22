@@ -181,6 +181,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (gradientSetting?.setting_value) {
         setDeadlineGradientSettings(gradientSetting.setting_value);
       }
+
+      // Load default sort setting and apply if user has no custom sort
+      const defaultSortSetting = settings.find(s => s.setting_key === 'salesPipelineDefaultSort');
+      if (defaultSortSetting?.setting_value?.column && !sortConfig.key) {
+        handleColumnSort(defaultSortSetting.setting_value.column, defaultSortSetting.setting_value.direction || 'asc');
+      }
       
       setGlobalSettingsLoaded(true);
     } catch (error) {
