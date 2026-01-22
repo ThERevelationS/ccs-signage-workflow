@@ -50,10 +50,38 @@ export default function ResourcePlanning() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingCapacity, setEditingCapacity] = useState(null);
   const [capacityForm, setCapacityForm] = useState({ weekly_hours_capacity: 40, daily_hours_capacity: 8 });
+  const [hasAccess, setHasAccess] = useState(false);
+  const [accessChecked, setAccessChecked] = useState(false);
   
   useEffect(() => {
-    loadData();
-  }, []);
+    checkAccess();
+  }, [currentUser]);
+  
+  const checkAccess = async () => {
+    if (!currentUser?.email) {
+      setAccessChecked(true);
+      return;
+    }
+    
+    try {
+      const users = await AuthorizedEmail.filter({ email: currentUser.email });
+      const user = users[0];
+      // Admin always has access, or if can_view_resources is true
+      if (user?.role === 'admin' || user?.can_view_resources) {
+        setHasAccess(true);
+        loadData();
+      }
+    } catch (error) {
+      console.error("Error checking access:", error);
+    }
+    setAccessChecked(true);
+  };
+  
+  useEffect(() => {
+    if (hasAccess) {
+      loadData();
+    }
+  }, [hasAccess]);
   
   const loadData = async () => {
     setIsLoading(true);
@@ -189,10 +217,24 @@ export default function ResourcePlanning() {
     }
   };
   
-  if (isLoading) {
+  if (!accessChecked || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+  
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6">
+        <div className="clay-card p-8 text-center max-w-md">
+          <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Access Restricted</h2>
+          <p className="text-gray-600">
+            You don't have permission to view this page. Please contact an administrator to request access.
+          </p>
+        </div>
       </div>
     );
   }
