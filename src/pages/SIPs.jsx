@@ -409,7 +409,8 @@ export default function SIPs() {
                     </td>
                   </tr>
                   {focusedRowIndex === index && <tr><td colSpan={12} className="h-3 bg-transparent border-none"></td></tr>}
-                </React.Fragment>);
+                  </React.Fragment>
+                );
               })}
               {activeWorkOrders.length === 0 && (
                 <tr>
