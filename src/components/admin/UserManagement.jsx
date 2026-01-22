@@ -74,7 +74,8 @@ export default function UserManagement() {
     password_hash: "",
     role: "user",
     sales_roles: ["Task Assigned"],
-    can_import_export: false
+    can_import_export: false,
+    can_view_resources: false
   });
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
   const [sendingOnboardingEmail, setSendingOnboardingEmail] = useState(null);
@@ -104,7 +105,8 @@ export default function UserManagement() {
       password_hash: "", // Don't show existing password
       role: user.role || "user",
       sales_roles: user.sales_roles || ["Task Assigned"],
-      can_import_export: user.can_import_export || false
+      can_import_export: user.can_import_export || false,
+      can_view_resources: user.role === 'admin' || user.can_view_resources || false
     });
     setIsDialogOpen(true);
   };
@@ -678,7 +680,12 @@ Return valid HTML that will render beautifully in ALL email clients including da
                     <Label>Role</Label>
                     <Select
                       value={formData.role}
-                      onValueChange={(val) => setFormData({ ...formData, role: val })}
+                      onValueChange={(val) => setFormData({ 
+                        ...formData, 
+                        role: val,
+                        // Auto-enable resources for admins
+                        can_view_resources: val === 'admin' ? true : formData.can_view_resources
+                      })}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue />
@@ -724,7 +731,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
 
                   <div>
                     <Label>Permissions</Label>
-                    <div className="mt-2">
+                    <div className="mt-2 space-y-2">
                       <div className="flex items-center gap-2">
                         <Checkbox
                           checked={formData.can_import_export || false}
@@ -734,8 +741,21 @@ Return valid HTML that will render beautifully in ALL email clients including da
                         />
                         <label className="text-sm">Can Import/Export Data</label>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.role === 'admin' || formData.can_view_resources || false}
+                          disabled={formData.role === 'admin'}
+                          onCheckedChange={(checked) => {
+                            setFormData({ ...formData, can_view_resources: checked });
+                          }}
+                        />
+                        <label className="text-sm">Can View Resources Page</label>
+                        {formData.role === 'admin' && (
+                          <span className="text-xs text-gray-400">(auto-enabled for admins)</span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Allow this user to import and export data on Order Form and Sales Pipeline</p>
+                    <p className="text-xs text-gray-500 mt-2">Control access to specific pages and features</p>
                   </div>
                 </div>
               </TabsContent>
