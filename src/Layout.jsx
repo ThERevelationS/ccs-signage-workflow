@@ -465,11 +465,15 @@ const getDarkModeStyles = () => `
 
 function LayoutContent({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
+  
+  // Multi-page view state
+  const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
   
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
@@ -479,6 +483,16 @@ function LayoutContent({ children }) {
   useEffect(() => {
     localStorage.setItem("navLayout", navLayout);
   }, [navLayout]);
+
+  // Handle Ctrl+Click for multi-page view
+  const handleNavClick = (e, item) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      // Extract page name from URL
+      const pageName = item.url.split('/').pop();
+      addPage(pageName, item.title);
+    }
+  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
