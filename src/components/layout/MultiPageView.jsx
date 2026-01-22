@@ -25,10 +25,17 @@ export function useMultiPageView() {
 
   const addPage = (pageName, pageTitle) => {
     // If page is already in split view, remove it (toggle behavior)
-    const existingIndex = additionalPages.findIndex(p => p.name === pageName);
+    const normalizedName = pageName.toLowerCase();
+    const existingIndex = additionalPages.findIndex(p => p.name.toLowerCase() === normalizedName);
     if (existingIndex !== -1) {
-      setAdditionalPages(prev => prev.filter(p => p.name !== pageName));
+      setAdditionalPages(prev => prev.filter(p => p.name.toLowerCase() !== normalizedName));
       return;
+    }
+    
+    // Check if it's the current main page (from URL)
+    const currentPath = window.location.pathname.split('/').pop()?.toLowerCase() || '';
+    if (currentPath === normalizedName) {
+      return; // Don't add the current page to split view
     }
     
     if (additionalPages.length >= 2) {
@@ -61,14 +68,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
 
   return (
     <div className="flex h-full w-full">
-      {/* Clear all button */}
-      <button
-        onClick={onClearAll}
-        className="fixed top-20 right-4 z-50 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium flex items-center gap-1.5 hover:bg-red-200 transition-colors shadow-md"
-      >
-        <X className="w-3.5 h-3.5" />
-        Clear Split View
-      </button>
+      {/* Clear all button removed - now in Layout footer */}
 
       {/* Main page */}
       <div 

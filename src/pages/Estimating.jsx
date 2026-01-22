@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import DragDropList from "@/components/workflow/DragDropList";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
-import { Maximize2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 
@@ -180,18 +180,7 @@ export default function Estimating() {
             <h1 className="text-2xl font-bold text-gray-800">Estimating</h1>
             <p className="text-sm text-gray-500">Manage estimation requests and quotes</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={toggleFullScreen}
-              variant="outline"
-              size="sm"
-              className="clay-button border-none"
-              style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
-            >
-              <Maximize2 className="w-4 h-4" />
-            </Button>
 
-          </div>
         </div>
       )}
 

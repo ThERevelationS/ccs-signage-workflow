@@ -15,9 +15,7 @@ import {
   Search,
   Plus,
   Upload,
-  Download,
-  Maximize2,
-  Minimize2
+  Download
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
@@ -163,21 +161,6 @@ export default function OrderForm() {
                 </Button>
               </>
             )}
-            
-            <Button
-              onClick={() => {
-                if (!document.fullscreenElement) {
-                  document.documentElement.requestFullscreen();
-                } else {
-                  document.exitFullscreen();
-                }
-              }}
-              size="sm"
-              className="clay-button border-none text-gray-800 h-8 px-3"
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
-            >
-              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </Button>
           </div>
         </div>
 

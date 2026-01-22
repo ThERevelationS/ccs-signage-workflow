@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
-import { Plus, Maximize2, Minimize2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
@@ -211,21 +211,7 @@ export default function Permitting() {
         </div>
       )}
       <div className="w-full max-w-[95vw] mx-auto">
-        {!isFullScreen && (
-          <div className="flex justify-end items-center gap-2 mb-2">
-            <div className="flex gap-2">
-              <Button
-                onClick={toggleFullScreen}
-                size="sm"
-                className="clay-button border-none text-gray-800 h-8 px-3"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, rgba(255,255,255,0.9) 100%)' }}
-              >
-                <Maximize2 className="w-4 h-4" />
-              </Button>
 
-            </div>
-          </div>
-        )}
         <div className="clay-card">
           {isLoading ? (
             <div className="text-center py-12">
