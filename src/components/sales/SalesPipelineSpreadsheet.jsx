@@ -762,12 +762,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             return null;
           };
           
-          // Helper to check and update string fields
+          // Helper to check and update string fields - also clears if import has empty value
           const checkStringField = (dbField, ...columns) => {
             for (const col of columns) {
-              if (row[col] != null && row[col] !== "") {
-                const newVal = String(row[col]).trim();
-                if (newVal && newVal !== (existingWO[dbField] || "")) {
+              if (col in row) {
+                const rawVal = row[col];
+                const newVal = (rawVal != null && rawVal !== "") ? String(rawVal).trim() : "";
+                if (newVal !== (existingWO[dbField] || "")) {
                   updates[dbField] = newVal;
                 }
                 return;
@@ -775,11 +776,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             }
           };
           
-          // Helper to check and update number fields
+          // Helper to check and update number fields - also clears if import has empty value
           const checkNumberField = (dbField, ...columns) => {
             for (const col of columns) {
-              if (row[col] != null && row[col] !== "") {
-                const newVal = parseFloat(row[col]) || 0;
+              if (col in row) {
+                const rawVal = row[col];
+                const newVal = (rawVal != null && rawVal !== "") ? (parseFloat(rawVal) || 0) : 0;
                 if (newVal !== (existingWO[dbField] || 0)) {
                   updates[dbField] = newVal;
                 }
@@ -788,13 +790,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             }
           };
           
-          // Helper to check and update date fields
+          // Helper to check and update date fields - also clears if import has empty value
           const checkDateField = (dbField, ...columns) => {
             for (const col of columns) {
-              if (row[col] != null && row[col] !== "") {
-                const parsed = parseExcelDateForUpdate(row[col]);
-                if (parsed && parsed !== (existingWO[dbField] || "")) {
-                  updates[dbField] = parsed;
+              if (col in row) {
+                const rawVal = row[col];
+                const parsed = (rawVal != null && rawVal !== "") ? parseExcelDateForUpdate(rawVal) : "";
+                const newVal = parsed || "";
+                if (newVal !== (existingWO[dbField] || "")) {
+                  updates[dbField] = newVal;
                 }
                 return;
               }
