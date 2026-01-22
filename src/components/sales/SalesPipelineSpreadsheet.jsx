@@ -839,19 +839,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           
           // Only update if there are actual changes
           if (Object.keys(updates).length > 0) {
-            await WorkOrder.update(existingWO.id, updates);
-            // Update local state and map
-            const updatedWO = { ...existingWO, ...updates };
-            existingWorkOrdersMap.set(uniqueKey, updatedWO);
-            setWorkOrders(prev => prev.map(wo => wo.id === existingWO.id ? updatedWO : wo));
+            itemsToUpdate.push({ id: existingWO.id, updates, uniqueKey, existingWO, customer });
           }
           
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Updated: ${customer}` });
-          
-          // Pause between batches to avoid rate limits
-          if ((i + 1) % BATCH_SIZE === 0) {
-            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
-          }
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Queued: ${customer}` });
           continue;
         }
         
