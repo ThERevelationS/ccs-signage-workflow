@@ -963,8 +963,22 @@ function LayoutContent({ children }) {
                 <span>My Info</span>
               </Link>
             )}
-          </div>
-        )}
+            {additionalPages.length > 0 && (
+              <button
+                onClick={clearPages}
+                className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
+                style={{ 
+                  background: 'rgba(254, 202, 202, 0.8)',
+                  color: '#991b1b'
+                }}
+                title="Clear split view"
+              >
+                <X className="w-3 h-3" />
+                <span>Clear Split</span>
+              </button>
+            )}
+            </div>
+            )}
       </div>
     </>
   );
