@@ -691,8 +691,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       });
 
       let importedCount = 0;
-      const BATCH_SIZE = 25; // Process in larger batches for speed
-      const BATCH_DELAY = 300; // 0.3 seconds between batches
+      const BATCH_SIZE = 50; // Use bulkCreate which handles this efficiently
+      const BATCH_DELAY = 1000; // 1 second between batches to avoid rate limits
       
       // Collect items to bulk create
       const itemsToCreate = [];
