@@ -678,8 +678,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "columns" && (
-            <div className="space-y-3">
-              <div className="clay-card p-4 space-y-3">
+            <div className="space-y-3 overflow-hidden flex-1 flex flex-col">
+              <div className="clay-card p-4 space-y-3 overflow-hidden flex flex-col flex-1">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
