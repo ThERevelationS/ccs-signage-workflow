@@ -753,6 +753,129 @@ export default function WorkOrderDetailsDialog({
             </div>
           </div>
 
+          {/* Work Notes - Spreadsheet Style, Full Width */}
+          <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-sm">Notes</h3>
+              <Popover open={editingField === 'addNote'} onOpenChange={(open) => open ? setEditingField('addNote') : setEditingField(null)} modal={true}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 px-3 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Note
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="clay-card w-96">
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Type</Label>
+                      <Select
+                        value={editValues.noteType || ""}
+                        onValueChange={(val) => setEditValues({ ...editValues, noteType: val })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrative Work</SelectItem>
+                          <SelectItem value="fabrication">Sign Shop Fabrication</SelectItem>
+                          <SelectItem value="vinyl">Vinyl Production</SelectItem>
+                          <SelectItem value="permitting">Permitting Steps</SelectItem>
+                          <SelectItem value="design">Design Work</SelectItem>
+                          <SelectItem value="installation">Installation</SelectItem>
+                          <SelectItem value="client">Client Communication</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Note</Label>
+                      <Textarea
+                        placeholder="Enter note details..."
+                        className="mt-1 min-h-24"
+                        value={editValues.noteText || ""}
+                        onChange={(e) => setEditValues({ ...editValues, noteText: e.target.value })} />
+                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={async () => {
+                        if (editValues.noteType && editValues.noteText) {
+                          await handleAddWorkNote({
+                            type: editValues.noteType,
+                            text: editValues.noteText
+                          });
+                          setEditValues({});
+                          setEditingField(null);
+                        }
+                      }}>
+                      Add Note
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Spreadsheet-style notes table */}
+            <div className="border rounded-lg overflow-hidden" style={{ maxHeight: '120px', overflowY: 'auto' }}>
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 border-b sticky top-0">
+                  <tr>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '80px' }}>Type</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '70px' }}>Date</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700" style={{ width: '80px' }}>By</th>
+                    <th className="text-left px-2 py-1.5 font-medium text-gray-700">Note</th>
+                    <th className="text-center px-2 py-1.5 font-medium text-gray-700" style={{ width: '40px' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workNotes.map((note, idx) => (
+                    <tr key={note.id} className={`border-b last:border-b-0 hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-2 py-1.5">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">
+                          {note.type === 'admin' && 'Admin'}
+                          {note.type === 'fabrication' && 'Fab'}
+                          {note.type === 'vinyl' && 'Vinyl'}
+                          {note.type === 'permitting' && 'Permit'}
+                          {note.type === 'design' && 'Design'}
+                          {note.type === 'installation' && 'Install'}
+                          {note.type === 'client' && 'Client'}
+                          {note.type === 'other' && 'Other'}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-500">
+                        {format(new Date(note.timestamp), "M/d/yy")}
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-600 text-xs">
+                        {note.created_by?.split(' ')[0] || '-'}
+                      </td>
+                      <td className="px-2 py-1.5 text-gray-700">
+                        {note.text}
+                        {note.sub_tasks && note.sub_tasks.length > 0 && (
+                          <span className="text-gray-400 ml-2">({note.sub_tasks.length} sub-tasks)</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => handleDeleteWorkNote(note.id)}>
+                          <X className="w-3 h-3 text-gray-400 hover:text-red-600" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {workNotes.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-2 py-3 text-center text-gray-400">
+                        No notes yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {/* Client Information Section - Collapsible */}
