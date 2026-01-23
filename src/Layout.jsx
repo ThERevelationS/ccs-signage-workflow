@@ -895,8 +895,7 @@ function LayoutContent({ children }) {
             paddingTop: isSideNav ? '0' : (isCollapsed ? '16px' : '80px'),
             marginLeft: isSideNav ? '224px' : '0',
             height: '100vh',
-            overflowY: 'auto',
-            overflowX: 'hidden'
+            overflow: 'auto'
           }}
         >
           <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
