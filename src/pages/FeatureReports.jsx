@@ -185,8 +185,8 @@ export default function FeatureReports() {
   const isAdmin = currentUser?.role === "admin";
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 pt-6 sm:pt-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 pt-6 sm:pt-8">
+      <div className="max-w-4xl mx-auto pb-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 pt-2">
           <div className="flex items-center gap-3">
