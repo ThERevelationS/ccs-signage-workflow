@@ -697,20 +697,20 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 <div>
                   <Label className="mb-1 block text-sm">Column Settings - Toggle visibility</Label>
                   
-                  <div className="grid grid-cols-6 gap-0.5">
+                  <div className="grid grid-cols-8 gap-0.5">
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`px-1 py-0.5 rounded border flex items-center gap-1 cursor-pointer ${
+                        className={`px-1 py-0.5 rounded border flex items-center gap-0.5 cursor-pointer ${
                           column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
-                        style={{ fontSize: '9px' }}
+                        style={{ fontSize: '8px', lineHeight: '1.1' }}
                       >
                         <input
                           type="checkbox"
                           checked={column.visible}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-2.5 h-2.5"
+                          className="w-2 h-2 flex-shrink-0"
                         />
                         <span className={`truncate ${column.visible ? "font-medium" : ""}`}>
                           {column.label}
