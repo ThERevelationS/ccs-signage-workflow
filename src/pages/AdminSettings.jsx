@@ -637,8 +637,8 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-6xl mx-auto pb-8">
         <Tabs defaultValue="automations" className="space-y-6">
           <div className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
             <TabsList className="bg-transparent w-full flex flex-wrap gap-1">
