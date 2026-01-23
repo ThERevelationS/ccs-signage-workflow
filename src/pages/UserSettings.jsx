@@ -211,8 +211,8 @@ export default function UserSettings() {
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto pb-8">
         <div className="flex items-center gap-4 mb-6">
           <div 
             className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white"
