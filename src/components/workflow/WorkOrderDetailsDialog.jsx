@@ -687,15 +687,15 @@ export default function WorkOrderDetailsDialog({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  {editingField === 'title' ?
+                  {editingField === 'client_name' ?
                   <div className="flex items-center gap-2 flex-1">
                       <Input
-                      value={editValues.title}
-                      onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
+                      value={editValues.client_name}
+                      onChange={(e) => setEditValues({ ...editValues, client_name: e.target.value })}
                       className="text-2xl font-bold h-10"
                       autoFocus />
 
-                      <Button size="sm" onClick={() => saveEdit('title')} className="h-8">
+                      <Button size="sm" onClick={() => saveEdit('client_name')} className="h-8">
                         <Check className="w-4 h-4" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8">
@@ -706,9 +706,9 @@ export default function WorkOrderDetailsDialog({
                   <>
                         <h2
                       className="text-2xl font-bold text-gray-800 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                      onClick={() => startEdit('title')}>
+                      onClick={() => startEdit('client_name')}>
 
-                          {workOrder.title}
+                          {workOrder.client_name}
                           <Pencil className="w-4 h-4 inline ml-2 opacity-0 hover:opacity-100" />
                         </h2>
                         {workOrder.is_rider &&
@@ -726,29 +726,6 @@ export default function WorkOrderDetailsDialog({
                       </>
                   }
                 </div>
-                {editingField === 'client_name' ?
-                <div className="flex items-center gap-2">
-                    <Input
-                    value={editValues.client_name}
-                    onChange={(e) => setEditValues({ ...editValues, client_name: e.target.value })}
-                    className="h-8"
-                    autoFocus />
-
-                    <Button size="sm" onClick={() => saveEdit('client_name')} className="h-7">
-                      <Check className="w-3 h-3" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7">
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div> :
-
-                <p
-                  className="text-gray-600 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded inline-block"
-                  onClick={() => startEdit('client_name')}>
-
-                    {workOrder.client_name}
-                  </p>
-                }
               </div>
             </div>
           </div>
