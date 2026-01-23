@@ -341,7 +341,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
           className="clay-card border-none [&>button]:hidden" 
-          style={{ maxWidth: "900px", overflow: "visible" }}
+          style={{ maxWidth: "90vw", width: "1100px", overflow: "hidden" }}
         >
           <DialogHeader>
             <div className="flex items-center justify-between">
