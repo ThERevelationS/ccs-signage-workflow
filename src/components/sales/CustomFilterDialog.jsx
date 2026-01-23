@@ -678,8 +678,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "columns" && (
-            <div className="space-y-3 overflow-hidden flex-1 flex flex-col">
-              <div className="clay-card p-4 space-y-3 overflow-hidden flex flex-col flex-1">
+            <div className="space-y-3 overflow-y-auto flex-1">
+              <div className="clay-card p-4 space-y-3">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
                 </h3>
@@ -697,22 +697,22 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 <div>
                   <Label className="mb-1 block text-sm">Column Settings - Toggle visibility</Label>
                   
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-wrap gap-1">
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`px-2 py-0.5 rounded border flex items-center gap-1.5 cursor-pointer w-fit ${
+                        className={`px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer ${
                           column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
-                        style={{ fontSize: '12px', minWidth: '120px', maxWidth: '180px' }}
+                        style={{ fontSize: '11px' }}
                       >
                         <input
                           type="checkbox"
                           checked={column.visible}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-3.5 h-3.5 flex-shrink-0"
+                          className="w-3 h-3 flex-shrink-0"
                         />
-                        <span className={`truncate ${column.visible ? "font-medium" : ""}`}>
+                        <span className={column.visible ? "font-medium" : ""}>
                           {column.label}
                         </span>
                       </label>
@@ -720,10 +720,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="clay-card p-2 bg-blue-50/50 flex-1 flex flex-col min-h-0">
-                  <Label className="mb-1 block font-bold text-sm flex-shrink-0">Preview</Label>
-                  <p className="text-xs text-gray-500 mb-1 flex-shrink-0">Arrows reorder columns. Scroll horizontally →</p>
-                  <div className="border rounded-lg bg-white flex-1 min-h-0" style={{ overflowX: 'auto', overflowY: 'hidden' }}>
+                <div className="clay-card p-2 bg-blue-50/50">
+                  <Label className="mb-1 block font-bold text-sm">Preview</Label>
+                  <p className="text-xs text-gray-500 mb-1">Arrows reorder columns. Scroll horizontally →</p>
+                  <div className="border rounded-lg bg-white overflow-x-auto" style={{ maxHeight: '100px' }}>
                     <table className="border-collapse" style={{ fontSize: '10px', minWidth: 'max-content' }}>
                       <thead className="bg-gray-100">
                         <tr className="border-b">
