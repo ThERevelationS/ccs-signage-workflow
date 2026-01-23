@@ -971,7 +971,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
 
       // Process updates in batches
-      setImportProgress({ show: true, current: 0, total: itemsToUpdate.length + itemsToCreate.length, currentItem: "Processing updates..." });
+      const totalItems = itemsToUpdate.length + itemsToCreate.length;
+      setImportProgress({ show: true, current: 0, total: totalItems, currentItem: `Processing ${itemsToUpdate.length} updates, ${itemsToCreate.length} new items...` });
       
       for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
         if (importStateRef.current.cancelled) {
