@@ -780,9 +780,7 @@ export default function WorkOrderCard({
                   className="flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h3 className="font-bold text-gray-800 text-base leading-tight">{workOrder.title}</h3>
-                    <span className="text-sm text-gray-500">•</span>
-                    <p className="text-sm text-gray-600 font-medium leading-tight">{workOrder.client_name}</p>
+                    <h3 className="font-bold text-gray-800 text-base leading-tight">{workOrder.client_name}</h3>
                   {workOrder.is_rider &&
                   <Badge
                     className="rounded-full px-3 py-1 leading-none flex-shrink-0 font-bold uppercase tracking-wide"
@@ -824,10 +822,10 @@ export default function WorkOrderCard({
             </div>
 
             <div className="flex gap-2 mb-1 flex-wrap">
-              {workOrder.assigned_to &&
+              {(workOrder.current_task_assigned_to || workOrder.assigned_to) &&
               <div className="flex items-center gap-1 text-gray-600">
                   <User className="w-3 h-3 flex-shrink-0 text-blue-600" />
-                  <span className="text-xs font-medium">{workOrder.assigned_to.split('@')[0]}</span>
+                  <span className="text-xs font-medium">{(workOrder.current_task_assigned_to || workOrder.assigned_to).split('@')[0]}</span>
                 </div>
               }
               {workOrder.due_date &&
@@ -861,12 +859,12 @@ export default function WorkOrderCard({
               </div>
 
             {workOrder.description &&
-            <p className="text-xs text-gray-600 mb-1 leading-snug line-clamp-1">
+            <p className="text-xs text-gray-600 mb-1 leading-snug line-clamp-2">
               {workOrder.description}
             </p>
             }
             </div>
-          </div>
+            </div>
 
           {/* Tasks Section - Full Width */}
           <div
