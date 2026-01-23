@@ -720,11 +720,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="clay-card p-2 bg-blue-50/50">
+                <div className="clay-card p-2 bg-blue-50/50 overflow-hidden">
                   <Label className="mb-1 block font-bold text-sm">Preview</Label>
                   <p className="text-xs text-gray-500 mb-1">Arrows reorder columns. Scroll horizontally →</p>
-                  <div className="border rounded-lg bg-white overflow-x-auto" style={{ maxHeight: '100px', maxWidth: '100%' }}>
-                    <table className="border-collapse min-w-max" style={{ fontSize: '10px' }}>
+                  <div className="border rounded-lg bg-white overflow-x-scroll" style={{ maxHeight: '120px' }}>
+                    <table className="border-collapse w-max" style={{ fontSize: '10px' }}>
                       <thead className="bg-gray-100">
                         <tr className="border-b">
                           {columnSettings.filter(c => c.visible).map((column, index) => (
