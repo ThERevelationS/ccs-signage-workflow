@@ -640,7 +640,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             setOrders(prev => prev.map(o => o.id === existingOrder.id ? updatedOrder : o));
             originalOrdersRef.current[existingOrder.id] = { ...originalOrdersRef.current[existingOrder.id], ...updates };
             
-            await new Promise(resolve => setTimeout(resolve, 350));
+            // Longer delay for updates to prevent rate limiting
+            await new Promise(resolve => setTimeout(resolve, 800));
           }
           
           setImportProgress({ show: true, current: i + 1, total: jsonData.length });
@@ -720,8 +721,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         importedCount++;
         setImportProgress({ show: true, current: i + 1, total: jsonData.length });
         
-        // Delay to prevent rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Delay to prevent rate limiting - use longer delay every 5 items
+        const batchDelay = (importedCount % 5 === 0) ? 2000 : 800;
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
       }
 
       // No need to reload - we've been updating state as we go
