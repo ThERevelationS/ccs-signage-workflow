@@ -769,6 +769,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             return null;
           };
           
+          // Helper to map first name to full name from users
+          const mapFirstNameToFullName = (value) => {
+            if (!value) return "";
+            const trimmedValue = String(value).trim();
+            // Try to find user by matching first name
+            const matchedUser = users.find(u => {
+              const firstName = u.full_name?.split(' ')[0] || '';
+              return firstName.toLowerCase() === trimmedValue.toLowerCase();
+            });
+            return matchedUser ? matchedUser.full_name : trimmedValue;
+          };
+          
           // Helper to check and update string fields - also clears if import has empty value
           const checkStringField = (dbField, ...columns) => {
             for (const col of columns) {
@@ -814,10 +826,32 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           
           // Check all text fields
           checkStringField('lead_source', 'Source', 'Lead Source');
-          checkStringField('current_task_assigned_to', 'Current Task Assigned to');
-          checkStringField('designer', 'Designer', 'designer');
-          checkStringField('project_manager', 'Project Manager', 'PM', 'project_manager');
-          checkStringField('estimator', 'Estimator', 'estimator');
+          
+          // Map first names to full names for user assignment fields
+          if ('Current Task Assigned to' in row) {
+            const mapped = mapFirstNameToFullName(row['Current Task Assigned to']);
+            if (mapped !== (existingWO['current_task_assigned_to'] || "")) {
+              updates['current_task_assigned_to'] = mapped;
+            }
+          }
+          if ('Designer' in row || 'designer' in row) {
+            const mapped = mapFirstNameToFullName(row['Designer'] ?? row['designer']);
+            if (mapped !== (existingWO['designer'] || "")) {
+              updates['designer'] = mapped;
+            }
+          }
+          if ('Project Manager' in row || 'PM' in row || 'project_manager' in row) {
+            const mapped = mapFirstNameToFullName(row['Project Manager'] ?? row['PM'] ?? row['project_manager']);
+            if (mapped !== (existingWO['project_manager'] || "")) {
+              updates['project_manager'] = mapped;
+            }
+          }
+          if ('Estimator' in row || 'estimator' in row) {
+            const mapped = mapFirstNameToFullName(row['Estimator'] ?? row['estimator']);
+            if (mapped !== (existingWO['estimator'] || "")) {
+              updates['estimator'] = mapped;
+            }
+          }
           checkStringField('est_inv_at', 'Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number');
           checkStringField('current_task_description', 'Current Task Description');
           checkStringField('permit_number', 'Permit Number');
@@ -936,6 +970,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         // Validate that description doesn't look like notes (contains date patterns like 1/15/2024)
         const looksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(descriptionValue) && descriptionValue.length > 100;
         
+        // Helper to map first name to full name from users for new records
+        const mapFirstNameToFullNameForNew = (value) => {
+          if (!value) return "";
+          const trimmedValue = String(value).trim();
+          // Try to find user by matching first name
+          const matchedUser = users.find(u => {
+            const firstName = u.full_name?.split(' ')[0] || '';
+            return firstName.toLowerCase() === trimmedValue.toLowerCase();
+          });
+          return matchedUser ? matchedUser.full_name : trimmedValue;
+        };
+        
         // Queue for bulk creation
         itemsToCreate.push({
           title: customer || "Unnamed",
@@ -943,10 +989,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           description: looksLikeNotes ? "" : descriptionValue,
           lead_source: String(row["Source"] ?? row["Lead Source"] ?? ""),
           current_task_deadline: parseExcelDate(row["Current Task Deadline"]),
-          current_task_assigned_to: String(row["Current Task Assigned to"] || ""),
-          designer: String(row["Designer"] ?? row["designer"] ?? ""),
-          project_manager: String(row["Project Manager"] ?? row["PM"] ?? row["project_manager"] ?? ""),
-          estimator: String(row["Estimator"] ?? row["estimator"] ?? ""),
+          current_task_assigned_to: mapFirstNameToFullNameForNew(row["Current Task Assigned to"] || ""),
+          designer: mapFirstNameToFullNameForNew(row["Designer"] ?? row["designer"] ?? ""),
+          project_manager: mapFirstNameToFullNameForNew(row["Project Manager"] ?? row["PM"] ?? row["project_manager"] ?? ""),
+          estimator: mapFirstNameToFullNameForNew(row["Estimator"] ?? row["estimator"] ?? ""),
           est_inv_at: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"] ?? ""),
           estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
           current_task_description: String(row["Current Task Description"] || ""),
