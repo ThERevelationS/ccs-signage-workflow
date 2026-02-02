@@ -128,34 +128,14 @@ export default function ProductChecklistDialog({
 
       setChecklist(currentWO.sip_checklist || []);
 
-      // Load custom dropdown options
-      const cache = {};
+      // Load dropdown conditions
+      const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
+      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+      
       const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
       const loadedProductTypes = productTypesSetting?.setting_value?.items || 
         ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(loadedProductTypes);
-      
-      for (const setting of settings) {
-        if (setting.setting_key.startsWith('dropdown_')) {
-          const key = setting.setting_key.replace('dropdown_', '');
-          cache[key] = setting.setting_value?.items || [];
-        }
-      }
-      setDropdownOptionsCache(cache);
-      
-      // Auto-suggest product types based on work order content
-      const textToAnalyze = `${currentWO.client_name || ''} ${currentWO.title || ''} ${currentWO.description || ''}`;
-      const suggestions = suggestProductTypes(textToAnalyze, loadedProductTypes);
-      if (suggestions.length > 0) {
-        const suggestionMap = {};
-        // Suggest for products that don't have a type yet
-        (currentWO.products || []).forEach(p => {
-          if (!p.product_type && suggestions.length > 0) {
-            suggestionMap[p.id] = suggestions;
-          }
-        });
-        setSuggestedTypes(suggestionMap);
-      }
     } catch (error) {
       console.error("Error loading data:", error);
     }
