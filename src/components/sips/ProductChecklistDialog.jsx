@@ -716,18 +716,7 @@ export default function ProductChecklistDialog({
         document.body
       )}
 
-      {/* Dropdown Manager - rendered via portal to escape dialog context */}
-      {showDropdownManager && ReactDOM.createPortal(
-        <CustomDropdownManager
-          isOpen={true}
-          onClose={() => {
-            setShowDropdownManager(null);
-            loadData();
-          }}
-          dropdownKey={showDropdownManager}
-        />,
-        document.body
-      )}
+
 
       {/* Incomplete Warning */}
       <AlertDialog open={!!incompleteWarning} onOpenChange={() => setIncompleteWarning(null)}>
