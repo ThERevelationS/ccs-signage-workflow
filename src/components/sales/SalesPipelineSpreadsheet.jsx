@@ -1189,17 +1189,38 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const applyCustomFilter = (wo, conditions) => {
     if (!conditions || conditions.length === 0) return true;
     
-    return conditions.every(condition => {
+    // Group conditions by field for "is" operator - multiple "is" on same field = OR
+    const conditionsByField = {};
+    const otherConditions = [];
+    
+    conditions.forEach(condition => {
+      if (condition.operator === "is" || condition.operator === "equals") {
+        const key = condition.field;
+        if (!conditionsByField[key]) {
+          conditionsByField[key] = [];
+        }
+        conditionsByField[key].push(condition.value);
+      } else {
+        otherConditions.push(condition);
+      }
+    });
+    
+    // Check grouped "is" conditions - ANY value matching = pass (OR logic within same field)
+    for (const [field, values] of Object.entries(conditionsByField)) {
+      const fieldValue = wo[field];
+      // If ANY of the values match, this field passes
+      const fieldPasses = values.some(val => fieldValue == val);
+      if (!fieldPasses) return false;
+    }
+    
+    // Check other conditions with AND logic
+    return otherConditions.every(condition => {
       const fieldValue = wo[condition.field];
       const condValue = condition.value;
       
       switch (condition.operator) {
-        case "is":
-          return fieldValue == condValue;
         case "is_not":
           return fieldValue != condValue;
-        case "equals":
-          return fieldValue == condValue;
         case "contains":
           return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
         case "greater_than":
