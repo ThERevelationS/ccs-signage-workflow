@@ -364,6 +364,7 @@ Deno.serve(async (req) => {
       try {
         const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.list();
         const workOrders = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
+        console.log(`Work Orders: fetched ${workOrders.length} records`);
         const formattedWO = workOrders.map(wo => ({
           id: wo.id,
           title: wo.title,
@@ -428,7 +429,9 @@ Deno.serve(async (req) => {
     // Sales Pipeline Export (same format as UI export)
     if (typesToBackup.includes('salespipeline')) {
       try {
-        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } });
+        // For sales pipeline, get ALL work orders that aren't riders (including completed ones for full backup)
+        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, deleted: { $ne: true } });
+        console.log(`Sales Pipeline: fetched ${Array.isArray(workOrdersRaw) ? workOrdersRaw.length : 0} work orders`);
         const workOrdersForExport = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         
         const calculateDays = (fromDate, toDate) => {

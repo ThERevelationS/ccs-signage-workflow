@@ -169,7 +169,10 @@ export default function FeatureReports() {
       updateData.completed_date = new Date().toISOString();
     }
     await FeatureReport.update(report.id, updateData);
-    loadReports();
+    // Update local state instead of full reload to avoid page refresh
+    setReports(prev => prev.map(r => 
+      r.id === report.id ? { ...r, ...updateData } : r
+    ).filter(r => newStatus !== "completed" || r.id !== report.id));
   };
 
   const handleDelete = async (id) => {

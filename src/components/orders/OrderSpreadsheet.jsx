@@ -497,6 +497,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file name contains "Order Request" to prevent importing wrong file
+    const fileName = file.name.toLowerCase();
+    if (!fileName.includes('order') && !fileName.includes('request')) {
+      alert('Invalid file. Please select a file with "Order" or "Request" in the name for the Order Form. This appears to be a Workflow file.');
+      e.target.value = "";
+      return;
+    }
+
     importStateRef.current = { paused: false, cancelled: false };
 
     const reader = new FileReader();

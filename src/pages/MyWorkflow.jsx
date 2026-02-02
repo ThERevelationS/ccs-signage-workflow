@@ -337,24 +337,24 @@ export default function MyWorkflow() {
     const myTasks = [];
     
     (wo.notes || []).forEach((task, taskIndex) => {
-      // Check if task is assigned to me
+      // Check if task is assigned to me - main tasks only, not standalone subtasks
       if (task.assigned_to === userName) {
         myTasks.push({ type: 'task', task, taskIndex, workOrderId: wo.id });
-      }
-      
-      // Check sub-tasks
-      (task.sub_tasks || []).forEach((st, stIndex) => {
-        if (st.assigned_to === userName) {
-          myTasks.push({ type: 'subtask', task, taskIndex, subTask: st, subTaskIndex: stIndex, workOrderId: wo.id });
-        }
+      } else {
+        // If the main task is NOT assigned to me, but has subtasks assigned to me,
+        // show only those subtasks under the parent task context (not as standalone)
+        const mySubTasks = (task.sub_tasks || []).filter(st => st.assigned_to === userName);
+        const myDetails = (task.sub_tasks || []).flatMap((st, stIndex) => 
+          (st.details || []).filter(d => d.assigned_to === userName).map((d, dIndex) => ({
+            subTask: st, subTaskIndex: stIndex, detail: d, detailIndex: dIndex
+          }))
+        );
         
-        // Check details
-        (st.details || []).forEach((d, dIndex) => {
-          if (d.assigned_to === userName) {
-            myTasks.push({ type: 'detail', task, taskIndex, subTask: st, subTaskIndex: stIndex, detail: d, detailIndex: dIndex, workOrderId: wo.id });
-          }
-        });
-      });
+        // If I have subtasks or details assigned under this task, show the task as context
+        if (mySubTasks.length > 0 || myDetails.length > 0) {
+          myTasks.push({ type: 'task_with_my_items', task, taskIndex, workOrderId: wo.id, mySubTasks, myDetails });
+        }
+      }
     });
     
     return myTasks;
@@ -454,6 +454,41 @@ export default function MyWorkflow() {
                           
                           return (
                             <div key={idx} className="group">
+                              {/* Task with my subtasks/details - show parent as context */}
+                              {item.type === 'task_with_my_items' && (
+                                <div className="p-1 rounded border bg-gray-50 border-gray-200">
+                                  <div className="flex items-center gap-1 mb-1">
+                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                      {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
+                                    </button>
+                                    <p className="text-xs text-gray-500 italic">↳ {item.task.text}</p>
+                                  </div>
+                                  {isExpanded && (
+                                    <div className="ml-4 space-y-0.5">
+                                      {/* Show my assigned subtasks */}
+                                      {item.mySubTasks?.map((st, stIdx) => {
+                                        const actualStIdx = (item.task.sub_tasks || []).indexOf(st);
+                                        return (
+                                          <div key={stIdx} className={`flex items-center gap-1 p-1 rounded border ${st.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                                            <Checkbox checked={st.completed} onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, actualStIdx)} disabled={!isRegistered} className="h-3 w-3" />
+                                            <p className={`text-xs ${st.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{st.text}</p>
+                                          </div>
+                                        );
+                                      })}
+                                      {/* Show my assigned details */}
+                                      {item.myDetails?.map((d, dIdx) => (
+                                        <div key={dIdx} className={`flex items-center gap-1 p-1 rounded border ${d.detail.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                                          <Checkbox checked={d.detail.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, d.subTaskIndex, d.detailIndex)} disabled={!isRegistered} className="h-3 w-3" />
+                                          <div className="flex-1 min-w-0">
+                                            <p className={`text-xs ${d.detail.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{d.detail.text}</p>
+                                            <p className="text-[10px] text-gray-400">↳ {d.subTask.text}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               {item.type === 'task' && (
                                 <div className={`p-1 rounded border ${item.task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
                                   <div className="flex items-center gap-1">
@@ -586,24 +621,7 @@ export default function MyWorkflow() {
                                   )}
                                 </div>
                               )}
-                              {item.type === 'subtask' && (
-                                <div className={`flex items-center gap-1 p-1 rounded border ${item.subTask.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                                  <Checkbox checked={item.subTask.completed} onCheckedChange={() => toggleSubTaskComplete(wo.id, item.taskIndex, item.subTaskIndex)} disabled={!isRegistered} className="h-3 w-3" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-xs ${item.subTask.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.subTask.text}</p>
-                                    <p className="text-[10px] text-gray-400">↳ {item.task.text}</p>
-                                  </div>
-                                </div>
-                              )}
-                              {item.type === 'detail' && (
-                                <div className={`flex items-center gap-1 p-1 rounded border ${item.detail.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
-                                  <Checkbox checked={item.detail.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, item.subTaskIndex, item.detailIndex)} disabled={!isRegistered} className="h-3 w-3" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-xs ${item.detail.completed ? 'line-through text-gray-500' : 'font-medium'}`}>{item.detail.text}</p>
-                                    <p className="text-[10px] text-gray-400">↳ {item.subTask.text}</p>
-                                  </div>
-                                </div>
-                              )}
+                              {/* Removed standalone subtask and detail rendering - they now appear under their parent task */}
                             </div>
                           );
                         })}

@@ -667,6 +667,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file name contains "Workflow" to prevent importing wrong file
+    const fileName = file.name.toLowerCase();
+    if (!fileName.includes('workflow')) {
+      alert('Invalid file. Please select a file with "Workflow" in the name for the Sales Pipeline. This appears to be an Order Request file.');
+      e.target.value = "";
+      return;
+    }
+
     importStateRef.current = { paused: false, cancelled: false };
 
     const reader = new FileReader();
@@ -740,11 +748,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         // Validate that job description doesn't look like notes (contains date patterns)
         const descLooksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(jobDescStr) && jobDescStr.length > 100;
         
-        // Check for duplicates by customer name + description - if found, fill in missing fields instead of creating duplicate
+        // Check for duplicates - only block exact duplicates (same customer AND same description)
+        // Allow different descriptions for the same customer
         const clientKey = customer.toLowerCase().trim();
         // Don't use description for key if it looks like notes data
         const descKey = descLooksLikeNotes ? '' : jobDescStr.toLowerCase().trim();
-        const uniqueKey = clientKey ? `${clientKey}|||${descKey}` : null;
+        // Only check for duplicates if we have both customer and description
+        const uniqueKey = (clientKey && descKey) ? `${clientKey}|||${descKey}` : null;
         const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
         
         if (existingWO) {
