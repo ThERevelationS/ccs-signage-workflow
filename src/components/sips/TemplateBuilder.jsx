@@ -312,18 +312,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const deleteSubTemplate = async () => {
     if (!deleteConfirm) return;
     const idToDelete = deleteConfirm.id;
+    const wasSelected = selectedSubTemplate === idToDelete;
+    
+    // Close the dialog first
     setDeleteConfirm(null);
+    
+    // Clear selection immediately if this was selected
+    if (wasSelected) {
+      setSelectedSubTemplate(null);
+      setSubTemplateChecklistItems([]);
+    }
     
     try {
       await ChecklistSubItem.delete(idToDelete);
       const updated = { ...subTemplateItems };
       delete updated[idToDelete];
       await saveSubTemplateItems(updated);
-      
-      if (selectedSubTemplate === idToDelete) {
-        setSelectedSubTemplate(null);
-        setSubTemplateChecklistItems([]);
-      }
       await loadData();
     } catch (error) {
       console.error("Error deleting sub-template:", error);
