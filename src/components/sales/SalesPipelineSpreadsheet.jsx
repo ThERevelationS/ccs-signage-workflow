@@ -1090,7 +1090,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         await Promise.all(batch.map(async (item) => {
           await WorkOrder.update(item.id, item.updates);
           const updatedWO = { ...item.existingWO, ...item.updates };
-          existingWorkOrdersMap.set(item.uniqueKey, updatedWO);
+          // Update tracking map with the updated work order
+          const clientKey = item.customer.toLowerCase().trim();
+          const existingList = existingByCustomer.get(clientKey) || [];
+          const idx = existingList.findIndex(wo => wo.id === item.id);
+          if (idx >= 0) {
+            existingList[idx] = { ...item.existingWO, ...item.updates };
+          }
         }));
         
         const batchCustomers = batch.map(item => item.customer).join(', ');
