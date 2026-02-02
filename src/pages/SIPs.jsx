@@ -10,7 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import EnhancedSipChecklist from "@/components/workflow/EnhancedSipChecklist";
+import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
+import TemplateBuilder from "@/components/sips/TemplateBuilder";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -48,6 +49,7 @@ export default function SIPs() {
   const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const parentRef = useRef(null);
 
   useEffect(() => {
@@ -132,9 +134,26 @@ export default function SIPs() {
   };
 
   const getChecklistProgress = (wo) => {
-    const checklist = wo.sip_checklist || DEFAULT_SIP_CHECKLIST;
-    const completed = checklist.filter(item => item.checked).length;
-    return { completed, total: checklist.length };
+    const checklist = wo.sip_checklist || [];
+    if (checklist.length === 0) return { completed: 0, total: 0 };
+    
+    // Count completed main items (have approved_by AND custom_dropdown_value)
+    const mainCompleted = checklist.filter(item => item.approved_by && item.custom_dropdown_value).length;
+    
+    // Count completed sub-items
+    let subCompleted = 0;
+    let subTotal = 0;
+    checklist.forEach(item => {
+      if (item.sub_items && item.sub_items.length > 0) {
+        subTotal += item.sub_items.length;
+        subCompleted += item.sub_items.filter(si => si.checked).length;
+      }
+    });
+    
+    return { 
+      completed: mainCompleted + subCompleted, 
+      total: checklist.length + subTotal 
+    };
   };
 
   if (isLoading) {
@@ -155,6 +174,16 @@ export default function SIPs() {
               <h1 className="text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
               <p className="text-gray-500 mt-1">Production & Installation Planning - {workOrders.length} items</p>
             </div>
+            {(currentUser?.role === 'admin' || users.find(u => u.email === currentUser?.email)?.can_import_export) && (
+              <Button
+                onClick={() => setShowTemplateBuilder(true)}
+                className="clay-button border-none"
+                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Template Builder
+              </Button>
+            )}
           </div>
         </div>
 
@@ -513,17 +542,25 @@ export default function SIPs() {
         />
       )}
 
-      {/* Enhanced Checklist Dialog */}
-      <EnhancedSipChecklist
-        isOpen={checklistDialog.open}
-        onClose={() => setChecklistDialog({ open: false, workOrder: null })}
-        workOrder={checklistDialog.workOrder}
-        onUpdate={() => loadWorkOrders(false)}
-        isRegistered={isRegistered}
-        title="SIP Checklist"
-        checklistField="sip_checklist"
-        accentColor="blue"
-      />
+      {/* Product Checklist Dialog */}
+      {checklistDialog.open && (
+        <ProductChecklistDialog
+          isOpen={checklistDialog.open}
+          onClose={() => setChecklistDialog({ open: false, workOrder: null })}
+          workOrder={checklistDialog.workOrder}
+          onUpdate={() => loadWorkOrders(false)}
+          isRegistered={isRegistered}
+          isAdmin={currentUser?.role === 'admin'}
+        />
+      )}
+
+      {/* Template Builder */}
+      {showTemplateBuilder && (
+        <TemplateBuilder
+          isOpen={showTemplateBuilder}
+          onClose={() => setShowTemplateBuilder(false)}
+        />
+      )}
     </div>
   );
 }
