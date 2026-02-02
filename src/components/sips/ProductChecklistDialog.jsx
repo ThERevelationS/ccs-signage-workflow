@@ -35,7 +35,6 @@ export default function ProductChecklistDialog({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
-  const [showDropdownManager, setShowDropdownManager] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [incompleteWarning, setIncompleteWarning] = useState(null);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
