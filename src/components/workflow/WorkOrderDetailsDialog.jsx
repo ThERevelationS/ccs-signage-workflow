@@ -73,6 +73,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import ProjectHealthBadge, { calculateProjectHealth } from "./ProjectHealthBadge";
 import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
+import MultiUserSelect from "@/components/shared/MultiUserSelect";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -927,26 +928,35 @@ export default function WorkOrderDetailsDialog({
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleAddTask();
-                        if (e.key === 'Escape') {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");}
+                        if (e.key === 'Escape') {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");setNewTaskAdditionalAssignees([]);}
                       }} />
-                    <Select value={newTaskAssignedTo} onValueChange={setNewTaskAssignedTo}>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Assign to (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>Unassigned</SelectItem>
-                        {allUsers.map(user => (
-                          <SelectItem key={user.id} value={user.full_name || user.email}>
-                            {user.full_name || user.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                      <Select value={newTaskAssignedTo} onValueChange={setNewTaskAssignedTo}>
+                        <SelectTrigger className="h-8 text-sm flex-1">
+                          <SelectValue placeholder="Primary assignee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Unassigned</SelectItem>
+                          {allUsers.map(user => (
+                            <SelectItem key={user.id} value={user.full_name || user.email}>
+                              {user.full_name || user.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <MultiUserSelect
+                        users={allUsers}
+                        selectedUsers={newTaskAdditionalAssignees}
+                        onSelectionChange={setNewTaskAdditionalAssignees}
+                        excludeUser={newTaskAssignedTo}
+                        compact
+                      />
+                    </div>
                     <div className="flex gap-1">
                       <Button size="sm" onClick={handleAddTask} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
                         <Check className="w-3 h-3 mr-1" />Save
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");}} className="h-6 px-2 text-xs">
+                      <Button size="sm" variant="ghost" onClick={() => {setIsAddingTask(false);setNewTaskText("");setNewTaskAssignedTo("");setNewTaskAdditionalAssignees([]);}} className="h-6 px-2 text-xs">
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
@@ -971,26 +981,35 @@ export default function WorkOrderDetailsDialog({
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleEditTask(actualIndex);
-                                if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");}
+                                if (e.key === 'Escape') {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");setEditedTaskAdditionalAssignees([]);}
                               }} />
-                            <Select value={editedTaskAssignedTo} onValueChange={setEditedTaskAssignedTo}>
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Assign to (optional)" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={null}>Unassigned</SelectItem>
-                                {allUsers.map(user => (
-                                  <SelectItem key={user.id} value={user.full_name || user.email}>
-                                    {user.full_name || user.email}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-2">
+                              <Select value={editedTaskAssignedTo} onValueChange={setEditedTaskAssignedTo}>
+                                <SelectTrigger className="h-8 text-sm flex-1">
+                                  <SelectValue placeholder="Primary assignee" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={null}>Unassigned</SelectItem>
+                                  {allUsers.map(user => (
+                                    <SelectItem key={user.id} value={user.full_name || user.email}>
+                                      {user.full_name || user.email}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <MultiUserSelect
+                                users={allUsers}
+                                selectedUsers={editedTaskAdditionalAssignees}
+                                onSelectionChange={setEditedTaskAdditionalAssignees}
+                                excludeUser={editedTaskAssignedTo}
+                                compact
+                              />
+                            </div>
                             <div className="flex gap-1">
                               <Button size="sm" onClick={() => handleEditTask(actualIndex)} className="h-6 px-2 text-xs bg-green-100 hover:bg-green-200 text-green-800">
                                 <Check className="w-3 h-3 mr-1" />Save
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");}} className="h-6 px-2 text-xs">
+                              <Button size="sm" variant="ghost" onClick={() => {setEditingTaskIndex(null);setEditedTaskText("");setEditedTaskAssignedTo("");setEditedTaskAdditionalAssignees([]);}} className="h-6 px-2 text-xs">
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -998,14 +1017,17 @@ export default function WorkOrderDetailsDialog({
                           <>
                             <div className="flex-1">
                               <div
-                                className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
-                                onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);setEditedTaskAssignedTo(task.assigned_to || "");}}>
-                                <p className="text-sm text-gray-700">{task.text}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
-                                  {task.assigned_to && <span className="ml-2 text-blue-600">→ {task.assigned_to}</span>}
-                                  {task.estimated_hours > 0 && <span className="ml-2 text-purple-600">({task.estimated_hours}h)</span>}
-                                </p>
+                              className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors"
+                              onClick={() => {setEditingTaskIndex(actualIndex);setEditedTaskText(task.text);setEditedTaskAssignedTo(task.assigned_to || "");setEditedTaskAdditionalAssignees(task.additional_assignees || []);}}>
+                              <p className="text-sm text-gray-700">{task.text}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {format(new Date(task.timestamp), "MMM d, h:mm a")} • {task.created_by?.split('@')[0] || 'Unknown'}
+                                {task.assigned_to && <span className="ml-2 text-blue-600">→ {task.assigned_to}</span>}
+                                {task.additional_assignees?.length > 0 && (
+                                  <span className="ml-1 text-purple-600">+{task.additional_assignees.length}</span>
+                                )}
+                                {task.estimated_hours > 0 && <span className="ml-2 text-purple-600">({task.estimated_hours}h)</span>}
+                              </p>
                                 {/* Task Dependencies */}
                                 {tasks.length > 1 && (
                                   <div className="mt-1">
@@ -1041,6 +1063,11 @@ export default function WorkOrderDetailsDialog({
                                             → {subTask.assigned_to}
                                           </Badge>
                                         )}
+                                        {subTask.additional_assignees?.length > 0 && (
+                                          <Badge variant="outline" className="text-[10px] text-purple-600 px-1 py-0">
+                                            +{subTask.additional_assignees.length}
+                                          </Badge>
+                                        )}
                                         <Button
                                           variant="ghost"
                                           size="icon"
@@ -1062,6 +1089,11 @@ export default function WorkOrderDetailsDialog({
                                               {detail.assigned_to && (
                                                 <Badge variant="outline" className="text-[9px] text-blue-600 px-1 py-0">
                                                   → {detail.assigned_to}
+                                                </Badge>
+                                              )}
+                                              {detail.additional_assignees?.length > 0 && (
+                                                <Badge variant="outline" className="text-[9px] text-purple-600 px-1 py-0">
+                                                  +{detail.additional_assignees.length}
                                                 </Badge>
                                               )}
                                               <Button
@@ -1086,26 +1118,35 @@ export default function WorkOrderDetailsDialog({
                                             autoFocus
                                             onKeyDown={(e) => {
                                               if (e.key === 'Enter') handleAddTaskDetail(actualIndex, subIdx);
-                                              if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");}
+                                              if (e.key === 'Escape') {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");setNewDetailAdditionalAssignees([]);}
                                             }} />
-                                          <Select value={newDetailAssignedTo} onValueChange={setNewDetailAssignedTo}>
-                                            <SelectTrigger className="h-5 text-xs">
-                                              <SelectValue placeholder="Assign to (optional)" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value={null}>Unassigned</SelectItem>
-                                              {allUsers.map(user => (
-                                                <SelectItem key={user.id} value={user.full_name || user.email}>
-                                                  {user.full_name || user.email}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
+                                          <div className="flex gap-2">
+                                            <Select value={newDetailAssignedTo} onValueChange={setNewDetailAssignedTo}>
+                                              <SelectTrigger className="h-5 text-xs flex-1">
+                                                <SelectValue placeholder="Primary assignee" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value={null}>Unassigned</SelectItem>
+                                                {allUsers.map(user => (
+                                                  <SelectItem key={user.id} value={user.full_name || user.email}>
+                                                    {user.full_name || user.email}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                            <MultiUserSelect
+                                              users={allUsers}
+                                              selectedUsers={newDetailAdditionalAssignees}
+                                              onSelectionChange={setNewDetailAdditionalAssignees}
+                                              excludeUser={newDetailAssignedTo}
+                                              compact
+                                            />
+                                          </div>
                                           <div className="flex gap-1">
                                             <Button size="sm" onClick={() => handleAddTaskDetail(actualIndex, subIdx)} className="h-5 px-2">
                                               <Check className="w-3 h-3" />
                                             </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");}} className="h-5 px-2">
+                                            <Button size="sm" variant="ghost" onClick={() => {setAddingDetailFor(null);setNewDetailText("");setNewDetailAssignedTo("");setNewDetailAdditionalAssignees([]);}} className="h-5 px-2">
                                               <X className="w-3 h-3" />
                                             </Button>
                                           </div>
@@ -1138,26 +1179,35 @@ export default function WorkOrderDetailsDialog({
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleAddTaskSubTask(actualIndex);
-                                      if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");}
+                                      if (e.key === 'Escape') {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");setNewSubTaskAdditionalAssignees([]);}
                                     }} />
-                                  <Select value={newSubTaskAssignedTo} onValueChange={setNewSubTaskAssignedTo}>
-                                    <SelectTrigger className="h-6 text-xs">
-                                      <SelectValue placeholder="Assign to (optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value={null}>Unassigned</SelectItem>
-                                      {allUsers.map(user => (
-                                        <SelectItem key={user.id} value={user.full_name || user.email}>
-                                          {user.full_name || user.email}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <div className="flex gap-2">
+                                    <Select value={newSubTaskAssignedTo} onValueChange={setNewSubTaskAssignedTo}>
+                                      <SelectTrigger className="h-6 text-xs flex-1">
+                                        <SelectValue placeholder="Primary assignee" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value={null}>Unassigned</SelectItem>
+                                        {allUsers.map(user => (
+                                          <SelectItem key={user.id} value={user.full_name || user.email}>
+                                            {user.full_name || user.email}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <MultiUserSelect
+                                      users={allUsers}
+                                      selectedUsers={newSubTaskAdditionalAssignees}
+                                      onSelectionChange={setNewSubTaskAdditionalAssignees}
+                                      excludeUser={newSubTaskAssignedTo}
+                                      compact
+                                    />
+                                  </div>
                                   <div className="flex gap-1">
                                     <Button size="sm" onClick={() => handleAddTaskSubTask(actualIndex)} className="h-6 px-2">
                                       <Check className="w-3 h-3" />
                                     </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");}} className="h-6 px-2">
+                                    <Button size="sm" variant="ghost" onClick={() => {setAddingSubTaskFor(null);setNewSubTaskText("");setNewSubTaskAssignedTo("");setNewSubTaskAdditionalAssignees([]);}} className="h-6 px-2">
                                       <X className="w-3 h-3" />
                                     </Button>
                                   </div>
