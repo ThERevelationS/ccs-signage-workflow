@@ -720,6 +720,24 @@ export default function CustomerInfoForm({
               {products.map((product, index) => (
                 <div key={product.id} className="flex gap-2 items-center">
                   <Label className="w-6">#{index + 1}</Label>
+                  <Select
+                    value={product.product_type || ""}
+                    onValueChange={(val) => {
+                      const updated = [...products];
+                      updated[index].product_type = val;
+                      setProducts(updated);
+                    }}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Input
                     value={product.description}
                     onChange={(e) => {
@@ -730,26 +748,6 @@ export default function CustomerInfoForm({
                     placeholder="Product description..."
                     className="flex-1"
                   />
-                  {currentUser?.role === 'admin' && (
-                    <Select
-                      value={product.product_type || ""}
-                      onValueChange={(val) => {
-                        const updated = [...products];
-                        updated[index].product_type = val;
-                        setProducts(updated);
-                      }}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Product type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        {productTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                   <Button
                     variant="ghost"
                     size="icon"
