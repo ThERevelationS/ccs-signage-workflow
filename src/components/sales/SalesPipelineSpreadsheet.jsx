@@ -768,14 +768,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         // Validate that job description doesn't look like notes (contains date patterns)
         const descLooksLikeNotes = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(jobDescStr) && jobDescStr.length > 100;
         
-        // Check for duplicates - only block exact duplicates (same customer AND same description)
-        // Allow different descriptions for the same customer
+        // Check for existing customer - smart matching
         const clientKey = customer.toLowerCase().trim();
-        // Don't use description for key if it looks like notes data
-        const descKey = descLooksLikeNotes ? '' : jobDescStr.toLowerCase().trim();
-        // Only check for duplicates if we have both customer and description
-        const uniqueKey = (clientKey && descKey) ? `${clientKey}|||${descKey}` : null;
-        const existingWO = uniqueKey ? existingWorkOrdersMap.get(uniqueKey) : null;
+        const existingForCustomer = existingByCustomer.get(clientKey) || [];
+        
+        // Find matching work order - update if descriptions are similar, create new if different
+        let existingWO = null;
+        const importDesc = descLooksLikeNotes ? '' : jobDescStr;
+        
+        for (const wo of existingForCustomer) {
+          const existingDesc = wo.description || '';
+          if (areDescriptionsSimilar(importDesc, existingDesc)) {
+            existingWO = wo;
+            break;
+          }
+        }
+        
+        // Create a unique key for tracking (customer + matched WO id if found)
+        const uniqueKey = existingWO ? `${clientKey}|||${existingWO.id}` : null;
         
         if (existingWO) {
           // Update ALL columns from import if different (not just missing)
