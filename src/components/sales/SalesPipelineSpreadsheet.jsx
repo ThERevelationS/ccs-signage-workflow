@@ -686,17 +686,37 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false, currentItem: "Starting import..." });
 
-      // Track existing work orders to check for duplicates - use client_name + description as key
-      const existingWorkOrdersMap = new Map();
+      // Track existing work orders - group by customer name for smarter matching
+      const existingByCustomer = new Map();
       workOrders.forEach(wo => {
-        // Key by client_name + description to allow same customer with different projects
         if (wo.client_name) {
           const clientKey = wo.client_name.toLowerCase().trim();
-          const descKey = (wo.description || '').toLowerCase().trim();
-          const key = `${clientKey}|||${descKey}`;
-          existingWorkOrdersMap.set(key, wo);
+          if (!existingByCustomer.has(clientKey)) {
+            existingByCustomer.set(clientKey, []);
+          }
+          existingByCustomer.get(clientKey).push(wo);
         }
       });
+      
+      // Helper to check if descriptions are significantly different
+      const areDescriptionsSimilar = (desc1, desc2) => {
+        if (!desc1 && !desc2) return true;
+        if (!desc1 || !desc2) return false;
+        const d1 = desc1.toLowerCase().trim();
+        const d2 = desc2.toLowerCase().trim();
+        if (d1 === d2) return true;
+        // Check if one contains the other (handles typo fixes, small additions)
+        if (d1.includes(d2) || d2.includes(d1)) return true;
+        // Calculate similarity using word overlap
+        const words1 = new Set(d1.split(/\s+/).filter(w => w.length > 2));
+        const words2 = new Set(d2.split(/\s+/).filter(w => w.length > 2));
+        if (words1.size === 0 && words2.size === 0) return true;
+        const intersection = [...words1].filter(w => words2.has(w)).length;
+        const union = new Set([...words1, ...words2]).size;
+        const similarity = union > 0 ? intersection / union : 0;
+        // Consider similar if >50% word overlap
+        return similarity > 0.5;
+      };
 
       let importedCount = 0;
       const BATCH_SIZE = 5; // Very small batches to avoid rate limits
