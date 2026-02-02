@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, Copy, Search, Eye, History, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, Copy, Eye, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import CustomDropdownManager from "./CustomDropdownManager";
 
@@ -36,10 +36,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   
   // New features state
-  const [templateSearch, setTemplateSearch] = useState("");
-  const [templateFilterType, setTemplateFilterType] = useState("all");
   const [showPreview, setShowPreview] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -151,15 +148,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
     }
   };
 
-  // Filter templates
-  const filteredTemplates = templates.filter(template => {
-    const matchesSearch = !templateSearch || 
-      template.name.toLowerCase().includes(templateSearch.toLowerCase());
-    const matchesType = templateFilterType === "all" || 
-      template.product_type === templateFilterType ||
-      (!template.product_type && templateFilterType === "none");
-    return matchesSearch && matchesType;
-  });
+
 
   // Template Items
   const addTemplateItem = () => {
@@ -306,53 +295,28 @@ export default function TemplateBuilder({ isOpen, onClose }) {
               {/* Template List */}
               <div className="space-y-2 overflow-y-auto pr-2">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold">Templates ({filteredTemplates.length})</h3>
-                  <Button size="sm" onClick={createNewTemplate}>
-                    <Plus className="w-4 h-4 mr-1" />
+                  <h3 className="font-bold text-sm">Templates ({templates.length})</h3>
+                  <Button size="sm" onClick={createNewTemplate} className="h-7">
+                    <Plus className="w-3 h-3 mr-1" />
                     New
                   </Button>
                 </div>
                 
-                {/* Search and Filter */}
-                <div className="space-y-2 mb-3">
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <Input
-                      value={templateSearch}
-                      onChange={(e) => setTemplateSearch(e.target.value)}
-                      placeholder="Search templates..."
-                      className="pl-8 h-8 text-sm"
-                    />
-                  </div>
-                  <Select value={templateFilterType} onValueChange={setTemplateFilterType}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Filter by type..." />
-                    </SelectTrigger>
-                    <SelectContent className="z-[100]">
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="none">No Type</SelectItem>
-                      {productTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {filteredTemplates.map(template => (
+                {templates.map(template => (
                   <div
                     key={template.id}
                     onClick={() => selectTemplate(template)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-2 rounded-lg border cursor-pointer transition-colors ${
                       selectedTemplate?.id === template.id 
                         ? 'bg-blue-100 border-blue-300' 
                         : 'bg-white hover:bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className="font-medium">{template.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {template.product_type || "No product type"} • {template.items?.length || 0} items
+                    <div className="font-medium text-sm">{template.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {template.product_type || "No type"} • {template.items?.length || 0} items
                     </div>
-                    <div className="flex gap-1 mt-2">
+                    <div className="flex gap-1 mt-1">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -360,8 +324,8 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                           e.stopPropagation();
                           duplicateTemplate(template);
                         }}
-                        className="h-6 px-2"
-                        title="Duplicate template"
+                        className="h-5 px-1"
+                        title="Duplicate"
                       >
                         <Copy className="w-3 h-3 text-blue-500" />
                       </Button>
@@ -370,22 +334,10 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowVersionHistory(template);
-                        }}
-                        className="h-6 px-2"
-                        title="Version history"
-                      >
-                        <History className="w-3 h-3 text-gray-500" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
                           setDeleteConfirm({ id: template.id, type: 'template', name: template.name });
                         }}
-                        className="h-6 px-2"
-                        title="Delete template"
+                        className="h-5 px-1"
+                        title="Delete"
                       >
                         <Trash2 className="w-3 h-3 text-red-500" />
                       </Button>
@@ -507,29 +459,33 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                             {/* Sub-items for this checklist item */}
                             <div>
                               <Label className="text-xs">Sub-items (checkboxes):</Label>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {(item.sub_items || []).map(si => (
-                                  <div key={si.id} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs flex items-center gap-1">
-                                    {si.text}
-                                    <button onClick={() => removeSubItemFromTemplateItem(item.id, si.id)}>
-                                      <Trash2 className="w-2.5 h-2.5" />
-                                    </button>
-                                  </div>
-                                ))}
-                                <Select onValueChange={(val) => addSubItemToTemplateItem(item.id, val)}>
-                                  <SelectTrigger className="h-6 w-24 text-xs">
-                                    <SelectValue placeholder="+ Add" />
-                                  </SelectTrigger>
-                                  <SelectContent className="z-[100]">
-                                    {subItems.filter(si => {
-                                      // Filter by product type if template has one
-                                      if (!templateProductType) return true;
-                                      return si.applies_to_product_types?.includes(templateProductType) || !si.applies_to_product_types?.length;
-                                    }).map(si => (
-                                      <SelectItem key={si.id} value={si.id}>{si.name}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                              <div className="flex flex-wrap gap-2 mt-1 p-2 bg-gray-50 rounded border max-h-32 overflow-y-auto">
+                                {subItems.filter(si => {
+                                  if (!templateProductType) return true;
+                                  return si.applies_to_product_types?.includes(templateProductType) || !si.applies_to_product_types?.length;
+                                }).map(si => {
+                                  const isSelected = (item.sub_items || []).some(s => s.id === si.id);
+                                  return (
+                                    <label key={si.id} className="flex items-center gap-1 text-xs cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            addSubItemToTemplateItem(item.id, si.id);
+                                          } else {
+                                            removeSubItemFromTemplateItem(item.id, si.id);
+                                          }
+                                        }}
+                                        className="w-3 h-3"
+                                      />
+                                      <span className={isSelected ? "text-blue-700 font-medium" : "text-gray-600"}>{si.name}</span>
+                                    </label>
+                                  );
+                                })}
+                                {subItems.length === 0 && (
+                                  <span className="text-xs text-gray-400">No sub-items created yet. Add them in the Sub-items Pool tab.</span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -666,6 +622,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                 
                 <div className="flex gap-2 mb-4">
                   <Input
+                    id="newProductTypeInput"
                     placeholder="Add product type..."
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.target.value.trim()) {
@@ -674,9 +631,9 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                       }
                     }}
                   />
-                  <Button onClick={(e) => {
-                    const input = e.target.closest('.clay-card').querySelector('input');
-                    if (input.value.trim()) {
+                  <Button onClick={() => {
+                    const input = document.getElementById('newProductTypeInput');
+                    if (input && input.value.trim()) {
                       saveProductTypes([...productTypes, input.value.trim()]);
                       input.value = "";
                     }
@@ -799,48 +756,6 @@ export default function TemplateBuilder({ isOpen, onClose }) {
         </div>
       )}
 
-      {/* Version History Modal */}
-      {showVersionHistory && (
-        <div className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4" onClick={() => setShowVersionHistory(null)}>
-          <div className="clay-card w-full max-w-md max-h-[60vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-bold">Version History: {showVersionHistory.name}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowVersionHistory(null)}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              <div className="space-y-2">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">Current Version</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(showVersionHistory.updated_date || showVersionHistory.created_date).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {showVersionHistory.items?.length || 0} items
-                  </div>
-                </div>
-                <div className="p-3 bg-gray-50 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">Created</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(showVersionHistory.created_date).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    by {showVersionHistory.created_by || "Unknown"}
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4 text-center">
-                Full version history tracking coming soon
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
