@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,13 +16,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2 } from "lucide-react";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
 ];
 
 const WorkOrder = base44.entities.WorkOrder;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);

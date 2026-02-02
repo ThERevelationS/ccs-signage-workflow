@@ -239,18 +239,21 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
   const deleteSubTemplate = async () => {
     if (!deleteConfirm) return;
+    const idToDelete = deleteConfirm.id;
+    setDeleteConfirm(null);
+    
     try {
-      await ChecklistSubItem.delete(deleteConfirm.id);
+      await ChecklistSubItem.delete(idToDelete);
       // Also delete associated items
       const updated = { ...subTemplateItems };
-      delete updated[deleteConfirm.id];
+      delete updated[idToDelete];
       await saveSubTemplateItems(updated);
-      await loadData();
-      setDeleteConfirm(null);
-      if (selectedSubTemplate === deleteConfirm.id) {
+      
+      if (selectedSubTemplate === idToDelete) {
         setSelectedSubTemplate(null);
         setSubTemplateChecklistItems([]);
       }
+      await loadData();
     } catch (error) {
       console.error("Error deleting sub-template:", error);
     }
