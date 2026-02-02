@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -510,19 +511,20 @@ export default function ProductChecklistDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Template Builder */}
-      {showTemplateBuilder && (
+      {/* Template Builder - rendered via portal to escape dialog context */}
+      {showTemplateBuilder && ReactDOM.createPortal(
         <TemplateBuilder
           isOpen={showTemplateBuilder}
           onClose={() => {
             setShowTemplateBuilder(false);
             loadData();
           }}
-        />
+        />,
+        document.body
       )}
 
-      {/* Dropdown Manager */}
-      {showDropdownManager && (
+      {/* Dropdown Manager - rendered via portal to escape dialog context */}
+      {showDropdownManager && ReactDOM.createPortal(
         <CustomDropdownManager
           isOpen={true}
           onClose={() => {
@@ -530,7 +532,8 @@ export default function ProductChecklistDialog({
             loadData();
           }}
           dropdownKey={showDropdownManager}
-        />
+        />,
+        document.body
       )}
 
       {/* Incomplete Warning */}
