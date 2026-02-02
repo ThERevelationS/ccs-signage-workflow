@@ -1156,10 +1156,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <h3 className="font-bold text-lg">
                         {subTemplates.find(st => st.id === selectedSubTemplate)?.name} Items
                       </h3>
-                      <Button onClick={saveSubTemplateChecklist} size="sm">
-                        <Save className="w-4 h-4 mr-1" />
-                        Save
-                      </Button>
+                      <div className="flex gap-2">
+                        {clipboard?.type === 'subtemplate' && (
+                          <Button onClick={pasteToSubTemplate} size="sm" variant="outline" className="text-green-600">
+                            <Clipboard className="w-4 h-4 mr-1" />
+                            Paste
+                          </Button>
+                        )}
+                        <Button onClick={saveSubTemplateChecklist} size="sm">
+                          <Save className="w-4 h-4 mr-1" />
+                          Save
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-4">
