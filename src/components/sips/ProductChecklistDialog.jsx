@@ -804,6 +804,76 @@ export default function ProductChecklistDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Other Dropdown Popup */}
+      <OtherDialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
+        <OtherDialogContent className="max-w-md clay-card border-none">
+          <OtherDialogHeader>
+            <OtherDialogTitle className="flex items-center gap-2">
+              <List className="w-5 h-5 text-purple-500" />
+              Select or Create Value
+            </OtherDialogTitle>
+          </OtherDialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">All Available Conditions</Label>
+              <div className="max-h-48 overflow-y-auto border rounded-lg bg-gray-50">
+                {dropdownConditions.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No dropdown conditions created yet.
+                  </div>
+                ) : (
+                  dropdownConditions.map(dd => (
+                    <div
+                      key={dd.id}
+                      onClick={() => {
+                        if (showOtherPopup?.itemId) {
+                          updateChecklistItem(showOtherPopup.itemId, { custom_dropdown_value: dd.name });
+                          setShowOtherPopup(null);
+                        }
+                      }}
+                      className="p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <List className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <span className="font-medium">{dd.name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium mb-2 block">Or Enter Custom Value</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={customDropdownValue}
+                  onChange={(e) => setCustomDropdownValue(e.target.value)}
+                  placeholder="Type custom value..."
+                  className="flex-1"
+                  onKeyDown={(e) => e.key === 'Enter' && showOtherPopup?.itemId && handleCreateCustomValue(showOtherPopup.itemId)}
+                />
+                <Button 
+                  onClick={() => showOtherPopup?.itemId && handleCreateCustomValue(showOtherPopup.itemId)} 
+                  disabled={!customDropdownValue.trim()}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Use
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <OtherDialogFooter>
+            <Button variant="outline" onClick={() => setShowOtherPopup(null)}>
+              Cancel
+            </Button>
+          </OtherDialogFooter>
+        </OtherDialogContent>
+      </OtherDialog>
     </>
   );
 }
