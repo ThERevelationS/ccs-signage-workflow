@@ -142,9 +142,22 @@ export default function ProductChecklistDialog({
     setIsLoading(false);
   };
 
-  const getDropdownOptions = (key) => {
-    if (!key) return [];
-    return dropdownOptionsCache[key] || [];
+  const getDropdownName = (dropdownId) => {
+    if (!dropdownId) return null;
+    const dd = dropdownConditions.find(d => d.id === dropdownId);
+    return dd?.name || null;
+  };
+
+  const handleOtherDropdownSelect = (itemId, selectedDropdownId) => {
+    updateChecklistItem(itemId, { dropdown_id: selectedDropdownId, custom_dropdown_value: "" });
+    setShowOtherPopup(null);
+  };
+
+  const handleCreateCustomValue = (itemId) => {
+    if (!customDropdownValue.trim()) return;
+    updateChecklistItem(itemId, { custom_dropdown_value: customDropdownValue.trim() });
+    setCustomDropdownValue("");
+    setShowOtherPopup(null);
   };
 
   // Handle template application from TemplateBuilder - APPENDS to existing checklist
