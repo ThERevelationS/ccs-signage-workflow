@@ -87,12 +87,12 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   };
 
   const handleSave = async () => {
-    if (Object.keys(localData).length === 0) return;
     setSaving(true);
     try {
       // Clean up numeric fields - convert empty strings to null
       const cleanedData = {
         ...localData,
+        products: products,
         ...(localData.budget_less_than !== undefined && {
           budget_less_than: localData.budget_less_than ? parseFloat(localData.budget_less_than) : null
         })
@@ -110,6 +110,24 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   };
 
   const hasChanges = Object.keys(localData).length > 0;
+  
+  const updateProduct = (index, field, value) => {
+    const updated = [...products];
+    updated[index] = { ...updated[index], [field]: value };
+    setProducts(updated);
+  };
+
+  const addProduct = () => {
+    setProducts([...products, {
+      id: `prod_${Date.now()}`,
+      description: "",
+      product_type: ""
+    }]);
+  };
+
+  const removeProduct = (index) => {
+    setProducts(products.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="clay-card p-3">
