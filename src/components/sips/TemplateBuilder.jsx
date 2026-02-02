@@ -4,22 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare, List, MoreHorizontal } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import CustomDropdownManager from "./CustomDropdownManager";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
+export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [] }) {
   const [activeTab, setActiveTab] = useState("selectors");
   const [subTemplates, setSubTemplates] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
   const [productTypeTemplates, setProductTypeTemplates] = useState({});
   const [subTemplateItems, setSubTemplateItems] = useState({});
+  const [dropdownConditions, setDropdownConditions] = useState([]);
   
-  // Template Selector state - now supports multiple of same type with custom names
-  const [selectedProducts, setSelectedProducts] = useState([]); // [{id, productType, customName, subTemplates: []}]
+  // Template Selector state
+  const [selectedProducts, setSelectedProducts] = useState([]);
   
   // Sub-template Editor
   const [newSubTemplateName, setNewSubTemplateName] = useState("");
@@ -33,8 +35,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
   const [productTypeItems, setProductTypeItems] = useState([]);
   const [newItemText, setNewItemText] = useState("");
   const [editingItem, setEditingItem] = useState(null);
-  const [showDropdownManager, setShowDropdownManager] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
+  
+  // Dropdown/Conditions Editor
+  const [newDropdownName, setNewDropdownName] = useState("");
+  const [editingDropdown, setEditingDropdown] = useState(null);
+  
+  // Other Dropdown Popup
+  const [showOtherPopup, setShowOtherPopup] = useState(null);
+  const [customDropdownValue, setCustomDropdownValue] = useState("");
   
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
@@ -57,13 +66,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
       const types = productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(types);
       
-      // Load product type templates
       const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
       setProductTypeTemplates(ptTemplates?.setting_value || {});
       
-      // Load sub-template checklist items
       const stItems = settings.find(s => s.setting_key === 'subTemplateItems');
       setSubTemplateItems(stItems?.setting_value || {});
+      
+      const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
+      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -111,10 +121,40 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
     }
   };
 
-  // Template Selection - Add a product type with custom name
+  const saveDropdownConditions = async (items) => {
+    try {
+      const settings = await GlobalSettings.filter({ setting_key: 'dropdownConditions' });
+      if (settings.length > 0) {
+        await GlobalSettings.update(settings[0].id, { setting_value: { items } });
+      } else {
+        await GlobalSettings.create({ setting_key: 'dropdownConditions', setting_value: { items } });
+      }
+      setDropdownConditions(items);
+    } catch (error) {
+      console.error("Error saving dropdown conditions:", error);
+    }
+  };
+
+  // Get existing product names from checklist to prevent duplicates
+  const getExistingProductNames = () => {
+    const names = new Set();
+    existingChecklist.forEach(item => {
+      if (item.product_name) names.add(item.product_name);
+    });
+    return names;
+  };
+
   const addProductToSelection = (productType) => {
-    const existingCount = selectedProducts.filter(p => p.productType === productType).length;
-    const customName = existingCount > 0 ? `${productType} ${existingCount + 1}` : productType;
+    const existingNames = getExistingProductNames();
+    const selectedNames = new Set(selectedProducts.map(p => p.customName));
+    const allNames = new Set([...existingNames, ...selectedNames]);
+    
+    let customName = productType;
+    let counter = 1;
+    while (allNames.has(customName)) {
+      counter++;
+      customName = `${productType} ${counter}`;
+    }
     
     setSelectedProducts([...selectedProducts, {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -125,10 +165,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
   };
 
   const updateProductName = (productId, newName) => {
-    // Check for duplicate names
-    const isDuplicate = selectedProducts.some(p => p.id !== productId && p.customName === newName);
-    if (isDuplicate) {
-      alert("Product name must be unique");
+    const existingNames = getExistingProductNames();
+    const otherSelectedNames = selectedProducts.filter(p => p.id !== productId).map(p => p.customName);
+    
+    if (existingNames.has(newName) || otherSelectedNames.includes(newName)) {
+      alert("A product with this name already exists. Please choose a unique name.");
       return false;
     }
     setSelectedProducts(selectedProducts.map(p => 
@@ -157,25 +198,39 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
   };
 
   const handleApplyTemplate = () => {
-    // Combine all selected products and their sub-templates
+    if (selectedProducts.length === 0) {
+      alert("Please select at least one product template to apply.");
+      return;
+    }
+    
     const combinedItems = [];
     
     selectedProducts.forEach(product => {
       const template = productTypeTemplates[product.productType];
       if (template?.items) {
-        // Add product type items under the custom name
         combinedItems.push({
           type: 'product_header',
           productName: product.customName,
           productType: product.productType,
           items: template.items.map(item => ({
             ...item,
-            id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            details: item.details?.map(d => ({
+              ...d,
+              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              tasks: d.tasks?.map(t => ({
+                ...t,
+                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              }))
+            })),
+            tasks: item.tasks?.map(t => ({
+              ...t,
+              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            }))
           }))
         });
       }
       
-      // Add selected sub-templates for this product
       product.subTemplates.forEach(stId => {
         const subTemplate = subTemplates.find(st => st.id === stId);
         const stItems = subTemplateItems[stId];
@@ -186,16 +241,30 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
             subTemplateName: subTemplate.name,
             items: stItems.items.map(item => ({
               ...item,
-              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              details: item.details?.map(d => ({
+                ...d,
+                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                tasks: d.tasks?.map(t => ({
+                  ...t,
+                  id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                }))
+              })),
+              tasks: item.tasks?.map(t => ({
+                ...t,
+                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              }))
             }))
           });
         }
       });
     });
     
-    if (onApplyTemplate) {
+    if (onApplyTemplate && combinedItems.length > 0) {
       onApplyTemplate(combinedItems);
     }
+    
+    setSelectedProducts([]);
     onClose();
   };
 
@@ -244,7 +313,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
     
     try {
       await ChecklistSubItem.delete(idToDelete);
-      // Also delete associated items
       const updated = { ...subTemplateItems };
       delete updated[idToDelete];
       await saveSubTemplateItems(updated);
@@ -277,7 +345,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
     }
   };
 
-  // Sub-template checklist editor
   const selectSubTemplateForEditing = (subTemplate) => {
     setSelectedSubTemplate(subTemplate.id);
     setSubTemplateChecklistItems(subTemplateItems[subTemplate.id]?.items || []);
@@ -289,17 +356,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
       [selectedSubTemplate]: { items: subTemplateChecklistItems }
     };
     saveSubTemplateItems(updated);
-  };
-
-  const addSubTemplateChecklistItem = (type) => {
-    if (!newItemText.trim()) return;
-    setSubTemplateChecklistItems([...subTemplateChecklistItems, {
-      id: Date.now().toString(),
-      text: newItemText.trim(),
-      type: type,
-      custom_dropdown_key: ""
-    }]);
-    setNewItemText("");
   };
 
   // Product Type Template Editor
@@ -317,81 +373,250 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
     saveProductTypeTemplates(updated);
   };
 
-  const addChecklistItem = (type = 'checklist') => {
+  // Hierarchical item management
+  const addChecklistItem = (items, setItems) => {
     if (!newItemText.trim()) return;
-    setProductTypeItems([...productTypeItems, {
+    setItems([...items, {
       id: Date.now().toString(),
       text: newItemText.trim(),
-      type: type,
-      custom_dropdown_key: ""
+      type: 'checklist',
+      dropdown_id: "",
+      details: [],
+      tasks: []
     }]);
     setNewItemText("");
   };
 
-  const updateItem = (id, updates, isSubTemplate = false) => {
-    if (isSubTemplate) {
-      setSubTemplateChecklistItems(subTemplateChecklistItems.map(item => 
-        item.id === id ? { ...item, ...updates } : item
-      ));
+  const addDetailItem = (items, setItems, parentId, text) => {
+    if (!text.trim()) return;
+    setItems(items.map(item => {
+      if (item.id === parentId) {
+        return {
+          ...item,
+          details: [...(item.details || []), {
+            id: Date.now().toString(),
+            text: text.trim(),
+            type: 'detail',
+            dropdown_id: "",
+            tasks: []
+          }]
+        };
+      }
+      return item;
+    }));
+  };
+
+  const addTask = (items, setItems, parentId, detailId, text) => {
+    if (!text.trim()) return;
+    setItems(items.map(item => {
+      if (item.id === parentId) {
+        if (detailId) {
+          return {
+            ...item,
+            details: item.details.map(d => {
+              if (d.id === detailId) {
+                return {
+                  ...d,
+                  tasks: [...(d.tasks || []), {
+                    id: Date.now().toString(),
+                    text: text.trim(),
+                    type: 'task'
+                  }]
+                };
+              }
+              return d;
+            })
+          };
+        } else {
+          return {
+            ...item,
+            tasks: [...(item.tasks || []), {
+              id: Date.now().toString(),
+              text: text.trim(),
+              type: 'task'
+            }]
+          };
+        }
+      }
+      return item;
+    }));
+  };
+
+  const updateItem = (items, setItems, id, updates, detailId = null, taskId = null) => {
+    setItems(items.map(item => {
+      if (item.id === id) {
+        if (detailId) {
+          return {
+            ...item,
+            details: item.details.map(d => {
+              if (d.id === detailId) {
+                if (taskId) {
+                  return {
+                    ...d,
+                    tasks: d.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
+                  };
+                }
+                return { ...d, ...updates };
+              }
+              return d;
+            })
+          };
+        }
+        if (taskId) {
+          return {
+            ...item,
+            tasks: item.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
+          };
+        }
+        return { ...item, ...updates };
+      }
+      return item;
+    }));
+  };
+
+  const deleteItem = (items, setItems, id, detailId = null, taskId = null) => {
+    if (taskId) {
+      setItems(items.map(item => {
+        if (item.id === id) {
+          if (detailId) {
+            return {
+              ...item,
+              details: item.details.map(d => {
+                if (d.id === detailId) {
+                  return { ...d, tasks: d.tasks.filter(t => t.id !== taskId) };
+                }
+                return d;
+              })
+            };
+          }
+          return { ...item, tasks: item.tasks.filter(t => t.id !== taskId) };
+        }
+        return item;
+      }));
+    } else if (detailId) {
+      setItems(items.map(item => {
+        if (item.id === id) {
+          return { ...item, details: item.details.filter(d => d.id !== detailId) };
+        }
+        return item;
+      }));
     } else {
-      setProductTypeItems(productTypeItems.map(item => 
-        item.id === id ? { ...item, ...updates } : item
-      ));
+      setItems(items.filter(item => item.id !== id));
     }
   };
 
-  const deleteItem = (id, isSubTemplate = false) => {
-    if (isSubTemplate) {
-      setSubTemplateChecklistItems(subTemplateChecklistItems.filter(item => item.id !== id));
-    } else {
-      setProductTypeItems(productTypeItems.filter(item => item.id !== id));
-    }
-  };
-
-  const moveItem = (index, direction, isSubTemplate = false) => {
-    const items = isSubTemplate ? [...subTemplateChecklistItems] : [...productTypeItems];
+  const moveItem = (items, setItems, index, direction) => {
+    const newItems = [...items];
     if (direction === 'up' && index > 0) {
-      [items[index], items[index - 1]] = [items[index - 1], items[index]];
+      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
     } else if (direction === 'down' && index < items.length - 1) {
-      [items[index], items[index + 1]] = [items[index + 1], items[index]];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
     }
-    if (isSubTemplate) {
-      setSubTemplateChecklistItems(items);
-    } else {
-      setProductTypeItems(items);
-    }
+    setItems(newItems);
   };
 
   const toggleItemExpanded = (itemId) => {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
+  // Handle Other dropdown selection
+  const handleOtherDropdownSelect = (items, setItems, itemId, detailId, selectedDropdownId) => {
+    if (detailId) {
+      updateItem(items, setItems, itemId, { dropdown_id: selectedDropdownId }, detailId);
+    } else {
+      updateItem(items, setItems, itemId, { dropdown_id: selectedDropdownId });
+    }
+    setShowOtherPopup(null);
+  };
+
+  const handleCreateCustomDropdown = () => {
+    if (!customDropdownValue.trim()) return;
+    const newDropdown = {
+      id: Date.now().toString(),
+      name: customDropdownValue.trim()
+    };
+    const updated = [...dropdownConditions, newDropdown];
+    saveDropdownConditions(updated);
+    
+    if (showOtherPopup) {
+      const { items, setItems, itemId, detailId } = showOtherPopup;
+      handleOtherDropdownSelect(items, setItems, itemId, detailId, newDropdown.id);
+    }
+    setCustomDropdownValue("");
+  };
+
   if (!isOpen) return null;
 
-  // Render checklist item editor (shared between product types and sub-templates)
-  const renderItemEditor = (items, isSubTemplate = false) => (
+  // Dropdown select with Other option
+  const renderDropdownSelect = (item, items, setItems, detailId = null) => {
+    const itemDropdownId = detailId 
+      ? items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId)?.dropdown_id
+      : item.dropdown_id;
+    
+    const selectedDropdown = dropdownConditions.find(d => d.id === itemDropdownId);
+    
+    return (
+      <div className="flex items-center gap-1">
+        <Select
+          value={itemDropdownId || "none"}
+          onValueChange={(val) => {
+            if (val === "other") {
+              setShowOtherPopup({ items, setItems, itemId: item.id, detailId });
+            } else if (val === "none") {
+              if (detailId) {
+                updateItem(items, setItems, item.id, { dropdown_id: "" }, detailId);
+              } else {
+                updateItem(items, setItems, item.id, { dropdown_id: "" });
+              }
+            } else {
+              if (detailId) {
+                updateItem(items, setItems, item.id, { dropdown_id: val }, detailId);
+              } else {
+                updateItem(items, setItems, item.id, { dropdown_id: val });
+              }
+            }
+          }}
+        >
+          <SelectTrigger className="h-7 text-xs w-36">
+            <SelectValue placeholder="Dropdown...">
+              {selectedDropdown?.name || "None"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            {dropdownConditions.map(dd => (
+              <SelectItem key={dd.id} value={dd.id}>{dd.name}</SelectItem>
+            ))}
+            <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
+  // Render hierarchical item editor
+  const renderItemEditor = (items, setItems) => (
     <div className="space-y-2 max-h-[45vh] overflow-y-auto">
       {items.map((item, index) => (
-        <div key={item.id} className={`border rounded-lg p-3 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
+        <div key={item.id} className="border rounded-lg p-3 bg-white">
+          {/* Main Checklist Item */}
           <div className="flex items-start gap-2">
             <div className="flex flex-col">
-              <button onClick={() => moveItem(index, 'up', isSubTemplate)} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+              <button onClick={() => moveItem(items, setItems, index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                 <ArrowUp className="w-3 h-3" />
               </button>
-              <button onClick={() => moveItem(index, 'down', isSubTemplate)} disabled={index === items.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+              <button onClick={() => moveItem(items, setItems, index, 'down')} disabled={index === items.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                 <ArrowDown className="w-3 h-3" />
               </button>
             </div>
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                  {item.type === 'task' ? 'Task' : 'Checklist'}
-                </span>
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                 {editingItem === item.id ? (
                   <Input
                     value={item.text}
-                    onChange={(e) => updateItem(item.id, { text: e.target.value }, isSubTemplate)}
+                    onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value })}
                     onBlur={() => setEditingItem(null)}
                     onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
                     autoFocus
@@ -407,42 +632,162 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                 )}
               </div>
 
-              {item.type === 'checklist' && (
-                <>
-                  <button 
-                    onClick={() => toggleItemExpanded(item.id)}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-                  >
-                    {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    Dropdown: {item.custom_dropdown_key || 'none'}
-                  </button>
+              <div className="flex items-center gap-2 text-xs">
+                <button 
+                  onClick={() => toggleItemExpanded(item.id)}
+                  className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                >
+                  {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  Details ({item.details?.length || 0}) | Tasks ({item.tasks?.length || 0})
+                </button>
+                {renderDropdownSelect(item, items, setItems)}
+              </div>
 
-                  {expandedItems[item.id] && (
-                    <div className="ml-4 space-y-2 pt-2 border-t">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">Dropdown Key:</Label>
+              {/* Expanded Content */}
+              {expandedItems[item.id] && (
+                <div className="ml-4 mt-2 space-y-3 border-l-2 border-gray-200 pl-3">
+                  {/* Tasks under main item */}
+                  {item.tasks?.map((task, tIdx) => (
+                    <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                      {editingItem === task.id ? (
                         <Input
-                          value={item.custom_dropdown_key || ""}
-                          onChange={(e) => updateItem(item.id, { custom_dropdown_key: e.target.value }, isSubTemplate)}
-                          placeholder="e.g., fabrication_status"
+                          value={task.text}
+                          onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
+                          onBlur={() => setEditingItem(null)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
+                          autoFocus
                           className="h-6 text-xs flex-1"
                         />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setShowDropdownManager(item.custom_dropdown_key || '')}
-                          className="h-6 px-2"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </Button>
+                      ) : (
+                        <>
+                          <span className="flex-1 text-sm">{task.text}</span>
+                          <button onClick={() => setEditingItem(task.id)} className="p-1"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                        </>
+                      )}
+                      <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-1">
+                        <Trash2 className="w-3 h-3 text-red-500" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Add Task to main item */}
+                  <div className="flex gap-1">
+                    <Input
+                      placeholder="Add task..."
+                      className="h-6 text-xs flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          addTask(items, setItems, item.id, null, e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button size="sm" variant="ghost" className="h-6 px-2 text-orange-600" onClick={(e) => {
+                      const input = e.target.closest('.flex').querySelector('input');
+                      if (input.value.trim()) {
+                        addTask(items, setItems, item.id, null, input.value);
+                        input.value = "";
+                      }
+                    }}>
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+
+                  {/* Detail Items */}
+                  {item.details?.map((detail, dIdx) => (
+                    <div key={detail.id} className="bg-gray-50 p-2 rounded border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
+                        {editingItem === detail.id ? (
+                          <Input
+                            value={detail.text}
+                            onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id)}
+                            onBlur={() => setEditingItem(null)}
+                            onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
+                            autoFocus
+                            className="h-6 text-xs flex-1"
+                          />
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm">{detail.text}</span>
+                            <button onClick={() => setEditingItem(detail.id)} className="p-1"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                          </>
+                        )}
+                        {renderDropdownSelect(item, items, setItems, detail.id)}
+                        <button onClick={() => deleteItem(items, setItems, item.id, detail.id)} className="p-1">
+                          <Trash2 className="w-3 h-3 text-red-500" />
+                        </button>
+                      </div>
+                      
+                      {/* Tasks under detail */}
+                      <div className="ml-4 mt-2 space-y-1 border-l-2 border-orange-200 pl-2">
+                        {detail.tasks?.map((task) => (
+                          <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded">
+                            <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                            {editingItem === task.id ? (
+                              <Input
+                                value={task.text}
+                                onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
+                                onBlur={() => setEditingItem(null)}
+                                onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
+                                autoFocus
+                                className="h-5 text-xs flex-1"
+                              />
+                            ) : (
+                              <>
+                                <span className="flex-1 text-xs">{task.text}</span>
+                                <button onClick={() => setEditingItem(task.id)} className="p-0.5"><Pencil className="w-2.5 h-2.5 text-gray-400" /></button>
+                              </>
+                            )}
+                            <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5">
+                              <Trash2 className="w-2.5 h-2.5 text-red-500" />
+                            </button>
+                          </div>
+                        ))}
+                        <div className="flex gap-1">
+                          <Input
+                            placeholder="Add task..."
+                            className="h-5 text-xs flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.target.value.trim()) {
+                                addTask(items, setItems, item.id, detail.id, e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  )}
-                </>
+                  ))}
+
+                  {/* Add Detail Item */}
+                  <div className="flex gap-1">
+                    <Input
+                      placeholder="Add detail item..."
+                      className="h-6 text-xs flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          addDetailItem(items, setItems, item.id, e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button size="sm" variant="ghost" className="h-6 px-2 text-purple-600" onClick={(e) => {
+                      const input = e.target.closest('.flex').querySelector('input');
+                      if (input.value.trim()) {
+                        addDetailItem(items, setItems, item.id, input.value);
+                        input.value = "";
+                      }
+                    }}>
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
-            <button onClick={() => deleteItem(item.id, isSubTemplate)} className="p-1">
+            <button onClick={() => deleteItem(items, setItems, item.id)} className="p-1">
               <Trash2 className="w-4 h-4 text-red-500" />
             </button>
           </div>
@@ -451,7 +796,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
       {items.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p>No items yet. Add checklist items or tasks above.</p>
+          <p>No items yet. Add checklist items above.</p>
         </div>
       )}
     </div>
@@ -473,20 +818,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 py-2 border-b bg-white">
-              <TabsList className="grid w-full grid-cols-3 bg-gray-200 p-1">
+              <TabsList className="grid w-full grid-cols-4 bg-gray-200 p-1">
                 <TabsTrigger value="selectors" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Template Selectors</TabsTrigger>
                 <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
-                <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Product Types</TabsTrigger>
+                <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Main Product Templates</TabsTrigger>
+                <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Dropdowns/Conditions</TabsTrigger>
               </TabsList>
             </div>
 
             {/* Template Selectors Tab */}
             <TabsContent value="selectors" className="flex-1 overflow-y-auto p-4">
               <div className="grid grid-cols-2 gap-4">
-                {/* Left: Add Product Types */}
                 <div className="space-y-3">
-                  <h3 className="font-bold text-sm">Add Product Types</h3>
-                  <p className="text-xs text-gray-500">Click to add a product type. You can add multiple of the same type.</p>
+                  <h3 className="font-bold text-sm">Add Main Product Templates</h3>
+                  <p className="text-xs text-gray-500">Click to add a product type. You can add multiple of the same type with unique names.</p>
                   
                   <div className="space-y-1 max-h-[50vh] overflow-y-auto">
                     {productTypes.map(type => {
@@ -514,9 +859,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                   </div>
                 </div>
 
-                {/* Right: Selected Products with Sub-template options */}
                 <div className="space-y-3">
                   <h3 className="font-bold text-sm">Selected Products ({selectedProducts.length})</h3>
+                  {existingChecklist.length > 0 && (
+                    <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      ✓ Project has {getExistingProductNames().size} existing products. New templates will be added.
+                    </p>
+                  )}
                   
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
@@ -540,7 +889,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                           </div>
                           <div className="text-xs text-gray-500 mb-2">Type: {product.productType}</div>
                           
-                          {/* Sub-template checkboxes */}
                           {subTemplates.length > 0 && (
                             <div className="border-t pt-2 mt-2">
                               <Label className="text-xs font-medium block mb-1">Apply Sub-Templates:</Label>
@@ -575,9 +923,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                                   );
                                 })}
                               </div>
-                              {subTemplates.length === 0 && (
-                                <p className="text-xs text-gray-400">No sub-templates created. Add them in the Sub-Templates tab.</p>
-                              )}
                             </div>
                           )}
                         </div>
@@ -600,7 +945,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
             {/* Sub-Templates Tab */}
             <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
-              {/* Sub-template List */}
               <div className="space-y-2 overflow-y-auto">
                 <div className="bg-gray-50 border rounded-lg p-3 mb-3">
                   <h3 className="font-bold mb-2 text-sm">Create Sub-Template</h3>
@@ -677,7 +1021,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                 ))}
               </div>
 
-              {/* Sub-template Checklist Editor */}
               <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
                 {selectedSubTemplate ? (
                   <>
@@ -693,27 +1036,23 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-sm font-medium">Add Item</Label>
+                        <Label className="text-sm font-medium">Add Checklist Item</Label>
                         <div className="flex gap-2 mt-1">
                           <Input
                             value={newItemText}
                             onChange={(e) => setNewItemText(e.target.value)}
                             placeholder="Item text..."
                             className="flex-1"
-                            onKeyDown={(e) => e.key === 'Enter' && addSubTemplateChecklistItem('checklist')}
+                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)}
                           />
-                          <Button onClick={() => addSubTemplateChecklistItem('checklist')} size="sm" variant="outline">
+                          <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline">
                             <Plus className="w-3 h-3 mr-1" />
-                            Checklist
-                          </Button>
-                          <Button onClick={() => addSubTemplateChecklistItem('task')} size="sm" variant="outline">
-                            <Plus className="w-3 h-3 mr-1" />
-                            Task
+                            Add
                           </Button>
                         </div>
                       </div>
 
-                      {renderItemEditor(subTemplateChecklistItems, true)}
+                      {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
                     </div>
                   </>
                 ) : (
@@ -724,9 +1063,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
               </div>
             </TabsContent>
 
-            {/* Product Types Tab */}
+            {/* Main Product Templates Tab */}
             <TabsContent value="producttypes" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
-              {/* Product Type List */}
               <div className="space-y-2 overflow-y-auto">
                 <div className="bg-gray-50 border rounded-lg p-2 mb-3">
                   <div className="flex gap-2">
@@ -753,7 +1091,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                   </div>
                 </div>
 
-                <h3 className="font-bold text-sm">Product Types ({productTypes.length})</h3>
+                <h3 className="font-bold text-sm">Main Product Templates ({productTypes.length})</h3>
                 {productTypes.map((type, index) => {
                   const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                   return (
@@ -811,7 +1149,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                 })}
               </div>
 
-              {/* Product Type Template Editor */}
               <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
                 {selectedProductType ? (
                   <>
@@ -825,32 +1162,159 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
 
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-sm font-medium">Add Item</Label>
+                        <Label className="text-sm font-medium">Add Checklist Item</Label>
                         <div className="flex gap-2 mt-1">
                           <Input
                             value={newItemText}
                             onChange={(e) => setNewItemText(e.target.value)}
                             placeholder="Item text..."
                             className="flex-1"
-                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem('checklist')}
+                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)}
                           />
-                          <Button onClick={() => addChecklistItem('checklist')} size="sm" variant="outline">
+                          <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline">
                             <Plus className="w-3 h-3 mr-1" />
-                            Checklist
-                          </Button>
-                          <Button onClick={() => addChecklistItem('task')} size="sm" variant="outline">
-                            <Plus className="w-3 h-3 mr-1" />
-                            Task
+                            Add
                           </Button>
                         </div>
                       </div>
 
-                      {renderItemEditor(productTypeItems, false)}
+                      {renderItemEditor(productTypeItems, setProductTypeItems)}
                     </div>
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
                     <p>Select a product type to edit its template</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Dropdowns/Conditions Tab */}
+            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-4">
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-gray-50 border rounded-lg p-4 mb-4">
+                  <h3 className="font-bold mb-2">Create Dropdown/Condition</h3>
+                  <p className="text-xs text-gray-500 mb-3">These dropdowns can be assigned to checklist items and detail items in templates.</p>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newDropdownName}
+                      onChange={(e) => setNewDropdownName(e.target.value)}
+                      placeholder="Dropdown name (e.g., Fabrication Status, Design Approval)..."
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newDropdownName.trim()) {
+                          const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
+                          saveDropdownConditions([...dropdownConditions, newItem]);
+                          setNewDropdownName("");
+                        }
+                      }}
+                    />
+                    <Button onClick={() => {
+                      if (newDropdownName.trim()) {
+                        const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
+                        saveDropdownConditions([...dropdownConditions, newItem]);
+                        setNewDropdownName("");
+                      }
+                    }}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                </div>
+
+                <h3 className="font-bold text-sm mb-3">Dropdowns/Conditions ({dropdownConditions.length})</h3>
+                
+                {dropdownConditions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
+                    <List className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>No dropdowns created yet.</p>
+                    <p className="text-xs mt-1">Add dropdowns above to use them in templates.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {dropdownConditions.map((dd, index) => (
+                      <div key={dd.id} className="flex items-center gap-2 p-3 border rounded-lg bg-white">
+                        <div className="flex flex-col">
+                          <button 
+                            onClick={() => {
+                              if (index > 0) {
+                                const newItems = [...dropdownConditions];
+                                [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+                                saveDropdownConditions(newItems);
+                              }
+                            }} 
+                            disabled={index === 0} 
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (index < dropdownConditions.length - 1) {
+                                const newItems = [...dropdownConditions];
+                                [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+                                saveDropdownConditions(newItems);
+                              }
+                            }} 
+                            disabled={index === dropdownConditions.length - 1} 
+                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                        
+                        {editingDropdown === dd.id ? (
+                          <div className="flex-1 flex gap-2">
+                            <Input
+                              defaultValue={dd.name}
+                              className="flex-1"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const newName = e.target.value.trim();
+                                  if (newName) {
+                                    saveDropdownConditions(dropdownConditions.map(d => 
+                                      d.id === dd.id ? { ...d, name: newName } : d
+                                    ));
+                                  }
+                                  setEditingDropdown(null);
+                                }
+                                if (e.key === 'Escape') setEditingDropdown(null);
+                              }}
+                              onBlur={(e) => {
+                                const newName = e.target.value.trim();
+                                if (newName) {
+                                  saveDropdownConditions(dropdownConditions.map(d => 
+                                    d.id === dd.id ? { ...d, name: newName } : d
+                                  ));
+                                }
+                                setEditingDropdown(null);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex-1">
+                              <span className="font-medium">{dd.name}</span>
+                            </div>
+                            <button onClick={() => setEditingDropdown(dd.id)} className="p-1.5 hover:bg-gray-100 rounded">
+                              <Pencil className="w-4 h-4 text-gray-500" />
+                            </button>
+                          </>
+                        )}
+                        
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Delete "${dd.name}"?`)) {
+                              saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id));
+                            }
+                          }} 
+                          className="p-1.5 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -865,14 +1329,70 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
         </div>
       </div>
 
-      {/* Dropdown Manager */}
-      {showDropdownManager !== null && (
-        <CustomDropdownManager
-          isOpen={true}
-          onClose={() => setShowDropdownManager(null)}
-          dropdownKey={showDropdownManager}
-        />
-      )}
+      {/* Other Dropdown Popup */}
+      <Dialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select or Create Dropdown</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">All Available Dropdowns</Label>
+              <div className="max-h-48 overflow-y-auto border rounded-lg">
+                {dropdownConditions.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No dropdowns created yet.
+                  </div>
+                ) : (
+                  dropdownConditions.map(dd => (
+                    <div
+                      key={dd.id}
+                      onClick={() => {
+                        if (showOtherPopup) {
+                          handleOtherDropdownSelect(
+                            showOtherPopup.items, 
+                            showOtherPopup.setItems, 
+                            showOtherPopup.itemId, 
+                            showOtherPopup.detailId,
+                            dd.id
+                          );
+                        }
+                      }}
+                      className="p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
+                    >
+                      <List className="w-4 h-4 text-purple-500" />
+                      <span>{dd.name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium mb-2 block">Or Create Custom Dropdown</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={customDropdownValue}
+                  onChange={(e) => setCustomDropdownValue(e.target.value)}
+                  placeholder="New dropdown name..."
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()}
+                />
+                <Button onClick={handleCreateCustomDropdown} disabled={!customDropdownValue.trim()}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Create
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOtherPopup(null)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
