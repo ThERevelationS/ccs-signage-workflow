@@ -166,43 +166,91 @@ export default function ProductChecklistDialog({
     return dropdownOptionsCache[key] || [];
   };
 
-  // Handle template application from TemplateBuilder
+  // Handle template application from TemplateBuilder - APPENDS to existing checklist
   const handleApplyTemplate = (templateData) => {
-    const newChecklist = [];
+    const newItems = [];
     
-    templateData.forEach(section => {
-      if (section.type === 'product_header') {
-        // Add items from product type template
-        section.items.forEach(item => {
-          newChecklist.push({
-            id: `${section.productName}_${item.id}`,
-            product_name: section.productName,
-            product_type: section.productType,
-            text: item.text,
-            type: item.type || 'checklist',
+    // Helper to flatten hierarchical items
+    const flattenItem = (item, productName, productType, subTemplateName = null) => {
+      const baseId = subTemplateName 
+        ? `${productName}_sub_${subTemplateName}_${item.id}`
+        : `${productName}_${item.id}`;
+      
+      // Add main checklist item
+      newItems.push({
+        id: baseId,
+        product_name: productName,
+        product_type: productType,
+        sub_template_name: subTemplateName,
+        text: item.text,
+        type: 'checklist',
+        approved_by: "",
+        dropdown_id: item.dropdown_id || "",
+        custom_dropdown_value: ""
+      });
+      
+      // Add tasks under main item
+      item.tasks?.forEach(task => {
+        newItems.push({
+          id: `${baseId}_task_${task.id}`,
+          product_name: productName,
+          product_type: productType,
+          sub_template_name: subTemplateName,
+          parent_id: baseId,
+          text: task.text,
+          type: 'task',
+          approved_by: "",
+          custom_dropdown_value: ""
+        });
+      });
+      
+      // Add detail items and their tasks
+      item.details?.forEach(detail => {
+        const detailId = `${baseId}_detail_${detail.id}`;
+        newItems.push({
+          id: detailId,
+          product_name: productName,
+          product_type: productType,
+          sub_template_name: subTemplateName,
+          parent_id: baseId,
+          text: detail.text,
+          type: 'detail',
+          approved_by: "",
+          dropdown_id: detail.dropdown_id || "",
+          custom_dropdown_value: ""
+        });
+        
+        // Add tasks under detail
+        detail.tasks?.forEach(task => {
+          newItems.push({
+            id: `${detailId}_task_${task.id}`,
+            product_name: productName,
+            product_type: productType,
+            sub_template_name: subTemplateName,
+            parent_id: detailId,
+            text: task.text,
+            type: 'task',
             approved_by: "",
-            custom_dropdown_key: item.custom_dropdown_key || "",
             custom_dropdown_value: ""
           });
         });
-      } else if (section.type === 'sub_template') {
-        // Add items from sub-template
+      });
+    };
+    
+    templateData.forEach(section => {
+      if (section.type === 'product_header') {
         section.items.forEach(item => {
-          newChecklist.push({
-            id: `${section.parentProduct}_sub_${section.subTemplateName}_${item.id}`,
-            product_name: section.parentProduct,
-            sub_template_name: section.subTemplateName,
-            text: item.text,
-            type: item.type || 'checklist',
-            approved_by: "",
-            custom_dropdown_key: item.custom_dropdown_key || "",
-            custom_dropdown_value: ""
-          });
+          flattenItem(item, section.productName, section.productType);
+        });
+      } else if (section.type === 'sub_template') {
+        section.items.forEach(item => {
+          flattenItem(item, section.parentProduct, null, section.subTemplateName);
         });
       }
     });
 
-    setChecklist(newChecklist);
+    // Append to existing checklist instead of replacing
+    setChecklist([...checklist, ...newItems]);
   };
 
   const updateChecklistItem = (itemId, updates) => {
