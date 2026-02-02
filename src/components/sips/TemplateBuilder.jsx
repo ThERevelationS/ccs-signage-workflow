@@ -249,8 +249,8 @@ export default function TemplateBuilder({ isOpen, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-        <div className="clay-card w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="clay-card w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}
           <div className="p-6 border-b">
             <h2 className="text-2xl font-bold">Checklist Template Builder</h2>
             <p className="text-sm text-gray-600 mt-1">Create and manage product-specific checklist templates and sub-items</p>
