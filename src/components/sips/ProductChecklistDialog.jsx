@@ -12,9 +12,7 @@ import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeade
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TemplateBuilder from "./TemplateBuilder";
 
-
 const WorkOrder = base44.entities.WorkOrder;
-
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
