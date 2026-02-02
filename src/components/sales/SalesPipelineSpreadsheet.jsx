@@ -1131,11 +1131,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         
         const createdItems = await WorkOrder.bulkCreate(cleanBatch);
         
-        // Update tracking map and local state
+        // Update tracking map with created items
         createdItems.forEach((newWO, idx) => {
           const originalItem = batch[idx];
-          if (originalItem._uniqueKey) {
-            existingWorkOrdersMap.set(originalItem._uniqueKey, newWO);
+          const clientKey = originalItem.client_name?.toLowerCase().trim();
+          if (clientKey) {
+            const existingList = existingByCustomer.get(clientKey) || [];
+            // Replace the pending placeholder with the real work order
+            const pendingIdx = existingList.findIndex(wo => wo._pending);
+            if (pendingIdx >= 0) {
+              existingList[pendingIdx] = newWO;
+            } else {
+              existingList.push(newWO);
+            }
           }
         });
         
