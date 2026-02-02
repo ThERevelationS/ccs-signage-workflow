@@ -602,6 +602,7 @@ export default function ProductChecklistDialog({
             loadData();
           }}
           onApplyTemplate={handleApplyTemplate}
+          existingChecklist={checklist}
         />,
         document.body
       )}
