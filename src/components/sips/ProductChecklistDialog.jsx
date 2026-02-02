@@ -29,9 +29,7 @@ export default function ProductChecklistDialog({
   const [checklist, setChecklist] = useState([]);
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
-  const [subTemplates, setSubTemplates] = useState([]);
-  const [productTypeTemplates, setProductTypeTemplates] = useState({});
-  const [subTemplateItems, setSubTemplateItems] = useState({});
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
