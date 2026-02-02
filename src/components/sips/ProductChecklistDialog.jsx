@@ -698,6 +698,7 @@ export default function ProductChecklistDialog({
           }}
           onApplyTemplate={handleApplyTemplate}
           existingChecklist={checklist}
+          isAdmin={isAdmin}
         />,
         document.body
       )}
