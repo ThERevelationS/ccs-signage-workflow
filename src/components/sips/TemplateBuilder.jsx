@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, Copy, Search, Eye, History, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import CustomDropdownManager from "./CustomDropdownManager";
 
@@ -34,6 +34,12 @@ export default function TemplateBuilder({ isOpen, onClose }) {
   const [editingSubItem, setEditingSubItem] = useState(null);
   
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
+  // New features state
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [templateFilterType, setTemplateFilterType] = useState("all");
+  const [showPreview, setShowPreview] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -126,6 +132,34 @@ export default function TemplateBuilder({ isOpen, onClose }) {
       console.error("Error deleting template:", error);
     }
   };
+
+  // Duplicate template
+  const duplicateTemplate = async (template) => {
+    try {
+      const newTemplate = {
+        name: `${template.name} (Copy)`,
+        product_type: template.product_type || "",
+        items: template.items.map(item => ({
+          ...item,
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        }))
+      };
+      await ChecklistTemplate.create(newTemplate);
+      await loadData();
+    } catch (error) {
+      console.error("Error duplicating template:", error);
+    }
+  };
+
+  // Filter templates
+  const filteredTemplates = templates.filter(template => {
+    const matchesSearch = !templateSearch || 
+      template.name.toLowerCase().includes(templateSearch.toLowerCase());
+    const matchesType = templateFilterType === "all" || 
+      template.product_type === templateFilterType ||
+      (!template.product_type && templateFilterType === "none");
+    return matchesSearch && matchesType;
+  });
 
   // Template Items
   const addTemplateItem = () => {
@@ -270,14 +304,39 @@ export default function TemplateBuilder({ isOpen, onClose }) {
               {/* Template List */}
               <div className="space-y-2 overflow-y-auto pr-2">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold">Templates</h3>
+                  <h3 className="font-bold">Templates ({filteredTemplates.length})</h3>
                   <Button size="sm" onClick={createNewTemplate}>
                     <Plus className="w-4 h-4 mr-1" />
                     New
                   </Button>
                 </div>
                 
-                {templates.map(template => (
+                {/* Search and Filter */}
+                <div className="space-y-2 mb-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Search templates..."
+                      className="pl-8 h-8 text-sm"
+                    />
+                  </div>
+                  <Select value={templateFilterType} onValueChange={setTemplateFilterType}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Filter by type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="none">No Type</SelectItem>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {filteredTemplates.map(template => (
                   <div
                     key={template.id}
                     onClick={() => selectTemplate(template)}
@@ -297,9 +356,34 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
+                          duplicateTemplate(template);
+                        }}
+                        className="h-6 px-2"
+                        title="Duplicate template"
+                      >
+                        <Copy className="w-3 h-3 text-blue-500" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowVersionHistory(template);
+                        }}
+                        className="h-6 px-2"
+                        title="Version history"
+                      >
+                        <History className="w-3 h-3 text-gray-500" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setDeleteConfirm({ id: template.id, type: 'template', name: template.name });
                         }}
                         className="h-6 px-2"
+                        title="Delete template"
                       >
                         <Trash2 className="w-3 h-3 text-red-500" />
                       </Button>
@@ -310,9 +394,21 @@ export default function TemplateBuilder({ isOpen, onClose }) {
 
               {/* Template Editor */}
               <div className="col-span-2 overflow-y-auto clay-card p-4">
-                <h3 className="font-bold text-lg mb-4">
-                  {selectedTemplate ? "Edit Template" : "Create New Template"}
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg">
+                    {selectedTemplate ? "Edit Template" : "Create New Template"}
+                  </h3>
+                  {templateItems.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPreview(true)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Preview
+                    </Button>
+                  )}
+                </div>
 
                 <div className="space-y-4">
                   <div>
@@ -659,6 +755,90 @@ export default function TemplateBuilder({ isOpen, onClose }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Template Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
+          <div className="clay-card w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-bold text-lg">Template Preview: {templateName || "Untitled"}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              <div className="space-y-3">
+                {templateItems.map((item, index) => (
+                  <div key={item.id} className="border rounded-lg p-3 bg-purple-50/30">
+                    <div className="grid grid-cols-3 gap-2 items-center mb-2">
+                      <div className="font-medium text-sm">{item.text}</div>
+                      <div className="h-8 bg-gray-100 rounded border text-xs flex items-center px-2 text-gray-400">
+                        Approved by...
+                      </div>
+                      <div className="h-8 bg-gray-100 rounded border text-xs flex items-center px-2 text-gray-400">
+                        {item.custom_dropdown_key || "Status..."}
+                      </div>
+                    </div>
+                    {item.sub_items && item.sub_items.length > 0 && (
+                      <div className="ml-4 mt-2 space-y-1">
+                        {item.sub_items.map(si => (
+                          <label key={si.id} className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" disabled className="h-4 w-4" />
+                            <span>{si.text}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version History Modal */}
+      {showVersionHistory && (
+        <div className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4" onClick={() => setShowVersionHistory(null)}>
+          <div className="clay-card w-full max-w-md max-h-[60vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-bold">Version History: {showVersionHistory.name}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowVersionHistory(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              <div className="space-y-2">
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Current Version</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(showVersionHistory.updated_date || showVersionHistory.created_date).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {showVersionHistory.items?.length || 0} items
+                  </div>
+                </div>
+                <div className="p-3 bg-gray-50 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Created</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(showVersionHistory.created_date).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    by {showVersionHistory.created_by || "Unknown"}
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-4 text-center">
+                Full version history tracking coming soon
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
