@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare, List, MoreHorizontal } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare, List, MoreHorizontal, Copy, Clipboard } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [] }) {
+export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [], isAdmin = false }) {
   const [activeTab, setActiveTab] = useState("selectors");
   const [subTemplates, setSubTemplates] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
@@ -46,6 +46,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
+  // Clipboard for copy/paste
+  const [clipboard, setClipboard] = useState(null); // { type: 'subtemplate' | 'producttype', data: ... }
 
   useEffect(() => {
     if (isOpen) {
@@ -818,11 +821,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 py-2 border-b bg-white">
-              <TabsList className="grid w-full grid-cols-4 bg-gray-200 p-1">
+              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-1`}>
                 <TabsTrigger value="selectors" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Template Selectors</TabsTrigger>
-                <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
-                <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Main Product Templates</TabsTrigger>
-                <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Dropdowns/Conditions</TabsTrigger>
+                {isAdmin && (
+                  <>
+                    <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Main Product Templates</TabsTrigger>
+                    <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
+                    <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Dropdowns/Conditions</TabsTrigger>
+                  </>
+                )}
               </TabsList>
             </div>
 
