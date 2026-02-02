@@ -363,22 +363,33 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('workorders')) {
       try {
         console.log('Starting Work Orders backup...');
-        // Use list() to get all records
+        // Use paginated fetching to get all records
         let workOrders = [];
-        try {
-          const rawResult = await base44.asServiceRole.entities.WorkOrder.list();
-          // Handle case where SDK returns JSON string instead of array
-          if (typeof rawResult === 'string') {
-            workOrders = JSON.parse(rawResult);
-          } else {
-            workOrders = rawResult;
+        let skip = 0;
+        const limit = 200;
+        let hasMore = true;
+        
+        while (hasMore) {
+          try {
+            const batch = await base44.asServiceRole.entities.WorkOrder.list(null, limit, skip);
+            const batchArray = Array.isArray(batch) ? batch : (typeof batch === 'string' ? JSON.parse(batch) : []);
+            console.log(`Work Orders batch: skip=${skip}, got ${batchArray.length} records`);
+            
+            if (batchArray.length === 0) {
+              hasMore = false;
+            } else {
+              workOrders = workOrders.concat(batchArray);
+              skip += limit;
+              if (batchArray.length < limit) {
+                hasMore = false;
+              }
+            }
+          } catch (batchErr) {
+            console.error('Work Orders batch error:', batchErr.message);
+            hasMore = false;
           }
-          console.log(`Work Orders parsed: isArray: ${Array.isArray(workOrders)}, length: ${workOrders?.length || 0}`);
-        } catch (listErr) {
-          console.error('Work Orders error:', listErr.message);
         }
-        if (!Array.isArray(workOrders)) workOrders = [];
-        console.log(`Work Orders: fetched ${workOrders.length} records`);
+        console.log(`Work Orders: fetched ${workOrders.length} records total`);
         const formattedWO = workOrders.map(wo => ({
           id: wo.id,
           title: wo.title,
@@ -444,21 +455,33 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('salespipeline')) {
       try {
         console.log('Starting Sales Pipeline backup...');
-        // For sales pipeline, get ALL work orders first using list(), then filter in code
+        // For sales pipeline, get ALL work orders using paginated fetching
         let allWorkOrders = [];
-        try {
-          const rawResult = await base44.asServiceRole.entities.WorkOrder.list();
-          // Handle case where SDK returns JSON string instead of array
-          if (typeof rawResult === 'string') {
-            allWorkOrders = JSON.parse(rawResult);
-          } else {
-            allWorkOrders = rawResult;
+        let skip = 0;
+        const limit = 200;
+        let hasMore = true;
+        
+        while (hasMore) {
+          try {
+            const batch = await base44.asServiceRole.entities.WorkOrder.list(null, limit, skip);
+            const batchArray = Array.isArray(batch) ? batch : (typeof batch === 'string' ? JSON.parse(batch) : []);
+            console.log(`Sales Pipeline batch: skip=${skip}, got ${batchArray.length} records`);
+            
+            if (batchArray.length === 0) {
+              hasMore = false;
+            } else {
+              allWorkOrders = allWorkOrders.concat(batchArray);
+              skip += limit;
+              if (batchArray.length < limit) {
+                hasMore = false;
+              }
+            }
+          } catch (batchErr) {
+            console.error('Sales Pipeline batch error:', batchErr.message);
+            hasMore = false;
           }
-          console.log(`Sales Pipeline parsed: isArray: ${Array.isArray(allWorkOrders)}, length: ${allWorkOrders?.length || 0}`);
-        } catch (listErr) {
-          console.error('Sales Pipeline error:', listErr.message);
         }
-        if (!Array.isArray(allWorkOrders)) allWorkOrders = [];
+        
         const workOrdersRaw = allWorkOrders.filter(wo => !wo.is_rider && wo.deleted !== true);
         console.log(`Sales Pipeline: fetched ${workOrdersRaw.length} work orders (from ${allWorkOrders.length} total)`);
         const workOrdersForExport = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
