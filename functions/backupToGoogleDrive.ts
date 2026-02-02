@@ -363,17 +363,19 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('workorders')) {
       try {
         console.log('Starting Work Orders backup...');
-        // Use list() to get all records - filter({}) may have pagination limits
+        // Use list() to get all records
         let workOrders = [];
         try {
-          workOrders = await base44.asServiceRole.entities.WorkOrder.list();
-          console.log(`Work Orders list() returned: ${typeof workOrders}, isArray: ${Array.isArray(workOrders)}, length: ${workOrders?.length || 0}`);
+          const rawResult = await base44.asServiceRole.entities.WorkOrder.list();
+          // Handle case where SDK returns JSON string instead of array
+          if (typeof rawResult === 'string') {
+            workOrders = JSON.parse(rawResult);
+          } else {
+            workOrders = rawResult;
+          }
+          console.log(`Work Orders parsed: isArray: ${Array.isArray(workOrders)}, length: ${workOrders?.length || 0}`);
         } catch (listErr) {
-          console.error('Work Orders list error:', listErr.message);
-          // Try filter as fallback
-          const filtered = await base44.asServiceRole.entities.WorkOrder.filter({});
-          workOrders = Array.isArray(filtered) ? filtered : [];
-          console.log(`Work Orders filter fallback returned: ${workOrders.length}`);
+          console.error('Work Orders error:', listErr.message);
         }
         if (!Array.isArray(workOrders)) workOrders = [];
         console.log(`Work Orders: fetched ${workOrders.length} records`);
@@ -445,10 +447,16 @@ Deno.serve(async (req) => {
         // For sales pipeline, get ALL work orders first using list(), then filter in code
         let allWorkOrders = [];
         try {
-          allWorkOrders = await base44.asServiceRole.entities.WorkOrder.list();
-          console.log(`Sales Pipeline list() returned: ${typeof allWorkOrders}, isArray: ${Array.isArray(allWorkOrders)}, length: ${allWorkOrders?.length || 0}`);
+          const rawResult = await base44.asServiceRole.entities.WorkOrder.list();
+          // Handle case where SDK returns JSON string instead of array
+          if (typeof rawResult === 'string') {
+            allWorkOrders = JSON.parse(rawResult);
+          } else {
+            allWorkOrders = rawResult;
+          }
+          console.log(`Sales Pipeline parsed: isArray: ${Array.isArray(allWorkOrders)}, length: ${allWorkOrders?.length || 0}`);
         } catch (listErr) {
-          console.error('Sales Pipeline list error:', listErr.message);
+          console.error('Sales Pipeline error:', listErr.message);
         }
         if (!Array.isArray(allWorkOrders)) allWorkOrders = [];
         const workOrdersRaw = allWorkOrders.filter(wo => !wo.is_rider && wo.deleted !== true);
