@@ -1268,6 +1268,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           {hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}
                         </div>
                       </div>
+                      <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-1" title="Duplicate">
+                        <Copy className="w-3 h-3 text-blue-500" />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); copyProductTypeToClipboard(type); }} className="p-1" title="Copy to clipboard">
+                        <Clipboard className="w-3 h-3 text-green-500" />
+                      </button>
                       <button onClick={(e) => {
                         e.stopPropagation();
                         if (confirm(`Delete "${type}"?`)) {
