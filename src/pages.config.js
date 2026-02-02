@@ -68,9 +68,9 @@ import ResetPassword from './pages/ResetPassword';
 import ResourcePlanning from './pages/ResourcePlanning';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
+import TemplateBuilder from './pages/TemplateBuilder';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
-import TemplateBuilder from './pages/TemplateBuilder';
 import __Layout from './Layout.jsx';
 
 
@@ -96,9 +96,9 @@ export const PAGES = {
     "ResourcePlanning": ResourcePlanning,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
+    "TemplateBuilder": TemplateBuilder,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
-    "TemplateBuilder": TemplateBuilder,
 }
 
 export const pagesConfig = {
