@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, Copy, Eye, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import CustomDropdownManager from "./CustomDropdownManager";
 
@@ -13,30 +13,29 @@ const ChecklistTemplate = base44.entities.ChecklistTemplate;
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-export default function TemplateBuilder({ isOpen, onClose }) {
-  const [activeTab, setActiveTab] = useState("items");
+export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
+  const [activeTab, setActiveTab] = useState("selectors");
   const [templates, setTemplates] = useState([]);
-  const [subItems, setSubItems] = useState([]);
+  const [subTemplates, setSubTemplates] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
+  const [productTypeTemplates, setProductTypeTemplates] = useState({});
   
-  // Template Item Editor
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [templateName, setTemplateName] = useState("");
-  const [templateProductType, setTemplateProductType] = useState("");
-  const [templateItems, setTemplateItems] = useState([]);
+  // Template Selector state
+  const [selectedTemplates, setSelectedTemplates] = useState([]);
+  
+  // Sub-template Editor
+  const [newSubTemplateName, setNewSubTemplateName] = useState("");
+  const [editingSubTemplate, setEditingSubTemplate] = useState(null);
+  
+  // Product Type Editor
+  const [selectedProductType, setSelectedProductType] = useState(null);
+  const [productTypeItems, setProductTypeItems] = useState([]);
   const [newItemText, setNewItemText] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [showDropdownManager, setShowDropdownManager] = useState(null);
-  
-  // Sub-item Editor
-  const [newSubItemName, setNewSubItemName] = useState("");
-  const [newSubItemProductTypes, setNewSubItemProductTypes] = useState([]);
-  const [editingSubItem, setEditingSubItem] = useState(null);
+  const [expandedItems, setExpandedItems] = useState({});
   
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
-  // New features state
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -46,17 +45,22 @@ export default function TemplateBuilder({ isOpen, onClose }) {
 
   const loadData = async () => {
     try {
-      const [templatesData, subItemsData, settings] = await Promise.all([
+      const [templatesData, subTemplatesData, settings] = await Promise.all([
         ChecklistTemplate.list(),
         ChecklistSubItem.list(),
         GlobalSettings.list()
       ]);
       
       setTemplates(templatesData);
-      setSubItems(subItemsData.sort((a, b) => (a.order || 0) - (b.order || 0)));
+      setSubTemplates(subTemplatesData.sort((a, b) => (a.order || 0) - (b.order || 0)));
       
       const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
-      setProductTypes(productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
+      const types = productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
+      setProductTypes(types);
+      
+      // Load product type templates
+      const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
+      setProductTypeTemplates(ptTemplates?.setting_value || {});
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -76,199 +80,205 @@ export default function TemplateBuilder({ isOpen, onClose }) {
     }
   };
 
-  // Template Management
-  const createNewTemplate = () => {
-    setSelectedTemplate(null);
-    setTemplateName("");
-    setTemplateProductType("");
-    setTemplateItems([]);
-  };
-
-  const selectTemplate = (template) => {
-    setSelectedTemplate(template);
-    setTemplateName(template.name);
-    setTemplateProductType(template.product_type || "");
-    setTemplateItems(template.items || []);
-  };
-
-  const saveTemplate = async () => {
-    if (!templateName.trim()) {
-      alert("Template name is required");
-      return;
-    }
-    
-    const data = {
-      name: templateName.trim(),
-      product_type: templateProductType || "",
-      items: templateItems
-    };
-
+  const saveProductTypeTemplates = async (templates) => {
     try {
-      if (selectedTemplate) {
-        await ChecklistTemplate.update(selectedTemplate.id, data);
+      const settings = await GlobalSettings.filter({ setting_key: 'productTypeTemplates' });
+      if (settings.length > 0) {
+        await GlobalSettings.update(settings[0].id, { setting_value: templates });
       } else {
-        await ChecklistTemplate.create(data);
+        await GlobalSettings.create({ setting_key: 'productTypeTemplates', setting_value: templates });
       }
-      await loadData();
-      createNewTemplate();
+      setProductTypeTemplates(templates);
     } catch (error) {
-      console.error("Error saving template:", error);
+      console.error("Error saving product type templates:", error);
     }
   };
 
-  const deleteTemplate = async () => {
-    if (!deleteConfirm) return;
-    try {
-      await ChecklistTemplate.delete(deleteConfirm.id);
-      await loadData();
-      if (selectedTemplate?.id === deleteConfirm.id) {
-        createNewTemplate();
-      }
-      setDeleteConfirm(null);
-    } catch (error) {
-      console.error("Error deleting template:", error);
-    }
+  // Template Selection for combining
+  const toggleTemplateSelection = (templateId) => {
+    setSelectedTemplates(prev => 
+      prev.includes(templateId) 
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
   };
 
-  // Duplicate template
-  const duplicateTemplate = async (template) => {
-    try {
-      const newTemplate = {
-        name: `${template.name} (Copy)`,
-        product_type: template.product_type || "",
-        items: template.items.map(item => ({
+  const handleApplyTemplate = () => {
+    // Combine selected product type templates into one
+    const combinedItems = [];
+    selectedTemplates.forEach(typeKey => {
+      const template = productTypeTemplates[typeKey];
+      if (template?.items) {
+        combinedItems.push(...template.items.map(item => ({
           ...item,
-          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        }))
-      };
-      await ChecklistTemplate.create(newTemplate);
-      await loadData();
-    } catch (error) {
-      console.error("Error duplicating template:", error);
-    }
-  };
-
-
-
-  // Template Items
-  const addTemplateItem = () => {
-    if (!newItemText.trim()) return;
-    setTemplateItems([...templateItems, {
-      id: Date.now().toString(),
-      text: newItemText.trim(),
-      custom_dropdown_key: "",
-      sub_items: []
-    }]);
-    setNewItemText("");
-  };
-
-  const updateTemplateItem = (id, updates) => {
-    setTemplateItems(templateItems.map(item => 
-      item.id === id ? { ...item, ...updates } : item
-    ));
-  };
-
-  const deleteTemplateItem = (id) => {
-    setTemplateItems(templateItems.filter(item => item.id !== id));
-  };
-
-  const moveTemplateItem = (index, direction) => {
-    const newItems = [...templateItems];
-    if (direction === 'up' && index > 0) {
-      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-    } else if (direction === 'down' && index < newItems.length - 1) {
-      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-    }
-    setTemplateItems(newItems);
-  };
-
-  const addSubItemToTemplateItem = (itemId, subItemId) => {
-    const subItem = subItems.find(si => si.id === subItemId);
-    if (!subItem) return;
+          id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          product_type: typeKey
+        })));
+      }
+    });
     
-    setTemplateItems(templateItems.map(item => {
-      if (item.id === itemId) {
-        const existingSubItems = item.sub_items || [];
-        if (existingSubItems.find(si => si.id === subItemId)) return item;
-        return {
-          ...item,
-          sub_items: [...existingSubItems, { id: subItemId, text: subItem.name }]
-        };
-      }
-      return item;
-    }));
+    if (onApplyTemplate) {
+      onApplyTemplate(combinedItems);
+    }
+    onClose();
   };
 
-  const removeSubItemFromTemplateItem = (itemId, subItemId) => {
-    setTemplateItems(templateItems.map(item => {
-      if (item.id === itemId) {
-        return {
-          ...item,
-          sub_items: (item.sub_items || []).filter(si => si.id !== subItemId)
-        };
-      }
-      return item;
-    }));
-  };
-
-  // Sub-item Management
-  const createSubItem = async () => {
-    if (!newSubItemName.trim()) return;
+  // Sub-template Management
+  const createSubTemplate = async () => {
+    if (!newSubTemplateName.trim()) return;
     try {
       await ChecklistSubItem.create({
-        name: newSubItemName.trim(),
-        applies_to_product_types: newSubItemProductTypes,
-        order: subItems.length
+        name: newSubTemplateName.trim(),
+        applies_to_product_types: [],
+        order: subTemplates.length
       });
       await loadData();
-      setNewSubItemName("");
-      setNewSubItemProductTypes([]);
+      setNewSubTemplateName("");
     } catch (error) {
-      console.error("Error creating sub-item:", error);
+      console.error("Error creating sub-template:", error);
     }
   };
 
-  const updateSubItem = async (id, updates) => {
+  const updateSubTemplate = async (id, updates) => {
     try {
       await ChecklistSubItem.update(id, updates);
       await loadData();
-      setEditingSubItem(null);
+      setEditingSubTemplate(null);
     } catch (error) {
-      console.error("Error updating sub-item:", error);
+      console.error("Error updating sub-template:", error);
     }
   };
 
-  const deleteSubItem = async () => {
+  const deleteSubTemplate = async () => {
     if (!deleteConfirm) return;
     try {
       await ChecklistSubItem.delete(deleteConfirm.id);
       await loadData();
       setDeleteConfirm(null);
     } catch (error) {
-      console.error("Error deleting sub-item:", error);
+      console.error("Error deleting sub-template:", error);
     }
   };
 
-  const moveSubItem = async (index, direction) => {
-    const newItems = [...subItems];
+  const moveSubTemplate = async (index, direction) => {
+    const newItems = [...subTemplates];
     if (direction === 'up' && index > 0) {
       [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
     } else if (direction === 'down' && index < newItems.length - 1) {
       [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
     }
     
-    // Update order in database
     try {
       await Promise.all(newItems.map((item, idx) => 
         ChecklistSubItem.update(item.id, { order: idx })
       ));
       await loadData();
     } catch (error) {
-      console.error("Error reordering sub-items:", error);
+      console.error("Error reordering sub-templates:", error);
     }
   };
 
+  // Product Type Template Editor
+  const selectProductType = (type) => {
+    setSelectedProductType(type);
+    setProductTypeItems(productTypeTemplates[type]?.items || []);
+    setExpandedItems({});
+  };
+
+  const saveProductTypeTemplate = () => {
+    const updated = {
+      ...productTypeTemplates,
+      [selectedProductType]: {
+        items: productTypeItems
+      }
+    };
+    saveProductTypeTemplates(updated);
+  };
+
+  const addChecklistItem = () => {
+    if (!newItemText.trim()) return;
+    setProductTypeItems([...productTypeItems, {
+      id: Date.now().toString(),
+      text: newItemText.trim(),
+      type: 'checklist',
+      custom_dropdown_key: "",
+      sub_items: []
+    }]);
+    setNewItemText("");
+  };
+
+  const addTaskItem = () => {
+    if (!newItemText.trim()) return;
+    setProductTypeItems([...productTypeItems, {
+      id: Date.now().toString(),
+      text: newItemText.trim(),
+      type: 'task'
+    }]);
+    setNewItemText("");
+  };
+
+  const updateItem = (id, updates) => {
+    setProductTypeItems(productTypeItems.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+  };
+
+  const deleteItem = (id) => {
+    setProductTypeItems(productTypeItems.filter(item => item.id !== id));
+  };
+
+  const moveItem = (index, direction) => {
+    const newItems = [...productTypeItems];
+    if (direction === 'up' && index > 0) {
+      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+    } else if (direction === 'down' && index < newItems.length - 1) {
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+    }
+    setProductTypeItems(newItems);
+  };
+
+  const addSubItemToItem = (itemId, subTemplateId) => {
+    const subTemplate = subTemplates.find(st => st.id === subTemplateId);
+    if (!subTemplate) return;
+    
+    setProductTypeItems(productTypeItems.map(item => {
+      if (item.id === itemId) {
+        const existing = item.sub_items || [];
+        if (existing.find(si => si.id === subTemplateId)) return item;
+        return {
+          ...item,
+          sub_items: [...existing, { id: subTemplateId, text: subTemplate.name }]
+        };
+      }
+      return item;
+    }));
+  };
+
+  const removeSubItemFromItem = (itemId, subTemplateId) => {
+    setProductTypeItems(productTypeItems.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          sub_items: (item.sub_items || []).filter(si => si.id !== subTemplateId)
+        };
+      }
+      return item;
+    }));
+  };
+
+  const toggleItemExpanded = (itemId) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
   if (!isOpen) return null;
+
+  // Get product types that have templates configured
+  const productTypesWithTemplates = productTypes.filter(type => 
+    productTypeTemplates[type]?.items?.length > 0
+  );
 
   return (
     <>
@@ -276,335 +286,137 @@ export default function TemplateBuilder({ isOpen, onClose }) {
         <div className="w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold">Checklist Template Builder</h2>
-              <p className="text-xs text-gray-500">Manage templates, sub-items, and product types</p>
+              <h2 className="text-lg font-bold">Template Builder</h2>
+              <p className="text-xs text-gray-500">Build and combine templates for projects</p>
             </div>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-4 py-2 border-b bg-white">
               <TabsList className="grid w-full grid-cols-3 bg-gray-200 p-1">
-                <TabsTrigger value="items" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Checklist Templates</TabsTrigger>
-                <TabsTrigger value="subitems" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-items Pool</TabsTrigger>
+                <TabsTrigger value="selectors" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Template Selectors</TabsTrigger>
+                <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
                 <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Product Types</TabsTrigger>
               </TabsList>
             </div>
 
-            {/* Checklist Templates Tab */}
-            <TabsContent value="items" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
-              {/* Template List */}
-              <div className="space-y-2 overflow-y-auto pr-2">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-sm">Templates ({templates.length})</h3>
-                  <Button size="sm" onClick={createNewTemplate} className="h-7">
-                    <Plus className="w-3 h-3 mr-1" />
-                    New
-                  </Button>
+            {/* Template Selectors Tab */}
+            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">Select product type templates to combine into a project checklist. Each product type you select will add its checklist items to the project.</p>
                 </div>
-                
-                {templates.map(template => (
-                  <div
-                    key={template.id}
-                    onClick={() => selectTemplate(template)}
-                    className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-                      selectedTemplate?.id === template.id 
-                        ? 'bg-blue-100 border-blue-300' 
-                        : 'bg-white hover:bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{template.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {template.product_type || "No type"} • {template.items?.length || 0} items
-                    </div>
-                    <div className="flex gap-1 mt-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          duplicateTemplate(template);
-                        }}
-                        className="h-5 px-1"
-                        title="Duplicate"
-                      >
-                        <Copy className="w-3 h-3 text-blue-500" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirm({ id: template.id, type: 'template', name: template.name });
-                        }}
-                        className="h-5 px-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
-              {/* Template Editor */}
-              <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-lg">
-                    {selectedTemplate ? "Edit Template" : "Create New Template"}
-                  </h3>
-                  {templateItems.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPreview(true)}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Preview
-                    </Button>
+                <div className="space-y-2">
+                  <h3 className="font-bold text-sm">Available Templates ({productTypesWithTemplates.length})</h3>
+                  {productTypesWithTemplates.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No product type templates configured yet.</p>
+                      <p className="text-sm mt-1">Go to the Product Types tab to create templates.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {productTypesWithTemplates.map(type => {
+                        const template = productTypeTemplates[type];
+                        const isSelected = selectedTemplates.includes(type);
+                        return (
+                          <div
+                            key={type}
+                            onClick={() => toggleTemplateSelection(type)}
+                            className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' 
+                                : 'bg-white hover:bg-gray-50 border-gray-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                checked={isSelected} 
+                                onChange={() => {}}
+                                className="w-4 h-4"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium">{type}</div>
+                                <div className="text-xs text-gray-500">
+                                  {template?.items?.length || 0} items
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label>Template Name</Label>
-                    <Input
-                      value={templateName}
-                      onChange={(e) => setTemplateName(e.target.value)}
-                      placeholder="e.g., Channel Letter Standard Checklist"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Product Type</Label>
-                    <Select value={templateProductType} onValueChange={setTemplateProductType}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select product type..." />
-                      </SelectTrigger>
-                      <SelectContent className="z-[100]">
-                        <SelectItem value={null}>None</SelectItem>
-                        {productTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Checklist Items</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input
-                        value={newItemText}
-                        onChange={(e) => setNewItemText(e.target.value)}
-                        placeholder="Add checklist item..."
-                        onKeyDown={(e) => e.key === 'Enter' && addTemplateItem()}
-                      />
-                      <Button onClick={addTemplateItem} size="sm">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {templateItems.map((item, index) => (
-                      <div key={item.id} className="border rounded-lg p-3 bg-white">
-                        <div className="flex items-start gap-2">
-                          <div className="flex flex-col">
-                            <button onClick={() => moveTemplateItem(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                              <ArrowUp className="w-3 h-3" />
-                            </button>
-                            <button onClick={() => moveTemplateItem(index, 'down')} disabled={index === templateItems.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                              <ArrowDown className="w-3 h-3" />
-                            </button>
-                          </div>
-
-                          <div className="flex-1 space-y-2">
-                            {editingItem === item.id ? (
-                              <Input
-                                value={item.text}
-                                onChange={(e) => updateTemplateItem(item.id, { text: e.target.value })}
-                                onBlur={() => setEditingItem(null)}
-                                onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                                autoFocus
-                                className="h-8 text-sm"
-                              />
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="flex-1 font-medium text-sm">{item.text}</span>
-                                <button onClick={() => setEditingItem(item.id)} className="p-1">
-                                  <Pencil className="w-3 h-3 text-gray-400" />
-                                </button>
-                              </div>
-                            )}
-
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs">Custom Dropdown:</Label>
-                              <Input
-                                value={item.custom_dropdown_key || ""}
-                                onChange={(e) => updateTemplateItem(item.id, { custom_dropdown_key: e.target.value })}
-                                placeholder="Dropdown key (e.g., 'fabrication_status')"
-                                className="h-7 text-xs flex-1"
-                              />
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setShowDropdownManager(item.custom_dropdown_key || '')}
-                                className="h-7 px-2"
-                                title="Manage dropdown options"
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </Button>
-                            </div>
-
-                            {/* Sub-items for this checklist item */}
-                            <div>
-                              <Label className="text-xs">Sub-items (checkboxes):</Label>
-                              <div className="flex flex-wrap gap-2 mt-1 p-2 bg-gray-50 rounded border max-h-32 overflow-y-auto">
-                                {subItems.filter(si => {
-                                  if (!templateProductType) return true;
-                                  return si.applies_to_product_types?.includes(templateProductType) || !si.applies_to_product_types?.length;
-                                }).map(si => {
-                                  const isSelected = (item.sub_items || []).some(s => s.id === si.id);
-                                  return (
-                                    <label key={si.id} className="flex items-center gap-1 text-xs cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={(e) => {
-                                          if (e.target.checked) {
-                                            addSubItemToTemplateItem(item.id, si.id);
-                                          } else {
-                                            removeSubItemFromTemplateItem(item.id, si.id);
-                                          }
-                                        }}
-                                        className="w-3 h-3"
-                                      />
-                                      <span className={isSelected ? "text-blue-700 font-medium" : "text-gray-600"}>{si.name}</span>
-                                    </label>
-                                  );
-                                })}
-                                {subItems.length === 0 && (
-                                  <span className="text-xs text-gray-400">No sub-items created yet. Add them in the Sub-items Pool tab.</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <button onClick={() => deleteTemplateItem(item.id)} className="p-1">
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button onClick={saveTemplate} className="flex-1">
-                      <Save className="w-4 h-4 mr-2" />
-                      {selectedTemplate ? "Update Template" : "Create Template"}
+                {selectedTemplates.length > 0 && (
+                  <div className="sticky bottom-0 bg-white border-t pt-4">
+                    <Button 
+                      onClick={handleApplyTemplate}
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-2" />
+                      Apply {selectedTemplates.length} Template{selectedTemplates.length > 1 ? 's' : ''} to Project
                     </Button>
                   </div>
-                </div>
+                )}
               </div>
             </TabsContent>
 
-            {/* Sub-items Tab */}
-            <TabsContent value="subitems" className="flex-1 overflow-y-auto p-4">
+            {/* Sub-Templates Tab */}
+            <TabsContent value="subtemplates" className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
                 <div className="bg-gray-50 border rounded-lg p-4">
-                  <h3 className="font-bold mb-2 text-sm">Create New Sub-item</h3>
-                  <div className="space-y-3">
+                  <h3 className="font-bold mb-2 text-sm">Create New Sub-Template</h3>
+                  <p className="text-xs text-gray-500 mb-3">Sub-templates are reusable checklist detail items (e.g., Permitting, Installation, Assembly)</p>
+                  <div className="flex gap-2">
                     <Input
-                      value={newSubItemName}
-                      onChange={(e) => setNewSubItemName(e.target.value)}
-                      placeholder="Sub-item name..."
-                      onKeyDown={(e) => e.key === 'Enter' && createSubItem()}
+                      value={newSubTemplateName}
+                      onChange={(e) => setNewSubTemplateName(e.target.value)}
+                      placeholder="Sub-template name..."
+                      onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()}
                     />
-                    <div>
-                      <Label className="text-xs mb-1 block">Applies to Product Types (optional):</Label>
-                      <div className="flex flex-wrap gap-1">
-                        {productTypes.map(type => (
-                          <label key={type} className="flex items-center gap-1 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={newSubItemProductTypes.includes(type)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setNewSubItemProductTypes([...newSubItemProductTypes, type]);
-                                } else {
-                                  setNewSubItemProductTypes(newSubItemProductTypes.filter(t => t !== type));
-                                }
-                              }}
-                              className="w-3 h-3"
-                            />
-                            {type}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <Button onClick={createSubItem} className="w-full">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Sub-item
+                    <Button onClick={createSubTemplate}>
+                      <Plus className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="font-bold text-sm">Sub-items Pool ({subItems.length})</h3>
-                  {subItems.map((subItem, index) => (
-                    <div key={subItem.id} className="bg-white border rounded-lg p-3 flex items-center gap-2">
+                  <h3 className="font-bold text-sm">Sub-Templates ({subTemplates.length})</h3>
+                  {subTemplates.map((subTemplate, index) => (
+                    <div key={subTemplate.id} className="bg-white border rounded-lg p-3 flex items-center gap-2">
                       <div className="flex flex-col">
-                        <button onClick={() => moveSubItem(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                        <button onClick={() => moveSubTemplate(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                           <ArrowUp className="w-3 h-3" />
                         </button>
-                        <button onClick={() => moveSubItem(index, 'down')} disabled={index === subItems.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                        <button onClick={() => moveSubTemplate(index, 'down')} disabled={index === subTemplates.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                           <ArrowDown className="w-3 h-3" />
                         </button>
                       </div>
 
-                      {editingSubItem === subItem.id ? (
-                        <div className="flex-1 space-y-2">
-                          <Input
-                            value={subItem.name}
-                            onChange={(e) => updateSubItem(subItem.id, { name: e.target.value })}
-                            className="h-8"
-                          />
-                          <div className="flex flex-wrap gap-1">
-                            {productTypes.map(type => (
-                              <label key={type} className="flex items-center gap-1 text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={subItem.applies_to_product_types?.includes(type)}
-                                  onChange={(e) => {
-                                    const current = subItem.applies_to_product_types || [];
-                                    const updated = e.target.checked
-                                      ? [...current, type]
-                                      : current.filter(t => t !== type);
-                                    updateSubItem(subItem.id, { applies_to_product_types: updated });
-                                  }}
-                                  className="w-3 h-3"
-                                />
-                                {type}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
+                      {editingSubTemplate === subTemplate.id ? (
+                        <Input
+                          value={subTemplate.name}
+                          onChange={(e) => updateSubTemplate(subTemplate.id, { name: e.target.value })}
+                          onBlur={() => setEditingSubTemplate(null)}
+                          onKeyDown={(e) => e.key === 'Enter' && setEditingSubTemplate(null)}
+                          className="flex-1 h-8"
+                          autoFocus
+                        />
                       ) : (
-                        <div className="flex-1">
-                          <div className="font-medium">{subItem.name}</div>
-                          {subItem.applies_to_product_types?.length > 0 && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {subItem.applies_to_product_types.join(", ")}
-                            </div>
-                          )}
-                        </div>
+                        <div className="flex-1 font-medium">{subTemplate.name}</div>
                       )}
 
                       <div className="flex gap-1">
-                        <button onClick={() => setEditingSubItem(editingSubItem === subItem.id ? null : subItem.id)} className="p-1">
+                        <button onClick={() => setEditingSubTemplate(editingSubTemplate === subTemplate.id ? null : subTemplate.id)} className="p-1">
                           <Pencil className="w-4 h-4 text-gray-500" />
                         </button>
-                        <button onClick={() => setDeleteConfirm({ id: subItem.id, type: 'subitem', name: subItem.name })} className="p-1">
+                        <button onClick={() => setDeleteConfirm({ id: subTemplate.id, type: 'subtemplate', name: subTemplate.name })} className="p-1">
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </button>
                       </div>
@@ -615,38 +427,53 @@ export default function TemplateBuilder({ isOpen, onClose }) {
             </TabsContent>
 
             {/* Product Types Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-y-auto p-4">
-              <div className="bg-gray-50 border rounded-lg p-4 max-w-2xl">
-                <h3 className="font-bold mb-1 text-sm">Manage Product Types</h3>
-                <p className="text-xs text-gray-500 mb-3">Used for templates and product selection</p>
-                
-                <div className="flex gap-2 mb-4">
-                  <Input
-                    id="newProductTypeInput"
-                    placeholder="Add product type..."
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.target.value.trim()) {
-                        saveProductTypes([...productTypes, e.target.value.trim()]);
-                        e.target.value = "";
-                      }
-                    }}
-                  />
-                  <Button onClick={() => {
-                    const input = document.getElementById('newProductTypeInput');
-                    if (input && input.value.trim()) {
-                      saveProductTypes([...productTypes, input.value.trim()]);
-                      input.value = "";
-                    }
-                  }}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
+            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
+              {/* Product Type List */}
+              <div className="space-y-2 overflow-y-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-bold text-sm">Product Types</h3>
                 </div>
-
-                <div className="space-y-1">
-                  {productTypes.map((type, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border">
+                
+                <div className="bg-gray-50 border rounded-lg p-2 mb-3">
+                  <div className="flex gap-2">
+                    <Input
+                      id="newProductTypeInput"
+                      placeholder="Add type..."
+                      className="h-8 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          saveProductTypes([...productTypes, e.target.value.trim()]);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button size="sm" className="h-8" onClick={() => {
+                      const input = document.getElementById('newProductTypeInput');
+                      if (input && input.value.trim()) {
+                        saveProductTypes([...productTypes, input.value.trim()]);
+                        input.value = "";
+                      }
+                    }}>
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {productTypes.map((type, index) => {
+                  const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
+                  return (
+                    <div
+                      key={type}
+                      onClick={() => selectProductType(type)}
+                      className={`p-2 rounded-lg border cursor-pointer transition-colors flex items-center gap-2 ${
+                        selectedProductType === type 
+                          ? 'bg-blue-100 border-blue-300' 
+                          : 'bg-white hover:bg-gray-50 border-gray-200'
+                      }`}
+                    >
                       <div className="flex flex-col">
-                        <button onClick={() => {
+                        <button onClick={(e) => {
+                          e.stopPropagation();
                           const newTypes = [...productTypes];
                           if (index > 0) {
                             [newTypes[index], newTypes[index - 1]] = [newTypes[index - 1], newTypes[index]];
@@ -655,7 +482,8 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                         }} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                           <ArrowUp className="w-3 h-3" />
                         </button>
-                        <button onClick={() => {
+                        <button onClick={(e) => {
+                          e.stopPropagation();
                           const newTypes = [...productTypes];
                           if (index < productTypes.length - 1) {
                             [newTypes[index], newTypes[index + 1]] = [newTypes[index + 1], newTypes[index]];
@@ -665,17 +493,184 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                           <ArrowDown className="w-3 h-3" />
                         </button>
                       </div>
-                      <span className="flex-1">{type}</span>
-                      <button onClick={() => {
-                        if (confirm(`Delete product type "${type}"?`)) {
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{type}</div>
+                        <div className="text-xs text-gray-500">
+                          {hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}
+                        </div>
+                      </div>
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${type}"?`)) {
                           saveProductTypes(productTypes.filter((_, i) => i !== index));
+                          if (selectedProductType === type) {
+                            setSelectedProductType(null);
+                            setProductTypeItems([]);
+                          }
                         }
-                      }}>
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                      }} className="p-1">
+                        <Trash2 className="w-3 h-3 text-red-500" />
                       </button>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
+
+              {/* Product Type Template Editor */}
+              <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
+                {selectedProductType ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-lg">{selectedProductType} Template</h3>
+                      <Button onClick={saveProductTypeTemplate} size="sm">
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Add Item</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={newItemText}
+                            onChange={(e) => setNewItemText(e.target.value)}
+                            placeholder="Item text..."
+                            className="flex-1"
+                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem()}
+                          />
+                          <Button onClick={addChecklistItem} size="sm" variant="outline">
+                            <Plus className="w-3 h-3 mr-1" />
+                            Checklist
+                          </Button>
+                          <Button onClick={addTaskItem} size="sm" variant="outline">
+                            <Plus className="w-3 h-3 mr-1" />
+                            Task
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                        {productTypeItems.map((item, index) => (
+                          <div key={item.id} className={`border rounded-lg p-3 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
+                            <div className="flex items-start gap-2">
+                              <div className="flex flex-col">
+                                <button onClick={() => moveItem(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                                  <ArrowUp className="w-3 h-3" />
+                                </button>
+                                <button onClick={() => moveItem(index, 'down')} disabled={index === productTypeItems.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                                  <ArrowDown className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    {item.type === 'task' ? 'Task' : 'Checklist'}
+                                  </span>
+                                  {editingItem === item.id ? (
+                                    <Input
+                                      value={item.text}
+                                      onChange={(e) => updateItem(item.id, { text: e.target.value })}
+                                      onBlur={() => setEditingItem(null)}
+                                      onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
+                                      autoFocus
+                                      className="h-7 text-sm flex-1"
+                                    />
+                                  ) : (
+                                    <>
+                                      <span className="flex-1 font-medium text-sm">{item.text}</span>
+                                      <button onClick={() => setEditingItem(item.id)} className="p-1">
+                                        <Pencil className="w-3 h-3 text-gray-400" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+
+                                {item.type === 'checklist' && (
+                                  <>
+                                    <button 
+                                      onClick={() => toggleItemExpanded(item.id)}
+                                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                                    >
+                                      {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                      Details ({(item.sub_items?.length || 0)} sub-items, dropdown: {item.custom_dropdown_key || 'none'})
+                                    </button>
+
+                                    {expandedItems[item.id] && (
+                                      <div className="ml-4 space-y-2 pt-2 border-t">
+                                        <div className="flex items-center gap-2">
+                                          <Label className="text-xs">Dropdown Key:</Label>
+                                          <Input
+                                            value={item.custom_dropdown_key || ""}
+                                            onChange={(e) => updateItem(item.id, { custom_dropdown_key: e.target.value })}
+                                            placeholder="e.g., fabrication_status"
+                                            className="h-6 text-xs flex-1"
+                                          />
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowDropdownManager(item.custom_dropdown_key || '')}
+                                            className="h-6 px-2"
+                                          >
+                                            <Pencil className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+
+                                        <div>
+                                          <Label className="text-xs">Sub-items (from Sub-Templates):</Label>
+                                          <div className="flex flex-wrap gap-2 mt-1 p-2 bg-gray-50 rounded border max-h-24 overflow-y-auto">
+                                            {subTemplates.map(st => {
+                                              const isSelected = (item.sub_items || []).some(s => s.id === st.id);
+                                              return (
+                                                <label key={st.id} className="flex items-center gap-1 text-xs cursor-pointer">
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={(e) => {
+                                                      if (e.target.checked) {
+                                                        addSubItemToItem(item.id, st.id);
+                                                      } else {
+                                                        removeSubItemFromItem(item.id, st.id);
+                                                      }
+                                                    }}
+                                                    className="w-3 h-3"
+                                                  />
+                                                  <span className={isSelected ? "text-blue-700 font-medium" : "text-gray-600"}>{st.name}</span>
+                                                </label>
+                                              );
+                                            })}
+                                            {subTemplates.length === 0 && (
+                                              <span className="text-xs text-gray-400">No sub-templates. Create them in Sub-Templates tab.</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              <button onClick={() => deleteItem(item.id)} className="p-1">
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {productTypeItems.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No items yet. Add checklist items or tasks above.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <p>Select a product type to edit its template</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -699,63 +694,21 @@ export default function TemplateBuilder({ isOpen, onClose }) {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent className="bg-white border shadow-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteConfirm?.type === 'template' ? 'Template' : 'Sub-item'}?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {deleteConfirm?.type === 'subtemplate' ? 'Sub-Template' : 'Item'}?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteConfirm?.type === 'template' ? deleteTemplate : deleteSubItem} className="bg-red-600 text-white">
+            <AlertDialogAction onClick={deleteSubTemplate} className="bg-red-600 text-white">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Template Preview Modal */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-          <div className="clay-card w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-bold text-lg">Template Preview: {templateName || "Untitled"}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              <div className="space-y-3">
-                {templateItems.map((item, index) => (
-                  <div key={item.id} className="border rounded-lg p-3 bg-purple-50/30">
-                    <div className="grid grid-cols-3 gap-2 items-center mb-2">
-                      <div className="font-medium text-sm">{item.text}</div>
-                      <div className="h-8 bg-gray-100 rounded border text-xs flex items-center px-2 text-gray-400">
-                        Approved by...
-                      </div>
-                      <div className="h-8 bg-gray-100 rounded border text-xs flex items-center px-2 text-gray-400">
-                        {item.custom_dropdown_key || "Status..."}
-                      </div>
-                    </div>
-                    {item.sub_items && item.sub_items.length > 0 && (
-                      <div className="ml-4 mt-2 space-y-1">
-                        {item.sub_items.map(si => (
-                          <label key={si.id} className="flex items-center gap-2 text-sm">
-                            <input type="checkbox" disabled className="h-4 w-4" />
-                            <span>{si.text}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
     </>
   );
 }
