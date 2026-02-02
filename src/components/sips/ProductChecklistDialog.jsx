@@ -316,10 +316,11 @@ export default function ProductChecklistDialog({
     setIsSaving(false);
   };
 
-  // Group checklist items by product_name and sub_template
+  // Group checklist items by product_name, sub_template, and hierarchy
   const getGroupedChecklist = () => {
     const groups = {};
     
+    // First pass: organize by product and sub-template
     checklist.forEach(item => {
       const productName = item.product_name || 'Ungrouped';
       if (!groups[productName]) {
@@ -341,6 +342,31 @@ export default function ProductChecklistDialog({
     });
     
     return groups;
+  };
+  
+  // Build hierarchy for items
+  const buildItemHierarchy = (items) => {
+    const mainItems = items.filter(i => i.type === 'checklist' && !i.parent_id);
+    
+    return mainItems.map(main => {
+      const details = items.filter(i => i.type === 'detail' && i.parent_id === main.id);
+      const mainTasks = items.filter(i => i.type === 'task' && i.parent_id === main.id);
+      
+      return {
+        ...main,
+        tasks: mainTasks,
+        details: details.map(detail => ({
+          ...detail,
+          tasks: items.filter(i => i.type === 'task' && i.parent_id === detail.id)
+        }))
+      };
+    });
+  };
+  
+  const [expandedItems, setExpandedItems] = useState({});
+  
+  const toggleExpanded = (itemId) => {
+    setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
   if (isLoading) {
