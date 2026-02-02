@@ -14,7 +14,7 @@ import TemplateBuilder from "./TemplateBuilder";
 
 
 const WorkOrder = base44.entities.WorkOrder;
-const ChecklistSubItem = base44.entities.ChecklistSubItem;
+
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
