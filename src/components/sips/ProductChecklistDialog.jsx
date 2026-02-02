@@ -11,7 +11,7 @@ import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Trash2, List, M
 import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeader as OtherDialogHeader, DialogTitle as OtherDialogTitle, DialogFooter as OtherDialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TemplateBuilder from "./TemplateBuilder";
-import CustomDropdownManager from "./CustomDropdownManager";
+
 
 const WorkOrder = base44.entities.WorkOrder;
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
