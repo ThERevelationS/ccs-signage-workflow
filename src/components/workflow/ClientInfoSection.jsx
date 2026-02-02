@@ -522,29 +522,53 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
                 <Package className="w-4 h-4 text-teal-600" />
                 Products
               </h4>
-              {visibleProducts < 6 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setVisibleProducts(prev => Math.min(prev + 1, 6))}
-                  className="h-6 px-2 text-xs"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Product
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={addProduct}
+                className="h-6 px-2 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Product
+              </Button>
             </div>
-            <div className="grid grid-cols-6 gap-2 mb-2">
-              {[1, 2, 3, 4, 5, 6].slice(0, visibleProducts).map(num => (
-                <div key={num}>
-                  <Label className="text-xs">#{num}</Label>
+            <div className="space-y-2 mb-2">
+              {products.map((product, index) => (
+                <div key={product.id} className="flex gap-2 items-center">
+                  <span className="text-xs font-medium w-6">#{index + 1}</span>
+                  <Select
+                    value={product.product_type || ""}
+                    onValueChange={(val) => updateProduct(index, 'product_type', val)}
+                  >
+                    <SelectTrigger className="w-40 h-8 text-sm">
+                      <SelectValue placeholder="Type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Input
-                    value={getValue(`product_${num}`)}
-                    onChange={(e) => handleChange(`product_${num}`, e.target.value)}
-                    className="h-8 text-sm"
+                    value={product.description}
+                    onChange={(e) => updateProduct(index, 'description', e.target.value)}
+                    placeholder="Product description..."
+                    className="flex-1 h-8 text-sm"
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeProduct(index)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                 </div>
               ))}
+              {products.length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-2">No products added yet</p>
+              )}
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs font-semibold">Complete:</span>
