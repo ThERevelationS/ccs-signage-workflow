@@ -444,26 +444,30 @@ export default function ProductChecklistDialog({
                     )}
                   </h3>
 
-                  {/* Main Items */}
+                  {/* Main Items with hierarchy */}
                   {group.mainItems.length > 0 && (
                     <div className="space-y-2 mb-3">
-                      {group.mainItems.map(item => (
-                        <div key={item.id} className={`clay-card p-3 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
-                          <div className="grid grid-cols-3 gap-2 items-center">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs px-2 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                                {item.type === 'task' ? 'Task' : 'Checklist'}
-                              </span>
-                              <span className="font-medium text-sm">{item.text}</span>
-                            </div>
+                      {buildItemHierarchy(group.mainItems).map(item => (
+                        <div key={item.id} className="clay-card p-3 bg-white">
+                          {/* Main checklist item */}
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => toggleExpanded(item.id)}
+                              className="p-1 hover:bg-gray-100 rounded"
+                            >
+                              {(item.details?.length > 0 || item.tasks?.length > 0) ? (
+                                expandedItems[item.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                              ) : <div className="w-4" />}
+                            </button>
+                            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
+                            <span className="font-medium text-sm flex-1">{item.text}</span>
                             
-                            {/* Approved By */}
                             <Select
                               value={item.approved_by || ""}
                               onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger className="h-7 text-xs w-32">
                                 <SelectValue placeholder="Approved by..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -475,72 +479,166 @@ export default function ProductChecklistDialog({
                               </SelectContent>
                             </Select>
 
-                            {/* Custom Dropdown */}
-                            <div className="flex gap-1">
-                              <Select
-                                value={item.custom_dropdown_value || ""}
-                                onValueChange={(val) => updateChecklistItem(item.id, { custom_dropdown_value: val })}
-                                disabled={!isRegistered}
-                              >
-                                <SelectTrigger className="h-8 text-xs flex-1">
-                                  <SelectValue placeholder={item.custom_dropdown_key || "Status..."} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getDropdownOptions(item.custom_dropdown_key).map(opt => (
-                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {isAdmin && item.custom_dropdown_key && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setShowDropdownManager(item.custom_dropdown_key)}
-                                  className="h-8 w-8 p-0"
-                                  title="Edit dropdown options"
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {isRegistered && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => deleteChecklistItem(item.id)}
-                                  className="h-8 w-8 p-0 text-red-500"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
+                            {/* Dropdown with Other option */}
+                            <Select
+                              value={item.custom_dropdown_value || "select_value"}
+                              onValueChange={(val) => {
+                                if (val === "other") {
+                                  setShowOtherPopup({ itemId: item.id });
+                                } else if (val !== "select_value") {
+                                  updateChecklistItem(item.id, { custom_dropdown_value: val });
+                                }
+                              }}
+                              disabled={!isRegistered}
+                            >
+                              <SelectTrigger className="h-7 text-xs w-32">
+                                <SelectValue placeholder={getDropdownName(item.dropdown_id) || "Status..."} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {dropdownConditions.filter(dd => dd.id === item.dropdown_id || !item.dropdown_id).slice(0, 5).map(dd => (
+                                  <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                ))}
+                                <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {isRegistered && (
+                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(item.id)} className="h-7 w-7 p-0 text-red-500">
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
                           </div>
+
+                          {/* Expanded: Tasks and Details */}
+                          {expandedItems[item.id] && (
+                            <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
+                              {/* Tasks under main item */}
+                              {item.tasks?.map(task => (
+                                <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                                  <span className="text-sm flex-1">{task.text}</span>
+                                  <Checkbox 
+                                    checked={!!task.approved_by}
+                                    onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                    disabled={!isRegistered}
+                                  />
+                                  {isRegistered && (
+                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-6 w-6 p-0 text-red-500">
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+
+                              {/* Detail items */}
+                              {item.details?.map(detail => (
+                                <div key={detail.id} className="bg-gray-50 p-2 rounded border">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
+                                    <span className="text-sm flex-1">{detail.text}</span>
+                                    
+                                    <Select
+                                      value={detail.approved_by || ""}
+                                      onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })}
+                                      disabled={!isRegistered}
+                                    >
+                                      <SelectTrigger className="h-6 text-xs w-28">
+                                        <SelectValue placeholder="Approved..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {users.map(u => (
+                                          <SelectItem key={u.email} value={u.full_name || u.email}>
+                                            {u.full_name || u.email}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+
+                                    <Select
+                                      value={detail.custom_dropdown_value || "select_value"}
+                                      onValueChange={(val) => {
+                                        if (val === "other") {
+                                          setShowOtherPopup({ itemId: detail.id });
+                                        } else if (val !== "select_value") {
+                                          updateChecklistItem(detail.id, { custom_dropdown_value: val });
+                                        }
+                                      }}
+                                      disabled={!isRegistered}
+                                    >
+                                      <SelectTrigger className="h-6 text-xs w-28">
+                                        <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Status..."} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {dropdownConditions.filter(dd => dd.id === detail.dropdown_id || !detail.dropdown_id).slice(0, 5).map(dd => (
+                                          <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                        ))}
+                                        <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+
+                                    {isRegistered && (
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-6 w-6 p-0 text-red-500">
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+
+                                  {/* Tasks under detail */}
+                                  {detail.tasks?.length > 0 && (
+                                    <div className="ml-4 mt-2 space-y-1 border-l-2 border-orange-200 pl-2">
+                                      {detail.tasks.map(task => (
+                                        <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded">
+                                          <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                                          <span className="text-xs flex-1">{task.text}</span>
+                                          <Checkbox 
+                                            checked={!!task.approved_by}
+                                            onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                            disabled={!isRegistered}
+                                          />
+                                          {isRegistered && (
+                                            <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-5 w-5 p-0 text-red-500">
+                                              <Trash2 className="w-2.5 h-2.5" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Sub-templates */}
+                  {/* Sub-templates with hierarchy */}
                   {Object.entries(group.subTemplates).map(([stName, stItems]) => (
                     <div key={stName} className="ml-4 mt-2 border-l-2 border-blue-300 pl-3">
                       <h4 className="text-sm font-semibold text-blue-700 mb-2">🔗 {stName}</h4>
                       <div className="space-y-2">
-                        {stItems.map(item => (
-                          <div key={item.id} className={`clay-card p-2 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
-                            <div className="grid grid-cols-3 gap-2 items-center">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                                  {item.type === 'task' ? 'Task' : 'Checklist'}
-                                </span>
-                                <span className="text-sm">{item.text}</span>
-                              </div>
+                        {buildItemHierarchy(stItems).map(item => (
+                          <div key={item.id} className="clay-card p-2 bg-white">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => toggleExpanded(item.id)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                              >
+                                {(item.details?.length > 0 || item.tasks?.length > 0) ? (
+                                  expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
+                                ) : <div className="w-3" />}
+                              </button>
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
+                              <span className="text-sm flex-1">{item.text}</span>
                               
                               <Select
                                 value={item.approved_by || ""}
                                 onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-7 text-xs">
-                                  <SelectValue placeholder="Approved by..." />
+                                <SelectTrigger className="h-6 text-xs w-28">
+                                  <SelectValue placeholder="Approved..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {users.map(u => (
@@ -551,33 +649,59 @@ export default function ProductChecklistDialog({
                                 </SelectContent>
                               </Select>
 
-                              <div className="flex gap-1">
-                                <Select
-                                  value={item.custom_dropdown_value || ""}
-                                  onValueChange={(val) => updateChecklistItem(item.id, { custom_dropdown_value: val })}
-                                  disabled={!isRegistered}
-                                >
-                                  <SelectTrigger className="h-7 text-xs flex-1">
-                                    <SelectValue placeholder={item.custom_dropdown_key || "Status..."} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {getDropdownOptions(item.custom_dropdown_key).map(opt => (
-                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                {isRegistered && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => deleteChecklistItem(item.id)}
-                                    className="h-7 w-7 p-0 text-red-500"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                )}
-                              </div>
+                              <Select
+                                value={item.custom_dropdown_value || "select_value"}
+                                onValueChange={(val) => {
+                                  if (val === "other") {
+                                    setShowOtherPopup({ itemId: item.id });
+                                  } else if (val !== "select_value") {
+                                    updateChecklistItem(item.id, { custom_dropdown_value: val });
+                                  }
+                                }}
+                                disabled={!isRegistered}
+                              >
+                                <SelectTrigger className="h-6 text-xs w-28">
+                                  <SelectValue placeholder={getDropdownName(item.dropdown_id) || "Status..."} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {dropdownConditions.filter(dd => dd.id === item.dropdown_id || !item.dropdown_id).slice(0, 5).map(dd => (
+                                    <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                  ))}
+                                  <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              {isRegistered && (
+                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(item.id)} className="h-6 w-6 p-0 text-red-500">
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
                             </div>
+
+                            {/* Expanded content for sub-template items */}
+                            {expandedItems[item.id] && (
+                              <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
+                                {item.tasks?.map(task => (
+                                  <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
+                                    <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                                    <span className="text-xs flex-1">{task.text}</span>
+                                    <Checkbox 
+                                      checked={!!task.approved_by}
+                                      onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                      disabled={!isRegistered}
+                                    />
+                                  </div>
+                                ))}
+                                {item.details?.map(detail => (
+                                  <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs">
+                                    <div className="flex items-center gap-1">
+                                      <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
+                                      <span className="flex-1">{detail.text}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
