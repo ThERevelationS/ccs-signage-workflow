@@ -78,8 +78,8 @@ export default function CustomDropdownManager({ isOpen, onClose, dropdownKey }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="clay-card w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 z-[80] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="clay-card w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b">
           <h3 className="font-bold text-lg">Edit Dropdown Options</h3>
           <p className="text-xs text-gray-500 mt-1">Key: {dropdownKey || "New dropdown"}</p>
