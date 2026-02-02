@@ -1131,6 +1131,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                             {subTemplateItems[st.id]?.items?.length || 0} items
                           </div>
                         </div>
+                        <button onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }} className="p-1" title="Duplicate">
+                          <Copy className="w-3 h-3 text-blue-500" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); copySubTemplateToClipboard(st); }} className="p-1" title="Copy to clipboard">
+                          <Clipboard className="w-3 h-3 text-green-500" />
+                        </button>
                         <button onClick={(e) => { e.stopPropagation(); startEditingSubTemplate(st); }} className="p-1">
                           <Pencil className="w-3 h-3 text-gray-500" />
                         </button>
