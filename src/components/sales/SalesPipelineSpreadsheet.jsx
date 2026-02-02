@@ -911,12 +911,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           checkDateField('permit_receipt_confirmed_date', 'Date Permit Receipt Confirmed');
           checkDateField('permit_approved_date', 'Date Permit Approved/Received');
           
+          // Also update description if import has one and it's different (but similar)
+          if (importDesc && importDesc !== (existingWO.description || '')) {
+            updates.description = importDesc;
+          }
+          
           // Only update if there are actual changes
           if (Object.keys(updates).length > 0) {
             itemsToUpdate.push({ id: existingWO.id, updates, uniqueKey, existingWO, customer });
           }
           
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Queued: ${customer}` });
+          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Updating: ${customer}` });
           continue;
         }
         
