@@ -362,7 +362,8 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('workorders')) {
       try {
-        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.list();
+        // Use filter with empty object to get all records
+        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({});
         const workOrders = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         console.log(`Work Orders: fetched ${workOrders.length} records`);
         const formattedWO = workOrders.map(wo => ({
@@ -429,9 +430,10 @@ Deno.serve(async (req) => {
     // Sales Pipeline Export (same format as UI export)
     if (typesToBackup.includes('salespipeline')) {
       try {
-        // For sales pipeline, get ALL work orders that aren't riders (including completed ones for full backup)
-        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, deleted: { $ne: true } });
-        console.log(`Sales Pipeline: fetched ${Array.isArray(workOrdersRaw) ? workOrdersRaw.length : 0} work orders`);
+        // For sales pipeline, get ALL work orders first, then filter in code
+        const allWorkOrders = await base44.asServiceRole.entities.WorkOrder.filter({});
+        const workOrdersRaw = (Array.isArray(allWorkOrders) ? allWorkOrders : []).filter(wo => !wo.is_rider && wo.deleted !== true);
+        console.log(`Sales Pipeline: fetched ${workOrdersRaw.length} work orders (from ${allWorkOrders.length} total)`);
         const workOrdersForExport = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         
         const calculateDays = (fromDate, toDate) => {
