@@ -18,41 +18,6 @@ const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-// Keyword mappings for auto-suggesting product types
-const PRODUCT_TYPE_KEYWORDS = {
-  "Channel Letters": ["channel", "letters", "illuminated letters", "led letters", "halo lit", "front lit", "back lit"],
-  "Cabinet Sign": ["cabinet", "box sign", "lightbox", "light box", "fluorescent"],
-  "Monument": ["monument", "ground sign", "entry sign", "entrance sign", "brick sign"],
-  "Pylon": ["pylon", "pole sign", "freestanding", "highway sign", "tall sign"],
-  "Wall Sign": ["wall sign", "flat sign", "dimensional", "3d letters", "mounted sign", "facade"],
-  "Window Graphics": ["window", "vinyl", "frosted", "perforated", "decal", "cling"],
-  "Vehicle Wrap": ["vehicle", "wrap", "car wrap", "truck wrap", "fleet", "van wrap", "trailer"],
-  "Awning": ["awning", "canopy", "shade"],
-  "Banner": ["banner", "mesh banner", "vinyl banner", "temporary sign"],
-  "Digital Sign": ["digital", "led display", "electronic", "message center", "emb"],
-  "Wayfinding": ["wayfinding", "directional", "ada", "braille", "interior sign"]
-};
-
-// Suggest product types based on text content
-const suggestProductTypes = (text, availableTypes) => {
-  if (!text) return [];
-  const lowerText = text.toLowerCase();
-  const suggestions = [];
-  
-  for (const [productType, keywords] of Object.entries(PRODUCT_TYPE_KEYWORDS)) {
-    if (!availableTypes.includes(productType)) continue;
-    for (const keyword of keywords) {
-      if (lowerText.includes(keyword)) {
-        if (!suggestions.includes(productType)) {
-          suggestions.push(productType);
-        }
-        break;
-      }
-    }
-  }
-  return suggestions;
-};
-
 export default function ProductChecklistDialog({ 
   isOpen, 
   onClose, 
