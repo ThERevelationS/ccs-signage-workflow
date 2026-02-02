@@ -27,23 +27,47 @@ const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [visibleProducts, setVisibleProducts] = useState(1);
   const [saving, setSaving] = useState(false);
   const [localData, setLocalData] = useState({});
+  const [products, setProducts] = useState([]);
+  const [productTypes, setProductTypes] = useState([]);
 
-  // Initialize visible products based on existing data
-  React.useEffect(() => {
+  // Load product types and initialize products
+  useEffect(() => {
+    loadProductTypes();
     if (workOrder) {
-      let count = 1;
-      for (let i = 6; i >= 1; i--) {
-        if (workOrder[`product_${i}`]) {
-          count = i;
-          break;
+      // Load products from new structure or migrate old
+      if (workOrder.products && Array.isArray(workOrder.products)) {
+        setProducts(workOrder.products);
+      } else {
+        const migratedProducts = [];
+        for (let i = 1; i <= 6; i++) {
+          const desc = workOrder[`product_${i}`];
+          if (desc && desc.trim()) {
+            migratedProducts.push({
+              id: `prod_${i}`,
+              description: desc,
+              product_type: ""
+            });
+          }
         }
+        setProducts(migratedProducts);
       }
-      setVisibleProducts(count);
     }
   }, [workOrder?.id]);
+
+  const loadProductTypes = async () => {
+    try {
+      const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
+      if (settings.length > 0) {
+        setProductTypes(settings[0].setting_value?.items || []);
+      } else {
+        setProductTypes(["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
+      }
+    } catch (error) {
+      console.error("Error loading product types:", error);
+    }
+  };
 
   const getValue = (field) => {
     return localData[field] !== undefined ? localData[field] : (workOrder?.[field] || "");
