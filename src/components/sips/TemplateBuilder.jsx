@@ -1296,10 +1296,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-lg">{selectedProductType} Template</h3>
-                      <Button onClick={saveProductTypeTemplate} size="sm">
-                        <Save className="w-4 h-4 mr-1" />
-                        Save
-                      </Button>
+                      <div className="flex gap-2">
+                        {clipboard?.type === 'producttype' && (
+                          <Button onClick={pasteToProductType} size="sm" variant="outline" className="text-green-600">
+                            <Clipboard className="w-4 h-4 mr-1" />
+                            Paste
+                          </Button>
+                        )}
+                        <Button onClick={saveProductTypeTemplate} size="sm">
+                          <Save className="w-4 h-4 mr-1" />
+                          Save
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-4">
