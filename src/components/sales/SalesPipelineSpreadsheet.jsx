@@ -1027,6 +1027,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           return matchedUser ? matchedUser.full_name : trimmedValue;
         };
         
+        // For new items, add to tracking map so we don't create duplicates within same import
+        const newUniqueKey = `${clientKey}|||new_${itemsToCreate.length}`;
+        if (!existingByCustomer.has(clientKey)) {
+          existingByCustomer.set(clientKey, []);
+        }
+        // Add a placeholder to prevent creating duplicates within the same import batch
+        existingByCustomer.get(clientKey).push({ 
+          id: newUniqueKey, 
+          description: looksLikeNotes ? "" : descriptionValue,
+          _pending: true 
+        });
+        
         // Queue for bulk creation
         itemsToCreate.push({
           title: customer || "Unnamed",
