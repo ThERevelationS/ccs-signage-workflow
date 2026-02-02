@@ -283,24 +283,26 @@ export default function TemplateBuilder({ isOpen, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-        <div className="clay-card w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white" onClick={(e) => e.stopPropagation()}>
-          <div className="p-6 border-b">
-            <h2 className="text-2xl font-bold">Checklist Template Builder</h2>
-            <p className="text-sm text-gray-600 mt-1">Create and manage product-specific checklist templates and sub-items</p>
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">Checklist Template Builder</h2>
+              <p className="text-xs text-gray-500">Manage templates, sub-items, and product types</p>
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-6 pt-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="items">Checklist Templates</TabsTrigger>
-                <TabsTrigger value="subitems">Sub-items Pool</TabsTrigger>
-                <TabsTrigger value="producttypes">Product Types</TabsTrigger>
+            <div className="px-4 py-2 border-b bg-white">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-200 p-1">
+                <TabsTrigger value="items" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Checklist Templates</TabsTrigger>
+                <TabsTrigger value="subitems" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-items Pool</TabsTrigger>
+                <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Product Types</TabsTrigger>
               </TabsList>
             </div>
 
             {/* Checklist Templates Tab */}
-            <TabsContent value="items" className="flex-1 overflow-hidden p-6 grid grid-cols-3 gap-4">
+            <TabsContent value="items" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
               {/* Template List */}
               <div className="space-y-2 overflow-y-auto pr-2">
                 <div className="flex items-center justify-between mb-3">
@@ -326,7 +328,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Filter by type..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[100]">
                       <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="none">No Type</SelectItem>
                       {productTypes.map(type => (
@@ -393,7 +395,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
               </div>
 
               {/* Template Editor */}
-              <div className="col-span-2 overflow-y-auto clay-card p-4">
+              <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg">
                     {selectedTemplate ? "Edit Template" : "Create New Template"}
@@ -427,7 +429,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select product type..." />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[100]">
                         <SelectItem value={null}>None</SelectItem>
                         {productTypes.map(type => (
                           <SelectItem key={type} value={type}>{type}</SelectItem>
@@ -518,7 +520,7 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                                   <SelectTrigger className="h-6 w-24 text-xs">
                                     <SelectValue placeholder="+ Add" />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent className="z-[100]">
                                     {subItems.filter(si => {
                                       // Filter by product type if template has one
                                       if (!templateProductType) return true;
@@ -551,10 +553,10 @@ export default function TemplateBuilder({ isOpen, onClose }) {
             </TabsContent>
 
             {/* Sub-items Tab */}
-            <TabsContent value="subitems" className="flex-1 overflow-y-auto p-6">
+            <TabsContent value="subitems" className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
-                <div className="clay-card p-4">
-                  <h3 className="font-bold mb-3">Create New Sub-item</h3>
+                <div className="bg-gray-50 border rounded-lg p-4">
+                  <h3 className="font-bold mb-2 text-sm">Create New Sub-item</h3>
                   <div className="space-y-3">
                     <Input
                       value={newSubItemName}
@@ -592,9 +594,9 @@ export default function TemplateBuilder({ isOpen, onClose }) {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="font-bold">Sub-items Pool ({subItems.length})</h3>
+                  <h3 className="font-bold text-sm">Sub-items Pool ({subItems.length})</h3>
                   {subItems.map((subItem, index) => (
-                    <div key={subItem.id} className="clay-card p-3 flex items-center gap-2">
+                    <div key={subItem.id} className="bg-white border rounded-lg p-3 flex items-center gap-2">
                       <div className="flex flex-col">
                         <button onClick={() => moveSubItem(index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
                           <ArrowUp className="w-3 h-3" />
@@ -657,10 +659,10 @@ export default function TemplateBuilder({ isOpen, onClose }) {
             </TabsContent>
 
             {/* Product Types Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-y-auto p-6">
-              <div className="clay-card p-4 max-w-2xl">
-                <h3 className="font-bold mb-3">Manage Product Types</h3>
-                <p className="text-sm text-gray-600 mb-4">These product types are used for templates and product selection</p>
+            <TabsContent value="producttypes" className="flex-1 overflow-y-auto p-4">
+              <div className="bg-gray-50 border rounded-lg p-4 max-w-2xl">
+                <h3 className="font-bold mb-1 text-sm">Manage Product Types</h3>
+                <p className="text-xs text-gray-500 mb-3">Used for templates and product selection</p>
                 
                 <div className="flex gap-2 mb-4">
                   <Input
@@ -721,8 +723,8 @@ export default function TemplateBuilder({ isOpen, onClose }) {
             </TabsContent>
           </Tabs>
 
-          <div className="p-4 border-t flex justify-end">
-            <Button onClick={onClose} variant="outline">
+          <div className="px-4 py-3 border-t bg-gray-50 flex justify-end">
+            <Button onClick={onClose} variant="outline" size="sm">
               Close
             </Button>
           </div>
