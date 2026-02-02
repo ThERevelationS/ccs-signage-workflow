@@ -362,9 +362,20 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('workorders')) {
       try {
-        // Use filter with empty object to get all records
-        const workOrdersRaw = await base44.asServiceRole.entities.WorkOrder.filter({});
-        const workOrders = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
+        console.log('Starting Work Orders backup...');
+        // Use list() to get all records - filter({}) may have pagination limits
+        let workOrders = [];
+        try {
+          workOrders = await base44.asServiceRole.entities.WorkOrder.list();
+          console.log(`Work Orders list() returned: ${typeof workOrders}, isArray: ${Array.isArray(workOrders)}, length: ${workOrders?.length || 0}`);
+        } catch (listErr) {
+          console.error('Work Orders list error:', listErr.message);
+          // Try filter as fallback
+          const filtered = await base44.asServiceRole.entities.WorkOrder.filter({});
+          workOrders = Array.isArray(filtered) ? filtered : [];
+          console.log(`Work Orders filter fallback returned: ${workOrders.length}`);
+        }
+        if (!Array.isArray(workOrders)) workOrders = [];
         console.log(`Work Orders: fetched ${workOrders.length} records`);
         const formattedWO = workOrders.map(wo => ({
           id: wo.id,
@@ -430,9 +441,17 @@ Deno.serve(async (req) => {
     // Sales Pipeline Export (same format as UI export)
     if (typesToBackup.includes('salespipeline')) {
       try {
-        // For sales pipeline, get ALL work orders first, then filter in code
-        const allWorkOrders = await base44.asServiceRole.entities.WorkOrder.filter({});
-        const workOrdersRaw = (Array.isArray(allWorkOrders) ? allWorkOrders : []).filter(wo => !wo.is_rider && wo.deleted !== true);
+        console.log('Starting Sales Pipeline backup...');
+        // For sales pipeline, get ALL work orders first using list(), then filter in code
+        let allWorkOrders = [];
+        try {
+          allWorkOrders = await base44.asServiceRole.entities.WorkOrder.list();
+          console.log(`Sales Pipeline list() returned: ${typeof allWorkOrders}, isArray: ${Array.isArray(allWorkOrders)}, length: ${allWorkOrders?.length || 0}`);
+        } catch (listErr) {
+          console.error('Sales Pipeline list error:', listErr.message);
+        }
+        if (!Array.isArray(allWorkOrders)) allWorkOrders = [];
+        const workOrdersRaw = allWorkOrders.filter(wo => !wo.is_rider && wo.deleted !== true);
         console.log(`Sales Pipeline: fetched ${workOrdersRaw.length} work orders (from ${allWorkOrders.length} total)`);
         const workOrdersForExport = Array.isArray(workOrdersRaw) ? workOrdersRaw : [];
         
