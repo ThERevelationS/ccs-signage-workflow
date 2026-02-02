@@ -540,31 +540,41 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate }) {
                           {/* Sub-template checkboxes */}
                           {subTemplates.length > 0 && (
                             <div className="border-t pt-2 mt-2">
-                              <Label className="text-xs font-medium">Apply Sub-Templates:</Label>
-                              <div className="flex flex-wrap gap-2 mt-1">
+                              <Label className="text-xs font-medium block mb-1">Apply Sub-Templates:</Label>
+                              <div className="flex flex-wrap gap-2">
                                 {subTemplates.map(st => {
                                   const hasItems = subTemplateItems[st.id]?.items?.length > 0;
                                   const isSelected = product.subTemplates.includes(st.id);
                                   return (
-                                    <label 
+                                    <div 
                                       key={st.id} 
-                                      className={`flex items-center gap-1 text-xs cursor-pointer px-2 py-1 rounded border ${
-                                        !hasItems ? 'opacity-50 cursor-not-allowed' : isSelected ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 border-gray-200'
+                                      onClick={() => hasItems && toggleSubTemplateForProduct(product.id, st.id)}
+                                      className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border transition-colors ${
+                                        !hasItems 
+                                          ? 'opacity-50 cursor-not-allowed bg-gray-100' 
+                                          : isSelected 
+                                            ? 'bg-purple-100 border-purple-400 cursor-pointer' 
+                                            : 'bg-white border-gray-300 hover:border-purple-300 cursor-pointer'
                                       }`}
                                     >
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => hasItems && toggleSubTemplateForProduct(product.id, st.id)}
-                                        disabled={!hasItems}
-                                        className="w-3 h-3"
-                                      />
-                                      <span>{st.name}</span>
-                                      {!hasItems && <span className="text-gray-400">(empty)</span>}
-                                    </label>
+                                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                        isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'
+                                      }`}>
+                                        {isSelected && (
+                                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <span className="font-medium">{st.name}</span>
+                                      <span className="text-gray-500">({subTemplateItems[st.id]?.items?.length || 0})</span>
+                                    </div>
                                   );
                                 })}
                               </div>
+                              {subTemplates.length === 0 && (
+                                <p className="text-xs text-gray-400">No sub-templates created. Add them in the Sub-Templates tab.</p>
+                              )}
                             </div>
                           )}
                         </div>
