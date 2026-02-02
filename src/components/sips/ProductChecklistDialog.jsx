@@ -49,10 +49,9 @@ export default function ProductChecklistDialog({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [freshWO, usersData, subTemplatesData, settings] = await Promise.all([
+      const [freshWO, usersData, settings] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
         AuthorizedEmail.list(),
-        ChecklistSubItem.list(),
         GlobalSettings.list()
       ]);
 
@@ -60,15 +59,6 @@ export default function ProductChecklistDialog({
       if (!currentWO) return;
 
       setUsers(usersData);
-      setSubTemplates(subTemplatesData.sort((a, b) => (a.order || 0) - (b.order || 0)));
-
-      // Load product type templates from GlobalSettings
-      const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
-      setProductTypeTemplates(ptTemplates?.setting_value || {});
-      
-      // Load sub-template checklist items from GlobalSettings
-      const stItems = settings.find(s => s.setting_key === 'subTemplateItems');
-      setSubTemplateItems(stItems?.setting_value || {});
 
       // Load products from new structure or migrate old
       if (currentWO.products && Array.isArray(currentWO.products)) {
