@@ -135,9 +135,11 @@ export default function WorkOrderDetailsDialog({
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
   const [newTaskAssignedTo, setNewTaskAssignedTo] = useState("");
+  const [newTaskAdditionalAssignees, setNewTaskAdditionalAssignees] = useState([]);
   const [editingTaskIndex, setEditingTaskIndex] = useState(null);
   const [editedTaskText, setEditedTaskText] = useState("");
   const [editedTaskAssignedTo, setEditedTaskAssignedTo] = useState("");
+  const [editedTaskAdditionalAssignees, setEditedTaskAdditionalAssignees] = useState([]);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
@@ -281,6 +283,7 @@ export default function WorkOrderDetailsDialog({
       timestamp: new Date().toISOString(),
       created_by: currentUser?.full_name || currentUser?.email || "Unknown",
       assigned_to: newTaskAssignedTo || "",
+      additional_assignees: newTaskAdditionalAssignees || [],
       completed: false,
       sub_tasks: [],
       depends_on: [],
@@ -292,6 +295,7 @@ export default function WorkOrderDetailsDialog({
     Object.assign(workOrder, { notes: updatedTasks });
     setNewTaskText("");
     setNewTaskAssignedTo("");
+    setNewTaskAdditionalAssignees([]);
     setIsAddingTask(false);
     if (onUpdate) onUpdate();
     // Then persist to database
@@ -300,7 +304,9 @@ export default function WorkOrderDetailsDialog({
   };
 
   const [newSubTaskAssignedTo, setNewSubTaskAssignedTo] = useState("");
+  const [newSubTaskAdditionalAssignees, setNewSubTaskAdditionalAssignees] = useState([]);
   const [newDetailAssignedTo, setNewDetailAssignedTo] = useState("");
+  const [newDetailAdditionalAssignees, setNewDetailAdditionalAssignees] = useState([]);
 
   const handleAddTaskSubTask = async (taskIndex) => {
     if (!newSubTaskText.trim()) return;
@@ -313,10 +319,12 @@ export default function WorkOrderDetailsDialog({
           created_by: task.created_by,
           completed: task.completed || false,
           assigned_to: task.assigned_to,
+          additional_assignees: task.additional_assignees || [],
           sub_tasks: [...(task.sub_tasks || []), { 
             text: newSubTaskText, 
             completed: false,
-            assigned_to: newSubTaskAssignedTo || ""
+            assigned_to: newSubTaskAssignedTo || "",
+            additional_assignees: newSubTaskAdditionalAssignees || []
           }]
         };
       }
@@ -326,6 +334,7 @@ export default function WorkOrderDetailsDialog({
         created_by: task.created_by,
         completed: task.completed || false,
         assigned_to: task.assigned_to,
+        additional_assignees: task.additional_assignees || [],
         sub_tasks: task.sub_tasks || []
       };
     });
@@ -333,6 +342,7 @@ export default function WorkOrderDetailsDialog({
     Object.assign(workOrder, { notes: updatedTasks });
     setNewSubTaskText("");
     setNewSubTaskAssignedTo("");
+    setNewSubTaskAdditionalAssignees([]);
     setAddingSubTaskFor(null);
     if (onUpdate) onUpdate();
     // Then persist to database
@@ -380,7 +390,12 @@ export default function WorkOrderDetailsDialog({
           if (stIdx === subTaskIndex) {
             return {
               ...st,
-              details: [...(st.details || []), { text: newDetailText, completed: false, assigned_to: newDetailAssignedTo || "" }]
+              details: [...(st.details || []), { 
+                text: newDetailText, 
+                completed: false, 
+                assigned_to: newDetailAssignedTo || "",
+                additional_assignees: newDetailAdditionalAssignees || []
+              }]
             };
           }
           return st;
@@ -393,6 +408,7 @@ export default function WorkOrderDetailsDialog({
     Object.assign(workOrder, { notes: updatedTasks });
     setNewDetailText("");
     setNewDetailAssignedTo("");
+    setNewDetailAdditionalAssignees([]);
     setAddingDetailFor(null);
     if (onUpdate) onUpdate();
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
@@ -478,13 +494,15 @@ export default function WorkOrderDetailsDialog({
     updatedTasks[taskIndex] = {
       ...updatedTasks[taskIndex],
       text: editedTaskText,
-      assigned_to: editedTaskAssignedTo
+      assigned_to: editedTaskAssignedTo,
+      additional_assignees: editedTaskAdditionalAssignees
     };
     // Optimistic update - update UI immediately
     Object.assign(workOrder, { notes: updatedTasks });
     setEditingTaskIndex(null);
     setEditedTaskText("");
     setEditedTaskAssignedTo("");
+    setEditedTaskAdditionalAssignees([]);
     if (onUpdate) onUpdate();
     // Then persist to database
     await WorkOrder.update(workOrder.id, { notes: updatedTasks });
