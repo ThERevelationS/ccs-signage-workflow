@@ -338,97 +338,20 @@ export default function ProductChecklistDialog({
             </div>
           </DialogHeader>
 
-          {/* Products Management */}
+          {/* Products from Work Order (read-only display) */}
           <div className="clay-card p-3 bg-blue-50/50">
             <h3 className="font-bold text-sm mb-2">Products on this Job</h3>
-            <div className="space-y-2">
-              {products.map((product, index) => (
-                <div key={product.id} className="flex gap-2 items-center">
+            <p className="text-xs text-gray-500 mb-2">Products are managed in the Client Information section. Use Template Builder to apply checklists.</p>
+            <div className="space-y-1">
+              {products.length > 0 ? products.map((product, index) => (
+                <div key={product.id} className="flex gap-2 items-center p-2 bg-white rounded border">
                   <span className="text-sm font-medium w-6">{index + 1}.</span>
-                  <Input
-                    value={product.description}
-                    onChange={(e) => {
-                      const updated = [...products];
-                      updated[index].description = e.target.value;
-                      setProducts(updated);
-                    }}
-                    placeholder="Product description..."
-                    className="flex-1 h-8 text-sm"
-                    disabled={!isRegistered}
-                  />
-                  <div className="flex items-center gap-1">
-                    <Select
-                      value={product.product_type || ""}
-                      onValueChange={(val) => {
-                        const updated = [...products];
-                        updated[index].product_type = val;
-                        setProducts(updated);
-                        // Clear suggestion when manually selected
-                        if (suggestedTypes[product.id]) {
-                          const newSuggestions = { ...suggestedTypes };
-                          delete newSuggestions[product.id];
-                          setSuggestedTypes(newSuggestions);
-                        }
-                      }}
-                      disabled={!isRegistered}
-                    >
-                      <SelectTrigger className="w-44 h-8 text-sm">
-                        <SelectValue placeholder="Product type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        {productTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Auto-suggestion indicator */}
-                    {suggestedTypes[product.id]?.length > 0 && !product.product_type && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const updated = [...products];
-                          updated[index].product_type = suggestedTypes[product.id][0];
-                          setProducts(updated);
-                          const newSuggestions = { ...suggestedTypes };
-                          delete newSuggestions[product.id];
-                          setSuggestedTypes(newSuggestions);
-                        }}
-                        className="h-8 px-2 text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200"
-                        title={`Suggested: ${suggestedTypes[product.id].join(', ')}`}
-                      >
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        {suggestedTypes[product.id][0]}
-                      </Button>
-                    )}
-                    {isRegistered && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setProducts(products.filter((_, i) => i !== index))}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
+                  <span className="text-sm font-medium text-purple-700">{product.product_type || 'No type'}</span>
+                  <span className="text-gray-400">-</span>
+                  <span className="text-sm text-gray-600 flex-1">{product.description || 'No description'}</span>
                 </div>
-              ))}
-              {isRegistered && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setProducts([...products, { 
-                    id: `prod_${Date.now()}`, 
-                    description: "", 
-                    product_type: "" 
-                  }])}
-                  className="h-7 text-xs"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Product
-                </Button>
+              )) : (
+                <p className="text-sm text-gray-400 text-center py-2">No products defined. Add products in the Client Information section first.</p>
               )}
             </div>
           </div>
