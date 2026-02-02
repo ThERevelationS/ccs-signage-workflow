@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TemplateBuilder from "./TemplateBuilder";
 import CustomDropdownManager from "./CustomDropdownManager";
@@ -17,6 +17,41 @@ const ChecklistTemplate = base44.entities.ChecklistTemplate;
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
+
+// Keyword mappings for auto-suggesting product types
+const PRODUCT_TYPE_KEYWORDS = {
+  "Channel Letters": ["channel", "letters", "illuminated letters", "led letters", "halo lit", "front lit", "back lit"],
+  "Cabinet Sign": ["cabinet", "box sign", "lightbox", "light box", "fluorescent"],
+  "Monument": ["monument", "ground sign", "entry sign", "entrance sign", "brick sign"],
+  "Pylon": ["pylon", "pole sign", "freestanding", "highway sign", "tall sign"],
+  "Wall Sign": ["wall sign", "flat sign", "dimensional", "3d letters", "mounted sign", "facade"],
+  "Window Graphics": ["window", "vinyl", "frosted", "perforated", "decal", "cling"],
+  "Vehicle Wrap": ["vehicle", "wrap", "car wrap", "truck wrap", "fleet", "van wrap", "trailer"],
+  "Awning": ["awning", "canopy", "shade"],
+  "Banner": ["banner", "mesh banner", "vinyl banner", "temporary sign"],
+  "Digital Sign": ["digital", "led display", "electronic", "message center", "emb"],
+  "Wayfinding": ["wayfinding", "directional", "ada", "braille", "interior sign"]
+};
+
+// Suggest product types based on text content
+const suggestProductTypes = (text, availableTypes) => {
+  if (!text) return [];
+  const lowerText = text.toLowerCase();
+  const suggestions = [];
+  
+  for (const [productType, keywords] of Object.entries(PRODUCT_TYPE_KEYWORDS)) {
+    if (!availableTypes.includes(productType)) continue;
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        if (!suggestions.includes(productType)) {
+          suggestions.push(productType);
+        }
+        break;
+      }
+    }
+  }
+  return suggestions;
+};
 
 export default function ProductChecklistDialog({ 
   isOpen, 
@@ -40,6 +75,8 @@ export default function ProductChecklistDialog({
   const [dropdownOptionsCache, setDropdownOptionsCache] = useState({});
   const [incompleteWarning, setIncompleteWarning] = useState(null);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
+  const [productTypes, setProductTypes] = useState([]);
+  const [suggestedTypes, setSuggestedTypes] = useState({});
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -88,6 +125,11 @@ export default function ProductChecklistDialog({
 
       // Load custom dropdown options
       const cache = {};
+      const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
+      const loadedProductTypes = productTypesSetting?.setting_value?.items || 
+        ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
+      setProductTypes(loadedProductTypes);
+      
       for (const setting of settings) {
         if (setting.setting_key.startsWith('dropdown_')) {
           const key = setting.setting_key.replace('dropdown_', '');
@@ -95,6 +137,20 @@ export default function ProductChecklistDialog({
         }
       }
       setDropdownOptionsCache(cache);
+      
+      // Auto-suggest product types based on work order content
+      const textToAnalyze = `${currentWO.client_name || ''} ${currentWO.title || ''} ${currentWO.description || ''}`;
+      const suggestions = suggestProductTypes(textToAnalyze, loadedProductTypes);
+      if (suggestions.length > 0) {
+        const suggestionMap = {};
+        // Suggest for products that don't have a type yet
+        (currentWO.products || []).forEach(p => {
+          if (!p.product_type && suggestions.length > 0) {
+            suggestionMap[p.id] = suggestions;
+          }
+        });
+        setSuggestedTypes(suggestionMap);
+      }
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -290,25 +346,52 @@ export default function ProductChecklistDialog({
                     disabled={!isRegistered}
                   />
                   {isAdmin && (
-                    <Select
-                      value={product.product_type || ""}
-                      onValueChange={(val) => {
-                        const updated = [...products];
-                        updated[index].product_type = val;
-                        setProducts(updated);
-                      }}
-                    >
-                      <SelectTrigger className="w-48 h-8 text-sm">
-                        <SelectValue placeholder="Product type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>None</SelectItem>
-                        {/* Load from global settings */}
-                        {["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"].map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-1">
+                      <Select
+                        value={product.product_type || ""}
+                        onValueChange={(val) => {
+                          const updated = [...products];
+                          updated[index].product_type = val;
+                          setProducts(updated);
+                          // Clear suggestion when manually selected
+                          if (suggestedTypes[product.id]) {
+                            const newSuggestions = { ...suggestedTypes };
+                            delete newSuggestions[product.id];
+                            setSuggestedTypes(newSuggestions);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-44 h-8 text-sm">
+                          <SelectValue placeholder="Product type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>None</SelectItem>
+                          {productTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Auto-suggestion indicator */}
+                      {suggestedTypes[product.id]?.length > 0 && !product.product_type && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updated = [...products];
+                            updated[index].product_type = suggestedTypes[product.id][0];
+                            setProducts(updated);
+                            const newSuggestions = { ...suggestedTypes };
+                            delete newSuggestions[product.id];
+                            setSuggestedTypes(newSuggestions);
+                          }}
+                          className="h-8 px-2 text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200"
+                          title={`Suggested: ${suggestedTypes[product.id].join(', ')}`}
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {suggestedTypes[product.id][0]}
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
