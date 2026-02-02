@@ -543,7 +543,7 @@ export default function SIPs() {
       )}
 
       {/* Product Checklist Dialog */}
-      {checklistDialog.open && (
+      {checklistDialog.open && checklistDialog.workOrder && (
         <ProductChecklistDialog
           isOpen={checklistDialog.open}
           onClose={() => setChecklistDialog({ open: false, workOrder: null })}

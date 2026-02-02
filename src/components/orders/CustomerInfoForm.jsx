@@ -52,7 +52,8 @@ export default function CustomerInfoForm({
   const [newFollowUpText, setNewFollowUpText] = useState("");
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
-  const [visibleProducts, setVisibleProducts] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [productTypes, setProductTypes] = useState([]);
 
   const [formData, setFormData] = useState({
     designer: "",
@@ -115,6 +116,7 @@ export default function CustomerInfoForm({
   });
 
   useEffect(() => {
+    loadProductTypes();
     if (existingForm) {
       setFormData({
         ...formData,
@@ -122,17 +124,38 @@ export default function CustomerInfoForm({
         notes: existingForm.notes || [],
         follow_up: existingForm.follow_up || []
       });
-      // Count existing products
-      let count = 1;
-      for (let i = 6; i >= 1; i--) {
-        if (existingForm[`product_${i}`]) {
-          count = i;
-          break;
+      // Load products from new structure or migrate old
+      if (existingForm.products && Array.isArray(existingForm.products)) {
+        setProducts(existingForm.products);
+      } else {
+        const migratedProducts = [];
+        for (let i = 1; i <= 6; i++) {
+          const desc = existingForm[`product_${i}`];
+          if (desc && desc.trim()) {
+            migratedProducts.push({
+              id: `prod_${i}`,
+              description: desc,
+              product_type: ""
+            });
+          }
         }
+        setProducts(migratedProducts);
       }
-      setVisibleProducts(count);
     }
   }, [existingForm]);
+
+  const loadProductTypes = async () => {
+    try {
+      const settings = await base44.entities.GlobalSettings.filter({ setting_key: 'productTypes' });
+      if (settings.length > 0) {
+        setProductTypes(settings[0].setting_value?.items || []);
+      } else {
+        setProductTypes(["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
+      }
+    } catch (error) {
+      console.error("Error loading product types:", error);
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -261,10 +284,10 @@ export default function CustomerInfoForm({
     }
     setSaving(true);
     try {
-      // Clean up numeric fields - convert empty strings to null
       const cleanedData = {
         ...formData,
-        budget_less_than: formData.budget_less_than ? parseFloat(formData.budget_less_than) : null
+        budget_less_than: formData.budget_less_than ? parseFloat(formData.budget_less_than) : null,
+        products: products
       };
       
       if (existingForm?.id) {
@@ -685,29 +708,67 @@ export default function CustomerInfoForm({
           <div className="clay-card p-4">
             <div className="flex items-center justify-between mb-4 border-b pb-2">
               <h3 className="font-bold text-lg">Products</h3>
-              {visibleProducts < 6 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setVisibleProducts(prev => Math.min(prev + 1, 6))}
-                  className="h-7 px-3"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Product
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setProducts([...products, { 
+                  id: `prod_${Date.now()}`, 
+                  description: "", 
+                  product_type: "" 
+                }])}
+                className="h-7 px-3"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Product
+              </Button>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].slice(0, visibleProducts).map(num => (
-                <div key={num}>
-                  <Label>#{num}</Label>
+            <div className="space-y-2">
+              {products.map((product, index) => (
+                <div key={product.id} className="flex gap-2 items-center">
+                  <Label className="w-6">#{index + 1}</Label>
                   <Input
-                    value={formData[`product_${num}`] || ""}
-                    onChange={(e) => handleChange(`product_${num}`, e.target.value)}
-                    className="mt-1"
+                    value={product.description}
+                    onChange={(e) => {
+                      const updated = [...products];
+                      updated[index].description = e.target.value;
+                      setProducts(updated);
+                    }}
+                    placeholder="Product description..."
+                    className="flex-1"
                   />
+                  {currentUser?.role === 'admin' && (
+                    <Select
+                      value={product.product_type || ""}
+                      onValueChange={(val) => {
+                        const updated = [...products];
+                        updated[index].product_type = val;
+                        setProducts(updated);
+                      }}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Product type..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>None</SelectItem>
+                        {productTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setProducts(products.filter((_, i) => i !== index))}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                 </div>
               ))}
+              {products.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-2">No products added yet</p>
+              )}
             </div>
             <div className="mt-4 flex items-center gap-4">
               <span className="font-semibold text-sm">Complete:</span>
