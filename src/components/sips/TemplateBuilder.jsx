@@ -361,6 +361,121 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     saveSubTemplateItems(updated);
   };
 
+  // Duplicate Sub-Template
+  const duplicateSubTemplate = async (subTemplate) => {
+    try {
+      const newName = `${subTemplate.name} (Copy)`;
+      const newSubTemplate = await ChecklistSubItem.create({
+        name: newName,
+        applies_to_product_types: subTemplate.applies_to_product_types || [],
+        order: subTemplates.length
+      });
+      
+      // Copy the items too
+      const originalItems = subTemplateItems[subTemplate.id]?.items || [];
+      if (originalItems.length > 0) {
+        const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({
+          ...item,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+        }));
+        const updated = {
+          ...subTemplateItems,
+          [newSubTemplate.id]: { items: copiedItems }
+        };
+        await saveSubTemplateItems(updated);
+      }
+      
+      await loadData();
+    } catch (error) {
+      console.error("Error duplicating sub-template:", error);
+    }
+  };
+
+  // Copy Sub-Template to clipboard
+  const copySubTemplateToClipboard = (subTemplate) => {
+    const items = subTemplateItems[subTemplate.id]?.items || [];
+    setClipboard({
+      type: 'subtemplate',
+      data: {
+        name: subTemplate.name,
+        items: JSON.parse(JSON.stringify(items))
+      }
+    });
+  };
+
+  // Paste from clipboard to Sub-Template
+  const pasteToSubTemplate = async () => {
+    if (!clipboard || clipboard.type !== 'subtemplate' || !selectedSubTemplate) return;
+    
+    const existingItems = subTemplateChecklistItems;
+    const pastedItems = clipboard.data.items.map(item => ({
+      ...item,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    }));
+    
+    const mergedItems = [...existingItems, ...pastedItems];
+    setSubTemplateChecklistItems(mergedItems);
+    
+    const updated = {
+      ...subTemplateItems,
+      [selectedSubTemplate]: { items: mergedItems }
+    };
+    await saveSubTemplateItems(updated);
+  };
+
+  // Duplicate Main Product Template
+  const duplicateProductTypeTemplate = async (productType) => {
+    const newTypeName = `${productType} (Copy)`;
+    const newTypes = [...productTypes, newTypeName];
+    await saveProductTypes(newTypes);
+    
+    // Copy the template items
+    const originalItems = productTypeTemplates[productType]?.items || [];
+    if (originalItems.length > 0) {
+      const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({
+        ...item,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+      }));
+      const updated = {
+        ...productTypeTemplates,
+        [newTypeName]: { items: copiedItems }
+      };
+      await saveProductTypeTemplates(updated);
+    }
+  };
+
+  // Copy Product Type Template to clipboard
+  const copyProductTypeToClipboard = (productType) => {
+    const items = productTypeTemplates[productType]?.items || [];
+    setClipboard({
+      type: 'producttype',
+      data: {
+        name: productType,
+        items: JSON.parse(JSON.stringify(items))
+      }
+    });
+  };
+
+  // Paste from clipboard to Product Type
+  const pasteToProductType = async () => {
+    if (!clipboard || clipboard.type !== 'producttype' || !selectedProductType) return;
+    
+    const existingItems = productTypeItems;
+    const pastedItems = clipboard.data.items.map(item => ({
+      ...item,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    }));
+    
+    const mergedItems = [...existingItems, ...pastedItems];
+    setProductTypeItems(mergedItems);
+    
+    const updated = {
+      ...productTypeTemplates,
+      [selectedProductType]: { items: mergedItems }
+    };
+    await saveProductTypeTemplates(updated);
+  };
+
   // Product Type Template Editor
   const selectProductType = (type) => {
     setSelectedProductType(type);
