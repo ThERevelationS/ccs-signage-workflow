@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
+import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Sparkles, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TemplateBuilder from "./TemplateBuilder";
 import CustomDropdownManager from "./CustomDropdownManager";
 
 const WorkOrder = base44.entities.WorkOrder;
-const ChecklistTemplate = base44.entities.ChecklistTemplate;
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -64,13 +63,12 @@ export default function ProductChecklistDialog({
   const [checklist, setChecklist] = useState([]);
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [subItemsPool, setSubItemsPool] = useState([]);
+  const [subTemplates, setSubTemplates] = useState([]);
+  const [productTypeTemplates, setProductTypeTemplates] = useState({});
+  const [subTemplateItems, setSubTemplateItems] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
-  const [showApplyTemplates, setShowApplyTemplates] = useState(false);
-  const [selectedTemplates, setSelectedTemplates] = useState({});
   const [showDropdownManager, setShowDropdownManager] = useState(null);
   const [dropdownOptionsCache, setDropdownOptionsCache] = useState({});
   const [incompleteWarning, setIncompleteWarning] = useState(null);
@@ -87,10 +85,9 @@ export default function ProductChecklistDialog({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [freshWO, usersData, templatesData, subItemsData, settings] = await Promise.all([
+      const [freshWO, usersData, subTemplatesData, settings] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
         AuthorizedEmail.list(),
-        ChecklistTemplate.list(),
         ChecklistSubItem.list(),
         GlobalSettings.list()
       ]);
@@ -99,8 +96,15 @@ export default function ProductChecklistDialog({
       if (!currentWO) return;
 
       setUsers(usersData);
-      setTemplates(templatesData);
-      setSubItemsPool(subItemsData);
+      setSubTemplates(subTemplatesData.sort((a, b) => (a.order || 0) - (b.order || 0)));
+
+      // Load product type templates from GlobalSettings
+      const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
+      setProductTypeTemplates(ptTemplates?.setting_value || {});
+      
+      // Load sub-template checklist items from GlobalSettings
+      const stItems = settings.find(s => s.setting_key === 'subTemplateItems');
+      setSubTemplateItems(stItems?.setting_value || {});
 
       // Load products from new structure or migrate old
       if (currentWO.products && Array.isArray(currentWO.products)) {
@@ -162,35 +166,43 @@ export default function ProductChecklistDialog({
     return dropdownOptionsCache[key] || [];
   };
 
-  const handleApplyTemplates = () => {
+  // Handle template application from TemplateBuilder
+  const handleApplyTemplate = (templateData) => {
     const newChecklist = [];
     
-    products.forEach(product => {
-      const templateId = selectedTemplates[product.id];
-      if (!templateId) return;
-      
-      const template = templates.find(t => t.id === templateId);
-      if (!template) return;
-
-      template.items.forEach(templateItem => {
-        newChecklist.push({
-          id: `${product.id}_${templateItem.id}`,
-          product_id: product.id,
-          text: templateItem.text,
-          approved_by: "",
-          custom_dropdown_value: "",
-          sub_items: (templateItem.sub_items || []).map(si => ({
-            id: si.id,
-            text: si.text,
-            checked: false
-          }))
+    templateData.forEach(section => {
+      if (section.type === 'product_header') {
+        // Add items from product type template
+        section.items.forEach(item => {
+          newChecklist.push({
+            id: `${section.productName}_${item.id}`,
+            product_name: section.productName,
+            product_type: section.productType,
+            text: item.text,
+            type: item.type || 'checklist',
+            approved_by: "",
+            custom_dropdown_key: item.custom_dropdown_key || "",
+            custom_dropdown_value: ""
+          });
         });
-      });
+      } else if (section.type === 'sub_template') {
+        // Add items from sub-template
+        section.items.forEach(item => {
+          newChecklist.push({
+            id: `${section.parentProduct}_sub_${section.subTemplateName}_${item.id}`,
+            product_name: section.parentProduct,
+            sub_template_name: section.subTemplateName,
+            text: item.text,
+            type: item.type || 'checklist',
+            approved_by: "",
+            custom_dropdown_key: item.custom_dropdown_key || "",
+            custom_dropdown_value: ""
+          });
+        });
+      }
     });
 
     setChecklist(newChecklist);
-    setShowApplyTemplates(false);
-    setSelectedTemplates({});
   };
 
   const updateChecklistItem = (itemId, updates) => {
@@ -199,18 +211,8 @@ export default function ProductChecklistDialog({
     ));
   };
 
-  const toggleSubItem = (itemId, subItemId) => {
-    setChecklist(checklist.map(item => {
-      if (item.id === itemId) {
-        return {
-          ...item,
-          sub_items: (item.sub_items || []).map(si =>
-            si.id === subItemId ? { ...si, checked: !si.checked } : si
-          )
-        };
-      }
-      return item;
-    }));
+  const deleteChecklistItem = (itemId) => {
+    setChecklist(checklist.filter(item => item.id !== itemId));
   };
 
   const checkIfComplete = () => {
@@ -218,19 +220,14 @@ export default function ProductChecklistDialog({
       return { complete: false, hasChecklist: false };
     }
     
-    // Check if all main items have both approved_by and custom_dropdown_value
-    const allApproved = checklist.every(item => 
+    // Check if all checklist items (not tasks) have both approved_by and custom_dropdown_value
+    const checklistItems = checklist.filter(item => item.type !== 'task');
+    const allApproved = checklistItems.every(item => 
       item.approved_by && item.custom_dropdown_value
     );
-    
-    // Check if all sub-items are checked
-    const allSubItemsChecked = checklist.every(item => {
-      if (!item.sub_items || item.sub_items.length === 0) return true;
-      return item.sub_items.every(si => si.checked);
-    });
 
     return { 
-      complete: allApproved && allSubItemsChecked, 
+      complete: allApproved, 
       hasChecklist: true 
     };
   };
@@ -276,9 +273,31 @@ export default function ProductChecklistDialog({
     setIsSaving(false);
   };
 
-  const getProductName = (productId) => {
-    const product = products.find(p => p.id === productId);
-    return product ? `${product.description} ${product.product_type ? `(${product.product_type})` : ''}` : '';
+  // Group checklist items by product_name and sub_template
+  const getGroupedChecklist = () => {
+    const groups = {};
+    
+    checklist.forEach(item => {
+      const productName = item.product_name || 'Ungrouped';
+      if (!groups[productName]) {
+        groups[productName] = {
+          productType: item.product_type,
+          mainItems: [],
+          subTemplates: {}
+        };
+      }
+      
+      if (item.sub_template_name) {
+        if (!groups[productName].subTemplates[item.sub_template_name]) {
+          groups[productName].subTemplates[item.sub_template_name] = [];
+        }
+        groups[productName].subTemplates[item.sub_template_name].push(item);
+      } else {
+        groups[productName].mainItems.push(item);
+      }
+    });
+    
+    return groups;
   };
 
   if (isLoading) {
@@ -292,6 +311,8 @@ export default function ProductChecklistDialog({
       </Dialog>
     );
   }
+
+  const groupedChecklist = getGroupedChecklist();
 
   return (
     <>
@@ -311,16 +332,6 @@ export default function ProductChecklistDialog({
                   >
                     <Pencil className="w-4 h-4 mr-1" />
                     Template Builder
-                  </Button>
-                )}
-                {products.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowApplyTemplates(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Apply Templates
                   </Button>
                 )}
               </div>
@@ -345,54 +356,63 @@ export default function ProductChecklistDialog({
                     className="flex-1 h-8 text-sm"
                     disabled={!isRegistered}
                   />
-                  {isAdmin && (
-                    <div className="flex items-center gap-1">
-                      <Select
-                        value={product.product_type || ""}
-                        onValueChange={(val) => {
+                  <div className="flex items-center gap-1">
+                    <Select
+                      value={product.product_type || ""}
+                      onValueChange={(val) => {
+                        const updated = [...products];
+                        updated[index].product_type = val;
+                        setProducts(updated);
+                        // Clear suggestion when manually selected
+                        if (suggestedTypes[product.id]) {
+                          const newSuggestions = { ...suggestedTypes };
+                          delete newSuggestions[product.id];
+                          setSuggestedTypes(newSuggestions);
+                        }
+                      }}
+                      disabled={!isRegistered}
+                    >
+                      <SelectTrigger className="w-44 h-8 text-sm">
+                        <SelectValue placeholder="Product type..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>None</SelectItem>
+                        {productTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/* Auto-suggestion indicator */}
+                    {suggestedTypes[product.id]?.length > 0 && !product.product_type && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
                           const updated = [...products];
-                          updated[index].product_type = val;
+                          updated[index].product_type = suggestedTypes[product.id][0];
                           setProducts(updated);
-                          // Clear suggestion when manually selected
-                          if (suggestedTypes[product.id]) {
-                            const newSuggestions = { ...suggestedTypes };
-                            delete newSuggestions[product.id];
-                            setSuggestedTypes(newSuggestions);
-                          }
+                          const newSuggestions = { ...suggestedTypes };
+                          delete newSuggestions[product.id];
+                          setSuggestedTypes(newSuggestions);
                         }}
+                        className="h-8 px-2 text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200"
+                        title={`Suggested: ${suggestedTypes[product.id].join(', ')}`}
                       >
-                        <SelectTrigger className="w-44 h-8 text-sm">
-                          <SelectValue placeholder="Product type..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>None</SelectItem>
-                          {productTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {/* Auto-suggestion indicator */}
-                      {suggestedTypes[product.id]?.length > 0 && !product.product_type && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const updated = [...products];
-                            updated[index].product_type = suggestedTypes[product.id][0];
-                            setProducts(updated);
-                            const newSuggestions = { ...suggestedTypes };
-                            delete newSuggestions[product.id];
-                            setSuggestedTypes(newSuggestions);
-                          }}
-                          className="h-8 px-2 text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200"
-                          title={`Suggested: ${suggestedTypes[product.id].join(', ')}`}
-                        >
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {suggestedTypes[product.id][0]}
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {suggestedTypes[product.id][0]}
+                      </Button>
+                    )}
+                    {isRegistered && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setProducts(products.filter((_, i) => i !== index))}
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
               {isRegistered && (
@@ -418,42 +438,116 @@ export default function ProductChecklistDialog({
             {checklist.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>No checklist items yet</p>
-                <p className="text-sm mt-1">Apply templates to get started</p>
+                <p className="text-sm mt-1">Use Template Builder to create and apply templates</p>
               </div>
             ) : (
-              products.map(product => {
-                const productItems = checklist.filter(item => item.product_id === product.id);
-                if (productItems.length === 0) return null;
+              Object.entries(groupedChecklist).map(([productName, group]) => (
+                <div key={productName} className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20">
+                  <h3 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
+                    📦 {productName}
+                    {group.productType && (
+                      <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
+                        {group.productType}
+                      </span>
+                    )}
+                  </h3>
 
-                return (
-                  <div key={product.id} className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20">
-                    <h3 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
-                      📦 {product.description}
-                      {product.product_type && (
-                        <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
-                          {product.product_type}
-                        </span>
-                      )}
-                    </h3>
+                  {/* Main Items */}
+                  {group.mainItems.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {group.mainItems.map(item => (
+                        <div key={item.id} className={`clay-card p-3 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
+                          <div className="grid grid-cols-3 gap-2 items-center">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {item.type === 'task' ? 'Task' : 'Checklist'}
+                              </span>
+                              <span className="font-medium text-sm">{item.text}</span>
+                            </div>
+                            
+                            {/* Approved By */}
+                            <Select
+                              value={item.approved_by || ""}
+                              onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
+                              disabled={!isRegistered}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Approved by..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {users.map(u => (
+                                  <SelectItem key={u.email} value={u.full_name || u.email}>
+                                    {u.full_name || u.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
 
-                    <div className="space-y-2">
-                      {productItems.map(item => {
-                        const template = templates.find(t => t.items?.find(ti => ti.id === item.id.split('_')[1]));
-                        const templateItem = template?.items?.find(ti => ti.id === item.id.split('_')[1]);
-                        const dropdownOptions = getDropdownOptions(templateItem?.custom_dropdown_key || '');
+                            {/* Custom Dropdown */}
+                            <div className="flex gap-1">
+                              <Select
+                                value={item.custom_dropdown_value || ""}
+                                onValueChange={(val) => updateChecklistItem(item.id, { custom_dropdown_value: val })}
+                                disabled={!isRegistered}
+                              >
+                                <SelectTrigger className="h-8 text-xs flex-1">
+                                  <SelectValue placeholder={item.custom_dropdown_key || "Status..."} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getDropdownOptions(item.custom_dropdown_key).map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {isAdmin && item.custom_dropdown_key && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowDropdownManager(item.custom_dropdown_key)}
+                                  className="h-8 w-8 p-0"
+                                  title="Edit dropdown options"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {isRegistered && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteChecklistItem(item.id)}
+                                  className="h-8 w-8 p-0 text-red-500"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                        return (
-                          <div key={item.id} className="clay-card p-3 bg-white">
-                            <div className="grid grid-cols-3 gap-2 items-center mb-2">
-                              <div className="font-medium text-sm">{item.text}</div>
+                  {/* Sub-templates */}
+                  {Object.entries(group.subTemplates).map(([stName, stItems]) => (
+                    <div key={stName} className="ml-4 mt-2 border-l-2 border-blue-300 pl-3">
+                      <h4 className="text-sm font-semibold text-blue-700 mb-2">🔗 {stName}</h4>
+                      <div className="space-y-2">
+                        {stItems.map(item => (
+                          <div key={item.id} className={`clay-card p-2 bg-white ${item.type === 'task' ? 'border-l-4 border-l-orange-400' : ''}`}>
+                            <div className="grid grid-cols-3 gap-2 items-center">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-1.5 py-0.5 rounded ${item.type === 'task' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                  {item.type === 'task' ? 'Task' : 'Checklist'}
+                                </span>
+                                <span className="text-sm">{item.text}</span>
+                              </div>
                               
-                              {/* Approved By */}
                               <Select
                                 value={item.approved_by || ""}
                                 onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-8 text-xs">
+                                <SelectTrigger className="h-7 text-xs">
                                   <SelectValue placeholder="Approved by..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -465,61 +559,40 @@ export default function ProductChecklistDialog({
                                 </SelectContent>
                               </Select>
 
-                              {/* Custom Dropdown */}
                               <div className="flex gap-1">
                                 <Select
                                   value={item.custom_dropdown_value || ""}
                                   onValueChange={(val) => updateChecklistItem(item.id, { custom_dropdown_value: val })}
                                   disabled={!isRegistered}
                                 >
-                                  <SelectTrigger className="h-8 text-xs flex-1">
-                                    <SelectValue placeholder={templateItem?.custom_dropdown_key || "Status..."} />
+                                  <SelectTrigger className="h-7 text-xs flex-1">
+                                    <SelectValue placeholder={item.custom_dropdown_key || "Status..."} />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {dropdownOptions.map(opt => (
+                                    {getDropdownOptions(item.custom_dropdown_key).map(opt => (
                                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
-                                {isAdmin && templateItem?.custom_dropdown_key && (
+                                {isRegistered && (
                                   <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     size="sm"
-                                    onClick={() => setShowDropdownManager(templateItem.custom_dropdown_key)}
-                                    className="h-8 w-8 p-0"
-                                    title="Edit dropdown options"
+                                    onClick={() => deleteChecklistItem(item.id)}
+                                    className="h-7 w-7 p-0 text-red-500"
                                   >
-                                    <Pencil className="w-3 h-3" />
+                                    <Trash2 className="w-3 h-3" />
                                   </Button>
                                 )}
                               </div>
                             </div>
-
-                            {/* Sub-items */}
-                            {item.sub_items && item.sub_items.length > 0 && (
-                              <div className="ml-4 mt-2 space-y-1">
-                                {item.sub_items.map(subItem => (
-                                  <label key={subItem.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                                    <Checkbox
-                                      checked={subItem.checked || false}
-                                      onCheckedChange={() => toggleSubItem(item.id, subItem.id)}
-                                      disabled={!isRegistered}
-                                      className="h-4 w-4"
-                                    />
-                                    <span className={subItem.checked ? 'line-through text-gray-500' : ''}>
-                                      {subItem.text}
-                                    </span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  ))}
+                </div>
+              ))
             )}
           </div>
 
@@ -549,51 +622,6 @@ export default function ProductChecklistDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Apply Templates Dialog */}
-      <Dialog open={showApplyTemplates} onOpenChange={setShowApplyTemplates}>
-        <DialogContent className="clay-card border-none max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Apply Templates to Products</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-3 mt-4">
-            {products.map(product => (
-              <div key={product.id} className="clay-card p-3">
-                <div className="font-medium mb-2">
-                  {product.description} 
-                  {product.product_type && <span className="text-xs text-gray-500 ml-2">({product.product_type})</span>}
-                </div>
-                <Select
-                  value={selectedTemplates[product.id] || ""}
-                  onValueChange={(val) => setSelectedTemplates({ ...selectedTemplates, [product.id]: val })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select template..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>None</SelectItem>
-                    {templates.filter(t => !t.product_type || t.product_type === product.product_type).map(template => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name} ({template.items?.length || 0} items)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setShowApplyTemplates(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleApplyTemplates} className="flex-1 bg-blue-600 hover:bg-blue-700">
-              Apply Templates
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Template Builder - rendered via portal to escape dialog context */}
       {showTemplateBuilder && ReactDOM.createPortal(
         <TemplateBuilder
@@ -602,6 +630,7 @@ export default function ProductChecklistDialog({
             setShowTemplateBuilder(false);
             loadData();
           }}
+          onApplyTemplate={handleApplyTemplate}
         />,
         document.body
       )}
@@ -628,16 +657,8 @@ export default function ProductChecklistDialog({
               Incomplete Checklist
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This job cannot be checked off because the checklist has incomplete items:
-              <ul className="mt-2 space-y-1 text-sm">
-                {checklist.filter(item => !item.approved_by || !item.custom_dropdown_value).length > 0 && (
-                  <li>• {checklist.filter(item => !item.approved_by || !item.custom_dropdown_value).length} items missing approval/status</li>
-                )}
-                {checklist.filter(item => (item.sub_items || []).some(si => !si.checked)).length > 0 && (
-                  <li>• {checklist.filter(item => (item.sub_items || []).some(si => !si.checked)).length} items with unchecked sub-items</li>
-                )}
-              </ul>
-              <p className="mt-2 font-medium">Please complete all checklist items before marking this job as done.</p>
+              This job cannot be checked off because the checklist has incomplete items.
+              Please complete all checklist items (approval and status) before marking this job as done.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
