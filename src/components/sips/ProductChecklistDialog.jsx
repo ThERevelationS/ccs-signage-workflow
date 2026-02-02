@@ -70,11 +70,12 @@ export default function ProductChecklistDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [showDropdownManager, setShowDropdownManager] = useState(null);
-  const [dropdownOptionsCache, setDropdownOptionsCache] = useState({});
+  const [dropdownConditions, setDropdownConditions] = useState([]);
   const [incompleteWarning, setIncompleteWarning] = useState(null);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
   const [productTypes, setProductTypes] = useState([]);
-  const [suggestedTypes, setSuggestedTypes] = useState({});
+  const [showOtherPopup, setShowOtherPopup] = useState(null);
+  const [customDropdownValue, setCustomDropdownValue] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
