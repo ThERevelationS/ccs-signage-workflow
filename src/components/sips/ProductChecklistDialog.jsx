@@ -547,21 +547,21 @@ export default function ProductChecklistDialog({
 
                             {/* Dropdown with Other option */}
                             <Select
-                              value={item.custom_dropdown_value || "select_value"}
+                              value={displayItem.custom_dropdown_value || "select_value"}
                               onValueChange={(val) => {
                                 if (val === "other") {
-                                  setShowOtherPopup({ itemId: item.id });
+                                  setShowOtherPopup({ itemId: displayItem.id });
                                 } else if (val !== "select_value") {
-                                  updateChecklistItem(item.id, { custom_dropdown_value: val });
+                                  updateChecklistItem(displayItem.id, { custom_dropdown_value: val });
                                 }
                               }}
                               disabled={!isRegistered}
                             >
                               <SelectTrigger className="h-7 text-xs w-32">
-                                <SelectValue placeholder={getDropdownName(item.dropdown_id) || "Status..."} />
+                                <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Status..."} />
                               </SelectTrigger>
                               <SelectContent>
-                                {dropdownConditions.filter(dd => dd.id === item.dropdown_id || !item.dropdown_id).slice(0, 5).map(dd => (
+                                {dropdownConditions.filter(dd => dd.id === displayItem.dropdown_id || !displayItem.dropdown_id).slice(0, 5).map(dd => (
                                   <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
                                 ))}
                                 <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
@@ -569,17 +569,17 @@ export default function ProductChecklistDialog({
                             </Select>
 
                             {isRegistered && (
-                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(item.id)} className="h-7 w-7 p-0 text-red-500">
+                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(displayItem.id)} className="h-7 w-7 p-0 text-red-500">
                                 <Trash2 className="w-3 h-3" />
                               </Button>
                             )}
                           </div>
 
                           {/* Expanded: Tasks and Details */}
-                          {expandedItems[item.id] && (
+                          {expandedItems[displayItem.id] && (
                             <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
                               {/* Tasks under main item */}
-                              {item.tasks?.map(task => (
+                              {displayItem.tasks?.map(task => (
                               <div key={task.id} className="bg-orange-50 p-1 rounded border-l-2 border-orange-300 group">
                                 <div className="flex items-center gap-1.5">
                                   <Checkbox 
