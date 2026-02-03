@@ -378,10 +378,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   if (!isOpen) return null;
 
-  // Compact condition multi-select
+  // Compact condition multi-select with portal
   const renderConditionSelect = (item, items, setItems, detailId = null) => {
     const uniqueId = detailId ? `${item.id}-${detailId}` : item.id;
     const isOpen = openDropdownId === uniqueId;
+    const buttonRef = useRef(null);
     let currentIds = [];
     if (detailId) {
       const detail = items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId);
@@ -396,6 +397,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       if (detailId) updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
       else updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" });
     };
+
+    const getButtonRect = () => {
+      const btn = document.querySelector(`[data-dropdown-id="${uniqueId}"]`);
+      return btn?.getBoundingClientRect() || { bottom: 0, left: 0 };
+    };
     
     return (
       <div className="relative">
@@ -404,15 +410,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Condition" : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}</span>
           <ChevronDown className="w-3 h-3 flex-shrink-0" />
         </button>
-        {isOpen && (
+        {isOpen && ReactDOM.createPortal(
           <>
-            <div className="fixed inset-0 z-[200]" onClick={() => setOpenDropdownId(null)} />
-            <div className="fixed z-[201] bg-white border rounded-lg shadow-xl min-w-[240px] max-h-64 overflow-y-auto" 
+            <div className="fixed inset-0 z-[300]" onClick={() => setOpenDropdownId(null)} />
+            <div className="fixed z-[301] bg-white border rounded-lg shadow-2xl min-w-[240px] max-h-64 overflow-y-auto" 
               style={{ 
-                top: document.querySelector(`[data-dropdown-id="${uniqueId}"]`)?.getBoundingClientRect().bottom + 4 || 0,
-                left: document.querySelector(`[data-dropdown-id="${uniqueId}"]`)?.getBoundingClientRect().left || 0
+                top: getButtonRect().bottom + 4,
+                left: getButtonRect().left
               }}>
-              <div className="p-2 border-b bg-gray-50 font-medium text-xs">Select Conditions</div>
+              <div className="p-2 border-b bg-gray-50 font-medium text-xs sticky top-0">Select Conditions</div>
               {dropdownConditions.map(dd => (
                 <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm">
@@ -423,11 +429,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
               ))}
               <div onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t">
+                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t sticky bottom-0 bg-white">
                 <Plus className="w-4 h-4" /><span>Add New Condition...</span>
               </div>
             </div>
-          </>
+          </>,
+          document.body
         )}
       </div>
     );
