@@ -431,7 +431,11 @@ export default function ProductChecklistDialog({
                       {buildItemHierarchy(group.mainItems).map(item => (
                         <div key={item.id} className="clay-card p-3 bg-white">
                           {/* Main checklist item */}
-                          <div className="flex items-center gap-2">
+                          <div 
+                            className="flex items-center gap-2 group"
+                            onMouseEnter={() => setHoveredItem(item.id)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
                             <button 
                               onClick={() => toggleExpanded(item.id)}
                               className="p-1 hover:bg-gray-100 rounded"
@@ -442,6 +446,26 @@ export default function ProductChecklistDialog({
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                             <span className="font-medium text-sm flex-1">{item.text}</span>
+                            
+                            {/* Quick add buttons on hover */}
+                            {isRegistered && hoveredItem === item.id && (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: item.id, type: 'task', productName: item.product_name }); }}
+                                  className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+                                  title="Add Task"
+                                >
+                                  +Task
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: item.id, type: 'detail', productName: item.product_name }); }}
+                                  className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                                  title="Add Detail"
+                                >
+                                  +Detail
+                                </button>
+                              </div>
+                            )}
                             
                             <Select
                               value={item.approved_by || ""}
