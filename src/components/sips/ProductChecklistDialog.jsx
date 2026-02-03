@@ -118,18 +118,21 @@ export default function ProductChecklistDialog({
     
     // Helper to flatten hierarchical items
     const flattenItem = (item, productName, productType, subTemplateName = null) => {
+      // Generate unique ID with timestamp to avoid conflicts
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substr(2, 9);
       const baseId = subTemplateName 
-        ? `${productName}_sub_${subTemplateName}_${item.id}`
-        : `${productName}_${item.id}`;
+        ? `${productName}_sub_${subTemplateName}_${item.id}_${timestamp}_${randomSuffix}`
+        : `${productName}_${item.id}_${timestamp}_${randomSuffix}`;
       
       // Get dropdown_ids (support both old dropdown_id and new dropdown_ids array)
       const itemDropdownIds = item.dropdown_ids || (item.dropdown_id ? [item.dropdown_id] : []);
       
-      // Add main checklist item
+      // Add main checklist item - ensure product_name is always set
       newItems.push({
         id: baseId,
-        product_name: productName,
-        product_type: productType,
+        product_name: productName || 'Unnamed Product',
+        product_type: productType || '',
         sub_template_name: subTemplateName,
         text: item.text,
         type: 'checklist',
@@ -140,29 +143,30 @@ export default function ProductChecklistDialog({
       });
       
       // Add tasks under main item
-      item.tasks?.forEach(task => {
+      item.tasks?.forEach((task, tIdx) => {
         newItems.push({
-          id: `${baseId}_task_${task.id}`,
-          product_name: productName,
-          product_type: productType,
+          id: `${baseId}_task_${task.id}_${tIdx}`,
+          product_name: productName || 'Unnamed Product',
+          product_type: productType || '',
           sub_template_name: subTemplateName,
           parent_id: baseId,
           text: task.text,
           type: 'task',
           approved_by: "",
+          assigned_to: "",
           custom_dropdown_value: ""
         });
       });
       
       // Add detail items and their tasks
-      item.details?.forEach(detail => {
-        const detailId = `${baseId}_detail_${detail.id}`;
+      item.details?.forEach((detail, dIdx) => {
+        const detailId = `${baseId}_detail_${detail.id}_${dIdx}`;
         const detailDropdownIds = detail.dropdown_ids || (detail.dropdown_id ? [detail.dropdown_id] : []);
         
         newItems.push({
           id: detailId,
-          product_name: productName,
-          product_type: productType,
+          product_name: productName || 'Unnamed Product',
+          product_type: productType || '',
           sub_template_name: subTemplateName,
           parent_id: baseId,
           text: detail.text,
@@ -174,16 +178,17 @@ export default function ProductChecklistDialog({
         });
         
         // Add tasks under detail
-        detail.tasks?.forEach(task => {
+        detail.tasks?.forEach((task, dtIdx) => {
           newItems.push({
-            id: `${detailId}_task_${task.id}`,
-            product_name: productName,
-            product_type: productType,
+            id: `${detailId}_task_${task.id}_${dtIdx}`,
+            product_name: productName || 'Unnamed Product',
+            product_type: productType || '',
             sub_template_name: subTemplateName,
             parent_id: detailId,
             text: task.text,
             type: 'task',
             approved_by: "",
+            assigned_to: "",
             custom_dropdown_value: ""
           });
         });
@@ -197,6 +202,7 @@ export default function ProductChecklistDialog({
         });
       } else if (section.type === 'sub_template') {
         section.items.forEach(item => {
+          // Use parentProduct as the product_name for sub-template items
           flattenItem(item, section.parentProduct, null, section.subTemplateName);
         });
       }
@@ -381,7 +387,7 @@ export default function ProductChecklistDialog({
                     onClick={() => setShowTemplateBuilder(true)}
                   >
                     <Pencil className="w-4 h-4 mr-1" />
-                    Template Builder
+                    Checklist Builder
                   </Button>
                 )}
               </div>
@@ -391,7 +397,7 @@ export default function ProductChecklistDialog({
           {/* Products from Work Order (read-only display) */}
           <div className="clay-card p-3 bg-blue-50/50">
             <h3 className="font-bold text-sm mb-2">Products on this Job</h3>
-            <p className="text-xs text-gray-500 mb-2">Products are managed in the Client Information section. Use Template Builder to apply checklists.</p>
+            <p className="text-xs text-gray-500 mb-2">Products are managed in the Client Information section. Use Checklist Builder to apply checklists.</p>
             <div className="space-y-1">
               {products.length > 0 ? products.map((product, index) => (
                 <div key={product.id} className="flex gap-2 items-center p-2 bg-white rounded border">
@@ -411,7 +417,7 @@ export default function ProductChecklistDialog({
             {checklist.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>No checklist items yet</p>
-                <p className="text-sm mt-1">Use Template Builder to create and apply templates</p>
+                <p className="text-sm mt-1">Use Checklist Builder to create and apply checklists</p>
               </div>
             ) : (
               Object.entries(groupedChecklist).map(([productName, group]) => (
@@ -519,10 +525,32 @@ export default function ProductChecklistDialog({
                             <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
                               {/* Tasks under main item */}
                               {item.tasks?.map(task => (
-                              <div key={task.id} className="bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                              <div key={task.id} className="bg-orange-50 p-1 rounded border-l-2 border-orange-300 group">
+                                <div className="flex items-center gap-1.5">
+                                  <Checkbox 
+                                    checked={!!task.approved_by}
+                                    onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                    disabled={!isRegistered}
+                                    className="h-3 w-3"
+                                  />
+                                  <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-600 font-medium">T</span>
                                   <span className="text-xs flex-1">{task.text}</span>
+                                  <Select
+                                    value={task.assigned_to || ""}
+                                    onValueChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
+                                    disabled={!isRegistered}
+                                  >
+                                    <SelectTrigger className="h-5 text-xs w-24 px-1">
+                                      <SelectValue placeholder="Assign..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {users.map(u => (
+                                        <SelectItem key={u.email} value={u.full_name || u.email}>
+                                          {u.full_name || u.email}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                   {isRegistered && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: item.product_name }); }}
@@ -532,31 +560,25 @@ export default function ProductChecklistDialog({
                                       +Sub
                                     </button>
                                   )}
-                                  <Checkbox 
-                                    checked={!!task.approved_by}
-                                    onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                    disabled={!isRegistered}
-                                    className="h-3.5 w-3.5"
-                                  />
                                   {isRegistered && (
-                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-5 w-5 p-0 text-red-500 opacity-0 group-hover:opacity-100">
+                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover:opacity-100">
                                       <Trash2 className="w-2.5 h-2.5" />
                                     </Button>
                                   )}
                                 </div>
                                 {/* Subtasks */}
                                 {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
-                                  <div key={subtask.id} className="ml-4 mt-1 flex items-center gap-1.5 bg-yellow-50 p-1 rounded text-xs group/subtask">
-                                    <span className="px-1 py-0.5 rounded bg-yellow-100 text-yellow-700">Sub</span>
-                                    <span className="flex-1">{subtask.text}</span>
+                                  <div key={subtask.id} className="ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask">
                                     <Checkbox 
                                       checked={!!subtask.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
                                       disabled={!isRegistered}
-                                      className="h-3 w-3"
+                                      className="h-2.5 w-2.5"
                                     />
+                                    <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
+                                    <span className="flex-1">{subtask.text}</span>
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover/subtask:opacity-100">
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 opacity-0 group-hover/subtask:opacity-100">
                                         <Trash2 className="w-2 h-2" />
                                       </Button>
                                     )}
@@ -564,20 +586,20 @@ export default function ProductChecklistDialog({
                                 ))}
                                 {/* Inline add subtask */}
                                 {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
-                                  <div className="ml-4 mt-1 flex items-center gap-1.5 bg-yellow-50 p-1 rounded">
+                                  <div className="ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
                                       placeholder="New subtask..."
-                                      className="h-5 text-xs flex-1"
+                                      className="h-4 text-xs flex-1"
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') addNewItem('subtask', task.id, item.product_name);
                                         if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
                                       }}
                                     />
-                                    <Button size="sm" className="h-5 px-1.5 text-xs" onClick={() => addNewItem('subtask', task.id, item.product_name)}>Add</Button>
-                                    <Button size="sm" variant="ghost" className="h-5 px-1 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                    <Button size="sm" className="h-4 px-1 text-xs" onClick={() => addNewItem('subtask', task.id, item.product_name)}>Add</Button>
+                                    <Button size="sm" variant="ghost" className="h-4 px-0.5 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
                                   </div>
                                 )}
                               </div>
@@ -708,44 +730,60 @@ export default function ProductChecklistDialog({
 
                                   {/* Tasks under detail */}
                                   {detail.tasks?.length > 0 && (
-                                    <div className="ml-4 mt-2 space-y-1 border-l-2 border-orange-200 pl-2">
+                                    <div className="ml-4 mt-1 space-y-0.5 border-l border-orange-200 pl-1.5">
                                       {detail.tasks.map(task => (
-                                        <div key={task.id} className="bg-orange-50 p-1 rounded group/dtask">
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                                            <span className="text-xs flex-1">{task.text}</span>
-                                            {isRegistered && (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: item.product_name }); }}
-                                                className="px-1 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 opacity-0 group-hover/dtask:opacity-100"
-                                                title="Add Subtask"
-                                              >
-                                                +Sub
-                                              </button>
-                                            )}
+                                        <div key={task.id} className="bg-orange-50 p-0.5 rounded group/dtask">
+                                          <div className="flex items-center gap-1">
                                             <Checkbox 
                                               checked={!!task.approved_by}
                                               onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                               disabled={!isRegistered}
-                                              className="h-3 w-3"
+                                              className="h-2.5 w-2.5"
                                             />
+                                            <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
+                                            <span className="text-xs flex-1">{task.text}</span>
+                                            <Select
+                                              value={task.assigned_to || ""}
+                                              onValueChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
+                                              disabled={!isRegistered}
+                                            >
+                                              <SelectTrigger className="h-4 text-xs w-20 px-0.5">
+                                                <SelectValue placeholder="Assign" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {users.map(u => (
+                                                  <SelectItem key={u.email} value={u.full_name || u.email}>
+                                                    {u.full_name || u.email}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover/dtask:opacity-100">
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: item.product_name }); }}
+                                                className="px-0.5 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 opacity-0 group-hover/dtask:opacity-100"
+                                                title="Add Subtask"
+                                              >
+                                                +S
+                                              </button>
+                                            )}
+                                            {isRegistered && (
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-3 w-3 p-0 text-red-500 opacity-0 group-hover/dtask:opacity-100">
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
                                           </div>
                                           {/* Subtasks under detail task */}
                                           {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
-                                            <div key={subtask.id} className="ml-3 mt-1 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub">
-                                              <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">Sub</span>
-                                              <span className="flex-1">{subtask.text}</span>
+                                            <div key={subtask.id} className="ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub">
                                               <Checkbox 
                                                 checked={!!subtask.approved_by}
                                                 onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
                                                 disabled={!isRegistered}
-                                                className="h-2.5 w-2.5"
+                                                className="h-2 w-2"
                                               />
+                                              <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
+                                              <span className="flex-1">{subtask.text}</span>
                                               {isRegistered && (
                                                 <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 opacity-0 group-hover/dsub:opacity-100">
                                                   <Trash2 className="w-2 h-2" />
@@ -755,7 +793,7 @@ export default function ProductChecklistDialog({
                                           ))}
                                           {/* Inline add subtask for detail task */}
                                           {newItemInput.show && newItemInput.parentId === task.id && newItemInput.type === 'subtask' && (
-                                            <div className="ml-3 mt-1 flex items-center gap-1 bg-yellow-50 p-0.5 rounded">
+                                            <div className="ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded">
                                               <Input
                                                 value={newItemText}
                                                 onChange={(e) => setNewItemText(e.target.value)}

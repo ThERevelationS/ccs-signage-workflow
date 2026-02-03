@@ -591,7 +591,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2" onClick={(e) => e.stopPropagation()}>
         <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
-            <div><h2 className="text-lg font-bold">Template Builder</h2></div>
+            <div><h2 className="text-lg font-bold">Checklist Builder</h2></div>
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
