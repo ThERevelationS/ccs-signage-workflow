@@ -76,25 +76,31 @@ export default function MyWorkflow() {
       
       const userName = currentUser?.full_name || currentUser?.email;
       
-      // Find work orders where user has tasks assigned to them (in notes array)
+      // Find work orders where user has tasks assigned to them (in notes array OR sip_checklist)
       const myOrders = allOrders.filter(wo => {
-        // Check if any task is assigned to this user
-        const hasAssignedTask = (wo.notes || []).some(task => task.assigned_to === userName);
+        // Check notes array (traditional tasks)
+        const hasAssignedTask = (wo.notes || []).some(task => task.assigned_to === userName && !task.completed);
         if (hasAssignedTask) return true;
         
-        // Check sub-tasks
+        // Check sub-tasks in notes
         const hasAssignedSubTask = (wo.notes || []).some(task => 
-          (task.sub_tasks || []).some(st => st.assigned_to === userName)
+          (task.sub_tasks || []).some(st => st.assigned_to === userName && !st.completed)
         );
         if (hasAssignedSubTask) return true;
         
-        // Check details
+        // Check details in notes
         const hasAssignedDetail = (wo.notes || []).some(task => 
           (task.sub_tasks || []).some(st => 
-            (st.details || []).some(d => d.assigned_to === userName)
+            (st.details || []).some(d => d.assigned_to === userName && !d.completed)
           )
         );
         if (hasAssignedDetail) return true;
+        
+        // Check sip_checklist for assigned tasks (from ProductChecklistDialog)
+        const hasAssignedSipTask = (wo.sip_checklist || []).some(item => 
+          item.assigned_to === userName && !item.approved_by
+        );
+        if (hasAssignedSipTask) return true;
         
         return false;
       });
@@ -336,24 +342,46 @@ export default function MyWorkflow() {
     const userName = currentUser?.full_name || currentUser?.email;
     const myTasks = [];
     
+    // Check traditional notes array
     (wo.notes || []).forEach((task, taskIndex) => {
+      // Skip completed tasks
+      if (task.completed) return;
+      
       // Check if task is assigned to me - main tasks only, not standalone subtasks
       if (task.assigned_to === userName) {
-        myTasks.push({ type: 'task', task, taskIndex, workOrderId: wo.id });
+        myTasks.push({ type: 'task', task, taskIndex, workOrderId: wo.id, source: 'notes' });
       } else {
         // If the main task is NOT assigned to me, but has subtasks assigned to me,
         // show only those subtasks under the parent task context (not as standalone)
-        const mySubTasks = (task.sub_tasks || []).filter(st => st.assigned_to === userName);
+        const mySubTasks = (task.sub_tasks || []).filter(st => st.assigned_to === userName && !st.completed);
         const myDetails = (task.sub_tasks || []).flatMap((st, stIndex) => 
-          (st.details || []).filter(d => d.assigned_to === userName).map((d, dIndex) => ({
+          (st.details || []).filter(d => d.assigned_to === userName && !d.completed).map((d, dIndex) => ({
             subTask: st, subTaskIndex: stIndex, detail: d, detailIndex: dIndex
           }))
         );
         
         // If I have subtasks or details assigned under this task, show the task as context
         if (mySubTasks.length > 0 || myDetails.length > 0) {
-          myTasks.push({ type: 'task_with_my_items', task, taskIndex, workOrderId: wo.id, mySubTasks, myDetails });
+          myTasks.push({ type: 'task_with_my_items', task, taskIndex, workOrderId: wo.id, mySubTasks, myDetails, source: 'notes' });
         }
+      }
+    });
+    
+    // Check sip_checklist for assigned tasks (from ProductChecklistDialog)
+    (wo.sip_checklist || []).forEach((item, itemIndex) => {
+      // Skip completed items (approved_by means completed for sip_checklist)
+      if (item.approved_by) return;
+      
+      // Only show task-type items that are assigned to me
+      if (item.type === 'task' && item.assigned_to === userName) {
+        myTasks.push({ 
+          type: 'sip_task', 
+          item, 
+          itemIndex, 
+          workOrderId: wo.id, 
+          source: 'sip_checklist',
+          productName: item.product_name
+        });
       }
     });
     
