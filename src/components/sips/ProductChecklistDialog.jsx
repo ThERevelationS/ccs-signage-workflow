@@ -512,14 +512,22 @@ export default function ProductChecklistDialog({
                             {isRegistered && hoveredItem === displayItem.id && (
                               <div className="flex gap-1">
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: displayItem.id, type: 'task', productName: displayItem.product_name || productName }); }}
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
+                                    setNewItemInput({ show: true, parentId: displayItem.id, type: 'task', productName: displayItem.product_name || productName }); 
+                                  }}
                                   className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
                                   title="Add Task"
                                 >
                                   +Task
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: displayItem.id, type: 'detail', productName: displayItem.product_name || productName }); }}
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
+                                    setNewItemInput({ show: true, parentId: displayItem.id, type: 'detail', productName: displayItem.product_name || productName }); 
+                                  }}
                                   className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
                                   title="Add Detail"
                                 >
@@ -915,14 +923,22 @@ export default function ProductChecklistDialog({
                               {isRegistered && hoveredItem === stDisplayItem.id && (
                                 <div className="flex gap-1">
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
+                                      setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'task', productName: stDisplayItem.product_name || productName }); 
+                                    }}
                                     className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
                                     title="Add Task"
                                   >
                                     +Task
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'detail', productName: stDisplayItem.product_name || productName }); }}
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
+                                      setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'detail', productName: stDisplayItem.product_name || productName }); 
+                                    }}
                                     className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
                                     title="Add Detail"
                                   >

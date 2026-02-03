@@ -878,9 +878,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="max-w-2xl mx-auto">
                 <div className="flex gap-2 mb-3">
                   <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
-                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim() }]); setNewDropdownName(""); } }} />
-                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim() }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }} />
+                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
+                
+                {/* Legend */}
+                <div className="flex gap-4 mb-3 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span>Completed Condition</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <span>Continued Condition</span>
+                  </div>
+                </div>
+                
                 <DragDropContext onDragEnd={(result) => { if (!result.destination) return; const reordered = Array.from(dropdownConditions); const [removed] = reordered.splice(result.source.index, 1); reordered.splice(result.destination.index, 0, removed); saveDropdownConditions(reordered); }}>
                   <Droppable droppableId="conditions">
                     {(provided) => (
@@ -888,8 +901,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         {dropdownConditions.map((dd, index) => (
                           <Draggable key={dd.id} draggableId={dd.id} index={index}>
                             {(provided) => (
-                              <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded bg-white text-sm">
+                              <div ref={provided.innerRef} {...provided.draggableProps} 
+                                className={`flex items-center gap-1 p-2 border rounded text-sm ${dd.is_completed ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
                                 <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                
+                                {/* Completed/Continued Toggle */}
+                                <button 
+                                  onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: !d.is_completed } : d))}
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${dd.is_completed ? 'bg-green-500' : 'bg-yellow-500'}`}
+                                  title={dd.is_completed ? "Completed - click to mark as Continued" : "Continued - click to mark as Completed"}
+                                >
+                                  {dd.is_completed ? <Check className="w-3 h-3 text-white" /> : <span className="text-white text-xs font-bold">C</span>}
+                                </button>
+                                
                                 {editingDropdown === dd.id ? (
                                   <Input defaultValue={dd.name} className="flex-1 h-6 text-sm" autoFocus
                                     onKeyDown={(e) => { if (e.key === 'Enter') { const newName = e.target.value.trim(); if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); setEditingDropdown(null); } if (e.key === 'Escape') setEditingDropdown(null); }}
@@ -897,6 +921,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 ) : (
                                   <>
                                     <span className="flex-1 truncate">{dd.name}</span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                                      {dd.is_completed ? 'Done' : 'Cont.'}
+                                    </span>
                                     <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
                                   </>
                                 )}
