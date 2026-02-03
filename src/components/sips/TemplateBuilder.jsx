@@ -1342,127 +1342,96 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Conditions Tab */}
             <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-gray-50 border rounded-lg p-4 mb-4">
-                  <h3 className="font-bold mb-2">Create Condition</h3>
-                  <p className="text-xs text-gray-500 mb-3">These conditions can be assigned to checklist items and detail items in templates.</p>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newDropdownName}
-                      onChange={(e) => setNewDropdownName(e.target.value)}
-                      placeholder="Condition name (e.g., Fabrication Status, Design Approval)..."
-                      className="flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newDropdownName.trim()) {
+              <div className="max-w-3xl mx-auto">
+                <div className="flex gap-4 items-start mb-4">
+                  <div className="flex-1 bg-gray-50 border rounded-lg p-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newDropdownName}
+                        onChange={(e) => setNewDropdownName(e.target.value)}
+                        placeholder="New condition name..."
+                        className="flex-1 h-8 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newDropdownName.trim()) {
+                            const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
+                            saveDropdownConditions([...dropdownConditions, newItem]);
+                            setNewDropdownName("");
+                          }
+                        }}
+                      />
+                      <Button size="sm" className="h-8" onClick={() => {
+                        if (newDropdownName.trim()) {
                           const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
                           saveDropdownConditions([...dropdownConditions, newItem]);
                           setNewDropdownName("");
                         }
-                      }}
-                    />
-                    <Button onClick={() => {
-                      if (newDropdownName.trim()) {
-                        const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
-                        saveDropdownConditions([...dropdownConditions, newItem]);
-                        setNewDropdownName("");
-                      }
-                    }}>
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add
-                    </Button>
+                      }}>
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                <h3 className="font-bold text-sm mb-3">Conditions ({dropdownConditions.length})</h3>
-                
                 {dropdownConditions.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
-                    <List className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>No conditions created yet.</p>
-                    <p className="text-xs mt-1">Add conditions above to use them in templates.</p>
+                  <div className="text-center py-6 text-gray-500 border rounded-lg bg-gray-50">
+                    <List className="w-6 h-6 mx-auto mb-1 text-gray-400" />
+                    <p className="text-sm">No conditions yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {dropdownConditions.map((dd, index) => (
-                      <div key={dd.id} className="flex items-center gap-2 p-3 border rounded-lg bg-white">
+                      <div key={dd.id} className="flex items-center gap-1 p-2 border rounded bg-white text-sm">
                         <div className="flex flex-col">
-                          <button 
-                            onClick={() => {
-                              if (index > 0) {
-                                const newItems = [...dropdownConditions];
-                                [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-                                saveDropdownConditions(newItems);
-                              }
-                            }} 
-                            disabled={index === 0} 
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <ArrowUp className="w-3 h-3" />
+                          <button onClick={() => {
+                            if (index > 0) {
+                              const newItems = [...dropdownConditions];
+                              [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
+                              saveDropdownConditions(newItems);
+                            }
+                          }} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                            <ArrowUp className="w-2.5 h-2.5" />
                           </button>
-                          <button 
-                            onClick={() => {
-                              if (index < dropdownConditions.length - 1) {
-                                const newItems = [...dropdownConditions];
-                                [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-                                saveDropdownConditions(newItems);
-                              }
-                            }} 
-                            disabled={index === dropdownConditions.length - 1} 
-                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <ArrowDown className="w-3 h-3" />
+                          <button onClick={() => {
+                            if (index < dropdownConditions.length - 1) {
+                              const newItems = [...dropdownConditions];
+                              [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+                              saveDropdownConditions(newItems);
+                            }
+                          }} disabled={index === dropdownConditions.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                            <ArrowDown className="w-2.5 h-2.5" />
                           </button>
                         </div>
                         
                         {editingDropdown === dd.id ? (
-                          <div className="flex-1 flex gap-2">
-                            <Input
-                              defaultValue={dd.name}
-                              className="flex-1"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  const newName = e.target.value.trim();
-                                  if (newName) {
-                                    saveDropdownConditions(dropdownConditions.map(d => 
-                                      d.id === dd.id ? { ...d, name: newName } : d
-                                    ));
-                                  }
-                                  setEditingDropdown(null);
-                                }
-                                if (e.key === 'Escape') setEditingDropdown(null);
-                              }}
-                              onBlur={(e) => {
+                          <Input
+                            defaultValue={dd.name}
+                            className="flex-1 h-6 text-sm"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
                                 const newName = e.target.value.trim();
-                                if (newName) {
-                                  saveDropdownConditions(dropdownConditions.map(d => 
-                                    d.id === dd.id ? { ...d, name: newName } : d
-                                  ));
-                                }
+                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
                                 setEditingDropdown(null);
-                              }}
-                            />
-                          </div>
+                              }
+                              if (e.key === 'Escape') setEditingDropdown(null);
+                            }}
+                            onBlur={(e) => {
+                              const newName = e.target.value.trim();
+                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
+                              setEditingDropdown(null);
+                            }}
+                          />
                         ) : (
                           <>
-                            <div className="flex-1">
-                              <span className="font-medium">{dd.name}</span>
-                            </div>
-                            <button onClick={() => setEditingDropdown(dd.id)} className="p-1.5 hover:bg-gray-100 rounded">
-                              <Pencil className="w-4 h-4 text-gray-500" />
+                            <span className="flex-1 truncate">{dd.name}</span>
+                            <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded">
+                              <Pencil className="w-3 h-3 text-gray-400" />
                             </button>
                           </>
                         )}
-                        
-                        <button 
-                          onClick={() => {
-                            if (confirm(`Delete "${dd.name}"?`)) {
-                              saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id));
-                            }
-                          }} 
-                          className="p-1.5 hover:bg-red-50 rounded"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                        <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded">
+                          <Trash2 className="w-3 h-3 text-red-500" />
                         </button>
                       </div>
                     ))}
