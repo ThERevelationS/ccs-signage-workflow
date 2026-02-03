@@ -67,6 +67,7 @@ import PTOManagement from "../components/admin/PTOManagement";
 import BackupManager from "../components/admin/BackupManager";
 import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
 import SalesPipelineDefaultSort from "@/components/admin/SalesPipelineDefaultSort";
+import ResourceAllocationView from "@/components/workflow/ResourceAllocationView";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
@@ -666,6 +667,12 @@ export default function AdminSettings() {
                 <Activity className="w-4 h-4 mr-2" />
                 Activity
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                  <Users className="w-4 h-4 mr-2" />
+                  Resources
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -726,6 +733,12 @@ export default function AdminSettings() {
           <TabsContent value="activity">
             <ActivityFeed />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="resources">
+              <ResourceAllocationView />
+            </TabsContent>
+          )}
 
           <TabsContent value="automations">
             {/* Email Groups Section - moved under Automations */}
