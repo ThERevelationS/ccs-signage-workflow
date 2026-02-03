@@ -703,7 +703,10 @@ export default function ProductChecklistDialog({
             setShowTemplateBuilder(false);
             loadData();
           }}
-          onApplyTemplate={handleApplyTemplate}
+          onApplyTemplate={(templateData) => {
+            handleApplyTemplate(templateData);
+            setShowTemplateBuilder(false);
+          }}
           existingChecklist={checklist}
           isAdmin={isAdmin}
         />,
