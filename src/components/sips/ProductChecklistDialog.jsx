@@ -498,28 +498,28 @@ export default function ProductChecklistDialog({
                             onMouseLeave={() => setHoveredItem(null)}
                           >
                             <button 
-                              onClick={() => toggleExpanded(item.id)}
+                              onClick={() => toggleExpanded(displayItem.id)}
                               className="p-1 hover:bg-gray-100 rounded"
                             >
-                              {(item.details?.length > 0 || item.tasks?.length > 0) ? (
-                                expandedItems[item.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                              {(displayItem.details?.length > 0 || displayItem.tasks?.length > 0) ? (
+                                expandedItems[displayItem.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
                               ) : <div className="w-4" />}
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                            <span className="font-medium text-sm flex-1">{item.text}</span>
+                            <span className="font-medium text-sm flex-1">{displayItem.text}</span>
                             
                             {/* Quick add buttons on hover */}
-                            {isRegistered && hoveredItem === item.id && (
+                            {isRegistered && hoveredItem === displayItem.id && (
                               <div className="flex gap-1">
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: item.id, type: 'task', productName: item.product_name }); }}
+                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: displayItem.id, type: 'task', productName: displayItem.product_name || productName }); }}
                                   className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
                                   title="Add Task"
                                 >
                                   +Task
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: item.id, type: 'detail', productName: item.product_name }); }}
+                                  onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: displayItem.id, type: 'detail', productName: displayItem.product_name || productName }); }}
                                   className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
                                   title="Add Detail"
                                 >
@@ -529,8 +529,8 @@ export default function ProductChecklistDialog({
                             )}
                             
                             <Select
-                              value={item.approved_by || ""}
-                              onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
+                              value={displayItem.approved_by || ""}
+                              onValueChange={(val) => updateChecklistItem(displayItem.id, { approved_by: val })}
                               disabled={!isRegistered}
                             >
                               <SelectTrigger className="h-7 text-xs w-32">
