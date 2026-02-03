@@ -667,7 +667,28 @@ export default function MyWorkflow() {
                                   )}
                                 </div>
                               )}
-                              {/* Removed standalone subtask and detail rendering - they now appear under their parent task */}
+                              {/* SIP Checklist tasks */}
+                              {item.type === 'sip_task' && (
+                                <div className={`p-1 rounded border ${item.item.approved_by ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                                  <div className="flex items-center gap-1">
+                                    <Checkbox
+                                      checked={!!item.item.approved_by}
+                                      onCheckedChange={() => toggleSipTaskComplete(wo.id, item.itemIndex)}
+                                      disabled={!isRegistered}
+                                      className="h-3 w-3"
+                                    />
+                                    <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">SIP Task</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-xs ${item.item.approved_by ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                        {item.item.text}
+                                      </p>
+                                      {item.productName && (
+                                        <p className="text-[10px] text-gray-400">📦 {item.productName}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
