@@ -338,6 +338,24 @@ export default function MyWorkflow() {
     await WorkOrder.update(workOrderId, { notes: updatedTasks });
   };
 
+  const toggleSipTaskComplete = async (workOrderId, itemIndex) => {
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+    
+    const updatedChecklist = [...(wo.sip_checklist || [])];
+    const item = updatedChecklist[itemIndex];
+    updatedChecklist[itemIndex] = {
+      ...item,
+      approved_by: item.approved_by ? "" : (currentUser?.full_name || currentUser?.email || "Done")
+    };
+    
+    setWorkOrders(prev => prev.map(w => 
+      w.id === workOrderId ? { ...w, sip_checklist: updatedChecklist } : w
+    ));
+    
+    await WorkOrder.update(workOrderId, { sip_checklist: updatedChecklist });
+  };
+
   const getMyTasksForWorkOrder = (wo) => {
     const userName = currentUser?.full_name || currentUser?.email;
     const myTasks = [];
