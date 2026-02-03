@@ -502,7 +502,43 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   }, [isOpen]);
 
   // Compact checklist item row
-  const renderCompactItem = (item, index, items, setItems, provided) => (
+  const renderCompactItem = (item, index, items, setItems, provided, isProductType = false) => {
+    const markChanged = () => {
+      if (isProductType) {
+        setProductTypeHasChanges(true);
+        setProductTypeSaveStatus('idle');
+      } else {
+        setSubTemplateHasChanges(true);
+        setSubTemplateSaveStatus('idle');
+      }
+    };
+    
+    const updateItemWithChange = (itemId, updates, detailId = null, taskId = null, subtaskId = null) => {
+      updateItem(items, setItems, itemId, updates, detailId, taskId, subtaskId);
+      markChanged();
+    };
+    
+    const deleteItemWithChange = (id, detailId = null, taskId = null, subtaskId = null) => {
+      deleteItem(items, setItems, id, detailId, taskId, subtaskId);
+      markChanged();
+    };
+    
+    const addTaskWithChange = (parentId, detailId, text) => {
+      addTask(items, setItems, parentId, detailId, text);
+      markChanged();
+    };
+    
+    const addSubtaskWithChange = (parentId, detailId, taskId, text) => {
+      addSubtask(items, setItems, parentId, detailId, taskId, text);
+      markChanged();
+    };
+    
+    const addDetailItemWithChange = (parentId, text) => {
+      addDetailItem(items, setItems, parentId, text);
+      markChanged();
+    };
+    
+    return (
     <div ref={provided.innerRef} {...provided.draggableProps} 
       className={`border rounded p-1.5 bg-white mb-1 ${expandedItems[item.id] ? 'ring-1 ring-blue-300' : ''}`}>
       <div className="flex items-center gap-1">
@@ -512,14 +548,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         </button>
         <span className="text-xs px-1 py-0.5 rounded bg-blue-100 text-blue-700">C</span>
         {editingItem === item.id ? (
-          <Input value={item.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value })}
+          <Input value={item.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value })}
             onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
             autoFocus className="h-5 text-xs flex-1" />
         ) : (
           <span className="flex-1 text-xs font-medium truncate cursor-pointer" onClick={() => setEditingItem(item.id)}>{item.text}</span>
         )}
-        {renderConditionSelect(item, items, setItems)}
-        <button onClick={() => deleteItem(items, setItems, item.id)} className="p-0.5 hover:bg-red-50 rounded">
+        {renderConditionSelect(item, items, setItems, null, markChanged)}
+        <button onClick={() => deleteItemWithChange(item.id)} className="p-0.5 hover:bg-red-50 rounded">
           <Trash2 className="w-3 h-3 text-red-500" />
         </button>
       </div>
@@ -532,14 +568,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="flex items-center gap-1 bg-orange-50 p-1 rounded text-xs group/task">
                 <span className="px-1 py-0.5 rounded bg-orange-100 text-orange-700 text-xs">T</span>
                 {editingItem === task.id ? (
-                  <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
+                  <Input value={task.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, null, task.id)}
                     onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
                 ) : (
                   <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
                 )}
                 <Input 
                   value={task.assigned_to || ""} 
-                  onChange={(e) => updateItem(items, setItems, item.id, { assigned_to: e.target.value }, null, task.id)}
+                  onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, null, task.id)}
                   placeholder="Assign..." 
                   className="h-4 text-xs w-20" 
                   list={`users-${task.id}`}
@@ -547,25 +583,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <datalist id={`users-${task.id}`}>
                   {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
                 </datalist>
-                <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-0.5 opacity-0 group-hover/task:opacity-100"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+                <button onClick={() => deleteItemWithChange(item.id, null, task.id)} className="p-0.5 opacity-0 group-hover/task:opacity-100"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
               </div>
               {/* Subtasks */}
               {task.subtasks?.map((subtask) => (
                 <div key={subtask.id} className="ml-4 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask">
                   <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                   {editingItem === subtask.id ? (
-                    <Input value={subtask.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id, subtask.id)}
+                    <Input value={subtask.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, null, task.id, subtask.id)}
                       onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
                   ) : (
                     <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
                   )}
-                  <button onClick={() => deleteItem(items, setItems, item.id, null, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/subtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                  <button onClick={() => deleteItemWithChange(item.id, null, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/subtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
                 </div>
               ))}
-              <Input placeholder="+ subtask" className="ml-4 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtask(items, setItems, item.id, null, task.id, e.target.value); e.target.value = ""; } }} />
+              <Input placeholder="+ subtask" className="ml-4 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, null, task.id, e.target.value); e.target.value = ""; } }} />
             </div>
           ))}
-          <Input placeholder="+ task" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, null, e.target.value); e.target.value = ""; } }} />
+          <Input placeholder="+ task" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTaskWithChange(item.id, null, e.target.value); e.target.value = ""; } }} />
           
           {/* Details */}
           {item.details?.map((detail) => (
@@ -573,13 +609,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="flex items-center gap-1 text-xs">
                 <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">D</span>
                 {editingItem === detail.id ? (
-                  <Input value={detail.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id)}
+                  <Input value={detail.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id)}
                     onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
                 ) : (
                   <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(detail.id)}>{detail.text}</span>
                 )}
-                {renderConditionSelect(item, items, setItems, detail.id)}
-                <button onClick={() => deleteItem(items, setItems, item.id, detail.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+                {renderConditionSelect(item, items, setItems, detail.id, markChanged)}
+                <button onClick={() => deleteItemWithChange(item.id, detail.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
               </div>
               <div className="ml-4 mt-1 space-y-0.5">
                 {detail.tasks?.map((task) => (
@@ -587,14 +623,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     <div className="flex items-center gap-1 bg-orange-50 p-0.5 rounded text-xs group/dtask">
                       <span className="px-0.5 rounded bg-orange-100 text-orange-700">T</span>
                       {editingItem === task.id ? (
-                        <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
+                        <Input value={task.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id, task.id)}
                           onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
                       ) : (
                         <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
                       )}
                       <Input 
                         value={task.assigned_to || ""} 
-                        onChange={(e) => updateItem(items, setItems, item.id, { assigned_to: e.target.value }, detail.id, task.id)}
+                        onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, detail.id, task.id)}
                         placeholder="Assign..." 
                         className="h-4 text-xs w-16" 
                         list={`users-detail-${task.id}`}
@@ -602,33 +638,33 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <datalist id={`users-detail-${task.id}`}>
                         {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
                       </datalist>
-                      <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5 opacity-0 group-hover/dtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                      <button onClick={() => deleteItemWithChange(item.id, detail.id, task.id)} className="p-0.5 opacity-0 group-hover/dtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
                     </div>
                     {/* Subtasks under detail tasks */}
                     {task.subtasks?.map((subtask) => (
                       <div key={subtask.id} className="ml-3 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsubtask">
                         <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                         {editingItem === subtask.id ? (
-                          <Input value={subtask.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id, subtask.id)}
+                          <Input value={subtask.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id, task.id, subtask.id)}
                             onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
                         ) : (
                           <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
                         )}
-                        <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/dsubtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                        <button onClick={() => deleteItemWithChange(item.id, detail.id, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/dsubtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
                       </div>
                     ))}
-                    <Input placeholder="+ subtask" className="ml-3 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtask(items, setItems, item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} />
+                    <Input placeholder="+ subtask" className="ml-3 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} />
                   </div>
                 ))}
-                <Input placeholder="+ task" className="h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, detail.id, e.target.value); e.target.value = ""; } }} />
+                <Input placeholder="+ task" className="h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTaskWithChange(item.id, detail.id, e.target.value); e.target.value = ""; } }} />
               </div>
             </div>
           ))}
-          <Input placeholder="+ detail" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addDetailItem(items, setItems, item.id, e.target.value); e.target.value = ""; } }} />
+          <Input placeholder="+ detail" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addDetailItemWithChange(item.id, e.target.value); e.target.value = ""; } }} />
         </div>
       )}
     </div>
-  );
+  );};
 
   // Mark changes when items are modified
   const markProductTypeChanged = () => {
@@ -643,13 +679,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   // Item editor with drag-drop
   const renderItemEditor = (items, setItems, isProductType = false) => (
-    <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems)}>
+    <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems, isProductType)}>
       <Droppable droppableId="items">
         {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1 max-h-[55vh] overflow-y-auto pr-1">
             {items.map((item, index) => (
               <Draggable key={item.id} draggableId={item.id} index={index}>
-                {(provided) => renderCompactItem(item, index, items, setItems, provided)}
+                {(provided) => renderCompactItem(item, index, items, setItems, provided, isProductType)}
               </Draggable>
             ))}
             {provided.placeholder}
