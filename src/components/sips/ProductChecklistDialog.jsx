@@ -290,26 +290,33 @@ export default function ProductChecklistDialog({
   };
 
   // Group checklist items by product_name, sub_template, and hierarchy
+  // IMPORTANT: Preserve order - items stay exactly where they were created
   const getGroupedChecklist = () => {
     const groups = {};
+    const itemOrder = new Map(); // Track original order
     
-    // First pass: organize by product and sub-template
-    checklist.forEach(item => {
-      // Extract product name from ID if not in product_name field (legacy format)
-      // IDs look like: "Channel Letters_1770148172754_zddfxi03n" or "Channel Letters_sub_Permitting_..."
+    // First pass: organize by product and sub-template while preserving order
+    checklist.forEach((item, index) => {
+      itemOrder.set(item.id, index);
+      
+      // Use the explicitly set product_name - don't try to extract from ID for manually created items
       let productName = item.product_name;
       
+      // Only extract from ID if product_name is truly missing (for legacy data)
       if (!productName || productName === 'undefined' || productName === 'Ungrouped') {
-        // Try to extract from ID
-        if (item.id) {
+        // For manually created items (IDs starting with "manual_"), use the stored product_name
+        if (item.id && item.id.startsWith('manual_')) {
+          // Manual items should ALWAYS have product_name set from when they were created
+          // If somehow missing, keep them with their parent
+          productName = item.product_name || 'General Items';
+        } else if (item.id) {
+          // Legacy extraction for old items only
           const idParts = item.id.split('_');
           if (idParts.length >= 2) {
-            // Check if it's a sub-template item
             const subIndex = idParts.indexOf('sub');
             if (subIndex > 0) {
               productName = idParts.slice(0, subIndex).join(' ');
             } else {
-              // Regular item - first part before timestamp
               productName = idParts[0];
             }
           }
@@ -317,8 +324,18 @@ export default function ProductChecklistDialog({
       }
       
       // Final fallback
-      if (!productName || productName === 'undefined' || productName === 'Ungrouped') {
-        productName = 'General Items';
+      if (!productName || productName === 'undefined' || productName === 'Ungrouped' || productName === 'Manual Items') {
+        // If there's a parent_id, find the parent and use its product_name
+        if (item.parent_id) {
+          const parent = checklist.find(p => p.id === item.parent_id);
+          if (parent && parent.product_name) {
+            productName = parent.product_name;
+          } else {
+            productName = 'General Items';
+          }
+        } else {
+          productName = 'General Items';
+        }
       }
       
       if (!groups[productName]) {
@@ -329,9 +346,9 @@ export default function ProductChecklistDialog({
         };
       }
       
-      // Check for sub_template_name or extract from ID
+      // Check for sub_template_name - use explicit value, don't extract from ID for manual items
       let subTemplateName = item.sub_template_name;
-      if (!subTemplateName && item.id && item.id.includes('_sub_')) {
+      if (!subTemplateName && item.id && !item.id.startsWith('manual_') && item.id.includes('_sub_')) {
         const parts = item.id.split('_sub_');
         if (parts.length > 1) {
           const afterSub = parts[1].split('_');
@@ -347,6 +364,14 @@ export default function ProductChecklistDialog({
       } else {
         groups[productName].mainItems.push(item);
       }
+    });
+    
+    // Sort items within each group by their original order
+    Object.values(groups).forEach(group => {
+      group.mainItems.sort((a, b) => (itemOrder.get(a.id) || 0) - (itemOrder.get(b.id) || 0));
+      Object.values(group.subTemplates).forEach(stItems => {
+        stItems.sort((a, b) => (itemOrder.get(a.id) || 0) - (itemOrder.get(b.id) || 0));
+      });
     });
     
     return groups;
@@ -392,13 +417,21 @@ export default function ProductChecklistDialog({
     // Find the parent item to get its product_name and sub_template_name for proper grouping
     let actualProductName = productName;
     let subTemplateName = null;
+    let productType = '';
     
     if (parentId) {
       const parentItem = checklist.find(item => item.id === parentId);
       if (parentItem) {
+        // ALWAYS inherit from parent to ensure proper grouping
         actualProductName = parentItem.product_name || productName;
         subTemplateName = parentItem.sub_template_name || null;
+        productType = parentItem.product_type || '';
       }
+    }
+    
+    // Ensure we have a valid product name
+    if (!actualProductName || actualProductName === 'Manual Items' || actualProductName === 'undefined') {
+      actualProductName = productName || 'General Items';
     }
     
     const newId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -408,12 +441,42 @@ export default function ProductChecklistDialog({
       type: type,
       approved_by: "",
       custom_dropdown_value: "",
-      product_name: actualProductName || 'Manual Items',
+      product_name: actualProductName,
+      product_type: productType,
       sub_template_name: subTemplateName,
       parent_id: parentId
     };
     
-    setChecklist(prev => [...prev, newItem]);
+    // Insert the new item right after its parent in the checklist array
+    // This ensures the item stays in the correct position
+    if (parentId) {
+      const parentIndex = checklist.findIndex(item => item.id === parentId);
+      if (parentIndex !== -1) {
+        // Find the last child of this parent to insert after
+        let insertIndex = parentIndex + 1;
+        for (let i = parentIndex + 1; i < checklist.length; i++) {
+          if (checklist[i].parent_id === parentId) {
+            insertIndex = i + 1;
+          } else if (checklist[i].parent_id !== parentId && 
+                     checklist.find(p => p.id === checklist[i].parent_id)?.parent_id === parentId) {
+            // This is a grandchild (e.g., subtask under a task), continue
+            insertIndex = i + 1;
+          } else {
+            break;
+          }
+        }
+        setChecklist(prev => {
+          const newList = [...prev];
+          newList.splice(insertIndex, 0, newItem);
+          return newList;
+        });
+      } else {
+        setChecklist(prev => [...prev, newItem]);
+      }
+    } else {
+      setChecklist(prev => [...prev, newItem]);
+    }
+    
     setNewItemText("");
     setNewItemInput({ show: false, parentId: null, type: null, productName: null });
   };
