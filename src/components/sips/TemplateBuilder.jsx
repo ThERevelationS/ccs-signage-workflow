@@ -492,6 +492,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     saveProductTypeTemplates(updated);
   };
 
+  // Multi-select dropdown state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+
   // Hierarchical item management
   const addChecklistItem = (items, setItems) => {
     if (!newItemText.trim()) return;
@@ -499,7 +502,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       id: Date.now().toString(),
       text: newItemText.trim(),
       type: 'checklist',
-      dropdown_id: "",
+      dropdown_ids: [],
       details: [],
       tasks: []
     }]);
@@ -516,7 +519,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             id: Date.now().toString(),
             text: text.trim(),
             type: 'detail',
-            dropdown_id: "",
+            dropdown_ids: [],
             tasks: []
           }]
         };
@@ -638,12 +641,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
-  // Handle Other dropdown selection
+  // Handle Other dropdown selection - now adds to array
   const handleOtherDropdownSelect = (items, setItems, itemId, detailId, selectedDropdownId) => {
+    let currentIds = [];
     if (detailId) {
-      updateItem(items, setItems, itemId, { dropdown_id: selectedDropdownId }, detailId);
+      const item = items.find(i => i.id === itemId);
+      const detail = item?.details?.find(d => d.id === detailId);
+      currentIds = detail?.dropdown_ids || (detail?.dropdown_id ? [detail.dropdown_id] : []);
     } else {
-      updateItem(items, setItems, itemId, { dropdown_id: selectedDropdownId });
+      const item = items.find(i => i.id === itemId);
+      currentIds = item?.dropdown_ids || (item?.dropdown_id ? [item.dropdown_id] : []);
+    }
+    
+    const newIds = currentIds.includes(selectedDropdownId) ? currentIds : [...currentIds, selectedDropdownId];
+    
+    if (detailId) {
+      updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
+    } else {
+      updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" });
     }
     setShowOtherPopup(null);
   };
@@ -666,49 +681,95 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   if (!isOpen) return null;
 
-  // Dropdown select with Other option
+  // Multi-select dropdown for conditions
   const renderDropdownSelect = (item, items, setItems, detailId = null) => {
-    const itemDropdownId = detailId 
-      ? items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId)?.dropdown_id
-      : item.dropdown_id;
+    const uniqueId = detailId ? `${item.id}-${detailId}` : item.id;
+    const isOpen = openDropdownId === uniqueId;
     
-    const selectedDropdown = dropdownConditions.find(d => d.id === itemDropdownId);
+    // Get current dropdown_ids (support both old dropdown_id and new dropdown_ids)
+    let currentIds = [];
+    if (detailId) {
+      const detail = items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId);
+      currentIds = detail?.dropdown_ids || (detail?.dropdown_id ? [detail.dropdown_id] : []);
+    } else {
+      currentIds = item.dropdown_ids || (item.dropdown_id ? [item.dropdown_id] : []);
+    }
+    
+    const selectedNames = currentIds
+      .map(id => dropdownConditions.find(d => d.id === id)?.name)
+      .filter(Boolean);
+    
+    const toggleCondition = (conditionId) => {
+      const newIds = currentIds.includes(conditionId)
+        ? currentIds.filter(id => id !== conditionId)
+        : [...currentIds, conditionId];
+      
+      if (detailId) {
+        updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
+      } else {
+        updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" });
+      }
+    };
     
     return (
-      <div className="flex items-center gap-1">
-        <Select
-          value={itemDropdownId || "none"}
-          onValueChange={(val) => {
-            if (val === "other") {
-              setShowOtherPopup({ items, setItems, itemId: item.id, detailId });
-            } else if (val === "none") {
-              if (detailId) {
-                updateItem(items, setItems, item.id, { dropdown_id: "" }, detailId);
-              } else {
-                updateItem(items, setItems, item.id, { dropdown_id: "" });
-              }
-            } else {
-              if (detailId) {
-                updateItem(items, setItems, item.id, { dropdown_id: val }, detailId);
-              } else {
-                updateItem(items, setItems, item.id, { dropdown_id: val });
-              }
-            }
+      <div className="relative">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenDropdownId(isOpen ? null : uniqueId);
           }}
+          className="h-7 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[120px] max-w-[180px]"
         >
-          <SelectTrigger className="h-7 text-xs w-36">
-            <SelectValue placeholder="Condition...">
-              {selectedDropdown?.name || "None"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="z-[100]">
-            <SelectItem value="none">None</SelectItem>
-            {dropdownConditions.map(dd => (
-              <SelectItem key={dd.id} value={dd.id}>{dd.name}</SelectItem>
-            ))}
-            <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
-          </SelectContent>
-        </Select>
+          <span className="truncate flex-1 text-left">
+            {selectedNames.length === 0 ? "Conditions..." : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}
+          </span>
+          <ChevronDown className="w-3 h-3 flex-shrink-0" />
+        </button>
+        
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-[99]" onClick={() => setOpenDropdownId(null)} />
+            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded-lg shadow-lg min-w-[200px] max-h-48 overflow-y-auto">
+              {dropdownConditions.length === 0 ? (
+                <div className="p-2 text-xs text-gray-500">No conditions available</div>
+              ) : (
+                dropdownConditions.map(dd => (
+                  <div
+                    key={dd.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCondition(dd.id);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm"
+                  >
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                      currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'
+                    }`}>
+                      {currentIds.includes(dd.id) && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span>{dd.name}</span>
+                  </div>
+                ))
+              )}
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOtherPopup({ items, setItems, itemId: item.id, detailId });
+                  setOpenDropdownId(null);
+                }}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New...</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   };
