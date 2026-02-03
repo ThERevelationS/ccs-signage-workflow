@@ -228,11 +228,19 @@ export default function ProductChecklistDialog({
       return { complete: false, hasChecklist: false };
     }
     
-    // Check if all checklist items (not tasks) have both approved_by and custom_dropdown_value
-    const checklistItems = checklist.filter(item => item.type !== 'task');
-    const allApproved = checklistItems.every(item => 
-      item.approved_by && item.custom_dropdown_value
-    );
+    // Check if all checklist items (not tasks/subtasks) have both approved_by and custom_dropdown_value
+    // AND that all selected conditions are "completed" type conditions
+    const checklistItems = checklist.filter(item => item.type !== 'task' && item.type !== 'subtask');
+    const allApproved = checklistItems.every(item => {
+      if (!item.approved_by || !item.custom_dropdown_value) return false;
+      
+      // Find the selected condition and check if it's a "completed" condition
+      const selectedCondition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+      // If condition exists and is NOT marked as completed, the item is not complete
+      if (selectedCondition && !selectedCondition.is_completed) return false;
+      
+      return true;
+    });
 
     return { 
       complete: allApproved, 
@@ -1259,12 +1267,17 @@ export default function ProductChecklistDialog({
                           setShowOtherPopup(null);
                         }
                       }}
-                      className="p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors"
+                      className={`p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                        <List className="w-4 h-4 text-purple-500" />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${dd.is_completed ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                        {dd.is_completed ? <CheckCircle2 className="w-4 h-4 text-white" /> : <List className="w-4 h-4 text-white" />}
                       </div>
-                      <span className="font-medium">{dd.name}</span>
+                      <div className="flex-1">
+                        <span className="font-medium">{dd.name}</span>
+                        <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                          {dd.is_completed ? 'Completed' : 'Continued'}
+                        </span>
+                      </div>
                     </div>
                   ))
                 )}
