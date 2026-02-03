@@ -323,9 +323,31 @@ export default function ProductChecklistDialog({
   };
   
   const [expandedItems, setExpandedItems] = useState({});
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
+  const [newItemText, setNewItemText] = useState("");
   
   const toggleExpanded = (itemId) => {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
+  const addNewItem = (type, parentId = null, productName = null) => {
+    if (!newItemText.trim()) return;
+    
+    const newId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newItem = {
+      id: newId,
+      text: newItemText.trim(),
+      type: type,
+      approved_by: "",
+      custom_dropdown_value: "",
+      product_name: productName || 'Manual Items',
+      parent_id: parentId
+    };
+    
+    setChecklist(prev => [...prev, newItem]);
+    setNewItemText("");
+    setNewItemInput({ show: false, parentId: null, type: null, productName: null });
   };
 
   if (isLoading) {
