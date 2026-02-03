@@ -293,26 +293,46 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     if (!text.trim()) return;
     setItems(items.map(item => {
       if (item.id === parentId) {
-        if (detailId) return { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: [...(d.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task' }] } : d) };
-        return { ...item, tasks: [...(item.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task' }] };
+        if (detailId) return { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: [...(d.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task', assigned_to: '', subtasks: [] }] } : d) };
+        return { ...item, tasks: [...(item.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task', assigned_to: '', subtasks: [] }] };
       }
       return item;
     }));
   };
 
-  const updateItem = (items, setItems, id, updates, detailId = null, taskId = null) => {
+  const addSubtask = (items, setItems, parentId, detailId, taskId, text) => {
+    if (!text.trim()) return;
+    setItems(items.map(item => {
+      if (item.id === parentId) {
+        if (detailId) {
+          return { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: d.tasks.map(t => t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), { id: Date.now().toString(), text: text.trim() }] } : t) } : d) };
+        } else {
+          return { ...item, tasks: item.tasks.map(t => t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), { id: Date.now().toString(), text: text.trim() }] } : t) };
+        }
+      }
+      return item;
+    }));
+  };
+
+  const updateItem = (items, setItems, id, updates, detailId = null, taskId = null, subtaskId = null) => {
     setItems(items.map(item => {
       if (item.id === id) {
-        if (detailId) return { ...item, details: item.details.map(d => d.id === detailId ? (taskId ? { ...d, tasks: d.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t) } : { ...d, ...updates }) : d) };
-        if (taskId) return { ...item, tasks: item.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t) };
+        if (detailId) {
+          return { ...item, details: item.details.map(d => d.id === detailId ? (taskId ? { ...d, tasks: d.tasks.map(t => t.id === taskId ? (subtaskId ? { ...t, subtasks: t.subtasks.map(st => st.id === subtaskId ? { ...st, ...updates } : st) } : { ...t, ...updates }) : t) } : { ...d, ...updates }) : d) };
+        }
+        if (taskId) {
+          return { ...item, tasks: item.tasks.map(t => t.id === taskId ? (subtaskId ? { ...t, subtasks: t.subtasks.map(st => st.id === subtaskId ? { ...st, ...updates } : st) } : { ...t, ...updates }) : t) };
+        }
         return { ...item, ...updates };
       }
       return item;
     }));
   };
 
-  const deleteItem = (items, setItems, id, detailId = null, taskId = null) => {
-    if (taskId) {
+  const deleteItem = (items, setItems, id, detailId = null, taskId = null, subtaskId = null) => {
+    if (subtaskId) {
+      setItems(items.map(item => item.id === id ? (detailId ? { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: d.tasks.map(t => t.id === taskId ? { ...t, subtasks: t.subtasks.filter(st => st.id !== subtaskId) } : t) } : d) } : { ...item, tasks: item.tasks.map(t => t.id === taskId ? { ...t, subtasks: t.subtasks.filter(st => st.id !== subtaskId) } : t) }) : item));
+    } else if (taskId) {
       setItems(items.map(item => item.id === id ? (detailId ? { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: d.tasks.filter(t => t.id !== taskId) } : d) } : { ...item, tasks: item.tasks.filter(t => t.id !== taskId) }) : item));
     } else if (detailId) {
       setItems(items.map(item => item.id === id ? { ...item, details: item.details.filter(d => d.id !== detailId) } : item));

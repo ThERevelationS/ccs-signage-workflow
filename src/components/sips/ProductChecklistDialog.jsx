@@ -577,9 +577,11 @@ export default function ProductChecklistDialog({
                                 <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Status..."} />
                               </SelectTrigger>
                               <SelectContent>
-                                {dropdownConditions.filter(dd => dd.id === displayItem.dropdown_id || !displayItem.dropdown_id).slice(0, 5).map(dd => (
-                                  <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
-                                ))}
+                                {dropdownConditions
+                                  .filter(dd => (displayItem.dropdown_ids || []).includes(dd.id))
+                                  .map(dd => (
+                                    <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                  ))}
                                 <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                               </SelectContent>
                             </Select>
@@ -766,9 +768,11 @@ export default function ProductChecklistDialog({
                                         <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Status..."} />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {dropdownConditions.filter(dd => dd.id === detail.dropdown_id || !detail.dropdown_id).slice(0, 5).map(dd => (
-                                          <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
-                                        ))}
+                                        {dropdownConditions
+                                          .filter(dd => (detail.dropdown_ids || []).includes(dd.id))
+                                          .map(dd => (
+                                            <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                          ))}
                                         <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                                       </SelectContent>
                                     </Select>
@@ -987,9 +991,11 @@ export default function ProductChecklistDialog({
                                   <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Status..."} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {dropdownConditions.filter(dd => dd.id === stDisplayItem.dropdown_id || !stDisplayItem.dropdown_id).slice(0, 5).map(dd => (
-                                    <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
-                                  ))}
+                                  {dropdownConditions
+                                    .filter(dd => (stDisplayItem.dropdown_ids || []).includes(dd.id))
+                                    .map(dd => (
+                                      <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                    ))}
                                   <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                                 </SelectContent>
                               </Select>
