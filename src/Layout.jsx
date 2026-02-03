@@ -38,23 +38,22 @@ const MultiPageContext = createContext(null);
 export const useMultiPage = () => useContext(MultiPageContext);
 
 const navigationItems = [
-  { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, color: "#E0D4F7" },
-  { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#E0D4F7" },
-  { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, color: "#B2DFDB" },
-  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#FFD6E8" },
-  { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, color: "#FFE4D6" },
-  { title: "Design", url: createPageUrl("Design"), icon: Pencil, color: "#D4E9F7" },
-  { title: "Production", url: createPageUrl("Production"), icon: Hammer, color: "#C8F4E9" },
-  { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#FFD6E8" },
-  { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#E0D4F7" },
-  { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, color: "#FFE4D6" },
-  { title: "Resources", url: createPageUrl("ResourcePlanning"), icon: User, color: "#C8F4E9" },
+  { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, color: "#E8E0F0", borderColor: "#C9B8E0" },
+  { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#DCE8F0", borderColor: "#B8D0E0" },
+  { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, color: "#D4EDE8", borderColor: "#A8D8CC" },
+  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#F0E8DC", borderColor: "#E0D0B8" },
+  { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, color: "#F0DCD8", borderColor: "#E0B8B0" },
+  { title: "Design", url: createPageUrl("Design"), icon: Pencil, color: "#D8E8F0", borderColor: "#B0D0E8" },
+  { title: "Production", url: createPageUrl("Production"), icon: Hammer, color: "#DCF0E4", borderColor: "#B0E0C8" },
+  { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#E8DCF0", borderColor: "#D0B8E0" },
+  { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#F0E4DC", borderColor: "#E0C8B0" },
+  { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, color: "#E0F0E8", borderColor: "#B8E0D0" },
 ];
 
 const meetingsDropdownItems = [
-  { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, color: "#FDE68A" },
-  { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, color: "#FBBF24" },
-  { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D4E9F7" },
+  { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, color: "#F8F0D8", borderColor: "#E8D8A8" },
+  { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, color: "#F0F0D8", borderColor: "#D8D8A8" },
+  { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D8E4F0", borderColor: "#A8C8E0" },
 ];
 
 
@@ -649,10 +648,10 @@ function LayoutContent({ children }) {
 
                 <button
                   onClick={() => setShowAddTaskDialog(true)}
-                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
                 >
-                  <ClipboardList className="w-4 h-4" />
-                  <span className="font-bold text-sm">+ Task</span>
+                  <ClipboardList className="w-4 h-4 text-blue-600" />
+                  <span className="font-bold text-sm text-blue-700">+ Task</span>
                 </button>
 
                 <GlobalSearch />
@@ -671,14 +670,15 @@ function LayoutContent({ children }) {
                       to={item.url}
                       onClick={(e) => handleNavClick(e, item)}
                       className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 border ${
-                        isActive ? 'clay-card border-purple-300 shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card border-transparent hover:border-gray-200'
+                        isActive ? 'clay-card shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
                       }`}
-                      style={isActive ? { 
-                        background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
-                      } : {}}
+                      style={{ 
+                        background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
+                        borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor
+                      }}
                       title="Ctrl+Click to open in split view"
                     >
-                      <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                      <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#6B7280' }} />
                       <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                         {item.title}
                       </span>
@@ -772,14 +772,15 @@ function LayoutContent({ children }) {
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
                         className={`px-2 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
-                          isActive ? 'clay-card border-purple-300 shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card border-gray-200 hover:border-gray-300'
+                          isActive ? 'clay-card shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
                         }`}
-                        style={isActive ? { 
-                          background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
-                        } : {}}
+                        style={{ 
+                          background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
+                          borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor
+                        }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#6B7280' }} />
                         <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                           {item.title}
                         </span>
@@ -857,10 +858,10 @@ function LayoutContent({ children }) {
                   
                   <button
                     onClick={() => setShowAddTaskDialog(true)}
-                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
                   >
-                    <ClipboardList className="w-4 h-4" />
-                    <span className="font-bold text-sm">+ Task</span>
+                    <ClipboardList className="w-4 h-4 text-blue-600" />
+                    <span className="font-bold text-sm text-blue-700">+ Task</span>
                   </button>
                   
                   <div className="col-span-2">
