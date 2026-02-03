@@ -582,6 +582,17 @@ export default function ProductChecklistDialog({
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     <span className="text-sm flex-1">{detail.text}</span>
                                     
+                                    {/* Quick add task button for detail */}
+                                    {isRegistered && (
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: item.product_name }); }}
+                                        className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 opacity-0 group-hover/detail:opacity-100"
+                                        title="Add Task"
+                                      >
+                                        +Task
+                                      </button>
+                                    )}
+                                    
                                     <Select
                                       value={detail.approved_by || ""}
                                       onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })}
