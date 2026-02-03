@@ -427,7 +427,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   if (!isOpen) return null;
 
   // Compact condition multi-select with portal
-  const renderConditionSelect = (item, items, setItems, detailId = null) => {
+  const renderConditionSelect = (item, items, setItems, detailId = null, onChangeCallback = null) => {
     const uniqueId = detailId ? `${item.id}-${detailId}` : item.id;
     const isOpen = openDropdownId === uniqueId;
     let currentIds = [];
@@ -443,6 +443,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       const newIds = currentIds.includes(conditionId) ? currentIds.filter(id => id !== conditionId) : [...currentIds, conditionId];
       if (detailId) updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
       else updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" });
+      if (onChangeCallback) onChangeCallback();
     };
 
     const getButtonRect = () => {
