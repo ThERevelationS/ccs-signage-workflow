@@ -701,9 +701,9 @@ export default function ProductChecklistDialog({
           isOpen={showTemplateBuilder}
           onClose={() => {
             setShowTemplateBuilder(false);
-            loadData();
           }}
           onApplyTemplate={(templateData) => {
+            console.log("Received template data:", templateData.length, "sections");
             handleApplyTemplate(templateData);
             setShowTemplateBuilder(false);
           }}
