@@ -490,7 +490,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         ) : (
           <span className="flex-1 text-xs font-medium truncate cursor-pointer" onClick={() => setEditingItem(item.id)}>{item.text}</span>
         )}
-        <span className="text-xs text-gray-400">{(item.details?.length || 0)}d/{(item.tasks?.length || 0)}t</span>
         {renderConditionSelect(item, items, setItems)}
         <button onClick={() => deleteItem(items, setItems, item.id)} className="p-0.5 hover:bg-red-50 rounded">
           <Trash2 className="w-3 h-3 text-red-500" />
@@ -673,8 +672,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2" onClick={(e) => e.stopPropagation()}>
-        <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="w-[95vw] max-w-[1600px] h-[90vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
             <div><h2 className="text-lg font-bold">Checklist Builder</h2></div>
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
@@ -696,7 +695,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Select & Apply Tab */}
             <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-[1fr_2fr_2fr] gap-4">
                 <div>
                   <h3 className="font-bold text-sm mb-2">Product Templates</h3>
                   <div className="space-y-1 max-h-[60vh] overflow-y-auto">
@@ -726,23 +725,31 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                             <button onClick={() => setSelectedProducts(selectedProducts.filter(p => p.id !== product.id))} className="p-1"><Trash2 className="w-4 h-4 text-red-500" /></button>
                           </div>
                           <div className="text-xs text-gray-500 mb-1">Type: {product.productType}</div>
-                          {subTemplates.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {subTemplates.map(st => {
-                                const hasItems = subTemplateItems[st.id]?.items?.length > 0;
-                                const isSelected = product.subTemplates.includes(st.id);
-                                return (
-                                  <div key={st.id} onClick={() => hasItems && toggleSubTemplateForProduct(product.id, st.id)}
-                                    className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${!hasItems ? 'opacity-50' : isSelected ? 'bg-purple-100 border-purple-400 cursor-pointer' : 'bg-white cursor-pointer hover:border-purple-300'}`}>
-                                    <div className={`w-3 h-3 rounded border flex items-center justify-center ${isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'}`}>
-                                      {isSelected && <Check className="w-2 h-2 text-white" />}
+                          {(() => {
+                            // Get applicable sub-templates for this product type
+                            const applicableSTs = subTemplates.filter(st => {
+                              const hasItems = subTemplateItems[st.id]?.items?.length > 0;
+                              const appliesToThis = st.applies_to_product_types?.includes(product.productType) || st.applies_to_product_types?.length === 0;
+                              return hasItems && appliesToThis;
+                            });
+                            if (applicableSTs.length === 0) return null;
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {applicableSTs.map(st => {
+                                  const isSelected = product.subTemplates.includes(st.id);
+                                  return (
+                                    <div key={st.id} onClick={() => toggleSubTemplateForProduct(product.id, st.id)}
+                                      className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${isSelected ? 'bg-purple-100 border-purple-400 cursor-pointer' : 'bg-white cursor-pointer hover:border-purple-300'}`}>
+                                      <div className={`w-3 h-3 rounded border flex items-center justify-center ${isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'}`}>
+                                        {isSelected && <Check className="w-2 h-2 text-white" />}
+                                      </div>
+                                      <span>{st.name}</span>
                                     </div>
-                                    <span>{st.name}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
@@ -829,7 +836,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Sub-Templates Tab */}
-            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 grid grid-cols-3 gap-3">
+            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New sub-template..." className="h-7 text-sm" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
@@ -872,7 +879,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               </div>
 
               {/* Editor */}
-              <div className="overflow-hidden bg-gray-50 border rounded-lg p-3">
+              <div className="overflow-hidden bg-gray-50 border rounded-lg p-3 flex flex-col">
                 {selectedSubTemplate ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
@@ -884,7 +891,40 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} />
                       <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
                     </div>
-                    {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
+                    <div className="flex-1 overflow-y-auto">
+                      {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
+                    </div>
+                    
+                    {/* Product Type Assignment */}
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs font-medium text-gray-600 mb-2">Applies to Product Types:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {productTypes.map(type => {
+                          const currentST = subTemplates.find(st => st.id === selectedSubTemplate);
+                          const isApplied = currentST?.applies_to_product_types?.includes(type);
+                          return (
+                            <button
+                              key={type}
+                              onClick={async () => {
+                                const currentApplies = currentST?.applies_to_product_types || [];
+                                const newApplies = isApplied 
+                                  ? currentApplies.filter(t => t !== type)
+                                  : [...currentApplies, type];
+                                await ChecklistSubItem.update(selectedSubTemplate, { applies_to_product_types: newApplies });
+                                await loadData();
+                              }}
+                              className={`text-xs px-2 py-1 rounded border flex items-center gap-1 ${isApplied ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300 hover:border-blue-300'}`}
+                            >
+                              <div className={`w-3 h-3 rounded border flex items-center justify-center ${isApplied ? 'bg-blue-500 border-blue-500' : 'border-gray-400'}`}>
+                                {isApplied && <Check className="w-2 h-2 text-white" />}
+                              </div>
+                              <span className="truncate max-w-[80px]">{type}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">If none selected, applies to all types</p>
+                    </div>
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a sub-template</div>
@@ -895,23 +935,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="overflow-hidden border rounded-lg p-3 bg-white">
                 <h3 className="font-bold text-sm mb-2 pb-1 border-b">Live Preview</h3>
                 {selectedSubTemplate && subTemplateChecklistItems.length > 0 ? (
-                  <div className="max-h-[55vh] overflow-y-auto">
+                  <div className="max-h-[65vh] overflow-y-auto">
+                    <h4 className="font-bold text-sm text-blue-800 mb-2 pb-1 border-b">🔗 {subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h4>
                     {subTemplateChecklistItems.map((item) => {
                       const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
                       return (
                         <div key={item.id} className="mb-2">
-                          <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
+                          <div className="flex items-start gap-2 p-2 bg-white rounded border">
                             <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <div className="font-medium text-sm">{item.text}</div>
+                              <div className="font-medium text-xs">{item.text}</div>
                               {conditionNames.length > 0 && (
-                                <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
+                                <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded mt-1 inline-block">{conditionNames.join(', ')}</span>
                               )}
                             </div>
                           </div>
                           {item.tasks?.map(task => (
                             <div key={task.id} className="ml-6 mt-1">
-                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
+                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-xs">
                                 <div className="w-3 h-3 border rounded flex-shrink-0" />
                                 <span className="flex-1">{task.text}</span>
                                 {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
@@ -931,7 +972,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
                                   <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
                                   <div className="flex-1">
-                                    <span className="text-sm">{detail.text}</span>
+                                    <span className="text-xs">{detail.text}</span>
                                     {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
                                   </div>
                                 </div>
@@ -966,7 +1007,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Product Templates Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 grid grid-cols-3 gap-3">
+            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input id="newPT" placeholder="New product type..." className="h-7 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
@@ -1020,23 +1061,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="overflow-hidden border rounded-lg p-3 bg-white">
                 <h3 className="font-bold text-sm mb-2 pb-1 border-b">Live Preview</h3>
                 {selectedProductType && productTypeItems.length > 0 ? (
-                  <div className="max-h-[55vh] overflow-y-auto">
+                  <div className="max-h-[65vh] overflow-y-auto">
+                    <h4 className="font-bold text-sm text-purple-800 mb-2 pb-1 border-b">📦 {selectedProductType}</h4>
                     {productTypeItems.map((item) => {
                       const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
                       return (
                         <div key={item.id} className="mb-2">
-                          <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
+                          <div className="flex items-start gap-2 p-2 bg-white rounded border">
                             <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{item.text}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-xs">{item.text}</div>
                               {conditionNames.length > 0 && (
-                                <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
+                                <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded mt-1 inline-block">{conditionNames.join(', ')}</span>
                               )}
                             </div>
                           </div>
                           {item.tasks?.map(task => (
                             <div key={task.id} className="ml-6 mt-1">
-                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
+                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-xs">
                                 <div className="w-3 h-3 border rounded flex-shrink-0" />
                                 <span className="flex-1">{task.text}</span>
                                 {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
@@ -1056,7 +1098,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
                                   <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
                                   <div className="flex-1">
-                                    <span className="text-sm">{detail.text}</span>
+                                    <span className="text-xs">{detail.text}</span>
                                     {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
                                   </div>
                                 </div>
@@ -1092,75 +1134,132 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Conditions Tab */}
             <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-4xl mx-auto">
                 {/* Instructions */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
                   <p className="font-medium mb-1">How to change condition type:</p>
-                  <p className="text-gray-600">Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow).</p>
+                  <p className="text-gray-600">Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow). The condition will automatically move to the correct section.</p>
                 </div>
                 
-                {/* Legend */}
-                <div className="flex gap-6 mb-3 text-sm text-gray-700">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center"><Check className="w-2.5 h-2.5 text-white" /></div>
-                    <span className="font-medium">Completed Condition</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center"><span className="text-white text-xs font-bold">C</span></div>
-                    <span className="font-medium">Continued Condition</span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 mb-2">
+                <div className="flex gap-2 mb-4">
                   <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
                     onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }} />
                   <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
                 
-                <DragDropContext onDragEnd={(result) => { if (!result.destination) return; const reordered = Array.from(dropdownConditions); const [removed] = reordered.splice(result.source.index, 1); reordered.splice(result.destination.index, 0, removed); saveDropdownConditions(reordered); }}>
-                  <Droppable droppableId="conditions">
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-2 gap-1">
-                        {dropdownConditions.map((dd, index) => (
-                          <Draggable key={dd.id} draggableId={dd.id} index={index}>
-                            {(provided) => (
-                              <div ref={provided.innerRef} {...provided.draggableProps} 
-                                className={`flex items-center gap-1 p-2 border rounded text-sm ${dd.is_completed ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'}`}>
-                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
-                                
-                                {/* Completed/Continued Toggle */}
-                                <button 
-                                  onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: !d.is_completed } : d))}
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${dd.is_completed ? 'bg-green-500' : 'bg-yellow-500'}`}
-                                  title={dd.is_completed ? "Completed - click to mark as Continued" : "Continued - click to mark as Completed"}
-                                >
-                                  {dd.is_completed ? <Check className="w-3 h-3 text-white" /> : <span className="text-white text-xs font-bold">C</span>}
-                                </button>
-                                
-                                {editingDropdown === dd.id ? (
-                                  <Input defaultValue={dd.name} className="flex-1 h-6 text-sm" autoFocus
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { const newName = e.target.value.trim(); if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); setEditingDropdown(null); } if (e.key === 'Escape') setEditingDropdown(null); }}
-                                    onBlur={(e) => { const newName = e.target.value.trim(); if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); setEditingDropdown(null); }} />
-                                ) : (
-                                  <>
-                                    <span className="flex-1 truncate">{dd.name}</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded whitespace-nowrap ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                                      {dd.is_completed ? 'Completed' : 'Continued'}
-                                    </span>
-                                    <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                                  </>
-                                )}
-                                <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-                {dropdownConditions.length === 0 && <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">No conditions yet</div>}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Completed Conditions */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-green-300">
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>
+                      <h3 className="font-bold text-green-800">Completed Conditions</h3>
+                      <span className="text-xs text-green-600">({dropdownConditions.filter(d => d.is_completed).length})</span>
+                    </div>
+                    <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+                      {dropdownConditions.filter(dd => dd.is_completed).map((dd) => (
+                        <div key={dd.id} className="flex items-center gap-1 p-2 border rounded text-sm bg-green-50 border-green-300">
+                          <GripVertical className="w-3 h-3 text-gray-400" />
+                          <button 
+                            onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: false } : d))}
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600"
+                            title="Click to mark as Continued"
+                          >
+                            <Check className="w-3 h-3 text-white" />
+                          </button>
+                          {editingDropdown === dd.id ? (
+                            <>
+                              <Input 
+                                id={`edit-${dd.id}`}
+                                defaultValue={dd.name} 
+                                className="flex-1 h-6 text-sm" 
+                                autoFocus
+                                onKeyDown={(e) => { 
+                                  if (e.key === 'Enter') { 
+                                    const newName = e.target.value.trim(); 
+                                    if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
+                                    setEditingDropdown(null); 
+                                  } 
+                                  if (e.key === 'Escape') setEditingDropdown(null); 
+                                }}
+                              />
+                              <Button size="sm" className="h-6 px-2" onClick={() => {
+                                const input = document.getElementById(`edit-${dd.id}`);
+                                const newName = input?.value.trim();
+                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
+                                setEditingDropdown(null);
+                              }}><Save className="w-3 h-3" /></Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="flex-1 truncate">{dd.name}</span>
+                              <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                            </>
+                          )}
+                          <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                        </div>
+                      ))}
+                      {dropdownConditions.filter(d => d.is_completed).length === 0 && (
+                        <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No completed conditions</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Continued Conditions */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-yellow-300">
+                      <div className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center"><span className="text-white text-xs font-bold">C</span></div>
+                      <h3 className="font-bold text-yellow-800">Continued Conditions</h3>
+                      <span className="text-xs text-yellow-600">({dropdownConditions.filter(d => !d.is_completed).length})</span>
+                    </div>
+                    <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+                      {dropdownConditions.filter(dd => !dd.is_completed).map((dd) => (
+                        <div key={dd.id} className="flex items-center gap-1 p-2 border rounded text-sm bg-yellow-50 border-yellow-300">
+                          <GripVertical className="w-3 h-3 text-gray-400" />
+                          <button 
+                            onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: true } : d))}
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600"
+                            title="Click to mark as Completed"
+                          >
+                            <span className="text-white text-xs font-bold">C</span>
+                          </button>
+                          {editingDropdown === dd.id ? (
+                            <>
+                              <Input 
+                                id={`edit-${dd.id}`}
+                                defaultValue={dd.name} 
+                                className="flex-1 h-6 text-sm" 
+                                autoFocus
+                                onKeyDown={(e) => { 
+                                  if (e.key === 'Enter') { 
+                                    const newName = e.target.value.trim(); 
+                                    if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
+                                    setEditingDropdown(null); 
+                                  } 
+                                  if (e.key === 'Escape') setEditingDropdown(null); 
+                                }}
+                              />
+                              <Button size="sm" className="h-6 px-2" onClick={() => {
+                                const input = document.getElementById(`edit-${dd.id}`);
+                                const newName = input?.value.trim();
+                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
+                                setEditingDropdown(null);
+                              }}><Save className="w-3 h-3" /></Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="flex-1 truncate">{dd.name}</span>
+                              <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                            </>
+                          )}
+                          <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                        </div>
+                      ))}
+                      {dropdownConditions.filter(d => !d.is_completed).length === 0 && (
+                        <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No continued conditions</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
