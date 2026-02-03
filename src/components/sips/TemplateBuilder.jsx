@@ -405,8 +405,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         </button>
         {isOpen && (
           <>
-            <div className="fixed inset-0 z-[99]" onClick={() => setOpenDropdownId(null)} />
-            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded-lg shadow-xl min-w-[240px] max-h-64 overflow-y-auto">
+            <div className="fixed inset-0 z-[200]" onClick={() => setOpenDropdownId(null)} />
+            <div className="fixed z-[201] bg-white border rounded-lg shadow-xl min-w-[240px] max-h-64 overflow-y-auto" 
+              style={{ 
+                top: document.querySelector(`[data-dropdown-id="${uniqueId}"]`)?.getBoundingClientRect().bottom + 4 || 0,
+                left: document.querySelector(`[data-dropdown-id="${uniqueId}"]`)?.getBoundingClientRect().left || 0
+              }}>
               <div className="p-2 border-b bg-gray-50 font-medium text-xs">Select Conditions</div>
               {dropdownConditions.map(dd => (
                 <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
