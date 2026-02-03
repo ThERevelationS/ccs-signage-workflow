@@ -406,19 +406,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         {isOpen && (
           <>
             <div className="fixed inset-0 z-[99]" onClick={() => setOpenDropdownId(null)} />
-            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded shadow-lg min-w-[160px] max-h-40 overflow-y-auto">
+            <div className="fixed z-[100] bg-white border rounded shadow-lg min-w-[220px] max-h-60 overflow-y-auto"
+              style={{ 
+                top: '50%', 
+                left: '50%', 
+                transform: 'translate(-50%, -50%)'
+              }}>
+              <div className="p-2 border-b bg-gray-50 font-medium text-xs">Select Conditions</div>
               {dropdownConditions.map(dd => (
                 <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
-                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-purple-50 cursor-pointer text-xs">
-                  <div className={`w-3 h-3 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}>
-                    {currentIds.includes(dd.id) && <Check className="w-2 h-2 text-white" />}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}>
+                    {currentIds.includes(dd.id) && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <span className="truncate">{dd.name}</span>
+                  <span>{dd.name}</span>
                 </div>
               ))}
               <div onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
-                className="flex items-center gap-2 px-2 py-1.5 hover:bg-purple-50 cursor-pointer text-xs text-purple-600 font-medium border-t">
-                <Plus className="w-3 h-3" /><span>Add...</span>
+                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t">
+                <Plus className="w-4 h-4" /><span>Add New Condition...</span>
               </div>
             </div>
           </>
