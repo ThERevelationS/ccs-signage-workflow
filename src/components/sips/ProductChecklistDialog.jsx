@@ -121,6 +121,9 @@ export default function ProductChecklistDialog({
         ? `${productName}_sub_${subTemplateName}_${item.id}`
         : `${productName}_${item.id}`;
       
+      // Get dropdown_ids (support both old dropdown_id and new dropdown_ids array)
+      const itemDropdownIds = item.dropdown_ids || (item.dropdown_id ? [item.dropdown_id] : []);
+      
       // Add main checklist item
       newItems.push({
         id: baseId,
@@ -130,7 +133,8 @@ export default function ProductChecklistDialog({
         text: item.text,
         type: 'checklist',
         approved_by: "",
-        dropdown_id: item.dropdown_id || "",
+        dropdown_ids: itemDropdownIds,
+        dropdown_id: itemDropdownIds[0] || "",
         custom_dropdown_value: ""
       });
       
@@ -152,6 +156,8 @@ export default function ProductChecklistDialog({
       // Add detail items and their tasks
       item.details?.forEach(detail => {
         const detailId = `${baseId}_detail_${detail.id}`;
+        const detailDropdownIds = detail.dropdown_ids || (detail.dropdown_id ? [detail.dropdown_id] : []);
+        
         newItems.push({
           id: detailId,
           product_name: productName,
@@ -161,7 +167,8 @@ export default function ProductChecklistDialog({
           text: detail.text,
           type: 'detail',
           approved_by: "",
-          dropdown_id: detail.dropdown_id || "",
+          dropdown_ids: detailDropdownIds,
+          dropdown_id: detailDropdownIds[0] || "",
           custom_dropdown_value: ""
         });
         
