@@ -346,7 +346,13 @@ export default function ProductChecklistDialog({
   
   // Build hierarchy for items
   const buildItemHierarchy = (items) => {
-    const mainItems = items.filter(i => i.type === 'checklist' && !i.parent_id);
+    // Get main items: either type='checklist', no type (legacy), or items without parent_id that aren't tasks/details/subtasks
+    const mainItems = items.filter(i => {
+      // If it has no type, it's a legacy main item
+      if (!i.type) return !i.parent_id;
+      // Otherwise, it's a checklist item without a parent
+      return i.type === 'checklist' && !i.parent_id;
+    });
     
     return mainItems.map(main => {
       const details = items.filter(i => i.type === 'detail' && i.parent_id === main.id);
