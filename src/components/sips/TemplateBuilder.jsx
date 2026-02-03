@@ -694,7 +694,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </div>
 
             {/* Select & Apply Tab */}
-            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3 mt-0" style={{ marginTop: 0 }}>
+            <TabsContent value="selectors" className="overflow-y-auto p-3" style={{ marginTop: 0 }}>
               <div className="grid grid-cols-[1fr_2fr_2fr] gap-4">
                 <div>
                   <h3 className="font-bold text-sm mb-2">Product Templates</h3>
@@ -836,7 +836,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Sub-Templates Tab */}
-            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 mt-0" style={{ marginTop: 0 }}>
+            <TabsContent value="subtemplates" className="overflow-hidden p-3" style={{ marginTop: 0 }}>
               <div className="grid grid-cols-[200px_1fr_1fr] gap-4 h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
@@ -1009,7 +1009,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Product Templates Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 mt-0" style={{ marginTop: 0 }}>
+            <TabsContent value="producttypes" className="overflow-hidden p-3" style={{ marginTop: 0 }}>
               <div className="grid grid-cols-[200px_1fr_1fr] gap-4 h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
@@ -1137,7 +1137,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Conditions Tab */}
-            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3 mt-0" style={{ marginTop: 0 }}>
+            <TabsContent value="dropdowns" className="overflow-y-auto p-3" style={{ marginTop: 0 }}>
               {/* Instructions */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
                   <p className="font-medium mb-1">How to change condition type:</p>
