@@ -286,11 +286,17 @@ export default function ProductChecklistDialog({
     const groups = {};
     
     // First pass: organize by product and sub-template
+    // Skip items without product_name (old format data)
     checklist.forEach(item => {
-      const productName = item.product_name || 'Ungrouped';
+      // Skip items without a proper product_name
+      if (!item.product_name || item.product_name === 'Ungrouped' || item.product_name === 'undefined') {
+        return;
+      }
+      
+      const productName = item.product_name;
       if (!groups[productName]) {
         groups[productName] = {
-          productType: item.product_type,
+          productType: item.product_type || '',
           mainItems: [],
           subTemplates: {}
         };
