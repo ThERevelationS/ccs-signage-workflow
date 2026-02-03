@@ -873,7 +873,8 @@ export default function ProductChecklistDialog({
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
 
