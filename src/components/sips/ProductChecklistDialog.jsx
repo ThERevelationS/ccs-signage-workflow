@@ -639,6 +639,25 @@ export default function ProductChecklistDialog({
                                     )}
                                   </div>
 
+                                  {/* Inline add task for detail */}
+                                  {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
+                                    <div className="ml-4 mt-2 flex items-center gap-2 bg-orange-50 p-1.5 rounded">
+                                      <Input
+                                        value={newItemText}
+                                        onChange={(e) => setNewItemText(e.target.value)}
+                                        placeholder="New task..."
+                                        className="h-5 text-xs flex-1"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') addNewItem('task', detail.id, item.product_name);
+                                          if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                        }}
+                                      />
+                                      <Button size="sm" className="h-5 px-2 text-xs" onClick={() => addNewItem('task', detail.id, item.product_name)}>Add</Button>
+                                      <Button size="sm" variant="ghost" className="h-5 px-1 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                    </div>
+                                  )}
+
                                   {/* Tasks under detail */}
                                   {detail.tasks?.length > 0 && (
                                     <div className="ml-4 mt-2 space-y-1 border-l-2 border-orange-200 pl-2">
