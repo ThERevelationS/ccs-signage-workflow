@@ -459,6 +459,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     );
   };
 
+  // Get users list
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const usersData = await base44.entities.AuthorizedEmail.list();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error loading users:", error);
+      }
+    };
+    if (isOpen) loadUsers();
+  }, [isOpen]);
+
   // Compact checklist item row
   const renderCompactItem = (item, index, items, setItems, provided) => (
     <div ref={provided.innerRef} {...provided.draggableProps} 
@@ -487,15 +501,41 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         <div className="ml-5 mt-1 pl-2 border-l-2 border-gray-200 space-y-1">
           {/* Tasks */}
           {item.tasks?.map((task) => (
-            <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-1 rounded text-xs">
-              <span className="px-1 py-0.5 rounded bg-orange-100 text-orange-700">T</span>
-              {editingItem === task.id ? (
-                <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
-                  onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
-              ) : (
-                <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
-              )}
-              <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+            <div key={task.id} className="space-y-0.5">
+              <div className="flex items-center gap-1 bg-orange-50 p-1 rounded text-xs group/task">
+                <span className="px-1 py-0.5 rounded bg-orange-100 text-orange-700 text-xs">T</span>
+                {editingItem === task.id ? (
+                  <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
+                    onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                ) : (
+                  <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
+                )}
+                <Input 
+                  value={task.assigned_to || ""} 
+                  onChange={(e) => updateItem(items, setItems, item.id, { assigned_to: e.target.value }, null, task.id)}
+                  placeholder="Assign..." 
+                  className="h-4 text-xs w-20" 
+                  list={`users-${task.id}`}
+                />
+                <datalist id={`users-${task.id}`}>
+                  {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
+                </datalist>
+                <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-0.5 opacity-0 group-hover/task:opacity-100"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+              </div>
+              {/* Subtasks */}
+              {task.subtasks?.map((subtask) => (
+                <div key={subtask.id} className="ml-4 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask">
+                  <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
+                  {editingItem === subtask.id ? (
+                    <Input value={subtask.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id, subtask.id)}
+                      onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                  ) : (
+                    <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
+                  )}
+                  <button onClick={() => deleteItem(items, setItems, item.id, null, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/subtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                </div>
+              ))}
+              <Input placeholder="+ subtask" className="ml-4 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtask(items, setItems, item.id, null, task.id, e.target.value); e.target.value = ""; } }} />
             </div>
           ))}
           <Input placeholder="+ task" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, null, e.target.value); e.target.value = ""; } }} />
@@ -516,15 +556,41 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               </div>
               <div className="ml-4 mt-1 space-y-0.5">
                 {detail.tasks?.map((task) => (
-                  <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-0.5 rounded text-xs">
-                    <span className="px-0.5 rounded bg-orange-100 text-orange-700">T</span>
-                    {editingItem === task.id ? (
-                      <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
-                        onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
-                    ) : (
-                      <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
-                    )}
-                    <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                  <div key={task.id} className="space-y-0.5">
+                    <div className="flex items-center gap-1 bg-orange-50 p-0.5 rounded text-xs group/dtask">
+                      <span className="px-0.5 rounded bg-orange-100 text-orange-700">T</span>
+                      {editingItem === task.id ? (
+                        <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
+                          onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                      ) : (
+                        <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
+                      )}
+                      <Input 
+                        value={task.assigned_to || ""} 
+                        onChange={(e) => updateItem(items, setItems, item.id, { assigned_to: e.target.value }, detail.id, task.id)}
+                        placeholder="Assign..." 
+                        className="h-4 text-xs w-16" 
+                        list={`users-detail-${task.id}`}
+                      />
+                      <datalist id={`users-detail-${task.id}`}>
+                        {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
+                      </datalist>
+                      <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5 opacity-0 group-hover/dtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                    </div>
+                    {/* Subtasks under detail tasks */}
+                    {task.subtasks?.map((subtask) => (
+                      <div key={subtask.id} className="ml-3 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsubtask">
+                        <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
+                        {editingItem === subtask.id ? (
+                          <Input value={subtask.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id, subtask.id)}
+                            onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                        ) : (
+                          <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
+                        )}
+                        <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/dsubtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                      </div>
+                    ))}
+                    <Input placeholder="+ subtask" className="ml-3 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtask(items, setItems, item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} />
                   </div>
                 ))}
                 <Input placeholder="+ task" className="h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, detail.id, e.target.value); e.target.value = ""; } }} />
@@ -894,23 +960,29 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Conditions Tab */}
             <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex gap-2 mb-3">
-                  <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
-                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }} />
-                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
+              <div className="max-w-3xl mx-auto">
+                {/* Instructions */}
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                  <p className="font-medium mb-1">How to change condition type:</p>
+                  <p className="text-gray-600">Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow).</p>
                 </div>
                 
                 {/* Legend */}
-                <div className="flex gap-4 mb-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                    <span>Completed Condition</span>
+                <div className="flex gap-6 mb-3 text-sm text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center"><Check className="w-2.5 h-2.5 text-white" /></div>
+                    <span className="font-medium">Completed Condition</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    <span>Continued Condition</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center"><span className="text-white text-xs font-bold">C</span></div>
+                    <span className="font-medium">Continued Condition</span>
                   </div>
+                </div>
+                
+                <div className="flex gap-2 mb-2">
+                  <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }} />
+                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
                 
                 <DragDropContext onDragEnd={(result) => { if (!result.destination) return; const reordered = Array.from(dropdownConditions); const [removed] = reordered.splice(result.source.index, 1); reordered.splice(result.destination.index, 0, removed); saveDropdownConditions(reordered); }}>
@@ -940,8 +1012,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 ) : (
                                   <>
                                     <span className="flex-1 truncate">{dd.name}</span>
-                                    <span className={`text-xs px-1.5 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                                      {dd.is_completed ? 'Done' : 'Cont.'}
+                                    <span className={`text-xs px-2 py-0.5 rounded whitespace-nowrap ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                                      {dd.is_completed ? 'Completed' : 'Continued'}
                                     </span>
                                     <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
                                   </>
