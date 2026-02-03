@@ -519,21 +519,40 @@ export default function ProductChecklistDialog({
                             <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
                               {/* Tasks under main item */}
                               {item.tasks?.map(task => (
-                                <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                                  <span className="text-sm flex-1">{task.text}</span>
-                                  <Checkbox 
-                                    checked={!!task.approved_by}
-                                    onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                    disabled={!isRegistered}
-                                  />
-                                  {isRegistered && (
-                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-6 w-6 p-0 text-red-500">
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  )}
-                                </div>
+                              <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400 group">
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                                <span className="text-sm flex-1">{task.text}</span>
+                                <Checkbox 
+                                  checked={!!task.approved_by}
+                                  onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                  disabled={!isRegistered}
+                                />
+                                {isRegistered && (
+                                  <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-6 w-6 p-0 text-red-500 opacity-0 group-hover:opacity-100">
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
                               ))}
+
+                              {/* Inline add task input */}
+                              {newItemInput.show && newItemInput.parentId === item.id && newItemInput.type === 'task' && (
+                              <div className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                                <Input
+                                  value={newItemText}
+                                  onChange={(e) => setNewItemText(e.target.value)}
+                                  placeholder="New task..."
+                                  className="h-6 text-xs flex-1"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') addNewItem('task', item.id, item.product_name);
+                                    if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                  }}
+                                />
+                                <Button size="sm" className="h-6 px-2 text-xs" onClick={() => addNewItem('task', item.id, item.product_name)}>Add</Button>
+                                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>Cancel</Button>
+                              </div>
+                              )}
 
                               {/* Detail items */}
                               {item.details?.map(detail => (
