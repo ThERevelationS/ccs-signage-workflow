@@ -637,16 +637,26 @@ function LayoutContent({ children }) {
                 </div>
               </div>
 
-              {/* Time Clock */}
-              <Link
-                to={createPageUrl("TimeClock")}
-                className="w-full px-3 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50 mb-3"
-              >
-                <Home className="w-4 h-4 text-green-600" />
-                <span className="font-bold text-sm text-green-700">Time Clock</span>
-              </Link>
+              {/* Time Clock + Add Task + Search in vertical stack */}
+              <div className="space-y-2 mb-4">
+                <Link
+                  to={createPageUrl("TimeClock")}
+                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                >
+                  <Home className="w-4 h-4 text-green-600" />
+                  <span className="font-bold text-sm text-green-700">Time Clock</span>
+                </Link>
 
-              <GlobalSearch />
+                <button
+                  onClick={() => setShowAddTaskDialog(true)}
+                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span className="font-bold text-sm">+ Task</span>
+                </button>
+
+                <GlobalSearch />
+              </div>
             </div>
 
             {/* Navigation Links */}
@@ -835,23 +845,27 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Time Clock + Add Task + Search */}
-                <div className="hidden lg:flex items-center gap-2">
+                {/* Time Clock + Add Task + Search in 2x2 grid */}
+                <div className="hidden lg:grid grid-cols-2 gap-2">
                   <Link
                     to={createPageUrl("TimeClock")}
-                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
                   >
                     <Home className="w-4 h-4 text-green-600" />
                     <span className="font-bold text-sm text-green-700">Time Clock</span>
                   </Link>
+                  
                   <button
                     onClick={() => setShowAddTaskDialog(true)}
-                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                   >
-                    <ClipboardList className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-sm text-blue-700">+ Task</span>
+                    <ClipboardList className="w-4 h-4" />
+                    <span className="font-bold text-sm">+ Task</span>
                   </button>
-                  <GlobalSearch />
+                  
+                  <div className="col-span-2">
+                    <GlobalSearch />
+                  </div>
                 </div>
               </div>
 
