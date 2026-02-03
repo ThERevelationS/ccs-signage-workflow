@@ -121,7 +121,7 @@ export default function GlobalSearch() {
       <Button
         size="sm"
         onClick={() => setShowResults(true)}
-        className={`clay-button border-2 h-9 px-4 ${hasActiveFilters ? 'text-purple-700 border-purple-300' : 'text-gray-800 border-gray-200'}`}
+        className={`clay-button border-2 px-4 py-2 rounded-xl ${hasActiveFilters ? 'text-purple-700 border-purple-300' : 'text-gray-800 border-gray-200'}`}
         style={{ background: hasActiveFilters ? 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' : 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
       >
         <Search className="w-4 h-4 mr-2" />

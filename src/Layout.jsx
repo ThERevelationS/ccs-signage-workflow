@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
+import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
 
 // Context for multi-page view
@@ -470,6 +471,7 @@ function LayoutContent({ children }) {
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
+  const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
   
   // Multi-page view state
@@ -833,8 +835,8 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Time Clock + Search stacked vertically */}
-                <div className="hidden lg:flex flex-col items-center gap-2">
+                {/* Time Clock + Add Task + Search */}
+                <div className="hidden lg:flex items-center gap-2">
                   <Link
                     to={createPageUrl("TimeClock")}
                     className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
@@ -842,6 +844,13 @@ function LayoutContent({ children }) {
                     <Home className="w-4 h-4 text-green-600" />
                     <span className="font-bold text-sm text-green-700">Time Clock</span>
                   </Link>
+                  <button
+                    onClick={() => setShowAddTaskDialog(true)}
+                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                  >
+                    <ClipboardList className="w-4 h-4 text-blue-600" />
+                    <span className="font-bold text-sm text-blue-700">+ Task</span>
+                  </button>
                   <GlobalSearch />
                 </div>
               </div>
@@ -908,6 +917,12 @@ function LayoutContent({ children }) {
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </main>
+
+        {/* Add Task Dialog */}
+        <AddTaskDialog 
+          isOpen={showAddTaskDialog} 
+          onClose={() => setShowAddTaskDialog(false)} 
+        />
 
         {/* Floating Buttons - hidden in fullscreen */}
         {!isCollapsed && (
