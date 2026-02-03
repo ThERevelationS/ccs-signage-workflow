@@ -1259,7 +1259,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     </div>
                   </div>
                 </div>
-              </div>
             </TabsContent>
           </Tabs>
 
