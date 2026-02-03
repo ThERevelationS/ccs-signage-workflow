@@ -399,19 +399,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return (
       <div className="relative">
         <button type="button" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
-          className="h-6 text-xs px-1.5 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 max-w-[140px]">
-          <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Cond..." : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} sel`}</span>
-          <ChevronDown className="w-2.5 h-2.5 flex-shrink-0" />
+          className="h-6 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[100px]">
+          <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Condition" : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}</span>
+          <ChevronDown className="w-3 h-3 flex-shrink-0" />
         </button>
         {isOpen && (
           <>
             <div className="fixed inset-0 z-[99]" onClick={() => setOpenDropdownId(null)} />
-            <div className="fixed z-[100] bg-white border rounded shadow-lg min-w-[220px] max-h-60 overflow-y-auto"
-              style={{ 
-                top: '50%', 
-                left: '50%', 
-                transform: 'translate(-50%, -50%)'
-              }}>
+            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded-lg shadow-xl min-w-[240px] max-h-64 overflow-y-auto">
               <div className="p-2 border-b bg-gray-50 font-medium text-xs">Select Conditions</div>
               {dropdownConditions.map(dd => (
                 <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
@@ -582,7 +577,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2" onClick={(e) => e.stopPropagation()}>
-        <div className="w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
             <div><h2 className="text-lg font-bold">Template Builder</h2></div>
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
@@ -604,7 +599,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Select & Apply Tab */}
             <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <h3 className="font-bold text-sm mb-2">Product Templates</h3>
                   <div className="space-y-1 max-h-[60vh] overflow-y-auto">
@@ -660,6 +655,78 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <CheckSquare className="w-4 h-4 mr-2" />Apply to Project
                     </Button>
                   )}
+                </div>
+
+                {/* Preview Column */}
+                <div className="border-l pl-3">
+                  <h3 className="font-bold text-sm mb-2">Preview</h3>
+                  <div className="bg-gray-50 border rounded-lg p-3 max-h-[60vh] overflow-y-auto">
+                    {selectedProducts.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400 text-sm">Select products to preview</div>
+                    ) : (
+                      selectedProducts.map(product => {
+                        const template = productTypeTemplates[product.productType];
+                        return (
+                          <div key={product.id} className="mb-4 last:mb-0">
+                            <h4 className="font-bold text-sm text-purple-800 mb-2 pb-1 border-b">📦 {product.customName}</h4>
+                            {template?.items?.map((item, idx) => {
+                              const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+                              return (
+                                <div key={idx} className="mb-2">
+                                  <div className="flex items-start gap-2 p-2 bg-white rounded border">
+                                    <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-xs">{item.text}</div>
+                                      {conditionNames.length > 0 && (
+                                        <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded mt-1 inline-block">{conditionNames.join(', ')}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {item.tasks?.map((task, tIdx) => (
+                                    <div key={tIdx} className="ml-6 mt-1 flex items-center gap-2 p-1.5 bg-orange-50 rounded text-xs">
+                                      <div className="w-3 h-3 border rounded flex-shrink-0" />
+                                      <span>{task.text}</span>
+                                    </div>
+                                  ))}
+                                  {item.details?.map((detail, dIdx) => (
+                                    <div key={dIdx} className="ml-6 mt-1">
+                                      <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
+                                        <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
+                                        <span className="text-xs">{detail.text}</span>
+                                      </div>
+                                      {detail.tasks?.map((task, dtIdx) => (
+                                        <div key={dtIdx} className="ml-4 mt-1 flex items-center gap-2 p-1 bg-orange-50 rounded text-xs">
+                                          <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                                          <span>{task.text}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                            {/* Sub-templates preview */}
+                            {product.subTemplates.map(stId => {
+                              const subTemplate = subTemplates.find(st => st.id === stId);
+                              const stItems = subTemplateItems[stId];
+                              if (!subTemplate || !stItems?.items) return null;
+                              return (
+                                <div key={stId} className="ml-3 mt-2 border-l-2 border-blue-300 pl-2">
+                                  <h5 className="text-xs font-semibold text-blue-700 mb-1">🔗 {subTemplate.name}</h5>
+                                  {stItems.items.map((item, idx) => (
+                                    <div key={idx} className="flex items-start gap-1 p-1 bg-white rounded border mb-1">
+                                      <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
+                                      <span className="text-xs">{item.text}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
