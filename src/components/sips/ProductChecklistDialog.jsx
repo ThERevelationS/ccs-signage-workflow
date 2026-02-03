@@ -287,10 +287,31 @@ export default function ProductChecklistDialog({
     
     // First pass: organize by product and sub-template
     checklist.forEach(item => {
-      // Use product_name, or fallback to "General" for legacy items
-      const productName = item.product_name && item.product_name !== 'undefined' && item.product_name !== 'Ungrouped' 
-        ? item.product_name 
-        : 'General Items';
+      // Extract product name from ID if not in product_name field (legacy format)
+      // IDs look like: "Channel Letters_1770148172754_zddfxi03n" or "Channel Letters_sub_Permitting_..."
+      let productName = item.product_name;
+      
+      if (!productName || productName === 'undefined' || productName === 'Ungrouped') {
+        // Try to extract from ID
+        if (item.id) {
+          const idParts = item.id.split('_');
+          if (idParts.length >= 2) {
+            // Check if it's a sub-template item
+            const subIndex = idParts.indexOf('sub');
+            if (subIndex > 0) {
+              productName = idParts.slice(0, subIndex).join(' ');
+            } else {
+              // Regular item - first part before timestamp
+              productName = idParts[0];
+            }
+          }
+        }
+      }
+      
+      // Final fallback
+      if (!productName || productName === 'undefined' || productName === 'Ungrouped') {
+        productName = 'General Items';
+      }
       
       if (!groups[productName]) {
         groups[productName] = {
@@ -300,11 +321,21 @@ export default function ProductChecklistDialog({
         };
       }
       
-      if (item.sub_template_name) {
-        if (!groups[productName].subTemplates[item.sub_template_name]) {
-          groups[productName].subTemplates[item.sub_template_name] = [];
+      // Check for sub_template_name or extract from ID
+      let subTemplateName = item.sub_template_name;
+      if (!subTemplateName && item.id && item.id.includes('_sub_')) {
+        const parts = item.id.split('_sub_');
+        if (parts.length > 1) {
+          const afterSub = parts[1].split('_');
+          subTemplateName = afterSub[0];
         }
-        groups[productName].subTemplates[item.sub_template_name].push(item);
+      }
+      
+      if (subTemplateName) {
+        if (!groups[productName].subTemplates[subTemplateName]) {
+          groups[productName].subTemplates[subTemplateName] = [];
+        }
+        groups[productName].subTemplates[subTemplateName].push(item);
       } else {
         groups[productName].mainItems.push(item);
       }
