@@ -554,9 +554,30 @@ export default function ProductChecklistDialog({
                               </div>
                               )}
 
+                              {/* Inline add detail input */}
+                              {newItemInput.show && newItemInput.parentId === item.id && newItemInput.type === 'detail' && (
+                                <div className="bg-gray-50 p-2 rounded border">
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={newItemText}
+                                      onChange={(e) => setNewItemText(e.target.value)}
+                                      placeholder="New detail..."
+                                      className="h-6 text-xs flex-1"
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') addNewItem('detail', item.id, item.product_name);
+                                        if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                      }}
+                                    />
+                                    <Button size="sm" className="h-6 px-2 text-xs" onClick={() => addNewItem('detail', item.id, item.product_name)}>Add</Button>
+                                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>Cancel</Button>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Detail items */}
                               {item.details?.map(detail => (
-                                <div key={detail.id} className="bg-gray-50 p-2 rounded border">
+                                <div key={detail.id} className="bg-gray-50 p-2 rounded border group/detail">
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     <span className="text-sm flex-1">{detail.text}</span>
