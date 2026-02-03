@@ -815,7 +815,7 @@ export default function ProductChecklistDialog({
                                             </Select>
                                             {isRegistered && (
                                               <button
-                                                onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: item.product_name }); }}
+                                                onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
                                                 className="px-0.5 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 opacity-0 group-hover/dtask:opacity-100"
                                                 title="Add Subtask"
                                               >
