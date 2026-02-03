@@ -490,11 +490,11 @@ export default function ProductChecklistDialog({
                         
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                         return (
-                        <div key={item.id} className="clay-card p-3 bg-white">
+                        <div key={displayItem.id} className="clay-card p-3 bg-white">
                           {/* Main checklist item */}
                           <div 
                             className="flex items-center gap-2 group"
-                            onMouseEnter={() => setHoveredItem(item.id)}
+                            onMouseEnter={() => setHoveredItem(displayItem.id)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
                             <button 
