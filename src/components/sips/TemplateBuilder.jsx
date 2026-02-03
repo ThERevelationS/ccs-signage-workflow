@@ -615,7 +615,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               </Draggable>
             ))}
             {provided.placeholder}
-            {items.length === 0 && <div className="text-center py-4 text-gray-400 text-sm">No items yet</div>}
+
           </div>
         )}
       </Droppable>
