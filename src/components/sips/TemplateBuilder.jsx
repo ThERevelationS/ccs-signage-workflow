@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare, List, MoreHorizontal, Copy, Clipboard } from "lucide-react";
-
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { 
+  Plus, Trash2, Pencil, Save, X, ChevronDown, ChevronRight, CheckSquare, 
+  List, Copy, Clipboard, GripVertical, Eye, EyeOff, Check
+} from "lucide-react";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -37,7 +39,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [editingItem, setEditingItem] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
   
-  // Dropdown/Conditions Editor
+  // Conditions Editor
   const [newDropdownName, setNewDropdownName] = useState("");
   const [editingDropdown, setEditingDropdown] = useState(null);
   
@@ -45,15 +47,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   
-
+  // Preview mode
+  const [showPreview, setShowPreview] = useState(false);
   
-  // Clipboard for copy/paste
-  const [clipboard, setClipboard] = useState(null); // { type: 'subtemplate' | 'producttype', data: ... }
+  // Clipboard
+  const [clipboard, setClipboard] = useState(null);
+  
+  // Multi-select dropdown state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
-      loadData();
-    }
+    if (isOpen) loadData();
   }, [isOpen]);
 
   const loadData = async () => {
@@ -66,8 +70,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setSubTemplates(subTemplatesData.sort((a, b) => (a.order || 0) - (b.order || 0)));
       
       const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
-      const types = productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
-      setProductTypes(types);
+      setProductTypes(productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
       
       const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
       setProductTypeTemplates(ptTemplates?.setting_value || {});
@@ -85,65 +88,43 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const saveProductTypes = async (types) => {
     try {
       const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
-      if (settings.length > 0) {
-        await GlobalSettings.update(settings[0].id, { setting_value: { items: types } });
-      } else {
-        await GlobalSettings.create({ setting_key: 'productTypes', setting_value: { items: types } });
-      }
+      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: types } });
+      else await GlobalSettings.create({ setting_key: 'productTypes', setting_value: { items: types } });
       setProductTypes(types);
-    } catch (error) {
-      console.error("Error saving product types:", error);
-    }
+    } catch (error) { console.error("Error saving product types:", error); }
   };
 
   const saveProductTypeTemplates = async (templates) => {
     try {
       const settings = await GlobalSettings.filter({ setting_key: 'productTypeTemplates' });
-      if (settings.length > 0) {
-        await GlobalSettings.update(settings[0].id, { setting_value: templates });
-      } else {
-        await GlobalSettings.create({ setting_key: 'productTypeTemplates', setting_value: templates });
-      }
+      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: templates });
+      else await GlobalSettings.create({ setting_key: 'productTypeTemplates', setting_value: templates });
       setProductTypeTemplates(templates);
-    } catch (error) {
-      console.error("Error saving product type templates:", error);
-    }
+    } catch (error) { console.error("Error saving product type templates:", error); }
   };
 
   const saveSubTemplateItems = async (items) => {
     try {
       const settings = await GlobalSettings.filter({ setting_key: 'subTemplateItems' });
-      if (settings.length > 0) {
-        await GlobalSettings.update(settings[0].id, { setting_value: items });
-      } else {
-        await GlobalSettings.create({ setting_key: 'subTemplateItems', setting_value: items });
-      }
+      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: items });
+      else await GlobalSettings.create({ setting_key: 'subTemplateItems', setting_value: items });
       setSubTemplateItems(items);
-    } catch (error) {
-      console.error("Error saving sub-template items:", error);
-    }
+    } catch (error) { console.error("Error saving sub-template items:", error); }
   };
 
   const saveDropdownConditions = async (items) => {
     try {
       const settings = await GlobalSettings.filter({ setting_key: 'dropdownConditions' });
-      if (settings.length > 0) {
-        await GlobalSettings.update(settings[0].id, { setting_value: { items } });
-      } else {
-        await GlobalSettings.create({ setting_key: 'dropdownConditions', setting_value: { items } });
-      }
+      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items } });
+      else await GlobalSettings.create({ setting_key: 'dropdownConditions', setting_value: { items } });
       setDropdownConditions(items);
-    } catch (error) {
-      console.error("Error saving dropdown conditions:", error);
-    }
+    } catch (error) { console.error("Error saving dropdown conditions:", error); }
   };
 
-  // Get existing product names from checklist to prevent duplicates
+  // Template Selection
   const getExistingProductNames = () => {
     const names = new Set();
-    existingChecklist.forEach(item => {
-      if (item.product_name) names.add(item.product_name);
-    });
+    existingChecklist.forEach(item => { if (item.product_name) names.add(item.product_name); });
     return names;
   };
 
@@ -154,60 +135,39 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     
     let customName = productType;
     let counter = 1;
-    while (allNames.has(customName)) {
-      counter++;
-      customName = `${productType} ${counter}`;
-    }
+    while (allNames.has(customName)) { counter++; customName = `${productType} ${counter}`; }
     
     setSelectedProducts([...selectedProducts, {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      productType,
-      customName,
-      subTemplates: []
+      productType, customName, subTemplates: []
     }]);
   };
 
   const updateProductName = (productId, newName) => {
     const existingNames = getExistingProductNames();
     const otherSelectedNames = selectedProducts.filter(p => p.id !== productId).map(p => p.customName);
-    
     if (existingNames.has(newName) || otherSelectedNames.includes(newName)) {
-      alert("A product with this name already exists. Please choose a unique name.");
+      alert("A product with this name already exists.");
       return false;
     }
-    setSelectedProducts(selectedProducts.map(p => 
-      p.id === productId ? { ...p, customName: newName } : p
-    ));
+    setSelectedProducts(selectedProducts.map(p => p.id === productId ? { ...p, customName: newName } : p));
     return true;
-  };
-
-  const removeProductFromSelection = (productId) => {
-    setSelectedProducts(selectedProducts.filter(p => p.id !== productId));
   };
 
   const toggleSubTemplateForProduct = (productId, subTemplateId) => {
     setSelectedProducts(selectedProducts.map(p => {
       if (p.id === productId) {
         const hasIt = p.subTemplates.includes(subTemplateId);
-        return {
-          ...p,
-          subTemplates: hasIt 
-            ? p.subTemplates.filter(id => id !== subTemplateId)
-            : [...p.subTemplates, subTemplateId]
-        };
+        return { ...p, subTemplates: hasIt ? p.subTemplates.filter(id => id !== subTemplateId) : [...p.subTemplates, subTemplateId] };
       }
       return p;
     }));
   };
 
   const handleApplyTemplate = () => {
-    if (selectedProducts.length === 0) {
-      alert("Please select at least one product template to apply.");
-      return;
-    }
+    if (selectedProducts.length === 0) { alert("Please select at least one product template."); return; }
     
     const combinedItems = [];
-    
     selectedProducts.forEach(product => {
       const template = productTypeTemplates[product.productType];
       if (template?.items) {
@@ -218,18 +178,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           items: template.items.map(item => ({
             ...item,
             id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            details: item.details?.map(d => ({
-              ...d,
-              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              tasks: d.tasks?.map(t => ({
-                ...t,
-                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              }))
-            })),
-            tasks: item.tasks?.map(t => ({
-              ...t,
-              id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            }))
+            details: item.details?.map(d => ({ ...d, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, tasks: d.tasks?.map(t => ({ ...t, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` })) })),
+            tasks: item.tasks?.map(t => ({ ...t, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))
           }))
         });
       }
@@ -245,28 +195,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             items: stItems.items.map(item => ({
               ...item,
               id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              details: item.details?.map(d => ({
-                ...d,
-                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                tasks: d.tasks?.map(t => ({
-                  ...t,
-                  id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                }))
-              })),
-              tasks: item.tasks?.map(t => ({
-                ...t,
-                id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              }))
+              details: item.details?.map(d => ({ ...d, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, tasks: d.tasks?.map(t => ({ ...t, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` })) })),
+              tasks: item.tasks?.map(t => ({ ...t, id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))
             }))
           });
         }
       });
     });
     
-    if (onApplyTemplate && combinedItems.length > 0) {
-      onApplyTemplate(combinedItems);
-    }
-    
+    if (onApplyTemplate && combinedItems.length > 0) onApplyTemplate(combinedItems);
     setSelectedProducts([]);
     onClose();
   };
@@ -275,209 +212,47 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const createSubTemplate = async () => {
     if (!newSubTemplateName.trim()) return;
     try {
-      await ChecklistSubItem.create({
-        name: newSubTemplateName.trim(),
-        applies_to_product_types: [],
-        order: subTemplates.length
-      });
+      await ChecklistSubItem.create({ name: newSubTemplateName.trim(), applies_to_product_types: [], order: subTemplates.length });
       await loadData();
       setNewSubTemplateName("");
-    } catch (error) {
-      console.error("Error creating sub-template:", error);
-    }
-  };
-
-  const startEditingSubTemplate = (subTemplate) => {
-    setEditingSubTemplateId(subTemplate.id);
-    setEditingSubTemplateName(subTemplate.name);
-  };
-
-  const saveSubTemplateName = async () => {
-    if (!editingSubTemplateName.trim()) return;
-    try {
-      await ChecklistSubItem.update(editingSubTemplateId, { name: editingSubTemplateName.trim() });
-      await loadData();
-      setEditingSubTemplateId(null);
-      setEditingSubTemplateName("");
-    } catch (error) {
-      console.error("Error updating sub-template:", error);
-    }
-  };
-
-  const cancelEditingSubTemplate = () => {
-    setEditingSubTemplateId(null);
-    setEditingSubTemplateName("");
+    } catch (error) { console.error("Error creating sub-template:", error); }
   };
 
   const deleteSubTemplate = async (subTemplate) => {
-    if (!confirm(`Delete "${subTemplate.name}"? This action cannot be undone.`)) return;
-    
-    const idToDelete = subTemplate.id;
-    
-    // Clear selection immediately if this was selected
-    if (selectedSubTemplate === idToDelete) {
-      setSelectedSubTemplate(null);
-      setSubTemplateChecklistItems([]);
-    }
-    
+    if (!confirm(`Delete "${subTemplate.name}"?`)) return;
+    if (selectedSubTemplate === subTemplate.id) { setSelectedSubTemplate(null); setSubTemplateChecklistItems([]); }
     try {
-      await ChecklistSubItem.delete(idToDelete);
+      await ChecklistSubItem.delete(subTemplate.id);
       const updated = { ...subTemplateItems };
-      delete updated[idToDelete];
+      delete updated[subTemplate.id];
       await saveSubTemplateItems(updated);
       await loadData();
-    } catch (error) {
-      console.error("Error deleting sub-template:", error);
-    }
-  };
-
-  const moveSubTemplate = async (index, direction) => {
-    const newItems = [...subTemplates];
-    if (direction === 'up' && index > 0) {
-      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-    } else if (direction === 'down' && index < newItems.length - 1) {
-      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-    }
-    
-    try {
-      await Promise.all(newItems.map((item, idx) => 
-        ChecklistSubItem.update(item.id, { order: idx })
-      ));
-      await loadData();
-    } catch (error) {
-      console.error("Error reordering sub-templates:", error);
-    }
+    } catch (error) { console.error("Error deleting sub-template:", error); }
   };
 
   const selectSubTemplateForEditing = (subTemplate) => {
     setSelectedSubTemplate(subTemplate.id);
     setSubTemplateChecklistItems(subTemplateItems[subTemplate.id]?.items || []);
+    setExpandedItems({});
   };
 
   const saveSubTemplateChecklist = () => {
-    const updated = {
-      ...subTemplateItems,
-      [selectedSubTemplate]: { items: subTemplateChecklistItems }
-    };
-    saveSubTemplateItems(updated);
+    saveSubTemplateItems({ ...subTemplateItems, [selectedSubTemplate]: { items: subTemplateChecklistItems } });
   };
 
-  // Duplicate Sub-Template
   const duplicateSubTemplate = async (subTemplate) => {
     try {
-      const newName = `${subTemplate.name} (Copy)`;
-      const newSubTemplate = await ChecklistSubItem.create({
-        name: newName,
-        applies_to_product_types: subTemplate.applies_to_product_types || [],
-        order: subTemplates.length
-      });
-      
-      // Copy the items too
+      const newSubTemplate = await ChecklistSubItem.create({ name: `${subTemplate.name} (Copy)`, applies_to_product_types: subTemplate.applies_to_product_types || [], order: subTemplates.length });
       const originalItems = subTemplateItems[subTemplate.id]?.items || [];
       if (originalItems.length > 0) {
-        const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({
-          ...item,
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-        }));
-        const updated = {
-          ...subTemplateItems,
-          [newSubTemplate.id]: { items: copiedItems }
-        };
-        await saveSubTemplateItems(updated);
+        const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
+        await saveSubTemplateItems({ ...subTemplateItems, [newSubTemplate.id]: { items: copiedItems } });
       }
-      
       await loadData();
-    } catch (error) {
-      console.error("Error duplicating sub-template:", error);
-    }
+    } catch (error) { console.error("Error duplicating sub-template:", error); }
   };
 
-  // Copy Sub-Template to clipboard
-  const copySubTemplateToClipboard = (subTemplate) => {
-    const items = subTemplateItems[subTemplate.id]?.items || [];
-    setClipboard({
-      type: 'subtemplate',
-      data: {
-        name: subTemplate.name,
-        items: JSON.parse(JSON.stringify(items))
-      }
-    });
-  };
-
-  // Paste from clipboard to Sub-Template
-  const pasteToSubTemplate = async () => {
-    if (!clipboard || clipboard.type !== 'subtemplate' || !selectedSubTemplate) return;
-    
-    const existingItems = subTemplateChecklistItems;
-    const pastedItems = clipboard.data.items.map(item => ({
-      ...item,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    }));
-    
-    const mergedItems = [...existingItems, ...pastedItems];
-    setSubTemplateChecklistItems(mergedItems);
-    
-    const updated = {
-      ...subTemplateItems,
-      [selectedSubTemplate]: { items: mergedItems }
-    };
-    await saveSubTemplateItems(updated);
-  };
-
-  // Duplicate Main Product Template
-  const duplicateProductTypeTemplate = async (productType) => {
-    const newTypeName = `${productType} (Copy)`;
-    const newTypes = [...productTypes, newTypeName];
-    await saveProductTypes(newTypes);
-    
-    // Copy the template items
-    const originalItems = productTypeTemplates[productType]?.items || [];
-    if (originalItems.length > 0) {
-      const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({
-        ...item,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-      }));
-      const updated = {
-        ...productTypeTemplates,
-        [newTypeName]: { items: copiedItems }
-      };
-      await saveProductTypeTemplates(updated);
-    }
-  };
-
-  // Copy Product Type Template to clipboard
-  const copyProductTypeToClipboard = (productType) => {
-    const items = productTypeTemplates[productType]?.items || [];
-    setClipboard({
-      type: 'producttype',
-      data: {
-        name: productType,
-        items: JSON.parse(JSON.stringify(items))
-      }
-    });
-  };
-
-  // Paste from clipboard to Product Type
-  const pasteToProductType = async () => {
-    if (!clipboard || clipboard.type !== 'producttype' || !selectedProductType) return;
-    
-    const existingItems = productTypeItems;
-    const pastedItems = clipboard.data.items.map(item => ({
-      ...item,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    }));
-    
-    const mergedItems = [...existingItems, ...pastedItems];
-    setProductTypeItems(mergedItems);
-    
-    const updated = {
-      ...productTypeTemplates,
-      [selectedProductType]: { items: mergedItems }
-    };
-    await saveProductTypeTemplates(updated);
-  };
-
-  // Product Type Template Editor
+  // Product Type Management
   const selectProductType = (type) => {
     setSelectedProductType(type);
     setProductTypeItems(productTypeTemplates[type]?.items || []);
@@ -485,80 +260,37 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveProductTypeTemplate = () => {
-    const updated = {
-      ...productTypeTemplates,
-      [selectedProductType]: { items: productTypeItems }
-    };
-    saveProductTypeTemplates(updated);
+    saveProductTypeTemplates({ ...productTypeTemplates, [selectedProductType]: { items: productTypeItems } });
   };
 
-  // Multi-select dropdown state
-  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const duplicateProductTypeTemplate = async (productType) => {
+    const newTypeName = `${productType} (Copy)`;
+    await saveProductTypes([...productTypes, newTypeName]);
+    const originalItems = productTypeTemplates[productType]?.items || [];
+    if (originalItems.length > 0) {
+      const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
+      await saveProductTypeTemplates({ ...productTypeTemplates, [newTypeName]: { items: copiedItems } });
+    }
+  };
 
-  // Hierarchical item management
+  // Checklist Item Management
   const addChecklistItem = (items, setItems) => {
     if (!newItemText.trim()) return;
-    setItems([...items, {
-      id: Date.now().toString(),
-      text: newItemText.trim(),
-      type: 'checklist',
-      dropdown_ids: [],
-      details: [],
-      tasks: []
-    }]);
+    setItems([...items, { id: Date.now().toString(), text: newItemText.trim(), type: 'checklist', dropdown_ids: [], details: [], tasks: [] }]);
     setNewItemText("");
   };
 
   const addDetailItem = (items, setItems, parentId, text) => {
     if (!text.trim()) return;
-    setItems(items.map(item => {
-      if (item.id === parentId) {
-        return {
-          ...item,
-          details: [...(item.details || []), {
-            id: Date.now().toString(),
-            text: text.trim(),
-            type: 'detail',
-            dropdown_ids: [],
-            tasks: []
-          }]
-        };
-      }
-      return item;
-    }));
+    setItems(items.map(item => item.id === parentId ? { ...item, details: [...(item.details || []), { id: Date.now().toString(), text: text.trim(), type: 'detail', dropdown_ids: [], tasks: [] }] } : item));
   };
 
   const addTask = (items, setItems, parentId, detailId, text) => {
     if (!text.trim()) return;
     setItems(items.map(item => {
       if (item.id === parentId) {
-        if (detailId) {
-          return {
-            ...item,
-            details: item.details.map(d => {
-              if (d.id === detailId) {
-                return {
-                  ...d,
-                  tasks: [...(d.tasks || []), {
-                    id: Date.now().toString(),
-                    text: text.trim(),
-                    type: 'task'
-                  }]
-                };
-              }
-              return d;
-            })
-          };
-        } else {
-          return {
-            ...item,
-            tasks: [...(item.tasks || []), {
-              id: Date.now().toString(),
-              text: text.trim(),
-              type: 'task'
-            }]
-          };
-        }
+        if (detailId) return { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: [...(d.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task' }] } : d) };
+        return { ...item, tasks: [...(item.tasks || []), { id: Date.now().toString(), text: text.trim(), type: 'task' }] };
       }
       return item;
     }));
@@ -567,29 +299,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const updateItem = (items, setItems, id, updates, detailId = null, taskId = null) => {
     setItems(items.map(item => {
       if (item.id === id) {
-        if (detailId) {
-          return {
-            ...item,
-            details: item.details.map(d => {
-              if (d.id === detailId) {
-                if (taskId) {
-                  return {
-                    ...d,
-                    tasks: d.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
-                  };
-                }
-                return { ...d, ...updates };
-              }
-              return d;
-            })
-          };
-        }
-        if (taskId) {
-          return {
-            ...item,
-            tasks: item.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
-          };
-        }
+        if (detailId) return { ...item, details: item.details.map(d => d.id === detailId ? (taskId ? { ...d, tasks: d.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t) } : { ...d, ...updates }) : d) };
+        if (taskId) return { ...item, tasks: item.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t) };
         return { ...item, ...updates };
       }
       return item;
@@ -598,50 +309,45 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const deleteItem = (items, setItems, id, detailId = null, taskId = null) => {
     if (taskId) {
-      setItems(items.map(item => {
-        if (item.id === id) {
-          if (detailId) {
-            return {
-              ...item,
-              details: item.details.map(d => {
-                if (d.id === detailId) {
-                  return { ...d, tasks: d.tasks.filter(t => t.id !== taskId) };
-                }
-                return d;
-              })
-            };
-          }
-          return { ...item, tasks: item.tasks.filter(t => t.id !== taskId) };
-        }
-        return item;
-      }));
+      setItems(items.map(item => item.id === id ? (detailId ? { ...item, details: item.details.map(d => d.id === detailId ? { ...d, tasks: d.tasks.filter(t => t.id !== taskId) } : d) } : { ...item, tasks: item.tasks.filter(t => t.id !== taskId) }) : item));
     } else if (detailId) {
-      setItems(items.map(item => {
-        if (item.id === id) {
-          return { ...item, details: item.details.filter(d => d.id !== detailId) };
-        }
-        return item;
-      }));
+      setItems(items.map(item => item.id === id ? { ...item, details: item.details.filter(d => d.id !== detailId) } : item));
     } else {
       setItems(items.filter(item => item.id !== id));
     }
   };
 
-  const moveItem = (items, setItems, index, direction) => {
-    const newItems = [...items];
-    if (direction === 'up' && index > 0) {
-      [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-    } else if (direction === 'down' && index < items.length - 1) {
-      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-    }
-    setItems(newItems);
+  // Drag and Drop
+  const handleDragEnd = (result, items, setItems) => {
+    if (!result.destination) return;
+    const reordered = Array.from(items);
+    const [removed] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, removed);
+    setItems(reordered);
   };
 
-  const toggleItemExpanded = (itemId) => {
-    setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  const handleSubTemplateDragEnd = async (result) => {
+    if (!result.destination) return;
+    const reordered = Array.from(subTemplates);
+    const [removed] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, removed);
+    try {
+      await Promise.all(reordered.map((item, idx) => ChecklistSubItem.update(item.id, { order: idx })));
+      await loadData();
+    } catch (error) { console.error("Error reordering:", error); }
   };
 
-  // Handle Other dropdown selection - now adds to array
+  const handleProductTypeDragEnd = async (result) => {
+    if (!result.destination) return;
+    const reordered = Array.from(productTypes);
+    const [removed] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, removed);
+    await saveProductTypes(reordered);
+  };
+
+  const toggleItemExpanded = (itemId) => setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+
+  // Condition dropdown selection
   const handleOtherDropdownSelect = (items, setItems, itemId, detailId, selectedDropdownId) => {
     let currentIds = [];
     if (detailId) {
@@ -652,41 +358,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       const item = items.find(i => i.id === itemId);
       currentIds = item?.dropdown_ids || (item?.dropdown_id ? [item.dropdown_id] : []);
     }
-    
     const newIds = currentIds.includes(selectedDropdownId) ? currentIds : [...currentIds, selectedDropdownId];
-    
-    if (detailId) {
-      updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
-    } else {
-      updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" });
-    }
+    if (detailId) updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
+    else updateItem(items, setItems, itemId, { dropdown_ids: newIds, dropdown_id: "" });
     setShowOtherPopup(null);
   };
 
   const handleCreateCustomDropdown = () => {
     if (!customDropdownValue.trim()) return;
-    const newDropdown = {
-      id: Date.now().toString(),
-      name: customDropdownValue.trim()
-    };
-    const updated = [...dropdownConditions, newDropdown];
-    saveDropdownConditions(updated);
-    
-    if (showOtherPopup) {
-      const { items, setItems, itemId, detailId } = showOtherPopup;
-      handleOtherDropdownSelect(items, setItems, itemId, detailId, newDropdown.id);
-    }
+    const newDropdown = { id: Date.now().toString(), name: customDropdownValue.trim() };
+    saveDropdownConditions([...dropdownConditions, newDropdown]);
+    if (showOtherPopup) handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, newDropdown.id);
     setCustomDropdownValue("");
   };
 
   if (!isOpen) return null;
 
-  // Multi-select dropdown for conditions
-  const renderDropdownSelect = (item, items, setItems, detailId = null) => {
+  // Compact condition multi-select
+  const renderConditionSelect = (item, items, setItems, detailId = null) => {
     const uniqueId = detailId ? `${item.id}-${detailId}` : item.id;
     const isOpen = openDropdownId === uniqueId;
-    
-    // Get current dropdown_ids (support both old dropdown_id and new dropdown_ids)
     let currentIds = [];
     if (detailId) {
       const detail = items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId);
@@ -694,78 +385,37 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     } else {
       currentIds = item.dropdown_ids || (item.dropdown_id ? [item.dropdown_id] : []);
     }
-    
-    const selectedNames = currentIds
-      .map(id => dropdownConditions.find(d => d.id === id)?.name)
-      .filter(Boolean);
+    const selectedNames = currentIds.map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
     
     const toggleCondition = (conditionId) => {
-      const newIds = currentIds.includes(conditionId)
-        ? currentIds.filter(id => id !== conditionId)
-        : [...currentIds, conditionId];
-      
-      if (detailId) {
-        updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
-      } else {
-        updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" });
-      }
+      const newIds = currentIds.includes(conditionId) ? currentIds.filter(id => id !== conditionId) : [...currentIds, conditionId];
+      if (detailId) updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" }, detailId);
+      else updateItem(items, setItems, item.id, { dropdown_ids: newIds, dropdown_id: "" });
     };
     
     return (
       <div className="relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenDropdownId(isOpen ? null : uniqueId);
-          }}
-          className="h-7 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[120px] max-w-[180px]"
-        >
-          <span className="truncate flex-1 text-left">
-            {selectedNames.length === 0 ? "Conditions..." : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}
-          </span>
-          <ChevronDown className="w-3 h-3 flex-shrink-0" />
+        <button type="button" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
+          className="h-6 text-xs px-1.5 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 max-w-[140px]">
+          <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Cond..." : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} sel`}</span>
+          <ChevronDown className="w-2.5 h-2.5 flex-shrink-0" />
         </button>
-        
         {isOpen && (
           <>
             <div className="fixed inset-0 z-[99]" onClick={() => setOpenDropdownId(null)} />
-            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded-lg shadow-lg min-w-[200px] max-h-48 overflow-y-auto">
-              {dropdownConditions.length === 0 ? (
-                <div className="p-2 text-xs text-gray-500">No conditions available</div>
-              ) : (
-                dropdownConditions.map(dd => (
-                  <div
-                    key={dd.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCondition(dd.id);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm"
-                  >
-                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                      currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'
-                    }`}>
-                      {currentIds.includes(dd.id) && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <span>{dd.name}</span>
+            <div className="absolute top-full left-0 mt-1 z-[100] bg-white border rounded shadow-lg min-w-[160px] max-h-40 overflow-y-auto">
+              {dropdownConditions.map(dd => (
+                <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
+                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-purple-50 cursor-pointer text-xs">
+                  <div className={`w-3 h-3 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}>
+                    {currentIds.includes(dd.id) && <Check className="w-2 h-2 text-white" />}
                   </div>
-                ))
-              )}
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowOtherPopup({ items, setItems, itemId: item.id, detailId });
-                  setOpenDropdownId(null);
-                }}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add New...</span>
+                  <span className="truncate">{dd.name}</span>
+                </div>
+              ))}
+              <div onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
+                className="flex items-center gap-2 px-2 py-1.5 hover:bg-purple-50 cursor-pointer text-xs text-purple-600 font-medium border-t">
+                <Plus className="w-3 h-3" /><span>Add...</span>
               </div>
             </div>
           </>
@@ -774,268 +424,187 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     );
   };
 
-  // Render hierarchical item editor
-  const renderItemEditor = (items, setItems) => (
-    <div className="space-y-2 max-h-[45vh] overflow-y-auto">
-      {items.map((item, index) => (
-        <div key={item.id} className="border rounded-lg p-3 bg-white">
-          {/* Main Checklist Item */}
-          <div className="flex items-start gap-2">
-            <div className="flex flex-col">
-              <button onClick={() => moveItem(items, setItems, index, 'up')} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                <ArrowUp className="w-3 h-3" />
-              </button>
-              <button onClick={() => moveItem(items, setItems, index, 'down')} disabled={index === items.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                <ArrowDown className="w-3 h-3" />
-              </button>
-            </div>
-
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                {editingItem === item.id ? (
-                  <Input
-                    value={item.text}
-                    onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value })}
-                    onBlur={() => setEditingItem(null)}
-                    onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                    autoFocus
-                    className="h-7 text-sm flex-1"
-                  />
-                ) : (
-                  <>
-                    <span className="flex-1 font-medium text-sm">{item.text}</span>
-                    <button onClick={() => setEditingItem(item.id)} className="p-1">
-                      <Pencil className="w-3 h-3 text-gray-400" />
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 text-xs">
-                <button 
-                  onClick={() => toggleItemExpanded(item.id)}
-                  className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
-                >
-                  {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                  Details ({item.details?.length || 0}) | Tasks ({item.tasks?.length || 0})
-                </button>
-                {renderDropdownSelect(item, items, setItems)}
-              </div>
-
-              {/* Expanded Content */}
-              {expandedItems[item.id] && (
-                <div className="ml-4 mt-2 space-y-3 border-l-2 border-gray-200 pl-3">
-                  {/* Tasks under main item */}
-                  {item.tasks?.map((task, tIdx) => (
-                    <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                      {editingItem === task.id ? (
-                        <Input
-                          value={task.text}
-                          onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
-                          onBlur={() => setEditingItem(null)}
-                          onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                          autoFocus
-                          className="h-6 text-xs flex-1"
-                        />
-                      ) : (
-                        <>
-                          <span className="flex-1 text-sm">{task.text}</span>
-                          <button onClick={() => setEditingItem(task.id)} className="p-1"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                        </>
-                      )}
-                      <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-1">
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {/* Add Task to main item */}
-                  <div className="flex gap-1">
-                    <Input
-                      placeholder="Add task..."
-                      className="h-6 text-xs flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          addTask(items, setItems, item.id, null, e.target.value);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-orange-600" onClick={(e) => {
-                      const input = e.target.closest('.flex').querySelector('input');
-                      if (input.value.trim()) {
-                        addTask(items, setItems, item.id, null, input.value);
-                        input.value = "";
-                      }
-                    }}>
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                  </div>
-
-                  {/* Detail Items */}
-                  {item.details?.map((detail, dIdx) => (
-                    <div key={detail.id} className="bg-gray-50 p-2 rounded border">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
-                        {editingItem === detail.id ? (
-                          <Input
-                            value={detail.text}
-                            onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id)}
-                            onBlur={() => setEditingItem(null)}
-                            onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                            autoFocus
-                            className="h-6 text-xs flex-1"
-                          />
-                        ) : (
-                          <>
-                            <span className="flex-1 text-sm">{detail.text}</span>
-                            <button onClick={() => setEditingItem(detail.id)} className="p-1"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                          </>
-                        )}
-                        {renderDropdownSelect(item, items, setItems, detail.id)}
-                        <button onClick={() => deleteItem(items, setItems, item.id, detail.id)} className="p-1">
-                          <Trash2 className="w-3 h-3 text-red-500" />
-                        </button>
-                      </div>
-                      
-                      {/* Tasks under detail */}
-                      <div className="ml-4 mt-2 space-y-1 border-l-2 border-orange-200 pl-2">
-                        {detail.tasks?.map((task) => (
-                          <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded">
-                            <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                            {editingItem === task.id ? (
-                              <Input
-                                value={task.text}
-                                onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
-                                onBlur={() => setEditingItem(null)}
-                                onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                                autoFocus
-                                className="h-5 text-xs flex-1"
-                              />
-                            ) : (
-                              <>
-                                <span className="flex-1 text-xs">{task.text}</span>
-                                <button onClick={() => setEditingItem(task.id)} className="p-0.5"><Pencil className="w-2.5 h-2.5 text-gray-400" /></button>
-                              </>
-                            )}
-                            <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5">
-                              <Trash2 className="w-2.5 h-2.5 text-red-500" />
-                            </button>
-                          </div>
-                        ))}
-                        <div className="flex gap-1">
-                          <Input
-                            placeholder="Add task..."
-                            className="h-5 text-xs flex-1"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.target.value.trim()) {
-                                addTask(items, setItems, item.id, detail.id, e.target.value);
-                                e.target.value = "";
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Add Detail Item */}
-                  <div className="flex gap-1">
-                    <Input
-                      placeholder="Add detail item..."
-                      className="h-6 text-xs flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          addDetailItem(items, setItems, item.id, e.target.value);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-purple-600" onClick={(e) => {
-                      const input = e.target.closest('.flex').querySelector('input');
-                      if (input.value.trim()) {
-                        addDetailItem(items, setItems, item.id, input.value);
-                        input.value = "";
-                      }
-                    }}>
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
+  // Compact checklist item row
+  const renderCompactItem = (item, index, items, setItems, provided) => (
+    <div ref={provided.innerRef} {...provided.draggableProps} 
+      className={`border rounded p-1.5 bg-white mb-1 ${expandedItems[item.id] ? 'ring-1 ring-blue-300' : ''}`}>
+      <div className="flex items-center gap-1">
+        <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
+        <button onClick={() => toggleItemExpanded(item.id)} className="p-0.5">
+          {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </button>
+        <span className="text-xs px-1 py-0.5 rounded bg-blue-100 text-blue-700">C</span>
+        {editingItem === item.id ? (
+          <Input value={item.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value })}
+            onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
+            autoFocus className="h-5 text-xs flex-1" />
+        ) : (
+          <span className="flex-1 text-xs font-medium truncate cursor-pointer" onClick={() => setEditingItem(item.id)}>{item.text}</span>
+        )}
+        <span className="text-xs text-gray-400">{(item.details?.length || 0)}d/{(item.tasks?.length || 0)}t</span>
+        {renderConditionSelect(item, items, setItems)}
+        <button onClick={() => deleteItem(items, setItems, item.id)} className="p-0.5 hover:bg-red-50 rounded">
+          <Trash2 className="w-3 h-3 text-red-500" />
+        </button>
+      </div>
+      
+      {expandedItems[item.id] && (
+        <div className="ml-5 mt-1 pl-2 border-l-2 border-gray-200 space-y-1">
+          {/* Tasks */}
+          {item.tasks?.map((task) => (
+            <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-1 rounded text-xs">
+              <span className="px-1 py-0.5 rounded bg-orange-100 text-orange-700">T</span>
+              {editingItem === task.id ? (
+                <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, null, task.id)}
+                  onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+              ) : (
+                <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
               )}
+              <button onClick={() => deleteItem(items, setItems, item.id, null, task.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
             </div>
-
-            <button onClick={() => deleteItem(items, setItems, item.id)} className="p-1">
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </button>
-          </div>
-        </div>
-      ))}
-
-      {items.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <p>No items yet. Add checklist items above.</p>
+          ))}
+          <Input placeholder="+ task" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, null, e.target.value); e.target.value = ""; } }} />
+          
+          {/* Details */}
+          {item.details?.map((detail) => (
+            <div key={detail.id} className="bg-gray-50 p-1 rounded border">
+              <div className="flex items-center gap-1 text-xs">
+                <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">D</span>
+                {editingItem === detail.id ? (
+                  <Input value={detail.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id)}
+                    onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                ) : (
+                  <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(detail.id)}>{detail.text}</span>
+                )}
+                {renderConditionSelect(item, items, setItems, detail.id)}
+                <button onClick={() => deleteItem(items, setItems, item.id, detail.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+              </div>
+              <div className="ml-4 mt-1 space-y-0.5">
+                {detail.tasks?.map((task) => (
+                  <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-0.5 rounded text-xs">
+                    <span className="px-0.5 rounded bg-orange-100 text-orange-700">T</span>
+                    {editingItem === task.id ? (
+                      <Input value={task.text} onChange={(e) => updateItem(items, setItems, item.id, { text: e.target.value }, detail.id, task.id)}
+                        onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                    ) : (
+                      <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(task.id)}>{task.text}</span>
+                    )}
+                    <button onClick={() => deleteItem(items, setItems, item.id, detail.id, task.id)} className="p-0.5"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                  </div>
+                ))}
+                <Input placeholder="+ task" className="h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTask(items, setItems, item.id, detail.id, e.target.value); e.target.value = ""; } }} />
+              </div>
+            </div>
+          ))}
+          <Input placeholder="+ detail" className="h-5 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addDetailItem(items, setItems, item.id, e.target.value); e.target.value = ""; } }} />
         </div>
       )}
     </div>
   );
 
+  // Item editor with drag-drop
+  const renderItemEditor = (items, setItems) => (
+    <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems)}>
+      <Droppable droppableId="items">
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1 max-h-[55vh] overflow-y-auto pr-1">
+            {items.map((item, index) => (
+              <Draggable key={item.id} draggableId={item.id} index={index}>
+                {(provided) => renderCompactItem(item, index, items, setItems, provided)}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+            {items.length === 0 && <div className="text-center py-4 text-gray-400 text-sm">No items yet</div>}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
+
+  // Preview renderer
+  const renderPreview = (items, title) => (
+    <div className="bg-white border rounded-lg p-3 max-h-[60vh] overflow-y-auto">
+      <h4 className="font-bold text-sm mb-2 pb-1 border-b">{title}</h4>
+      {items.map((item, idx) => {
+        const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+        return (
+          <div key={item.id} className="mb-2">
+            <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
+              <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="font-medium text-sm">{item.text}</div>
+                {conditionNames.length > 0 && (
+                  <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
+                )}
+              </div>
+            </div>
+            {item.tasks?.map(task => (
+              <div key={task.id} className="ml-6 mt-1 flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
+                <div className="w-3 h-3 border rounded flex-shrink-0" />
+                <span>{task.text}</span>
+              </div>
+            ))}
+            {item.details?.map(detail => {
+              const detailConditions = (detail.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+              return (
+                <div key={detail.id} className="ml-6 mt-1">
+                  <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
+                    <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="text-sm">{detail.text}</span>
+                      {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
+                    </div>
+                  </div>
+                  {detail.tasks?.map(task => (
+                    <div key={task.id} className="ml-4 mt-1 flex items-center gap-2 p-1 bg-orange-50 rounded text-xs">
+                      <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                      <span>{task.text}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2" onClick={(e) => e.stopPropagation()}>
         <div className="w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-          <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold">Template Builder</h2>
-              <p className="text-xs text-gray-500">Build and combine templates for projects</p>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+          <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
+            <div><h2 className="text-lg font-bold">Template Builder</h2></div>
+            <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-4 py-2 border-b bg-white">
-              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-1`}>
-                <TabsTrigger value="selectors" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Template Selectors</TabsTrigger>
+            <div className="px-3 py-1.5 border-b bg-white">
+              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-8`}>
+                <TabsTrigger value="selectors" className="text-xs data-[state=active]:bg-white">Select & Apply</TabsTrigger>
                 {isAdmin && (
                   <>
-                    <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Main Product Templates</TabsTrigger>
-                    <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
-                    <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Conditions</TabsTrigger>
+                    <TabsTrigger value="producttypes" className="text-xs data-[state=active]:bg-white">Product Templates</TabsTrigger>
+                    <TabsTrigger value="subtemplates" className="text-xs data-[state=active]:bg-white">Sub-Templates</TabsTrigger>
+                    <TabsTrigger value="dropdowns" className="text-xs data-[state=active]:bg-white">Conditions</TabsTrigger>
                   </>
                 )}
               </TabsList>
             </div>
 
-            {/* Template Selectors Tab */}
-            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <h3 className="font-bold text-sm">Add Main Product Templates</h3>
-                  <p className="text-xs text-gray-500">Click to add a product type. You can add multiple of the same type with unique names.</p>
-                  
-                  <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+            {/* Select & Apply Tab */}
+            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <h3 className="font-bold text-sm mb-2">Product Templates</h3>
+                  <div className="space-y-1 max-h-[60vh] overflow-y-auto">
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                       return (
-                        <div
-                          key={type}
-                          onClick={() => hasTemplate && addProductToSelection(type)}
-                          className={`p-2 rounded-lg border transition-colors flex items-center justify-between ${
-                            hasTemplate 
-                              ? 'bg-white hover:bg-blue-50 border-gray-200 cursor-pointer' 
-                              : 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed'
-                          }`}
-                        >
-                          <div>
-                            <div className="font-medium text-sm">{type}</div>
-                            <div className="text-xs text-gray-500">
-                              {hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template configured'}
-                            </div>
-                          </div>
+                        <div key={type} onClick={() => hasTemplate && addProductToSelection(type)}
+                          className={`p-2 rounded border flex items-center justify-between ${hasTemplate ? 'bg-white hover:bg-blue-50 cursor-pointer' : 'bg-gray-100 opacity-50'}`}>
+                          <div><div className="font-medium text-sm">{type}</div><div className="text-xs text-gray-500">{hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}</div></div>
                           {hasTemplate && <Plus className="w-4 h-4 text-blue-500" />}
                         </div>
                       );
@@ -1043,84 +612,43 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-bold text-sm">Selected Products ({selectedProducts.length})</h3>
-                  {existingChecklist.length > 0 && (
-                    <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                      ✓ Project has {getExistingProductNames().size} existing products. New templates will be added.
-                    </p>
-                  )}
-                  
+                <div>
+                  <h3 className="font-bold text-sm mb-2">Selected ({selectedProducts.length})</h3>
                   {selectedProducts.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
-                      <p>No products selected.</p>
-                      <p className="text-xs mt-1">Click a product type on the left to add it.</p>
-                    </div>
+                    <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
                   ) : (
-                    <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                    <div className="space-y-2 max-h-[50vh] overflow-y-auto">
                       {selectedProducts.map(product => (
-                        <div key={product.id} className="border rounded-lg p-3 bg-white">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Input
-                              value={product.customName}
-                              onChange={(e) => updateProductName(product.id, e.target.value)}
-                              className="h-8 font-medium flex-1"
-                              placeholder="Product name..."
-                            />
-                            <button onClick={() => removeProductFromSelection(product.id)} className="p-1">
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
+                        <div key={product.id} className="border rounded p-2 bg-white">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} className="h-7 text-sm flex-1" />
+                            <button onClick={() => setSelectedProducts(selectedProducts.filter(p => p.id !== product.id))} className="p-1"><Trash2 className="w-4 h-4 text-red-500" /></button>
                           </div>
-                          <div className="text-xs text-gray-500 mb-2">Type: {product.productType}</div>
-                          
+                          <div className="text-xs text-gray-500 mb-1">Type: {product.productType}</div>
                           {subTemplates.length > 0 && (
-                            <div className="border-t pt-2 mt-2">
-                              <Label className="text-xs font-medium block mb-1">Apply Sub-Templates:</Label>
-                              <div className="flex flex-wrap gap-2">
-                                {subTemplates.map(st => {
-                                  const hasItems = subTemplateItems[st.id]?.items?.length > 0;
-                                  const isSelected = product.subTemplates.includes(st.id);
-                                  return (
-                                    <div 
-                                      key={st.id} 
-                                      onClick={() => hasItems && toggleSubTemplateForProduct(product.id, st.id)}
-                                      className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border transition-colors ${
-                                        !hasItems 
-                                          ? 'opacity-50 cursor-not-allowed bg-gray-100' 
-                                          : isSelected 
-                                            ? 'bg-purple-100 border-purple-400 cursor-pointer' 
-                                            : 'bg-white border-gray-300 hover:border-purple-300 cursor-pointer'
-                                      }`}
-                                    >
-                                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                        isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'
-                                      }`}>
-                                        {isSelected && (
-                                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                          </svg>
-                                        )}
-                                      </div>
-                                      <span className="font-medium">{st.name}</span>
-                                      <span className="text-gray-500">({subTemplateItems[st.id]?.items?.length || 0})</span>
+                            <div className="flex flex-wrap gap-1">
+                              {subTemplates.map(st => {
+                                const hasItems = subTemplateItems[st.id]?.items?.length > 0;
+                                const isSelected = product.subTemplates.includes(st.id);
+                                return (
+                                  <div key={st.id} onClick={() => hasItems && toggleSubTemplateForProduct(product.id, st.id)}
+                                    className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${!hasItems ? 'opacity-50' : isSelected ? 'bg-purple-100 border-purple-400 cursor-pointer' : 'bg-white cursor-pointer hover:border-purple-300'}`}>
+                                    <div className={`w-3 h-3 rounded border flex items-center justify-center ${isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'}`}>
+                                      {isSelected && <Check className="w-2 h-2 text-white" />}
                                     </div>
-                                  );
-                                })}
-                              </div>
+                                    <span>{st.name}</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
                       ))}
                     </div>
                   )}
-
                   {selectedProducts.length > 0 && (
-                    <Button 
-                      onClick={handleApplyTemplate}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                    >
-                      <CheckSquare className="w-4 h-4 mr-2" />
-                      Apply Template to Project
+                    <Button onClick={handleApplyTemplate} className="w-full mt-2 bg-purple-600 hover:bg-purple-700">
+                      <CheckSquare className="w-4 h-4 mr-2" />Apply to Project
                     </Button>
                   )}
                 </div>
@@ -1128,454 +656,204 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Sub-Templates Tab */}
-            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
-              <div className="space-y-2 overflow-y-auto">
-                <div className="bg-gray-50 border rounded-lg p-3 mb-3">
-                  <h3 className="font-bold mb-2 text-sm">Create Sub-Template</h3>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newSubTemplateName}
-                      onChange={(e) => setNewSubTemplateName(e.target.value)}
-                      placeholder="Name..."
-                      className="h-8 text-sm"
-                      onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()}
-                    />
-                    <Button size="sm" className="h-8" onClick={createSubTemplate}>
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                  </div>
+            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 grid grid-cols-3 gap-3">
+              <div className="space-y-1 overflow-y-auto">
+                <div className="flex gap-1 mb-2">
+                  <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New sub-template..." className="h-7 text-sm" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
+                  <Button size="sm" className="h-7 px-2" onClick={createSubTemplate}><Plus className="w-3 h-3" /></Button>
                 </div>
-
-                <h3 className="font-bold text-sm">Sub-Templates ({subTemplates.length})</h3>
-                {subTemplates.map((st, index) => (
-                  <div
-                    key={st.id}
-                    onClick={() => editingSubTemplateId !== st.id && selectSubTemplateForEditing(st)}
-                    className={`p-2 rounded-lg border cursor-pointer transition-colors flex items-center gap-2 ${
-                      selectedSubTemplate === st.id 
-                        ? 'bg-purple-100 border-purple-300' 
-                        : 'bg-white hover:bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <button onClick={(e) => { e.stopPropagation(); moveSubTemplate(index, 'up'); }} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                        <ArrowUp className="w-3 h-3" />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); moveSubTemplate(index, 'down'); }} disabled={index === subTemplates.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                        <ArrowDown className="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    {editingSubTemplateId === st.id ? (
-                      <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          value={editingSubTemplateName}
-                          onChange={(e) => setEditingSubTemplateName(e.target.value)}
-                          className="h-7 text-sm flex-1"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveSubTemplateName();
-                            if (e.key === 'Escape') cancelEditingSubTemplate();
-                          }}
-                        />
-                        <Button size="sm" className="h-7 px-2" onClick={saveSubTemplateName}>
-                          <Save className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={cancelEditingSubTemplate}>
-                          <X className="w-3 h-3" />
-                        </Button>
+                <DragDropContext onDragEnd={handleSubTemplateDragEnd}>
+                  <Droppable droppableId="subtemplates">
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                        {subTemplates.map((st, index) => (
+                          <Draggable key={st.id} draggableId={st.id} index={index}>
+                            {(provided) => (
+                              <div ref={provided.innerRef} {...provided.draggableProps}
+                                onClick={() => editingSubTemplateId !== st.id && selectSubTemplateForEditing(st)}
+                                className={`p-1.5 rounded border cursor-pointer flex items-center gap-1 mb-1 ${selectedSubTemplate === st.id ? 'bg-purple-100 border-purple-300' : 'bg-white hover:bg-gray-50'}`}>
+                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                {editingSubTemplateId === st.id ? (
+                                  <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                    <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-6 text-xs flex-1" autoFocus
+                                      onKeyDown={async (e) => { if (e.key === 'Enter') { await ChecklistSubItem.update(st.id, { name: editingSubTemplateName }); await loadData(); setEditingSubTemplateId(null); } if (e.key === 'Escape') setEditingSubTemplateId(null); }} />
+                                    <Button size="sm" className="h-6 px-1" onClick={async () => { await ChecklistSubItem.update(st.id, { name: editingSubTemplateName }); await loadData(); setEditingSubTemplateId(null); }}><Save className="w-3 h-3" /></Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{st.name}</div><div className="text-xs text-gray-500">{subTemplateItems[st.id]?.items?.length || 0} items</div></div>
+                                    <button onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setEditingSubTemplateId(st.id); setEditingSubTemplateName(st.name); }} className="p-0.5"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); deleteSubTemplate(st); }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{st.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {subTemplateItems[st.id]?.items?.length || 0} items
-                          </div>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }} className="p-1" title="Duplicate">
-                          <Copy className="w-3 h-3 text-blue-500" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); copySubTemplateToClipboard(st); }} className="p-1" title="Copy to clipboard">
-                          <Clipboard className="w-3 h-3 text-green-500" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); startEditingSubTemplate(st); }} className="p-1">
-                          <Pencil className="w-3 h-3 text-gray-500" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); deleteSubTemplate(st); }} className="p-1">
-                          <Trash2 className="w-3 h-3 text-red-500" />
-                        </button>
-                      </>
                     )}
-                  </div>
-                ))}
+                  </Droppable>
+                </DragDropContext>
               </div>
 
-              <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
+              <div className={`col-span-2 overflow-hidden bg-gray-50 border rounded-lg p-3 ${showPreview ? 'grid grid-cols-2 gap-3' : ''}`}>
                 {selectedSubTemplate ? (
                   <>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-lg">
-                        {subTemplates.find(st => st.id === selectedSubTemplate)?.name} Items
-                      </h3>
-                      <div className="flex gap-2">
-                        {clipboard?.type === 'subtemplate' && (
-                          <Button onClick={pasteToSubTemplate} size="sm" variant="outline" className="text-green-600">
-                            <Clipboard className="w-4 h-4 mr-1" />
-                            Paste
+                    <div className={showPreview ? '' : ''}>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
+                        <div className="flex gap-1">
+                          <Button onClick={() => setShowPreview(!showPreview)} size="sm" variant="outline" className="h-7 px-2">
+                            {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                           </Button>
-                        )}
-                        <Button onClick={saveSubTemplateChecklist} size="sm">
-                          <Save className="w-4 h-4 mr-1" />
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium">Add Checklist Item</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            value={newItemText}
-                            onChange={(e) => setNewItemText(e.target.value)}
-                            placeholder="Item text..."
-                            className="flex-1"
-                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)}
-                          />
-                          <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline">
-                            <Plus className="w-3 h-3 mr-1" />
-                            Add
-                          </Button>
+                          <Button onClick={saveSubTemplateChecklist} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
                         </div>
                       </div>
-
+                      <div className="flex gap-1 mb-2">
+                        <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                          onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} />
+                        <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                      </div>
                       {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
                     </div>
+                    {showPreview && renderPreview(subTemplateChecklistItems, "Preview")}
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <p>Select a sub-template to edit its checklist items</p>
-                  </div>
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a sub-template</div>
                 )}
               </div>
             </TabsContent>
 
-            {/* Main Product Templates Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-4 grid grid-cols-3 gap-4">
-              <div className="space-y-2 overflow-y-auto">
-                <div className="bg-gray-50 border rounded-lg p-2 mb-3">
-                  <div className="flex gap-2">
-                    <Input
-                      id="newProductTypeInput"
-                      placeholder="Add type..."
-                      className="h-8 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          saveProductTypes([...productTypes, e.target.value.trim()]);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                    <Button size="sm" className="h-8" onClick={() => {
-                      const input = document.getElementById('newProductTypeInput');
-                      if (input && input.value.trim()) {
-                        saveProductTypes([...productTypes, input.value.trim()]);
-                        input.value = "";
-                      }
-                    }}>
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                  </div>
+            {/* Product Templates Tab */}
+            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 grid grid-cols-3 gap-3">
+              <div className="space-y-1 overflow-y-auto">
+                <div className="flex gap-1 mb-2">
+                  <Input id="newPT" placeholder="New product type..." className="h-7 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
+                  <Button size="sm" className="h-7 px-2" onClick={() => { const input = document.getElementById('newPT'); if (input?.value.trim()) { saveProductTypes([...productTypes, input.value.trim()]); input.value = ""; } }}><Plus className="w-3 h-3" /></Button>
                 </div>
-
-                <h3 className="font-bold text-sm">Main Product Templates ({productTypes.length})</h3>
-                {productTypes.map((type, index) => {
-                  const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
-                  return (
-                    <div
-                      key={type}
-                      onClick={() => selectProductType(type)}
-                      className={`p-2 rounded-lg border cursor-pointer transition-colors flex items-center gap-2 ${
-                        selectedProductType === type 
-                          ? 'bg-blue-100 border-blue-300' 
-                          : 'bg-white hover:bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <div className="flex flex-col">
-                        <button onClick={(e) => {
-                          e.stopPropagation();
-                          const newTypes = [...productTypes];
-                          if (index > 0) {
-                            [newTypes[index], newTypes[index - 1]] = [newTypes[index - 1], newTypes[index]];
-                            saveProductTypes(newTypes);
-                          }
-                        }} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                        <button onClick={(e) => {
-                          e.stopPropagation();
-                          const newTypes = [...productTypes];
-                          if (index < productTypes.length - 1) {
-                            [newTypes[index], newTypes[index + 1]] = [newTypes[index + 1], newTypes[index]];
-                            saveProductTypes(newTypes);
-                          }
-                        }} disabled={index === productTypes.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                          <ArrowDown className="w-3 h-3" />
-                        </button>
+                <DragDropContext onDragEnd={handleProductTypeDragEnd}>
+                  <Droppable droppableId="producttypes">
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                        {productTypes.map((type, index) => (
+                          <Draggable key={type} draggableId={type} index={index}>
+                            {(provided) => (
+                              <div ref={provided.innerRef} {...provided.draggableProps} onClick={() => selectProductType(type)}
+                                className={`p-1.5 rounded border cursor-pointer flex items-center gap-1 mb-1 ${selectedProductType === type ? 'bg-blue-100 border-blue-300' : 'bg-white hover:bg-gray-50'}`}>
+                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
+                                <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${type}"?`)) { saveProductTypes(productTypes.filter((_, i) => i !== index)); if (selectedProductType === type) { setSelectedProductType(null); setProductTypeItems([]); } } }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{type}</div>
-                        <div className="text-xs text-gray-500">
-                          {hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}
-                        </div>
-                      </div>
-                      <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-1" title="Duplicate">
-                        <Copy className="w-3 h-3 text-blue-500" />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); copyProductTypeToClipboard(type); }} className="p-1" title="Copy to clipboard">
-                        <Clipboard className="w-3 h-3 text-green-500" />
-                      </button>
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Delete "${type}"?`)) {
-                          saveProductTypes(productTypes.filter((_, i) => i !== index));
-                          if (selectedProductType === type) {
-                            setSelectedProductType(null);
-                            setProductTypeItems([]);
-                          }
-                        }
-                      }} className="p-1">
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </button>
-                    </div>
-                  );
-                })}
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
 
-              <div className="col-span-2 overflow-y-auto bg-gray-50 border rounded-lg p-4">
+              <div className={`col-span-2 overflow-hidden bg-gray-50 border rounded-lg p-3 ${showPreview ? 'grid grid-cols-2 gap-3' : ''}`}>
                 {selectedProductType ? (
                   <>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-lg">{selectedProductType} Template</h3>
-                      <div className="flex gap-2">
-                        {clipboard?.type === 'producttype' && (
-                          <Button onClick={pasteToProductType} size="sm" variant="outline" className="text-green-600">
-                            <Clipboard className="w-4 h-4 mr-1" />
-                            Paste
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-sm">{selectedProductType}</h3>
+                        <div className="flex gap-1">
+                          <Button onClick={() => setShowPreview(!showPreview)} size="sm" variant="outline" className="h-7 px-2">
+                            {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                           </Button>
-                        )}
-                        <Button onClick={saveProductTypeTemplate} size="sm">
-                          <Save className="w-4 h-4 mr-1" />
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium">Add Checklist Item</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            value={newItemText}
-                            onChange={(e) => setNewItemText(e.target.value)}
-                            placeholder="Item text..."
-                            className="flex-1"
-                            onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)}
-                          />
-                          <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline">
-                            <Plus className="w-3 h-3 mr-1" />
-                            Add
-                          </Button>
+                          <Button onClick={saveProductTypeTemplate} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
                         </div>
                       </div>
-
+                      <div className="flex gap-1 mb-2">
+                        <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                          onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)} />
+                        <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                      </div>
                       {renderItemEditor(productTypeItems, setProductTypeItems)}
                     </div>
+                    {showPreview && renderPreview(productTypeItems, "Preview")}
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <p>Select a product type to edit its template</p>
-                  </div>
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a product type</div>
                 )}
               </div>
             </TabsContent>
 
             {/* Conditions Tab */}
-            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-3xl mx-auto">
-                <div className="flex gap-4 items-start mb-4">
-                  <div className="flex-1 bg-gray-50 border rounded-lg p-3">
-                    <div className="flex gap-2">
-                      <Input
-                        value={newDropdownName}
-                        onChange={(e) => setNewDropdownName(e.target.value)}
-                        placeholder="New condition name..."
-                        className="flex-1 h-8 text-sm"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newDropdownName.trim()) {
-                            const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
-                            saveDropdownConditions([...dropdownConditions, newItem]);
-                            setNewDropdownName("");
-                          }
-                        }}
-                      />
-                      <Button size="sm" className="h-8" onClick={() => {
-                        if (newDropdownName.trim()) {
-                          const newItem = { id: Date.now().toString(), name: newDropdownName.trim() };
-                          saveDropdownConditions([...dropdownConditions, newItem]);
-                          setNewDropdownName("");
-                        }
-                      }}>
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add
-                      </Button>
-                    </div>
-                  </div>
+            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex gap-2 mb-3">
+                  <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim() }]); setNewDropdownName(""); } }} />
+                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim() }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
-
-                {dropdownConditions.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500 border rounded-lg bg-gray-50">
-                    <List className="w-6 h-6 mx-auto mb-1 text-gray-400" />
-                    <p className="text-sm">No conditions yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {dropdownConditions.map((dd, index) => (
-                      <div key={dd.id} className="flex items-center gap-1 p-2 border rounded bg-white text-sm">
-                        <div className="flex flex-col">
-                          <button onClick={() => {
-                            if (index > 0) {
-                              const newItems = [...dropdownConditions];
-                              [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-                              saveDropdownConditions(newItems);
-                            }
-                          }} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                            <ArrowUp className="w-2.5 h-2.5" />
-                          </button>
-                          <button onClick={() => {
-                            if (index < dropdownConditions.length - 1) {
-                              const newItems = [...dropdownConditions];
-                              [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-                              saveDropdownConditions(newItems);
-                            }
-                          }} disabled={index === dropdownConditions.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                            <ArrowDown className="w-2.5 h-2.5" />
-                          </button>
-                        </div>
-                        
-                        {editingDropdown === dd.id ? (
-                          <Input
-                            defaultValue={dd.name}
-                            className="flex-1 h-6 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const newName = e.target.value.trim();
-                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                                setEditingDropdown(null);
-                              }
-                              if (e.key === 'Escape') setEditingDropdown(null);
-                            }}
-                            onBlur={(e) => {
-                              const newName = e.target.value.trim();
-                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                              setEditingDropdown(null);
-                            }}
-                          />
-                        ) : (
-                          <>
-                            <span className="flex-1 truncate">{dd.name}</span>
-                            <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded">
-                              <Pencil className="w-3 h-3 text-gray-400" />
-                            </button>
-                          </>
-                        )}
-                        <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded">
-                          <Trash2 className="w-3 h-3 text-red-500" />
-                        </button>
+                <DragDropContext onDragEnd={(result) => { if (!result.destination) return; const reordered = Array.from(dropdownConditions); const [removed] = reordered.splice(result.source.index, 1); reordered.splice(result.destination.index, 0, removed); saveDropdownConditions(reordered); }}>
+                  <Droppable droppableId="conditions">
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps} className="grid grid-cols-2 gap-1">
+                        {dropdownConditions.map((dd, index) => (
+                          <Draggable key={dd.id} draggableId={dd.id} index={index}>
+                            {(provided) => (
+                              <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded bg-white text-sm">
+                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                {editingDropdown === dd.id ? (
+                                  <Input defaultValue={dd.name} className="flex-1 h-6 text-sm" autoFocus
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { const newName = e.target.value.trim(); if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); setEditingDropdown(null); } if (e.key === 'Escape') setEditingDropdown(null); }}
+                                    onBlur={(e) => { const newName = e.target.value.trim(); if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); setEditingDropdown(null); }} />
+                                ) : (
+                                  <>
+                                    <span className="flex-1 truncate">{dd.name}</span>
+                                    <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                  </>
+                                )}
+                                <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                {dropdownConditions.length === 0 && <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">No conditions yet</div>}
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="px-4 py-3 border-t bg-gray-50 flex justify-end">
-            <Button onClick={onClose} variant="outline" size="sm">
-              Close
-            </Button>
+          <div className="px-3 py-2 border-t bg-gray-50 flex justify-end">
+            <Button onClick={onClose} variant="outline" size="sm">Close</Button>
           </div>
         </div>
       </div>
 
-      {/* Other Condition Popup */}
+      {/* Create Condition Dialog */}
       <Dialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
-        <DialogContent className="max-w-md z-[110]">
-          <DialogHeader>
-            <DialogTitle>Select or Create Condition</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">All Available Conditions</Label>
-              <div className="max-h-48 overflow-y-auto border rounded-lg">
-                {dropdownConditions.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500 text-sm">
-                    No conditions created yet.
-                  </div>
-                ) : (
-                  dropdownConditions.map(dd => (
-                    <div
-                      key={dd.id}
-                      onClick={() => {
-                        if (showOtherPopup) {
-                          handleOtherDropdownSelect(
-                            showOtherPopup.items, 
-                            showOtherPopup.setItems, 
-                            showOtherPopup.itemId, 
-                            showOtherPopup.detailId,
-                            dd.id
-                          );
-                        }
-                      }}
-                      className="p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2"
-                    >
-                      <List className="w-4 h-4 text-purple-500" />
-                      <span>{dd.name}</span>
-                    </div>
-                  ))
-                )}
-              </div>
+        <DialogContent className="max-w-sm z-[110]">
+          <DialogHeader><DialogTitle>Add Condition</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="max-h-36 overflow-y-auto border rounded">
+              {dropdownConditions.map(dd => (
+                <div key={dd.id} onClick={() => showOtherPopup && handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, dd.id)}
+                  className="p-2 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 text-sm">
+                  <List className="w-4 h-4 text-purple-500" /><span>{dd.name}</span>
+                </div>
+              ))}
             </div>
-
-            <div className="border-t pt-4">
-              <Label className="text-sm font-medium mb-2 block">Or Create Custom Condition</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={customDropdownValue}
-                  onChange={(e) => setCustomDropdownValue(e.target.value)}
-                  placeholder="New condition name..."
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()}
-                />
-                <Button onClick={handleCreateCustomDropdown} disabled={!customDropdownValue.trim()}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Create
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Input value={customDropdownValue} onChange={(e) => setCustomDropdownValue(e.target.value)} placeholder="New condition..." onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()} />
+              <Button onClick={handleCreateCustomDropdown} disabled={!customDropdownValue.trim()}><Plus className="w-4 h-4" /></Button>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowOtherPopup(null)}>
-              Cancel
-            </Button>
-          </DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setShowOtherPopup(null)}>Cancel</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-
-
     </>
   );
 }
