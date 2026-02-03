@@ -475,7 +475,11 @@ export default function ProductChecklistDialog({
                   {/* Main Items with hierarchy */}
                   {group.mainItems.length > 0 && (
                     <div className="space-y-2 mb-3">
-                      {buildItemHierarchy(group.mainItems).map(item => (
+                      {/* If buildItemHierarchy returns empty but we have items, show them directly */}
+                      {(buildItemHierarchy(group.mainItems).length > 0 
+                        ? buildItemHierarchy(group.mainItems) 
+                        : group.mainItems
+                      ).map(item => (
                         <div key={item.id} className="clay-card p-3 bg-white">
                           {/* Main checklist item */}
                           <div 
