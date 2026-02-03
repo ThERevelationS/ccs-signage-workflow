@@ -1005,6 +1005,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </div>
                 )}
               </div>
+              </div>
             </TabsContent>
 
             {/* Product Templates Tab */}
@@ -1131,6 +1132,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     {selectedProductType ? 'Add items to see preview' : 'Select a product type to preview'}
                   </div>
                 )}
+              </div>
               </div>
             </TabsContent>
 
