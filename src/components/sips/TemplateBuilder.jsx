@@ -871,30 +871,96 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </DragDropContext>
               </div>
 
-              <div className={`col-span-2 overflow-hidden bg-gray-50 border rounded-lg p-3 ${showPreview ? 'grid grid-cols-2 gap-3' : ''}`}>
+              {/* Editor */}
+              <div className="overflow-hidden bg-gray-50 border rounded-lg p-3">
                 {selectedSubTemplate ? (
                   <>
-                    <div className={showPreview ? '' : ''}>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
-                        <div className="flex gap-1">
-                          <Button onClick={() => setShowPreview(!showPreview)} size="sm" variant="outline" className="h-7 px-2">
-                            {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                          </Button>
-                          <Button onClick={saveSubTemplateChecklist} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 mb-2">
-                        <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
-                          onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} />
-                        <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
-                      </div>
-                      {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
+                      <Button onClick={saveSubTemplateChecklist} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
                     </div>
-                    {showPreview && renderPreview(subTemplateChecklistItems, "Preview")}
+                    <div className="flex gap-1 mb-2">
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} />
+                      <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                    </div>
+                    {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a sub-template</div>
+                )}
+              </div>
+
+              {/* Live Preview */}
+              <div className="overflow-hidden border rounded-lg p-3 bg-white">
+                <h3 className="font-bold text-sm mb-2 pb-1 border-b">Live Preview</h3>
+                {selectedSubTemplate && subTemplateChecklistItems.length > 0 ? (
+                  <div className="max-h-[55vh] overflow-y-auto">
+                    {subTemplateChecklistItems.map((item) => {
+                      const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+                      return (
+                        <div key={item.id} className="mb-2">
+                          <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
+                            <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{item.text}</div>
+                              {conditionNames.length > 0 && (
+                                <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
+                              )}
+                            </div>
+                          </div>
+                          {item.tasks?.map(task => (
+                            <div key={task.id} className="ml-6 mt-1">
+                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
+                                <div className="w-3 h-3 border rounded flex-shrink-0" />
+                                <span className="flex-1">{task.text}</span>
+                                {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
+                              </div>
+                              {task.subtasks?.map(st => (
+                                <div key={st.id} className="ml-4 mt-0.5 flex items-center gap-2 p-1 bg-yellow-50 rounded text-xs">
+                                  <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                                  <span>{st.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                          {item.details?.map(detail => {
+                            const detailConditions = (detail.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+                            return (
+                              <div key={detail.id} className="ml-6 mt-1">
+                                <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
+                                  <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <span className="text-sm">{detail.text}</span>
+                                    {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
+                                  </div>
+                                </div>
+                                {detail.tasks?.map(task => (
+                                  <div key={task.id} className="ml-4 mt-0.5">
+                                    <div className="flex items-center gap-2 p-1 bg-orange-50 rounded text-xs">
+                                      <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                                      <span className="flex-1">{task.text}</span>
+                                      {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
+                                    </div>
+                                    {task.subtasks?.map(st => (
+                                      <div key={st.id} className="ml-3 mt-0.5 flex items-center gap-2 p-0.5 bg-yellow-50 rounded text-xs">
+                                        <div className="w-2 h-2 border rounded flex-shrink-0" />
+                                        <span>{st.text}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    {selectedSubTemplate ? 'Add items to see preview' : 'Select a sub-template to preview'}
+                  </div>
                 )}
               </div>
             </TabsContent>
@@ -930,30 +996,96 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </DragDropContext>
               </div>
 
-              <div className={`col-span-2 overflow-hidden bg-gray-50 border rounded-lg p-3 ${showPreview ? 'grid grid-cols-2 gap-3' : ''}`}>
+              {/* Editor */}
+              <div className="overflow-hidden bg-gray-50 border rounded-lg p-3">
                 {selectedProductType ? (
                   <>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-sm">{selectedProductType}</h3>
-                        <div className="flex gap-1">
-                          <Button onClick={() => setShowPreview(!showPreview)} size="sm" variant="outline" className="h-7 px-2">
-                            {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                          </Button>
-                          <Button onClick={saveProductTypeTemplate} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 mb-2">
-                        <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
-                          onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)} />
-                        <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
-                      </div>
-                      {renderItemEditor(productTypeItems, setProductTypeItems)}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-sm">{selectedProductType}</h3>
+                      <Button onClick={saveProductTypeTemplate} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
                     </div>
-                    {showPreview && renderPreview(productTypeItems, "Preview")}
+                    <div className="flex gap-1 mb-2">
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)} />
+                      <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                    </div>
+                    {renderItemEditor(productTypeItems, setProductTypeItems)}
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a product type</div>
+                )}
+              </div>
+
+              {/* Live Preview */}
+              <div className="overflow-hidden border rounded-lg p-3 bg-white">
+                <h3 className="font-bold text-sm mb-2 pb-1 border-b">Live Preview</h3>
+                {selectedProductType && productTypeItems.length > 0 ? (
+                  <div className="max-h-[55vh] overflow-y-auto">
+                    {productTypeItems.map((item) => {
+                      const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+                      return (
+                        <div key={item.id} className="mb-2">
+                          <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
+                            <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{item.text}</div>
+                              {conditionNames.length > 0 && (
+                                <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
+                              )}
+                            </div>
+                          </div>
+                          {item.tasks?.map(task => (
+                            <div key={task.id} className="ml-6 mt-1">
+                              <div className="flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
+                                <div className="w-3 h-3 border rounded flex-shrink-0" />
+                                <span className="flex-1">{task.text}</span>
+                                {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
+                              </div>
+                              {task.subtasks?.map(st => (
+                                <div key={st.id} className="ml-4 mt-0.5 flex items-center gap-2 p-1 bg-yellow-50 rounded text-xs">
+                                  <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                                  <span>{st.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                          {item.details?.map(detail => {
+                            const detailConditions = (detail.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
+                            return (
+                              <div key={detail.id} className="ml-6 mt-1">
+                                <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
+                                  <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <span className="text-sm">{detail.text}</span>
+                                    {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
+                                  </div>
+                                </div>
+                                {detail.tasks?.map(task => (
+                                  <div key={task.id} className="ml-4 mt-0.5">
+                                    <div className="flex items-center gap-2 p-1 bg-orange-50 rounded text-xs">
+                                      <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
+                                      <span className="flex-1">{task.text}</span>
+                                      {task.assigned_to && <span className="text-xs px-1 py-0.5 bg-blue-100 text-blue-700 rounded">{task.assigned_to}</span>}
+                                    </div>
+                                    {task.subtasks?.map(st => (
+                                      <div key={st.id} className="ml-3 mt-0.5 flex items-center gap-2 p-0.5 bg-yellow-50 rounded text-xs">
+                                        <div className="w-2 h-2 border rounded flex-shrink-0" />
+                                        <span>{st.text}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    {selectedProductType ? 'Add items to see preview' : 'Select a product type to preview'}
+                  </div>
                 )}
               </div>
             </TabsContent>
