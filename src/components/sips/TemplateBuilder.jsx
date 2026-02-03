@@ -694,7 +694,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </div>
 
             {/* Select & Apply Tab */}
-            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3">
+            <TabsContent value="selectors" className="flex-1 overflow-y-auto p-3 !mt-0">
               <div className="grid grid-cols-[1fr_2fr_2fr] gap-4">
                 <div>
                   <h3 className="font-bold text-sm mb-2">Product Templates</h3>
@@ -836,7 +836,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Sub-Templates Tab */}
-            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4">
+            <TabsContent value="subtemplates" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4 !mt-0">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New sub-template..." className="h-7 text-sm" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
@@ -1007,7 +1007,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Product Templates Tab */}
-            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4 items-start">
+            <TabsContent value="producttypes" className="flex-1 overflow-hidden p-3 grid grid-cols-[200px_1fr_1fr] gap-4 items-start !mt-0">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input id="newPT" placeholder="New product type..." className="h-7 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
@@ -1133,7 +1133,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Conditions Tab */}
-            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3">
+            <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3 !mt-0">
               {/* Instructions */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
                   <p className="font-medium mb-1">How to change condition type:</p>
