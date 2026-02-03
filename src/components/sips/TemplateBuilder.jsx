@@ -314,24 +314,27 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const idToDelete = deleteConfirm.id;
     const wasSelected = selectedSubTemplate === idToDelete;
     
-    // Close the dialog first
-    setDeleteConfirm(null);
-    
     // Clear selection immediately if this was selected
     if (wasSelected) {
       setSelectedSubTemplate(null);
       setSubTemplateChecklistItems([]);
     }
     
-    try {
-      await ChecklistSubItem.delete(idToDelete);
-      const updated = { ...subTemplateItems };
-      delete updated[idToDelete];
-      await saveSubTemplateItems(updated);
-      await loadData();
-    } catch (error) {
-      console.error("Error deleting sub-template:", error);
-    }
+    // Close the dialog
+    setDeleteConfirm(null);
+    
+    // Perform deletion after a short delay to let state settle
+    setTimeout(async () => {
+      try {
+        await ChecklistSubItem.delete(idToDelete);
+        const updated = { ...subTemplateItems };
+        delete updated[idToDelete];
+        await saveSubTemplateItems(updated);
+        await loadData();
+      } catch (error) {
+        console.error("Error deleting sub-template:", error);
+      }
+    }, 100);
   };
 
   const moveSubTemplate = async (index, direction) => {
@@ -700,11 +703,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           }}
         >
           <SelectTrigger className="h-7 text-xs w-36">
-            <SelectValue placeholder="Dropdown...">
+            <SelectValue placeholder="Condition...">
               {selectedDropdown?.name || "None"}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[100]">
             <SelectItem value="none">None</SelectItem>
             {dropdownConditions.map(dd => (
               <SelectItem key={dd.id} value={dd.id}>{dd.name}</SelectItem>
@@ -946,7 +949,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <>
                     <TabsTrigger value="producttypes" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Main Product Templates</TabsTrigger>
                     <TabsTrigger value="subtemplates" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Sub-Templates</TabsTrigger>
-                    <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Dropdowns/Conditions</TabsTrigger>
+                    <TabsTrigger value="dropdowns" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow font-medium">Conditions</TabsTrigger>
                   </>
                 )}
               </TabsList>
@@ -1343,17 +1346,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               </div>
             </TabsContent>
 
-            {/* Dropdowns/Conditions Tab */}
+            {/* Conditions Tab */}
             <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-4">
               <div className="max-w-2xl mx-auto">
                 <div className="bg-gray-50 border rounded-lg p-4 mb-4">
-                  <h3 className="font-bold mb-2">Create Dropdown/Condition</h3>
-                  <p className="text-xs text-gray-500 mb-3">These dropdowns can be assigned to checklist items and detail items in templates.</p>
+                  <h3 className="font-bold mb-2">Create Condition</h3>
+                  <p className="text-xs text-gray-500 mb-3">These conditions can be assigned to checklist items and detail items in templates.</p>
                   <div className="flex gap-2">
                     <Input
                       value={newDropdownName}
                       onChange={(e) => setNewDropdownName(e.target.value)}
-                      placeholder="Dropdown name (e.g., Fabrication Status, Design Approval)..."
+                      placeholder="Condition name (e.g., Fabrication Status, Design Approval)..."
                       className="flex-1"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && newDropdownName.trim()) {
@@ -1376,13 +1379,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </div>
                 </div>
 
-                <h3 className="font-bold text-sm mb-3">Dropdowns/Conditions ({dropdownConditions.length})</h3>
+                <h3 className="font-bold text-sm mb-3">Conditions ({dropdownConditions.length})</h3>
                 
                 {dropdownConditions.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
                     <List className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>No dropdowns created yet.</p>
-                    <p className="text-xs mt-1">Add dropdowns above to use them in templates.</p>
+                    <p>No conditions created yet.</p>
+                    <p className="text-xs mt-1">Add conditions above to use them in templates.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1483,20 +1486,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         </div>
       </div>
 
-      {/* Other Dropdown Popup */}
+      {/* Other Condition Popup */}
       <Dialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md z-[110]">
           <DialogHeader>
-            <DialogTitle>Select or Create Dropdown</DialogTitle>
+            <DialogTitle>Select or Create Condition</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium mb-2 block">All Available Dropdowns</Label>
+              <Label className="text-sm font-medium mb-2 block">All Available Conditions</Label>
               <div className="max-h-48 overflow-y-auto border rounded-lg">
                 {dropdownConditions.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
-                    No dropdowns created yet.
+                    No conditions created yet.
                   </div>
                 ) : (
                   dropdownConditions.map(dd => (
@@ -1524,12 +1527,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </div>
 
             <div className="border-t pt-4">
-              <Label className="text-sm font-medium mb-2 block">Or Create Custom Dropdown</Label>
+              <Label className="text-sm font-medium mb-2 block">Or Create Custom Condition</Label>
               <div className="flex gap-2">
                 <Input
                   value={customDropdownValue}
                   onChange={(e) => setCustomDropdownValue(e.target.value)}
-                  placeholder="New dropdown name..."
+                  placeholder="New condition name..."
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()}
                 />
                 <Button onClick={handleCreateCustomDropdown} disabled={!customDropdownValue.trim()}>
