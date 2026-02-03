@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -382,7 +382,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const renderConditionSelect = (item, items, setItems, detailId = null) => {
     const uniqueId = detailId ? `${item.id}-${detailId}` : item.id;
     const isOpen = openDropdownId === uniqueId;
-    const buttonRef = useRef(null);
     let currentIds = [];
     if (detailId) {
       const detail = items.find(i => i.id === item.id)?.details?.find(d => d.id === detailId);
