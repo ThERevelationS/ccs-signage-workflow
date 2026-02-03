@@ -203,9 +203,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
     });
     
-    if (onApplyTemplate && combinedItems.length > 0) onApplyTemplate(combinedItems);
+    console.log("Applying template with items:", combinedItems.length);
+    if (onApplyTemplate && combinedItems.length > 0) {
+      onApplyTemplate(combinedItems);
+    }
     setSelectedProducts([]);
-    onClose();
+    // Note: Don't call onClose() here - let the parent handle closing after applying
   };
 
   // Sub-template Management
