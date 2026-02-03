@@ -203,7 +203,8 @@ export default function ProductChecklistDialog({
     });
 
     // Append to existing checklist instead of replacing
-    setChecklist([...checklist, ...newItems]);
+    console.log("Setting checklist with", newItems.length, "new items, total:", checklist.length + newItems.length);
+    setChecklist(prev => [...prev, ...newItems]);
   };
 
   const updateChecklistItem = (itemId, updates) => {
