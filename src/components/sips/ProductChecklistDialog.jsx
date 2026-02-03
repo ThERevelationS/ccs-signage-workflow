@@ -649,11 +649,11 @@ export default function ProductChecklistDialog({
                                       className="h-4 text-xs flex-1"
                                       autoFocus
                                       onKeyDown={(e) => {
-                                        if (e.key === 'Enter') addNewItem('subtask', task.id, item.product_name);
+                                        if (e.key === 'Enter') addNewItem('subtask', task.id, displayItem.product_name || productName);
                                         if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
                                       }}
                                     />
-                                    <Button size="sm" className="h-4 px-1 text-xs" onClick={() => addNewItem('subtask', task.id, item.product_name)}>Add</Button>
+                                    <Button size="sm" className="h-4 px-1 text-xs" onClick={() => addNewItem('subtask', task.id, displayItem.product_name || productName)}>Add</Button>
                                     <Button size="sm" variant="ghost" className="h-4 px-0.5 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
                                   </div>
                                 )}
