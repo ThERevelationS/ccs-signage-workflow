@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Trash2, Pencil, Save, ArrowUp, ArrowDown, X, ChevronDown, ChevronRight, CheckSquare, List, MoreHorizontal, Copy, Clipboard } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -45,7 +45,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
   
   // Clipboard for copy/paste
   const [clipboard, setClipboard] = useState(null); // { type: 'subtemplate' | 'producttype', data: ... }
@@ -309,32 +309,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setEditingSubTemplateName("");
   };
 
-  const deleteSubTemplate = async () => {
-    if (!deleteConfirm) return;
-    const idToDelete = deleteConfirm.id;
-    const wasSelected = selectedSubTemplate === idToDelete;
+  const deleteSubTemplate = async (subTemplate) => {
+    if (!confirm(`Delete "${subTemplate.name}"? This action cannot be undone.`)) return;
+    
+    const idToDelete = subTemplate.id;
     
     // Clear selection immediately if this was selected
-    if (wasSelected) {
+    if (selectedSubTemplate === idToDelete) {
       setSelectedSubTemplate(null);
       setSubTemplateChecklistItems([]);
     }
     
-    // Close the dialog
-    setDeleteConfirm(null);
-    
-    // Perform deletion after a short delay to let state settle
-    setTimeout(async () => {
-      try {
-        await ChecklistSubItem.delete(idToDelete);
-        const updated = { ...subTemplateItems };
-        delete updated[idToDelete];
-        await saveSubTemplateItems(updated);
-        await loadData();
-      } catch (error) {
-        console.error("Error deleting sub-template:", error);
-      }
-    }, 100);
+    try {
+      await ChecklistSubItem.delete(idToDelete);
+      const updated = { ...subTemplateItems };
+      delete updated[idToDelete];
+      await saveSubTemplateItems(updated);
+      await loadData();
+    } catch (error) {
+      console.error("Error deleting sub-template:", error);
+    }
   };
 
   const moveSubTemplate = async (index, direction) => {
@@ -1147,7 +1141,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         <button onClick={(e) => { e.stopPropagation(); startEditingSubTemplate(st); }} className="p-1">
                           <Pencil className="w-3 h-3 text-gray-500" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ id: st.id, type: 'subtemplate', name: st.name }); }} className="p-1">
+                        <button onClick={(e) => { e.stopPropagation(); deleteSubTemplate(st); }} className="p-1">
                           <Trash2 className="w-3 h-3 text-red-500" />
                         </button>
                       </>
@@ -1551,23 +1545,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="bg-white border shadow-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Sub-Template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deleteConfirm?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteSubTemplate} className="bg-red-600 text-white">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </>
   );
 }
