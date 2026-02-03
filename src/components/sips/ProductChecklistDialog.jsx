@@ -113,6 +113,7 @@ export default function ProductChecklistDialog({
 
   // Handle template application from TemplateBuilder - APPENDS to existing checklist
   const handleApplyTemplate = (templateData) => {
+    console.log("handleApplyTemplate called with:", templateData);
     const newItems = [];
     
     // Helper to flatten hierarchical items
