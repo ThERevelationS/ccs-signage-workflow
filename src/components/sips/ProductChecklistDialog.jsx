@@ -389,6 +389,18 @@ export default function ProductChecklistDialog({
   const addNewItem = (type, parentId = null, productName = null) => {
     if (!newItemText.trim()) return;
     
+    // Find the parent item to get its product_name and sub_template_name for proper grouping
+    let actualProductName = productName;
+    let subTemplateName = null;
+    
+    if (parentId) {
+      const parentItem = checklist.find(item => item.id === parentId);
+      if (parentItem) {
+        actualProductName = parentItem.product_name || productName;
+        subTemplateName = parentItem.sub_template_name || null;
+      }
+    }
+    
     const newId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newItem = {
       id: newId,
@@ -396,7 +408,8 @@ export default function ProductChecklistDialog({
       type: type,
       approved_by: "",
       custom_dropdown_value: "",
-      product_name: productName || 'Manual Items',
+      product_name: actualProductName || 'Manual Items',
+      sub_template_name: subTemplateName,
       parent_id: parentId
     };
     
