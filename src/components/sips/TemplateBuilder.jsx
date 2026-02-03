@@ -1134,7 +1134,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Conditions Tab */}
             <TabsContent value="dropdowns" className="flex-1 overflow-y-auto p-3">
-                {/* Instructions */}
+              {/* Instructions */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
                   <p className="font-medium mb-1">How to change condition type:</p>
                   <p className="text-gray-600">Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow). The condition will automatically move to the correct section.</p>
