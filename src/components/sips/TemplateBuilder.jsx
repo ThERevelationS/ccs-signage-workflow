@@ -56,6 +56,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   
   // Multi-select dropdown state
   const [openDropdownId, setOpenDropdownId] = useState(null);
+  
+  // Track changes and save state for Product Templates and Sub-Templates
+  const [productTypeHasChanges, setProductTypeHasChanges] = useState(false);
+  const [productTypeSaveStatus, setProductTypeSaveStatus] = useState('idle'); // 'idle' | 'saved'
+  const [subTemplateHasChanges, setSubTemplateHasChanges] = useState(false);
+  const [subTemplateSaveStatus, setSubTemplateSaveStatus] = useState('idle'); // 'idle' | 'saved'
 
   useEffect(() => {
     if (isOpen) loadData();
@@ -238,10 +244,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setSelectedSubTemplate(subTemplate.id);
     setSubTemplateChecklistItems(subTemplateItems[subTemplate.id]?.items || []);
     setExpandedItems({});
+    setSubTemplateHasChanges(false);
+    setSubTemplateSaveStatus('idle');
   };
 
-  const saveSubTemplateChecklist = () => {
-    saveSubTemplateItems({ ...subTemplateItems, [selectedSubTemplate]: { items: subTemplateChecklistItems } });
+  const saveSubTemplateChecklist = async () => {
+    await saveSubTemplateItems({ ...subTemplateItems, [selectedSubTemplate]: { items: subTemplateChecklistItems } });
+    setSubTemplateHasChanges(false);
+    setSubTemplateSaveStatus('saved');
   };
 
   const duplicateSubTemplate = async (subTemplate) => {
@@ -261,10 +271,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setSelectedProductType(type);
     setProductTypeItems(productTypeTemplates[type]?.items || []);
     setExpandedItems({});
+    setProductTypeHasChanges(false);
+    setProductTypeSaveStatus('idle');
   };
 
-  const saveProductTypeTemplate = () => {
-    saveProductTypeTemplates({ ...productTypeTemplates, [selectedProductType]: { items: productTypeItems } });
+  const saveProductTypeTemplate = async () => {
+    await saveProductTypeTemplates({ ...productTypeTemplates, [selectedProductType]: { items: productTypeItems } });
+    setProductTypeHasChanges(false);
+    setProductTypeSaveStatus('saved');
   };
 
   const duplicateProductTypeTemplate = async (productType) => {
@@ -278,10 +292,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   // Checklist Item Management
-  const addChecklistItem = (items, setItems) => {
+  const addChecklistItem = (items, setItems, isProductType = false) => {
     if (!newItemText.trim()) return;
     setItems([...items, { id: Date.now().toString(), text: newItemText.trim(), type: 'checklist', dropdown_ids: [], details: [], tasks: [] }]);
     setNewItemText("");
+    if (isProductType) {
+      setProductTypeHasChanges(true);
+      setProductTypeSaveStatus('idle');
+    } else {
+      setSubTemplateHasChanges(true);
+      setSubTemplateSaveStatus('idle');
+    }
   };
 
   const addDetailItem = (items, setItems, parentId, text) => {
@@ -342,12 +363,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   // Drag and Drop
-  const handleDragEnd = (result, items, setItems) => {
+  const handleDragEnd = (result, items, setItems, isProductType = false) => {
     if (!result.destination) return;
     const reordered = Array.from(items);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
     setItems(reordered);
+    if (isProductType) {
+      setProductTypeHasChanges(true);
+      setProductTypeSaveStatus('idle');
+    } else {
+      setSubTemplateHasChanges(true);
+      setSubTemplateSaveStatus('idle');
+    }
   };
 
   const handleSubTemplateDragEnd = async (result) => {
@@ -602,8 +630,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     </div>
   );
 
+  // Mark changes when items are modified
+  const markProductTypeChanged = () => {
+    setProductTypeHasChanges(true);
+    setProductTypeSaveStatus('idle');
+  };
+  
+  const markSubTemplateChanged = () => {
+    setSubTemplateHasChanges(true);
+    setSubTemplateSaveStatus('idle');
+  };
+
   // Item editor with drag-drop
-  const renderItemEditor = (items, setItems) => (
+  const renderItemEditor = (items, setItems, isProductType = false) => (
     <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems)}>
       <Droppable droppableId="items">
         {(provided) => (
@@ -885,15 +924,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
-                      <Button onClick={saveSubTemplateChecklist} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
+                      {(subTemplateHasChanges || subTemplateSaveStatus === 'saved') && (
+                        <Button 
+                          onClick={saveSubTemplateChecklist} 
+                          size="sm" 
+                          className={`h-7 ${subTemplateSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                        >
+                          <Save className="w-3 h-3 mr-1" />
+                          {subTemplateSaveStatus === 'saved' ? 'Saved' : 'Save'}
+                        </Button>
+                      )}
                     </div>
                     <div className="flex gap-1 mb-2">
                       <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
-                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} />
-                      <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} />
+                      <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                      {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems)}
+                      {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems, false)}
                     </div>
                     
                     {/* Product Type Assignment */}
@@ -1046,14 +1094,23 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-bold text-sm">{selectedProductType}</h3>
-                      <Button onClick={saveProductTypeTemplate} size="sm" className="h-7"><Save className="w-3 h-3 mr-1" />Save</Button>
+                      {(productTypeHasChanges || productTypeSaveStatus === 'saved') && (
+                        <Button 
+                          onClick={saveProductTypeTemplate} 
+                          size="sm" 
+                          className={`h-7 ${productTypeSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                        >
+                          <Save className="w-3 h-3 mr-1" />
+                          {productTypeSaveStatus === 'saved' ? 'Saved' : 'Save'}
+                        </Button>
+                      )}
                     </div>
                     <div className="flex gap-1 mb-2">
                       <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
-                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems)} />
-                      <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                        onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems, true)} />
+                      <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems, true)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
                     </div>
-                    {renderItemEditor(productTypeItems, setProductTypeItems)}
+                    {renderItemEditor(productTypeItems, setProductTypeItems, true)}
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500 text-sm">Select a product type</div>
