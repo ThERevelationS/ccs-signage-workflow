@@ -883,23 +883,57 @@ export default function ProductChecklistDialog({
                     <div key={stName} className="ml-4 mt-2 border-l-2 border-blue-300 pl-3">
                       <h4 className="text-sm font-semibold text-blue-700 mb-2">🔗 {stName}</h4>
                       <div className="space-y-2">
-                        {buildItemHierarchy(stItems).map(item => (
-                          <div key={item.id} className="clay-card p-2 bg-white">
-                            <div className="flex items-center gap-2">
+                        {stItems.map(rawItem => {
+                          const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
+                          const stItemTasks = stItems.filter(i => i.type === 'task' && i.parent_id === stItem.id);
+                          const stItemDetails = stItems.filter(i => i.type === 'detail' && i.parent_id === stItem.id).map(detail => ({
+                            ...detail,
+                            tasks: stItems.filter(i => i.type === 'task' && i.parent_id === detail.id)
+                          }));
+                          if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
+                          
+                          const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
+                          return (
+                          <div key={stDisplayItem.id} className="clay-card p-2 bg-white">
+                            <div 
+                              className="flex items-center gap-2 group"
+                              onMouseEnter={() => setHoveredItem(stDisplayItem.id)}
+                              onMouseLeave={() => setHoveredItem(null)}
+                            >
                               <button 
-                                onClick={() => toggleExpanded(item.id)}
+                                onClick={() => toggleExpanded(stDisplayItem.id)}
                                 className="p-1 hover:bg-gray-100 rounded"
                               >
-                                {(item.details?.length > 0 || item.tasks?.length > 0) ? (
-                                  expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
+                                {(stDisplayItem.details?.length > 0 || stDisplayItem.tasks?.length > 0) ? (
+                                  expandedItems[stDisplayItem.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
                                 ) : <div className="w-3" />}
                               </button>
                               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                              <span className="text-sm flex-1">{item.text}</span>
+                              <span className="text-sm flex-1">{stDisplayItem.text}</span>
+                              
+                              {/* Quick add buttons on hover for sub-templates */}
+                              {isRegistered && hoveredItem === stDisplayItem.id && (
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
+                                    className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+                                    title="Add Task"
+                                  >
+                                    +Task
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'detail', productName: stDisplayItem.product_name || productName }); }}
+                                    className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                                    title="Add Detail"
+                                  >
+                                    +Detail
+                                  </button>
+                                </div>
+                              )}
                               
                               <Select
-                                value={item.approved_by || ""}
-                                onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })}
+                                value={stDisplayItem.approved_by || ""}
+                                onValueChange={(val) => updateChecklistItem(stDisplayItem.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
                                 <SelectTrigger className="h-6 text-xs w-28">
@@ -915,21 +949,21 @@ export default function ProductChecklistDialog({
                               </Select>
 
                               <Select
-                                value={item.custom_dropdown_value || "select_value"}
+                                value={stDisplayItem.custom_dropdown_value || "select_value"}
                                 onValueChange={(val) => {
                                   if (val === "other") {
-                                    setShowOtherPopup({ itemId: item.id });
+                                    setShowOtherPopup({ itemId: stDisplayItem.id });
                                   } else if (val !== "select_value") {
-                                    updateChecklistItem(item.id, { custom_dropdown_value: val });
+                                    updateChecklistItem(stDisplayItem.id, { custom_dropdown_value: val });
                                   }
                                 }}
                                 disabled={!isRegistered}
                               >
                                 <SelectTrigger className="h-6 text-xs w-28">
-                                  <SelectValue placeholder={getDropdownName(item.dropdown_id) || "Status..."} />
+                                  <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Status..."} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {dropdownConditions.filter(dd => dd.id === item.dropdown_id || !item.dropdown_id).slice(0, 5).map(dd => (
+                                  {dropdownConditions.filter(dd => dd.id === stDisplayItem.dropdown_id || !stDisplayItem.dropdown_id).slice(0, 5).map(dd => (
                                     <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
                                   ))}
                                   <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
@@ -937,38 +971,156 @@ export default function ProductChecklistDialog({
                               </Select>
 
                               {isRegistered && (
-                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(item.id)} className="h-6 w-6 p-0 text-red-500">
+                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(stDisplayItem.id)} className="h-6 w-6 p-0 text-red-500">
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                               )}
                             </div>
 
                             {/* Expanded content for sub-template items */}
-                            {expandedItems[item.id] && (
+                            {expandedItems[stDisplayItem.id] && (
                               <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
-                                {item.tasks?.map(task => (
-                                  <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
-                                    <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                                    <span className="text-xs flex-1">{task.text}</span>
+                                {stDisplayItem.tasks?.map(task => (
+                                  <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask">
                                     <Checkbox 
                                       checked={!!task.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                       disabled={!isRegistered}
+                                      className="h-3 w-3"
                                     />
+                                    <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
+                                    <span className="text-xs flex-1">{task.text}</span>
+                                    <Select
+                                      value={task.assigned_to || ""}
+                                      onValueChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
+                                      disabled={!isRegistered}
+                                    >
+                                      <SelectTrigger className="h-5 text-xs w-24 px-1">
+                                        <SelectValue placeholder="Assign..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {users.map(u => (
+                                          <SelectItem key={u.email} value={u.full_name || u.email}>
+                                            {u.full_name || u.email}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    {isRegistered && (
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover/sttask:opacity-100">
+                                        <Trash2 className="w-2.5 h-2.5" />
+                                      </Button>
+                                    )}
                                   </div>
                                 ))}
-                                {item.details?.map(detail => (
-                                  <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs">
+                                
+                                {/* Inline add task for sub-template */}
+                                {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'task' && (
+                                  <div className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
+                                    <Input
+                                      value={newItemText}
+                                      onChange={(e) => setNewItemText(e.target.value)}
+                                      placeholder="New task..."
+                                      className="h-5 text-xs flex-1"
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') addNewItem('task', stDisplayItem.id, stDisplayItem.product_name || productName);
+                                        if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                      }}
+                                    />
+                                    <Button size="sm" className="h-5 px-2 text-xs" onClick={() => addNewItem('task', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
+                                    <Button size="sm" variant="ghost" className="h-5 px-1 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                  </div>
+                                )}
+                                
+                                {stDisplayItem.details?.map(detail => (
+                                  <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs group/stdetail">
                                     <div className="flex items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       <span className="flex-1">{detail.text}</span>
+                                      {isRegistered && (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
+                                          className="px-1 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 opacity-0 group-hover/stdetail:opacity-100"
+                                          title="Add Task"
+                                        >
+                                          +Task
+                                        </button>
+                                      )}
+                                      {isRegistered && (
+                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover/stdetail:opacity-100">
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        </Button>
+                                      )}
                                     </div>
+                                    {/* Inline add task for sub-template detail */}
+                                    {newItemInput.show && newItemInput.parentId === detail.id && newItemInput.type === 'task' && (
+                                      <div className="ml-4 mt-1 flex items-center gap-1 bg-orange-50 p-1 rounded">
+                                        <Input
+                                          value={newItemText}
+                                          onChange={(e) => setNewItemText(e.target.value)}
+                                          placeholder="New task..."
+                                          className="h-4 text-xs flex-1"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') addNewItem('task', detail.id, stDisplayItem.product_name || productName);
+                                            if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                          }}
+                                        />
+                                        <Button size="sm" className="h-4 px-1 text-xs" onClick={() => addNewItem('task', detail.id, stDisplayItem.product_name || productName)}>Add</Button>
+                                        <Button size="sm" variant="ghost" className="h-4 px-0.5 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                      </div>
+                                    )}
+                                    {/* Tasks under detail */}
+                                    {detail.tasks?.length > 0 && (
+                                      <div className="ml-4 mt-1 space-y-0.5">
+                                        {detail.tasks.map(task => (
+                                          <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask">
+                                            <Checkbox 
+                                              checked={!!task.approved_by}
+                                              onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                              disabled={!isRegistered}
+                                              className="h-2.5 w-2.5"
+                                            />
+                                            <span className="px-0.5 rounded bg-orange-100 text-orange-600">T</span>
+                                            <span className="flex-1">{task.text}</span>
+                                            {isRegistered && (
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-3 w-3 p-0 text-red-500 opacity-0 group-hover/stdtask:opacity-100">
+                                                <Trash2 className="w-2 h-2" />
+                                              </Button>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
+                                
+                                {/* Inline add detail for sub-template */}
+                                {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'detail' && (
+                                  <div className="bg-gray-50 p-1.5 rounded border">
+                                    <div className="flex items-center gap-1">
+                                      <Input
+                                        value={newItemText}
+                                        onChange={(e) => setNewItemText(e.target.value)}
+                                        placeholder="New detail..."
+                                        className="h-5 text-xs flex-1"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') addNewItem('detail', stDisplayItem.id, stDisplayItem.product_name || productName);
+                                          if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                        }}
+                                      />
+                                      <Button size="sm" className="h-5 px-2 text-xs" onClick={() => addNewItem('detail', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
+                                      <Button size="sm" variant="ghost" className="h-5 px-1 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
                     </div>
                   ))}
