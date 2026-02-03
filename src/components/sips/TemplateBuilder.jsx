@@ -398,7 +398,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     
     return (
       <div className="relative">
-        <button type="button" onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
+        <button type="button" data-dropdown-id={uniqueId} onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
           className="h-6 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[100px]">
           <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Condition" : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}</span>
           <ChevronDown className="w-3 h-3 flex-shrink-0" />
