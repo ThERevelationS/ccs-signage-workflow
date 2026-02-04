@@ -277,57 +277,68 @@ export default function ProductChecklistDialog({
   const saveChecklist = async () => {
     setIsSaving(true);
     try {
-      // Before saving, ensure all items have proper product_name by resolving from parent chain
-      const resolvedChecklist = checklist.map(item => {
-        // If item already has a valid product_name that's not General Items, keep it
-        if (item.product_name && 
+      // Build a map for quick parent lookup
+      const itemMap = new Map();
+      checklist.forEach(item => itemMap.set(item.id, item));
+      
+      // Recursive function to find root product info by traversing parent chain
+      const findRootProductInfo = (itemId, visited = new Set()) => {
+        if (!itemId || visited.has(itemId)) return null;
+        visited.add(itemId);
+        
+        const item = itemMap.get(itemId);
+        if (!item) return null;
+        
+        // Check if this item has valid product info
+        const hasValidProductName = item.product_name && 
             item.product_name !== 'undefined' && 
             item.product_name !== 'General Items' &&
-            item.product_name !== 'Manual Items') {
-          return item;
+            item.product_name !== 'Manual Items' &&
+            item.product_name !== 'Ungrouped';
+        
+        if (hasValidProductName) {
+          return {
+            product_name: item.product_name,
+            product_type: item.product_type || '',
+            sub_template_name: item.sub_template_name || null
+          };
         }
         
-        // Otherwise, try to resolve from parent chain
+        // Traverse up to parent
         if (item.parent_id) {
-          let currentParentId = item.parent_id;
-          let resolvedProductName = null;
-          let resolvedProductType = '';
-          let resolvedSubTemplateName = null;
-          const visited = new Set();
-          
-          while (currentParentId && !visited.has(currentParentId)) {
-            visited.add(currentParentId);
-            const parent = checklist.find(p => p.id === currentParentId);
-            if (parent) {
-              if (parent.product_name && 
-                  parent.product_name !== 'undefined' && 
-                  parent.product_name !== 'General Items' &&
-                  parent.product_name !== 'Manual Items') {
-                resolvedProductName = parent.product_name;
-                resolvedProductType = parent.product_type || '';
-                resolvedSubTemplateName = parent.sub_template_name || null;
-                break;
-              }
-              currentParentId = parent.parent_id;
-            } else {
-              break;
-            }
-          }
-          
-          if (resolvedProductName) {
-            return {
-              ...item,
-              product_name: resolvedProductName,
-              product_type: resolvedProductType,
-              sub_template_name: resolvedSubTemplateName
-            };
-          }
+          return findRootProductInfo(item.parent_id, visited);
         }
         
+        return null;
+      };
+      
+      // Before saving, ensure ALL items have proper product_name by resolving from parent chain
+      const resolvedChecklist = checklist.map(item => {
+        // Always try to resolve from parent chain first
+        const rootInfo = findRootProductInfo(item.id);
+        
+        if (rootInfo) {
+          return {
+            ...item,
+            product_name: rootInfo.product_name,
+            product_type: item.product_type || rootInfo.product_type,
+            sub_template_name: item.sub_template_name || rootInfo.sub_template_name
+          };
+        }
+        
+        // Keep item as-is if no root info found
         return item;
       });
       
-      console.log("Saving checklist with resolved product names:", resolvedChecklist.map(i => ({ id: i.id, product_name: i.product_name, parent_id: i.parent_id })));
+      console.log("Saving checklist - items with product names:", 
+        resolvedChecklist.map(i => ({ 
+          id: i.id?.substring(0, 20), 
+          text: i.text?.substring(0, 20),
+          product_name: i.product_name, 
+          parent_id: i.parent_id?.substring(0, 20),
+          type: i.type
+        }))
+      );
       
       await WorkOrder.update(workOrder.id, { 
         sip_checklist: resolvedChecklist,
