@@ -1051,7 +1051,9 @@ export default function ProductChecklistDialog({
                                 {dropdownConditions
                                   .filter(dd => (displayItem.dropdown_ids || []).includes(dd.id))
                                   .map(dd => (
-                                    <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                    <SelectItem key={dd.id} value={dd.name}>
+                                      {dd.name} {dd.is_completed && '(Completed)'}
+                                    </SelectItem>
                                   ))}
                                 <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                               </SelectContent>
@@ -1222,6 +1224,12 @@ export default function ProductChecklistDialog({
                                         if (val === "other") {
                                           setShowOtherPopup({ itemId: detail.id });
                                         } else if (val !== "select_value") {
+                                          // Check if children are complete before allowing completion
+                                          const selectedCondition = dropdownConditions.find(dd => dd.name === val);
+                                          if (selectedCondition?.is_completed && !areChildrenComplete(detail.id)) {
+                                            alert("Please complete all tasks under this detail first.");
+                                            return;
+                                          }
                                           updateChecklistItem(detail.id, { custom_dropdown_value: val });
                                         }
                                       }}
@@ -1236,7 +1244,9 @@ export default function ProductChecklistDialog({
                                         {dropdownConditions
                                           .filter(dd => (detail.dropdown_ids || []).includes(dd.id))
                                           .map(dd => (
-                                            <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                            <SelectItem key={dd.id} value={dd.name}>
+                                              {dd.name} {dd.is_completed && '(Completed)'}
+                                            </SelectItem>
                                           ))}
                                         <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                                       </SelectContent>
@@ -1440,6 +1450,12 @@ export default function ProductChecklistDialog({
                                   if (val === "other") {
                                     setShowOtherPopup({ itemId: stDisplayItem.id });
                                   } else if (val !== "select_value") {
+                                    // Check if children are complete before allowing completion
+                                    const selectedCondition = dropdownConditions.find(dd => dd.name === val);
+                                    if (selectedCondition?.is_completed && !areChildrenComplete(stDisplayItem.id)) {
+                                      alert("Please complete all tasks and details under this checklist item first.");
+                                      return;
+                                    }
                                     updateChecklistItem(stDisplayItem.id, { custom_dropdown_value: val });
                                   }
                                 }}
@@ -1454,7 +1470,9 @@ export default function ProductChecklistDialog({
                                   {dropdownConditions
                                     .filter(dd => (stDisplayItem.dropdown_ids || []).includes(dd.id))
                                     .map(dd => (
-                                      <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>
+                                      <SelectItem key={dd.id} value={dd.name}>
+                                        {dd.name} {dd.is_completed && '(Completed)'}
+                                      </SelectItem>
                                     ))}
                                   <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
                                 </SelectContent>
