@@ -276,7 +276,31 @@ export default function ProductChecklistDialog({
   };
 
   const deleteChecklistItem = (itemId) => {
-    setChecklist(checklist.filter(item => item.id !== itemId));
+    // Get the item being deleted to find its product_name
+    const deletedItem = checklist.find(item => item.id === itemId);
+    const newChecklist = checklist.filter(item => item.id !== itemId);
+    
+    // If item had a product_name, check if any items remain for that product
+    if (deletedItem?.product_name) {
+      const productName = deletedItem.product_name;
+      const remainingItemsForProduct = newChecklist.filter(item => {
+        // Check if item belongs to this product (direct or via parent chain)
+        if (item.product_name === productName) return true;
+        // Check parent chain
+        let current = item;
+        while (current?.parent_id) {
+          const parent = newChecklist.find(p => p.id === current.parent_id);
+          if (parent?.product_name === productName) return true;
+          current = parent;
+        }
+        return false;
+      });
+      
+      // If no items remain for this product, the product group will naturally disappear
+      // No additional cleanup needed as grouping is dynamic
+    }
+    
+    setChecklist(newChecklist);
   };
 
   const checkIfComplete = () => {
@@ -585,8 +609,11 @@ export default function ProductChecklistDialog({
   // All items expanded by default - using a ref to track
   const [expandedItems, setExpandedItems] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
+  const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
+  const [newGeneralChecklistText, setNewGeneralChecklistText] = useState("");
   
   const toggleExpanded = (itemId) => {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -771,15 +798,56 @@ export default function ProductChecklistDialog({
               </div>
             ) : (
               Object.entries(groupedChecklist).map(([productName, group]) => (
-                <div key={productName} className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20">
-                  <h3 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
-                    📦 {productName}
-                    {group.productType && (
-                      <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
-                        {group.productType}
-                      </span>
+                <div 
+                  key={productName} 
+                  className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
+                  onMouseEnter={() => setHoveredProduct(productName)}
+                  onMouseLeave={() => setHoveredProduct(null)}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    {/* Add Checklist button on hover */}
+                    {isRegistered && hoveredProduct === productName && (
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setNewItemInput({ show: true, parentId: null, type: 'checklist', productName: productName }); 
+                        }}
+                        className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        title="Add Checklist Item"
+                      >
+                        +Checklist
+                      </button>
                     )}
-                  </h3>
+                    <h3 className="font-bold text-purple-800 flex items-center gap-2">
+                      📦 {productName}
+                      {group.productType && (
+                        <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
+                          {group.productType}
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+                  
+                  {/* Inline add checklist item for this product */}
+                  {newItemInput.show && newItemInput.parentId === null && newItemInput.type === 'checklist' && newItemInput.productName === productName && (
+                    <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={newItemText}
+                          onChange={(e) => setNewItemText(e.target.value)}
+                          placeholder="New checklist item..."
+                          className="h-7 text-sm flex-1"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') addNewItem('checklist', null, productName);
+                            if (e.key === 'Escape') { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }
+                          }}
+                        />
+                        <Button size="sm" className="h-7 px-3 text-xs" onClick={() => addNewItem('checklist', null, productName)}>Add</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Main Items with hierarchy */}
                   {group.mainItems.length > 0 && (
@@ -1461,27 +1529,100 @@ export default function ProductChecklistDialog({
             )}
           </div>
 
+          {/* Add General Checklist Item */}
+          {showAddGeneralChecklist && (
+            <div className="p-3 bg-gray-50 rounded-lg border mb-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newGeneralChecklistText}
+                  onChange={(e) => setNewGeneralChecklistText(e.target.value)}
+                  placeholder="New general checklist item..."
+                  className="h-8 text-sm flex-1"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newGeneralChecklistText.trim()) {
+                      const timestamp = Date.now();
+                      const randomSuffix = Math.random().toString(36).substr(2, 9);
+                      const newItem = {
+                        id: `General Items_manual_${timestamp}_${randomSuffix}`,
+                        text: newGeneralChecklistText.trim(),
+                        type: 'checklist',
+                        approved_by: "",
+                        custom_dropdown_value: "",
+                        product_name: "General Items",
+                        product_type: "",
+                        parent_id: null
+                      };
+                      setChecklist(prev => [...prev, newItem]);
+                      setNewGeneralChecklistText("");
+                      setShowAddGeneralChecklist(false);
+                    }
+                    if (e.key === 'Escape') { setShowAddGeneralChecklist(false); setNewGeneralChecklistText(""); }
+                  }}
+                />
+                <Button 
+                  size="sm" 
+                  className="h-8 px-3" 
+                  onClick={() => {
+                    if (newGeneralChecklistText.trim()) {
+                      const timestamp = Date.now();
+                      const randomSuffix = Math.random().toString(36).substr(2, 9);
+                      const newItem = {
+                        id: `General Items_manual_${timestamp}_${randomSuffix}`,
+                        text: newGeneralChecklistText.trim(),
+                        type: 'checklist',
+                        approved_by: "",
+                        custom_dropdown_value: "",
+                        product_name: "General Items",
+                        product_type: "",
+                        parent_id: null
+                      };
+                      setChecklist(prev => [...prev, newItem]);
+                      setNewGeneralChecklistText("");
+                      setShowAddGeneralChecklist(false);
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => { setShowAddGeneralChecklist(false); setNewGeneralChecklistText(""); }}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={onClose} className="flex-1 h-10">
               Cancel
             </Button>
+            {isRegistered && (
+              <Button
+                variant="outline"
+                onClick={() => setShowAddGeneralChecklist(true)}
+                className="flex-1 h-10"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
+            )}
             {isRegistered && !workOrder.sip_completed && (
               <Button
                 onClick={handleCheckOff}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                Mark Job Complete
+                Complete
               </Button>
             )}
             <Button 
               onClick={saveChecklist}
               disabled={isSaving || !isRegistered}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Checklist
+              Save
             </Button>
           </div>
         </DialogContent>
