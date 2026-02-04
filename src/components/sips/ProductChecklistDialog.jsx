@@ -452,12 +452,17 @@ export default function ProductChecklistDialog({
       return null;
     };
     
-    checklist.forEach((item, index) => {
+    // First pass: collect all items with their resolved product names
+    const itemsWithProduct = checklist.map((item, index) => {
       itemOrder.set(item.id, index);
-      
       let productName = resolveProductName(item);
       if (!productName) productName = 'General Items';
-      
+      const subTemplateName = resolveSubTemplateName(item);
+      return { item, productName, subTemplateName };
+    });
+    
+    // Second pass: group items - but keep parent_id relationships intact
+    itemsWithProduct.forEach(({ item, productName, subTemplateName }) => {
       if (!groups[productName]) {
         groups[productName] = {
           productType: item.product_type || '',
@@ -465,8 +470,6 @@ export default function ProductChecklistDialog({
           subTemplates: {}
         };
       }
-      
-      const subTemplateName = resolveSubTemplateName(item);
       
       if (subTemplateName) {
         if (!groups[productName].subTemplates[subTemplateName]) {
