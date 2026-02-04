@@ -656,7 +656,7 @@ function LayoutContent({ children }) {
                   </button>
                 </div>
 
-                <GlobalSearch />
+                <GlobalSearch className="w-full justify-center" />
               </div>
             </div>
 
@@ -868,7 +868,7 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
                   
-                  <GlobalSearch />
+                  <GlobalSearch className="w-full justify-center" />
                 </div>
               </div>
 
