@@ -1376,22 +1376,12 @@ export default function ProductChecklistDialog({
                                     />
                                     <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
                                     <span className="text-xs flex-1">{task.text}</span>
-                                    <Select
-                                      value={task.assigned_to || ""}
-                                      onValueChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
+                                    <MultiUserSelectInline
+                                      users={users}
+                                      selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
+                                      onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                       disabled={!isRegistered}
-                                    >
-                                      <SelectTrigger className="h-5 text-xs w-24 px-1">
-                                        <SelectValue placeholder="Assign..." />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {users.map(u => (
-                                          <SelectItem key={u.email} value={u.full_name || u.email}>
-                                            {u.full_name || u.email}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    />
                                     {isRegistered && (
                                       <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 opacity-0 group-hover/sttask:opacity-100">
                                         <Trash2 className="w-2.5 h-2.5" />
