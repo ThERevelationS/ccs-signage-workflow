@@ -77,7 +77,63 @@ export default function ProductChecklistDialog({
         setProducts(migratedProducts);
       }
 
-      setChecklist(currentWO.sip_checklist || []);
+      // Reconstruct hierarchy from IDs if type/parent_id fields are missing
+      const rawChecklist = currentWO.sip_checklist || [];
+      const reconstructedChecklist = rawChecklist.map(item => {
+        // If item already has type, use it
+        if (item.type) return item;
+        
+        // Otherwise, infer type and parent_id from ID structure
+        const id = item.id || '';
+        let type = 'checklist';
+        let parent_id = null;
+        
+        // Check for subtask pattern: contains "_task_" AND has another "_task_" or ends differently
+        // Pattern for subtask: parentId_task_xxx (where parentId itself contains _task_)
+        if (id.includes('_subtask_')) {
+          type = 'subtask';
+          // Parent is everything before _subtask_
+          const subtaskIdx = id.lastIndexOf('_subtask_');
+          parent_id = id.substring(0, subtaskIdx);
+        } else if (id.includes('_detail_')) {
+          // Check if this is a task under a detail
+          const detailIdx = id.indexOf('_detail_');
+          const afterDetail = id.substring(detailIdx);
+          if (afterDetail.includes('_task_')) {
+            // This is a task under a detail
+            type = 'task';
+            // Parent is up to and including the detail portion
+            const taskIdx = id.lastIndexOf('_task_');
+            parent_id = id.substring(0, taskIdx);
+          } else {
+            type = 'detail';
+            // Parent is everything before _detail_
+            parent_id = id.substring(0, detailIdx);
+          }
+        } else if (id.includes('_task_')) {
+          type = 'task';
+          // Parent is everything before _task_
+          const taskIdx = id.lastIndexOf('_task_');
+          parent_id = id.substring(0, taskIdx);
+        }
+        
+        return {
+          ...item,
+          type,
+          parent_id
+        };
+      });
+      
+      console.log("Loaded checklist with reconstructed hierarchy:", 
+        reconstructedChecklist.map(i => ({ 
+          id: i.id?.substring(0, 40), 
+          text: i.text?.substring(0, 20),
+          type: i.type,
+          parent_id: i.parent_id?.substring(0, 40)
+        }))
+      );
+      
+      setChecklist(reconstructedChecklist);
 
       // Load dropdown conditions
       const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
