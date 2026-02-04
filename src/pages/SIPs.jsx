@@ -52,6 +52,11 @@ export default function SIPs() {
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const parentRef = useRef(null);
 
+  // Set document title
+  useEffect(() => {
+    document.title = "SIPs";
+  }, []);
+
   useEffect(() => {
     loadWorkOrders();
     const interval = setInterval(() => loadWorkOrders(false), 60000);
