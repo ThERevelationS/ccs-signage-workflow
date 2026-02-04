@@ -59,6 +59,8 @@ export default function MyWorkflow() {
   const [newDetailAssignedTo, setNewDetailAssignedTo] = useState("");
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskText, setEditTaskText] = useState("");
+  const [editingSipTask, setEditingSipTask] = useState(null);
+  const [dropdownConditions, setDropdownConditions] = useState([]);
 
   useEffect(() => {
     if (currentUser) {
@@ -70,6 +72,11 @@ export default function MyWorkflow() {
   const loadUsers = async () => {
     const users = await AuthorizedEmail.list();
     setAllUsers(users);
+    
+    // Load dropdown conditions for SIP checklist
+    const settings = await base44.entities.GlobalSettings.list();
+    const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
+    setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
   };
 
   const loadMyWorkOrders = async () => {
@@ -341,16 +348,31 @@ export default function MyWorkflow() {
     await WorkOrder.update(workOrderId, { notes: updatedTasks });
   };
 
-  const toggleSipTaskComplete = async (workOrderId, itemIndex) => {
+  const toggleSipTaskComplete = async (workOrderId, itemId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
     if (!wo) return;
     
-    const updatedChecklist = [...(wo.sip_checklist || [])];
-    const item = updatedChecklist[itemIndex];
-    updatedChecklist[itemIndex] = {
-      ...item,
-      approved_by: item.approved_by ? "" : (currentUser?.full_name || currentUser?.email || "Done")
-    };
+    const updatedChecklist = (wo.sip_checklist || []).map(item =>
+      item.id === itemId ? {
+        ...item,
+        approved_by: item.approved_by ? "" : (currentUser?.full_name || currentUser?.email || "Done")
+      } : item
+    );
+    
+    setWorkOrders(prev => prev.map(w => 
+      w.id === workOrderId ? { ...w, sip_checklist: updatedChecklist } : w
+    ));
+    
+    await WorkOrder.update(workOrderId, { sip_checklist: updatedChecklist });
+  };
+
+  const updateSipChecklistItem = async (workOrderId, itemId, updates) => {
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (!wo) return;
+    
+    const updatedChecklist = (wo.sip_checklist || []).map(item =>
+      item.id === itemId ? { ...item, ...updates } : item
+    );
     
     setWorkOrders(prev => prev.map(w => 
       w.id === workOrderId ? { ...w, sip_checklist: updatedChecklist } : w
