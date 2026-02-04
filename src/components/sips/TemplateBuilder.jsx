@@ -39,6 +39,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [newItemText, setNewItemText] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
+  const [editingProductTypeName, setEditingProductTypeName] = useState(null);
+  const [editingProductTypeValue, setEditingProductTypeValue] = useState("");
   
   // Conditions Editor
   const [newDropdownName, setNewDropdownName] = useState("");
