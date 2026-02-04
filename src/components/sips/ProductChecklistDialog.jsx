@@ -1178,22 +1178,13 @@ export default function ProductChecklistDialog({
                                             />
                                             <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             <span className="text-xs flex-1">{task.text}</span>
-                                            <Select
-                                              value={task.assigned_to || ""}
-                                              onValueChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
+                                            <MultiUserSelectInline
+                                              users={users}
+                                              selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
+                                              onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                               disabled={!isRegistered}
-                                            >
-                                              <SelectTrigger className="h-4 text-xs w-20 px-0.5">
-                                                <SelectValue placeholder="Assign" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {users.map(u => (
-                                                  <SelectItem key={u.email} value={u.full_name || u.email}>
-                                                    {u.full_name || u.email}
-                                                  </SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
+                                              className="h-4 min-w-[70px]"
+                                            />
                                             {isRegistered && (
                                               <button
                                                 onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
