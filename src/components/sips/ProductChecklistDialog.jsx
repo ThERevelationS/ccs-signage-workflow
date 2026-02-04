@@ -581,7 +581,14 @@ export default function ProductChecklistDialog({
     
     console.log("Adding new item with product_name:", actualProductName, "parent_id:", parentId, "type:", type);
     
-    const newId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create ID that includes product name for proper grouping (matching template item pattern)
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substr(2, 9);
+    const sanitizedProductName = (actualProductName || 'General Items').replace(/\s+/g, ' ');
+    const newId = subTemplateName 
+      ? `${sanitizedProductName}_sub_${subTemplateName}_manual_${timestamp}_${randomSuffix}`
+      : `${sanitizedProductName}_manual_${timestamp}_${randomSuffix}`;
+    
     const newItem = {
       id: newId,
       text: newItemText.trim(),
