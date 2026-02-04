@@ -763,8 +763,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <TabsTrigger value="selectors" className="text-xs data-[state=active]:bg-white">Select & Apply</TabsTrigger>
                 {isAdmin && (
                   <>
-                    <TabsTrigger value="producttypes" className="text-xs data-[state=active]:bg-white">Product Templates</TabsTrigger>
-                    <TabsTrigger value="subtemplates" className="text-xs data-[state=active]:bg-white">Sub-Templates</TabsTrigger>
+                    <TabsTrigger value="producttypes" className="text-xs data-[state=active]:bg-white">Product Checklists</TabsTrigger>
+                    <TabsTrigger value="subtemplates" className="text-xs data-[state=active]:bg-white">Checklist Options</TabsTrigger>
                     <TabsTrigger value="dropdowns" className="text-xs data-[state=active]:bg-white">Conditions</TabsTrigger>
                   </>
                 )}
@@ -819,7 +819,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     </div>
                   )}
                   
-                  <h3 className="font-bold text-sm mb-2">All Product Templates</h3>
+                  <h3 className="font-bold text-sm mb-2">All Product Checklists</h3>
                   <div className="space-y-1 max-h-[30vh] overflow-y-auto">
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
