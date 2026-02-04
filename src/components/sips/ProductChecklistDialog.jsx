@@ -304,6 +304,27 @@ export default function ProductChecklistDialog({
     setChecklist(newChecklist);
   };
 
+  // Check if an item's children are all complete
+  const areChildrenComplete = (itemId) => {
+    const children = checklist.filter(c => c.parent_id === itemId);
+    if (children.length === 0) return true;
+    
+    return children.every(child => {
+      if (child.type === 'detail') {
+        // Detail must have both approved_by and condition
+        if (!child.approved_by || !child.custom_dropdown_value) return false;
+        // Check if detail's children (tasks) are complete
+        return areChildrenComplete(child.id);
+      } else if (child.type === 'task' || child.type === 'subtask') {
+        // Task/subtask must have approved_by (checked)
+        if (!child.approved_by) return false;
+        // Check if task's children (subtasks) are complete
+        return areChildrenComplete(child.id);
+      }
+      return true;
+    });
+  };
+
   const checkIfComplete = () => {
     if (!checklist || checklist.length === 0) {
       return { complete: false, hasChecklist: false };
