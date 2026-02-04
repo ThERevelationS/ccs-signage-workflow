@@ -54,7 +54,7 @@ export default function SIPs() {
 
   // Set document title
   useEffect(() => {
-    document.title = "SIPs";
+    document.title = "SIPs - Workflow Manager";
   }, []);
 
   useEffect(() => {
