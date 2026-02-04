@@ -352,21 +352,111 @@ export default function ProductChecklistDialog({
     setIsSaving(false);
   };
 
-  // Group checklist items by product_name - items should already have product_name set from save
+  // Group checklist items by product_name extracted from item ID or product_name field
   const getGroupedChecklist = () => {
     const groups = {};
     const itemOrder = new Map();
     
+    // Build item map for parent lookups
+    const itemMap = new Map();
+    checklist.forEach(item => itemMap.set(item.id, item));
+    
+    // Extract product name from item ID (e.g., "Channel Letters_123_abc" -> "Channel Letters")
+    const extractProductNameFromId = (id) => {
+      if (!id) return null;
+      
+      // Check for sub-template pattern first: "ProductName_sub_SubTemplateName_..."
+      if (id.includes('_sub_')) {
+        const beforeSub = id.split('_sub_')[0];
+        // The product name is everything before _sub_, but we need to handle the timestamp/random suffix
+        // Pattern: "ProductName_timestamp_random_sub_..."
+        // Find where the product name ends (before first numeric timestamp)
+        const parts = beforeSub.split('_');
+        const nameparts = [];
+        for (const part of parts) {
+          // Stop when we hit a timestamp (long number) or random string pattern
+          if (/^\d{13}/.test(part) || /^[a-z0-9]{9}$/.test(part)) break;
+          nameparts.push(part);
+        }
+        if (nameparts.length > 0) return nameparts.join(' ');
+      }
+      
+      // Standard pattern: "ProductName_timestamp_random_..."
+      const parts = id.split('_');
+      const nameparts = [];
+      for (const part of parts) {
+        // Stop when we hit a timestamp (long number) or random string, or "task", "detail", "manual"
+        if (/^\d{10,}/.test(part) || /^[a-z0-9]{9}$/.test(part) || ['task', 'detail', 'manual', 'sub'].includes(part)) break;
+        nameparts.push(part);
+      }
+      if (nameparts.length > 0) return nameparts.join(' ');
+      
+      return null;
+    };
+    
+    // Extract sub-template name from ID
+    const extractSubTemplateFromId = (id) => {
+      if (!id || !id.includes('_sub_')) return null;
+      const afterSub = id.split('_sub_')[1];
+      if (!afterSub) return null;
+      const parts = afterSub.split('_');
+      const nameparts = [];
+      for (const part of parts) {
+        if (/^\d{10,}/.test(part) || /^[a-z0-9]{9}$/.test(part) || ['task', 'detail'].includes(part)) break;
+        nameparts.push(part);
+      }
+      return nameparts.length > 0 ? nameparts.join(' ') : null;
+    };
+    
+    // Resolve product name - check field first, then extract from ID, then parent chain
+    const resolveProductName = (item, visited = new Set()) => {
+      if (!item || visited.has(item.id)) return null;
+      visited.add(item.id);
+      
+      // 1. Check if item has explicit product_name field
+      if (item.product_name && !['undefined', 'General Items', 'Manual Items', 'Ungrouped'].includes(item.product_name)) {
+        return item.product_name;
+      }
+      
+      // 2. Try to extract from ID
+      const fromId = extractProductNameFromId(item.id);
+      if (fromId) return fromId;
+      
+      // 3. Try parent chain
+      if (item.parent_id) {
+        const parent = itemMap.get(item.parent_id);
+        if (parent) return resolveProductName(parent, visited);
+      }
+      
+      return null;
+    };
+    
+    // Resolve sub-template name
+    const resolveSubTemplateName = (item, visited = new Set()) => {
+      if (!item || visited.has(item.id)) return null;
+      visited.add(item.id);
+      
+      // 1. Check explicit field
+      if (item.sub_template_name) return item.sub_template_name;
+      
+      // 2. Extract from ID
+      const fromId = extractSubTemplateFromId(item.id);
+      if (fromId) return fromId;
+      
+      // 3. Parent chain
+      if (item.parent_id) {
+        const parent = itemMap.get(item.parent_id);
+        if (parent) return resolveSubTemplateName(parent, visited);
+      }
+      
+      return null;
+    };
+    
     checklist.forEach((item, index) => {
       itemOrder.set(item.id, index);
       
-      // Use the item's product_name directly - it should already be set correctly from save
-      let productName = item.product_name;
-      
-      // Only fallback to General Items if truly missing
-      if (!productName || productName === 'undefined' || productName === 'Ungrouped' || productName === 'Manual Items') {
-        productName = 'General Items';
-      }
+      let productName = resolveProductName(item);
+      if (!productName) productName = 'General Items';
       
       if (!groups[productName]) {
         groups[productName] = {
@@ -376,8 +466,7 @@ export default function ProductChecklistDialog({
         };
       }
       
-      // Use sub_template_name directly
-      const subTemplateName = item.sub_template_name;
+      const subTemplateName = resolveSubTemplateName(item);
       
       if (subTemplateName) {
         if (!groups[productName].subTemplates[subTemplateName]) {
