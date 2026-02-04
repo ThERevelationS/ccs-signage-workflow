@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil } from "lucide-react";
+import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, Users, AlertCircle } from "lucide-react";
+import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
