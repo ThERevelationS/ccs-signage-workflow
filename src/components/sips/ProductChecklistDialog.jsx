@@ -775,18 +775,20 @@ export default function ProductChecklistDialog({
           <div className="clay-card p-3 bg-blue-50/50">
             <h3 className="font-bold text-sm mb-2">Products on this Job</h3>
             <p className="text-xs text-gray-500 mb-2">Products are managed in the Client Information section. Use Checklist Builder to apply checklists.</p>
-            <div className="space-y-1">
-              {products.length > 0 ? products.map((product, index) => (
-                <div key={product.id} className="flex gap-2 items-center p-2 bg-white rounded border">
-                  <span className="text-sm font-medium w-6">{index + 1}.</span>
-                  <span className="text-sm font-medium text-purple-700">{product.product_type || 'No type'}</span>
-                  <span className="text-gray-400">-</span>
-                  <span className="text-sm text-gray-600 flex-1">{product.description || 'No description'}</span>
-                </div>
-              )) : (
-                <p className="text-sm text-gray-400 text-center py-2">No products defined. Add products in the Client Information section first.</p>
-              )}
-            </div>
+            {products.length > 0 ? (
+              <div className="space-y-1">
+                {products.map((product, index) => (
+                  <div key={product.id} className="flex gap-2 items-center p-2 bg-white rounded border">
+                    <span className="text-sm font-medium w-6">{index + 1}.</span>
+                    <span className="text-sm font-medium text-purple-700">{product.product_type || 'No type'}</span>
+                    <span className="text-gray-400">-</span>
+                    <span className="text-sm text-gray-600 flex-1">{product.description || 'No description'}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-400 text-center py-1">No products defined.</div>
+            )}
           </div>
 
           {/* Checklist Items */}
@@ -867,8 +869,9 @@ export default function ProductChecklistDialog({
                         }));
                         
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
+                        const isItemCompleted = dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed;
                         return (
-                        <div key={displayItem.id} className="clay-card p-3 bg-white">
+                        <div key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
                           {/* Main checklist item */}
                           <div 
                             className="flex items-center gap-2 group"
@@ -1089,8 +1092,10 @@ export default function ProductChecklistDialog({
                               )}
 
                               {/* Detail items */}
-                              {displayItem.details?.map(detail => (
-                                <div key={detail.id} className="bg-gray-50 p-2 rounded border group/detail">
+                              {displayItem.details?.map(detail => {
+                                const isDetailCompleted = dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed;
+                                return (
+                                <div key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'}`}>
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     <span className={`text-sm flex-1 ${dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
@@ -1259,7 +1264,8 @@ export default function ProductChecklistDialog({
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                              );
+                              })}
                             </div>
                           )}
                         </div>
@@ -1283,8 +1289,9 @@ export default function ProductChecklistDialog({
                           if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                           
                           const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
+                          const isStItemCompleted = dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed;
                           return (
-                          <div key={stDisplayItem.id} className="clay-card p-2 bg-white">
+                          <div key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}
                             <div 
                               className="flex items-center gap-2 group"
                               onMouseEnter={() => setHoveredItem(stDisplayItem.id)}
