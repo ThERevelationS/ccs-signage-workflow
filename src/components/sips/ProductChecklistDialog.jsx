@@ -374,18 +374,18 @@ export default function ProductChecklistDialog({
         const parts = beforeSub.split('_');
         const nameparts = [];
         for (const part of parts) {
-          // Stop when we hit a timestamp (long number) or random string pattern
-          if (/^\d{13}/.test(part) || /^[a-z0-9]{9}$/.test(part)) break;
+          // Stop when we hit a timestamp (long number) or random string pattern or "manual"
+          if (/^\d{13}/.test(part) || /^[a-z0-9]{9}$/.test(part) || part === 'manual') break;
           nameparts.push(part);
         }
         if (nameparts.length > 0) return nameparts.join(' ');
       }
       
-      // Standard pattern: "ProductName_timestamp_random_..."
+      // Standard pattern: "ProductName_timestamp_random_..." or "ProductName_manual_timestamp_random_..."
       const parts = id.split('_');
       const nameparts = [];
       for (const part of parts) {
-        // Stop when we hit a timestamp (long number) or random string, or "task", "detail", "manual"
+        // Stop when we hit a timestamp (long number) or random string, or "task", "detail", "manual", "sub"
         if (/^\d{10,}/.test(part) || /^[a-z0-9]{9}$/.test(part) || ['task', 'detail', 'manual', 'sub'].includes(part)) break;
         nameparts.push(part);
       }
