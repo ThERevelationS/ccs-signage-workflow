@@ -641,18 +641,18 @@ function LayoutContent({ children }) {
                 <div className="flex gap-2">
                   <Link
                     to={createPageUrl("TimeClock")}
-                    className="flex-1 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                    className="flex-1 px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
                   >
                     <Home className="w-4 h-4 text-green-600" />
-                    <span className="font-bold text-xs text-green-700">Time Clock</span>
+                    <span className="font-bold text-sm text-green-700">Time Clock</span>
                   </Link>
 
                   <button
                     onClick={() => setShowAddTaskDialog(true)}
-                    className="flex-1 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                    className="flex-1 px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
                   >
                     <ClipboardList className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-xs text-blue-700">+ Task</span>
+                    <span className="font-bold text-sm text-blue-700">+ Task</span>
                   </button>
                 </div>
 
@@ -848,9 +848,9 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Time Clock + Add Task + Search - search spans full width */}
-                <div className="hidden lg:flex flex-col gap-2">
-                  <div className="flex gap-2">
+                {/* Time Clock + Add Task on top row, Search spans full width below */}
+                <div className="hidden lg:block">
+                  <div className="flex gap-2 mb-2">
                     <Link
                       to={createPageUrl("TimeClock")}
                       className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
@@ -868,9 +868,7 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
                   
-                  <div className="w-full" style={{ minWidth: '280px' }}>
-                    <GlobalSearch />
-                  </div>
+                  <GlobalSearch />
                 </div>
               </div>
 
