@@ -636,23 +636,25 @@ function LayoutContent({ children }) {
                 </div>
               </div>
 
-              {/* Time Clock + Add Task + Search in vertical stack */}
+              {/* Time Clock + Add Task side by side, Search full width below */}
               <div className="space-y-2 mb-4">
-                <Link
-                  to={createPageUrl("TimeClock")}
-                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
-                >
-                  <Home className="w-4 h-4 text-green-600" />
-                  <span className="font-bold text-sm text-green-700">Time Clock</span>
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    to={createPageUrl("TimeClock")}
+                    className="flex-1 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                  >
+                    <Home className="w-4 h-4 text-green-600" />
+                    <span className="font-bold text-xs text-green-700">Time Clock</span>
+                  </Link>
 
-                <button
-                  onClick={() => setShowAddTaskDialog(true)}
-                  className="w-full px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
-                >
-                  <ClipboardList className="w-4 h-4 text-blue-600" />
-                  <span className="font-bold text-sm text-blue-700">+ Task</span>
-                </button>
+                  <button
+                    onClick={() => setShowAddTaskDialog(true)}
+                    className="flex-1 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                  >
+                    <ClipboardList className="w-4 h-4 text-blue-600" />
+                    <span className="font-bold text-xs text-blue-700">+ Task</span>
+                  </button>
+                </div>
 
                 <GlobalSearch />
               </div>
@@ -846,25 +848,27 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Time Clock + Add Task + Search in 2x2 grid */}
-                <div className="hidden lg:grid grid-cols-2 gap-2">
-                  <Link
-                    to={createPageUrl("TimeClock")}
-                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
-                  >
-                    <Home className="w-4 h-4 text-green-600" />
-                    <span className="font-bold text-sm text-green-700">Time Clock</span>
-                  </Link>
+                {/* Time Clock + Add Task + Search - search spans full width */}
+                <div className="hidden lg:flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Link
+                      to={createPageUrl("TimeClock")}
+                      className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                    >
+                      <Home className="w-4 h-4 text-green-600" />
+                      <span className="font-bold text-sm text-green-700">Time Clock</span>
+                    </Link>
+                    
+                    <button
+                      onClick={() => setShowAddTaskDialog(true)}
+                      className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                    >
+                      <ClipboardList className="w-4 h-4 text-blue-600" />
+                      <span className="font-bold text-sm text-blue-700">+ Task</span>
+                    </button>
+                  </div>
                   
-                  <button
-                    onClick={() => setShowAddTaskDialog(true)}
-                    className="px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
-                  >
-                    <ClipboardList className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-sm text-blue-700">+ Task</span>
-                  </button>
-                  
-                  <div className="col-span-2">
+                  <div className="w-full" style={{ minWidth: '280px' }}>
                     <GlobalSearch />
                   </div>
                 </div>
