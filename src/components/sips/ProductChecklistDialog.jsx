@@ -780,7 +780,16 @@ export default function ProductChecklistDialog({
               </div>
             ) : (
               Object.entries(groupedChecklist)
-                .filter(([productName, group]) => group.mainItems.length > 0 || Object.keys(group.subTemplates).length > 0)
+                .filter(([productName, group]) => {
+                  // Only show product if it has actual checklist items (not just tasks/details/subtasks)
+                  const hasMainChecklistItems = group.mainItems.some(item => 
+                    !item.parent_id && (item.type === 'checklist' || !item.type)
+                  );
+                  const hasSubTemplateItems = Object.values(group.subTemplates).some(stItems => 
+                    stItems.some(item => !item.parent_id && (item.type === 'checklist' || !item.type))
+                  );
+                  return hasMainChecklistItems || hasSubTemplateItems;
+                })
                 .map(([productName, group]) => (
                 <div 
                   key={productName} 
