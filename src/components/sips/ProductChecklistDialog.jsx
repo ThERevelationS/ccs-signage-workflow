@@ -295,47 +295,66 @@ export default function ProductChecklistDialog({
     const groups = {};
     const itemOrder = new Map(); // Track original order
     
+    // Helper function to resolve product name by traversing parent chain
+    const resolveProductName = (item, visitedIds = new Set()) => {
+      // Prevent infinite loops
+      if (visitedIds.has(item.id)) return null;
+      visitedIds.add(item.id);
+      
+      // If this item has a valid product_name, use it
+      if (item.product_name && 
+          item.product_name !== 'undefined' && 
+          item.product_name !== 'Ungrouped' && 
+          item.product_name !== 'Manual Items' &&
+          item.product_name !== 'General Items') {
+        return item.product_name;
+      }
+      
+      // If has parent, get parent's product_name
+      if (item.parent_id) {
+        const parent = checklist.find(p => p.id === item.parent_id);
+        if (parent) {
+          return resolveProductName(parent, visitedIds);
+        }
+      }
+      
+      return null;
+    };
+    
     // First pass: organize by product and sub-template while preserving order
     checklist.forEach((item, index) => {
       itemOrder.set(item.id, index);
       
-      // Use the explicitly set product_name - don't try to extract from ID for manually created items
-      let productName = item.product_name;
+      // For manual items or items with parent_id, always try to resolve from parent chain first
+      let productName = null;
       
-      // Only extract from ID if product_name is truly missing (for legacy data)
-      if (!productName || productName === 'undefined' || productName === 'Ungrouped') {
-        // For manually created items (IDs starting with "manual_"), use the stored product_name
-        if (item.id && item.id.startsWith('manual_')) {
-          // Manual items should ALWAYS have product_name set from when they were created
-          // If somehow missing, keep them with their parent
-          productName = item.product_name || 'General Items';
-        } else if (item.id) {
-          // Legacy extraction for old items only
-          const idParts = item.id.split('_');
-          if (idParts.length >= 2) {
-            const subIndex = idParts.indexOf('sub');
-            if (subIndex > 0) {
-              productName = idParts.slice(0, subIndex).join(' ');
-            } else {
-              productName = idParts[0];
-            }
+      // If this item has a parent, get the product_name from the parent chain
+      if (item.parent_id) {
+        productName = resolveProductName(item);
+      }
+      
+      // If no parent or couldn't resolve, use the item's own product_name
+      if (!productName) {
+        productName = item.product_name;
+      }
+      
+      // For non-manual legacy items without product_name, try to extract from ID
+      if ((!productName || productName === 'undefined' || productName === 'Ungrouped') && 
+          item.id && !item.id.startsWith('manual_')) {
+        const idParts = item.id.split('_');
+        if (idParts.length >= 2) {
+          const subIndex = idParts.indexOf('sub');
+          if (subIndex > 0) {
+            productName = idParts.slice(0, subIndex).join(' ');
+          } else {
+            productName = idParts[0];
           }
         }
       }
       
-      // Final fallback
+      // Final fallback only if absolutely nothing worked
       if (!productName || productName === 'undefined' || productName === 'Ungrouped' || productName === 'Manual Items') {
-        // If there's a parent_id, find the parent and use its product_name
-        if (item.parent_id) {
-          const parent = checklist.find(p => p.id === item.parent_id);
-          if (parent && parent.product_name) {
-            productName = parent.product_name;
-          } else {
-            productName = 'General Items';
-          }
-        } else {
-          productName = 'General Items';
-        }
+        productName = 'General Items';
       }
       
       if (!groups[productName]) {
@@ -348,6 +367,16 @@ export default function ProductChecklistDialog({
       
       // Check for sub_template_name - use explicit value, don't extract from ID for manual items
       let subTemplateName = item.sub_template_name;
+      
+      // For manual items with parent, inherit sub_template_name from parent
+      if (!subTemplateName && item.parent_id && item.id?.startsWith('manual_')) {
+        const parent = checklist.find(p => p.id === item.parent_id);
+        if (parent) {
+          subTemplateName = parent.sub_template_name;
+        }
+      }
+      
+      // For legacy items, extract from ID
       if (!subTemplateName && item.id && !item.id.startsWith('manual_') && item.id.includes('_sub_')) {
         const parts = item.id.split('_sub_');
         if (parts.length > 1) {
