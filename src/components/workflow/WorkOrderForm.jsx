@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
-import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
+import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2, Package } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 
@@ -46,6 +46,7 @@ const TEAM_MEMBERS = [
 ];
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function WorkOrderForm({ 
   isOpen, 
@@ -75,6 +76,7 @@ export default function WorkOrderForm({
   const [showCompletedFollowUp, setShowCompletedFollowUp] = useState(false);
   const [scanningForm, setScanningForm] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [productTypes, setProductTypes] = useState([]);
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
@@ -144,7 +146,9 @@ export default function WorkOrderForm({
       paint: "",
       color: "",
       
-      // Products
+      // Products - new structure
+      products: [],
+      // Legacy products (kept for backward compatibility)
       product_1: "",
       product_2: "",
       product_3: "",
@@ -218,6 +222,7 @@ export default function WorkOrderForm({
   useEffect(() => {
     loadUsers();
     loadAuthorizedUsers();
+    loadProductTypes();
     
     // Handle custom name for initialData (duplicating)
     if (initialData && initialData.assigned_to && !TEAM_MEMBERS.includes(initialData.assigned_to)) {
@@ -275,6 +280,19 @@ export default function WorkOrderForm({
       setUsers(usersList);
     } catch (e) {
       console.error("Error loading users:", e);
+    }
+  };
+
+  const loadProductTypes = async () => {
+    try {
+      const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
+      if (settings.length > 0) {
+        setProductTypes(settings[0].setting_value?.items || []);
+      } else {
+        setProductTypes(["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
+      }
+    } catch (error) {
+      console.error("Error loading product types:", error);
     }
   };
 
@@ -1076,36 +1094,78 @@ export default function WorkOrderForm({
             </div>
           </div>
 
-          {/* Products Section */}
+          {/* Products Section - matches ClientInfoSection */}
           <div className="clay-card p-4">
-            <h3 className="font-bold text-lg mb-3 border-b pb-2">Products</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">#1</Label>
-                <Input value={formData.product_1} onChange={(e) => handleChange("product_1", e.target.value)} className="mt-1 h-8" />
-              </div>
-              <div>
-                <Label className="text-sm">#4</Label>
-                <Input value={formData.product_4} onChange={(e) => handleChange("product_4", e.target.value)} className="mt-1 h-8" />
-              </div>
-              <div>
-                <Label className="text-sm">#2</Label>
-                <Input value={formData.product_2} onChange={(e) => handleChange("product_2", e.target.value)} className="mt-1 h-8" />
-              </div>
-              <div>
-                <Label className="text-sm">#5</Label>
-                <Input value={formData.product_5} onChange={(e) => handleChange("product_5", e.target.value)} className="mt-1 h-8" />
-              </div>
-              <div>
-                <Label className="text-sm">#3</Label>
-                <Input value={formData.product_3} onChange={(e) => handleChange("product_3", e.target.value)} className="mt-1 h-8" />
-              </div>
-              <div>
-                <Label className="text-sm">#6</Label>
-                <Input value={formData.product_6} onChange={(e) => handleChange("product_6", e.target.value)} className="mt-1 h-8" />
-              </div>
+            <div className="flex items-center justify-between mb-3 border-b pb-2">
+              <h3 className="font-bold text-lg">Products</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const newProduct = {
+                    id: `prod_${Date.now()}`,
+                    description: "",
+                    product_type: ""
+                  };
+                  handleChange("products", [...(formData.products || []), newProduct]);
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Product
+              </Button>
             </div>
-            <div className="mt-3 flex items-center gap-4">
+            <div className="space-y-2 mb-3">
+              {(formData.products || []).map((product, index) => (
+                <div key={product.id} className="flex gap-2 items-center">
+                  <span className="text-xs font-medium w-6">#{index + 1}</span>
+                  <Select
+                    value={product.product_type || ""}
+                    onValueChange={(val) => {
+                      const updated = [...(formData.products || [])];
+                      updated[index] = { ...updated[index], product_type: val };
+                      handleChange("products", updated);
+                    }}
+                  >
+                    <SelectTrigger className="w-40 h-8 text-sm">
+                      <SelectValue placeholder="Type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>None</SelectItem>
+                      {productTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={product.description || ""}
+                    onChange={(e) => {
+                      const updated = [...(formData.products || [])];
+                      updated[index] = { ...updated[index], description: e.target.value };
+                      handleChange("products", updated);
+                    }}
+                    placeholder="Product description..."
+                    className="flex-1 h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      handleChange("products", (formData.products || []).filter((_, i) => i !== index));
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+              {(!formData.products || formData.products.length === 0) && (
+                <p className="text-xs text-gray-400 text-center py-2">No products added yet</p>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
               <span className="font-semibold text-sm">Complete:</span>
               <label className="flex items-center gap-1 cursor-pointer">
                 <Checkbox checked={formData.cb_complete} onCheckedChange={() => handleCheckboxChange("cb_complete")} />
