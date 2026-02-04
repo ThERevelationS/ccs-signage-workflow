@@ -415,11 +415,18 @@ export default function MyWorkflow() {
       // Skip completed items (approved_by means completed for sip_checklist)
       if (item.approved_by) return;
       
+      // Handle both single user assignment (old) and array assignment (new)
+      const assignedUsers = Array.isArray(item.assigned_to) ? item.assigned_to : (item.assigned_to ? [item.assigned_to] : []);
+      
       // Only show task-type items that are assigned to me
-      if (item.type === 'task' && item.assigned_to === userName) {
+      if (item.type === 'task' && assignedUsers.includes(userName)) {
+        // Find the parent checklist item for this task
+        const parentItem = wo.sip_checklist.find(ci => ci.id === item.parent_id);
+        
         myTasks.push({ 
           type: 'sip_task', 
           item, 
+          parentItem,
           itemIndex, 
           workOrderId: wo.id, 
           source: 'sip_checklist',
