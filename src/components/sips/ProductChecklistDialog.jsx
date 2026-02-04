@@ -313,30 +313,39 @@ export default function ProductChecklistDialog({
       };
       
       // Before saving, ensure ALL items have proper product_name by resolving from parent chain
+      // IMPORTANT: Preserve ALL fields including type, parent_id, etc.
       const resolvedChecklist = checklist.map(item => {
         // Always try to resolve from parent chain first
         const rootInfo = findRootProductInfo(item.id);
         
-        if (rootInfo) {
-          return {
-            ...item,
-            product_name: rootInfo.product_name,
-            product_type: item.product_type || rootInfo.product_type,
-            sub_template_name: item.sub_template_name || rootInfo.sub_template_name
-          };
-        }
+        // Build the complete item with all fields preserved
+        const savedItem = {
+          id: item.id,
+          text: item.text,
+          type: item.type || 'checklist', // Preserve type
+          parent_id: item.parent_id || null, // Preserve parent_id
+          approved_by: item.approved_by || '',
+          assigned_to: item.assigned_to || '',
+          custom_dropdown_value: item.custom_dropdown_value || '',
+          dropdown_id: item.dropdown_id || '',
+          dropdown_ids: item.dropdown_ids || [],
+          product_name: rootInfo?.product_name || item.product_name || 'General Items',
+          product_type: item.product_type || rootInfo?.product_type || '',
+          sub_template_name: item.sub_template_name || rootInfo?.sub_template_name || null,
+          product_id: item.product_id || null,
+          sub_items: item.sub_items || []
+        };
         
-        // Keep item as-is if no root info found
-        return item;
+        return savedItem;
       });
       
-      console.log("Saving checklist - items with product names:", 
+      console.log("Saving checklist - items:", 
         resolvedChecklist.map(i => ({ 
-          id: i.id?.substring(0, 20), 
+          id: i.id?.substring(0, 30), 
           text: i.text?.substring(0, 20),
-          product_name: i.product_name, 
-          parent_id: i.parent_id?.substring(0, 20),
-          type: i.type
+          type: i.type,
+          parent_id: i.parent_id?.substring(0, 30),
+          product_name: i.product_name
         }))
       );
       
