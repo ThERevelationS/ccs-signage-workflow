@@ -720,16 +720,17 @@ export default function ProductChecklistDialog({
                     <div className="space-y-2 mb-3">
                       {/* Build hierarchy - treat all items as main items if no type field */}
                       {group.mainItems.map(rawItem => {
+                        // Skip child items - they'll be rendered under their parent
+                        if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
+                        
                         // Treat items without type as checklist items
                         const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
-                        // Find associated tasks/details
+                        // Find associated tasks/details from the SAME group
                         const itemTasks = group.mainItems.filter(i => i.type === 'task' && i.parent_id === item.id);
                         const itemDetails = group.mainItems.filter(i => i.type === 'detail' && i.parent_id === item.id).map(detail => ({
                           ...detail,
                           tasks: group.mainItems.filter(i => i.type === 'task' && i.parent_id === detail.id)
                         }));
-                        // Skip if this is a child item (task/detail with parent)
-                        if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                         
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                         return (
