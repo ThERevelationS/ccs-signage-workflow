@@ -31,6 +31,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [localData, setLocalData] = useState({});
   const [products, setProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
+  const [productsChanged, setProductsChanged] = useState(false);
 
   // Load product types and initialize products
   useEffect(() => {
@@ -103,18 +104,21 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
       // Keep local data in sync with saved values (don't clear it, merge it)
       // This ensures the UI shows the saved values
       setLocalData({});
+      setProductsChanged(false);
+      if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error saving:", error);
     }
     setSaving(false);
   };
 
-  const hasChanges = Object.keys(localData).length > 0;
+  const hasChanges = Object.keys(localData).length > 0 || productsChanged;
   
   const updateProduct = (index, field, value) => {
     const updated = [...products];
     updated[index] = { ...updated[index], [field]: value };
     setProducts(updated);
+    setProductsChanged(true);
   };
 
   const addProduct = () => {
@@ -123,10 +127,12 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
       description: "",
       product_type: ""
     }]);
+    setProductsChanged(true);
   };
 
   const removeProduct = (index) => {
     setProducts(products.filter((_, i) => i !== index));
+    setProductsChanged(true);
   };
 
   return (
