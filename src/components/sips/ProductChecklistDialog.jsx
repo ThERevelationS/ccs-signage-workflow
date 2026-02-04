@@ -750,7 +750,7 @@ export default function ProductChecklistDialog({
   return (
     <>
       <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={onClose}>
-        <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold">
@@ -779,7 +779,9 @@ export default function ProductChecklistDialog({
                 <p className="text-sm mt-1">Use Checklist Builder to create and apply checklists</p>
               </div>
             ) : (
-              Object.entries(groupedChecklist).map(([productName, group]) => (
+              Object.entries(groupedChecklist)
+                .filter(([productName, group]) => group.mainItems.length > 0 || Object.keys(group.subTemplates).length > 0)
+                .map(([productName, group]) => (
                 <div 
                   key={productName} 
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
