@@ -877,18 +877,19 @@ export default function ProductChecklistDialog({
                 <p className="text-sm mt-1">Use Checklist Builder to create and apply checklists</p>
               </div>
             ) : (
-              Object.entries(groupedChecklist)
-                .filter(([productName, group]) => {
-                  // Only show product if it has actual checklist items (not just tasks/details/subtasks)
-                  const hasMainChecklistItems = group.mainItems.some(item => 
-                    !item.parent_id && (item.type === 'checklist' || !item.type)
-                  );
-                  const hasSubTemplateItems = Object.values(group.subTemplates).some(stItems => 
-                    stItems.some(item => !item.parent_id && (item.type === 'checklist' || !item.type))
-                  );
-                  return hasMainChecklistItems || hasSubTemplateItems;
-                })
-                .map(([productName, group]) => (
+              <>
+                {/* Active Items */}
+                {Object.entries(activeChecklist)
+                  .filter(([productName, group]) => {
+                    const hasMainChecklistItems = group.mainItems.some(item => 
+                      !item.parent_id && (item.type === 'checklist' || !item.type)
+                    );
+                    const hasSubTemplateItems = Object.values(group.subTemplates).some(stItems => 
+                      stItems.some(item => !item.parent_id && (item.type === 'checklist' || !item.type))
+                    );
+                    return hasMainChecklistItems || hasSubTemplateItems;
+                  })
+                  .map(([productName, group]) => (
                 <div 
                   key={productName} 
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
