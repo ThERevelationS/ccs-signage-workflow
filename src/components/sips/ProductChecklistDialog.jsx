@@ -1594,11 +1594,11 @@ export default function ProductChecklistDialog({
                                           </div>
                                         ))}
                                       </div>
-                                    )}
-                                  </div>
-                                ))}
-                                
-                                {/* Inline add detail for sub-template */}
+                                      )}
+                                      </div>
+                                      ))}
+
+                                      {/* Inline add detail for sub-template */}
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'detail' && (
                                   <div className="bg-gray-50 p-1.5 rounded border">
                                     <div className="flex items-center gap-1">
