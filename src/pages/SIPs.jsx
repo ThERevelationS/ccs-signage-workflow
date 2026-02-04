@@ -137,22 +137,19 @@ export default function SIPs() {
     const checklist = wo.sip_checklist || [];
     if (checklist.length === 0) return { completed: 0, total: 0 };
     
-    // Count completed main items (have approved_by AND custom_dropdown_value)
-    const mainCompleted = checklist.filter(item => item.approved_by && item.custom_dropdown_value).length;
+    // Only count main checklist items (type === 'checklist' or no type AND no parent_id)
+    const mainChecklistItems = checklist.filter(item => 
+      (!item.type || item.type === 'checklist') && !item.parent_id
+    );
     
-    // Count completed sub-items
-    let subCompleted = 0;
-    let subTotal = 0;
-    checklist.forEach(item => {
-      if (item.sub_items && item.sub_items.length > 0) {
-        subTotal += item.sub_items.length;
-        subCompleted += item.sub_items.filter(si => si.checked).length;
-      }
-    });
+    if (mainChecklistItems.length === 0) return { completed: 0, total: 0 };
+    
+    // Count completed main items (have approved_by AND custom_dropdown_value)
+    const mainCompleted = mainChecklistItems.filter(item => item.approved_by && item.custom_dropdown_value).length;
     
     return { 
-      completed: mainCompleted + subCompleted, 
-      total: checklist.length + subTotal 
+      completed: mainCompleted, 
+      total: mainChecklistItems.length 
     };
   };
 
