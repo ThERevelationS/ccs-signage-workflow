@@ -1605,7 +1605,92 @@ export default function ProductChecklistDialog({
                     </div>
                   ))}
                 </div>
-              ))
+                ))}
+                
+                {/* Completed Items Section */}
+                {Object.keys(completedChecklist).length > 0 && (
+                  <div className="mt-6 pt-4 border-t-4 border-green-300">
+                    <h3 className="font-bold text-green-800 mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5" />
+                      Completed Items ({Object.values(completedChecklist).reduce((sum, g) => sum + g.mainItems.filter(i => !i.parent_id && (i.type === 'checklist' || !i.type)).length + Object.values(g.subTemplates).reduce((s, st) => s + st.filter(i => !i.parent_id && (i.type === 'checklist' || !i.type)).length, 0), 0)})
+                    </h3>
+                    {Object.entries(completedChecklist)
+                      .filter(([productName, group]) => {
+                        const hasMainChecklistItems = group.mainItems.some(item => 
+                          !item.parent_id && (item.type === 'checklist' || !item.type)
+                        );
+                        const hasSubTemplateItems = Object.values(group.subTemplates).some(stItems => 
+                          stItems.some(item => !item.parent_id && (item.type === 'checklist' || !item.type))
+                        );
+                        return hasMainChecklistItems || hasSubTemplateItems;
+                      })
+                      .map(([productName, group]) => (
+                        <div 
+                          key={productName} 
+                          className="border-2 border-green-200 rounded-lg p-3 bg-green-50/20 mb-3"
+                        >
+                          <h3 className="font-bold text-green-800 flex items-center gap-2 mb-2">
+                            📦 {productName}
+                          </h3>
+                          
+                          {/* Main Items */}
+                          {group.mainItems.length > 0 && (
+                            <div className="space-y-2 mb-3">
+                              {group.mainItems.map(rawItem => {
+                                if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
+                                
+                                const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
+                                const itemTasks = group.mainItems.filter(i => i.type === 'task' && i.parent_id === item.id);
+                                const itemDetails = group.mainItems.filter(i => i.type === 'detail' && i.parent_id === item.id).map(detail => ({
+                                  ...detail,
+                                  tasks: group.mainItems.filter(i => i.type === 'task' && i.parent_id === detail.id)
+                                }));
+                                
+                                const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
+                                
+                                return (
+                                  <div key={displayItem.id} className="clay-card p-2 bg-green-100/70 opacity-70">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700">Checklist</span>
+                                      <span className="font-medium text-sm flex-1 line-through text-gray-500">{displayItem.text}</span>
+                                      <span className="text-xs text-gray-600">{displayItem.approved_by}</span>
+                                      <span className="text-xs px-2 py-0.5 bg-green-200 text-green-700 rounded">{displayItem.custom_dropdown_value}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {/* Sub-templates */}
+                          {Object.entries(group.subTemplates).map(([stName, stItems]) => (
+                            <div key={stName} className="ml-4 mt-2 border-l-2 border-green-300 pl-3">
+                              <h4 className="text-sm font-semibold text-green-700 mb-2">🔗 {stName}</h4>
+                              <div className="space-y-2">
+                                {stItems.map(rawItem => {
+                                  if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
+                                  
+                                  const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
+                                  
+                                  return (
+                                    <div key={stItem.id} className="clay-card p-2 bg-green-100/70 opacity-70">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-green-200 text-green-700">Checklist</span>
+                                        <span className="text-sm flex-1 line-through text-gray-500">{stItem.text}</span>
+                                        <span className="text-xs text-gray-600">{stItem.approved_by}</span>
+                                        <span className="text-xs px-2 py-0.5 bg-green-200 text-green-700 rounded">{stItem.custom_dropdown_value}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
