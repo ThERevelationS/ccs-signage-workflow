@@ -277,8 +277,60 @@ export default function ProductChecklistDialog({
   const saveChecklist = async () => {
     setIsSaving(true);
     try {
+      // Before saving, ensure all items have proper product_name by resolving from parent chain
+      const resolvedChecklist = checklist.map(item => {
+        // If item already has a valid product_name that's not General Items, keep it
+        if (item.product_name && 
+            item.product_name !== 'undefined' && 
+            item.product_name !== 'General Items' &&
+            item.product_name !== 'Manual Items') {
+          return item;
+        }
+        
+        // Otherwise, try to resolve from parent chain
+        if (item.parent_id) {
+          let currentParentId = item.parent_id;
+          let resolvedProductName = null;
+          let resolvedProductType = '';
+          let resolvedSubTemplateName = null;
+          const visited = new Set();
+          
+          while (currentParentId && !visited.has(currentParentId)) {
+            visited.add(currentParentId);
+            const parent = checklist.find(p => p.id === currentParentId);
+            if (parent) {
+              if (parent.product_name && 
+                  parent.product_name !== 'undefined' && 
+                  parent.product_name !== 'General Items' &&
+                  parent.product_name !== 'Manual Items') {
+                resolvedProductName = parent.product_name;
+                resolvedProductType = parent.product_type || '';
+                resolvedSubTemplateName = parent.sub_template_name || null;
+                break;
+              }
+              currentParentId = parent.parent_id;
+            } else {
+              break;
+            }
+          }
+          
+          if (resolvedProductName) {
+            return {
+              ...item,
+              product_name: resolvedProductName,
+              product_type: resolvedProductType,
+              sub_template_name: resolvedSubTemplateName
+            };
+          }
+        }
+        
+        return item;
+      });
+      
+      console.log("Saving checklist with resolved product names:", resolvedChecklist.map(i => ({ id: i.id, product_name: i.product_name, parent_id: i.parent_id })));
+      
       await WorkOrder.update(workOrder.id, { 
-        sip_checklist: checklist,
+        sip_checklist: resolvedChecklist,
         products: products
       });
       if (onUpdate) onUpdate();
