@@ -1291,7 +1291,7 @@ export default function ProductChecklistDialog({
                           const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
                           const isStItemCompleted = dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed;
                           return (
-                          <div key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}
+                          <div key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
                             <div 
                               className="flex items-center gap-2 group"
                               onMouseEnter={() => setHoveredItem(stDisplayItem.id)}
