@@ -805,6 +805,80 @@ export default function MyWorkflow() {
           }}
         />
       )}
+      
+      {/* Edit SIP Checklist Item Dialog */}
+      {editingSipTask && (
+        <Dialog open={true} onOpenChange={() => setEditingSipTask(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Checklist Item</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Checklist Item</Label>
+                <p className="text-sm font-medium mt-1 p-2 bg-gray-100 rounded">{editingSipTask.parentItem.text}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium">Approved By</Label>
+                <Select
+                  value={editingSipTask.parentItem.approved_by || ""}
+                  onValueChange={async (val) => {
+                    await updateSipChecklistItem(editingSipTask.woId, editingSipTask.parentItem.id, { approved_by: val });
+                    setEditingSipTask(prev => ({
+                      ...prev,
+                      parentItem: { ...prev.parentItem, approved_by: val }
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select person..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers.map(u => (
+                      <SelectItem key={u.email} value={u.full_name || u.email}>
+                        {u.full_name || u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium">Condition</Label>
+                <Select
+                  value={editingSipTask.parentItem.custom_dropdown_value || "select_value"}
+                  onValueChange={async (val) => {
+                    if (val !== "select_value") {
+                      await updateSipChecklistItem(editingSipTask.woId, editingSipTask.parentItem.id, { custom_dropdown_value: val });
+                      setEditingSipTask(prev => ({
+                        ...prev,
+                        parentItem: { ...prev.parentItem, custom_dropdown_value: val }
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select condition..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dropdownConditions
+                      .filter(dd => (editingSipTask.parentItem.dropdown_ids || []).includes(dd.id))
+                      .map(dd => (
+                        <SelectItem key={dd.id} value={dd.name}>
+                          {dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingSipTask(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
