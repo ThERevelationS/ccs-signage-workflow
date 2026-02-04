@@ -66,6 +66,7 @@ import { List } from "lucide-react";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import WorkOrderTimeEntries from "./WorkOrderTimeEntries";
 import ClientInfoSection from "./ClientInfoSection";
+import SipChecklistSection from "./SipChecklistSection";
 import CreateRiderDialog from "./CreateRiderDialog";
 import WorkOrderForm from "./WorkOrderForm";
 import WorkOrderFiles from "./WorkOrderFiles";
@@ -877,6 +878,14 @@ export default function WorkOrderDetailsDialog({
             {/* Client Information Section - Collapsible */}
             <div className="mb-6">
               <ClientInfoSection 
+                workOrder={workOrder} 
+                onUpdate={onUpdate} 
+              />
+            </div>
+
+            {/* SIP Checklist Section - Collapsible */}
+            <div className="mb-6">
+              <SipChecklistSection 
                 workOrder={workOrder} 
                 onUpdate={onUpdate} 
               />
