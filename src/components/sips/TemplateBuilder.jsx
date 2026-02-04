@@ -1154,12 +1154,58 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         {productTypes.map((type, index) => (
                           <Draggable key={type} draggableId={type} index={index}>
                             {(provided) => (
-                              <div ref={provided.innerRef} {...provided.draggableProps} onClick={() => selectProductType(type)}
+                              <div ref={provided.innerRef} {...provided.draggableProps} onClick={() => editingProductTypeName !== type && selectProductType(type)}
                                 className={`p-1.5 rounded border cursor-pointer flex items-center gap-1 mb-1 ${selectedProductType === type ? 'bg-blue-100 border-blue-300' : 'bg-white hover:bg-gray-50'}`}>
                                 <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
-                                <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
-                                <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
-                                <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${type}"?`)) { saveProductTypes(productTypes.filter((_, i) => i !== index)); if (selectedProductType === type) { setSelectedProductType(null); setProductTypeItems([]); } } }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                {editingProductTypeName === type ? (
+                                  <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                    <Input 
+                                      value={editingProductTypeValue} 
+                                      onChange={(e) => setEditingProductTypeValue(e.target.value)} 
+                                      className="h-6 text-xs flex-1" 
+                                      autoFocus
+                                      onKeyDown={async (e) => { 
+                                        if (e.key === 'Enter' && editingProductTypeValue.trim()) { 
+                                          const newName = editingProductTypeValue.trim();
+                                          const newTypes = productTypes.map(t => t === type ? newName : t);
+                                          await saveProductTypes(newTypes);
+                                          // Update templates if the type had a template
+                                          if (productTypeTemplates[type]) {
+                                            const newTemplates = { ...productTypeTemplates };
+                                            newTemplates[newName] = newTemplates[type];
+                                            delete newTemplates[type];
+                                            await saveProductTypeTemplates(newTemplates);
+                                          }
+                                          if (selectedProductType === type) setSelectedProductType(newName);
+                                          setEditingProductTypeName(null); 
+                                        } 
+                                        if (e.key === 'Escape') setEditingProductTypeName(null); 
+                                      }} 
+                                    />
+                                    <Button size="sm" className="h-6 px-1" onClick={async () => { 
+                                      if (editingProductTypeValue.trim()) {
+                                        const newName = editingProductTypeValue.trim();
+                                        const newTypes = productTypes.map(t => t === type ? newName : t);
+                                        await saveProductTypes(newTypes);
+                                        if (productTypeTemplates[type]) {
+                                          const newTemplates = { ...productTypeTemplates };
+                                          newTemplates[newName] = newTemplates[type];
+                                          delete newTemplates[type];
+                                          await saveProductTypeTemplates(newTemplates);
+                                        }
+                                        if (selectedProductType === type) setSelectedProductType(newName);
+                                      }
+                                      setEditingProductTypeName(null); 
+                                    }}><Save className="w-3 h-3" /></Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
+                                    <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setEditingProductTypeName(type); setEditingProductTypeValue(type); }} className="p-0.5"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${type}"?`)) { saveProductTypes(productTypes.filter((_, i) => i !== index)); if (selectedProductType === type) { setSelectedProductType(null); setProductTypeItems([]); } } }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                  </>
+                                )}
                               </div>
                             )}
                           </Draggable>
