@@ -703,9 +703,12 @@ export default function MyWorkflow() {
                               {item.type === 'sip_task' && (
                                 <div className={`p-1 rounded border ${item.item.approved_by ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                                   <div className="flex items-center gap-1">
+                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                      {item.parentItem && (isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />)}
+                                    </button>
                                     <Checkbox
                                       checked={!!item.item.approved_by}
-                                      onCheckedChange={() => toggleSipTaskComplete(wo.id, item.itemIndex)}
+                                      onCheckedChange={() => toggleSipTaskComplete(wo.id, item.item.id)}
                                       disabled={!isRegistered}
                                       className="h-3 w-3"
                                     />
@@ -718,7 +721,38 @@ export default function MyWorkflow() {
                                         <p className="text-[10px] text-gray-400">📦 {item.productName}</p>
                                       )}
                                     </div>
+                                    <MultiUserSelectInline
+                                      users={allUsers}
+                                      selectedUsers={item.item.assigned_to ? (Array.isArray(item.item.assigned_to) ? item.item.assigned_to : [item.item.assigned_to]) : []}
+                                      onSelectionChange={(val) => updateSipChecklistItem(wo.id, item.item.id, { assigned_to: val })}
+                                      disabled={!isRegistered}
+                                      className="h-4 min-w-[60px]"
+                                    />
+                                    {item.parentItem && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => setEditingSipTask({ woId: wo.id, item: item.item, parentItem: item.parentItem })}
+                                        className="h-4 w-4 opacity-0 group-hover:opacity-100"
+                                      >
+                                        <Pencil className="w-2.5 h-2.5 text-blue-500" />
+                                      </Button>
+                                    )}
                                   </div>
+                                  
+                                  {/* Expanded: Show parent checklist item details */}
+                                  {isExpanded && item.parentItem && (
+                                    <div className="ml-6 mt-1 p-2 bg-blue-50 rounded border border-blue-200">
+                                      <div className="text-[10px] text-blue-700 font-medium mb-1">Parent Checklist Item:</div>
+                                      <div className="text-xs font-medium mb-1">{item.parentItem.text}</div>
+                                      <div className="flex items-center gap-2 text-[10px]">
+                                        <span className="text-gray-600">Approved by:</span>
+                                        <span className="font-medium">{item.parentItem.approved_by || "-"}</span>
+                                        <span className="text-gray-600 ml-2">Status:</span>
+                                        <span className="font-medium">{item.parentItem.custom_dropdown_value || "-"}</span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
