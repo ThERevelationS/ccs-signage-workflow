@@ -768,6 +768,82 @@ export default function ProductChecklistDialog({
   }
 
   const groupedChecklist = getGroupedChecklist();
+  
+  // Separate active and completed checklists
+  const separateCompletedItems = () => {
+    const active = {};
+    const completed = {};
+    
+    Object.entries(groupedChecklist).forEach(([productName, group]) => {
+      active[productName] = { ...group, mainItems: [], subTemplates: {} };
+      completed[productName] = { ...group, mainItems: [], subTemplates: {} };
+      
+      // Separate main items
+      group.mainItems.forEach(item => {
+        if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
+          // Main checklist item - check if completed
+          const isCompleted = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value)?.is_completed;
+          const targetGroup = isCompleted ? completed : active;
+          
+          // Add the item and ALL its children
+          targetGroup[productName].mainItems.push(item);
+        } else {
+          // Child item - add to same group as its parent
+          const parent = group.mainItems.find(p => p.id === item.parent_id);
+          if (parent) {
+            const parentCompleted = dropdownConditions.find(dd => dd.name === parent.custom_dropdown_value)?.is_completed;
+            const targetGroup = parentCompleted ? completed : active;
+            targetGroup[productName].mainItems.push(item);
+          } else {
+            active[productName].mainItems.push(item);
+          }
+        }
+      });
+      
+      // Separate sub-template items
+      Object.entries(group.subTemplates).forEach(([stName, stItems]) => {
+        active[productName].subTemplates[stName] = [];
+        completed[productName].subTemplates[stName] = [];
+        
+        stItems.forEach(item => {
+          if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
+            const isCompleted = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value)?.is_completed;
+            const targetGroup = isCompleted ? completed : active;
+            targetGroup[productName].subTemplates[stName].push(item);
+          } else {
+            const parent = stItems.find(p => p.id === item.parent_id);
+            if (parent) {
+              const parentCompleted = dropdownConditions.find(dd => dd.name === parent.custom_dropdown_value)?.is_completed;
+              const targetGroup = parentCompleted ? completed : active;
+              targetGroup[productName].subTemplates[stName].push(item);
+            } else {
+              active[productName].subTemplates[stName].push(item);
+            }
+          }
+        });
+        
+        // Remove empty sub-template groups
+        if (active[productName].subTemplates[stName].length === 0) {
+          delete active[productName].subTemplates[stName];
+        }
+        if (completed[productName].subTemplates[stName].length === 0) {
+          delete completed[productName].subTemplates[stName];
+        }
+      });
+      
+      // Remove empty product groups
+      if (active[productName].mainItems.length === 0 && Object.keys(active[productName].subTemplates).length === 0) {
+        delete active[productName];
+      }
+      if (completed[productName].mainItems.length === 0 && Object.keys(completed[productName].subTemplates).length === 0) {
+        delete completed[productName];
+      }
+    });
+    
+    return { active, completed };
+  };
+  
+  const { active: activeChecklist, completed: completedChecklist } = separateCompletedItems();
 
   return (
     <>
