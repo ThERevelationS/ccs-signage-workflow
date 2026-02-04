@@ -582,14 +582,8 @@ export default function ProductChecklistDialog({
     });
   };
   
-  // Start with all items expanded by default
-  const [expandedItems, setExpandedItems] = useState(() => {
-    const expanded = {};
-    checklist.forEach(item => {
-      expanded[item.id] = true;
-    });
-    return expanded;
-  });
+  // All items expanded by default - using a ref to track
+  const [expandedItems, setExpandedItems] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
@@ -818,7 +812,7 @@ export default function ProductChecklistDialog({
                               className="p-1 hover:bg-gray-100 rounded"
                             >
                               {(displayItem.details?.length > 0 || displayItem.tasks?.length > 0) ? (
-                                expandedItems[displayItem.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                                (expandedItems[displayItem.id] !== false) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
                               ) : <div className="w-4" />}
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
@@ -901,8 +895,8 @@ export default function ProductChecklistDialog({
                             )}
                           </div>
 
-                          {/* Expanded: Tasks and Details */}
-                          {expandedItems[displayItem.id] && (
+                          {/* Expanded: Tasks and Details - expanded by default */}
+                          {(expandedItems[displayItem.id] !== false) && (
                             <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
                               {/* Tasks under main item */}
                               {displayItem.tasks?.map(task => (
@@ -1233,7 +1227,7 @@ export default function ProductChecklistDialog({
                                 className="p-1 hover:bg-gray-100 rounded"
                               >
                                 {(stDisplayItem.details?.length > 0 || stDisplayItem.tasks?.length > 0) ? (
-                                  expandedItems[stDisplayItem.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
+                                  (expandedItems[stDisplayItem.id] !== false) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
                                 ) : <div className="w-3" />}
                               </button>
                               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
@@ -1315,8 +1309,8 @@ export default function ProductChecklistDialog({
                               )}
                             </div>
 
-                            {/* Expanded content for sub-template items */}
-                            {expandedItems[stDisplayItem.id] && (
+                            {/* Expanded content for sub-template items - expanded by default */}
+                            {(expandedItems[stDisplayItem.id] !== false) && (
                               <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
                                 {stDisplayItem.tasks?.map(task => (
                                   <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask">
