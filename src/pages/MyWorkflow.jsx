@@ -63,6 +63,10 @@ export default function MyWorkflow() {
   const [dropdownConditions, setDropdownConditions] = useState([]);
 
   useEffect(() => {
+    document.title = "My Workflow - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     if (currentUser) {
       loadMyWorkOrders();
       loadUsers();

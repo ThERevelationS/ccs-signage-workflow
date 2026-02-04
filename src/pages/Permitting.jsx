@@ -17,6 +17,10 @@ export default function Permitting() {
   const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
+    document.title = "Permitting - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     

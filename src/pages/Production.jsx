@@ -17,6 +17,10 @@ export default function Production() {
   const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
+    document.title = "Production - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     

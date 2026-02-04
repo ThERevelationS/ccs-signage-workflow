@@ -19,6 +19,10 @@ export default function Estimating() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Estimating - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders();
     const interval = setInterval(() => loadWorkOrders(), 10000);
     return () => clearInterval(interval);

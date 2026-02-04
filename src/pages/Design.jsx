@@ -17,6 +17,10 @@ export default function Design() {
   const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
+    document.title = "Design - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     

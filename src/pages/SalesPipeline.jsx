@@ -24,6 +24,10 @@ export default function SalesPipeline() {
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
+    document.title = "Sales Pipeline - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadActiveFilters();
   }, [currentUser]);
 

@@ -17,6 +17,10 @@ export default function Fabrication() {
   const { isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
+    document.title = "Fabrication - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     

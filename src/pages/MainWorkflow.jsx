@@ -23,6 +23,10 @@ export default function MainWorkflow() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
 
   useEffect(() => {
+    document.title = "Main Workflow - Workflow Manager";
+  }, []);
+
+  useEffect(() => {
     loadWorkOrders(true);
     const interval = setInterval(() => loadWorkOrders(false), 10000);
     
