@@ -582,7 +582,14 @@ export default function ProductChecklistDialog({
     });
   };
   
-  const [expandedItems, setExpandedItems] = useState({});
+  // Start with all items expanded by default
+  const [expandedItems, setExpandedItems] = useState(() => {
+    const expanded = {};
+    checklist.forEach(item => {
+      expanded[item.id] = true;
+    });
+    return expanded;
+  });
   const [hoveredItem, setHoveredItem] = useState(null);
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
@@ -815,7 +822,7 @@ export default function ProductChecklistDialog({
                               ) : <div className="w-4" />}
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                            <span className="font-medium text-sm flex-1">{displayItem.text}</span>
+                            <span className={`font-medium text-sm flex-1 ${dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{displayItem.text}</span>
                             
                             {/* Quick add buttons on hover */}
                             {isRegistered && hoveredItem === displayItem.id && (
@@ -1024,7 +1031,7 @@ export default function ProductChecklistDialog({
                                 <div key={detail.id} className="bg-gray-50 p-2 rounded border group/detail">
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
-                                    <span className="text-sm flex-1">{detail.text}</span>
+                                    <span className={`text-sm flex-1 ${dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
                                     
                                     {/* Quick add task button for detail */}
                                     {isRegistered && (
@@ -1230,7 +1237,7 @@ export default function ProductChecklistDialog({
                                 ) : <div className="w-3" />}
                               </button>
                               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                              <span className="text-sm flex-1">{stDisplayItem.text}</span>
+                              <span className={`text-sm flex-1 ${dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{stDisplayItem.text}</span>
                               
                               {/* Quick add buttons on hover for sub-templates */}
                               {isRegistered && hoveredItem === stDisplayItem.id && (
