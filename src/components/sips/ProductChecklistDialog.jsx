@@ -1501,6 +1501,7 @@ export default function ProductChecklistDialog({
           }}
           existingChecklist={checklist}
           isAdmin={isAdmin}
+          workOrderProducts={products}
         />,
         document.body
       )}

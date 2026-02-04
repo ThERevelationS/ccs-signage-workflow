@@ -15,7 +15,7 @@ import {
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
 
-export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [], isAdmin = false }) {
+export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [], isAdmin = false, workOrderProducts = [] }) {
   const [activeTab, setActiveTab] = useState("selectors");
   const [subTemplates, setSubTemplates] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
@@ -773,8 +773,52 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             <TabsContent value="selectors" className="overflow-y-auto p-3" style={{ marginTop: 0 }}>
               <div className="grid grid-cols-[1fr_2fr_2fr] gap-4">
                 <div>
-                  <h3 className="font-bold text-sm mb-2">Product Templates</h3>
-                  <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+                  {/* Products from Work Order */}
+                  {workOrderProducts && workOrderProducts.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="font-bold text-sm mb-2 text-purple-700">📦 Products on this Job</h3>
+                      <div className="space-y-1 max-h-[25vh] overflow-y-auto border rounded-lg p-2 bg-purple-50">
+                        {workOrderProducts.map((product, index) => {
+                          const hasTemplate = product.product_type && productTypeTemplates[product.product_type]?.items?.length > 0;
+                          return (
+                            <div 
+                              key={product.id} 
+                              onClick={() => {
+                                if (hasTemplate) {
+                                  // Add this specific product with its description as the name
+                                  const existingNames = getExistingProductNames();
+                                  const selectedNames = new Set(selectedProducts.map(p => p.customName));
+                                  const allNames = new Set([...existingNames, ...selectedNames]);
+                                  
+                                  let customName = product.description || product.product_type;
+                                  let counter = 1;
+                                  while (allNames.has(customName)) { counter++; customName = `${product.description || product.product_type} ${counter}`; }
+                                  
+                                  setSelectedProducts([...selectedProducts, {
+                                    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                    productType: product.product_type,
+                                    customName: customName,
+                                    subTemplates: []
+                                  }]);
+                                }
+                              }}
+                              className={`p-2 rounded border flex items-center justify-between ${hasTemplate ? 'bg-white hover:bg-purple-100 cursor-pointer border-purple-300' : 'bg-gray-100 opacity-50 border-gray-200'}`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm truncate">{product.description || `Product ${index + 1}`}</div>
+                                <div className="text-xs text-purple-600">{product.product_type || 'No type'}</div>
+                              </div>
+                              {hasTemplate && <Plus className="w-4 h-4 text-purple-500 flex-shrink-0" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Click a product to apply its template</p>
+                    </div>
+                  )}
+                  
+                  <h3 className="font-bold text-sm mb-2">All Product Templates</h3>
+                  <div className="space-y-1 max-h-[30vh] overflow-y-auto">
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                       return (
