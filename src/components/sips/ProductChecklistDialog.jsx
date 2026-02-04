@@ -448,20 +448,55 @@ export default function ProductChecklistDialog({
     let subTemplateName = null;
     let productType = '';
     
+    // Helper to traverse parent chain and get the root product info
+    const getParentChainInfo = (itemId) => {
+      const item = checklist.find(i => i.id === itemId);
+      if (!item) return null;
+      
+      // If this item has valid product_name, use it
+      if (item.product_name && 
+          item.product_name !== 'undefined' && 
+          item.product_name !== 'General Items' &&
+          item.product_name !== 'Manual Items') {
+        return {
+          product_name: item.product_name,
+          product_type: item.product_type || '',
+          sub_template_name: item.sub_template_name || null
+        };
+      }
+      
+      // Otherwise, traverse up to parent
+      if (item.parent_id) {
+        return getParentChainInfo(item.parent_id);
+      }
+      
+      return null;
+    };
+    
     if (parentId) {
-      const parentItem = checklist.find(item => item.id === parentId);
-      if (parentItem) {
-        // ALWAYS inherit from parent to ensure proper grouping
-        actualProductName = parentItem.product_name || productName;
-        subTemplateName = parentItem.sub_template_name || null;
-        productType = parentItem.product_type || '';
+      // Get info from parent chain - this will find the original checklist item's product_name
+      const parentInfo = getParentChainInfo(parentId);
+      if (parentInfo) {
+        actualProductName = parentInfo.product_name;
+        productType = parentInfo.product_type;
+        subTemplateName = parentInfo.sub_template_name;
+      } else {
+        // Direct parent lookup as fallback
+        const parentItem = checklist.find(item => item.id === parentId);
+        if (parentItem) {
+          actualProductName = parentItem.product_name || productName;
+          subTemplateName = parentItem.sub_template_name || null;
+          productType = parentItem.product_type || '';
+        }
       }
     }
     
-    // Ensure we have a valid product name
+    // Ensure we have a valid product name - but NEVER default to General Items if we have productName passed in
     if (!actualProductName || actualProductName === 'Manual Items' || actualProductName === 'undefined') {
       actualProductName = productName || 'General Items';
     }
+    
+    console.log("Adding new item with product_name:", actualProductName, "parent_id:", parentId, "type:", type);
     
     const newId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newItem = {
@@ -475,6 +510,8 @@ export default function ProductChecklistDialog({
       sub_template_name: subTemplateName,
       parent_id: parentId
     };
+    
+    console.log("New item created:", JSON.stringify(newItem));
     
     // Insert the new item right after its parent in the checklist array
     // This ensures the item stays in the correct position
