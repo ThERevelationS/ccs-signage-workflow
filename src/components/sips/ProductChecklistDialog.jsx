@@ -954,6 +954,12 @@ export default function ProductChecklistDialog({
                                 if (val === "other") {
                                   setShowOtherPopup({ itemId: displayItem.id });
                                 } else if (val !== "select_value") {
+                                  // Check if children are complete before allowing completion
+                                  const selectedCondition = dropdownConditions.find(dd => dd.name === val);
+                                  if (selectedCondition?.is_completed && !areChildrenComplete(displayItem.id)) {
+                                    alert("Please complete all tasks and details under this checklist item first.");
+                                    return;
+                                  }
                                   updateChecklistItem(displayItem.id, { custom_dropdown_value: val });
                                 }
                               }}
