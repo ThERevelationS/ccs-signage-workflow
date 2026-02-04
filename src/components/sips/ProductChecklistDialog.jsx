@@ -750,7 +750,7 @@ export default function ProductChecklistDialog({
   return (
     <>
       <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={onClose}>
-        <DialogContent className="clay-card border-none max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold">
@@ -770,26 +770,6 @@ export default function ProductChecklistDialog({
               </div>
             </div>
           </DialogHeader>
-
-          {/* Products from Work Order (read-only display) */}
-          <div className="clay-card p-3 bg-blue-50/50">
-            <h3 className="font-bold text-sm mb-2">Products on this Job</h3>
-            <p className="text-xs text-gray-500 mb-2">Products are managed in the Client Information section. Use Checklist Builder to apply checklists.</p>
-            {products.length > 0 ? (
-              <div className="space-y-1">
-                {products.map((product, index) => (
-                  <div key={product.id} className="flex gap-2 items-center p-2 bg-white rounded border">
-                    <span className="text-sm font-medium w-6">{index + 1}.</span>
-                    <span className="text-sm font-medium text-purple-700">{product.product_type || 'No type'}</span>
-                    <span className="text-gray-400">-</span>
-                    <span className="text-sm text-gray-600 flex-1">{product.description || 'No description'}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-400 text-center py-1">No products defined.</div>
-            )}
-          </div>
 
           {/* Checklist Items */}
           <div className="flex-1 overflow-y-auto space-y-3">
@@ -946,8 +926,10 @@ export default function ProductChecklistDialog({
                               }}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-7 text-xs w-32">
-                                <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Status..."} />
+                              <SelectTrigger className="h-7 text-xs w-36">
+                                <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Status..."}>
+                                  {displayItem.custom_dropdown_value || "Status..."}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 {dropdownConditions
@@ -1139,8 +1121,10 @@ export default function ProductChecklistDialog({
                                       }}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-6 text-xs w-28">
-                                        <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Status..."} />
+                                      <SelectTrigger className="h-6 text-xs w-32">
+                                        <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Status..."}>
+                                          {detail.custom_dropdown_value || "Status..."}
+                                        </SelectValue>
                                       </SelectTrigger>
                                       <SelectContent>
                                         {dropdownConditions
@@ -1364,8 +1348,10 @@ export default function ProductChecklistDialog({
                                 }}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-6 text-xs w-28">
-                                  <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Status..."} />
+                                <SelectTrigger className="h-6 text-xs w-32">
+                                  <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Status..."}>
+                                    {stDisplayItem.custom_dropdown_value || "Status..."}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {dropdownConditions
