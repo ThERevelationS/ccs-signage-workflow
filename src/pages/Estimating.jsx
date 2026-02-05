@@ -24,7 +24,7 @@ export default function Estimating() {
 
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => loadWorkOrders(), 30000);
+    const interval = setInterval(() => loadWorkOrders(), 60000);
     return () => clearInterval(interval);
   }, []);
 
