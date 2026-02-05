@@ -56,6 +56,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import ProjectHealthBadge from "./ProjectHealthBadge";
+import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -146,6 +147,7 @@ export default function WorkOrderCard({
   const [incompleteSubtasksData, setIncompleteSubtasksData] = useState(null);
   const [addingDetailFor, setAddingDetailFor] = useState(null); // { taskIndex, subTaskIndex }
   const [newDetailText, setNewDetailText] = useState("");
+  const [allUsers, setAllUsers] = useState([]);
 
   const notes = React.useMemo(() => {
     if (!workOrder.notes) return [];
@@ -173,7 +175,17 @@ export default function WorkOrderCard({
 
   React.useEffect(() => {
     loadUser();
+    loadAllUsers();
   }, []);
+
+  const loadAllUsers = async () => {
+    try {
+      const users = await base44.entities.AuthorizedEmail.list();
+      setAllUsers(users);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+  };
 
   React.useEffect(() => {
     const checkForRidersAndParent = async () => {
@@ -411,8 +423,9 @@ export default function WorkOrderCard({
         timestamp: note.timestamp,
         created_by: note.created_by,
         completed: note.completed || false,
+        assigned_to: note.assigned_to || [],
         sub_tasks: idx === taskIndex 
-          ? [...(note.sub_tasks || []), { text: newSubTaskText, completed: false }]
+          ? [...(note.sub_tasks || []), { text: newSubTaskText, completed: false, assigned_to: [] }]
           : (note.sub_tasks || [])
       }));
       
@@ -430,6 +443,50 @@ export default function WorkOrderCard({
       console.error('Error adding subtask:', error);
       alert('Failed to add subtask: ' + error.message);
     }
+  };
+
+  const handleUpdateTaskAssignment = async (taskIndex, assignedUsers) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        return { ...note, assigned_to: assignedUsers };
+      }
+      return note;
+    });
+    
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) onUpdate();
+  };
+
+  const handleUpdateSubTaskAssignment = async (taskIndex, subTaskIndex, assignedUsers) => {
+    if (!isRegistered) {
+      promptForEmail();
+      return;
+    }
+    
+    const updatedNotes = notes.map((note, idx) => {
+      if (idx === taskIndex) {
+        const updatedSubTasks = (note.sub_tasks || []).map((st, stIdx) => {
+          if (stIdx === subTaskIndex) {
+            return { ...st, assigned_to: assignedUsers };
+          }
+          return st;
+        });
+        return { ...note, sub_tasks: updatedSubTasks };
+      }
+      return note;
+    });
+    
+    await base44.entities.WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
+    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
+    if (onUpdate) onUpdate();
   };
 
   const handleDeleteSubTask = async (taskIndex, subTaskIndex) => {
@@ -950,13 +1007,24 @@ export default function WorkOrderCard({
                                     <Circle className="w-3 h-3 text-gray-400" />
                                   </Button>
                                   <div className="flex-1">
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleNoteEdit(index, false);
-                                      }}
-                                      className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors">
-                                      <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
+                                    <div className="flex items-center gap-1">
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleNoteEdit(index, false);
+                                        }}
+                                        className="cursor-pointer hover:bg-white/70 rounded px-1 transition-colors flex-1">
+                                        <p className="text-gray-700 text-xs leading-snug">{note.text}</p>
+                                      </div>
+                                      <div onClick={(e) => e.stopPropagation()}>
+                                        <MultiUserSelectInline
+                                          users={allUsers}
+                                          selectedUsers={note.assigned_to ? (Array.isArray(note.assigned_to) ? note.assigned_to : [note.assigned_to]) : []}
+                                          onSelectionChange={(users) => handleUpdateTaskAssignment(actualIndex, users)}
+                                          disabled={!isRegistered}
+                                          className="h-5"
+                                        />
+                                      </div>
                                     </div>
                                     {/* Sub-tasks - always show all */}
                                     {note.sub_tasks && note.sub_tasks.length > 0 && (
@@ -968,12 +1036,19 @@ export default function WorkOrderCard({
                                             checked={subTask.completed}
                                             onCheckedChange={() => handleToggleSubTask(actualIndex, subIdx)}
                                             className="h-3 w-3 [&_svg]:h-2 [&_svg]:w-2" />
-                                          <span className={`text-xs ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
+                                          <span className={`text-xs flex-1 ${subTask.completed ? "line-through text-gray-400" : "text-gray-600"}`}>{subTask.text}</span>
+                                          <MultiUserSelectInline
+                                            users={allUsers}
+                                            selectedUsers={subTask.assigned_to ? (Array.isArray(subTask.assigned_to) ? subTask.assigned_to : [subTask.assigned_to]) : []}
+                                            onSelectionChange={(users) => handleUpdateSubTaskAssignment(actualIndex, subIdx, users)}
+                                            disabled={!isRegistered}
+                                            className="h-4"
+                                          />
                                           <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleDeleteSubTask(actualIndex, subIdx)}
-                                            className="h-3 w-3 ml-auto p-0">
+                                            className="h-3 w-3 p-0">
                                             <X className="w-2 h-2 text-red-500" />
                                           </Button>
                                         </div>

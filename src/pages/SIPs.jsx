@@ -176,16 +176,7 @@ export default function SIPs() {
               <h1 className="text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
               <p className="text-gray-500 mt-1">Production & Installation Planning - {workOrders.length} items</p>
             </div>
-            {(currentUser?.role === 'admin' || users.find(u => u.email === currentUser?.email)?.can_import_export) && (
-              <Button
-                onClick={() => setShowTemplateBuilder(true)}
-                className="clay-button border-none"
-                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
-              >
-                <Pencil className="w-4 h-4 mr-2" />
-                Template Builder
-              </Button>
-            )}
+
           </div>
         </div>
 
