@@ -22,7 +22,7 @@ export default function Design() {
 
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 10000);
+    const interval = setInterval(() => loadWorkOrders(false), 30000);
     
     const handleFullscreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);

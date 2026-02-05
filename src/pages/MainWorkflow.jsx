@@ -28,7 +28,7 @@ export default function MainWorkflow() {
 
   useEffect(() => {
     loadWorkOrders(true);
-    const interval = setInterval(() => loadWorkOrders(false), 60000);
+    const interval = setInterval(() => loadWorkOrders(false), 30000);
     
     return () => {
       clearInterval(interval);
