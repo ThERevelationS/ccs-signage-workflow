@@ -17,7 +17,6 @@ import {
   User,
   Lightbulb,
   ClipboardList,
-
   Menu,
   X,
   ChevronDown,
@@ -26,7 +25,9 @@ import {
   Minimize2,
   PanelLeft,
   PanelTop,
-  Columns
+  Columns,
+  Moon,
+  Sun
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
