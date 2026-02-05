@@ -91,277 +91,211 @@ const getFullscreenStyles = (isFullscreen) => `
 `;
 
 const getDarkModeStyles = () => `
+  /* NUCLEAR OPTION - KILL ALL WHITE */
+  
   .dark-mode {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #94a3b8;
-    --border-color: #475569;
+    background: #0f172a !important;
   }
-
-  /* GLOBAL DARK BACKGROUND - NUKE ALL WHITE */
-  .dark-mode,
-  .dark-mode * {
+  
+  .dark-mode *:not(svg):not(path):not(circle):not(rect):not(line):not(polygon):not(polyline) {
+    background-color: transparent !important;
     color: #e2e8f0 !important;
   }
-
-  /* FORCE ALL WHITE BACKGROUNDS TO DARK */
-  .dark-mode .bg-white,
-  .dark-mode .bg-gray-50,
-  .dark-mode .bg-gray-100,
-  .dark-mode .bg-gray-200 {
+  
+  /* FORCE DARK BACKGROUNDS ON CONTAINERS */
+  .dark-mode div,
+  .dark-mode section,
+  .dark-mode main,
+  .dark-mode nav,
+  .dark-mode header,
+  .dark-mode footer,
+  .dark-mode aside,
+  .dark-mode article {
+    background-color: transparent !important;
+  }
+  
+  .dark-mode .clay-card,
+  .dark-mode [class*="clay-card"] {
+    background: linear-gradient(145deg, #1e293b, #0f172a) !important;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), -5px -5px 15px rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+  }
+  
+  /* OVERRIDE ALL BACKGROUND CLASSES */
+  .dark-mode [class*="bg-white"],
+  .dark-mode [class*="bg-gray-"],
+  .dark-mode [class*="bg-slate-"] {
     background-color: #1e293b !important;
   }
-
-  .dark-mode .bg-white\\/50, 
-  .dark-mode .bg-white\\/70, 
-  .dark-mode .bg-white\\/80, 
-  .dark-mode .bg-white\\/90,
-  .dark-mode .bg-gray-50\\/50 {
-    background-color: rgba(30, 41, 59, 0.9) !important;
-  }
-
-  /* FORCE ALL TEXT TO BE LIGHT */
-  .dark-mode .text-gray-900,
-  .dark-mode .text-gray-800,
-  .dark-mode .text-gray-700,
-  .dark-mode .text-gray-600,
-  .dark-mode .text-gray-500,
-  .dark-mode .text-slate-900,
-  .dark-mode .text-slate-800,
-  .dark-mode .text-zinc-900,
-  .dark-mode .text-zinc-800,
-  .dark-mode .text-black {
-    color: #f8fafc !important;
-  }
-
-  .dark-mode .text-gray-400,
-  .dark-mode .text-gray-300 {
-    color: #cbd5e1 !important;
-  }
-
-  .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
+  
+  /* BUTTONS AND INTERACTIVE ELEMENTS */
+  .dark-mode button,
+  .dark-mode a {
+    background-color: #1e293b !important;
     color: #f1f5f9 !important;
   }
-
-  /* BUTTONS - ALL GET LIGHT TEXT */
-  .dark-mode button {
-    color: #f1f5f9 !important;
-  }
-
-  .dark-mode button.bg-white,
-  .dark-mode button.bg-gray-100,
-  .dark-mode button.bg-gray-50 {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
-  }
-
-  .dark-mode button[class*="bg-blue-"],
-  .dark-mode button[class*="bg-green-"],
-  .dark-mode button[class*="bg-red-"],
-  .dark-mode button[class*="bg-purple-"],
-  .dark-mode button[class*="bg-indigo-"],
-  .dark-mode button[class*="bg-orange-"],
-  .dark-mode button[class*="bg-yellow-"] {
+  
+  .dark-mode button[class*="bg-green"],
+  .dark-mode button[class*="bg-blue"],
+  .dark-mode button[class*="bg-red"],
+  .dark-mode button[class*="bg-purple"],
+  .dark-mode button[class*="bg-indigo"],
+  .dark-mode button[class*="bg-orange"],
+  .dark-mode button[class*="bg-yellow"] {
     color: #ffffff !important;
   }
-
-  .dark-mode .hover\\:bg-gray-100:hover,
-  .dark-mode .hover\\:bg-gray-50:hover,
-  .dark-mode .hover\\:bg-white:hover {
+  
+  .dark-mode button:hover,
+  .dark-mode a:hover {
     background-color: #334155 !important;
+    filter: brightness(1.1);
   }
-
-  /* INPUTS */
+  
+  /* FORMS */
   .dark-mode input,
   .dark-mode textarea,
   .dark-mode select {
     background-color: #0f172a !important;
     color: #f8fafc !important;
-    border-color: #475569 !important;
+    border: 1px solid #475569 !important;
   }
-
+  
   .dark-mode input::placeholder,
   .dark-mode textarea::placeholder {
     color: #64748b !important;
   }
-
-  /* BORDERS */
-  .dark-mode .border,
-  .dark-mode .border-b,
-  .dark-mode .border-t,
-  .dark-mode .border-l,
-  .dark-mode .border-r {
-    border-color: #334155 !important;
+  
+  /* TEXT */
+  .dark-mode h1, .dark-mode h2, .dark-mode h3, 
+  .dark-mode h4, .dark-mode h5, .dark-mode h6 {
+    color: #f8fafc !important;
   }
-
-  .dark-mode .border-gray-100,
-  .dark-mode .border-gray-200,
-  .dark-mode .border-gray-300 {
-    border-color: #334155 !important;
+  
+  .dark-mode p,
+  .dark-mode span,
+  .dark-mode label {
+    color: #e2e8f0 !important;
   }
-
+  
+  .dark-mode [class*="text-gray"],
+  .dark-mode [class*="text-black"],
+  .dark-mode [class*="text-slate"] {
+    color: #f1f5f9 !important;
+  }
+  
   /* TABLES */
   .dark-mode table {
     background-color: #1e293b !important;
   }
-
-  .dark-mode thead th {
+  
+  .dark-mode th {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
-    border-bottom-color: #475569 !important;
-  }
-
-  .dark-mode tbody tr {
-    background-color: transparent !important;
-    border-bottom-color: #334155 !important;
   }
   
-  .dark-mode tbody tr:hover {
-    background-color: rgba(51, 65, 85, 0.5) !important;
-  }
-
   .dark-mode td {
+    background-color: transparent !important;
     color: #e2e8f0 !important;
   }
-
-  /* CLAY CARDS */
-  .dark-mode .clay-card {
-    background: linear-gradient(145deg, #1e293b, #0f172a) !important;
-    box-shadow: 
-      5px 5px 15px rgba(0, 0, 0, 0.5),
-      -5px -5px 15px rgba(255, 255, 255, 0.05),
-      inset 1px 1px 2px rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255,255,255,0.05) !important;
-    color: #f8fafc !important;
+  
+  .dark-mode tr:hover td {
+    background-color: rgba(51, 65, 85, 0.5) !important;
   }
-
-  /* COLORED BADGES - DARKEN BUT KEEP TEXT BRIGHT */
-  .dark-mode .bg-green-50, .dark-mode .bg-green-100 {
+  
+  /* BORDERS */
+  .dark-mode * {
+    border-color: #334155 !important;
+  }
+  
+  /* COLORED BACKGROUNDS - DARKEN THEM */
+  .dark-mode [class*="bg-green-5"],
+  .dark-mode [class*="bg-green-1"] {
     background-color: rgba(22, 101, 52, 0.3) !important;
     color: #86efac !important;
   }
   
-  .dark-mode .bg-blue-50, .dark-mode .bg-blue-100 {
+  .dark-mode [class*="bg-blue-5"],
+  .dark-mode [class*="bg-blue-1"] {
     background-color: rgba(30, 64, 175, 0.3) !important;
     color: #93c5fd !important;
   }
-
-  .dark-mode .bg-yellow-50, .dark-mode .bg-yellow-100, 
-  .dark-mode .bg-orange-50, .dark-mode .bg-orange-100,
-  .dark-mode .bg-amber-50, .dark-mode .bg-amber-100 {
+  
+  .dark-mode [class*="bg-yellow"],
+  .dark-mode [class*="bg-orange"],
+  .dark-mode [class*="bg-amber"] {
     background-color: rgba(161, 98, 7, 0.3) !important;
     color: #fcd34d !important;
   }
-
-  .dark-mode .bg-red-50, .dark-mode .bg-red-100 {
+  
+  .dark-mode [class*="bg-red-5"],
+  .dark-mode [class*="bg-red-1"] {
     background-color: rgba(153, 27, 27, 0.3) !important;
     color: #fca5a5 !important;
   }
-
-  .dark-mode .bg-purple-50, .dark-mode .bg-purple-100 {
+  
+  .dark-mode [class*="bg-purple"] {
     background-color: rgba(107, 33, 168, 0.3) !important;
     color: #d8b4fe !important;
   }
-
-  /* POPOVERS/DROPDOWNS */
-  .dark-mode [data-radix-popper-content-wrapper] > div,
+  
+  /* RADIX UI COMPONENTS */
+  .dark-mode [role="dialog"],
   .dark-mode [role="menu"],
   .dark-mode [role="listbox"],
-  .dark-mode [role="dialog"] {
+  .dark-mode [data-radix-popper-content-wrapper] > * {
     background-color: #1e293b !important;
     border: 1px solid #475569 !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
   }
   
-  .dark-mode [role="menuitem"]:hover,
-  .dark-mode [role="option"]:hover {
+  .dark-mode [role="option"]:hover,
+  .dark-mode [role="menuitem"]:hover {
     background-color: #334155 !important;
-    color: white !important;
-    cursor: pointer;
-  }
-
-  /* DIALOGS */
-  .dark-mode [role="dialog"] {
-    background-color: #0f172a !important;
+    color: #ffffff !important;
   }
   
-  .dark-mode [role="dialog"] .clay-card {
-    background: #1e293b !important;
-    box-shadow: none !important;
+  /* NAVIGATION - EXTREME DARKENING */
+  .dark-mode nav *:not(svg):not(path) {
+    filter: brightness(0.6) saturate(0.7) !important;
   }
-
+  
+  .dark-mode nav *:hover {
+    filter: brightness(0.8) saturate(0.8) !important;
+  }
+  
+  /* OVERRIDE INLINE STYLES */
+  .dark-mode [style*="background"] {
+    background: #1e293b !important;
+  }
+  
+  .dark-mode [style*="linear-gradient"] {
+    background: #1e293b !important;
+  }
+  
   /* SCROLLBARS */
   .dark-mode ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: #0f172a !important;
   }
   
   .dark-mode ::-webkit-scrollbar-thumb {
-    background: #475569;
-    border-radius: 4px;
+    background: #475569 !important;
   }
   
-  .dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
-  }
-
-  /* NUKE INLINE WHITE BACKGROUNDS */
-  .dark-mode [style*="background-color: white"],
-  .dark-mode [style*="background-color: rgb(255, 255, 255)"],
-  .dark-mode [style*="background: white"],
-  .dark-mode [style*="background: rgb(255, 255, 255)"] {
-    background: #1e293b !important;
+  /* CALENDAR */
+  .dark-mode [class*="rdp"] {
     background-color: #1e293b !important;
   }
-
-  /* NAVIGATION - DARKEN GRADIENT BUTTONS */
-  .dark-mode nav a, 
-  .dark-mode nav button {
-    filter: brightness(0.7) saturate(0.8);
+  
+  .dark-mode [class*="rdp"] * {
+    color: #e2e8f0 !important;
   }
   
-  .dark-mode nav a:hover, 
-  .dark-mode nav button:hover {
-    filter: brightness(0.9) saturate(0.9);
-  }
-
-  /* CALENDAR */
-  .dark-mode .rdp {
-    --rdp-cell-size: 40px; 
-    --rdp-accent-color: #818cf8;
-    --rdp-background-color: #1e293b;
-    margin: 1em;
-  }
-  
-  .dark-mode .rdp-day_selected {
-    background-color: var(--rdp-accent-color) !important;
-    color: white !important;
-  }
-  
-  .dark-mode .rdp-day:hover:not(.rdp-day_selected) {
-    background-color: #334155 !important;
-  }
-
   /* SWITCH */
   .dark-mode [role="switch"] {
     background-color: #475569 !important;
   }
+  
   .dark-mode [role="switch"][data-state="checked"] {
     background-color: #818cf8 !important;
-  }
-
-  /* LINKS */
-  .dark-mode a {
-    color: #60a5fa;
-  }
-  .dark-mode a:hover {
-    color: #93c5fd;
-  }
-  
-  .dark-mode nav a {
-    color: inherit;
   }
 `;
 
