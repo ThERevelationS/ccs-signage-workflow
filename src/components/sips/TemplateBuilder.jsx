@@ -1326,14 +1326,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             <TabsContent value="dropdowns" className="overflow-y-auto p-3" style={{ marginTop: 0 }}>
               {/* Instructions */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                  <p className="font-medium mb-1">How to change condition type:</p>
-                  <p className="text-gray-600">Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow). The condition will automatically move to the correct section.</p>
+                  <p className="font-medium mb-1">How to use conditions:</p>
+                  <p className="text-gray-600">Drag conditions to reorder them within each section. Click the colored circle icon to toggle between <span className="font-medium text-green-700">Completed</span> (✓ green) and <span className="font-medium text-yellow-700">Continued</span> (C yellow). Dropdowns will show Completed conditions first, then Continued conditions.</p>
                 </div>
                 
                 <div className="flex gap-2 mb-4">
                   <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
-                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }} />
-                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }} />
+                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-6">
@@ -1344,53 +1344,79 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <h3 className="font-bold text-green-800">Completed Conditions</h3>
                       <span className="text-xs text-green-600">({dropdownConditions.filter(d => d.is_completed).length})</span>
                     </div>
-                    <div className="space-y-1 max-h-[50vh] overflow-y-auto">
-                      {dropdownConditions.filter(dd => dd.is_completed).map((dd) => (
-                        <div key={dd.id} className="flex items-center gap-1 p-2 border rounded text-sm bg-green-50 border-green-300">
-                          <GripVertical className="w-3 h-3 text-gray-400" />
-                          <button 
-                            onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: false } : d))}
-                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600"
-                            title="Click to mark as Continued"
-                          >
-                            <Check className="w-3 h-3 text-white" />
-                          </button>
-                          {editingDropdown === dd.id ? (
-                            <>
-                              <Input 
-                                id={`edit-${dd.id}`}
-                                defaultValue={dd.name} 
-                                className="flex-1 h-6 text-sm" 
-                                autoFocus
-                                onKeyDown={(e) => { 
-                                  if (e.key === 'Enter') { 
-                                    const newName = e.target.value.trim(); 
-                                    if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
-                                    setEditingDropdown(null); 
-                                  } 
-                                  if (e.key === 'Escape') setEditingDropdown(null); 
-                                }}
-                              />
-                              <Button size="sm" className="h-6 px-2" onClick={() => {
-                                const input = document.getElementById(`edit-${dd.id}`);
-                                const newName = input?.value.trim();
-                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                                setEditingDropdown(null);
-                              }}><Save className="w-3 h-3" /></Button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="flex-1 truncate">{dd.name}</span>
-                              <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                            </>
-                          )}
-                          <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
-                        </div>
-                      ))}
-                      {dropdownConditions.filter(d => d.is_completed).length === 0 && (
-                        <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No completed conditions</div>
-                      )}
-                    </div>
+                    <DragDropContext onDragEnd={(result) => {
+                      if (!result.destination) return;
+                      const completedItems = dropdownConditions.filter(d => d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0));
+                      const reordered = Array.from(completedItems);
+                      const [removed] = reordered.splice(result.source.index, 1);
+                      reordered.splice(result.destination.index, 0, removed);
+                      // Update order values
+                      const updatedCompleted = reordered.map((item, idx) => ({ ...item, order: idx }));
+                      const continuedItems = dropdownConditions.filter(d => !d.is_completed);
+                      saveDropdownConditions([...updatedCompleted, ...continuedItems]);
+                    }}>
+                      <Droppable droppableId="completed-conditions">
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1 max-h-[50vh] overflow-y-auto">
+                            {dropdownConditions.filter(dd => dd.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0)).map((dd, index) => (
+                              <Draggable key={dd.id} draggableId={dd.id} index={index}>
+                                {(provided) => (
+                                  <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded text-sm bg-green-50 border-green-300">
+                                    <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                    <button 
+                                      onClick={() => {
+                                        const continuedItems = dropdownConditions.filter(d => !d.is_completed);
+                                        const completedItems = dropdownConditions.filter(d => d.is_completed && d.id !== dd.id);
+                                        const movedItem = { ...dd, is_completed: false, order: continuedItems.length };
+                                        saveDropdownConditions([...completedItems, ...continuedItems, movedItem]);
+                                      }}
+                                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600"
+                                      title="Click to mark as Continued"
+                                    >
+                                      <Check className="w-3 h-3 text-white" />
+                                    </button>
+                                    {editingDropdown === dd.id ? (
+                                      <>
+                                        <Input 
+                                          id={`edit-${dd.id}`}
+                                          defaultValue={dd.name} 
+                                          className="flex-1 h-6 text-sm" 
+                                          autoFocus
+                                          onKeyDown={(e) => { 
+                                            if (e.key === 'Enter') { 
+                                              const newName = e.target.value.trim(); 
+                                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
+                                              setEditingDropdown(null); 
+                                            } 
+                                            if (e.key === 'Escape') setEditingDropdown(null); 
+                                          }}
+                                        />
+                                        <Button size="sm" className="h-6 px-2" onClick={() => {
+                                          const input = document.getElementById(`edit-${dd.id}`);
+                                          const newName = input?.value.trim();
+                                          if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
+                                          setEditingDropdown(null);
+                                        }}><Save className="w-3 h-3" /></Button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="flex-1 truncate">{dd.name}</span>
+                                        <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                      </>
+                                    )}
+                                    <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            {dropdownConditions.filter(d => d.is_completed).length === 0 && (
+                              <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No completed conditions</div>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </div>
 
                   {/* Continued Conditions */}
@@ -1400,53 +1426,79 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <h3 className="font-bold text-yellow-800">Continued Conditions</h3>
                       <span className="text-xs text-yellow-600">({dropdownConditions.filter(d => !d.is_completed).length})</span>
                     </div>
-                    <div className="space-y-1 max-h-[50vh] overflow-y-auto">
-                      {dropdownConditions.filter(dd => !dd.is_completed).map((dd) => (
-                        <div key={dd.id} className="flex items-center gap-1 p-2 border rounded text-sm bg-yellow-50 border-yellow-300">
-                          <GripVertical className="w-3 h-3 text-gray-400" />
-                          <button 
-                            onClick={() => saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, is_completed: true } : d))}
-                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600"
-                            title="Click to mark as Completed"
-                          >
-                            <span className="text-white text-xs font-bold">C</span>
-                          </button>
-                          {editingDropdown === dd.id ? (
-                            <>
-                              <Input 
-                                id={`edit-${dd.id}`}
-                                defaultValue={dd.name} 
-                                className="flex-1 h-6 text-sm" 
-                                autoFocus
-                                onKeyDown={(e) => { 
-                                  if (e.key === 'Enter') { 
-                                    const newName = e.target.value.trim(); 
-                                    if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
-                                    setEditingDropdown(null); 
-                                  } 
-                                  if (e.key === 'Escape') setEditingDropdown(null); 
-                                }}
-                              />
-                              <Button size="sm" className="h-6 px-2" onClick={() => {
-                                const input = document.getElementById(`edit-${dd.id}`);
-                                const newName = input?.value.trim();
-                                if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                                setEditingDropdown(null);
-                              }}><Save className="w-3 h-3" /></Button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="flex-1 truncate">{dd.name}</span>
-                              <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                            </>
-                          )}
-                          <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
-                        </div>
-                      ))}
-                      {dropdownConditions.filter(d => !d.is_completed).length === 0 && (
-                        <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No continued conditions</div>
-                      )}
-                    </div>
+                    <DragDropContext onDragEnd={(result) => {
+                      if (!result.destination) return;
+                      const continuedItems = dropdownConditions.filter(d => !d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0));
+                      const reordered = Array.from(continuedItems);
+                      const [removed] = reordered.splice(result.source.index, 1);
+                      reordered.splice(result.destination.index, 0, removed);
+                      // Update order values
+                      const updatedContinued = reordered.map((item, idx) => ({ ...item, order: idx }));
+                      const completedItems = dropdownConditions.filter(d => d.is_completed);
+                      saveDropdownConditions([...completedItems, ...updatedContinued]);
+                    }}>
+                      <Droppable droppableId="continued-conditions">
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1 max-h-[50vh] overflow-y-auto">
+                            {dropdownConditions.filter(dd => !dd.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0)).map((dd, index) => (
+                              <Draggable key={dd.id} draggableId={dd.id} index={index}>
+                                {(provided) => (
+                                  <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded text-sm bg-yellow-50 border-yellow-300">
+                                    <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                    <button 
+                                      onClick={() => {
+                                        const completedItems = dropdownConditions.filter(d => d.is_completed);
+                                        const continuedItems = dropdownConditions.filter(d => !d.is_completed && d.id !== dd.id);
+                                        const movedItem = { ...dd, is_completed: true, order: completedItems.length };
+                                        saveDropdownConditions([...completedItems, movedItem, ...continuedItems]);
+                                      }}
+                                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600"
+                                      title="Click to mark as Completed"
+                                    >
+                                      <span className="text-white text-xs font-bold">C</span>
+                                    </button>
+                                    {editingDropdown === dd.id ? (
+                                      <>
+                                        <Input 
+                                          id={`edit-${dd.id}`}
+                                          defaultValue={dd.name} 
+                                          className="flex-1 h-6 text-sm" 
+                                          autoFocus
+                                          onKeyDown={(e) => { 
+                                            if (e.key === 'Enter') { 
+                                              const newName = e.target.value.trim(); 
+                                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
+                                              setEditingDropdown(null); 
+                                            } 
+                                            if (e.key === 'Escape') setEditingDropdown(null); 
+                                          }}
+                                        />
+                                        <Button size="sm" className="h-6 px-2" onClick={() => {
+                                          const input = document.getElementById(`edit-${dd.id}`);
+                                          const newName = input?.value.trim();
+                                          if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
+                                          setEditingDropdown(null);
+                                        }}><Save className="w-3 h-3" /></Button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="flex-1 truncate">{dd.name}</span>
+                                        <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                      </>
+                                    )}
+                                    <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            {dropdownConditions.filter(d => !d.is_completed).length === 0 && (
+                              <div className="text-center py-4 text-gray-400 text-sm border rounded border-dashed">No continued conditions</div>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </div>
                 </div>
             </TabsContent>
