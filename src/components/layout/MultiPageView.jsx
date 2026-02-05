@@ -24,14 +24,6 @@ export function useMultiPageView() {
   const [additionalPages, setAdditionalPages] = useState([]);
 
   const addPage = (pageName, pageTitle) => {
-    const normalizedName = pageName.toLowerCase();
-    
-    // Check if it's the current main page (from URL) - don't allow adding main page
-    const currentPath = window.location.pathname.split('/').pop()?.toLowerCase() || '';
-    if (currentPath === normalizedName) {
-      return; // Don't add the current page to split view
-    }
-    
     // Generate unique ID for each page instance to allow duplicates
     const uniqueId = `${pageName}_${Date.now()}`;
     
