@@ -772,9 +772,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </div>
 
             {/* Select & Apply Tab */}
-            <TabsContent value="selectors" className="overflow-y-auto p-3" style={{ marginTop: 0 }}>
-              <div className="grid grid-cols-[1fr_2fr_2fr] gap-4">
-                <div>
+            <TabsContent value="selectors" className="overflow-y-auto p-3 flex-1" style={{ marginTop: 0 }}>
+              <div className="grid grid-cols-[1fr_2fr_2fr] gap-4 h-full">
+                <div className="flex flex-col h-full">
                   {/* Products from Work Order */}
                   {workOrderProducts && workOrderProducts.length > 0 && (
                     <div className="mb-4">
@@ -820,7 +820,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   )}
                   
                   <h3 className="font-bold text-sm mb-2">All Product Checklists</h3>
-                  <div className="space-y-1 max-h-[30vh] overflow-y-auto">
+                  <div className="space-y-1 flex-1 overflow-y-auto">
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                       return (
