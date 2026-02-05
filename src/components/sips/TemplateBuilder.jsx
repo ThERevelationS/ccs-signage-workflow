@@ -469,13 +469,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 left: getButtonRect().left
               }}>
               <div className="p-2 border-b bg-gray-50 font-medium text-xs sticky top-0">Select Conditions</div>
-              {dropdownConditions.map(dd => (
+              {[...dropdownConditions.filter(d => d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0)),
+                ...dropdownConditions.filter(d => !d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0))
+              ].map(dd => (
                 <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm">
+                  className={`flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}>
                   <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}>
                     {currentIds.includes(dd.id) && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <span>{dd.name}</span>
+                  <span className={`text-xs px-1 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-700' : 'bg-yellow-200 text-yellow-700'}`}>
+                    {dd.is_completed ? '✓' : 'C'}
+                  </span>
                 </div>
               ))}
               <div onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
