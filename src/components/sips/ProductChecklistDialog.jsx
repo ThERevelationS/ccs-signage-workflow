@@ -1031,6 +1031,11 @@ export default function ProductChecklistDialog({
                                 if (val === "other") {
                                   setShowOtherPopup({ itemId: displayItem.id });
                                 } else if (val !== "select_value") {
+                                  // Require approved_by before allowing any status selection
+                                  if (!displayItem.approved_by) {
+                                    alert("Please select an approver first before setting the status.");
+                                    return;
+                                  }
                                   // Check if children are complete before allowing completion
                                   const selectedCondition = dropdownConditions.find(dd => dd.name === val);
                                   if (selectedCondition?.is_completed && !areChildrenComplete(displayItem.id)) {
@@ -1224,6 +1229,11 @@ export default function ProductChecklistDialog({
                                         if (val === "other") {
                                           setShowOtherPopup({ itemId: detail.id });
                                         } else if (val !== "select_value") {
+                                          // Require approved_by before allowing any status selection
+                                          if (!detail.approved_by) {
+                                            alert("Please select an approver first before setting the status.");
+                                            return;
+                                          }
                                           // Check if it's switching TO a continued condition - allow bringing back
                                           const selectedCondition = dropdownConditions.find(dd => dd.name === val);
 
@@ -1452,6 +1462,11 @@ export default function ProductChecklistDialog({
                                   if (val === "other") {
                                     setShowOtherPopup({ itemId: stDisplayItem.id });
                                   } else if (val !== "select_value") {
+                                    // Require approved_by before allowing any status selection
+                                    if (!stDisplayItem.approved_by) {
+                                      alert("Please select an approver first before setting the status.");
+                                      return;
+                                    }
                                     // Allow switching TO continued conditions (bringing back from completed)
                                     const selectedCondition = dropdownConditions.find(dd => dd.name === val);
                                     
