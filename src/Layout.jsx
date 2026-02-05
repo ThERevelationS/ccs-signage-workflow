@@ -99,116 +99,86 @@ const getDarkModeStyles = () => `
     --text-secondary: #cbd5e1;
     --text-tertiary: #94a3b8;
     --border-color: #475569;
-    --accent-primary: #818cf8;
-    --accent-bg: rgba(129, 140, 248, 0.2);
   }
 
-  /* --- CORE COLORS & BACKGROUNDS --- */
-  
-  .dark-mode {
-    color: var(--text-primary) !important;
-    background-color: var(--bg-primary) !important;
+  /* GLOBAL DARK BACKGROUND - NUKE ALL WHITE */
+  .dark-mode,
+  .dark-mode * {
+    color: #e2e8f0 !important;
   }
-  
+
+  /* FORCE ALL WHITE BACKGROUNDS TO DARK */
   .dark-mode .bg-white,
   .dark-mode .bg-gray-50,
-  .dark-mode .bg-gray-100 {
-    background-color: var(--bg-secondary) !important;
-  }
-
+  .dark-mode .bg-gray-100,
   .dark-mode .bg-gray-200 {
-    background-color: var(--bg-tertiary) !important;
+    background-color: #1e293b !important;
   }
 
-  /* Force background override for almost all containers */
   .dark-mode .bg-white\\/50, 
   .dark-mode .bg-white\\/70, 
   .dark-mode .bg-white\\/80, 
   .dark-mode .bg-white\\/90,
   .dark-mode .bg-gray-50\\/50 {
-    background-color: rgba(30, 41, 59, 0.95) !important;
+    background-color: rgba(30, 41, 59, 0.9) !important;
   }
 
-  /* --- TEXT CONTRAST FIXES --- */
-
-  .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
-    color: #f1f5f9 !important;
-  }
-
-  .dark-mode p, .dark-mode span, .dark-mode div {
-    color: #e2e8f0; /* Default text color */
-  }
-
-  /* Override specific gray text classes that disappear on dark backgrounds */
+  /* FORCE ALL TEXT TO BE LIGHT */
   .dark-mode .text-gray-900,
   .dark-mode .text-gray-800,
   .dark-mode .text-gray-700,
+  .dark-mode .text-gray-600,
+  .dark-mode .text-gray-500,
   .dark-mode .text-slate-900,
   .dark-mode .text-slate-800,
   .dark-mode .text-zinc-900,
   .dark-mode .text-zinc-800,
   .dark-mode .text-black {
-    color: #f8fafc !important; /* Almost white */
-  }
-
-  .dark-mode .text-gray-600,
-  .dark-mode .text-gray-500,
-  .dark-mode .text-slate-600,
-  .dark-mode .text-slate-500 {
-    color: #cbd5e1 !important; /* Light gray */
+    color: #f8fafc !important;
   }
 
   .dark-mode .text-gray-400,
   .dark-mode .text-gray-300 {
-    color: #94a3b8 !important; /* Medium gray */
+    color: #cbd5e1 !important;
   }
 
-  /* --- BUTTONS --- */
+  .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode h6 {
+    color: #f1f5f9 !important;
+  }
 
-  /* Default/Ghost/Outline buttons - ensure text is readable */
+  /* BUTTONS - ALL GET LIGHT TEXT */
   .dark-mode button {
     color: #f1f5f9 !important;
   }
 
-  .dark-mode button:hover {
-    filter: brightness(1.2);
+  .dark-mode button.bg-white,
+  .dark-mode button.bg-gray-100,
+  .dark-mode button.bg-gray-50 {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
   }
 
-  /* Specific fix for white/light buttons turning invisible */
-  .dark-mode button.bg-white {
-    background-color: var(--bg-tertiary) !important;
-    border-color: var(--border-color) !important;
-  }
-
-  .dark-mode button.hover\\:bg-gray-100:hover {
-    background-color: var(--bg-tertiary) !important;
-  }
-
-  /* Primary/Colored Buttons - Ensure white text */
   .dark-mode button[class*="bg-blue-"],
   .dark-mode button[class*="bg-green-"],
   .dark-mode button[class*="bg-red-"],
   .dark-mode button[class*="bg-purple-"],
-  .dark-mode button[class*="bg-indigo-"] {
+  .dark-mode button[class*="bg-indigo-"],
+  .dark-mode button[class*="bg-orange-"],
+  .dark-mode button[class*="bg-yellow-"] {
     color: #ffffff !important;
   }
 
-  /* Fix Destructive/Red buttons */
-  .dark-mode .bg-destructive {
-    background-color: #7f1d1d !important; /* Dark red */
-    color: #fecaca !important;
+  .dark-mode .hover\\:bg-gray-100:hover,
+  .dark-mode .hover\\:bg-gray-50:hover,
+  .dark-mode .hover\\:bg-white:hover {
+    background-color: #334155 !important;
   }
 
-  .dark-mode .text-destructive {
-    color: #f87171 !important;
-  }
-
-  /* --- INPUTS & FORMS --- */
-
+  /* INPUTS */
   .dark-mode input,
   .dark-mode textarea,
   .dark-mode select {
-    background-color: #0f172a !important; /* Very dark blue/slate */
+    background-color: #0f172a !important;
     color: #f8fafc !important;
     border-color: #475569 !important;
   }
@@ -217,21 +187,13 @@ const getDarkModeStyles = () => `
   .dark-mode textarea::placeholder {
     color: #64748b !important;
   }
-  
-  /* Fix focus states */
-  .dark-mode *:focus-visible {
-    outline-color: #818cf8 !important;
-  }
 
-  /* --- BORDERS & DIVIDERS --- */
-
+  /* BORDERS */
   .dark-mode .border,
   .dark-mode .border-b,
   .dark-mode .border-t,
   .dark-mode .border-l,
-  .dark-mode .border-r,
-  .dark-mode .divide-y > *,
-  .dark-mode .divide-x > * {
+  .dark-mode .border-r {
     border-color: #334155 !important;
   }
 
@@ -241,14 +203,13 @@ const getDarkModeStyles = () => `
     border-color: #334155 !important;
   }
 
-  /* --- TABLES --- */
-
+  /* TABLES */
   .dark-mode table {
-    background-color: var(--bg-secondary) !important;
+    background-color: #1e293b !important;
   }
 
   .dark-mode thead th {
-    background-color: #1e293b !important; /* Slightly lighter than secondary */
+    background-color: #1e293b !important;
     color: #f1f5f9 !important;
     border-bottom-color: #475569 !important;
   }
@@ -266,9 +227,7 @@ const getDarkModeStyles = () => `
     color: #e2e8f0 !important;
   }
 
-  /* --- CLAY CARDS & SHADOWS --- */
-  /* Re-style clay effect for dark mode to be subtle but distinct */
-
+  /* CLAY CARDS */
   .dark-mode .clay-card {
     background: linear-gradient(145deg, #1e293b, #0f172a) !important;
     box-shadow: 
@@ -279,9 +238,7 @@ const getDarkModeStyles = () => `
     color: #f8fafc !important;
   }
 
-  /* --- COLORED BADGES & HIGHLIGHTS --- */
-  /* Make pastel backgrounds translucent and text bright */
-
+  /* COLORED BADGES - DARKEN BUT KEEP TEXT BRIGHT */
   .dark-mode .bg-green-50, .dark-mode .bg-green-100 {
     background-color: rgba(22, 101, 52, 0.3) !important;
     color: #86efac !important;
@@ -309,9 +266,7 @@ const getDarkModeStyles = () => `
     color: #d8b4fe !important;
   }
 
-  /* --- SPECIFIC COMPONENT OVERRIDES --- */
-
-  /* Popovers/Dropdowns */
+  /* POPOVERS/DROPDOWNS */
   .dark-mode [data-radix-popper-content-wrapper] > div,
   .dark-mode [role="menu"],
   .dark-mode [role="listbox"],
@@ -328,7 +283,7 @@ const getDarkModeStyles = () => `
     cursor: pointer;
   }
 
-  /* Dialogs */
+  /* DIALOGS */
   .dark-mode [role="dialog"] {
     background-color: #0f172a !important;
   }
@@ -338,7 +293,7 @@ const getDarkModeStyles = () => `
     box-shadow: none !important;
   }
 
-  /* Scrollbars */
+  /* SCROLLBARS */
   .dark-mode ::-webkit-scrollbar-track {
     background: #0f172a;
   }
@@ -352,18 +307,7 @@ const getDarkModeStyles = () => `
     background: #64748b;
   }
 
-  /* Icons */
-  .dark-mode svg {
-    color: currentColor; /* Inherit text color by default */
-  }
-
-  /* Fix for "text-white" on light backgrounds (inverted logic)
-     If something was text-white on a dark bg, in dark mode it stays text-white.
-     But if something relied on a dark bg that became light... rare case.
-     Mostly we need to fix text-black on white bg -> text-white on dark bg.
-  */
-
-  /* Hard override for any inline styles setting light backgrounds */
+  /* NUKE INLINE WHITE BACKGROUNDS */
   .dark-mode [style*="background-color: white"],
   .dark-mode [style*="background-color: rgb(255, 255, 255)"],
   .dark-mode [style*="background: white"],
@@ -372,16 +316,18 @@ const getDarkModeStyles = () => `
     background-color: #1e293b !important;
   }
 
-  /* Specific fix for gradient buttons in navigation */
-  .dark-mode nav a, .dark-mode nav button {
-     border-color: transparent !important;
+  /* NAVIGATION - DARKEN GRADIENT BUTTONS */
+  .dark-mode nav a, 
+  .dark-mode nav button {
+    filter: brightness(0.7) saturate(0.8);
   }
   
-  .dark-mode nav a:hover, .dark-mode nav button:hover {
-    background-color: rgba(255,255,255,0.1) !important;
+  .dark-mode nav a:hover, 
+  .dark-mode nav button:hover {
+    filter: brightness(0.9) saturate(0.9);
   }
 
-  /* Calendar Fixes */
+  /* CALENDAR */
   .dark-mode .rdp {
     --rdp-cell-size: 40px; 
     --rdp-accent-color: #818cf8;
@@ -398,7 +344,7 @@ const getDarkModeStyles = () => `
     background-color: #334155 !important;
   }
 
-  /* Switch */
+  /* SWITCH */
   .dark-mode [role="switch"] {
     background-color: #475569 !important;
   }
@@ -406,15 +352,14 @@ const getDarkModeStyles = () => `
     background-color: #818cf8 !important;
   }
 
-  /* Make sure links are visible */
+  /* LINKS */
   .dark-mode a {
-    color: #60a5fa; /* Blue-400 */
+    color: #60a5fa;
   }
   .dark-mode a:hover {
-    color: #93c5fd; /* Blue-300 */
+    color: #93c5fd;
   }
   
-  /* Reset link color in nav to inherit */
   .dark-mode nav a {
     color: inherit;
   }
