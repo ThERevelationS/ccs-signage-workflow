@@ -24,30 +24,27 @@ export function useMultiPageView() {
   const [additionalPages, setAdditionalPages] = useState([]);
 
   const addPage = (pageName, pageTitle) => {
-    // If page is already in split view, remove it (toggle behavior)
     const normalizedName = pageName.toLowerCase();
-    const existingIndex = additionalPages.findIndex(p => p.name.toLowerCase() === normalizedName);
-    if (existingIndex !== -1) {
-      setAdditionalPages(prev => prev.filter(p => p.name.toLowerCase() !== normalizedName));
-      return;
-    }
     
-    // Check if it's the current main page (from URL)
+    // Check if it's the current main page (from URL) - don't allow adding main page
     const currentPath = window.location.pathname.split('/').pop()?.toLowerCase() || '';
     if (currentPath === normalizedName) {
       return; // Don't add the current page to split view
     }
     
+    // Generate unique ID for each page instance to allow duplicates
+    const uniqueId = `${pageName}_${Date.now()}`;
+    
     if (additionalPages.length >= 2) {
       // Already have 2 additional pages (3 total with main), replace the last one
-      setAdditionalPages(prev => [...prev.slice(0, 1), { name: pageName, title: pageTitle }]);
+      setAdditionalPages(prev => [...prev.slice(0, 1), { name: pageName, title: pageTitle, id: uniqueId }]);
     } else {
-      setAdditionalPages(prev => [...prev, { name: pageName, title: pageTitle }]);
+      setAdditionalPages(prev => [...prev, { name: pageName, title: pageTitle, id: uniqueId }]);
     }
   };
 
-  const removePage = (pageName) => {
-    setAdditionalPages(prev => prev.filter(p => p.name !== pageName));
+  const removePage = (pageId) => {
+    setAdditionalPages(prev => prev.filter(p => p.id !== pageId));
   };
 
   const clearPages = () => {
@@ -83,7 +80,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
         const PageComponent = pageComponents[page.name.toLowerCase()];
         return (
           <div 
-            key={page.name}
+            key={page.id || page.name}
             className={`h-full relative flex flex-col ${index < additionalPages.length - 1 ? 'border-r border-gray-300' : ''}`}
             style={{ width: `${100 / totalPanes}%`, overflow: 'hidden' }}
           >
@@ -94,7 +91,7 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
                 <span className="text-xs font-medium text-purple-800">{page.title}</span>
               </div>
               <button
-                onClick={() => onRemovePage(page.name)}
+                onClick={() => onRemovePage(page.id || page.name)}
                 className="p-1 hover:bg-purple-200 rounded transition-colors"
               >
                 <X className="w-3.5 h-3.5 text-purple-600" />
