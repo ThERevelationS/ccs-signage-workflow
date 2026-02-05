@@ -1050,7 +1050,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               <div className={`w-3 h-3 rounded border flex items-center justify-center ${isApplied ? 'bg-blue-500 border-blue-500' : 'border-gray-400'}`}>
                                 {isApplied && <Check className="w-2 h-2 text-white" />}
                               </div>
-                              <span className="truncate max-w-[80px]">{type}</span>
+                              <span>{type}</span>
                             </button>
                           );
                         })}
