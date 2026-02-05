@@ -834,7 +834,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </div>
                 </div>
 
-                <div>
+                <div className="flex flex-col h-full">
                   <h3 className="font-bold text-sm mb-2">Selected ({selectedProducts.length})</h3>
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
