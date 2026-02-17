@@ -54,12 +54,22 @@ Deno.serve(async (req) => {
     const searchRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
     const searchData = await searchRes.json();
 
-    logData.debug_info = `Gmail query: ${gmailQuery} | Found: ${searchData.messages?.length ?? 0}`;
+    console.log('Gmail search URL:', searchUrl);
+    console.log('Gmail search response:', JSON.stringify(searchData));
+
+    logData.debug_info = `Gmail query: "${gmailQuery}" | HTTP status: ${searchRes.status} | Found: ${searchData.messages?.length ?? 0} | Raw response keys: ${Object.keys(searchData).join(', ')}`;
 
     if (!searchData.messages || searchData.messages.length === 0) {
+      // Also try a broader search to help diagnose
+      const broadUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent('from:noreply@corebridge.net')}&maxResults=5`;
+      const broadRes = await fetch(broadUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const broadData = await broadRes.json();
+      console.log('Broad search (from corebridge):', JSON.stringify(broadData));
+      logData.debug_info += ` | Broad search (from corebridge) found: ${broadData.messages?.length ?? 0}`;
+
       logData.status = 'no_emails';
       await CorebridgeLog.create(logData);
-      return Response.json({ success: true, message: "No new CoreBridge emails found", processed: 0, results: [] });
+      return Response.json({ success: true, message: "No new CoreBridge emails found", processed: 0, results: [], debug: logData.debug_info });
     }
 
     logData.emails_found = searchData.messages.length;
