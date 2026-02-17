@@ -76,6 +76,13 @@ Deno.serve(async (req) => {
     let processed = 0;
     const results = [];
 
+    // Pre-load ALL existing work orders once (not inside the loop)
+    const existingOrdersRaw = await WorkOrder.filter({ deleted: { $ne: true } });
+    const allExistingOrders = Array.isArray(existingOrdersRaw) ? existingOrdersRaw : (existingOrdersRaw?.data || existingOrdersRaw?.results || []);
+
+    // Track doc numbers processed in THIS run to avoid intra-run duplicates
+    const processedDocNumbers = new Set();
+
     for (const msg of searchData.messages) {
       try {
         const msgRes = await fetch(
