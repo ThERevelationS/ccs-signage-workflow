@@ -662,6 +662,10 @@ export default function AdminSettings() {
                     <Settings className="w-4 h-4 mr-2" />
                     Backend Functions
                   </TabsTrigger>
+                  <TabsTrigger value="corebridge" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <Bot className="w-4 h-4 mr-2" />
+                    CoreBridge AI
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
