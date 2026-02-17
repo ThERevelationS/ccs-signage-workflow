@@ -337,7 +337,7 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

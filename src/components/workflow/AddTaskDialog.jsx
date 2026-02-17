@@ -163,7 +163,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
 
   if (isLoading) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent className="clay-card border-none">
           <div className="flex items-center justify-center p-8">
             <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -174,7 +174,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
