@@ -270,7 +270,7 @@ export default function MilestoneManager({
 
 function MilestoneDialog({ open, onOpenChange, milestone, setMilestone, tasks, onSave }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent className="clay-card border-none max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
