@@ -1,9 +1,80 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Normalize a string for fuzzy comparison
+function normalize(str) {
+  return (str || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Compute fuzzy match score (0-100) between imported data and an existing work order
+function computeMatchScore(extracted, wo) {
+  let score = 0;
+  const reasons = [];
+
+  const normClient = normalize(extracted.client_name);
+  const normWoClient = normalize(wo.client_name);
+  const normTitle = normalize(extracted.description || extracted.client_name);
+  const normWoTitle = normalize(wo.title);
+
+  // Client name similarity
+  if (normClient && normWoClient) {
+    if (normClient === normWoClient) { score += 40; reasons.push('Exact client name match'); }
+    else if (normWoClient.includes(normClient) || normClient.includes(normWoClient)) { score += 25; reasons.push('Partial client name match'); }
+    else {
+      // Word overlap
+      const clientWords = normClient.split(' ').filter(w => w.length > 2);
+      const woWords = normWoClient.split(' ').filter(w => w.length > 2);
+      const overlap = clientWords.filter(w => woWords.includes(w)).length;
+      if (overlap > 0) { score += Math.min(15, overlap * 7); reasons.push(`${overlap} shared client name word(s)`); }
+    }
+  }
+
+  // Title / description similarity
+  if (normTitle && normWoTitle) {
+    if (normTitle === normWoTitle) { score += 30; reasons.push('Exact title/description match'); }
+    else if (normWoTitle.includes(normTitle) || normTitle.includes(normWoTitle)) { score += 15; reasons.push('Partial title match'); }
+    else {
+      const titleWords = normTitle.split(' ').filter(w => w.length > 2);
+      const woTitleWords = normWoTitle.split(' ').filter(w => w.length > 2);
+      const overlap = titleWords.filter(w => woTitleWords.includes(w)).length;
+      if (overlap > 0) { score += Math.min(10, overlap * 4); reasons.push(`${overlap} shared title word(s)`); }
+    }
+  }
+
+  // Address match
+  const normAddr = normalize(extracted.install_location || extracted.billing_address);
+  const normWoAddr = normalize(wo.install_location || wo.billing_address);
+  if (normAddr && normWoAddr && normAddr.length > 5 && (normAddr === normWoAddr || normAddr.includes(normWoAddr) || normWoAddr.includes(normAddr))) {
+    score += 20; reasons.push('Address match');
+  }
+
+  // Amount similarity (within 10%)
+  if (extracted.quoted_amount && wo.quoted_amount) {
+    const diff = Math.abs(extracted.quoted_amount - wo.quoted_amount) / Math.max(extracted.quoted_amount, wo.quoted_amount);
+    if (diff < 0.05) { score += 15; reasons.push('Very close quote amount'); }
+    else if (diff < 0.10) { score += 8; reasons.push('Similar quote amount'); }
+  }
+
+  // Contact name/email
+  if (extracted.contact_email && wo.contact_email && normalize(extracted.contact_email) === normalize(wo.contact_email)) {
+    score += 15; reasons.push('Contact email match');
+  }
+  if (extracted.contact_name && wo.contact_name && normalize(extracted.contact_name) === normalize(wo.contact_name)) {
+    score += 10; reasons.push('Contact name match');
+  }
+
+  // Penalize if existing WO already has a doc number (already linked)
+  if (wo.est_inv_at || wo.corbridge_invoice_number) {
+    score -= 20;
+  }
+
+  return { score: Math.max(0, Math.min(100, score)), reasons };
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const WorkOrder = base44.asServiceRole.entities.WorkOrder;
   const CorebridgeLog = base44.asServiceRole.entities.CorebridgeLog;
+  const PendingImport = base44.asServiceRole.entities.PendingImport;
 
   // Detect trigger type from request body
   let triggerType = 'scheduled';
