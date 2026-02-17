@@ -566,11 +566,11 @@ export default function MmmChecklistDialog({
 
   return (
     <>
-      <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={onClose}>
+      <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={() => {}}>
         <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold">MMM Checklist - {workOrder?.client_name}</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Monday Morning Meeting - {workOrder?.client_name}</DialogTitle>
               <div className="flex gap-2">
                 {isAdmin && (
                   <Button variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)}>
