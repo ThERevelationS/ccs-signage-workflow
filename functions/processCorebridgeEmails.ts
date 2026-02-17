@@ -209,11 +209,11 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             updateData.estimate_amount = extractedData.quoted_amount;
           }
 
-          // If this is now an invoice (EST -> INV conversion), move to WIP / production
-          if (docType === 'invoice' && (existing.est_inv_at || '').startsWith('EST')) {
-            updateData.current_stage = 'production';
+          // If this is now an invoice (EST -> INV conversion), move using configured stage
+          if (docType === 'invoice' && (existing.est_inv_at || '').startsWith(estPattern)) {
+            updateData.current_stage = estToInvStage;
             updateData.in_pipeline = true;
-            updateData.sales_status = 'won';
+            updateData.sales_status = estToInvSalesStatus;
             console.log(`EST->INV conversion for ${docNumber}: moving to WIP/production`);
           }
 
