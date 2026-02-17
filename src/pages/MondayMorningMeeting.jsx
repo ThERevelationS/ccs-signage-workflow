@@ -507,23 +507,15 @@ export default function MondayMorningMeeting() {
         />
       )}
 
-      {/* Product Checklist Dialog */}
+      {/* MMM Checklist Dialog */}
       {checklistDialog.open && checklistDialog.workOrder && (
-        <ProductChecklistDialog
+        <MmmChecklistDialog
           isOpen={checklistDialog.open}
           onClose={() => setChecklistDialog({ open: false, workOrder: null })}
           workOrder={checklistDialog.workOrder}
           onUpdate={() => loadWorkOrders(false)}
           isRegistered={isRegistered}
           isAdmin={currentUser?.role === 'admin'}
-        />
-      )}
-
-      {/* Template Builder */}
-      {showTemplateBuilder && (
-        <TemplateBuilder
-          isOpen={showTemplateBuilder}
-          onClose={() => setShowTemplateBuilder(false)}
         />
       )}
     </div>
