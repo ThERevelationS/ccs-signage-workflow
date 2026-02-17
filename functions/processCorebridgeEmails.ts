@@ -368,9 +368,16 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
               product_5: extractedData.products?.[4] || null,
             };
 
-            // Route based on whether strong match candidates exist
-            const hasStrongMatch = candidates.length > 0 && candidates[0].match_score >= 50;
-            const action = hasStrongMatch ? 'pending_merge' : 'pending_approve';
+            // If NO candidates at all → auto-create immediately, no review needed
+            if (candidates.length === 0) {
+              Object.keys(proposedWorkOrder).forEach(k => {
+                if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
+              });
+              const created = await WorkOrder.create(proposedWorkOrder);
+              results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
+            } else {
+            // Has potential matches → send to pending review
+            const action = candidates[0].match_score >= 50 ? 'pending_merge' : 'pending_approve';
 
             await PendingImport.create({
               doc_number: docNumber,
