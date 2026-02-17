@@ -142,7 +142,8 @@ Return a JSON object with these fields (use null for anything not found):
 - sales_rep_email: Salesperson email
 - payment_terms: Payment terms text
 - doc_number: The exact document number (EST-XXXXX or INV-XXXXX)
-- doc_numeric_id: Just the numeric part`;
+- doc_numeric_id: Just the numeric part
+${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
 
         let extractedData = null;
         if (pdfUrl) {
