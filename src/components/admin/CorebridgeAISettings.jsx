@@ -84,9 +84,13 @@ export default function CorebridgeAISettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [expandedLog, setExpandedLog] = useState(null);
 
   useEffect(() => {
     loadSettings();
+    loadLogs();
   }, []);
 
   const loadSettings = async () => {
