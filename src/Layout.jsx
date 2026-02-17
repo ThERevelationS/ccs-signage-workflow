@@ -676,11 +676,14 @@ function LayoutContent({ children }) {
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      </Link>
-                    );
-                  })}
-                  
-                  {/* Meetings Dropdown */}
+                        {item.title === 'Sales Pipeline' && pendingImportCount > 0 && (
+                          <span className="w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pendingImportCount}</span>
+                        )}
+                        </Link>
+                        );
+                        })}
+
+                        {/* Meetings Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
