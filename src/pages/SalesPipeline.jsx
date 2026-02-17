@@ -224,14 +224,25 @@ export default function SalesPipeline() {
           </div>
         </div>
 
-        <SalesPipelineSpreadsheet 
-          ref={spreadsheetRef}
-          searchTerm={searchTerm} 
-          filterStatus={filterStatus}
-          showButtonsInline={false}
-          activeColumnPreset={activeColumnPreset}
-          customFilters={activeFilters.filter(f => f.type === "filter")}
-        />
+        {showPendingImports ? (
+          <div className="clay-card p-4 overflow-auto flex-1">
+            <div className="flex items-center gap-2 mb-4">
+              <Inbox className="w-5 h-5 text-amber-600" />
+              <h2 className="text-lg font-bold text-gray-800">Pending AI Imports</h2>
+              <span className="text-xs text-gray-500">Review and approve or merge Corebridge emails that couldn't be automatically matched.</span>
+            </div>
+            <PendingImportsPanel onCountChange={setPendingCount} />
+          </div>
+        ) : (
+          <SalesPipelineSpreadsheet 
+            ref={spreadsheetRef}
+            searchTerm={searchTerm} 
+            filterStatus={filterStatus}
+            showButtonsInline={false}
+            activeColumnPreset={activeColumnPreset}
+            customFilters={activeFilters.filter(f => f.type === "filter")}
+          />
+        )}
       </div>
 
       {showNewClientForm && (
