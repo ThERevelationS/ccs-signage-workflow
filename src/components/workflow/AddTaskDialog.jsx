@@ -224,19 +224,13 @@ export default function AddTaskDialog({ isOpen, onClose }) {
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 <Label className="text-sm">Assign to:</Label>
-                <Select value={assignedTo} onValueChange={setAssignedTo}>
-                  <SelectTrigger className="h-8 w-48">
-                    <SelectValue placeholder="Select user..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>Unassigned</SelectItem>
-                    {users.map(u => (
-                      <SelectItem key={u.email} value={u.full_name || u.email}>
-                        {u.full_name || u.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiUserSelectInline
+                  users={users}
+                  selectedUsers={assignedTo}
+                  onSelectionChange={setAssignedTo}
+                  placeholder="Select users..."
+                  className="h-8 w-48"
+                />
               </div>
             </div>
 
@@ -294,22 +288,13 @@ export default function AddTaskDialog({ isOpen, onClose }) {
                         />
                         <div className="flex items-center gap-2">
                           <User className="w-3 h-3 text-gray-400" />
-                          <Select
-                            value={st.assigned_to || ""}
-                            onValueChange={(val) => updateSubTask(st.id, { assigned_to: val })}
-                          >
-                            <SelectTrigger className="h-7 text-xs w-40">
-                              <SelectValue placeholder="Assign..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={null}>Unassigned</SelectItem>
-                              {users.map(u => (
-                                <SelectItem key={u.email} value={u.full_name || u.email}>
-                                  {u.full_name || u.email}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <MultiUserSelectInline
+                            users={users}
+                            selectedUsers={Array.isArray(st.assigned_to) ? st.assigned_to : (st.assigned_to ? [st.assigned_to] : [])}
+                            onSelectionChange={(val) => updateSubTask(st.id, { assigned_to: val })}
+                            placeholder="Assign..."
+                            className="h-7 w-40"
+                          />
                         </div>
 
                         {/* Details under sub-task */}
@@ -337,22 +322,13 @@ export default function AddTaskDialog({ isOpen, onClose }) {
                                   placeholder="Detail description..."
                                   className="h-7 text-xs mb-1"
                                 />
-                                <Select
-                                  value={detail.assigned_to || ""}
-                                  onValueChange={(val) => updateDetail(st.id, detail.id, { assigned_to: val })}
-                                >
-                                  <SelectTrigger className="h-6 text-xs w-36">
-                                    <SelectValue placeholder="Assign..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value={null}>Unassigned</SelectItem>
-                                    {users.map(u => (
-                                      <SelectItem key={u.email} value={u.full_name || u.email}>
-                                        {u.full_name || u.email}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                <MultiUserSelectInline
+                                  users={users}
+                                  selectedUsers={Array.isArray(detail.assigned_to) ? detail.assigned_to : (detail.assigned_to ? [detail.assigned_to] : [])}
+                                  onSelectionChange={(val) => updateDetail(st.id, detail.id, { assigned_to: val })}
+                                  placeholder="Assign..."
+                                  className="h-6 w-36"
+                                />
                               </div>
                             ))}
                             <Button
