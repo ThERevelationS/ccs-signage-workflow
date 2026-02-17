@@ -205,7 +205,8 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           ? `${clientName} - ${docNumber}`
           : (extractedData.description || `${clientName} - Sign Project`);
 
-        const existingOrders = await WorkOrder.filter({ deleted: { $ne: true } });
+        const existingOrdersRaw = await WorkOrder.filter({ deleted: { $ne: true } });
+        const existingOrders = Array.isArray(existingOrdersRaw) ? existingOrdersRaw : (existingOrdersRaw?.data || existingOrdersRaw?.results || []);
         const existing = existingOrders.find(wo => {
           const storedNum = wo.est_inv_at || wo.corbridge_invoice_number || '';
           return storedNum.includes(docNumericId);
