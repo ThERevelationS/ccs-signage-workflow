@@ -53,10 +53,10 @@ export default function MyWorkflow() {
   const [expandedTasks, setExpandedTasks] = useState({});
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
   const [newSubTaskText, setNewSubTaskText] = useState("");
-  const [newSubTaskAssignedTo, setNewSubTaskAssignedTo] = useState("");
+  const [newSubTaskAssignedTo, setNewSubTaskAssignedTo] = useState([]);
   const [addingDetailFor, setAddingDetailFor] = useState(null);
   const [newDetailText, setNewDetailText] = useState("");
-  const [newDetailAssignedTo, setNewDetailAssignedTo] = useState("");
+  const [newDetailAssignedTo, setNewDetailAssignedTo] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskText, setEditTaskText] = useState("");
   const [editingSipTask, setEditingSipTask] = useState(null);
@@ -226,7 +226,7 @@ export default function MyWorkflow() {
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
     setNewSubTaskText("");
-    setNewSubTaskAssignedTo("");
+    setNewSubTaskAssignedTo([]);
     setAddingSubTaskFor(null);
     await WorkOrder.update(workOrderId, { notes: updatedTasks });
   };
@@ -280,7 +280,7 @@ export default function MyWorkflow() {
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
     setNewDetailText("");
-    setNewDetailAssignedTo("");
+    setNewDetailAssignedTo([]);
     setAddingDetailFor(null);
     await WorkOrder.update(workOrderId, { notes: updatedTasks });
   };
