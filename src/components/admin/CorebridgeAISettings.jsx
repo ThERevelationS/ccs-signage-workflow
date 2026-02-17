@@ -460,6 +460,116 @@ export default function CorebridgeAISettings() {
           <span>Runs automatically every <strong>10 minutes</strong> via the "Process CoreBridge Emails" scheduled automation.</span>
         </div>
       </div>
+
+      {/* Activity Log */}
+      <div className="clay-card p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-gray-500" />
+            Run History
+          </h3>
+          <Button variant="ghost" size="sm" onClick={loadLogs} disabled={logsLoading} className="gap-1 text-xs">
+            {logsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Refresh
+          </Button>
+        </div>
+
+        {logsLoading && logs.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-gray-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading logs...
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No runs recorded yet. Click "Run Now" to start.</div>
+        ) : (
+          <div className="space-y-2">
+            {logs.map((log) => {
+              const isExpanded = expandedLog === log.id;
+              const statusColor = {
+                success: 'bg-green-50 border-green-200',
+                partial: 'bg-yellow-50 border-yellow-200',
+                error: 'bg-red-50 border-red-200',
+                no_emails: 'bg-gray-50 border-gray-200',
+              }[log.status] || 'bg-gray-50 border-gray-200';
+
+              const statusIcon = {
+                success: <CheckCircle2 className="w-4 h-4 text-green-600" />,
+                partial: <AlertTriangle className="w-4 h-4 text-yellow-600" />,
+                error: <XCircle className="w-4 h-4 text-red-600" />,
+                no_emails: <SkipForward className="w-4 h-4 text-gray-400" />,
+              }[log.status];
+
+              const runDate = log.run_at ? new Date(log.run_at) : new Date(log.created_date);
+
+              return (
+                <div key={log.id} className={`rounded-xl border ${statusColor} overflow-hidden`}>
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black/5 transition-colors"
+                    onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                  >
+                    {statusIcon}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-800">
+                          {runDate.toLocaleString()}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          log.trigger === 'manual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {log.trigger === 'manual' ? 'Manual' : 'Scheduled'}
+                        </span>
+                        {log.status === 'no_emails' && <span className="text-xs text-gray-500">No emails found</span>}
+                        {log.status !== 'no_emails' && (
+                          <span className="text-xs text-gray-600">
+                            {log.emails_found ?? 0} found · {log.processed ?? 0} processed
+                          </span>
+                        )}
+                        {log.error_message && (
+                          <span className="text-xs text-red-600 truncate max-w-xs">{log.error_message}</span>
+                        )}
+                      </div>
+                    </div>
+                    {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4 space-y-2 border-t border-current border-opacity-10">
+                      {log.debug_info && (
+                        <p className="text-xs text-gray-500 font-mono bg-white/60 rounded p-2 mt-2">{log.debug_info}</p>
+                      )}
+                      {log.results?.length > 0 ? (
+                        <div className="space-y-1 mt-2">
+                          {log.results.map((r, i) => (
+                            <div key={i} className="flex items-start gap-2 text-xs text-gray-700 bg-white/60 rounded p-2">
+                              <span className={`px-1.5 py-0.5 rounded font-semibold flex-shrink-0 ${
+                                r.action === 'created' ? 'bg-green-100 text-green-700' :
+                                r.action === 'updated' ? 'bg-blue-100 text-blue-700' :
+                                r.action === 'skipped' ? 'bg-gray-100 text-gray-600' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {r.action?.toUpperCase()}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="font-medium">{r.docNumber || r.messageId || '—'}{r.client ? ` — ${r.client}` : ''}</div>
+                                {r.subject && <div className="text-gray-400 truncate">Subject: {r.subject}</div>}
+                                {r.stage && <div className="text-gray-500">Stage: {r.stage}</div>}
+                                {r.estToInv && <div className="text-orange-600 font-medium">→ Moved to WIP</div>}
+                                {r.skipped_reason && <div className="text-yellow-600">{r.skipped_reason}</div>}
+                                {r.error && <div className="text-red-600">{r.error}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-2 italic">No per-email results recorded.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
