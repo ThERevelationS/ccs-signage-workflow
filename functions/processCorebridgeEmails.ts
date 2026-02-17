@@ -61,11 +61,12 @@ Deno.serve(async (req) => {
         const subject = headers.find(h => h.name === 'Subject')?.value || '';
         const fromHeader = headers.find(h => h.name === 'From')?.value || '';
 
-        // Parse document number from subject
-        // Matches EST-XXXXX or INV-XXXXX
-        const estMatch = subject.match(/EST-(\d+)/i);
-        const invMatch = subject.match(/INV-(\d+)/i);
-        const docNumber = estMatch ? `EST-${estMatch[1]}` : invMatch ? `INV-${invMatch[1]}` : null;
+        // Parse document number from subject using configured patterns
+        const estRegex = new RegExp(`${estPattern}-(\\d+)`, 'i');
+        const invRegex = new RegExp(`${invPattern}-(\\d+)`, 'i');
+        const estMatch = subject.match(estRegex);
+        const invMatch = subject.match(invRegex);
+        const docNumber = estMatch ? `${estPattern}-${estMatch[1]}` : invMatch ? `${invPattern}-${invMatch[1]}` : null;
         const docType = estMatch ? 'estimate' : invMatch ? 'invoice' : null;
         const docNumericId = estMatch ? estMatch[1] : invMatch ? invMatch[1] : null;
 
