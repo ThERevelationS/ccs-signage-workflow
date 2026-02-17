@@ -847,7 +847,7 @@ export default function ProductChecklistDialog({
 
   return (
     <>
-      <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={onClose}>
+      <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={() => {}}>
         <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
