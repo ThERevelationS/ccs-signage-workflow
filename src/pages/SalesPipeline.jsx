@@ -22,6 +22,8 @@ export default function SalesPipeline() {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [canImportExport, setCanImportExport] = useState(false);
+  const [showPendingImports, setShowPendingImports] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
