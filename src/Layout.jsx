@@ -92,12 +92,31 @@ const getFullscreenStyles = (isFullscreen) => `
 
 const getDarkModeStyles = () => `
   /* ============================================================
-     DARK MODE — uses CSS color-scheme + filter inversion trick
-     on neutral elements, preserving colored UI elements.
+     DARK MODE — override shadcn CSS vars + Tailwind classes
   ============================================================ */
 
   .dark-mode {
     color-scheme: dark;
+    /* shadcn/ui CSS variable overrides */
+    --background: 15 23 42;
+    --foreground: 226 232 240;
+    --card: 30 41 59;
+    --card-foreground: 226 232 240;
+    --popover: 30 41 59;
+    --popover-foreground: 226 232 240;
+    --primary: 99 102 241;
+    --primary-foreground: 255 255 255;
+    --secondary: 36 55 78;
+    --secondary-foreground: 226 232 240;
+    --muted: 36 55 78;
+    --muted-foreground: 148 163 184;
+    --accent: 36 55 78;
+    --accent-foreground: 226 232 240;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 51 65 85;
+    --input: 15 23 42;
+    --ring: 99 102 241;
   }
 
   /* ---------- page chrome ---------- */
