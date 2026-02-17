@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase } from "lucide-react";
+import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;

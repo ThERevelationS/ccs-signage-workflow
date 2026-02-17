@@ -92,20 +92,25 @@ export default function MyWorkflow() {
       
       // Find work orders where user has tasks assigned to them (in notes array OR sip_checklist)
       const myOrders = allOrders.filter(wo => {
+        const isAssignedTo = (assignedTo) => {
+          const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
+          return arr.includes(userName);
+        };
+        
         // Check notes array (traditional tasks)
-        const hasAssignedTask = (wo.notes || []).some(task => task.assigned_to === userName && !task.completed);
+        const hasAssignedTask = (wo.notes || []).some(task => isAssignedTo(task.assigned_to) && !task.completed);
         if (hasAssignedTask) return true;
         
         // Check sub-tasks in notes
         const hasAssignedSubTask = (wo.notes || []).some(task => 
-          (task.sub_tasks || []).some(st => st.assigned_to === userName && !st.completed)
+          (task.sub_tasks || []).some(st => isAssignedTo(st.assigned_to) && !st.completed)
         );
         if (hasAssignedSubTask) return true;
         
         // Check details in notes
         const hasAssignedDetail = (wo.notes || []).some(task => 
           (task.sub_tasks || []).some(st => 
-            (st.details || []).some(d => d.assigned_to === userName && !d.completed)
+            (st.details || []).some(d => isAssignedTo(d.assigned_to) && !d.completed)
           )
         );
         if (hasAssignedDetail) return true;
