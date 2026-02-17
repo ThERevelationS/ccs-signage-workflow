@@ -296,12 +296,14 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           ? `${clientName} - ${docNumber}`
           : (extractedData.description || `${clientName} - Sign Project`);
 
-        const existing = allExistingOrders.find(wo => {
+        // 1. Check if an existing WO already has this exact doc number
+        const exactMatch = allExistingOrders.find(wo => {
           const storedNum = wo.est_inv_at || wo.corbridge_invoice_number || '';
           return storedNum.includes(docNumericId);
         });
 
-        if (existing) {
+        if (exactMatch) {
+          // Update the existing linked work order
           const updateData = {
             est_inv_at: docNumber,
             corbridge_invoice_number: docNumber
@@ -310,7 +312,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             updateData.quoted_amount = extractedData.quoted_amount;
             updateData.estimate_amount = extractedData.quoted_amount;
           }
-          const isEstToInv = docType === 'invoice' && (existing.est_inv_at || '').startsWith(estPattern);
+          const isEstToInv = docType === 'invoice' && (exactMatch.est_inv_at || '').startsWith(estPattern);
           if (isEstToInv) {
             updateData.current_stage = estToInvStage;
             updateData.in_pipeline = true;
@@ -318,40 +320,71 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           }
           if (extractedData.install_location) updateData.install_location = extractedData.install_location;
 
-          await WorkOrder.update(existing.id, updateData);
-          results.push({ action: 'updated', subject, docNumber, workOrderId: existing.id, client: clientName, estToInv: isEstToInv });
+          await WorkOrder.update(exactMatch.id, updateData);
+          results.push({ action: 'updated', subject, docNumber, workOrderId: exactMatch.id, client: clientName, estToInv: isEstToInv });
+
         } else {
-          const newWorkOrder = {
-            title: workOrderTitle,
-            client_name: clientName,
-            description: extractedData.description || '',
-            current_stage: docType === 'invoice' ? invoiceStage : estimateStage,
-            sales_status: docType === 'invoice' ? invoiceSalesStatus : estimateSalesStatus,
-            in_pipeline: true,
-            est_inv_at: docNumber,
-            corbridge_invoice_number: docNumber,
-            quoted_amount: extractedData.quoted_amount || null,
-            estimate_amount: extractedData.quoted_amount || null,
-            contact_name: extractedData.contact_name || null,
-            contact_email: extractedData.contact_email || null,
-            contact_phone: extractedData.contact_phone || null,
-            billing_address: extractedData.billing_address || null,
-            install_location: extractedData.install_location || null,
-            sales_rep: extractedData.sales_rep || null,
-            representative: extractedData.sales_rep || null,
-            completed: false,
-            deleted: false,
-            product_1: extractedData.products?.[0] || null,
-            product_2: extractedData.products?.[1] || null,
-            product_3: extractedData.products?.[2] || null,
-            product_4: extractedData.products?.[3] || null,
-            product_5: extractedData.products?.[4] || null,
-          };
-          Object.keys(newWorkOrder).forEach(k => {
-            if (newWorkOrder[k] === null || newWorkOrder[k] === undefined) delete newWorkOrder[k];
-          });
-          const created = await WorkOrder.create(newWorkOrder);
-          results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: newWorkOrder.current_stage });
+          // 2. No exact doc number match — check for a pending import already queued for this doc
+          const existingPendingRaw = await PendingImport.filter({ doc_number: docNumber, status: 'pending' });
+          const existingPending = Array.isArray(existingPendingRaw) ? existingPendingRaw : [];
+          if (existingPending.length > 0) {
+            results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Already in pending import queue' });
+          } else {
+            // 3. Compute fuzzy match scores against all existing work orders (that have no doc number)
+            const candidates = allExistingOrders
+              .filter(wo => !wo.deleted && !wo.completed)
+              .map(wo => {
+                const { score, reasons } = computeMatchScore(extractedData, wo);
+                return { work_order_id: wo.id, work_order_title: wo.title, client_name: wo.client_name, current_stage: wo.current_stage, match_score: score, match_reasons: reasons };
+              })
+              .filter(c => c.match_score >= 25)
+              .sort((a, b) => b.match_score - a.match_score)
+              .slice(0, 5);
+
+            const proposedWorkOrder = {
+              title: workOrderTitle,
+              client_name: clientName,
+              description: extractedData.description || '',
+              current_stage: docType === 'invoice' ? invoiceStage : estimateStage,
+              sales_status: docType === 'invoice' ? invoiceSalesStatus : estimateSalesStatus,
+              in_pipeline: true,
+              est_inv_at: docNumber,
+              corbridge_invoice_number: docNumber,
+              quoted_amount: extractedData.quoted_amount || null,
+              estimate_amount: extractedData.quoted_amount || null,
+              contact_name: extractedData.contact_name || null,
+              contact_email: extractedData.contact_email || null,
+              contact_phone: extractedData.contact_phone || null,
+              billing_address: extractedData.billing_address || null,
+              install_location: extractedData.install_location || null,
+              sales_rep: extractedData.sales_rep || null,
+              representative: extractedData.sales_rep || null,
+              completed: false,
+              deleted: false,
+              product_1: extractedData.products?.[0] || null,
+              product_2: extractedData.products?.[1] || null,
+              product_3: extractedData.products?.[2] || null,
+              product_4: extractedData.products?.[3] || null,
+              product_5: extractedData.products?.[4] || null,
+            };
+
+            // Route based on whether strong match candidates exist
+            const hasStrongMatch = candidates.length > 0 && candidates[0].match_score >= 50;
+            const action = hasStrongMatch ? 'pending_merge' : 'pending_approve';
+
+            await PendingImport.create({
+              doc_number: docNumber,
+              doc_type: docType,
+              email_subject: subject,
+              extracted_data: extractedData,
+              proposed_work_order: proposedWorkOrder,
+              match_candidates: candidates,
+              status: 'pending',
+              pdf_url: pdfUrl
+            });
+
+            results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
+          }
         }
 
         // Mark as read
