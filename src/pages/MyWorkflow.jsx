@@ -685,11 +685,12 @@ export default function MyWorkflow() {
                                           {/* Add Detail */}
                                           {addingDetailFor?.woId === wo.id && addingDetailFor?.taskIndex === item.taskIndex && addingDetailFor?.subTaskIndex === stIdx ? (
                                             <div className="ml-4 mt-0.5 space-y-0.5">
-                                              <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-4 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddDetail(wo.id, item.taskIndex, stIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); }}} />
-                                              <div className="flex gap-1">
-                                                <Button size="sm" onClick={() => handleAddDetail(wo.id, item.taskIndex, stIdx)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
-                                                <Button size="sm" variant="ghost" onClick={() => { setAddingDetailFor(null); setNewDetailText(""); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
-                                              </div>
+                                             <Input value={newDetailText} onChange={(e) => setNewDetailText(e.target.value)} placeholder="Detail..." className="h-4 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddDetail(wo.id, item.taskIndex, stIdx); if (e.key === 'Escape') { setAddingDetailFor(null); setNewDetailText(""); setNewDetailAssignedTo([]); }}} />
+                                             <MultiUserSelectInline users={allUsers} selectedUsers={newDetailAssignedTo} onSelectionChange={setNewDetailAssignedTo} placeholder="Assign..." className="h-4 w-full" />
+                                             <div className="flex gap-1">
+                                               <Button size="sm" onClick={() => handleAddDetail(wo.id, item.taskIndex, stIdx)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
+                                               <Button size="sm" variant="ghost" onClick={() => { setAddingDetailFor(null); setNewDetailText(""); setNewDetailAssignedTo([]); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
+                                             </div>
                                             </div>
                                           ) : (
                                             <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] opacity-0 group-hover/subtask:opacity-100"><Plus className="w-1.5 h-1.5" />Detail</Button>
