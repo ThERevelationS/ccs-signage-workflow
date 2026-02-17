@@ -673,7 +673,7 @@ export default function WorkOrderForm({
   const completedFollowUp = (formData.follow_up || []).filter(f => f.completed);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+    <Dialog open={isOpen} onOpenChange={() => {}} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
       <DialogContent role="dialog" className="clay-card border-none max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
