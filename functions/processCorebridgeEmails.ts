@@ -391,6 +391,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             });
 
             results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
+            } // end else (has candidates)
           }
         }
 
