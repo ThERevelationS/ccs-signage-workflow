@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
