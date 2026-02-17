@@ -656,7 +656,7 @@ export default function MyWorkflow() {
                                             ) : (
                                               <>
                                                 <span className={st.completed ? "line-through text-gray-400" : "text-gray-600"}>{st.text}</span>
-                                                {st.assigned_to && <Badge variant="outline" className="text-[9px] text-blue-600 px-0.5 py-0">→ {st.assigned_to}</Badge>}
+                                                {st.assigned_to && (Array.isArray(st.assigned_to) ? st.assigned_to : [st.assigned_to]).length > 0 && <Badge variant="outline" className="text-[9px] text-blue-600 px-0.5 py-0">→ {(Array.isArray(st.assigned_to) ? st.assigned_to : [st.assigned_to]).map(u => u.split(' ')[0]).join(', ')}</Badge>}
                                                 <Button 
                                                   variant="ghost" 
                                                   size="icon" 
@@ -676,7 +676,7 @@ export default function MyWorkflow() {
                                             <div key={dIdx} className="flex items-center gap-1 ml-4 text-[10px] group/detail">
                                               <Checkbox checked={d.completed} onCheckedChange={() => toggleDetailComplete(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2 w-2" />
                                               <span className={d.completed ? "line-through text-gray-400" : "text-gray-500"}>{d.text}</span>
-                                              {d.assigned_to && <Badge variant="outline" className="text-[8px] text-blue-600 px-0.5 py-0">→ {d.assigned_to}</Badge>}
+                                              {d.assigned_to && (Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).length > 0 && <Badge variant="outline" className="text-[8px] text-blue-600 px-0.5 py-0">→ {(Array.isArray(d.assigned_to) ? d.assigned_to : [d.assigned_to]).map(u => u.split(' ')[0]).join(', ')}</Badge>}
                                               <Button variant="ghost" size="icon" onClick={() => handleDeleteDetail(wo.id, item.taskIndex, stIdx, dIdx)} className="h-2.5 w-2.5 ml-auto opacity-0 group-hover/detail:opacity-100">
                                                 <X className="w-1.5 h-1.5 text-red-500" />
                                               </Button>
