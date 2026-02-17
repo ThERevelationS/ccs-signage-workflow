@@ -4,10 +4,11 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2, Settings } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2, Settings, Inbox } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
+import PendingImportsPanel from "@/components/sales/PendingImportsPanel";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
