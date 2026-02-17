@@ -699,11 +699,12 @@ export default function MyWorkflow() {
                                       {/* Add Sub-task */}
                                       {addingSubTaskFor?.woId === wo.id && addingSubTaskFor?.taskIndex === item.taskIndex ? (
                                         <div className="mt-0.5 space-y-0.5">
-                                          <Input value={newSubTaskText} onChange={(e) => setNewSubTaskText(e.target.value)} placeholder="Sub-task..." className="h-5 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubTask(wo.id, item.taskIndex); if (e.key === 'Escape') { setAddingSubTaskFor(null); setNewSubTaskText(""); }}} />
-                                          <div className="flex gap-1">
-                                            <Button size="sm" onClick={() => handleAddSubTask(wo.id, item.taskIndex)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
-                                            <Button size="sm" variant="ghost" onClick={() => { setAddingSubTaskFor(null); setNewSubTaskText(""); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
-                                          </div>
+                                         <Input value={newSubTaskText} onChange={(e) => setNewSubTaskText(e.target.value)} placeholder="Sub-task..." className="h-5 text-[10px]" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubTask(wo.id, item.taskIndex); if (e.key === 'Escape') { setAddingSubTaskFor(null); setNewSubTaskText(""); setNewSubTaskAssignedTo([]); }}} />
+                                         <MultiUserSelectInline users={allUsers} selectedUsers={newSubTaskAssignedTo} onSelectionChange={setNewSubTaskAssignedTo} placeholder="Assign..." className="h-5 w-full" />
+                                         <div className="flex gap-1">
+                                           <Button size="sm" onClick={() => handleAddSubTask(wo.id, item.taskIndex)} className="h-4 px-1"><Check className="w-2 h-2" /></Button>
+                                           <Button size="sm" variant="ghost" onClick={() => { setAddingSubTaskFor(null); setNewSubTaskText(""); setNewSubTaskAssignedTo([]); }} className="h-4 px-1"><X className="w-2 h-2" /></Button>
+                                         </div>
                                         </div>
                                       ) : (
                                         <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] opacity-0 group-hover:opacity-100"><Plus className="w-2 h-2" />Sub-task</Button>
