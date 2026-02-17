@@ -288,6 +288,36 @@ const getDarkModeStyles = () => `
   .dark-mode [style*="color: #000"] {
     color: #e2e8f0 !important;
   }
+
+  /* ---------- buttons: ensure readable text on light-bg buttons ---------- */
+  .dark-mode button.bg-white,
+  .dark-mode button[class*="bg-white"] {
+    background-color: #2d3a50 !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+  }
+
+  /* shadcn outline/ghost/secondary buttons */
+  .dark-mode button[class*="border-input"],
+  .dark-mode button[class*="bg-background"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+  }
+
+  /* shadcn secondary variant */
+  .dark-mode .bg-secondary { background-color: #243044 !important; color: #e2e8f0 !important; }
+
+  /* Outline variant buttons that pick up white bg from bg-background */
+  .dark-mode .bg-background { background-color: #0f172a !important; }
+  .dark-mode .text-foreground { color: #e2e8f0 !important; }
+  .dark-mode .text-muted-foreground { color: #94a3b8 !important; }
+  .dark-mode .border-input { border-color: #475569 !important; }
+
+  /* Ensure any button that ends up visually white has readable text */
+  .dark-mode button:not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-red"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not([class*="bg-primary"]):not([class*="bg-destructive"]) {
+    color: inherit;
+  }
 `;
 
 function LayoutContent({ children }) {
