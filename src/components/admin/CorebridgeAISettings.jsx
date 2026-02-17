@@ -28,7 +28,12 @@ import {
   Save,
   Settings,
   Search,
-  RotateCcw
+  RotateCcw,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  SkipForward,
+  XCircle
 } from "lucide-react";
 import { processCorebridgeEmails } from "@/functions/processCorebridgeEmails";
 
