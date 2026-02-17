@@ -38,6 +38,7 @@ import {
 import { processCorebridgeEmails } from "@/functions/processCorebridgeEmails";
 
 const GlobalSettings = base44.entities.GlobalSettings;
+const CorebridgeLog = base44.entities.CorebridgeLog;
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
