@@ -334,6 +334,20 @@ function LayoutContent({ children }) {
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
   
+  // Pending imports count for nav badge
+  const [pendingImportCount, setPendingImportCount] = useState(0);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await base44.entities.PendingImport.filter({ status: 'pending' });
+        setPendingImportCount(Array.isArray(res) ? res.length : 0);
+      } catch {}
+    };
+    load();
+    const interval = setInterval(load, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
   // Dark mode preference - default to true for power savings
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
