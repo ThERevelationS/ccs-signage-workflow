@@ -7,12 +7,33 @@ Deno.serve(async (req) => {
     // For scheduled automations, use service role
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
 
+    // Load settings from GlobalSettings
+    const settingsRecords = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: "corebridgeAI" });
+    const cfg = settingsRecords.length > 0 ? settingsRecords[0].setting_value : {};
+
+    // Check if disabled
+    if (cfg.enabled === false) {
+      return Response.json({ success: true, message: "CoreBridge AI importer is disabled", processed: 0 });
+    }
+
+    const gmailQuery = cfg.gmail_query || 'subject:"Your Sign Estimate" OR subject:"Your Sign Invoice" is:unread';
+    const estPattern = (cfg.estimate_subject_pattern || 'EST').toUpperCase();
+    const invPattern = (cfg.invoice_subject_pattern || 'INV').toUpperCase();
+    const maxEmails = cfg.max_emails_per_run || 20;
+    const estimateStage = cfg.estimate_stage || 'sales';
+    const estimateSalesStatus = cfg.estimate_sales_status || 'quoted';
+    const invoiceStage = cfg.invoice_stage || 'production';
+    const invoiceSalesStatus = cfg.invoice_sales_status || 'won';
+    const estToInvStage = cfg.est_to_inv_stage || 'production';
+    const estToInvSalesStatus = cfg.est_to_inv_sales_status || 'won';
+    const titleFormat = cfg.title_format || 'description';
+    const aiPromptExtra = cfg.ai_prompt_extra || '';
+
     // Get Gmail access token
     const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
 
-    // Search for CoreBridge emails - estimates and invoices
-    const query = 'subject:"Your Sign Estimate" OR subject:"Your Sign Invoice" is:unread';
-    const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=20`;
+    // Search for CoreBridge emails
+    const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(gmailQuery)}&maxResults=${maxEmails}`;
 
     const searchRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
