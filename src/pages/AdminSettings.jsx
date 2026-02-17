@@ -733,6 +733,10 @@ export default function AdminSettings() {
                   </TabsContent>
                 </Tabs>
               </TabsContent>
+
+              <TabsContent value="corebridge">
+                <CorebridgeAISettings />
+              </TabsContent>
             </>
           )}
 
