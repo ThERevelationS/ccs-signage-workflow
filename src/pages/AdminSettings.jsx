@@ -53,7 +53,8 @@ import {
   ArrowUpDown,
   SortAsc,
   Clock,
-  Activity
+  Activity,
+  Bot
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
