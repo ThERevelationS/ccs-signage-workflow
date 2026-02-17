@@ -399,15 +399,19 @@ export default function MyWorkflow() {
       // Skip completed tasks
       if (task.completed) return;
       
-      // Check if task is assigned to me - main tasks only, not standalone subtasks
-      if (task.assigned_to === userName) {
+      const isAssignedTo2 = (assignedTo) => {
+          const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
+          return arr.includes(userName);
+        };
+        // Check if task is assigned to me - main tasks only, not standalone subtasks
+      if (isAssignedTo2(task.assigned_to)) {
         myTasks.push({ type: 'task', task, taskIndex, workOrderId: wo.id, source: 'notes' });
       } else {
         // If the main task is NOT assigned to me, but has subtasks assigned to me,
         // show only those subtasks under the parent task context (not as standalone)
-        const mySubTasks = (task.sub_tasks || []).filter(st => st.assigned_to === userName && !st.completed);
+        const mySubTasks = (task.sub_tasks || []).filter(st => isAssignedTo2(st.assigned_to) && !st.completed);
         const myDetails = (task.sub_tasks || []).flatMap((st, stIndex) => 
-          (st.details || []).filter(d => d.assigned_to === userName && !d.completed).map((d, dIndex) => ({
+          (st.details || []).filter(d => isAssignedTo2(d.assigned_to) && !d.completed).map((d, dIndex) => ({
             subTask: st, subTaskIndex: stIndex, detail: d, detailIndex: dIndex
           }))
         );
