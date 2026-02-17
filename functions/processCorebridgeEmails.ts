@@ -178,11 +178,11 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           continue;
         }
 
-        // Build the title from client name + doc number
+        // Build the title using configured format
         const clientName = extractedData.client_name || "Unknown Client";
-        const workOrderTitle = extractedData.description
-          ? `${extractedData.description}`
-          : `${clientName} - Sign Project`;
+        const workOrderTitle = titleFormat === 'client_docnum'
+          ? `${clientName} - ${docNumber}`
+          : (extractedData.description || `${clientName} - Sign Project`);
 
         // Check if a work order already exists for this numeric ID
         // Search by corbridge_invoice_number (we store both EST and INV numbers here)
