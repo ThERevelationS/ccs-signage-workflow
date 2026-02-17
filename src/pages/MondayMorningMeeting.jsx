@@ -10,8 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
-import TemplateBuilder from "@/components/sips/TemplateBuilder";
+import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
