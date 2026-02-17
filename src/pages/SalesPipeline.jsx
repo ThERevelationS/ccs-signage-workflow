@@ -83,6 +83,19 @@ export default function SalesPipeline() {
               <h1 className="text-2xl font-bold text-gray-800">Sales Pipeline</h1>
               <p className="text-gray-600 text-sm">Manage leads and opportunities before they enter the workflow</p>
             </div>
+            {/* Pending Imports tab */}
+            <button
+              onClick={() => setShowPendingImports(!showPendingImports)}
+              className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${showPendingImports ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
+            >
+              <Inbox className="w-4 h-4" />
+              Pending Imports
+              {pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="flex items-end gap-2">
