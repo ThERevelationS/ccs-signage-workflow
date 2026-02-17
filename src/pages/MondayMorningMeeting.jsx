@@ -114,7 +114,7 @@ export default function MondayMorningMeeting() {
   };
 
   const getChecklistProgress = (wo) => {
-    const checklist = wo.sip_checklist || [];
+    const checklist = wo.mmm_sip_checklist || [];
     if (checklist.length === 0) return { completed: 0, total: 0 };
 
     const mainChecklistItems = checklist.filter(item =>
