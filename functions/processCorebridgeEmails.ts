@@ -107,6 +107,19 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Skip if we already processed this doc number in this run
+        if (processedDocNumbers.has(docNumber)) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Duplicate email for same doc number in this run' });
+          // Still mark as read so it doesn't keep showing up
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
+        processedDocNumbers.add(docNumber);
+
         // Find PDF attachment
         const findAttachments = (parts) => {
           if (!parts) return null;
