@@ -34,7 +34,6 @@ export default function MondayMorningMeeting() {
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const parentRef = useRef(null);
 
   useEffect(() => {
