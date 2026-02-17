@@ -21,7 +21,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   
   // Task form state
   const [taskText, setTaskText] = useState("");
-  const [assignedTo, setAssignedTo] = useState("");
+  const [assignedTo, setAssignedTo] = useState([]);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState("");
   const [subTasks, setSubTasks] = useState([]);
   const [expandedSubTasks, setExpandedSubTasks] = useState({});
@@ -50,7 +50,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
 
   const resetForm = () => {
     setTaskText("");
-    setAssignedTo("");
+    setAssignedTo([]);
     setSelectedWorkOrder("");
     setSubTasks([]);
     setExpandedSubTasks({});
@@ -59,7 +59,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
 
   const addSubTask = () => {
     const newId = `st_${Date.now()}`;
-    setSubTasks([...subTasks, { id: newId, text: "", assigned_to: "", details: [] }]);
+    setSubTasks([...subTasks, { id: newId, text: "", assigned_to: [], details: [] }]);
     setExpandedSubTasks(prev => ({ ...prev, [newId]: true }));
   };
 
@@ -76,7 +76,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
       if (st.id === subTaskId) {
         return {
           ...st,
-          details: [...(st.details || []), { id: `d_${Date.now()}`, text: "", assigned_to: "" }]
+          details: [...(st.details || []), { id: `d_${Date.now()}`, text: "", assigned_to: [] }]
         };
       }
       return st;
@@ -128,19 +128,19 @@ export default function AddTaskDialog({ isOpen, onClose }) {
         text: taskText.trim(),
         timestamp: new Date().toISOString(),
         completed: false,
-        assigned_to: assignedTo || "",
+        assigned_to: assignedTo || [],
         sub_tasks: subTasks
           .filter(st => st.text.trim())
           .map(st => ({
             text: st.text.trim(),
             completed: false,
-            assigned_to: st.assigned_to || "",
+            assigned_to: st.assigned_to || [],
             details: (st.details || [])
               .filter(d => d.text.trim())
               .map(d => ({
                 text: d.text.trim(),
                 completed: false,
-                assigned_to: d.assigned_to || ""
+                assigned_to: d.assigned_to || []
               }))
           }))
       };
