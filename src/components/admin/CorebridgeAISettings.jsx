@@ -138,14 +138,28 @@ export default function CorebridgeAISettings() {
     setSaveSuccess(false);
   };
 
+  const loadLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const data = await CorebridgeLog.list('-run_at', 50);
+      setLogs(data);
+    } catch (err) {
+      console.error("Error loading logs:", err);
+    }
+    setLogsLoading(false);
+  };
+
   const handleTestRun = async () => {
     setIsTesting(true);
     setTestResult(null);
     try {
-      const res = await processCorebridgeEmails({});
+      const res = await processCorebridgeEmails({ manual: true });
       setTestResult({ success: true, data: res.data });
+      // Reload logs after run
+      setTimeout(() => loadLogs(), 1500);
     } catch (err) {
       setTestResult({ success: false, error: err.message });
+      setTimeout(() => loadLogs(), 1500);
     }
     setIsTesting(false);
   };
