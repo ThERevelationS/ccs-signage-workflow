@@ -174,16 +174,86 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
           </div>
         )}
 
-        {/* Match candidates */}
-        {hasMatches && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-700">Possible existing projects to merge into:</p>
+        {/* AI Match Recommendations */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              AI Project Match
+            </p>
+            <button
+              onClick={runAiMatch}
+              disabled={aiLoading}
+              className="text-xs flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 disabled:opacity-50"
+            >
+              {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {aiRecs === null ? "Find Matches" : "Re-run AI"}
+            </button>
+          </div>
+
+          {aiLoading && (
+            <div className="flex items-center gap-2 text-xs text-purple-600 bg-purple-50 rounded-lg p-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              AI is scanning all projects for possible matches…
+            </div>
+          )}
+
+          {!aiLoading && aiRecs !== null && aiRecs.length === 0 && (
+            <div className="flex items-start gap-2 text-xs bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-gray-700">No matching projects found</p>
+                {aiNoMatchReason && <p className="text-gray-500 mt-0.5">{aiNoMatchReason}</p>}
+                <p className="text-gray-400 mt-1">Consider creating a new project for this import.</p>
+              </div>
+            </div>
+          )}
+
+          {!aiLoading && aiRecs !== null && aiRecs.length > 0 && (
             <div className="space-y-1">
+              {aiConfidence && (
+                <p className="text-xs text-gray-400 flex items-center gap-1">
+                  AI Confidence: <span className={`font-semibold ${aiConfidence === 'high' ? 'text-green-600' : aiConfidence === 'medium' ? 'text-yellow-600' : 'text-red-500'}`}>{aiConfidence}</span>
+                </p>
+              )}
+              {aiRecs.map(c => (
+                <label key={c.work_order_id} className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-colors ${selectedMergeId === c.work_order_id ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                  <input
+                    type="radio"
+                    name={`merge-${item.id}`}
+                    value={c.work_order_id}
+                    checked={selectedMergeId === c.work_order_id}
+                    onChange={() => setSelectedMergeId(c.work_order_id)}
+                    className="shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-gray-900 truncate">{c.work_order_title}</span>
+                      <MatchScoreBadge score={c.match_score} />
+                      <span className="text-gray-400 capitalize">{c.current_stage}</span>
+                    </div>
+                    <p className="text-gray-500">{c.client_name}</p>
+                    {c.ai_reasoning && (
+                      <p className="text-purple-600 mt-0.5 flex items-start gap-1">
+                        <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
+                        {c.ai_reasoning}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* Fallback: original fuzzy match candidates if AI hasn't run yet */}
+          {aiRecs === null && hasMatches && (
+            <div className="space-y-1">
+              <p className="text-xs text-gray-500 italic">Initial fuzzy matches (run AI for smarter recommendations):</p>
               {item.match_candidates.map(c => (
                 <label key={c.work_order_id} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-colors ${selectedMergeId === c.work_order_id ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                  <input 
-                    type="radio" 
-                    name={`merge-${item.id}`} 
+                  <input
+                    type="radio"
+                    name={`merge-${item.id}`}
                     value={c.work_order_id}
                     checked={selectedMergeId === c.work_order_id}
                     onChange={() => setSelectedMergeId(c.work_order_id)}
@@ -200,8 +270,12 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
                 </label>
               ))}
             </div>
-          </div>
-        )}
+          )}
+
+          {aiRecs === null && !hasMatches && (
+            <p className="text-xs text-gray-400 italic">No initial matches found. Click "Find Matches" to let AI search all projects.</p>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex gap-2 flex-wrap">
