@@ -82,8 +82,8 @@ export default function SalesPipeline() {
   };
 
   return (
-    <div className="flex flex-col p-4 sm:p-6" style={{ height: '100vh', overflow: 'hidden' }}>
-      <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ height: '100%' }}>
+    <div className="flex flex-col p-4 sm:p-6" style={{ height: '100%', overflow: 'hidden' }}>
+      <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">
