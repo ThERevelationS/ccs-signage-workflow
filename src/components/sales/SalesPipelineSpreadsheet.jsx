@@ -892,7 +892,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               updates['estimator'] = mapped;
             }
           }
-          checkStringField('est_inv_at', 'Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number');
+          // Sync est_inv_at and corbridge_invoice_number together
+          const estInvColumns = ['Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number'];
+          for (const col of estInvColumns) {
+            if (col in row) {
+              const rawVal = row[col];
+              const newVal = (rawVal != null && rawVal !== "") ? String(rawVal).trim() : "";
+              if (newVal !== (existingWO['est_inv_at'] || "")) {
+                updates['est_inv_at'] = newVal;
+                updates['corbridge_invoice_number'] = newVal;
+              }
+              break;
+            }
+          }
           checkStringField('current_task_description', 'Current Task Description');
           checkStringField('permit_number', 'Permit Number');
           checkStringField('title', 'Notes');
