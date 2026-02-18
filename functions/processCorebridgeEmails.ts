@@ -106,7 +106,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, message: "CoreBridge AI importer is disabled", processed: 0 });
     }
 
-    const gmailQuery = cfg.gmail_query || 'subject:"Your Sign Estimate" OR subject:"Your Sign Invoice" is:unread';
+    // Only scan emails from the last 24 hours to prevent reprocessing old emails
+    const baseGmailQuery = cfg.gmail_query || 'subject:"Your Sign Estimate" OR subject:"Your Sign Invoice" is:unread';
+    const gmailQuery = baseGmailQuery.includes('newer_than') ? baseGmailQuery : `(${baseGmailQuery}) newer_than:1d`;
     const estPattern = (cfg.estimate_subject_pattern || 'EST').toUpperCase();
     const invPattern = (cfg.invoice_subject_pattern || 'INV').toUpperCase();
     const maxEmails = cfg.max_emails_per_run || 20;
