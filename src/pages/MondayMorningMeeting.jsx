@@ -413,7 +413,7 @@ export default function MondayMorningMeeting() {
               })}
               {activeWorkOrders.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="px-3 py-12 text-center text-gray-500 text-base">
+                  <td colSpan={13} className="px-3 py-12 text-center text-gray-500 text-base">
                     No items assigned to Monday Morning Meeting. Assign "Monday Morning Meeting" to the Task Assigned column on the Sales Pipeline to see items here.
                   </td>
                 </tr>
