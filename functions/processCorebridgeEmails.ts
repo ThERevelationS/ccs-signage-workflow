@@ -343,12 +343,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           results.push({ action: 'updated', subject, docNumber, workOrderId: exactMatch.id, client: clientName, estToInv: isEstToInv });
 
         } else {
-          // 2. No exact doc number match — check for a pending import already queued for this doc
-          const existingPendingRaw = await PendingImport.filter({ doc_number: docNumber, status: 'pending' });
-          const existingPending = Array.isArray(existingPendingRaw) ? existingPendingRaw : [];
-          if (existingPending.length > 0) {
-            results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Already in pending import queue' });
-          } else {
+          {
             // 3. Compute fuzzy match scores against all existing work orders (that have no doc number)
             const candidates = allExistingOrders
               .filter(wo => !wo.deleted && !wo.completed)
