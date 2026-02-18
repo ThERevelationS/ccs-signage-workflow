@@ -147,6 +147,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     { value: "#f1f5f9", label: "Gray" }
   ];
   const [corbridgeDialog, setCorbridgeDialog] = useState({ open: false, workOrder: null });
+  const [taskAssignmentRules, setTaskAssignmentRules] = useState([]);
 
   useEffect(() => {
     loadGlobalSettings();
