@@ -255,6 +255,11 @@ export default function MondayMorningMeeting() {
                         </button>
                       </td>
 
+                      {/* Job Description */}
+                      <td className="px-2 py-2 border-r">
+                        <span className="text-sm text-gray-700 truncate block">{wo.description || "-"}</span>
+                      </td>
+
                       {/* Deadline */}
                       <td className="px-2 py-2 border-r">
                         <Popover

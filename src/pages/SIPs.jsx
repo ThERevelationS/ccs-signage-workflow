@@ -274,17 +274,22 @@ export default function SIPs() {
                     </td>
 
                     {/* Customer */}
-                    <td className="px-2 py-2 border-r">
-                      <button
-                        onClick={() => setSelectedWorkOrder(wo)}
-                        className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
-                      >
-                        <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
-                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
-                      </button>
-                    </td>
+                     <td className="px-2 py-2 border-r">
+                       <button
+                         onClick={() => setSelectedWorkOrder(wo)}
+                         className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
+                       >
+                         <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
+                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                       </button>
+                     </td>
 
-                    {/* Deadline */}
+                     {/* Job Description */}
+                     <td className="px-2 py-2 border-r">
+                       <span className="text-sm text-gray-700 truncate block">{wo.description || "-"}</span>
+                     </td>
+
+                     {/* Deadline */}
                     <td className="px-2 py-2 border-r">
                       <Popover 
                         open={openDatePopover === `deadline-${wo.id}`} 
