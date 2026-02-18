@@ -1063,6 +1063,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           project_manager: mapFirstNameToFullNameForNew(row["Project Manager"] ?? row["PM"] ?? row["project_manager"] ?? ""),
           estimator: mapFirstNameToFullNameForNew(row["Estimator"] ?? row["estimator"] ?? ""),
           est_inv_at: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"] ?? ""),
+          corbridge_invoice_number: String(row["Est/Inv @"] ?? row["Est/Inv #"] ?? row["Est/Inv # Link"] ?? row["corbridge_invoice_number"] ?? ""),
           estimate_amount: parseFloat(row["Estimate Amount"]) || 0,
           current_task_description: String(row["Current Task Description"] || ""),
           date_initial_contact: parseExcelDate(row["Date Est. Requested/Initial Contact"]),
