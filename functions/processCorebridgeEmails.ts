@@ -345,9 +345,9 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           results.push({ action: 'updated', subject, docNumber, workOrderId: exactMatch.id, client: clientName, estToInv: isEstToInv });
 
         } else {
-          // Compute fuzzy match scores against all existing work orders
+          // Compute fuzzy match scores against all existing work orders (including newly created in this run)
           const candidates = allExistingOrders
-            .filter(wo => !wo.deleted && !wo.completed)
+            .filter(wo => !wo.deleted && !wo.completed && wo.id !== undefined) // Ensure only valid WOs
             .map(wo => {
               const { score, reasons } = computeMatchScore(extractedData, wo);
               return { work_order_id: wo.id, work_order_title: wo.title, client_name: wo.client_name, current_stage: wo.current_stage, match_score: score, match_reasons: reasons };
@@ -391,6 +391,8 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             const created = await WorkOrder.create(proposedWorkOrder);
             // Add to in-memory list so this run won't create a duplicate for the same client
             allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
+            // Mark this doc as processed so we don't create another duplicate if email appears again
+            processedDocNumbers.add(docNumber);
             results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
           } else {
             // Has potential matches → send to pending review
