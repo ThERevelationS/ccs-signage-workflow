@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, GitMerge, X, ChevronDown, ChevronUp, 
   AlertTriangle, FileText, Loader2, RefreshCw, User, 
-  MapPin, DollarSign, Star, Package, AlignLeft
+  MapPin, DollarSign, Star, Package, AlignLeft, Sparkles, Info
 } from "lucide-react";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
+import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
 
 const PendingImport = base44.entities.PendingImport;
 const WorkOrder = base44.entities.WorkOrder;
