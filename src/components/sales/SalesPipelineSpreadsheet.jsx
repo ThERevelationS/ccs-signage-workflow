@@ -1431,7 +1431,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   return (
     <div 
-      className="overflow-visible" 
+      className="flex flex-col min-h-0 h-full overflow-visible" 
       tabIndex={0}
       onKeyDown={(e) => {
         if (focusedRowIndex !== null && filteredWorkOrders.length > 0) {
