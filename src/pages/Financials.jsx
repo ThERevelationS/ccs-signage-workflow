@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, Table, X, Maximize2, Minimize2 } from "lucide-react";
+import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRight, Calendar as CalendarIcon, BarChart3, Table, X, Maximize2, Minimize2, TrendingUp, Trophy, FileText } from "lucide-react";
 import { format } from "date-fns";
 import FinancialsSpreadsheet from "@/components/financials/FinancialsSpreadsheet";
 import FinancialsDashboard from "@/components/financials/FinancialsDashboard";
