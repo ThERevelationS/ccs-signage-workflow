@@ -235,7 +235,7 @@ export default function SalesPipeline() {
         </div>
 
         {showPendingImports ? (
-          <div className="clay-card p-4 overflow-auto flex-1">
+          <div className="clay-card p-4 overflow-auto" style={{ flex: 1, minHeight: 0 }}>
             <div className="flex items-center gap-2 mb-4">
               <Inbox className="w-5 h-5 text-amber-600" />
               <h2 className="text-lg font-bold text-gray-800">Pending AI Imports</h2>
