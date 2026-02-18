@@ -340,59 +340,61 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           if (extractedData.install_location) updateData.install_location = extractedData.install_location;
 
           await WorkOrder.update(exactMatch.id, updateData);
+          // Update in-memory so subsequent emails in this run see the change
+          Object.assign(exactMatch, updateData);
           results.push({ action: 'updated', subject, docNumber, workOrderId: exactMatch.id, client: clientName, estToInv: isEstToInv });
 
         } else {
-          {
-            // 3. Compute fuzzy match scores against all existing work orders (that have no doc number)
-            const candidates = allExistingOrders
-              .filter(wo => !wo.deleted && !wo.completed)
-              .map(wo => {
-                const { score, reasons } = computeMatchScore(extractedData, wo);
-                return { work_order_id: wo.id, work_order_title: wo.title, client_name: wo.client_name, current_stage: wo.current_stage, match_score: score, match_reasons: reasons };
-              })
-              .filter(c => c.match_score >= 25)
-              .sort((a, b) => b.match_score - a.match_score)
-              .slice(0, 5);
+          // Compute fuzzy match scores against all existing work orders
+          const candidates = allExistingOrders
+            .filter(wo => !wo.deleted && !wo.completed)
+            .map(wo => {
+              const { score, reasons } = computeMatchScore(extractedData, wo);
+              return { work_order_id: wo.id, work_order_title: wo.title, client_name: wo.client_name, current_stage: wo.current_stage, match_score: score, match_reasons: reasons };
+            })
+            .filter(c => c.match_score >= 25)
+            .sort((a, b) => b.match_score - a.match_score)
+            .slice(0, 5);
 
-            const proposedWorkOrder = {
-              title: workOrderTitle,
-              client_name: clientName,
-              description: extractedData.description || '',
-              current_stage: docType === 'invoice' ? invoiceStage : estimateStage,
-              sales_status: docType === 'invoice' ? invoiceSalesStatus : estimateSalesStatus,
-              in_pipeline: true,
-              est_inv_at: docNumber,
-              corbridge_invoice_number: docNumber,
-              quoted_amount: extractedData.quoted_amount || null,
-              estimate_amount: extractedData.quoted_amount || null,
-              contact_name: extractedData.contact_name || null,
-              contact_email: extractedData.contact_email || null,
-              contact_phone: extractedData.contact_phone || null,
-              billing_address: extractedData.billing_address || null,
-              install_location: extractedData.install_location || null,
-              sales_rep: extractedData.sales_rep || null,
-              representative: extractedData.sales_rep || null,
-              completed: false,
-              deleted: false,
-              product_1: extractedData.products?.[0] || null,
-              product_2: extractedData.products?.[1] || null,
-              product_3: extractedData.products?.[2] || null,
-              product_4: extractedData.products?.[3] || null,
-              product_5: extractedData.products?.[4] || null,
-            };
+          const proposedWorkOrder = {
+            title: workOrderTitle,
+            client_name: clientName,
+            description: extractedData.description || '',
+            current_stage: docType === 'invoice' ? invoiceStage : estimateStage,
+            sales_status: docType === 'invoice' ? invoiceSalesStatus : estimateSalesStatus,
+            in_pipeline: true,
+            est_inv_at: docNumber,
+            corbridge_invoice_number: docNumber,
+            quoted_amount: extractedData.quoted_amount || null,
+            estimate_amount: extractedData.quoted_amount || null,
+            contact_name: extractedData.contact_name || null,
+            contact_email: extractedData.contact_email || null,
+            contact_phone: extractedData.contact_phone || null,
+            billing_address: extractedData.billing_address || null,
+            install_location: extractedData.install_location || null,
+            sales_rep: extractedData.sales_rep || null,
+            representative: extractedData.sales_rep || null,
+            completed: false,
+            deleted: false,
+            product_1: extractedData.products?.[0] || null,
+            product_2: extractedData.products?.[1] || null,
+            product_3: extractedData.products?.[2] || null,
+            product_4: extractedData.products?.[3] || null,
+            product_5: extractedData.products?.[4] || null,
+          };
 
-            // If NO candidates at all → auto-create immediately, no review needed
-            if (candidates.length === 0) {
-              Object.keys(proposedWorkOrder).forEach(k => {
-                if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
-              });
-              const created = await WorkOrder.create(proposedWorkOrder);
-              results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
-            } else {
+          if (candidates.length === 0) {
+            // No fuzzy matches → auto-create immediately
+            Object.keys(proposedWorkOrder).forEach(k => {
+              if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
+            });
+            const created = await WorkOrder.create(proposedWorkOrder);
+            // Add to in-memory list so this run won't create a duplicate for the same client
+            allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
+            results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
+          } else {
             // Has potential matches → send to pending review
             const action = candidates[0].match_score >= 50 ? 'pending_merge' : 'pending_approve';
-
             await PendingImport.create({
               doc_number: docNumber,
               doc_type: docType,
@@ -403,12 +405,11 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
               status: 'pending',
               pdf_url: pdfUrl
             });
-
             results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
-            } // end else (has candidates)
           }
+        }
 
-        // Mark as read
+        // Mark email as read
         await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
