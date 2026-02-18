@@ -152,6 +152,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   useEffect(() => {
     loadGlobalSettings();
     loadWorkOrders();
+    loadTaskAssignmentRules();
     const interval = setInterval(() => loadWorkOrders(false), 60000); // Reduced frequency
     return () => clearInterval(interval);
   }, []);
