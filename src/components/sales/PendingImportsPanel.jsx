@@ -68,9 +68,33 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
   const [mergeLoading, setMergeLoading] = useState(false);
   const [rejectLoading, setRejectLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [aiRecs, setAiRecs] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiNoMatchReason, setAiNoMatchReason] = useState(null);
+  const [aiConfidence, setAiConfidence] = useState(null);
 
   const ed = item.extracted_data || {};
   const hasMatches = item.match_candidates?.length > 0;
+
+  const runAiMatch = async () => {
+    setAiLoading(true);
+    setAiRecs(null);
+    setAiNoMatchReason(null);
+    try {
+      const res = await findPendingImportMatches({ pending_import_id: item.id, extracted_data: ed });
+      setAiRecs(res.data?.recommendations || []);
+      setAiNoMatchReason(res.data?.no_matches_reason || null);
+      setAiConfidence(res.data?.confidence || null);
+      // Auto-select top AI recommendation if available
+      if (res.data?.recommendations?.length > 0) {
+        setSelectedMergeId(res.data.recommendations[0].work_order_id);
+      }
+    } catch (e) {
+      setAiRecs([]);
+      setAiNoMatchReason("AI matching failed. Please try again.");
+    }
+    setAiLoading(false);
+  };
 
   const handleMerge = async () => {
     if (!selectedMergeId) return;
