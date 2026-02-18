@@ -671,6 +671,10 @@ export default function AdminSettings() {
                   </TabsTrigger>
                 </>
               )}
+              <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                <UserCheck className="w-4 h-4 mr-2" />
+                Task Assignments
+              </TabsTrigger>
               <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                 <Activity className="w-4 h-4 mr-2" />
                 Activity
