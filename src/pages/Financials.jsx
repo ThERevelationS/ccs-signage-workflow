@@ -12,6 +12,9 @@ import { format } from "date-fns";
 import FinancialsSpreadsheet from "@/components/financials/FinancialsSpreadsheet";
 import FinancialsDashboard from "@/components/financials/FinancialsDashboard";
 import SalesPipelineDashboard from "@/components/financials/SalesPipelineDashboard";
+import SalesFunnelChart from "@/components/financials/SalesFunnelChart";
+import TeamLeaderboard from "@/components/financials/TeamLeaderboard";
+import PerformanceSummaryReport from "@/components/financials/PerformanceSummaryReport";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
