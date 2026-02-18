@@ -85,7 +85,6 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
       setAiRecs(res.data?.recommendations || []);
       setAiNoMatchReason(res.data?.no_matches_reason || null);
       setAiConfidence(res.data?.confidence || null);
-      // Auto-select top AI recommendation if available
       if (res.data?.recommendations?.length > 0) {
         setSelectedMergeId(res.data.recommendations[0].work_order_id);
       }
@@ -95,6 +94,9 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
     }
     setAiLoading(false);
   };
+
+  // Auto-run AI matching on mount
+  useEffect(() => { runAiMatch(); }, [item.id]);
 
   const handleMerge = async () => {
     if (!selectedMergeId) return;
