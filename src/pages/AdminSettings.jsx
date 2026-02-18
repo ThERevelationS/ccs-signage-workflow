@@ -54,7 +54,8 @@ import {
   SortAsc,
   Clock,
   Activity,
-  Bot
+  Bot,
+  UserCheck
 } from "lucide-react";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
