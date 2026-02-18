@@ -27,6 +27,16 @@ export default function SalesPipeline() {
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
+    const loadCount = async () => {
+      try {
+        const res = await base44.entities.PendingImport.filter({ status: 'pending' });
+        setPendingCount(Array.isArray(res) ? res.length : 0);
+      } catch {}
+    };
+    loadCount();
+  }, []);
+
+  useEffect(() => {
     document.title = "Sales Pipeline - Workflow Manager";
   }, []);
 
