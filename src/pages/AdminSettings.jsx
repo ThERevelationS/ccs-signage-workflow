@@ -746,6 +746,10 @@ export default function AdminSettings() {
             </>
           )}
 
+          <TabsContent value="task_assignments">
+            <TaskAssignmentRules />
+          </TabsContent>
+
           <TabsContent value="activity">
             <ActivityFeed />
           </TabsContent>
