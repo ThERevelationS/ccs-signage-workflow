@@ -284,7 +284,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Create New Project
           </Button>
-          {hasMatches && (
+          {(hasMatches || (aiRecs && aiRecs.length > 0)) && selectedMergeId && (
             <Button size="sm" onClick={handleMerge} disabled={mergeLoading || !selectedMergeId}
               className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white">
               {mergeLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <GitMerge className="w-3 h-3 mr-1" />}
