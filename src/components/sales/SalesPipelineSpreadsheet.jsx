@@ -283,7 +283,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const currentWo = workOrders.find(wo => wo.id === orderId);
     const oldValue = currentWo ? currentWo[field] : "";
     
-    setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
+    const updatedWo = { ...currentWo, [field]: value };
+    // Apply task assignment rules
+    const ruleUpdates = applyRules(taskAssignmentRules, updatedWo);
+    const mergedUpdates = { [field]: value, ...ruleUpdates };
+    
+    setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, ...mergedUpdates } : wo));
     
     // Track cell history
     if (!skipHistory && oldValue !== value) {
@@ -292,7 +297,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     
     setPendingChanges(prev => ({
       ...prev,
-      [orderId]: { ...prev[orderId], [field]: value }
+      [orderId]: { ...prev[orderId], ...mergedUpdates }
     }));
 
     if (debounceTimers.current[orderId]) {
@@ -301,7 +306,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     debounceTimers.current[orderId] = setTimeout(async () => {
       try {
-        const changes = pendingChanges[orderId] || { [field]: value };
+        const changes = pendingChanges[orderId] || mergedUpdates;
         await WorkOrder.update(orderId, changes);
         setPendingChanges(prev => {
           const updated = { ...prev };
