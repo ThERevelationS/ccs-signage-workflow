@@ -195,9 +195,9 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
           </div>
 
           {aiLoading && (
-            <div className="flex items-center gap-2 text-xs text-purple-600 bg-purple-50 rounded-lg p-2">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              AI is scanning all projects for possible matches…
+            <div className="flex items-center gap-2 text-xs text-purple-600 bg-purple-50 rounded-lg p-2 animate-pulse">
+              <Sparkles className="w-3 h-3" />
+              Scanning all projects for matches…
             </div>
           )}
 
