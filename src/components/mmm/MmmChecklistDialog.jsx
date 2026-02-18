@@ -570,7 +570,12 @@ export default function MmmChecklistDialog({
         <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold">Monday Morning Meeting - {workOrder?.client_name}</DialogTitle>
+              <DialogTitle className="text-xl font-bold">
+                {workOrder?.client_name}
+                {workOrder?.description && (
+                  <span className="block text-sm font-normal text-gray-500 mt-0.5">{workOrder.description}</span>
+                )}
+              </DialogTitle>
               <div className="flex gap-2">
                 {isAdmin && (
                   <Button variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)}>

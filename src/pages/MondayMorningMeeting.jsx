@@ -169,7 +169,8 @@ export default function MondayMorningMeeting() {
                 </th>
                 <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '50px' }}>✓</th>
                 <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '80px' }}>Checklist</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '180px' }}>Customer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '160px' }}>Customer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '180px' }}>Job Description</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Deadline</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '130px' }}>Task Assigned</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Designer</th>

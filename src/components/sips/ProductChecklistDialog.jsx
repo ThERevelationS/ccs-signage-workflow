@@ -867,7 +867,10 @@ export default function ProductChecklistDialog({
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold">
-                SIP Checklist - {workOrder?.client_name}
+                {workOrder?.client_name}
+                {workOrder?.description && (
+                  <span className="block text-sm font-normal text-gray-500 mt-0.5">{workOrder.description}</span>
+                )}
               </DialogTitle>
               <div className="flex gap-2">
                 {isAdmin && (
