@@ -494,6 +494,18 @@ export default function Financials() {
             dateRange={{ start: dateRangeStart, end: dateRangeEnd }}
             reportPeriod={reportPeriod}
           />
+        ) : activeTab === "funnel" ? (
+          <div className="clay-card p-4">
+            <SalesFunnelChart workOrders={filteredWorkOrders} />
+          </div>
+        ) : activeTab === "team" ? (
+          <div className="clay-card p-4">
+            <TeamLeaderboard workOrders={filteredWorkOrders} users={users} />
+          </div>
+        ) : activeTab === "reports" ? (
+          <div className="clay-card p-4">
+            <PerformanceSummaryReport workOrders={filteredWorkOrders} />
+          </div>
         ) : (
           <SalesPipelineDashboard workOrders={filteredWorkOrders} />
         )}
