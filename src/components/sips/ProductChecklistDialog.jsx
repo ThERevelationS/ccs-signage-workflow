@@ -1224,7 +1224,15 @@ export default function ProductChecklistDialog({
                                 <div key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'}`}>
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
-                                    <span className={`text-sm flex-1 ${dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
+                                    {editingItemId === detail.id ? (
+                                      <div className="flex-1 flex gap-1">
+                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-6 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
+                                        <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                      </div>
+                                    ) : (
+                                      <span className={`text-sm flex-1 cursor-pointer hover:bg-gray-100 rounded px-1 ${dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`} onDoubleClick={(e) => isRegistered && startEditItem(detail, e)} title="Double-click to edit">{detail.text}</span>
+                                    )}
                                     
                                     {/* Quick add task button for detail */}
                                     {isRegistered && (
