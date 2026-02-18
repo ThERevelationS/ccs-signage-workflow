@@ -248,36 +248,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
             </div>
           )}
 
-          {/* Fallback: original fuzzy match candidates if AI hasn't run yet */}
-          {aiRecs === null && hasMatches && (
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500 italic">Initial fuzzy matches (run AI for smarter recommendations):</p>
-              {item.match_candidates.map(c => (
-                <label key={c.work_order_id} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-colors ${selectedMergeId === c.work_order_id ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                  <input
-                    type="radio"
-                    name={`merge-${item.id}`}
-                    value={c.work_order_id}
-                    checked={selectedMergeId === c.work_order_id}
-                    onChange={() => setSelectedMergeId(c.work_order_id)}
-                    className="shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900 truncate">{c.work_order_title}</span>
-                      <MatchScoreBadge score={c.match_score} />
-                      <span className="text-gray-400 capitalize">{c.current_stage}</span>
-                    </div>
-                    <p className="text-gray-500">{c.client_name} · {c.match_reasons?.join(' · ')}</p>
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
 
-          {aiRecs === null && !hasMatches && (
-            <p className="text-xs text-gray-400 italic">No initial matches found. Click "Find Matches" to let AI search all projects.</p>
-          )}
         </div>
 
         {/* Actions */}
