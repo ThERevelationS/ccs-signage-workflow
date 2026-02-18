@@ -26,6 +26,7 @@ import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import * as XLSX from "xlsx";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
+import { applyRules } from "@/components/admin/TaskAssignmentRules";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
