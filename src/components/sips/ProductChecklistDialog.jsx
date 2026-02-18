@@ -992,7 +992,15 @@ export default function ProductChecklistDialog({
                               ) : <div className="w-4" />}
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
-                            <span className={`font-medium text-sm flex-1 ${dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{displayItem.text}</span>
+                            {editingItemId === displayItem.id ? (
+                              <div className="flex-1 flex gap-1">
+                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-6 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') { setEditingItemId(null); } }} />
+                                <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
+                                <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                              </div>
+                            ) : (
+                              <span className={`font-medium text-sm flex-1 cursor-pointer hover:bg-gray-100 rounded px-1 ${dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`} onDoubleClick={(e) => isRegistered && startEditItem(displayItem, e)} title="Double-click to edit">{displayItem.text}</span>
+                            )}
                             
                             {/* Quick add buttons on hover */}
                             {isRegistered && hoveredItem === displayItem.id && (
