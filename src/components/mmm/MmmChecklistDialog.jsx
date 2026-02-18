@@ -459,7 +459,7 @@ export default function MmmChecklistDialog({
           )}
 
           <Select value={displayItem.approved_by || ""} onValueChange={(val) => updateChecklistItem(displayItem.id, { approved_by: val })} disabled={!isRegistered}>
-            <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Approved by..." /></SelectTrigger>
+            <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Answered by..." /></SelectTrigger>
             <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
           </Select>
 
@@ -472,7 +472,7 @@ export default function MmmChecklistDialog({
               updateChecklistItem(displayItem.id, { custom_dropdown_value: val });
             }
           }} disabled={!isRegistered}>
-            <SelectTrigger className="h-7 text-xs w-36"><SelectValue placeholder="Status...">{displayItem.custom_dropdown_value || "Status..."}</SelectValue></SelectTrigger>
+            <SelectTrigger className="h-7 text-xs w-36"><SelectValue placeholder="Answer...">{displayItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
             <SelectContent>
               {dropdownConditions.filter(dd => (displayItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name}{dd.is_completed ? ' (Completed)' : ''}</SelectItem>)}
               <SelectItem value="other" className="text-orange-600 font-medium">+ Other...</SelectItem>
@@ -525,7 +525,7 @@ export default function MmmChecklistDialog({
                         updateChecklistItem(detail.id, { custom_dropdown_value: val });
                       }
                     }} disabled={!isRegistered}>
-                      <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Status...">{detail.custom_dropdown_value || "Status..."}</SelectValue></SelectTrigger>
+                      <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Answer...">{detail.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
                       <SelectContent>
                         {dropdownConditions.filter(dd => (detail.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name}{dd.is_completed ? ' (Completed)' : ''}</SelectItem>)}
                         <SelectItem value="other" className="text-orange-600 font-medium">+ Other...</SelectItem>
@@ -640,7 +640,7 @@ export default function MmmChecklistDialog({
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">Checklist</span>
                                     <span className={`text-sm flex-1 ${isCompleted ? 'line-through text-gray-400' : ''}`}>{stDisplayItem.text}</span>
                                     <Select value={stDisplayItem.approved_by || ""} onValueChange={(val) => updateChecklistItem(stDisplayItem.id, { approved_by: val })} disabled={!isRegistered}>
-                                      <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Approved..." /></SelectTrigger>
+                                      <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Answered..." /></SelectTrigger>
                                       <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <Select value={stDisplayItem.custom_dropdown_value || "select_value"} onValueChange={(val) => {
@@ -650,7 +650,7 @@ export default function MmmChecklistDialog({
                                         updateChecklistItem(stDisplayItem.id, { custom_dropdown_value: val });
                                       }
                                     }} disabled={!isRegistered}>
-                                      <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Status...">{stDisplayItem.custom_dropdown_value || "Status..."}</SelectValue></SelectTrigger>
+                                      <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Answer...">{stDisplayItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
                                       <SelectContent>
                                         {dropdownConditions.filter(dd => (stDisplayItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>)}
                                         <SelectItem value="other" className="text-orange-600 font-medium">+ Other...</SelectItem>
@@ -687,7 +687,7 @@ export default function MmmChecklistDialog({
                                   <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Select value={item.custom_dropdown_value || "select_value"} onValueChange={(val) => { if (val !== "select_value") updateChecklistItem(item.id, { custom_dropdown_value: val }); }} disabled={!isRegistered}>
-                                  <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Status...">{item.custom_dropdown_value || "Status..."}</SelectValue></SelectTrigger>
+                                  <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Answer...">{item.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
                                   <SelectContent>
                                     {dropdownConditions.filter(dd => (item.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name}</SelectItem>)}
                                     <SelectItem value="other" className="text-orange-600 font-medium">+ Other...</SelectItem>

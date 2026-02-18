@@ -1039,7 +1039,7 @@ export default function ProductChecklistDialog({
                               disabled={!isRegistered}
                             >
                               <SelectTrigger className="h-7 text-xs w-32">
-                                <SelectValue placeholder="Approved by..." />
+                                <SelectValue placeholder="Answered by..." />
                               </SelectTrigger>
                               <SelectContent>
                                 {users.map(u => (
@@ -1074,8 +1074,8 @@ export default function ProductChecklistDialog({
                               disabled={!isRegistered}
                             >
                               <SelectTrigger className="h-7 text-xs w-36">
-                                <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Status..."}>
-                                  {displayItem.custom_dropdown_value || "Status..."}
+                                <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Answer..."}>
+                                  {displayItem.custom_dropdown_value || "Answer..."}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
@@ -1254,7 +1254,7 @@ export default function ProductChecklistDialog({
                                       disabled={!isRegistered}
                                     >
                                       <SelectTrigger className="h-6 text-xs w-28">
-                                        <SelectValue placeholder="Approved..." />
+                                        <SelectValue placeholder="Answered..." />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {users.map(u => (
@@ -1290,8 +1290,8 @@ export default function ProductChecklistDialog({
                                       disabled={!isRegistered}
                                     >
                                       <SelectTrigger className="h-6 text-xs w-32">
-                                        <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Status..."}>
-                                          {detail.custom_dropdown_value || "Status..."}
+                                        <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Answer..."}>
+                                          {detail.custom_dropdown_value || "Answer..."}
                                         </SelectValue>
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1495,7 +1495,7 @@ export default function ProductChecklistDialog({
                                 disabled={!isRegistered}
                               >
                                 <SelectTrigger className="h-6 text-xs w-28">
-                                  <SelectValue placeholder="Approved..." />
+                                  <SelectValue placeholder="Answered..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {users.map(u => (
@@ -1531,8 +1531,8 @@ export default function ProductChecklistDialog({
                                 disabled={!isRegistered}
                               >
                                 <SelectTrigger className="h-6 text-xs w-32">
-                                  <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Status..."}>
-                                    {stDisplayItem.custom_dropdown_value || "Status..."}
+                                  <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Answer..."}>
+                                    {stDisplayItem.custom_dropdown_value || "Answer..."}
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1748,7 +1748,7 @@ export default function ProductChecklistDialog({
                                         disabled={!isRegistered}
                                       >
                                         <SelectTrigger className="h-6 text-xs w-28">
-                                          <SelectValue placeholder="Approved..." />
+                                          <SelectValue placeholder="Answered..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {users.map(u => (
@@ -1771,8 +1771,8 @@ export default function ProductChecklistDialog({
                                         disabled={!isRegistered}
                                       >
                                         <SelectTrigger className="h-6 text-xs w-32">
-                                          <SelectValue placeholder="Status...">
-                                            {displayItem.custom_dropdown_value || "Status..."}
+                                          <SelectValue placeholder="Answer...">
+                                            {displayItem.custom_dropdown_value || "Answer..."}
                                           </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1815,7 +1815,7 @@ export default function ProductChecklistDialog({
                                           disabled={!isRegistered}
                                         >
                                           <SelectTrigger className="h-6 text-xs w-28">
-                                            <SelectValue placeholder="Approved..." />
+                                            <SelectValue placeholder="Answered..." />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {users.map(u => (
@@ -1838,8 +1838,8 @@ export default function ProductChecklistDialog({
                                           disabled={!isRegistered}
                                         >
                                           <SelectTrigger className="h-6 text-xs w-32">
-                                            <SelectValue placeholder="Status...">
-                                              {stItem.custom_dropdown_value || "Status..."}
+                                            <SelectValue placeholder="Answer...">
+                                              {stItem.custom_dropdown_value || "Answer..."}
                                             </SelectValue>
                                           </SelectTrigger>
                                           <SelectContent>
