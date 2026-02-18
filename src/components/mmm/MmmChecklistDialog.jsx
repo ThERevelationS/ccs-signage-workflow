@@ -513,7 +513,7 @@ export default function MmmChecklistDialog({
                     <span className={`text-sm flex-1 ${isDetailCompleted ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
                     {isRegistered && <button onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: displayItem.product_name || productName }); }} className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 opacity-0 group-hover/detail:opacity-100">+Task</button>}
                     <Select value={detail.approved_by || ""} onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })} disabled={!isRegistered}>
-                      <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Approved..." /></SelectTrigger>
+                      <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Answered..." /></SelectTrigger>
                       <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                     </Select>
                     <Select value={detail.custom_dropdown_value || "select_value"} onValueChange={(val) => {
@@ -683,7 +683,7 @@ export default function MmmChecklistDialog({
                                 <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700">Checklist</span>
                                 <span className="font-medium text-sm flex-1 line-through text-gray-500">{item.text}</span>
                                 <Select value={item.approved_by || ""} onValueChange={(val) => updateChecklistItem(item.id, { approved_by: val })} disabled={!isRegistered}>
-                                  <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Approved..." /></SelectTrigger>
+                                  <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Answered..." /></SelectTrigger>
                                   <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Select value={item.custom_dropdown_value || "select_value"} onValueChange={(val) => { if (val !== "select_value") updateChecklistItem(item.id, { custom_dropdown_value: val }); }} disabled={!isRegistered}>
