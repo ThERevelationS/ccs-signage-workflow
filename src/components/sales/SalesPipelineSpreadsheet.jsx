@@ -156,6 +156,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return () => clearInterval(interval);
   }, []);
 
+  const loadTaskAssignmentRules = async () => {
+    try {
+      const settings = await GlobalSettings.filter({ setting_key: "taskAssignmentRules" });
+      if (settings.length > 0) {
+        setTaskAssignmentRules(settings[0].setting_value?.rules || []);
+      }
+    } catch {}
+  };
+
   const loadGlobalSettings = async () => {
     try {
       const settings = await GlobalSettings.list();
