@@ -298,11 +298,28 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           ? `${clientName} - ${docNumber}`
           : (extractedData.description || `${clientName} - Sign Project`);
 
-        // 1. Check if an existing WO already has this exact doc number
+        // 1. Check if an existing WO already has this exact doc number (strict match)
         const exactMatch = allExistingOrders.find(wo => {
-          const storedNum = wo.est_inv_at || wo.corbridge_invoice_number || '';
-          return storedNum.includes(docNumericId);
+          const fields = [wo.est_inv_at, wo.corbridge_invoice_number].filter(Boolean);
+          return fields.some(f => {
+            const normalized = f.trim().toUpperCase();
+            return normalized === docNumber.toUpperCase() || normalized === docNumericId;
+          });
         });
+
+        // Also check PendingImport for ANY status (not just pending) to avoid re-queueing already processed docs
+        const anyExistingPendingRaw = await PendingImport.filter({ doc_number: docNumber });
+        const anyExistingPending = Array.isArray(anyExistingPendingRaw) ? anyExistingPendingRaw : [];
+        if (!exactMatch && anyExistingPending.length > 0) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: `Already in pending queue (status: ${anyExistingPending[0].status})` });
+          // Mark as read so it doesn't keep getting picked up
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
 
         if (exactMatch) {
           // Update the existing linked work order
