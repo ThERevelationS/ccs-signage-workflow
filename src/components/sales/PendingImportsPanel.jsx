@@ -182,14 +182,15 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
             <p className="text-xs font-semibold text-gray-700 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-purple-500" />
               AI Project Match
+              {aiLoading && <Loader2 className="w-3 h-3 animate-spin text-purple-400 ml-1" />}
             </p>
             <button
               onClick={runAiMatch}
               disabled={aiLoading}
               className="text-xs flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 disabled:opacity-50"
             >
-              {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              {aiRecs === null ? "Find Matches" : "Re-run AI"}
+              <RefreshCw className="w-3 h-3" />
+              Re-run
             </button>
           </div>
 
