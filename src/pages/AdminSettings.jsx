@@ -70,6 +70,7 @@ import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
 import SalesPipelineDefaultSort from "@/components/admin/SalesPipelineDefaultSort";
 import ResourceAllocationView from "@/components/workflow/ResourceAllocationView";
 import CorebridgeAISettings from "@/components/admin/CorebridgeAISettings";
+import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
