@@ -407,7 +407,6 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
             } // end else (has candidates)
           }
-        }
 
         // Mark as read
         await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
