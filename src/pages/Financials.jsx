@@ -211,6 +211,18 @@ export default function Financials() {
                 <DollarSign className="w-4 h-4" />
                 Sales Pipeline
               </TabsTrigger>
+              <TabsTrigger value="funnel" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Funnel
+              </TabsTrigger>
+              <TabsTrigger value="team" className="gap-2">
+                <Trophy className="w-4 h-4" />
+                Team
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="gap-2">
+                <FileText className="w-4 h-4" />
+                Reports
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
