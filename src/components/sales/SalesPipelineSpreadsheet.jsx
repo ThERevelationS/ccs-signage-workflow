@@ -910,7 +910,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             }
           }
           // Sync est_inv_at and corbridge_invoice_number together
-          const estInvColumns = ['Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number'];
+          const estInvColumns = ['Est / Inv #', 'Est/Inv @', 'Est/Inv #', 'Est/Inv # Link', 'corbridge_invoice_number'];
           for (const col of estInvColumns) {
             if (col in row) {
               const rawVal = row[col];
