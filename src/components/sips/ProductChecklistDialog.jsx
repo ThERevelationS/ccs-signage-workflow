@@ -1108,7 +1108,15 @@ export default function ProductChecklistDialog({
                                     className="h-3 w-3"
                                   />
                                   <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-600 font-medium">T</span>
-                                  <span className="text-xs flex-1">{task.text}</span>
+                                  {editingItemId === task.id ? (
+                                    <div className="flex-1 flex gap-1">
+                                      <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-4 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                      <Button size="sm" className="h-4 px-1 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
+                                      <Button size="sm" variant="ghost" className="h-4 px-0.5 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs flex-1 cursor-pointer hover:bg-orange-100 rounded px-0.5" onDoubleClick={(e) => isRegistered && startEditItem(task, e)} title="Double-click to edit">{task.text}</span>
+                                  )}
                                                   <MultiUserSelectInline
                                     users={users}
                                     selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
