@@ -296,7 +296,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   // Checklist Item Management
   const addChecklistItem = (items, setItems, isProductType = false) => {
     if (!newItemText.trim()) return;
-    setItems([...items, { id: Date.now().toString(), text: newItemText.trim(), type: 'checklist', dropdown_ids: [], details: [], tasks: [] }]);
+    setItems([...items, { id: Date.now().toString(), text: newItemText.trim(), type: 'checklist', dropdown_ids: [], details: [], tasks: [], approved_by: "" }]);
     setNewItemText("");
     if (isProductType) {
       setProductTypeHasChanges(true);
@@ -309,7 +309,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const addDetailItem = (items, setItems, parentId, text) => {
     if (!text.trim()) return;
-    setItems(items.map(item => item.id === parentId ? { ...item, details: [...(item.details || []), { id: Date.now().toString(), text: text.trim(), type: 'detail', dropdown_ids: [], tasks: [] }] } : item));
+    setItems(items.map(item => item.id === parentId ? { ...item, details: [...(item.details || []), { id: Date.now().toString(), text: text.trim(), type: 'detail', dropdown_ids: [], tasks: [], approved_by: "" }] } : item));
   };
 
   const addTask = (items, setItems, parentId, detailId, text) => {
@@ -563,6 +563,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           <span className="flex-1 text-xs font-medium truncate cursor-pointer" onClick={() => setEditingItem(item.id)}>{item.text}</span>
         )}
         {renderConditionSelect(item, items, setItems, null, markChanged)}
+        <select 
+          value={item.approved_by || ""} 
+          onChange={(e) => updateItemWithChange(item.id, { approved_by: e.target.value })}
+          className="h-5 text-xs px-1 border rounded bg-white"
+        >
+          <option value="">Answered by...</option>
+          {users.map(u => <option key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</option>)}
+        </select>
         <button onClick={() => deleteItemWithChange(item.id)} className="p-0.5 hover:bg-red-50 rounded">
           <Trash2 className="w-3 h-3 text-red-500" />
         </button>
@@ -623,6 +631,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(detail.id)}>{detail.text}</span>
                 )}
                 {renderConditionSelect(item, items, setItems, detail.id, markChanged)}
+                <select 
+                  value={detail.approved_by || ""} 
+                  onChange={(e) => updateItemWithChange(item.id, { approved_by: e.target.value }, detail.id)}
+                  className="h-4 text-xs px-1 border rounded bg-white"
+                >
+                  <option value="">Answered...</option>
+                  {users.map(u => <option key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</option>)}
+                </select>
                 <button onClick={() => deleteItemWithChange(item.id, detail.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
               </div>
               <div className="ml-4 mt-1 space-y-0.5">
