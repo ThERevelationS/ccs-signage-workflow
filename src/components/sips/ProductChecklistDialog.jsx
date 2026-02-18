@@ -636,6 +636,21 @@ export default function ProductChecklistDialog({
   const [newItemText, setNewItemText] = useState("");
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
   const [newGeneralChecklistText, setNewGeneralChecklistText] = useState("");
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingItemText, setEditingItemText] = useState("");
+
+  const startEditItem = (item, e) => {
+    e.stopPropagation();
+    setEditingItemId(item.id);
+    setEditingItemText(item.text);
+  };
+
+  const saveEditItem = () => {
+    if (!editingItemText.trim()) return;
+    updateChecklistItem(editingItemId, { text: editingItemText.trim() });
+    setEditingItemId(null);
+    setEditingItemText("");
+  };
   
   const toggleExpanded = (itemId) => {
     setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
