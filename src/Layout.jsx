@@ -880,8 +880,8 @@ function LayoutContent({ children }) {
           onClose={() => setShowAddTaskDialog(false)} 
         />
 
-        {/* Floating Buttons - hidden in fullscreen */}
-        {!isCollapsed && (
+        {/* Floating Buttons - hidden in fullscreen and on mobile */}
+        {!isCollapsed && !isMobile && (
           <div className="fixed bottom-3 left-3 z-50 flex gap-1 opacity-20 hover:opacity-100 transition-opacity duration-200" style={{ marginLeft: isSideNav ? '224px' : '0' }}>
             {/* Full Screen Toggle */}
             <button
@@ -934,6 +934,39 @@ function LayoutContent({ children }) {
               </button>
             )}
           </div>
+        )}
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <nav
+            className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 flex border-t border-gray-200"
+            style={{
+              background: 'rgba(255,255,255,0.97)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
+              height: 'calc(64px + env(safe-area-inset-bottom))',
+            }}
+          >
+            {[
+              { label: 'Workflow', icon: BarChart3, url: createPageUrl('MainWorkflow') },
+              { label: 'Orders', icon: ClipboardList, url: createPageUrl('OrderForm') },
+              { label: 'Clock', icon: Clock, url: createPageUrl('TimeClock') },
+              { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
+            ].map((item) => {
+              const isActive = location.pathname === item.url;
+              return (
+                <Link
+                  key={item.label}
+                  to={item.url}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+                  style={{ minHeight: '44px', userSelect: 'none', color: isActive ? '#7C3AED' : '#6B7280' }}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         )}
       </div>
     </>
