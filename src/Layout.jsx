@@ -22,11 +22,9 @@ import {
   ChevronDown,
   Calendar,
   Maximize2,
-  Minimize2,
   PanelLeft,
   PanelTop,
   Columns,
-  Maximize2
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
