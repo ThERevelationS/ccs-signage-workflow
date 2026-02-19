@@ -2981,6 +2981,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <AlertDialogContent className="clay-card border-none max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedRows.size} rows?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedRows.size} selected work order{selectedRows.size > 1 ? 's' : ''}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulkDelete} className="bg-red-600 text-white">
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Clear Date Confirmation Dialog */}
       <AlertDialog open={!!clearDateConfirm} onOpenChange={() => setClearDateConfirm(null)}>
         <AlertDialogContent className="clay-card border-none max-w-md">
