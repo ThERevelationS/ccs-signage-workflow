@@ -438,6 +438,11 @@ function LayoutContent({ children }) {
         * {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+
+        button, a {
+          user-select: none;
+          -webkit-user-select: none;
+        }
         
         .clay-card {
           background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
@@ -477,6 +482,7 @@ function LayoutContent({ children }) {
 
         .top-nav {
           transition: transform 0.3s ease-in-out;
+          padding-top: env(safe-area-inset-top);
         }
 
         .top-nav.collapsed {
@@ -493,6 +499,14 @@ function LayoutContent({ children }) {
 
         .side-nav.collapsed {
           transform: translateX(-100%);
+        }
+
+        .mobile-bottom-nav {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .main-content-mobile {
+          padding-bottom: calc(64px + env(safe-area-inset-bottom));
         }
       `}</style>
       
