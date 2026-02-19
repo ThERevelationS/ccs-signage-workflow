@@ -2621,28 +2621,37 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 )}
 
                 <td className="px-1 py-0.5 text-center">
-                  {isRegistered && (
-                    <div className="flex items-center justify-center gap-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDuplicateClient(wo)}
-                        className="h-6 w-6"
-                        title="Duplicate client"
-                      >
-                        <Copy className="w-3 h-3 text-blue-500" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteWorkOrder(wo)}
-                        className="h-6 w-6"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center gap-0.5">
+                    {isAdmin && (
+                      <Checkbox
+                        checked={selectedRows.has(wo.id)}
+                        onCheckedChange={() => toggleRowSelection(wo.id)}
+                        className="h-3.5 w-3.5"
+                      />
+                    )}
+                    {isRegistered && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDuplicateClient(wo)}
+                          className="h-6 w-6"
+                          title="Duplicate client"
+                        >
+                          <Copy className="w-3 h-3 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteWorkOrder(wo)}
+                          className="h-6 w-6"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-500" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
               {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
