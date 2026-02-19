@@ -570,10 +570,10 @@ export default function MmmChecklistDialog({
         <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2 flex-wrap">
                 {workOrder?.client_name}
-                {workOrder?.description && (
-                  <span className="block text-sm font-normal text-gray-500 mt-0.5">{workOrder.description}</span>
+                {workOrder?.title && (
+                  <span className="text-base font-normal text-gray-500">— {workOrder.title}</span>
                 )}
               </DialogTitle>
               <div className="flex gap-2">
