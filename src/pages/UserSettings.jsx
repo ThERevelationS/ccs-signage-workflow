@@ -29,7 +29,8 @@ import {
   Heart,
   GraduationCap,
   Shirt,
-  Users
+  Users,
+  Trash2
 } from "lucide-react";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
