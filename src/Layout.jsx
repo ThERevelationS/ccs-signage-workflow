@@ -399,7 +399,6 @@ function LayoutContent({ children }) {
     <>
       <style>{`
                 ${getFullscreenStyles(isCollapsed)}
-                ${getDarkModeStyles()}
         :root {
           --clay-lavender: #E0D4F7;
           --clay-mint: #C8F4E9;
