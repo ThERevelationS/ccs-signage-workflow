@@ -826,26 +826,11 @@ function LayoutContent({ children }) {
         {/* Floating Buttons - hidden in fullscreen */}
         {!isCollapsed && (
           <div className="fixed bottom-3 left-3 z-50 flex gap-1 opacity-20 hover:opacity-100 transition-opacity duration-200" style={{ marginLeft: isSideNav ? '224px' : '0' }}>
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-              style={{ 
-                background: isDarkMode ? 'rgba(251, 191, 36, 0.8)' : 'rgba(30, 41, 59, 0.8)',
-                color: isDarkMode ? '#78350f' : '#f1f5f9'
-              }}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {isDarkMode ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
-            </button>
             {/* Full Screen Toggle */}
             <button
               onClick={toggleFullScreen}
               className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-              style={{ 
-                background: isDarkMode ? 'rgba(71, 85, 105, 0.8)' : 'rgba(191, 219, 254, 0.8)',
-                color: isDarkMode ? '#e2e8f0' : '#1e40af'
-              }}
+              style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
               title="Toggle Fullscreen"
             >
               <Maximize2 className="w-3 h-3" />
@@ -854,10 +839,7 @@ function LayoutContent({ children }) {
               <Link
                 to={createPageUrl("FeatureReports")}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-                style={{ 
-                  background: isDarkMode ? 'rgba(71, 85, 105, 0.8)' : 'rgba(191, 219, 254, 0.8)',
-                  color: isDarkMode ? '#e2e8f0' : '#1e40af'
-                }}
+                style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
               >
                 <Lightbulb className="w-3 h-3" />
                 <span>Reports</span>
@@ -867,10 +849,7 @@ function LayoutContent({ children }) {
               <Link
                 to={createPageUrl("AdminSettings")}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-                style={{ 
-                  background: isDarkMode ? 'rgba(71, 85, 105, 0.8)' : 'rgba(191, 219, 254, 0.8)',
-                  color: isDarkMode ? '#e2e8f0' : '#1e40af'
-                }}
+                style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
               >
                 <Settings className="w-3 h-3" />
                 <span>Admin</span>
@@ -880,10 +859,7 @@ function LayoutContent({ children }) {
               <Link
                 to={createPageUrl("UserSettings")}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-                style={{ 
-                  background: isDarkMode ? 'rgba(71, 85, 105, 0.8)' : 'rgba(191, 219, 254, 0.8)',
-                  color: isDarkMode ? '#e2e8f0' : '#1e40af'
-                }}
+                style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
               >
                 <User className="w-3 h-3" />
                 <span>My Info</span>
@@ -893,18 +869,15 @@ function LayoutContent({ children }) {
               <button
                 onClick={clearPages}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
-                style={{ 
-                  background: 'rgba(254, 202, 202, 0.8)',
-                  color: '#991b1b'
-                }}
+                style={{ background: 'rgba(254, 202, 202, 0.8)', color: '#991b1b' }}
                 title="Clear split view"
               >
                 <X className="w-3 h-3" />
                 <span>Clear Split</span>
               </button>
             )}
-            </div>
-            )}
+          </div>
+        )}
       </div>
     </>
   );
