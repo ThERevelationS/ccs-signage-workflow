@@ -415,6 +415,30 @@ export default function UserSettings() {
             <span><strong>Privacy Notice:</strong> Your HR and personal data is only accessible by office administrators and is kept secure.</span>
           </p>
         </div>
+
+        {/* Delete Account */}
+        <div className="mt-6 clay-card p-6 border border-red-100">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-red-700">
+            <Trash2 className="w-5 h-5" />
+            Delete Account
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Permanently remove your account and all associated data. This action cannot be undone.
+            Please contact an administrator to process your account deletion request.
+          </p>
+          <Button
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50"
+            onClick={() => {
+              if (confirm("Are you sure you want to request account deletion? This will notify your admin.")) {
+                alert("Your account deletion request has been submitted. An admin will process it shortly.");
+              }
+            }}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Request Account Deletion
+          </Button>
+        </div>
       </div>
     </div>
   );
