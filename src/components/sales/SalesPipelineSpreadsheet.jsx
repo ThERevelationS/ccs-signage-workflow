@@ -335,6 +335,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const confirmDelete = async () => {
+    if (!deleteConfirm) return;
     const orderId = deleteConfirm.id;
     
     if (debounceTimers.current[orderId]) {
