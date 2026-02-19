@@ -900,6 +900,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     );
   }
 
+  // Mobile card view
+  if (isMobile) {
+    return (
+      <OrderMobileCards
+        orders={filteredOrders}
+        onOpenDetails={(order) => alert(`Order: ${order.description}`)}
+      />
+    );
+  }
+
   return (
     <div 
       className="overflow-visible" 
