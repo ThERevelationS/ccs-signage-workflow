@@ -837,11 +837,27 @@ function LayoutContent({ children }) {
           </nav>
         )}
 
+        {/* Mobile back button in header area */}
+        {isMobile && !isRootRoute && (
+          <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 bg-white/95 backdrop-blur-sm border-b border-gray-200"
+            style={{ height: '48px', paddingTop: 'env(safe-area-inset-top)' }}
+          >
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-purple-700 font-medium text-sm min-h-[44px] min-w-[44px] -ml-1"
+              style={{ userSelect: 'none' }}
+            >
+              <ChevronLeft className="w-5 h-5" />
+              Back
+            </button>
+          </div>
+        )}
+
         {/* Main content */}
         <main 
-          className="flex-1 main-scroll-container" 
+          className={`flex-1 main-scroll-container ${isMobile ? 'main-content-mobile' : ''}`}
           style={{ 
-            paddingTop: isSideNav ? '0' : (isCollapsed ? '16px' : '80px'),
+            paddingTop: isMobile ? (isRootRoute ? '0' : '48px') : (isSideNav ? '0' : (isCollapsed ? '16px' : '80px')),
             marginLeft: isSideNav ? '224px' : '0',
             height: '100vh',
             overflow: 'auto'
@@ -849,7 +865,7 @@ function LayoutContent({ children }) {
         >
           <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
             <MultiPageContainer 
-              additionalPages={additionalPages} 
+              additionalPages={isMobile ? [] : additionalPages} 
               onRemovePage={removePage}
               onClearAll={clearPages}
             >
