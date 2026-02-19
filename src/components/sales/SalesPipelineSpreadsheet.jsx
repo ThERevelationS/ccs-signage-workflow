@@ -1646,15 +1646,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100">
             <tr className="border-b sticky top-0 z-10 bg-gray-100">
-              {isAdmin && (
-                <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '28px', minWidth: '28px' }}>
-                  <Checkbox
-                    checked={filteredWorkOrders.length > 0 && selectedRows.size === filteredWorkOrders.length}
-                    onCheckedChange={toggleSelectAll}
-                    className="h-3.5 w-3.5"
-                  />
-                </th>
-              )}
               <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '32px', minWidth: '32px' }}>#</th>
               {isColumnVisible("client_name") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
                 <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
