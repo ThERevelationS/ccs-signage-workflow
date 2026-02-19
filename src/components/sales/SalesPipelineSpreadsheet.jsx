@@ -27,6 +27,7 @@ import * as XLSX from "xlsx";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
+import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
