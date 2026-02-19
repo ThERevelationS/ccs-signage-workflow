@@ -329,6 +329,45 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+
+  const isAdmin = currentUser?.role === 'admin';
+
+  const toggleRowSelection = (id) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRows.size === filteredWorkOrders.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(filteredWorkOrders.map(wo => wo.id)));
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    const ids = [...selectedRows];
+    for (const id of ids) {
+      if (debounceTimers.current[id]) {
+        clearTimeout(debounceTimers.current[id]);
+        delete debounceTimers.current[id];
+      }
+      await WorkOrder.update(id, {
+        deleted: true,
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser?.email || "unknown"
+      });
+    }
+    setWorkOrders(prev => prev.filter(wo => !ids.includes(wo.id)));
+    setSelectedRows(new Set());
+    setBulkDeleteConfirm(false);
+  };
 
   const deleteWorkOrder = async (workOrder) => {
     setDeleteConfirm(workOrder);
