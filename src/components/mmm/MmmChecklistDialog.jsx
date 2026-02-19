@@ -141,7 +141,7 @@ export default function MmmChecklistDialog({
   };
 
   const updateChecklistItem = (itemId, updates) => {
-    setChecklist(checklist.map(item => item.id === itemId ? { ...item, ...updates } : item));
+    setChecklist(prev => prev.map(item => item.id === itemId ? { ...item, ...updates } : item));
   };
 
   const deleteChecklistItem = (itemId) => {
