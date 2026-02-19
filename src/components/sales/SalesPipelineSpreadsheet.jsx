@@ -1617,6 +1617,31 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
+      {isAdmin && selectedRows.size > 0 && (
+        <div className="mb-2 px-2">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <span className="text-sm font-medium text-red-700">{selectedRows.size} row{selectedRows.size > 1 ? 's' : ''} selected</span>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setBulkDeleteConfirm(true)}
+              className="h-7 px-2 flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete Selected
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setSelectedRows(new Set())}
+              className="h-7 px-2"
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div ref={parentRef} className="overflow-auto" style={{ flex: 1, minHeight: 0, height: 0 }}>
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100">
