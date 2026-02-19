@@ -377,27 +377,25 @@ export default function ProductChecklistDialog({
   };
 
   const saveChecklist = async () => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
       // Build a map for quick parent lookup
+      const currentChecklist = checklist;
       const itemMap = new Map();
-      checklist.forEach(item => itemMap.set(item.id, item));
+      currentChecklist.forEach(item => itemMap.set(item.id, item));
       
       // Recursive function to find root product info by traversing parent chain
       const findRootProductInfo = (itemId, visited = new Set()) => {
         if (!itemId || visited.has(itemId)) return null;
         visited.add(itemId);
-        
         const item = itemMap.get(itemId);
         if (!item) return null;
-        
-        // Check if this item has valid product info
         const hasValidProductName = item.product_name && 
             item.product_name !== 'undefined' && 
             item.product_name !== 'General Items' &&
             item.product_name !== 'Manual Items' &&
             item.product_name !== 'Ungrouped';
-        
         if (hasValidProductName) {
           return {
             product_name: item.product_name,
@@ -405,27 +403,19 @@ export default function ProductChecklistDialog({
             sub_template_name: item.sub_template_name || null
           };
         }
-        
-        // Traverse up to parent
         if (item.parent_id) {
           return findRootProductInfo(item.parent_id, visited);
         }
-        
         return null;
       };
       
-      // Before saving, ensure ALL items have proper product_name by resolving from parent chain
-      // IMPORTANT: Preserve ALL fields including type, parent_id, etc.
-      const resolvedChecklist = checklist.map(item => {
-        // Always try to resolve from parent chain first
+      const resolvedChecklist = currentChecklist.map(item => {
         const rootInfo = findRootProductInfo(item.id);
-        
-        // Build the complete item with all fields preserved
-        const savedItem = {
+        return {
           id: item.id,
           text: item.text,
-          type: item.type || 'checklist', // Preserve type
-          parent_id: item.parent_id || null, // Preserve parent_id
+          type: item.type || 'checklist',
+          parent_id: item.parent_id || null,
           approved_by: item.approved_by || '',
           assigned_to: item.assigned_to || '',
           custom_dropdown_value: item.custom_dropdown_value || '',
@@ -437,19 +427,7 @@ export default function ProductChecklistDialog({
           product_id: item.product_id || null,
           sub_items: item.sub_items || []
         };
-        
-        return savedItem;
       });
-      
-      console.log("Saving checklist - items:", 
-        resolvedChecklist.map(i => ({ 
-          id: i.id?.substring(0, 30), 
-          text: i.text?.substring(0, 20),
-          type: i.type,
-          parent_id: i.parent_id?.substring(0, 30),
-          product_name: i.product_name
-        }))
-      );
       
       await WorkOrder.update(workOrder.id, { 
         sip_checklist: resolvedChecklist,
@@ -459,8 +437,10 @@ export default function ProductChecklistDialog({
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
+      alert("Failed to save: " + error.message);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   // Group checklist items by product_name extracted from item ID or product_name field
