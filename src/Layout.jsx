@@ -320,6 +320,17 @@ const getDarkModeStyles = () => `
   }
 `;
 
+const ROOT_ROUTES = [
+  createPageUrl("MainWorkflow"),
+  createPageUrl("MyWorkflow"),
+  createPageUrl("SalesPipeline"),
+  createPageUrl("OrderForm"),
+  createPageUrl("TimeClock"),
+  createPageUrl("AdminSettings"),
+  createPageUrl("UserSettings"),
+  "/",
+];
+
 function LayoutContent({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -343,12 +354,29 @@ function LayoutContent({ children }) {
       } catch {}
     };
     load();
-    const interval = setInterval(load, 60000); // refresh every minute
+    const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const isDarkMode = false;
-  
+  // System dark mode detection
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setIsDarkMode(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Detect mobile
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
     return localStorage.getItem("navLayout") || "top";
@@ -358,11 +386,10 @@ function LayoutContent({ children }) {
     localStorage.setItem("navLayout", navLayout);
   }, [navLayout]);
 
-  // Handle Ctrl+Click for multi-page view
+  // Handle Ctrl+Click for multi-page view — disabled on mobile
   const handleNavClick = (e, item) => {
-    if (e.ctrlKey || e.metaKey) {
+    if (!isMobile && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      // Extract page name from URL
       const pageName = item.url.split('/').pop();
       addPage(pageName, item.title);
     }
@@ -372,7 +399,6 @@ function LayoutContent({ children }) {
     const handleFullscreenChange = () => {
       const isFullscreen = !!document.fullscreenElement;
       setIsCollapsed(isFullscreen);
-      // Prevent logout/email prompt in fullscreen
       if (isFullscreen) {
         localStorage.setItem("fullscreenMode", "true");
       } else {
@@ -392,8 +418,9 @@ function LayoutContent({ children }) {
     }
   };
 
+  const isRootRoute = ROOT_ROUTES.includes(location.pathname) || location.pathname === "/";
   const shouldShowNav = !isCollapsed || isHovered;
-  const isSideNav = navLayout === "side" && !isCollapsed;
+  const isSideNav = navLayout === "side" && !isCollapsed && !isMobile;
 
   return (
     <>
