@@ -1737,7 +1737,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
                 </div>
               </th>}
-              <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '40px' }}></th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700" style={{ minWidth: '60px' }}>
+                {isAdmin && (
+                  <Checkbox
+                    checked={filteredWorkOrders.length > 0 && selectedRows.size === filteredWorkOrders.length}
+                    onCheckedChange={toggleSelectAll}
+                    className="h-3.5 w-3.5"
+                  />
+                )}
+              </th>
             </tr>
           </thead>
 
