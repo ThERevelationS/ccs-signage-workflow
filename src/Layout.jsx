@@ -26,8 +26,7 @@ import {
   PanelLeft,
   PanelTop,
   Columns,
-  Moon,
-  Sun
+  Maximize2
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
