@@ -25,6 +25,8 @@ import {
   PanelLeft,
   PanelTop,
   Columns,
+  ChevronLeft,
+  Clock,
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
