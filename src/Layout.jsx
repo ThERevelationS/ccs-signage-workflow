@@ -347,15 +347,7 @@ function LayoutContent({ children }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Dark mode preference - default to true for power savings
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem("darkMode");
-    return saved !== null ? saved === "true" : true; // Default to dark mode
-  });
-
-  useEffect(() => {
-    localStorage.setItem("darkMode", isDarkMode.toString());
-  }, [isDarkMode]);
+  const isDarkMode = false;
   
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
