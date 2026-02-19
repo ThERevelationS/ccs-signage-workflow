@@ -183,7 +183,6 @@ Deno.serve(async (req) => {
         // Skip if we already processed this doc number in this run
         if (processedDocNumbers.has(docNumber)) {
           results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Duplicate email for same doc number in this run' });
-          // Still mark as read so it doesn't keep showing up
           await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -192,6 +191,37 @@ Deno.serve(async (req) => {
           continue;
         }
         processedDocNumbers.add(docNumber);
+
+        // === EARLY DEDUP CHECKS (before AI processing to save credits) ===
+
+        // 1. Check if already in PendingImport queue (any status)
+        const earlyPendingRaw = await PendingImport.filter({ doc_number: docNumber });
+        const earlyPending = Array.isArray(earlyPendingRaw) ? earlyPendingRaw : [];
+        if (earlyPending.length > 0) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: `Already in pending queue (status: ${earlyPending[0].status})` });
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
+
+        // 2. Directly query DB for any WO already linked to this doc number
+        // (More reliable than searching the in-memory list which may be paginated/incomplete)
+        const earlyExactByEst = await WorkOrder.filter({ est_inv_at: docNumber, deleted: { $ne: true } });
+        const earlyExactByInv = await WorkOrder.filter({ corbridge_invoice_number: docNumber, deleted: { $ne: true } });
+        const earlyExactMatch = (Array.isArray(earlyExactByEst) && earlyExactByEst[0]) || (Array.isArray(earlyExactByInv) && earlyExactByInv[0]) || null;
+
+        if (earlyExactMatch) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: `Already linked to work order: ${earlyExactMatch.title}` });
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
 
         // Find PDF attachment
         const findAttachments = (parts) => {
