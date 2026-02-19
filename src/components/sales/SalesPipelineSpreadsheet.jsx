@@ -1476,6 +1476,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     );
   }
 
+  // Mobile card view
+  if (isMobile) {
+    return (
+      <>
+        <SalesPipelineMobileCards
+          workOrders={filteredWorkOrders}
+          onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
+        />
+        {selectedWorkOrder && (
+          <WorkOrderDetailsDialog
+            workOrder={selectedWorkOrder}
+            onClose={() => setSelectedWorkOrder(null)}
+            onUpdate={(updated) => {
+              setWorkOrders(prev => prev.map(w => w.id === updated.id ? updated : w));
+              setSelectedWorkOrder(null);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div 
       className="flex flex-col min-h-0 h-full overflow-visible" 
