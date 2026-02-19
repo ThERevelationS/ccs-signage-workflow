@@ -1775,18 +1775,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                     backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined
                   }}
                 >
-                {/* Admin checkbox */}
-                {isAdmin && (
-                  <td className="px-0 py-0 border-r text-center" style={{ width: '28px' }}>
-                    <div className="flex items-center justify-center h-full py-1">
-                      <Checkbox
-                        checked={selectedRows.has(wo.id)}
-                        onCheckedChange={() => toggleRowSelection(wo.id)}
-                        className="h-3.5 w-3.5"
-                      />
-                    </div>
-                  </td>
-                )}
                 {/* Row Number - Clickable Focus Button */}
                 <td className="px-0 py-0 border-r">
                   <button
