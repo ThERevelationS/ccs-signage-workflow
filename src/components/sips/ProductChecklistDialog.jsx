@@ -271,7 +271,7 @@ export default function ProductChecklistDialog({
   };
 
   const updateChecklistItem = (itemId, updates) => {
-    setChecklist(checklist.map(item => 
+    setChecklist(prev => prev.map(item => 
       item.id === itemId ? { ...item, ...updates } : item
     ));
   };
