@@ -572,8 +572,8 @@ export default function MmmChecklistDialog({
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold flex items-center gap-2 flex-wrap">
                 {workOrder?.client_name}
-                {workOrder?.title && (
-                  <span className="text-base font-normal text-gray-500">— {workOrder.title}</span>
+                {workOrder?.description && (
+                  <span className="text-base font-normal text-gray-500">— {workOrder.description}</span>
                 )}
               </DialogTitle>
               <div className="flex gap-2">
