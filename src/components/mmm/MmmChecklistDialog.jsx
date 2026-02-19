@@ -187,10 +187,12 @@ export default function MmmChecklistDialog({
   };
 
   const saveChecklist = async () => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
+      const currentChecklist = checklist;
       const itemMap = new Map();
-      checklist.forEach(item => itemMap.set(item.id, item));
+      currentChecklist.forEach(item => itemMap.set(item.id, item));
       const findRootProductInfo = (itemId, visited = new Set()) => {
         if (!itemId || visited.has(itemId)) return null;
         visited.add(itemId);
@@ -201,7 +203,7 @@ export default function MmmChecklistDialog({
         if (item.parent_id) return findRootProductInfo(item.parent_id, visited);
         return null;
       };
-      const resolvedChecklist = checklist.map(item => {
+      const resolvedChecklist = currentChecklist.map(item => {
         const rootInfo = findRootProductInfo(item.id);
         return {
           id: item.id, text: item.text, type: item.type || 'checklist', parent_id: item.parent_id || null,
@@ -219,8 +221,10 @@ export default function MmmChecklistDialog({
       onClose();
     } catch (error) {
       console.error("Error saving MMM checklist:", error);
+      alert("Failed to save: " + error.message);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const getGroupedChecklist = () => {
