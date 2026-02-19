@@ -44,6 +44,12 @@ const SALES_STATUSES = [
 
 const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, isRegistered } = useAuth();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
