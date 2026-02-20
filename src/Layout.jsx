@@ -285,11 +285,9 @@ function LayoutContent({ children }) {
           <nav 
             className="side-nav fixed top-0 left-0 bottom-0 z-50 w-56 flex flex-col"
             style={{ 
-              background: isDarkMode 
-                ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(22, 33, 62, 0.95) 100%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
               backdropFilter: 'blur(10px)',
-              boxShadow: isDarkMode ? '4px 0 20px rgba(0,0,0,0.3)' : '4px 0 20px rgba(0,0,0,0.08)',
+              boxShadow: '4px 0 20px rgba(0,0,0,0.08)',
             }}
           >
             <div className="p-3">
