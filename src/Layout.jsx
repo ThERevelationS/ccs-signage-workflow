@@ -90,7 +90,8 @@ const getFullscreenStyles = (isFullscreen) => `
   ` : ''}
 `;
 
-const getDarkModeStyles = () => `
+const getDarkModeStyles = () => ``; // removed
+const _unused_getDarkModeStyles_orig = () => `
   /* ============================================================
      DARK MODE — override shadcn CSS vars + Tailwind classes
   ============================================================ */
