@@ -358,17 +358,6 @@ function LayoutContent({ children }) {
     return () => clearInterval(interval);
   }, []);
 
-  // System dark mode detection
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setIsDarkMode(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
   // Detect mobile
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
