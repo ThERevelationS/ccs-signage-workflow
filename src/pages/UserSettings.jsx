@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
+import DeleteAccountSection from "@/components/user/DeleteAccountSection";
 
 export default function UserSettings() {
   const { currentUser } = useAuth();
