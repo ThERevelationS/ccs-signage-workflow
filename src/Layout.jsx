@@ -131,12 +131,23 @@ function LayoutContent({ children }) {
   }, []);
 
   // Detect mobile
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+    useEffect(() => {
+      const handler = () => setIsMobile(window.innerWidth < 768);
+      window.addEventListener('resize', handler);
+      return () => window.removeEventListener('resize', handler);
+    }, []);
+
+    // Dark mode: sync Tailwind .dark class with system preference
+    useEffect(() => {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = (e) => {
+        document.documentElement.classList.toggle('dark', e.matches);
+      };
+      apply(mq);
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }, []);
 
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
@@ -198,6 +209,10 @@ function LayoutContent({ children }) {
         
         * {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+          overscroll-behavior: none;
         }
 
         button, a {
@@ -268,6 +283,10 @@ function LayoutContent({ children }) {
 
         .main-content-mobile {
           padding-bottom: calc(64px + env(safe-area-inset-bottom));
+        }
+
+        .main-scroll-container {
+          overscroll-behavior: none;
         }
       `}</style>
       
@@ -705,24 +724,31 @@ function LayoutContent({ children }) {
             }}
           >
             {[
-              { label: 'Workflow', icon: BarChart3, url: createPageUrl('MainWorkflow') },
-              { label: 'Orders', icon: ClipboardList, url: createPageUrl('OrderForm') },
-              { label: 'Clock', icon: Clock, url: createPageUrl('TimeClock') },
-              { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
-            ].map((item) => {
-              const isActive = location.pathname === item.url;
-              return (
-                <Link
-                  key={item.label}
-                  to={item.url}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
-                  style={{ minHeight: '44px', userSelect: 'none', color: isActive ? '#7C3AED' : '#6B7280' }}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
+                  { label: 'Workflow', icon: BarChart3, url: createPageUrl('MainWorkflow') },
+                  { label: 'Orders', icon: ClipboardList, url: createPageUrl('OrderForm') },
+                  { label: 'Clock', icon: Clock, url: createPageUrl('TimeClock') },
+                  { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
+                ].map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.url}
+                      onClick={(e) => {
+                        if (isActive) {
+                          e.preventDefault();
+                          navigate(item.url, { replace: true });
+                          window.scrollTo(0, 0);
+                        }
+                      }}
+                      className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+                      style={{ minHeight: '44px', userSelect: 'none', color: isActive ? '#7C3AED' : '#6B7280' }}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
           </nav>
         )}
       </div>
