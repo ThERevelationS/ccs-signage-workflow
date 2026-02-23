@@ -90,6 +90,7 @@ export default function OrderForm() {
   };
 
   return (
+    <PullToRefresh onRefresh={async () => { /* triggers OrderSpreadsheet to reload via key */ setSearchTerm(s => s); }}>
     <div className="h-full overflow-hidden p-4 sm:p-6 flex flex-col">
       <div className="w-full flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 mb-6">
@@ -173,5 +174,6 @@ export default function OrderForm() {
         />
       </div>
     </div>
+    </PullToRefresh>
   );
 }

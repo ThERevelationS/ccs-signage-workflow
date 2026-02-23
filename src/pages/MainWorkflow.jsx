@@ -84,6 +84,7 @@ export default function MainWorkflow() {
   };
 
   return (
+    <PullToRefresh onRefresh={() => loadWorkOrders(false)}>
     <div className="min-h-screen p-4">
       <div className="w-full max-w-[95vw] mx-auto">
         <div className="flex justify-end items-center gap-2 mb-2">
@@ -128,5 +129,6 @@ export default function MainWorkflow() {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 }
