@@ -137,8 +137,8 @@ export default function WorkOrderCard({
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   // Check if this work order has any riders and store them
-  const [riders, setRiders] = React.useState([]);
-  const [parentWorkOrder, setParentWorkOrder] = React.useState(null);
+  const [riders, setRiders] = React.useState(workOrder._riders || []);
+  const [parentWorkOrder, setParentWorkOrder] = React.useState(workOrder._parent || null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showAddTaskMenu, setShowAddTaskMenu] = useState(false);
   const [addingSubTaskFor, setAddingSubTaskFor] = useState(null);
