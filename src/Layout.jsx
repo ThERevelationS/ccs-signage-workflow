@@ -131,8 +131,32 @@ function LayoutContent({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Scroll position preservation per tab on mobile
+  const scrollPositions = useRef({});
+  const mainRef = useRef(null);
+  const prevPathnameRef = useRef(location.pathname);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const prev = prevPathnameRef.current;
+    const curr = location.pathname;
+    if (prev !== curr) {
+      // Save scroll for the previous route
+      if (mainRef.current) {
+        scrollPositions.current[prev] = mainRef.current.scrollTop;
+      }
+      // Restore scroll for the new route (defer so DOM renders first)
+      requestAnimationFrame(() => {
+        if (mainRef.current) {
+          mainRef.current.scrollTop = scrollPositions.current[curr] || 0;
+        }
+      });
+      prevPathnameRef.current = curr;
+    }
+  }, [location.pathname, isMobile]);
+
   // Detect mobile
-    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+        const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
     useEffect(() => {
       const handler = () => setIsMobile(window.innerWidth < 768);
       window.addEventListener('resize', handler);
