@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import PullToRefresh from "@/components/mobile/PullToRefresh";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -211,6 +212,7 @@ export default function TimeClock() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -581,5 +583,6 @@ export default function TimeClock() {
         allUsers={allUsers}
       />
     </div>
+    </PullToRefresh>
   );
 }

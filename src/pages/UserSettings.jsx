@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import PullToRefresh from "@/components/mobile/PullToRefresh";
 import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -213,7 +214,8 @@ export default function UserSettings() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <PullToRefresh onRefresh={loadUsers}>
+    <div className="p-6">
       <div className="max-w-4xl mx-auto pb-8">
         <div className="flex items-center gap-4 mb-6">
           <div 
@@ -421,5 +423,6 @@ export default function UserSettings() {
         <DeleteAccountSection userData={userData} />
       </div>
     </div>
+    </PullToRefresh>
   );
 }
