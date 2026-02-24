@@ -314,17 +314,7 @@ function LayoutContent({ children }) {
 
         /* ── Mobile global enhancements ── */
         @media (max-width: 767px) {
-          /* Minimum 14px font everywhere */
-          body, p, span, div, li, td, th, label {
-            font-size: max(14px, 1em);
-          }
-          /* All interactive elements: min 44×44px touch target */
-          button, a, input, select, textarea,
-          [role="button"], [role="tab"], [role="option"],
-          [role="menuitem"], [role="combobox"] {
-            min-height: 44px;
-          }
-          /* Inputs should be at least 14px to prevent iOS zoom */
+          /* Inputs: 16px prevents iOS auto-zoom */
           input, textarea, select {
             font-size: 16px !important;
           }
