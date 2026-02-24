@@ -105,7 +105,7 @@ export default function DragDropList({
               className="flex flex-col gap-4"
             >
               {rightColumn.map((workOrder) => {
-                const originalIndex = workOrders.findIndex(wo => wo.id === workOrder.id);
+                const originalIndex = enrichedWorkOrders.findIndex(wo => wo.id === workOrder.id);
                 return (
                   <Draggable 
                     key={workOrder.id} 
