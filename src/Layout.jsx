@@ -161,16 +161,7 @@ function LayoutContent({ children }) {
     }
   }, [location.pathname, isMobile]);
 
-    // Dark mode: sync Tailwind .dark class with system preference
-    useEffect(() => {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const apply = (e) => {
-        document.documentElement.classList.toggle('dark', e.matches);
-      };
-      apply(mq);
-      mq.addEventListener('change', apply);
-      return () => mq.removeEventListener('change', apply);
-    }, []);
+
 
   // Navigation layout preference - "top" or "side"
   const [navLayout, setNavLayout] = useState(() => {
