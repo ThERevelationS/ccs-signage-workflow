@@ -131,6 +131,14 @@ function LayoutContent({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Detect mobile
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   // Scroll position preservation per tab on mobile
   const scrollPositions = useRef({});
   const mainRef = useRef(null);
@@ -141,11 +149,9 @@ function LayoutContent({ children }) {
     const prev = prevPathnameRef.current;
     const curr = location.pathname;
     if (prev !== curr) {
-      // Save scroll for the previous route
       if (mainRef.current) {
         scrollPositions.current[prev] = mainRef.current.scrollTop;
       }
-      // Restore scroll for the new route (defer so DOM renders first)
       requestAnimationFrame(() => {
         if (mainRef.current) {
           mainRef.current.scrollTop = scrollPositions.current[curr] || 0;
@@ -154,14 +160,6 @@ function LayoutContent({ children }) {
       prevPathnameRef.current = curr;
     }
   }, [location.pathname, isMobile]);
-
-  // Detect mobile
-        const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-    useEffect(() => {
-      const handler = () => setIsMobile(window.innerWidth < 768);
-      window.addEventListener('resize', handler);
-      return () => window.removeEventListener('resize', handler);
-    }, []);
 
     // Dark mode: sync Tailwind .dark class with system preference
     useEffect(() => {
