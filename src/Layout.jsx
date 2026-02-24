@@ -656,6 +656,7 @@ function LayoutContent({ children }) {
 
         {/* Main content */}
         <main 
+          ref={mainRef}
           className={`flex-1 main-scroll-container ${isMobile ? 'main-content-mobile' : ''}`}
           style={{ 
             paddingTop: isMobile ? (isRootRoute ? '0' : '48px') : (isSideNav ? '0' : (isCollapsed ? '16px' : '80px')),
@@ -670,7 +671,20 @@ function LayoutContent({ children }) {
               onRemovePage={removePage}
               onClearAll={clearPages}
             >
-              {children}
+              {isMobile ? (
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={location.pathname}
+                    initial={{ x: 40, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -40, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeInOut' }}
+                    style={{ minHeight: '100%' }}
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+              ) : children}
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </main>
