@@ -3,13 +3,8 @@ import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import MobileSelect from "@/components/mobile/MobileSelect";
 import {
   ClipboardList,
   Filter,
@@ -114,18 +109,17 @@ export default function OrderForm() {
                 className="pl-9 w-64"
               />
             </div>
-            <Select value={filterStatus} onValueChange={handleFilterChange}>
-              <SelectTrigger className="w-36">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="ordered">Ordered</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-              </SelectContent>
-            </Select>
+            <MobileSelect
+              value={filterStatus}
+              onValueChange={handleFilterChange}
+              title="Filter by status"
+              triggerClassName="w-36"
+            >
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="ordered">Ordered</SelectItem>
+              <SelectItem value="received">Received</SelectItem>
+            </MobileSelect>
           </div>
 
           <div className="flex items-center gap-2">

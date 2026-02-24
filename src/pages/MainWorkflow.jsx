@@ -4,13 +4,8 @@ import PullToRefresh from "@/components/mobile/PullToRefresh";
 
 const WorkOrder = base44.entities.WorkOrder;
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import MobileSelect from "@/components/mobile/MobileSelect";
 import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
@@ -91,16 +86,16 @@ export default function MainWorkflow() {
           <div className="flex gap-2 items-center">
             <div className="flex items-center gap-1">
               <ArrowUpDown className="w-3 h-3 text-gray-500" />
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-28 h-8 clay-button border-none text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="clay-card border-none">
-                  <SelectItem value="due_date">Due Date</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="stage">Stage</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={sortBy}
+                onValueChange={setSortBy}
+                title="Sort by"
+                triggerClassName="w-28 h-8 clay-button border-none text-xs"
+              >
+                <SelectItem value="due_date">Due Date</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="stage">Stage</SelectItem>
+              </MobileSelect>
             </div>
           </div>
         </div>
