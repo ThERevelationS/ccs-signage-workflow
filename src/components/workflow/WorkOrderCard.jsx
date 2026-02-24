@@ -187,22 +187,17 @@ export default function WorkOrderCard({
     }
   };
 
+  // Riders and parent are passed in via workOrder._riders / workOrder._parent by the parent page
+  // to avoid N+1 API calls per card. Only fetch if not already provided.
   React.useEffect(() => {
+    if (workOrder._riders !== undefined || workOrder._parent !== undefined) return; // already provided
     const checkForRidersAndParent = async () => {
       const allWorkOrders = await WorkOrder.filter({ completed: false });
-      
-      // Check for riders if this is not a rider
       if (!workOrder.is_rider && workOrder.id) {
-        const foundRiders = allWorkOrders.filter(
-          (wo) => wo.parent_work_order_id === workOrder.id && wo.is_rider
-        );
-        setRiders(foundRiders);
+        setRiders(allWorkOrders.filter(wo => wo.parent_work_order_id === workOrder.id && wo.is_rider));
       }
-      
-      // Check for parent if this is a rider
       if (workOrder.is_rider && workOrder.parent_work_order_id) {
-        const parent = allWorkOrders.find((wo) => wo.id === workOrder.parent_work_order_id);
-        setParentWorkOrder(parent);
+        setParentWorkOrder(allWorkOrders.find(wo => wo.id === workOrder.parent_work_order_id) || null);
       }
     };
     checkForRidersAndParent();
