@@ -33,9 +33,18 @@ export default function DragDropList({
     );
   }
 
+  // Pre-compute riders and parents from the already-loaded list to avoid per-card API calls
+  const enrichedWorkOrders = React.useMemo(() => {
+    return workOrders.map(wo => ({
+      ...wo,
+      _riders: workOrders.filter(r => r.parent_work_order_id === wo.id && r.is_rider),
+      _parent: wo.is_rider ? (workOrders.find(p => p.id === wo.parent_work_order_id) || null) : null,
+    }));
+  }, [workOrders]);
+
   // Split work orders into two columns for display, but maintain single index order
-  const leftColumn = workOrders.filter((_, i) => i % 2 === 0);
-  const rightColumn = workOrders.filter((_, i) => i % 2 === 1);
+  const leftColumn = enrichedWorkOrders.filter((_, i) => i % 2 === 0);
+  const rightColumn = enrichedWorkOrders.filter((_, i) => i % 2 === 1);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
