@@ -315,7 +315,9 @@ function LayoutContent({ children }) {
         /* ── Mobile global enhancements ── */
         @media (max-width: 767px) {
           /* Inputs: 16px prevents iOS auto-zoom */
-          input, textarea, select {
+          input[type="text"], input[type="email"], input[type="password"],
+          input[type="number"], input[type="search"], input[type="tel"],
+          input[type="url"], textarea {
             font-size: 16px !important;
           }
         }
