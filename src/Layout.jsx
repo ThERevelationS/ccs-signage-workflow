@@ -313,6 +313,24 @@ function LayoutContent({ children }) {
         .main-scroll-container {
           overscroll-behavior: none;
         }
+
+        /* ── Mobile global enhancements ── */
+        @media (max-width: 767px) {
+          /* Minimum 14px font everywhere */
+          body, p, span, div, li, td, th, label {
+            font-size: max(14px, 1em);
+          }
+          /* All interactive elements: min 44×44px touch target */
+          button, a, input, select, textarea,
+          [role="button"], [role="tab"], [role="option"],
+          [role="menuitem"], [role="combobox"] {
+            min-height: 44px;
+          }
+          /* Inputs should be at least 14px to prevent iOS zoom */
+          input, textarea, select {
+            font-size: 16px !important;
+          }
+        }
       `}</style>
       
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
