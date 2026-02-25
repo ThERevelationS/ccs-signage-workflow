@@ -84,31 +84,31 @@ export default function SalesPipeline() {
   return (
     <div className="flex flex-col p-4 sm:p-6" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="clay-card p-3">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Sales Pipeline</h1>
-              <p className="text-gray-600 text-sm">Manage leads and opportunities before they enter the workflow</p>
-            </div>
-            {/* Pending Imports tab */}
-            <button
-              onClick={() => setShowPendingImports(!showPendingImports)}
-              className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
-            >
-              <Inbox className="w-4 h-4" />
-              {showPendingImports ? '← Return to Sales Pipeline' : 'Pending CoreBridge Imports'}
-              {!showPendingImports && pendingCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="clay-card p-3 flex-shrink-0">
+            <DollarSign className="w-6 h-6 text-green-600" />
           </div>
+          <div className="flex-shrink-0">
+            <h1 className="text-2xl font-bold text-gray-800">Sales Pipeline</h1>
+            <p className="text-gray-600 text-sm hidden sm:block">Manage leads and opportunities</p>
+          </div>
+          {/* Pending Imports tab */}
+          <button
+            onClick={() => setShowPendingImports(!showPendingImports)}
+            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
+          >
+            <Inbox className="w-4 h-4" />
+            {showPendingImports ? '← Return' : 'Pending Imports'}
+            {!showPendingImports && pendingCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {pendingCount}
+              </span>
+            )}
+          </button>
 
-          <div className="flex items-end gap-2">
+          <div className="flex-1" />
+
+          <div className="flex flex-wrap items-end gap-2">
             {isRegistered && (
               <Button 
                 onClick={() => setShowNewClientForm(true)}
