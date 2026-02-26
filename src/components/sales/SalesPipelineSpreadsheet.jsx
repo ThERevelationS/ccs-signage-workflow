@@ -1190,11 +1190,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       // Process creates in batches using bulkCreate
       for (let i = 0; i < itemsToCreate.length; i += BATCH_SIZE) {
-        if (importStateRef.current.cancelled) {
-          setImportProgress({ show: false, current: 0, total: 0, paused: false });
-          return;
-        }
-        while (importStateRef.current.paused) {
+        if (cancelCtx.current.cancelled) return;
+        while (cancelCtx.current.paused) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
         
