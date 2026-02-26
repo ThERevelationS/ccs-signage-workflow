@@ -1115,12 +1115,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <_TableBody_ />
-          {/* dead-code placeholder, never rendered */ false && <tr><td>
-                {isColumnVisible("client_name") && (
-                  <td 
-                    className="px-1 py-0.5 border-r"
-                    onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}
+          <_TABLE_BODY_COMPONENT_ />
                   >
                     <button
                       onClick={() => setSelectedWorkOrder(wo)}
