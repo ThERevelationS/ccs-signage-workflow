@@ -1115,27 +1115,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody_REPLACED_2 />
-          {false && <tr><td className="px-0 py-0 border-r">
-                  <button
-                    onClick={() => {
-                      if (isFocused) {
-                        setFocusedRowId(null);
-                        setFocusedRowIndex(null);
-                      } else {
-                        setFocusedRowId(wo.id);
-                        setFocusedRowIndex(index);
-                      }
-                    }}
-                    className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${
-                      isFocused 
-                        ? 'bg-purple-500 text-white' 
-                        : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                </td>
+          <SalesPipelineTableBody
+            virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders}
+            isColumnVisible={isColumnVisible} focusedRowId={focusedRowId}
+            setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex}
+            getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor}
+            calculateDays={calculateDays} openDatePopover={openDatePopover}
+            setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm}
+            updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin}
+            selectedRows={selectedRows} toggleRowSelection={toggleRowSelection}
+            handleContextMenu={handleContextMenu} setSelectedWorkOrder={setSelectedWorkOrder}
+            openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient}
+            deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users}
+            taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer}
+          />
+          {/* dead-code placeholder, never rendered */ false && <tr><td>
                 {isColumnVisible("client_name") && (
                   <td 
                     className="px-1 py-0.5 border-r"
