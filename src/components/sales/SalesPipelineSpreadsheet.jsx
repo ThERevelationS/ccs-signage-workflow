@@ -1115,19 +1115,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody_REPLACED />
-
-              return (
-              <React.Fragment key={wo.id}>
-                {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
-                <tr 
-                  className={`border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
-                  style={{ 
-                    backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined
-                  }}
-                >
-                {/* Row Number - Clickable Focus Button */}
-                <td className="px-0 py-0 border-r">
+          <SalesPipelineTableBody_REPLACED_2 />
+          {false && <tr><td className="px-0 py-0 border-r">
                   <button
                     onClick={() => {
                       if (isFocused) {
