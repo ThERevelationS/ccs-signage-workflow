@@ -380,7 +380,20 @@ export default function ProductChecklistDialog({
     onClose();
   };
 
-  const saveChecklist = async () => {
+  // Called when Save button is clicked - first show revisit date popup
+  const handleSaveClick = () => {
+    if (!isRegistered) return;
+    setPendingRevisitDate(workOrder.sip_revisit_date || null);
+    setShowRevisitPopup(true);
+  };
+
+  // Called after user picks (or skips) a revisit date
+  const handleRevisitSave = async (dateString) => {
+    setShowRevisitPopup(false);
+    await saveChecklist(dateString);
+  };
+
+  const saveChecklist = async (revisitDate) => {
     if (isSaving) return;
     setIsSaving(true);
     try {
