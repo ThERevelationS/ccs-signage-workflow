@@ -1160,17 +1160,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
         
         const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
-        await Promise.all(batch.map(async (item) => {
-          await WorkOrder.update(item.id, item.updates);
-          const updatedWO = { ...item.existingWO, ...item.updates };
-          // Update tracking map with the updated work order
-          const clientKey = item.customer.toLowerCase().trim();
-          const existingList = existingByCustomer.get(clientKey) || [];
-          const idx = existingList.findIndex(wo => wo.id === item.id);
-          if (idx >= 0) {
-            existingList[idx] = { ...item.existingWO, ...item.updates };
+        for (const item of batch) {
+          for (let attempt = 0; attempt < 4; attempt++) {
+            try { await WorkOrder.update(item.id, item.updates); break; }
+            catch (e) { if (attempt < 3) await new Promise(r => setTimeout(r, 400 * (attempt + 1))); else throw e; }
           }
-        }));
+          const ck = item.customer.toLowerCase().trim();
+          const el = existingByCustomer.get(ck) || [];
+          const ei = el.findIndex(wo => wo.id === item.id);
+          if (ei >= 0) el[ei] = { ...item.existingWO, ...item.updates };
+          await new Promise(r => setTimeout(r, 200));
+        }
         
         const batchCustomers = batch.map(item => item.customer).join(', ');
         updateProgress(i + batch.length, totalItems, `Updating: ${batchCustomers.substring(0, 50)}${batchCustomers.length > 50 ? '...' : ''}`);
