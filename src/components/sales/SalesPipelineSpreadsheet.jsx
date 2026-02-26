@@ -61,8 +61,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const [pendingChanges, setPendingChanges] = useState({});
   const debounceTimers = useRef({});
-  const [importProgress, setImportProgress] = useState({ show: false, current: 0, total: 0, paused: false, currentItem: "" });
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
+  // Import progress is now managed globally via ImportProgressContext (shown as floating overlay)
   const importStateRef = useRef({ paused: false, cancelled: false });
   const [showForm, setShowForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null); // For duplicating a client
