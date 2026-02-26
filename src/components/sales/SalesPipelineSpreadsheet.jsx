@@ -1221,12 +1221,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         importedCount += createdItems.length;
         
         const batchNames = batch.map(item => item._customer).join(', ');
-        setImportProgress({ 
-          show: true, 
-          current: itemsToUpdate.length + i + batch.length, 
-          total: totalItems, 
-          currentItem: `Creating: ${batchNames.substring(0, 50)}${batchNames.length > 50 ? '...' : ''}` 
-        });
+        updateProgress(itemsToUpdate.length + i + batch.length, totalItems, `Creating: ${batchNames.substring(0, 50)}${batchNames.length > 50 ? '...' : ''}`);
         
         if (i + BATCH_SIZE < itemsToCreate.length) {
           await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
