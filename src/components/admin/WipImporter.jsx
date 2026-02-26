@@ -1,86 +1,52 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileSpreadsheet, Calendar, Database } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, FileSpreadsheet, Calendar, Database, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { importWipSheet } from "@/functions/importWipSheet";
-import { useImportProgress } from "@/components/shared/ImportProgressContext";
-import { useAuth } from "@/components/auth/EmailGate";
 
 export default function WipImporter() {
   const fileInputLatestRef = useRef(null);
   const fileInputAllRef = useRef(null);
-  const { startImport, updateProgress, completeImport, cancelRef } = useImportProgress();
-  const { currentUser } = useAuth();
+  const [status, setStatus] = useState(null); // null | 'uploading' | 'processing' | 'done' | 'error'
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleFileSelect = async (file, mode) => {
     if (!file) return;
+    setStatus('uploading');
+    setMessage("Uploading file...");
+    setResult(null);
+    setError(null);
 
-    // Phase 1: Upload file and parse
-    const ctrl = startImport(1, currentUser?.email);
-    updateProgress(0, 1, "Uploading file...");
-
-    let parsed;
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      updateProgress(0, 1, "Parsing WIP sheets...");
+      setStatus('processing');
+      setMessage("Processing WIP sheets and updating work orders... This may take a minute.");
+
       const res = await importWipSheet({ fileUrl: file_url, mode });
-      parsed = res.data;
+      const data = res.data;
+
+      if (data.error) {
+        setError(data.error);
+        setStatus('error');
+      } else {
+        setResult(data);
+        setStatus('done');
+      }
     } catch (err) {
-      updateProgress(0, 1, `Error: ${err.message || "Upload failed"}`);
-      setTimeout(() => completeImport(), 3000);
-      return;
+      setError(err.message || "An error occurred during import");
+      setStatus('error');
     }
+  };
 
-    if (parsed.error) {
-      updateProgress(0, 1, `Error: ${parsed.error}`);
-      setTimeout(() => completeImport(), 3000);
-      return;
-    }
-
-    const { ordersToUpdate, sheetsProcessed, totalRows, notFoundOrders, notFoundCount } = parsed;
-    const total = ordersToUpdate.length;
-
-    if (total === 0) {
-      updateProgress(1, 1, `Done — ${sheetsProcessed} sheet(s), no matching orders to update.`);
-      setTimeout(() => completeImport(), 3000);
-      return;
-    }
-
-    // Phase 2: Batch updates via backend function
-    const BATCH_SIZE = 10;
-    let offset = 0;
-    let totalUpdated = 0;
-
-    startImport(total, currentUser?.email);
-    updateProgress(0, total, `Updating work orders (0 / ${total})...`);
-
-    while (offset < ordersToUpdate.length) {
-      if (ctrl.current?.cancelled) break;
-
-      // Wait while paused
-      while (ctrl.current?.paused && !ctrl.current?.cancelled) {
-        await new Promise(r => setTimeout(r, 300));
-      }
-      if (ctrl.current?.cancelled) break;
-
-      try {
-        const batchSlice = ordersToUpdate.slice(offset, offset + BATCH_SIZE);
-        const batchRes = await importWipSheet({
-          batchOffset: 0,
-          workOrdersSnapshot: batchSlice,
-        });
-        const batchData = batchRes.data;
-        totalUpdated += batchData.updatedInBatch || batchSlice.length;
-        offset += BATCH_SIZE;
-        updateProgress(totalUpdated, total, `Updating work orders (${totalUpdated} / ${total})...`);
-      } catch (err) {
-        // On transient error, wait and retry
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-
-    completeImport();
+  const reset = () => {
+    setStatus(null);
+    setMessage("");
+    setResult(null);
+    setError(null);
   };
 
   return (
@@ -97,61 +63,110 @@ export default function WipImporter() {
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 text-sm text-amber-700">
-          <strong>How it works:</strong> Matches rows by <strong>Order Number</strong> (e.g. INV-12345) to work orders in the system. Updates <strong>Job Description</strong> and <strong>Project Install Date</strong> only. Runs in the background — you can leave this page.
+          <strong>How it works:</strong> Matches rows by <strong>Order Number</strong> (e.g. INV-12345) to work orders in the system. Updates <strong>Job Description</strong> and <strong>Project Install Date</strong> only. Please keep this tab open while importing.
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Latest Sheet Only */}
-          <div className="border-2 border-dashed border-teal-200 rounded-xl p-5 bg-teal-50/50 hover:bg-teal-50 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-5 h-5 text-teal-600" />
-              <h4 className="font-semibold text-gray-700">Latest Sheet Only</h4>
+        {/* Processing state */}
+        {(status === 'uploading' || status === 'processing') && (
+          <div className="border border-blue-200 bg-blue-50 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+              <span className="font-medium text-blue-800">{message}</span>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Automatically picks the most recent WIP tab (e.g. "WIP 2-23-26") and updates matching projects.
-            </p>
-            <input
-              ref={fileInputLatestRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={(e) => { handleFileSelect(e.target.files[0], "latest"); e.target.value = ""; }}
-            />
-            <Button
-              onClick={() => fileInputLatestRef.current?.click()}
-              className="w-full"
-              style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)', color: '#0f766e', border: 'none' }}
-            >
-              <Upload className="w-4 h-4 mr-2" /> Upload & Import Latest
-            </Button>
+            <Progress value={status === 'uploading' ? 20 : 60} className="h-2" />
+            <p className="text-xs text-blue-500 mt-2">Please wait — do not close this tab.</p>
           </div>
+        )}
 
-          {/* All Sheets */}
-          <div className="border-2 border-dashed border-purple-200 rounded-xl p-5 bg-purple-50/50 hover:bg-purple-50 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <Database className="w-5 h-5 text-purple-600" />
-              <h4 className="font-semibold text-gray-700">All Sheets (Full History)</h4>
+        {/* Buttons - only show when idle */}
+        {!status && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Latest Sheet Only */}
+            <div className="border-2 border-dashed border-teal-200 rounded-xl p-5 bg-teal-50/50 hover:bg-teal-50 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="w-5 h-5 text-teal-600" />
+                <h4 className="font-semibold text-gray-700">Latest Sheet Only</h4>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Automatically picks the most recent WIP tab (e.g. "WIP 2-23-26") and updates matching projects.
+              </p>
+              <input ref={fileInputLatestRef} type="file" accept=".xlsx,.xls" className="hidden"
+                onChange={(e) => { handleFileSelect(e.target.files[0], "latest"); e.target.value = ""; }} />
+              <Button onClick={() => fileInputLatestRef.current?.click()} className="w-full"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)', color: '#0f766e', border: 'none' }}>
+                <Upload className="w-4 h-4 mr-2" /> Upload & Import Latest
+              </Button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Processes every WIP tab in the file. Later sheets override earlier ones for the same order number.
-            </p>
-            <input
-              ref={fileInputAllRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={(e) => { handleFileSelect(e.target.files[0], "all"); e.target.value = ""; }}
-            />
-            <Button
-              onClick={() => fileInputAllRef.current?.click()}
-              className="w-full"
-              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)', color: '#7c3aed', border: 'none' }}
-            >
-              <Upload className="w-4 h-4 mr-2" /> Upload & Import All
-            </Button>
+
+            {/* All Sheets */}
+            <div className="border-2 border-dashed border-purple-200 rounded-xl p-5 bg-purple-50/50 hover:bg-purple-50 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <Database className="w-5 h-5 text-purple-600" />
+                <h4 className="font-semibold text-gray-700">All Sheets (Full History)</h4>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Processes every WIP tab in the file. Later sheets override earlier ones for the same order number.
+              </p>
+              <input ref={fileInputAllRef} type="file" accept=".xlsx,.xls" className="hidden"
+                onChange={(e) => { handleFileSelect(e.target.files[0], "all"); e.target.value = ""; }} />
+              <Button onClick={() => fileInputAllRef.current?.click()} className="w-full"
+                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)', color: '#7c3aed', border: 'none' }}>
+                <Upload className="w-4 h-4 mr-2" /> Upload & Import All
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Error */}
+      {status === 'error' && (
+        <div className="clay-card p-4 border border-red-200 bg-red-50">
+          <div className="flex items-center gap-2 text-red-700 font-medium mb-1">
+            <AlertTriangle className="w-4 h-4" /> Import Failed
+          </div>
+          <p className="text-sm text-red-600 mb-3">{error}</p>
+          <Button size="sm" variant="outline" onClick={reset}>Try Again</Button>
+        </div>
+      )}
+
+      {/* Success */}
+      {status === 'done' && result && (
+        <div className="clay-card p-5 border border-green-200 bg-green-50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-green-700 font-semibold">
+              <CheckCircle2 className="w-5 h-5" /> Import Complete
+            </div>
+            <Button size="sm" variant="outline" onClick={reset}>Import Another</Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <div className="bg-white rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-gray-800">{result.sheetsProcessed}</p>
+              <p className="text-xs text-gray-500">Sheets Processed</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-gray-800">{result.totalRows}</p>
+              <p className="text-xs text-gray-500">Unique Orders Found</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-green-600">{result.updated}</p>
+              <p className="text-xs text-gray-500">Projects Updated</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-orange-500">{result.notFound}</p>
+              <p className="text-xs text-gray-500">Not Matched</p>
+            </div>
+          </div>
+          <p className="text-sm text-green-700">{result.message}</p>
+          {result.notFoundOrders && result.notFoundOrders.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-500 mb-1">Orders not found in system (first 20):</p>
+              <div className="flex flex-wrap gap-1">
+                {result.notFoundOrders.map(o => <Badge key={o} variant="outline" className="text-xs">{o}</Badge>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
