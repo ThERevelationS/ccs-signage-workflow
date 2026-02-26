@@ -1154,11 +1154,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       updateProgress(0, totalItems, `Processing ${itemsToUpdate.length} updates, ${itemsToCreate.length} new items...`);
       
       for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
-        if (importStateRef.current.cancelled) {
-          setImportProgress({ show: false, current: 0, total: 0, paused: false });
-          return;
-        }
-        while (importStateRef.current.paused) {
+        if (cancelCtx.current.cancelled) return;
+        while (cancelCtx.current.paused) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
         
