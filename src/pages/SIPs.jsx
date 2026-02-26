@@ -445,7 +445,7 @@ export default function SIPs() {
                     </td>
 
                     {/* Survey Date */}
-                    <td className="px-2 py-2">
+                    <td className="px-2 py-2 border-r">
                       <Popover 
                         open={openDatePopover === `survey-${wo.id}`} 
                         onOpenChange={(open) => setOpenDatePopover(open ? `survey-${wo.id}` : null)}
@@ -464,6 +464,40 @@ export default function SIPs() {
                               setOpenDatePopover(null);
                             }}
                           />
+                        </PopoverContent>
+                      </Popover>
+                    </td>
+
+                    {/* Revisit Date */}
+                    <td className="px-2 py-2" style={{ background: wo.sip_revisit_date ? '#fef9c3' : 'transparent' }}>
+                      <Popover
+                        open={openDatePopover === `revisit-${wo.id}`}
+                        onOpenChange={(open) => setOpenDatePopover(open ? `revisit-${wo.id}` : null)}
+                      >
+                        <PopoverTrigger asChild disabled={!isRegistered}>
+                          <button className={`h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-medium ${wo.sip_revisit_date ? 'text-amber-700' : 'text-gray-400'}`}>
+                            {wo.sip_revisit_date ? format(parseLocalDate(wo.sip_revisit_date), "MM/dd/yy") : "-"}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={parseLocalDate(wo.sip_revisit_date)}
+                            onSelect={(date) => {
+                              updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                              setOpenDatePopover(null);
+                            }}
+                          />
+                          {wo.sip_revisit_date && (
+                            <div className="p-2 border-t">
+                              <button
+                                onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }}
+                                className="text-xs text-red-500 hover:underline w-full text-center"
+                              >
+                                Clear date
+                              </button>
+                            </div>
+                          )}
                         </PopoverContent>
                       </Popover>
                     </td>
