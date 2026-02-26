@@ -1115,21 +1115,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <tbody>
-            {/* Spacer row for virtual scroll offset */}
-            <tr style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px` }}>
-              <td colSpan={100} />
-            </tr>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const index = virtualRow.index;
-              const wo = filteredWorkOrders[index];
-              const daysFromInitial = calculateDays(wo.date_initial_contact);
-              const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
-              const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
-              const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
-              const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
-              const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
-              const isFocused = focusedRowId === wo.id;
+          <SalesPipelineTableBody_PLACEHOLDER />
               const taskStyle = getTaskDescStyle(wo.current_task_description);
 
               return (
