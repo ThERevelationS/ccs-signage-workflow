@@ -816,12 +816,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         
         // Skip empty rows
         if (!customer) {
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: "Skipping empty row..." });
+          updateProgress(i + 1, jsonData.length, "Skipping empty row...");
           continue;
         }
         
         // Update progress with current customer being processed
-        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: customer });
+        updateProgress(i + 1, jsonData.length, customer);
 
         // Get job description for duplicate check - but NOT from "Notes" column
         // CRITICAL: Description and Notes are different fields - don't mix them up
