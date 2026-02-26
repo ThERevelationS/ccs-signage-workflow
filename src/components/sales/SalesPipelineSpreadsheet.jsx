@@ -1228,8 +1228,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
       }
 
-      setImportProgress({ show: true, current: jsonData.length, total: jsonData.length, currentItem: "Import complete!" });
-      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0, currentItem: "" }), 1500);
+      completeImport();
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
