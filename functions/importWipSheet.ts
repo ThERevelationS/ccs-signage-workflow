@@ -1,7 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import XLSX from 'npm:xlsx@0.18.5';
 
-// Parse date from sheet name like "WIP 2-23-26" or "WIP 2-23-2026"
 const parseSheetDate = (name) => {
   const match = name.match(/WIP\s+(\d+)-(\d+)-(\d+)/);
   if (!match) return null;
@@ -53,11 +52,7 @@ const parseSheetRows = (workbook, sheetName) => {
     if (installDate !== null && installDate !== undefined) {
       if (typeof installDate === 'number') {
         const d = XLSX.SSF.parse_date_code(installDate);
-        if (d) {
-          installDate = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
-        } else {
-          installDate = null;
-        }
+        installDate = d ? `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}` : null;
       } else if (typeof installDate === 'string') {
         const dateMatch = installDate.match(/(\d{4}-\d{2}-\d{2})/);
         installDate = dateMatch ? dateMatch[1] : null;
@@ -68,11 +63,12 @@ const parseSheetRows = (workbook, sheetName) => {
       orderNumber: orderNum,
       description: desc ? String(desc).trim() : null,
       installDate: installDate || null,
-      sheetName
     });
   }
   return results;
 };
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 Deno.serve(async (req) => {
   try {
@@ -83,137 +79,121 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { fileUrl, mode, batchOffset, workOrdersSnapshot } = body;
+    const { fileUrl, mode } = body;
 
-    // --- PHASE 1: Parse the file and return order list (no DB writes) ---
-    if (!batchOffset && !workOrdersSnapshot) {
-      const fileRes = await fetch(fileUrl);
-      if (!fileRes.ok) throw new Error(`Failed to download file: ${fileRes.status}`);
-      const arrayBuffer = await fileRes.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
+    // Download and parse
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) throw new Error(`Failed to download file: ${fileRes.status}`);
+    const arrayBuffer = await fileRes.arrayBuffer();
+    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
 
-      const wipSheets = workbook.SheetNames.filter(name =>
-        /^WIP\s+\d/.test(name) && name !== 'Formulas'
-      );
+    const wipSheets = workbook.SheetNames.filter(name =>
+      /^WIP\s+\d/.test(name) && name !== 'Formulas'
+    );
 
-      if (wipSheets.length === 0) {
-        return Response.json({ error: 'No WIP sheets found in this file' }, { status: 400 });
+    if (wipSheets.length === 0) {
+      return Response.json({ error: 'No WIP sheets found in this file' }, { status: 400 });
+    }
+
+    let sheetsToProcess = [];
+    if (mode === 'latest') {
+      let latestSheet = null;
+      let latestDate = null;
+      for (const sheetName of wipSheets) {
+        const d = parseSheetDate(sheetName);
+        if (d && (!latestDate || d > latestDate)) {
+          latestDate = d;
+          latestSheet = sheetName;
+        }
+      }
+      if (!latestSheet) return Response.json({ error: 'Could not parse dates from WIP sheet names' }, { status: 400 });
+      sheetsToProcess = [latestSheet];
+    } else {
+      sheetsToProcess = wipSheets;
+    }
+
+    const allRows = [];
+    for (const sheetName of sheetsToProcess) {
+      allRows.push(...parseSheetRows(workbook, sheetName));
+    }
+
+    if (allRows.length === 0) {
+      return Response.json({ error: 'No data rows found in selected sheets' }, { status: 400 });
+    }
+
+    // Deduplicate - later sheet wins
+    const orderMap = new Map();
+    for (const row of allRows) orderMap.set(row.orderNumber, row);
+
+    // Fetch all work orders
+    let allWorkOrders = [];
+    let skip = 0;
+    const pageSize = 200;
+    while (true) {
+      const page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
+      if (!Array.isArray(page) || page.length === 0) break;
+      allWorkOrders = allWorkOrders.concat(page);
+      if (page.length < pageSize) break;
+      skip += pageSize;
+    }
+
+    // Match and update - with delay to avoid rate limits
+    let updated = 0;
+    let notFound = 0;
+    const notFoundOrders = [];
+
+    for (const [orderNumber, wipData] of orderMap.entries()) {
+      const numericPart = orderNumber.replace(/^(INV|EST)-?/i, '');
+      const match = allWorkOrders.find(wo => {
+        const inv = wo.corbridge_invoice_number || '';
+        const est = wo.est_inv_at || '';
+        const link = wo.corbridge_link || '';
+        return inv === orderNumber || inv === numericPart ||
+               est === orderNumber || est === numericPart ||
+               link.includes(orderNumber) || link.includes(numericPart);
+      });
+
+      if (!match) {
+        notFound++;
+        notFoundOrders.push(orderNumber);
+        continue;
       }
 
-      let sheetsToProcess = [];
-      if (mode === 'latest') {
-        let latestSheet = null;
-        let latestDate = null;
-        for (const sheetName of wipSheets) {
-          const d = parseSheetDate(sheetName);
-          if (d && (!latestDate || d > latestDate)) {
-            latestDate = d;
-            latestSheet = sheetName;
+      const updateData = {};
+      if (wipData.description) updateData.description = wipData.description;
+      if (wipData.installDate) updateData.project_install_date = wipData.installDate;
+
+      if (Object.keys(updateData).length > 0) {
+        // Retry with backoff on rate limit
+        let attempts = 0;
+        while (attempts < 4) {
+          try {
+            await base44.asServiceRole.entities.WorkOrder.update(match.id, updateData);
+            updated++;
+            break;
+          } catch (e) {
+            if (e.message && e.message.includes('429')) {
+              attempts++;
+              await sleep(500 * attempts);
+            } else {
+              throw e;
+            }
           }
         }
-        if (!latestSheet) {
-          return Response.json({ error: 'Could not parse dates from WIP sheet names' }, { status: 400 });
-        }
-        sheetsToProcess = [latestSheet];
-      } else {
-        sheetsToProcess = wipSheets;
+        // Small delay between updates to stay under rate limits
+        await sleep(100);
       }
-
-      const allRows = [];
-      for (const sheetName of sheetsToProcess) {
-        allRows.push(...parseSheetRows(workbook, sheetName));
-      }
-
-      if (allRows.length === 0) {
-        return Response.json({ error: 'No data rows found in selected sheets' }, { status: 400 });
-      }
-
-      // Deduplicate - later sheet wins
-      const orderMap = new Map();
-      for (const row of allRows) {
-        orderMap.set(row.orderNumber, row);
-      }
-
-      // Fetch ALL work orders for matching
-      let allWorkOrders = [];
-      let skip = 0;
-      const pageSize = 200;
-      while (true) {
-        const page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
-        if (!Array.isArray(page) || page.length === 0) break;
-        allWorkOrders = allWorkOrders.concat(page);
-        if (page.length < pageSize) break;
-        skip += pageSize;
-      }
-
-      // Build slim snapshot of work orders (only fields needed for matching + update)
-      const snapshot = allWorkOrders.map(wo => ({
-        id: wo.id,
-        corbridge_invoice_number: wo.corbridge_invoice_number || '',
-        est_inv_at: wo.est_inv_at || '',
-        corbridge_link: wo.corbridge_link || '',
-      }));
-
-      // Pre-match orders to work order IDs
-      const ordersToUpdate = [];
-      const notFoundOrders = [];
-
-      for (const [orderNumber, wipData] of orderMap.entries()) {
-        const numericPart = orderNumber.replace(/^(INV|EST)-?/i, '');
-        const match = snapshot.find(wo =>
-          wo.corbridge_invoice_number === orderNumber ||
-          wo.corbridge_invoice_number === numericPart ||
-          wo.est_inv_at === orderNumber ||
-          wo.est_inv_at === numericPart ||
-          (wo.corbridge_link && wo.corbridge_link.includes(orderNumber)) ||
-          (wo.corbridge_link && wo.corbridge_link.includes(numericPart))
-        );
-
-        if (!match) {
-          notFoundOrders.push(orderNumber);
-          continue;
-        }
-
-        const updateData = {};
-        if (wipData.description) updateData.description = wipData.description;
-        if (wipData.installDate) updateData.project_install_date = wipData.installDate;
-
-        if (Object.keys(updateData).length > 0) {
-          ordersToUpdate.push({ id: match.id, updateData });
-        }
-      }
-
-      return Response.json({
-        phase: 'parsed',
-        sheetsProcessed: sheetsToProcess.length,
-        totalRows: orderMap.size,
-        ordersToUpdate,
-        notFoundOrders: notFoundOrders.slice(0, 20),
-        notFoundCount: notFoundOrders.length,
-      });
     }
 
-    // --- PHASE 2: Apply a batch of updates ---
-    if (batchOffset !== undefined && workOrdersSnapshot) {
-      const BATCH_SIZE = 10;
-      const batch = workOrdersSnapshot.slice(batchOffset, batchOffset + BATCH_SIZE);
-
-      let updatedInBatch = 0;
-      for (const item of batch) {
-        await base44.asServiceRole.entities.WorkOrder.update(item.id, item.updateData);
-        updatedInBatch++;
-      }
-
-      return Response.json({
-        phase: 'batch',
-        updatedInBatch,
-        nextOffset: batchOffset + BATCH_SIZE,
-        done: batchOffset + BATCH_SIZE >= workOrdersSnapshot.length,
-      });
-    }
-
-    return Response.json({ error: 'Invalid request' }, { status: 400 });
+    return Response.json({
+      success: true,
+      sheetsProcessed: sheetsToProcess.length,
+      totalRows: orderMap.size,
+      updated,
+      notFound,
+      notFoundOrders: notFoundOrders.slice(0, 20),
+      message: `Updated ${updated} work orders. ${notFound} order numbers not found in database.`
+    });
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
