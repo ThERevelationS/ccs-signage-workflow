@@ -130,8 +130,40 @@ export default function SIPs() {
     }
   };
 
-  // Separate active WIP items (not completed on SIPs) and completed WIP items
-  const activeWorkOrders = workOrders.filter(wo => !isWipItem(wo) || !wo.sip_completed);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const parseLocalDate = (ds) => {
+    if (!ds) return null;
+    const [y, m, d] = ds.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  const isRevisitFuture = (wo) => {
+    if (!wo.sip_revisit_date) return false;
+    const d = parseLocalDate(wo.sip_revisit_date);
+    return d && d > today;
+  };
+
+  // All non-completed active items
+  const allActive = workOrders.filter(wo => (!isWipItem(wo) || !wo.sip_completed));
+
+  // Jobs with NO revisit date or revisit date <= today go to main active list
+  const activeWorkOrders = allActive
+    .filter(wo => !isRevisitFuture(wo))
+    .sort((a, b) => {
+      // No date => top; then sort ascending by revisit date
+      if (!a.sip_revisit_date && !b.sip_revisit_date) return 0;
+      if (!a.sip_revisit_date) return -1;
+      if (!b.sip_revisit_date) return 1;
+      return a.sip_revisit_date.localeCompare(b.sip_revisit_date);
+    });
+
+  // Jobs with a FUTURE revisit date
+  const futureRevisitOrders = allActive
+    .filter(wo => isRevisitFuture(wo))
+    .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date));
+
   const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
 
   const openChecklist = (wo) => {
