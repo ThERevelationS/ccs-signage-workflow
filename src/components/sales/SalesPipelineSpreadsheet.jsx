@@ -3008,130 +3008,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         />
       )}
 
-      {/* Due Date Gradient Settings Dialog */}
-      <Dialog open={showGradientDialog} onOpenChange={setShowGradientDialog}>
-        <DialogContent className="clay-card border-none max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-blue-600" />
-              Due Date Gradient Settings
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Enable Gradient</label>
-              <Checkbox
-                checked={deadlineGradientSettings.enabled}
-                onCheckedChange={(checked) => saveGradientSettings({ ...deadlineGradientSettings, enabled: checked })}
-              />
+      <DeadlineGradientDialog open={showGradientDialog} onClose={() => setShowGradientDialog(false)} settings={deadlineGradientSettings} onSave={saveGradientSettings} />
+
+      {importProgress && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-96 max-w-[90vw] shadow-xl rounded-xl border border-blue-200 bg-white p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {importProgress.done ? <span className="text-green-600 font-semibold text-sm">✓ Import complete!</span> : <><Loader2 className="w-4 h-4 animate-spin text-blue-600" /><span className="text-sm font-semibold text-blue-700">Importing...</span></>}
             </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">Base Color (Far from deadline)</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={deadlineGradientSettings.baseColor}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, baseColor: e.target.value })}
-                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
-                />
-                <Input
-                  value={deadlineGradientSettings.baseColor}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, baseColor: e.target.value })}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">Due Today Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={deadlineGradientSettings.dueColor}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, dueColor: e.target.value })}
-                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
-                />
-                <Input
-                  value={deadlineGradientSettings.dueColor}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, dueColor: e.target.value })}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">Overdue Color (Past deadline)</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={deadlineGradientSettings.overdueColor || "#ef4444"}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, overdueColor: e.target.value })}
-                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
-                />
-                <Input
-                  value={deadlineGradientSettings.overdueColor || "#ef4444"}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, overdueColor: e.target.value })}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-2">Gradient Start (days before deadline)</label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="60"
-                  value={deadlineGradientSettings.gradientDays}
-                  onChange={(e) => saveGradientSettings({ ...deadlineGradientSettings, gradientDays: parseInt(e.target.value) })}
-                  className="flex-1"
-                />
-                <span className="text-sm font-medium w-16 text-center">{deadlineGradientSettings.gradientDays} days</span>
-              </div>
-            </div>
-            
-            <div className="border-t pt-4">
-              <label className="text-sm font-medium block mb-2">Preview</label>
-              <div className="flex h-8 rounded overflow-hidden border">
-                {[...Array(10)].map((_, i) => {
-                  const ratio = i / 9;
-                  const parseHex = (hex) => {
-                    hex = hex.replace('#', '');
-                    return {
-                      r: parseInt(hex.substring(0, 2), 16),
-                      g: parseInt(hex.substring(2, 4), 16),
-                      b: parseInt(hex.substring(4, 6), 16)
-                    };
-                  };
-                  const base = parseHex(deadlineGradientSettings.baseColor);
-                  const due = parseHex(deadlineGradientSettings.dueColor);
-                  const r = Math.round(due.r + (base.r - due.r) * ratio);
-                  const g = Math.round(due.g + (base.g - due.g) * ratio);
-                  const b = Math.round(due.b + (base.b - due.b) * ratio);
-                  return (
-                    <div 
-                      key={i} 
-                      className="flex-1"
-                      style={{ backgroundColor: `rgb(${r}, ${g}, ${b})` }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Due date</span>
-                <span>{deadlineGradientSettings.gradientDays}+ days away</span>
-              </div>
-            </div>
-            
-            <Button onClick={() => setShowGradientDialog(false)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Save & Close
-            </Button>
+            <span className="text-xs text-gray-500">{importProgress.current}/{importProgress.total}</span>
           </div>
-        </DialogContent>
-      </Dialog>
+          <Progress value={importProgress.total > 0 ? Math.round((importProgress.current / importProgress.total) * 100) : 0} className="h-2 mb-2" />
+          <p className="text-xs text-gray-600 truncate">{importProgress.message}</p>
+        </div>
+      )}
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
