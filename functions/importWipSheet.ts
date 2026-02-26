@@ -151,7 +151,8 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all WorkOrders from database
-    const workOrders = await base44.asServiceRole.entities.WorkOrder.list();
+    const workOrdersResult = await base44.asServiceRole.entities.WorkOrder.list();
+    const workOrders = Array.isArray(workOrdersResult) ? workOrdersResult : [];
 
     let updated = 0;
     let notFound = 0;
