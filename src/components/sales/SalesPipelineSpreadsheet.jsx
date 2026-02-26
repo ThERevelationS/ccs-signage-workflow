@@ -992,8 +992,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             updates.description = importDesc;
           }
           
-          // Only update if there are actual changes
-          if (Object.keys(updates).length > 0) {
+          // Only update if there are actual changes, and only if it's a real DB record (not a pending placeholder)
+          if (Object.keys(updates).length > 0 && !existingWO._pending) {
             itemsToUpdate.push({ id: existingWO.id, updates, uniqueKey, existingWO, customer });
           }
           
