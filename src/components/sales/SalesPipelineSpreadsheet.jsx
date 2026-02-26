@@ -1578,62 +1578,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      {importProgress.show && (
-        <div className="mb-3 px-2">
-          <div className="clay-card p-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">
-                  {importProgress.paused ? 'Import Paused' : 'Importing...'}
-                </span>
-                {importProgress.currentItem && (
-                  <span className="text-xs text-gray-600 truncate max-w-[300px]">
-                    {importProgress.currentItem}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
-                {importProgress.paused ? (
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      importStateRef.current.paused = false;
-                      setImportProgress(prev => ({ ...prev, paused: false }));
-                    }}
-                    className="h-6 px-2"
-                  >
-                    Resume
-                  </Button>
-                ) : (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      importStateRef.current.paused = true;
-                      setImportProgress(prev => ({ ...prev, paused: true }));
-                    }}
-                    className="h-6 px-2"
-                  >
-                    Pause
-                  </Button>
-                )}
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => {
-                    importStateRef.current.cancelled = true;
-                  }}
-                  className="h-6 px-2"
-                >
-                  Stop
-                </Button>
-              </div>
-            </div>
-            <Progress value={(importProgress.current / importProgress.total) * 100} className="h-2" />
-          </div>
-        </div>
-      )}
       {exportProgress.show && (
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
