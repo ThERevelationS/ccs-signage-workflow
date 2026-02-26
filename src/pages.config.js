@@ -64,6 +64,7 @@ import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
+import ReportingDashboard from './pages/ReportingDashboard';
 import ResetPassword from './pages/ResetPassword';
 import ResourcePlanning from './pages/ResourcePlanning';
 import SIPs from './pages/SIPs';
@@ -71,8 +72,8 @@ import SalesPipeline from './pages/SalesPipeline';
 import TemplateBuilder from './pages/TemplateBuilder';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
-import ReportingDashboard from './pages/ReportingDashboard';
 import WorkOrderCalendar from './pages/WorkOrderCalendar';
+import PermittingRepository from './pages/PermittingRepository';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Permitting": Permitting,
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
+    "ReportingDashboard": ReportingDashboard,
     "ResetPassword": ResetPassword,
     "ResourcePlanning": ResourcePlanning,
     "SIPs": SIPs,
@@ -101,8 +103,8 @@ export const PAGES = {
     "TemplateBuilder": TemplateBuilder,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
-    "ReportingDashboard": ReportingDashboard,
     "WorkOrderCalendar": WorkOrderCalendar,
+    "PermittingRepository": PermittingRepository,
 }
 
 export const pagesConfig = {

@@ -1,0 +1,37 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { query, state } = await req.json();
+    if (!query) return Response.json({ error: 'query required' }, { status: 400 });
+
+    // First search existing jurisdictions
+    const all = await base44.entities.JurisdictionProfile.list();
+    const queryLower = query.toLowerCase();
+    const existing = all.filter(j =>
+      j.name?.toLowerCase().includes(queryLower) ||
+      j.state?.toLowerCase().includes(queryLower) ||
+      j.ai_summary?.toLowerCase().includes(queryLower)
+    );
+
+    // Also use AI to search across document content
+    const contentMatches = all.filter(j => {
+      if (state && j.state !== state) return false;
+      return (j.documents || []).some(d =>
+        d.extracted_text?.toLowerCase().includes(queryLower) ||
+        d.ai_summary?.toLowerCase().includes(queryLower) ||
+        d.title?.toLowerCase().includes(queryLower)
+      );
+    });
+
+    const combined = [...new Map([...existing, ...contentMatches].map(j => [j.id, j])).values()];
+
+    return Response.json({ results: combined });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});
