@@ -11,6 +11,175 @@ import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRig
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format as dateFnsFormat } from "date-fns";
 import { format } from "date-fns";
+
+// Workflow reporting constants
+const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
+const STAGE_LABEL = {
+  estimating: "Estimating", sales: "Sales", permitting: "Permitting",
+  design: "Design", production: "Production", fabrication: "Fabrication",
+  installation: "Installation", completed: "Completed"
+};
+const CHART_COLORS = ["#8B5CF6","#3B82F6","#10B981","#F59E0B","#EF4444","#EC4899","#6366F1","#14B8A6"];
+const STAGE_COLORS = {
+  estimating: "#FFF9C4", sales: "#B2DFDB", permitting: "#FFE4D6",
+  design: "#D4E9F7", production: "#C8F4E9", fabrication: "#FFD6E8",
+  installation: "#E0D4F7", completed: "#A5D6A7"
+};
+
+function WorkflowReportingTab() {
+  const [allWorkOrders, setAllWorkOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.entities.WorkOrder.filter({ deleted: false }).then(wos => {
+      setAllWorkOrders(wos || []);
+      setLoading(false);
+    });
+  }, []);
+
+  const active = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
+  const completed = allWorkOrders.filter(wo => wo.completed && !wo.deleted);
+  const completionRate = allWorkOrders.length > 0
+    ? Math.round((completed.length / allWorkOrders.length) * 100) : 0;
+  const asapCount = active.filter(wo => wo.asap).length;
+  const today = new Date();
+  const overdueCount = active.filter(wo => wo.due_date && new Date(wo.due_date) < today).length;
+
+  const stageData = STAGES.map(stage => ({
+    name: STAGE_LABEL[stage],
+    count: active.filter(wo => wo.current_stage === stage).length,
+  })).filter(d => d.count > 0);
+
+  const completionPie = [
+    { name: "Active", value: active.length, fill: "#8B5CF6" },
+    { name: "Completed", value: completed.length, fill: "#10B981" }
+  ];
+
+  const next30 = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    return dateFnsFormat(d, "MMM d");
+  });
+  const timelineData = next30.map(label => ({
+    date: label,
+    count: active.filter(wo => wo.due_date && dateFnsFormat(new Date(wo.due_date), "MMM d") === label).length
+  })).filter(d => d.count > 0);
+
+  const assigneeCounts = {};
+  active.forEach(wo => {
+    const name = wo.assigned_to || "Unassigned";
+    assigneeCounts[name] = (assigneeCounts[name] || 0) + 1;
+  });
+  const resourceData = Object.entries(assigneeCounts)
+    .map(([name, count]) => ({ name: name.split(" ")[0] || name, count }))
+    .sort((a, b) => b.count - a.count).slice(0, 10);
+
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Active Work Orders", value: active.length, icon: Clock, color: "#8B5CF6", bg: "#EDE9FE" },
+          { label: "Completed", value: completed.length, icon: CheckCircle2, color: "#10B981", bg: "#D1FAE5" },
+          { label: "Completion Rate", value: `${completionRate}%`, icon: TrendingUp, color: "#3B82F6", bg: "#DBEAFE" },
+          { label: "ASAP / Overdue", value: `${asapCount} / ${overdueCount}`, icon: Users, color: "#EF4444", bg: "#FEE2E2" },
+        ].map(({ label, value, icon: Icon, color, bg }) => (
+          <div key={label} className="clay-card p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
+              <Icon className="w-5 h-5" style={{ color }} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-800">{value}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="clay-card p-5">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">Stage Distribution</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={stageData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Work Orders">
+                {stageData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="clay-card p-5">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">Work Order Status</h2>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width="60%" height={220}>
+              <PieChart>
+                <Pie data={completionPie} dataKey="value" cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3}>
+                  {completionPie.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-3">
+              {completionPie.map(entry => (
+                <div key={entry.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: entry.fill }} />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{entry.value}</p>
+                    <p className="text-xs text-gray-500">{entry.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="clay-card p-5">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">Due Dates — Next 30 Days</h2>
+          {timelineData.length === 0 ? (
+            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">No due dates in the next 30 days</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={timelineData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} name="Due" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+        <div className="clay-card p-5">
+          <h2 className="text-base font-semibold text-gray-700 mb-4">Resource Allocation (Active WOs)</h2>
+          {resourceData.length === 0 ? (
+            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">No data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={resourceData} layout="vertical" margin={{ top: 4, right: 16, left: 16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={70} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#10B981" radius={[0, 4, 4, 0]} name="Work Orders">
+                  {resourceData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 import FinancialsSpreadsheet from "@/components/financials/FinancialsSpreadsheet";
 import FinancialsDashboard from "@/components/financials/FinancialsDashboard";
 import SalesPipelineDashboard from "@/components/financials/SalesPipelineDashboard";
