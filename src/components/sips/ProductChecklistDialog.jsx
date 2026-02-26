@@ -1829,6 +1829,14 @@ export default function ProductChecklistDialog({
 
 
 
+      {/* Revisit Date Popup */}
+      <RevisitDatePopup
+        isOpen={showRevisitPopup}
+        onClose={() => setShowRevisitPopup(false)}
+        onSave={handleRevisitSave}
+        currentDate={pendingRevisitDate}
+      />
+
       {/* Incomplete Warning */}
       <AlertDialog open={!!incompleteWarning} onOpenChange={() => setIncompleteWarning(null)}>
         <AlertDialogContent className="clay-card border-none">
