@@ -731,13 +731,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file name contains "Workflow" to prevent importing wrong file
-    const fileName = file.name.toLowerCase();
-    if (!fileName.includes('workflow')) {
-      alert('Invalid file. Please select a file with "Workflow" in the name for the Sales Pipeline. This appears to be an Order Request file.');
-      e.target.value = "";
-      return;
-    }
+    // No longer enforce filename restriction - just process the file
 
     importStateRef.current = { paused: false, cancelled: false };
 
