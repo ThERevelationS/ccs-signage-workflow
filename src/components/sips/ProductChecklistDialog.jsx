@@ -40,6 +40,8 @@ export default function ProductChecklistDialog({
   const [productTypes, setProductTypes] = useState([]);
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
+  const [showRevisitPopup, setShowRevisitPopup] = useState(false);
+  const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
 
   useEffect(() => {
     if (isOpen && workOrder) {
