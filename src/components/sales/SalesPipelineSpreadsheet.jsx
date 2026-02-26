@@ -1524,8 +1524,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         accept=".xlsx,.xls"
         onChange={importFromExcel}
         className="hidden"
-        disabled={importProgress.show}
-      />
+        />
 
       {showButtonsInline && (
         <div className="flex items-center justify-between mb-2 px-2">
