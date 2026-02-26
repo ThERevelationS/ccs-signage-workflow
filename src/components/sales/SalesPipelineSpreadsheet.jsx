@@ -1146,12 +1146,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           _customer: customer
         });
         
-        setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Queued: ${customer}` });
+        updateProgress(i + 1, jsonData.length, `Queued: ${customer}`);
       }
 
       // Process updates in batches
       const totalItems = itemsToUpdate.length + itemsToCreate.length;
-      setImportProgress({ show: true, current: 0, total: totalItems, currentItem: `Processing ${itemsToUpdate.length} updates, ${itemsToCreate.length} new items...` });
+      updateProgress(0, totalItems, `Processing ${itemsToUpdate.length} updates, ${itemsToCreate.length} new items...`);
       
       for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
         if (importStateRef.current.cancelled) {
