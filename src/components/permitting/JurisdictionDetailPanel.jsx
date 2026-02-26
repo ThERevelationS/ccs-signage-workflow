@@ -1,0 +1,228 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Upload, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { format } from "date-fns";
+
+const DOC_TYPE_LABELS = {
+  sign_ordinance: "Sign Ordinance",
+  permit_application: "Permit Application",
+  zoning_code: "Zoning Code",
+  fee_schedule: "Fee Schedule",
+  checklist: "Checklist",
+  other: "Other"
+};
+
+export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdate }) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState(null);
+  const [asking, setAsking] = useState(false);
+  const [expandedDoc, setExpandedDoc] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const askQuestion = async () => {
+    if (!question.trim() || asking) return;
+    const q = question.trim();
+    setQuestion("");
+    setAsking(true);
+    const newHistory = [...chatHistory, { role: "user", content: q }];
+    setChatHistory(newHistory);
+
+    try {
+      const docContext = (jurisdiction.documents || [])
+        .map(d => `[${d.title}]: ${d.extracted_text || d.ai_summary || "No content extracted"}`)
+        .join("\n\n");
+
+      const prompt = `You are a permitting expert assistant for sign companies. 
+      
+Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
+${jurisdiction.ai_summary ? `Summary: ${jurisdiction.ai_summary}` : ""}
+
+Available documents and their content:
+${docContext || "No documents loaded yet."}
+
+${jurisdiction.permit_requirements ? `Known requirements: ${JSON.stringify(jurisdiction.permit_requirements, null, 2)}` : ""}
+
+Chat history:
+${newHistory.slice(-4).map(m => `${m.role === 'user' ? 'Question' : 'Answer'}: ${m.content}`).join("\n")}
+
+Current question: ${q}
+
+Answer the question based on the documents and information available. Be specific and cite which document you're referencing. If the information isn't available in the documents, say so clearly.`;
+
+      const res = await base44.integrations.Core.InvokeLLM({ prompt, add_context_from_internet: false });
+      const aiAnswer = typeof res === 'string' ? res : res?.response || "Unable to get answer.";
+      setChatHistory([...newHistory, { role: "assistant", content: aiAnswer }]);
+    } catch (e) {
+      setChatHistory([...newHistory, { role: "assistant", content: "Error getting answer. Please try again." }]);
+    }
+    setAsking(false);
+  };
+
+  const req = jurisdiction.permit_requirements || {};
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="flex items-start justify-between p-4 border-b">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
+            <Badge variant="outline">{jurisdiction.state}</Badge>
+            <Badge className="bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
+          </div>
+          {jurisdiction.permitting_url && (
+            <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
+              <ExternalLink className="w-3 h-3" /> Official Permitting Page
+            </a>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* AI Summary */}
+        {jurisdiction.ai_summary && (
+          <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+            <p className="text-xs font-semibold text-purple-700 mb-1">AI Summary</p>
+            <p className="text-sm text-gray-700">{jurisdiction.ai_summary}</p>
+          </div>
+        )}
+
+        {/* Key Requirements */}
+        {Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") && (
+          <div className="bg-gray-50 rounded-lg p-3 border">
+            <p className="text-xs font-semibold text-gray-700 mb-2">Key Requirements</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {req.requires_permit !== undefined && (
+                <div className="flex items-center gap-1">
+                  {req.requires_permit ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                  <span>Permit Required</span>
+                </div>
+              )}
+              {req.max_sign_area_sqft && <div><span className="text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
+              {req.max_height_ft && <div><span className="text-gray-500">Max Height:</span> {req.max_height_ft} ft</div>}
+              {req.fee_range && <div><span className="text-gray-500">Fees:</span> {req.fee_range}</div>}
+              {req.processing_time && <div><span className="text-gray-500">Processing:</span> {req.processing_time}</div>}
+              {req.illumination_allowed !== undefined && (
+                <div className="flex items-center gap-1">
+                  {req.illumination_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                  <span>Illumination Allowed</span>
+                </div>
+              )}
+              {req.electronic_signs_allowed !== undefined && (
+                <div className="flex items-center gap-1">
+                  {req.electronic_signs_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                  <span>Electronic Signs</span>
+                </div>
+              )}
+              {req.setback_requirements && <div className="col-span-2"><span className="text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Documents */}
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">
+            Documents ({jurisdiction.documents?.length || 0})
+          </p>
+          <div className="space-y-2">
+            {(jurisdiction.documents || []).map(doc => (
+              <div key={doc.id} className="border rounded-lg overflow-hidden">
+                <div
+                  className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50"
+                  onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
+                >
+                  <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-800 truncate">{doc.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-gray-400 capitalize">{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
+                      {doc.last_fetched && <span className="text-[10px] text-gray-400">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
+                      <span className="text-[10px] bg-blue-50 text-blue-600 px-1 rounded">{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {doc.url && (
+                      <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-blue-500 hover:text-blue-700">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    {expandedDoc === doc.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+                  </div>
+                </div>
+                {expandedDoc === doc.id && (
+                  <div className="px-3 pb-3 border-t bg-gray-50">
+                    {doc.ai_summary && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-purple-600 mb-1">AI Summary</p>
+                        <p className="text-xs text-gray-700">{doc.ai_summary}</p>
+                      </div>
+                    )}
+                    {doc.extracted_text && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-gray-500 mb-1">Extracted Content (preview)</p>
+                        <p className="text-xs text-gray-600 line-clamp-4 font-mono bg-white p-2 rounded border">{doc.extracted_text.substring(0, 500)}...</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {(!jurisdiction.documents || jurisdiction.documents.length === 0) && (
+              <p className="text-xs text-gray-400 italic">No documents yet. Use the AI refresh to discover documents.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        {jurisdiction.contact_info?.department && (
+          <div className="border rounded-lg p-3">
+            <p className="text-xs font-semibold text-gray-700 mb-2">Contact Information</p>
+            <div className="space-y-1 text-xs text-gray-600">
+              {jurisdiction.contact_info.department && <div><span className="font-medium">Dept:</span> {jurisdiction.contact_info.department}</div>}
+              {jurisdiction.contact_info.phone && <div><span className="font-medium">Phone:</span> {jurisdiction.contact_info.phone}</div>}
+              {jurisdiction.contact_info.email && <div><span className="font-medium">Email:</span> {jurisdiction.contact_info.email}</div>}
+              {jurisdiction.contact_info.address && <div><span className="font-medium">Address:</span> {jurisdiction.contact_info.address}</div>}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Chat Interface */}
+      <div className="border-t p-3 bg-gray-50">
+        <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
+          <MessageSquare className="w-3 h-3" /> Ask about this jurisdiction
+        </p>
+        {chatHistory.length > 0 && (
+          <div className="max-h-48 overflow-y-auto space-y-2 mb-2 bg-white rounded-lg p-2 border">
+            {chatHistory.map((msg, i) => (
+              <div key={i} className={`text-xs p-2 rounded ${msg.role === 'user' ? 'bg-blue-50 text-blue-800 ml-4' : 'bg-purple-50 text-gray-800 mr-4'}`}>
+                <span className="font-semibold">{msg.role === 'user' ? 'You: ' : 'AI: '}</span>
+                {msg.content}
+              </div>
+            ))}
+            {asking && <div className="text-xs text-gray-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Thinking...</div>}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && askQuestion()}
+            placeholder="e.g. What is the max sign height? Are permits required?"
+            className="text-xs h-8 flex-1"
+          />
+          <Button size="sm" onClick={askQuestion} disabled={asking || !question.trim()} className="h-8 bg-purple-600 hover:bg-purple-700">
+            {asking ? <Loader2 className="w-3 h-3 animate-spin" /> : "Ask"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
