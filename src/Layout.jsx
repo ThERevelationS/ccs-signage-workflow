@@ -762,9 +762,9 @@ function LayoutContent({ children }) {
             }}
           >
             {[
-                  { label: 'Workflow', icon: BarChart3, url: createPageUrl('MainWorkflow') },
-                  { label: 'Orders', icon: ClipboardList, url: createPageUrl('OrderForm') },
-                  { label: 'Clock', icon: Clock, url: createPageUrl('TimeClock') },
+                  { label: 'My Workflow', icon: User, url: createPageUrl('MyWorkflow') },
+                  { label: 'Sales', icon: DollarSign, url: createPageUrl('SalesPipeline') },
+                  { label: 'Timeclock', icon: Clock, url: createPageUrl('TimeClock') },
                   { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
                 ].map((item) => {
                   const isActive = location.pathname === item.url;
