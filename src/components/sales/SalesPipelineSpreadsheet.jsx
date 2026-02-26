@@ -2123,35 +2123,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </DialogContent>
       </Dialog>
 
-      {/* All dialogs rendered via SalesPipelineDialogsAndEditList - imported below */}
-      <_AllDialogs_ />
-        bulkDeleteConfirm={bulkDeleteConfirm}
-        setBulkDeleteConfirm={setBulkDeleteConfirm}
-        selectedRows={selectedRows}
-        confirmBulkDelete={confirmBulkDelete}
-        clearDateConfirm={clearDateConfirm}
-        setClearDateConfirm={setClearDateConfirm}
+      <SalesPipelineDialogsAndEditList
+        editDialog={editDialog} setEditDialog={setEditDialog}
+        editInput={editInput} setEditInput={setEditInput}
+        addToList={addToList} editingItem={editingItem} setEditingItem={setEditingItem}
+        updateListItem={updateListItem} moveListItem={moveListItem} removeFromList={removeFromList}
+        updateTaskPage={updateTaskPage} updateTaskStyle={updateTaskStyle}
+        WORKFLOW_PAGES={WORKFLOW_PAGES} TASK_COLORS={TASK_COLORS}
+        bulkDeleteConfirm={bulkDeleteConfirm} setBulkDeleteConfirm={setBulkDeleteConfirm}
+        selectedRows={selectedRows} confirmBulkDelete={confirmBulkDelete}
+        clearDateConfirm={clearDateConfirm} setClearDateConfirm={setClearDateConfirm}
         updateWorkOrder={updateWorkOrder}
-        contextMenu={contextMenu}
-        setContextMenu={setContextMenu}
-        clearCell={clearCell}
-        isRegistered={isRegistered}
-        headerContextMenu={headerContextMenu}
-        setHeaderContextMenu={setHeaderContextMenu}
-        handleColumnSort={handleColumnSort}
-        handleCustomSort={handleCustomSort}
-        clearSort={clearSort}
-        sortConfig={sortConfig}
-        workOrders={workOrders}
-        currentUser={currentUser}
+        contextMenu={contextMenu} setContextMenu={setContextMenu}
+        clearCell={clearCell} isRegistered={isRegistered}
+        headerContextMenu={headerContextMenu} setHeaderContextMenu={setHeaderContextMenu}
+        handleColumnSort={handleColumnSort} handleCustomSort={handleCustomSort}
+        clearSort={clearSort} sortConfig={sortConfig}
+        workOrders={workOrders} currentUser={currentUser}
         handleHeaderContextMenuAction={handleHeaderContextMenuAction}
-        showGradientDialog={showGradientDialog}
-        setShowGradientDialog={setShowGradientDialog}
-        deadlineGradientSettings={deadlineGradientSettings}
-        saveGradientSettings={saveGradientSettings}
+        showGradientDialog={showGradientDialog} setShowGradientDialog={setShowGradientDialog}
+        deadlineGradientSettings={deadlineGradientSettings} saveGradientSettings={saveGradientSettings}
         importProgress={importProgress}
-        deleteConfirm={deleteConfirm}
-        setDeleteConfirm={setDeleteConfirm}
+        deleteConfirm={deleteConfirm} setDeleteConfirm={setDeleteConfirm}
         confirmDelete={confirmDelete}
       />
     </div>
