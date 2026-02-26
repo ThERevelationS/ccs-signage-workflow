@@ -71,6 +71,7 @@ import SalesPipeline from './pages/SalesPipeline';
 import TemplateBuilder from './pages/TemplateBuilder';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
+import ReportingDashboard from './pages/ReportingDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -99,6 +100,7 @@ export const PAGES = {
     "TemplateBuilder": TemplateBuilder,
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
+    "ReportingDashboard": ReportingDashboard,
 }
 
 export const pagesConfig = {
