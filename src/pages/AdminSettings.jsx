@@ -725,8 +725,9 @@ export default function AdminSettings() {
                     <TabsTrigger value="client_trash">Client Trash</TabsTrigger>
                     <TabsTrigger value="order_trash">Order Trash</TabsTrigger>
                     <TabsTrigger value="default_sort">Default Sort</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="backup">
+                    <TabsTrigger value="wip_import">WIP Import</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="backup">
                     <BackupManager />
                   </TabsContent>
                   <TabsContent value="client_trash">
