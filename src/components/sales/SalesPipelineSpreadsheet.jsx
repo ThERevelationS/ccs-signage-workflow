@@ -792,13 +792,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       for (let i = 0; i < jsonData.length; i++) {
         // Check for cancel
-        if (importStateRef.current.cancelled) {
-          setImportProgress({ show: false, current: 0, total: 0, paused: false });
+        if (cancelCtx.current.cancelled) {
           return;
         }
 
         // Wait while paused
-        while (importStateRef.current.paused) {
+        while (cancelCtx.current.paused) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
