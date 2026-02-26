@@ -446,10 +446,15 @@ export default function ProductChecklistDialog({
         };
       });
       
-      await WorkOrder.update(workOrder.id, { 
+      const updatePayload = { 
         sip_checklist: resolvedChecklist,
         products: products
-      });
+      };
+      // Only update revisit date if explicitly passed (null means "clear it")
+      if (revisitDate !== undefined) {
+        updatePayload.sip_revisit_date = revisitDate || "";
+      }
+      await WorkOrder.update(workOrder.id, updatePayload);
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
