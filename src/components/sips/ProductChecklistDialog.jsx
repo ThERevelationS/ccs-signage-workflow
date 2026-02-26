@@ -1797,7 +1797,7 @@ export default function ProductChecklistDialog({
               </Button>
             )}
             <Button 
-              onClick={saveChecklist}
+              onClick={handleSaveClick}
               disabled={isSaving || !isRegistered}
               className="flex-1 h-10 bg-blue-600 hover:bg-blue-700"
             >
