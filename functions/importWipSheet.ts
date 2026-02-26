@@ -168,11 +168,22 @@ Deno.serve(async (req) => {
     const notFoundOrders = [];
 
     for (const [orderNumber, wipData] of orderMap.entries()) {
-      // Find matching work order by corbridge_invoice_number or corbridge_link or title containing the order number
-      let match = workOrders.find(wo => 
-        wo.corbridge_invoice_number === orderNumber ||
-        (wo.corbridge_link && wo.corbridge_link.includes(orderNumber))
-      );
+      // The WIP sheet uses "INV-12345" or "EST-12345" format
+      // The database stores just the number in corbridge_invoice_number, or the full string in est_inv_at
+      const numericPart = orderNumber.replace(/^(INV|EST)-?/i, '');
+      
+      let match = workOrders.find(wo => {
+        const invNum = wo.corbridge_invoice_number || '';
+        const estInv = wo.est_inv_at || '';
+        return (
+          invNum === orderNumber ||
+          invNum === numericPart ||
+          estInv === orderNumber ||
+          estInv === numericPart ||
+          (wo.corbridge_link && wo.corbridge_link.includes(orderNumber)) ||
+          (wo.corbridge_link && wo.corbridge_link.includes(numericPart))
+        );
+      });
 
       if (!match) {
         notFound++;
