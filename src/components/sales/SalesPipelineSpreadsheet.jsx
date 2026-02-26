@@ -63,7 +63,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const debounceTimers = useRef({});
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
-  const cancelCtx = importStateRef; const updateProgress = () => {}; const completeImport = () => {};
+  const cancelCtx = importStateRef; const [importProgress, setImportProgress] = useState(null); const updateProgress = (cur, tot, msg) => setImportProgress({ current: cur, total: tot, message: msg, done: false }); const completeImport = () => { setImportProgress(p => p ? { ...p, done: true, message: 'Import complete!' } : null); setTimeout(() => setImportProgress(null), 5000); };
   const [showForm, setShowForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null); // For duplicating a client
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
