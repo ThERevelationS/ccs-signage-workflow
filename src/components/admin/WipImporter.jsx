@@ -1,45 +1,87 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertTriangle, Calendar, Database } from "lucide-react";
+import { Upload, FileSpreadsheet, Calendar, Database } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { importWipSheet } from "@/functions/importWipSheet";
+import { useImportProgress } from "@/components/shared/ImportProgressContext";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function WipImporter() {
-  const [isUploading, setIsUploading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [activeMode, setActiveMode] = useState(null);
   const fileInputLatestRef = useRef(null);
   const fileInputAllRef = useRef(null);
+  const { startImport, updateProgress, completeImport, cancelRef } = useImportProgress();
+  const { currentUser } = useAuth();
 
   const handleFileSelect = async (file, mode) => {
     if (!file) return;
 
-    setIsUploading(true);
-    setResult(null);
-    setError(null);
-    setActiveMode(mode);
+    // Phase 1: Upload file and parse
+    const ctrl = startImport(1, currentUser?.email);
+    updateProgress(0, 1, "Uploading file...");
 
+    let parsed;
     try {
-      // Upload file to get URL
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      // Call backend function
-      const response = await importWipSheet({ fileUrl: file_url, mode });
-      const data = response.data;
-
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setResult(data);
-      }
+      updateProgress(0, 1, "Parsing WIP sheets...");
+      const res = await importWipSheet({ fileUrl: file_url, mode });
+      parsed = res.data;
     } catch (err) {
-      setError(err.message || "An error occurred during import");
-    } finally {
-      setIsUploading(false);
-      setActiveMode(null);
+      updateProgress(0, 1, `Error: ${err.message || "Upload failed"}`);
+      setTimeout(() => completeImport(), 3000);
+      return;
     }
+
+    if (parsed.error) {
+      updateProgress(0, 1, `Error: ${parsed.error}`);
+      setTimeout(() => completeImport(), 3000);
+      return;
+    }
+
+    const { ordersToUpdate, sheetsProcessed, totalRows, notFoundOrders, notFoundCount } = parsed;
+    const total = ordersToUpdate.length;
+
+    if (total === 0) {
+      updateProgress(1, 1, `Done — ${sheetsProcessed} sheet(s), no matching orders to update.`);
+      setTimeout(() => completeImport(), 3000);
+      return;
+    }
+
+    // Phase 2: Batch updates
+    const BATCH_SIZE = 10;
+    let offset = 0;
+    let totalUpdated = 0;
+
+    startImport(total, currentUser?.email);
+    updateProgress(0, total, `Updating work orders (0 / ${total})...`);
+
+    while (offset < ordersToUpdate.length) {
+      if (ctrl.current?.cancelled) break;
+
+      // Wait while paused
+      while (ctrl.current?.paused && !ctrl.current?.cancelled) {
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (ctrl.current?.cancelled) break;
+
+      try {
+        const batch = ordersToUpdate.slice(offset, offset + BATCH_SIZE);
+        let batchUpdated = 0;
+        for (const item of batch) {
+          if (ctrl.current?.cancelled) break;
+          await base44.asServiceRole.entities.WorkOrder.update(item.id, item.updateData);
+          batchUpdated++;
+          totalUpdated++;
+          updateProgress(totalUpdated, total, `Updating work orders (${totalUpdated} / ${total})...`);
+        }
+        offset += BATCH_SIZE;
+      } catch (err) {
+        // On transient error, wait and retry
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    completeImport();
   };
 
   return (
@@ -56,7 +98,7 @@ export default function WipImporter() {
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 text-sm text-amber-700">
-          <strong>How it works:</strong> The importer matches rows by <strong>Order Number</strong> (e.g. INV-12345) to work orders in the system. It updates the <strong>Job Description</strong> and <strong>Project Install Date</strong> fields only.
+          <strong>How it works:</strong> Matches rows by <strong>Order Number</strong> (e.g. INV-12345) to work orders in the system. Updates <strong>Job Description</strong> and <strong>Project Install Date</strong> only. Runs in the background — you can leave this page.
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -74,19 +116,14 @@ export default function WipImporter() {
               type="file"
               accept=".xlsx,.xls"
               className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files[0], "latest")}
+              onChange={(e) => { handleFileSelect(e.target.files[0], "latest"); e.target.value = ""; }}
             />
             <Button
               onClick={() => fileInputLatestRef.current?.click()}
-              disabled={isUploading}
               className="w-full"
               style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)', color: '#0f766e', border: 'none' }}
             >
-              {isUploading && activeMode === 'latest' ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-              ) : (
-                <><Upload className="w-4 h-4 mr-2" /> Upload & Import Latest</>
-              )}
+              <Upload className="w-4 h-4 mr-2" /> Upload & Import Latest
             </Button>
           </div>
 
@@ -104,72 +141,18 @@ export default function WipImporter() {
               type="file"
               accept=".xlsx,.xls"
               className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files[0], "all")}
+              onChange={(e) => { handleFileSelect(e.target.files[0], "all"); e.target.value = ""; }}
             />
             <Button
               onClick={() => fileInputAllRef.current?.click()}
-              disabled={isUploading}
               className="w-full"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)', color: '#7c3aed', border: 'none' }}
             >
-              {isUploading && activeMode === 'all' ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-              ) : (
-                <><Upload className="w-4 h-4 mr-2" /> Upload & Import All</>
-              )}
+              <Upload className="w-4 h-4 mr-2" /> Upload & Import All
             </Button>
           </div>
         </div>
       </div>
-
-      {/* Results */}
-      {error && (
-        <div className="clay-card p-4 border border-red-200 bg-red-50">
-          <div className="flex items-center gap-2 text-red-700 font-medium mb-1">
-            <AlertTriangle className="w-4 h-4" />
-            Import Failed
-          </div>
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-
-      {result && (
-        <div className="clay-card p-5 border border-green-200 bg-green-50">
-          <div className="flex items-center gap-2 text-green-700 font-semibold mb-3">
-            <CheckCircle2 className="w-5 h-5" />
-            Import Complete
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-gray-800">{result.sheetsProcessed}</p>
-              <p className="text-xs text-gray-500">Sheets Processed</p>
-            </div>
-            <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-gray-800">{result.totalRows}</p>
-              <p className="text-xs text-gray-500">Unique Orders Found</p>
-            </div>
-            <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-green-600">{result.updated}</p>
-              <p className="text-xs text-gray-500">Projects Updated</p>
-            </div>
-            <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-orange-500">{result.notFound}</p>
-              <p className="text-xs text-gray-500">Not Matched</p>
-            </div>
-          </div>
-          <p className="text-sm text-green-700">{result.message}</p>
-          {result.notFoundOrders && result.notFoundOrders.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-500 mb-1">Orders not found in system (first 20):</p>
-              <div className="flex flex-wrap gap-1">
-                {result.notFoundOrders.map(o => (
-                  <Badge key={o} variant="outline" className="text-xs">{o}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
