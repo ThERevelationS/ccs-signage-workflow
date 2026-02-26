@@ -47,7 +47,7 @@ export default function WipImporter() {
       return;
     }
 
-    // Phase 2: Batch updates
+    // Phase 2: Batch updates via backend function
     const BATCH_SIZE = 10;
     let offset = 0;
     let totalUpdated = 0;
@@ -65,16 +65,15 @@ export default function WipImporter() {
       if (ctrl.current?.cancelled) break;
 
       try {
-        const batch = ordersToUpdate.slice(offset, offset + BATCH_SIZE);
-        let batchUpdated = 0;
-        for (const item of batch) {
-          if (ctrl.current?.cancelled) break;
-          await base44.asServiceRole.entities.WorkOrder.update(item.id, item.updateData);
-          batchUpdated++;
-          totalUpdated++;
-          updateProgress(totalUpdated, total, `Updating work orders (${totalUpdated} / ${total})...`);
-        }
+        const batchSlice = ordersToUpdate.slice(offset, offset + BATCH_SIZE);
+        const batchRes = await importWipSheet({
+          batchOffset: 0,
+          workOrdersSnapshot: batchSlice,
+        });
+        const batchData = batchRes.data;
+        totalUpdated += batchData.updatedInBatch || batchSlice.length;
         offset += BATCH_SIZE;
+        updateProgress(totalUpdated, total, `Updating work orders (${totalUpdated} / ${total})...`);
       } catch (err) {
         // On transient error, wait and retry
         await new Promise(r => setTimeout(r, 2000));
