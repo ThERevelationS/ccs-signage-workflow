@@ -1115,20 +1115,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody
-            virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders}
-            isColumnVisible={isColumnVisible} focusedRowId={focusedRowId}
-            setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex}
-            getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor}
-            calculateDays={calculateDays} openDatePopover={openDatePopover}
-            setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm}
-            updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin}
-            selectedRows={selectedRows} toggleRowSelection={toggleRowSelection}
-            handleContextMenu={handleContextMenu} setSelectedWorkOrder={setSelectedWorkOrder}
-            openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient}
-            deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users}
-            taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer}
-          />
+          <_TableBody_ />
           {/* dead-code placeholder, never rendered */ false && <tr><td>
                 {isColumnVisible("client_name") && (
                   <td 
