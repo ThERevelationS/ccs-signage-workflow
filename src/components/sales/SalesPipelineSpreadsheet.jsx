@@ -1539,7 +1539,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
                   size="sm"
-                  disabled={importProgress.show}
                   className="clay-button border-none text-gray-700 h-8"
                   style={{ background: 'linear-gradient(135deg, #FFE4D6 0%, #FFD6E8 100%)' }}
                 >
