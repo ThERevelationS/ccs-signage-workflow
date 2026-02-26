@@ -748,7 +748,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false, currentItem: "Starting import..." });
+      updateProgress(0, jsonData.length, "Starting import...");
 
       // Track existing work orders - group by customer name for smarter matching
       const existingByCustomer = new Map();
