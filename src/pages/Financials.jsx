@@ -681,6 +681,8 @@ export default function Financials() {
           <div className="clay-card p-4">
             <PerformanceSummaryReport workOrders={filteredWorkOrders} />
           </div>
+        ) : activeTab === "workflow" ? (
+          <WorkflowReportingTab />
         ) : (
           <SalesPipelineDashboard workOrders={filteredWorkOrders} />
         )}
