@@ -1115,8 +1115,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody_PLACEHOLDER />
-              const taskStyle = getTaskDescStyle(wo.current_task_description);
+          <SalesPipelineTableBody_REPLACED />
 
               return (
               <React.Fragment key={wo.id}>
