@@ -797,6 +797,15 @@ function LayoutContent({ children }) {
   );
 }
 
+function LayoutContentWrapper({ children }) {
+  const { currentUser } = useAuth();
+  return (
+    <ImportProgressProvider currentUserEmail={currentUser?.email}>
+      <LayoutContent>{children}</LayoutContent>
+    </ImportProgressProvider>
+  );
+}
+
 export default function Layout({ children }) {
   return (
     <AuthProvider>
