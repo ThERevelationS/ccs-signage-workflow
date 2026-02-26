@@ -513,7 +513,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       return;
     }
 
-    importStateRef.current = { paused: false, cancelled: false };
+    const cancelCtx = startImport(1, currentUser?.email);
+    importStateRef.current = cancelCtx.current;
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -526,7 +527,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         ? Math.max(...orders.map(o => o.row_number || 0)) 
         : 0;
 
-      setImportProgress({ show: true, current: 0, total: jsonData.length, paused: false });
+      updateProgress(0, jsonData.length, "Starting import...");
 
       // Track existing orders to check for duplicates - map key to order object
       const existingOrdersMap = new Map();
