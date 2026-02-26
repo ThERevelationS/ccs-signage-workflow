@@ -153,13 +153,12 @@ Deno.serve(async (req) => {
     // Fetch all WorkOrders from database (paginate to get all)
     let allWorkOrders = [];
     let skip = 0;
-    const pageSize = 100;
+    const pageSize = 200;
     while (true) {
-      const page = await base44.asServiceRole.entities.WorkOrder.list(null, pageSize, skip);
-      const pageArr = Array.isArray(page) ? page : (page?.data || page?.items || []);
-      if (pageArr.length === 0) break;
-      allWorkOrders = allWorkOrders.concat(pageArr);
-      if (pageArr.length < pageSize) break;
+      const page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
+      if (!Array.isArray(page) || page.length === 0) break;
+      allWorkOrders = allWorkOrders.concat(page);
+      if (page.length < pageSize) break;
       skip += pageSize;
     }
     const workOrders = allWorkOrders;
