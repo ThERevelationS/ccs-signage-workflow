@@ -238,7 +238,8 @@ export default function SIPs() {
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Estimator</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Est/Inv #</th>
                 <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Amount</th>
-                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Survey</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Survey</th>
+                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ minWidth: '110px', background: '#fef3c7' }}>📅 Revisit</th>
               </tr>
             </thead>
             <tbody>
