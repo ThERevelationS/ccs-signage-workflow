@@ -739,6 +739,9 @@ export default function AdminSettings() {
                   <TabsContent value="default_sort">
                     <SalesPipelineDefaultSort />
                   </TabsContent>
+                  <TabsContent value="wip_import">
+                    <WipImporter />
+                  </TabsContent>
                 </Tabs>
               </TabsContent>
 
