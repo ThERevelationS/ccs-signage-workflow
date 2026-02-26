@@ -731,15 +731,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         setOrders(prev => [...prev, newOrder]);
         
         importedCount++;
-        setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+        updateProgress(i + 1, jsonData.length, `Imported: ${customer}`);
         
         // Delay to prevent rate limiting - use longer delay every 5 items
         const batchDelay = (importedCount % 5 === 0) ? 2000 : 800;
         await new Promise(resolve => setTimeout(resolve, batchDelay));
       }
 
-      // No need to reload - we've been updating state as we go
-      setTimeout(() => setImportProgress({ show: false, current: 0, total: 0 }), 1500);
+      completeImport();
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
