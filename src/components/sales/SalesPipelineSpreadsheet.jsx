@@ -604,96 +604,32 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const exportToExcel = async () => {
     setExportProgress({ show: true, progress: 0 });
-    
-    const exportData = filteredWorkOrders.map(wo => {
-      const daysFromInitial = calculateDays(wo.date_initial_contact);
-      const daysEstSent = calculateDays(wo.date_initial_contact, wo.date_estimate_sent);
-      const daysEstToOrder = calculateDays(wo.date_estimate_sent, wo.date_order_created);
-      const daysOrderToPermit = calculateDays(wo.date_order_created, wo.permit_submitted_date);
-      const daysPermitToApproved = calculateDays(wo.permit_submitted_date, wo.permit_approved_date);
-      const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
-      
-      // Helper to ensure clean string values
-      const str = (val) => (val == null ? "" : String(val));
-      const num = (val) => (typeof val === 'number' && !isNaN(val) ? val : (val == null || val === "" ? null : Number(val) || null));
-      
-      return {
-        "Customer": str(wo.client_name),
-        "Source": str(wo.lead_source),
-        "Current Task Deadline": str(wo.current_task_deadline),
-        "Current Task Assigned to": str(wo.current_task_assigned_to),
-        "Designer": str(wo.designer),
-        "Project Manager": str(wo.project_manager),
-        "Estimator": str(wo.estimator),
-        "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number),
-        "Estimate Amount": num(wo.estimate_amount),
-        "Current Task Description": str(wo.current_task_description),
-        "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
-        "Site Survey": str(wo.site_survey_date),
-        "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
-        "Date Order Created": str(wo.date_order_created),
-        "Project Install Date": str(wo.project_install_date),
-        "Permit Submitted": str(wo.permit_submitted_date),
-        "Notes": str(wo.title),
-        "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date),
-        "Permit Number": str(wo.permit_number),
-        "Date Permit Approved/Received": str(wo.permit_approved_date),
-        "Days from Initial Request to today": num(daysFromInitial),
-        "Days Est. Sent from Date Requested": num(daysEstSent),
-        "Days from Est. Sent to Date Order Created": num(daysEstToOrder),
-        "Days from Order Created to Permit Submitted": num(daysOrderToPermit),
-        "Days from Permit Submitted to Permit Approved": num(daysPermitToApproved),
-        "Days from Project Install Date from Order Created": num(daysOrderToInstall)
-      };
-    });
-
+    const str = (val) => (val == null ? "" : String(val));
+    const num = (val) => (typeof val === 'number' && !isNaN(val) ? val : (val == null || val === "" ? null : Number(val) || null));
+    const exportData = filteredWorkOrders.map(wo => ({
+      "Customer": str(wo.client_name), "Source": str(wo.lead_source),
+      "Current Task Deadline": str(wo.current_task_deadline), "Current Task Assigned to": str(wo.current_task_assigned_to),
+      "Designer": str(wo.designer), "Project Manager": str(wo.project_manager), "Estimator": str(wo.estimator),
+      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount),
+      "Current Task Description": str(wo.current_task_description), "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
+      "Site Survey": str(wo.site_survey_date), "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
+      "Date Order Created": str(wo.date_order_created), "Project Install Date": str(wo.project_install_date),
+      "Permit Submitted": str(wo.permit_submitted_date), "Notes": str(wo.title),
+      "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
+      "Date Permit Approved/Received": str(wo.permit_approved_date),
+      "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
+      "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
+      "Days from Est. Sent to Date Order Created": num(calculateDays(wo.date_estimate_sent, wo.date_order_created)),
+      "Days from Order Created to Permit Submitted": num(calculateDays(wo.date_order_created, wo.permit_submitted_date)),
+      "Days from Permit Submitted to Permit Approved": num(calculateDays(wo.permit_submitted_date, wo.permit_approved_date)),
+      "Days from Project Install Date from Order Created": num(calculateDays(wo.date_order_created, wo.project_install_date)),
+    }));
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
-
-    // Create worksheet from data
     const ws = XLSX.utils.json_to_sheet(exportData);
-    
-    // Set column widths for better readability
-    const colWidths = [
-      { wch: 25 }, // Customer
-      { wch: 12 }, // Source
-      { wch: 15 }, // Current Task Deadline
-      { wch: 20 }, // Current Task Assigned to
-      { wch: 15 }, // Designer
-      { wch: 15 }, // Project Manager
-      { wch: 15 }, // Estimator
-      { wch: 15 }, // Est/Inv @
-      { wch: 15 }, // Estimate Amount
-      { wch: 30 }, // Current Task Description
-      { wch: 15 }, // Date Est. Requested
-      { wch: 12 }, // Site Survey
-      { wch: 15 }, // Date Estimate Sent
-      { wch: 15 }, // Date Order Created
-      { wch: 15 }, // Project Install Date
-      { wch: 15 }, // Permit Submitted
-      { wch: 40 }, // Notes
-      { wch: 18 }, // Date Permit Receipt
-      { wch: 12 }, // Permit Number
-      { wch: 18 }, // Date Permit Approved
-      { wch: 18 }, // Days Init->Today
-      { wch: 18 }, // Days Req->Est
-      { wch: 18 }, // Days Est->Ord
-      { wch: 18 }, // Days Ord->Prm
-      { wch: 18 }, // Days Prm->App
-      { wch: 18 }, // Days Ord->Ins
-    ];
-    ws['!cols'] = colWidths;
-
-    // Create workbook and add the worksheet
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
-    
-    // Write as xlsx with proper bookType
-    XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`, { 
-      bookType: 'xlsx',
-      type: 'binary'
-    });
-    
+    XLSX.writeFile(wb, `sales_pipeline_${format(new Date(), "yyyy-MM-dd")}.xlsx`, { bookType: 'xlsx', type: 'binary' });
     setExportProgress({ show: true, progress: 100 });
     setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
   };
