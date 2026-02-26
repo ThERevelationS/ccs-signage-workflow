@@ -517,6 +517,83 @@ export default function SIPs() {
           </table>
         </div>
 
+        {/* Future Revisit Section */}
+        {futureRevisitOrders.length > 0 && (
+          <div className="clay-card p-4 w-full mt-6 overflow-x-auto" style={{ borderLeft: '4px solid #f59e0b' }}>
+            <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+              📅 Revisit Later ({futureRevisitOrders.length})
+              <span className="text-xs text-gray-400 font-normal">— future revisit date set, not in active queue</span>
+            </h3>
+            <table className="w-full border-collapse text-sm" style={{ tableLayout: 'auto', minWidth: '900px' }}>
+              <thead className="bg-amber-50">
+                <tr className="border-b">
+                  <th className="px-2 py-2 border-r text-center font-medium text-amber-700" style={{ minWidth: '50px' }}>✓</th>
+                  <th className="px-2 py-2 border-r text-center font-medium text-amber-700" style={{ minWidth: '80px' }}>Checklist</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '160px' }}>Customer</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '180px' }}>Job Description</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '100px' }}>Deadline</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '120px' }}>PM</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '100px' }}>Amount</th>
+                  <th className="px-2 py-2 text-left font-bold text-amber-700" style={{ minWidth: '110px', background: '#fef3c7' }}>📅 Revisit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {futureRevisitOrders.map((wo) => {
+                  const progress = getChecklistProgress(wo);
+                  return (
+                    <tr key={wo.id} className="border-b hover:bg-amber-50/50 bg-yellow-50/30">
+                      <td className="px-2 py-2 border-r text-center">
+                        <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5" />
+                      </td>
+                      <td className="px-2 py-2 border-r text-center">
+                        <Button variant="outline" onClick={() => openChecklist(wo)} className="h-8 w-full flex flex-col items-center justify-center gap-0.5 hover:bg-blue-50 p-1">
+                          <ClipboardList className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="text-xs">{progress.completed}/{progress.total}</span>
+                        </Button>
+                      </td>
+                      <td className="px-2 py-2 border-r">
+                        <button onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
+                          <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
+                          <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                        </button>
+                      </td>
+                      <td className="px-2 py-2 border-r"><span className="text-sm text-gray-700 truncate block">{wo.description || "-"}</span></td>
+                      <td className="px-2 py-2 border-r text-sm">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}</td>
+                      <td className="px-2 py-2 border-r text-sm truncate">{wo.project_manager || "-"}</td>
+                      <td className="px-2 py-2 border-r text-sm">{wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "-"}</td>
+                      <td className="px-2 py-2" style={{ background: '#fef9c3' }}>
+                        <Popover
+                          open={openDatePopover === `revisit-future-${wo.id}`}
+                          onOpenChange={(open) => setOpenDatePopover(open ? `revisit-future-${wo.id}` : null)}
+                        >
+                          <PopoverTrigger asChild disabled={!isRegistered}>
+                            <button className="h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-bold text-amber-700">
+                              {format(parseLocalDate(wo.sip_revisit_date), "MM/dd/yy")}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={parseLocalDate(wo.sip_revisit_date)}
+                              onSelect={(date) => {
+                                updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                                setOpenDatePopover(null);
+                              }}
+                            />
+                            <div className="p-2 border-t">
+                              <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear date</button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Completed WIP Items Section */}
         {completedWipItems.length > 0 && (
           <div className="clay-card p-4 w-full mt-6">
