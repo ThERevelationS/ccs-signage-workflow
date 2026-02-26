@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import * as XLSX from 'npm:xlsx@0.18.5';
+import XLSX from 'npm:xlsx@0.18.5';
 
 Deno.serve(async (req) => {
   try {
