@@ -12,6 +12,8 @@ import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeader as OtherDialogHeader, DialogTitle as OtherDialogTitle, DialogFooter as OtherDialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TemplateBuilder from "./TemplateBuilder";
+import RevisitDatePopup from "./RevisitDatePopup";
+import ChecklistCompletedSection from "./ChecklistCompletedSection";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
