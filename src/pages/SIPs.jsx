@@ -251,7 +251,7 @@ export default function SIPs() {
                 
                 return (
                   <React.Fragment key={wo.id}>
-                  {focusedRowIndex === index && <tr><td colSpan={12} className="h-3 bg-transparent border-none"></td></tr>}
+                  {focusedRowIndex === index && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   <tr 
                     className={`border-b ${focusedRowIndex !== index ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowIndex !== index ? 'bg-blue-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
                     style={{ height: '50px' }}
@@ -502,7 +502,7 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                  {focusedRowIndex === index && <tr><td colSpan={12} className="h-3 bg-transparent border-none"></td></tr>}
+                  {focusedRowIndex === index && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   </React.Fragment>
                 );
               })}
