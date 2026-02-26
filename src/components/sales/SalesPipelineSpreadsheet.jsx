@@ -996,7 +996,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             itemsToUpdate.push({ id: existingWO.id, updates, uniqueKey, existingWO, customer });
           }
           
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length, currentItem: `Updating: ${customer}` });
+          updateProgress(i + 1, jsonData.length, `Updating: ${customer}`);
           continue;
         }
         
