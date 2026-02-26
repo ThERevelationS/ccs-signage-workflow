@@ -800,7 +800,7 @@ function LayoutContent({ children }) {
 export default function Layout({ children }) {
   return (
     <AuthProvider>
-      <LayoutContent>{children}</LayoutContent>
+      <LayoutContentWrapper>{children}</LayoutContentWrapper>
     </AuthProvider>
   );
 }
