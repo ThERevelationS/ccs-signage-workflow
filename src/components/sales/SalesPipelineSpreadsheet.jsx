@@ -2930,106 +2930,36 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       </Dialog>
 
       {/* Bulk Delete Confirmation */}
-      <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
-        <AlertDialogContent className="clay-card border-none max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedRows.size} rows?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete {selectedRows.size} selected work order{selectedRows.size > 1 ? 's' : ''}. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmBulkDelete} className="bg-red-600 text-white">
-              Delete All
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Clear Date Confirmation Dialog */}
-      <AlertDialog open={!!clearDateConfirm} onOpenChange={() => setClearDateConfirm(null)}>
-        <AlertDialogContent className="clay-card border-none max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear Date?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to clear this date?
-              <br /><br />
-              <span className="font-medium text-orange-600">Note:</span> Email automations may be resent if this field is filled out again.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={async () => {
-                if (clearDateConfirm) {
-                  updateWorkOrder(clearDateConfirm.woId, clearDateConfirm.field, "");
-                }
-                setClearDateConfirm(null);
-              }}
-              className="bg-red-600 text-white"
-            >
-              Clear Date
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Context Menu */}
-      {contextMenu && (
-        <CellContextMenu
-          position={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={() => setContextMenu(null)}
-          entityType="WorkOrder"
-          entityId={contextMenu.workOrder.id}
-          fieldName={contextMenu.fieldName}
-          fieldLabel={contextMenu.fieldLabel}
-          currentValue={contextMenu.currentValue}
-          onClear={() => clearCell(contextMenu.workOrder.id, contextMenu.fieldName)}
-          isRegistered={isRegistered}
-        />
-      )}
-
-      {/* Header Context Menu */}
-      {headerContextMenu && (
-        <ColumnHeaderContextMenu
-          position={{ x: headerContextMenu.x, y: headerContextMenu.y }}
-          onClose={() => setHeaderContextMenu(null)}
-          fieldName={headerContextMenu.fieldName}
-          fieldLabel={headerContextMenu.fieldLabel}
-          onSort={(key, dir) => handleColumnSort(key, dir)}
-          onCustomSort={handleCustomSort}
-          onClearSort={clearSort}
-          currentSortKey={sortConfig.key}
-          currentSortDirection={sortConfig.direction}
-          allValues={workOrders}
-          isAdmin={currentUser?.role === 'admin'}
-          onAction={handleHeaderContextMenuAction}
-        />
-      )}
-
-      <DeadlineGradientDialog open={showGradientDialog} onClose={() => setShowGradientDialog(false)} settings={deadlineGradientSettings} onSave={saveGradientSettings} />
-
-      <SalesPipelineImportProgress importProgress={importProgress} />
-
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="clay-card border-none">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lead?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deleteConfirm?.title || deleteConfirm?.client_name}"?
-              <br /><br />
-              <span className="font-medium text-orange-600">Note:</span> This action moves the item to the Project Trash. Only admins can permanently delete or recover items.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SalesPipelineDialogs
+        bulkDeleteConfirm={bulkDeleteConfirm}
+        setBulkDeleteConfirm={setBulkDeleteConfirm}
+        selectedRows={selectedRows}
+        confirmBulkDelete={confirmBulkDelete}
+        clearDateConfirm={clearDateConfirm}
+        setClearDateConfirm={setClearDateConfirm}
+        updateWorkOrder={updateWorkOrder}
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        clearCell={clearCell}
+        isRegistered={isRegistered}
+        headerContextMenu={headerContextMenu}
+        setHeaderContextMenu={setHeaderContextMenu}
+        handleColumnSort={handleColumnSort}
+        handleCustomSort={handleCustomSort}
+        clearSort={clearSort}
+        sortConfig={sortConfig}
+        workOrders={workOrders}
+        currentUser={currentUser}
+        handleHeaderContextMenuAction={handleHeaderContextMenuAction}
+        showGradientDialog={showGradientDialog}
+        setShowGradientDialog={setShowGradientDialog}
+        deadlineGradientSettings={deadlineGradientSettings}
+        saveGradientSettings={saveGradientSettings}
+        importProgress={importProgress}
+        deleteConfirm={deleteConfirm}
+        setDeleteConfirm={setDeleteConfirm}
+        confirmDelete={confirmDelete}
+      />
     </div>
   );
 });
