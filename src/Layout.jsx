@@ -51,6 +51,7 @@ const navigationItems = [
   { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#E8DCF0", borderColor: "#D0B8E0" },
   { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#F0E4DC", borderColor: "#E0C8B0" },
   { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, color: "#E0F0E8", borderColor: "#B8E0D0" },
+  { title: "Permitting Repository", url: createPageUrl("PermittingRepository"), icon: ClipboardList, color: "#F0E8F8", borderColor: "#D8B8F0" },
 ];
 
 const meetingsDropdownItems = [
