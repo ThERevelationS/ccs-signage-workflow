@@ -57,7 +57,7 @@ const meetingsDropdownItems = [
   { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, color: "#F0F0D8", borderColor: "#D8D8A8" },
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D8E4F0", borderColor: "#A8C8E0" },
   { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, color: "#EDE9FE", borderColor: "#C4B5FD" },
-  { title: "Reports", url: createPageUrl("ReportingDashboard"), icon: BarChart3, color: "#D1FAE5", borderColor: "#6EE7B7" },
+
 ];
 
 
