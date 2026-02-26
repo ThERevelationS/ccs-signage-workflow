@@ -540,13 +540,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       for (let i = 0; i < jsonData.length; i++) {
         // Check for cancel
-        if (importStateRef.current.cancelled) {
-          setImportProgress({ show: false, current: 0, total: 0, paused: false });
-          return;
-        }
-
-        // Wait while paused
-        while (importStateRef.current.paused) {
+        if (cancelCtx.current.cancelled) return;
+        while (cancelCtx.current.paused) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
