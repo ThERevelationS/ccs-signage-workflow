@@ -150,9 +150,19 @@ Deno.serve(async (req) => {
       orderMap.set(row.orderNumber, row);
     }
 
-    // Fetch all WorkOrders from database
-    const workOrdersResult = await base44.asServiceRole.entities.WorkOrder.list();
-    const workOrders = Array.isArray(workOrdersResult) ? workOrdersResult : [];
+    // Fetch all WorkOrders from database (paginate to get all)
+    let allWorkOrders = [];
+    let skip = 0;
+    const pageSize = 100;
+    while (true) {
+      const page = await base44.asServiceRole.entities.WorkOrder.list(null, pageSize, skip);
+      const pageArr = Array.isArray(page) ? page : (page?.data || page?.items || []);
+      if (pageArr.length === 0) break;
+      allWorkOrders = allWorkOrders.concat(pageArr);
+      if (pageArr.length < pageSize) break;
+      skip += pageSize;
+    }
+    const workOrders = allWorkOrders;
 
     let updated = 0;
     let notFound = 0;
