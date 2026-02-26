@@ -508,7 +508,7 @@ export default function SIPs() {
               })}
               {activeWorkOrders.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="px-3 py-12 text-center text-gray-500 text-base">
+                  <td colSpan={14} className="px-3 py-12 text-center text-gray-500 text-base">
                     No items assigned to SIPs. Assign "SIPs" to the Task Assigned column or check WIP/SIP on a task description to see items here.
                   </td>
                 </tr>
