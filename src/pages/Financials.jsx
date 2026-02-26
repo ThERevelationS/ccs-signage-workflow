@@ -394,6 +394,10 @@ export default function Financials() {
                 <FileText className="w-4 h-4" />
                 Reports
               </TabsTrigger>
+              <TabsTrigger value="workflow" className="gap-2">
+                <Activity className="w-4 h-4" />
+                Workflow
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
