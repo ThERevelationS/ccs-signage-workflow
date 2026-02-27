@@ -939,58 +939,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         className="hidden"
       />
 
-      {/* Import/Export Progress */}
-      {importProgress.show && (
-        <div className="mb-3 px-2">
-          <div className="clay-card p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                {importProgress.paused ? 'Import Paused' : 'Importing...'}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{importProgress.current} / {importProgress.total}</span>
-                {importProgress.paused ? (
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      importStateRef.current.paused = false;
-                      setImportProgress(prev => ({ ...prev, paused: false }));
-                    }}
-                    className="h-6 px-2"
-                  >
-                    Resume
-                  </Button>
-                ) : (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      importStateRef.current.paused = true;
-                      setImportProgress(prev => ({ ...prev, paused: true }));
-                    }}
-                    className="h-6 px-2"
-                  >
-                    Pause
-                  </Button>
-                )}
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => {
-                    importStateRef.current.cancelled = true;
-                  }}
-                  className="h-6 px-2"
-                >
-                  Stop
-                </Button>
-              </div>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}></div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Import/Export Progress - handled globally by ImportProgressContext */}
       {exportProgress.show && (
         <div className="mb-3 px-2">
           <div className="clay-card p-3">
