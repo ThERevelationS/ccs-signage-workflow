@@ -29,6 +29,7 @@ import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/C
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
+import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
