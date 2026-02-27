@@ -656,7 +656,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             await new Promise(resolve => setTimeout(resolve, 800));
           }
           
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          updateProgress(i + 1, jsonData.length, `Updated: ${customer}`);
           continue;
         }
 
