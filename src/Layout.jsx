@@ -497,17 +497,21 @@ function LayoutContent({ children }) {
                         key={item.title}
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
-                        className={`px-2 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
-                          isActive ? 'clay-card shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
+                        className={`px-2 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border ${
+                          isActive ? 'clay-card shadow-lg scale-105' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
                         }`}
                         style={{ 
-                          background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
-                          borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor
+                          background: isActive
+                            ? `linear-gradient(135deg, ${item.borderColor} 0%, ${item.color} 100%)`
+                            : `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
+                          borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor,
+                          borderWidth: isActive ? '2px' : '1px',
+                          transform: isActive ? 'scale(1.07)' : undefined,
                         }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#6B7280' }} />
-                        <span className={`font-medium text-xs ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
+                        <span className={`font-medium text-xs ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
