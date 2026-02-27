@@ -564,7 +564,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         const quantity = row["How much?"] ?? row["Quantity"] ?? row["quantity"] ?? "";
         
         if (!customer && !description && !requestType && !quantity) {
-          setImportProgress({ show: true, current: i + 1, total: jsonData.length });
+          updateProgress(i + 1, jsonData.length, "Skipping empty row...");
           continue;
         }
 
