@@ -815,7 +815,7 @@ function LayoutContent({ children }) {
           <nav
             className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 flex border-t border-gray-200"
             style={{
-              background: 'rgba(255,255,255,0.97)',
+              background: darkMode ? 'rgba(20,20,40,0.97)' : 'rgba(255,255,255,0.97)',
               backdropFilter: 'blur(10px)',
               boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
               height: 'calc(64px + env(safe-area-inset-bottom))',
