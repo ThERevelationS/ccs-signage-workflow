@@ -761,6 +761,17 @@ function LayoutContent({ children }) {
                 <span>My Info</span>
               </Link>
             )}
+            <div
+              className="px-2 py-1 flex items-center gap-1 text-xs rounded-md"
+              style={{ background: 'rgba(191, 219, 254, 0.8)' }}
+              title="Toggle Dark Mode"
+            >
+              <DarkModeSwitch
+                checked={darkMode}
+                onChange={setDarkMode}
+                size={16}
+              />
+            </div>
             {additionalPages.length > 0 && (
               <button
                 onClick={clearPages}
