@@ -370,7 +370,7 @@ function LayoutContent({ children }) {
           <nav 
             className="side-nav fixed top-0 left-0 bottom-0 z-50 w-56 flex flex-col"
             style={{ 
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(20,20,40,0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
               backdropFilter: 'blur(10px)',
               boxShadow: '4px 0 20px rgba(0,0,0,0.08)',
             }}
