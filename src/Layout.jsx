@@ -356,7 +356,7 @@ function LayoutContent({ children }) {
         }
       `}</style>
       
-      <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
