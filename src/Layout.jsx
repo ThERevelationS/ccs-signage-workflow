@@ -493,7 +493,7 @@ function LayoutContent({ children }) {
             className={`top-nav fixed top-0 left-0 right-0 z-50 ${isCollapsed ? (isHovered ? 'show' : 'collapsed') : ''}`}
             onMouseLeave={() => isCollapsed && setIsHovered(false)}
             style={{ 
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(20,20,40,0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
               backdropFilter: 'blur(10px)',
               boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
               minHeight: 'auto'
