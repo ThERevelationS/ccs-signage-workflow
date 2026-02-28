@@ -247,6 +247,30 @@ function LayoutContent({ children }) {
           overscroll-behavior: none;
         }
 
+        /* Dark mode overrides for clay/custom styles */
+        .dark body,
+        .dark #root {
+          background: #1a1a2e !important;
+          color: #e2e8f0;
+        }
+
+        .dark .clay-card {
+          background: linear-gradient(145deg, rgba(40, 40, 60, 0.95), rgba(30, 30, 50, 0.9)) !important;
+          box-shadow:
+            8px 8px 20px rgba(0, 0, 0, 0.4),
+            -8px -8px 20px rgba(255, 255, 255, 0.03),
+            inset 2px 2px 8px rgba(255, 255, 255, 0.05),
+            inset -2px -2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .dark .clay-button {
+          box-shadow:
+            4px 4px 12px rgba(0, 0, 0, 0.4),
+            -4px -4px 12px rgba(255, 255, 255, 0.03),
+            inset 1px 1px 4px rgba(255, 255, 255, 0.05),
+            inset -1px -1px 4px rgba(0, 0, 0, 0.2) !important;
+        }
+
         button, a {
           user-select: none;
           -webkit-user-select: none;
