@@ -689,7 +689,7 @@ function LayoutContent({ children }) {
         {/* Mobile back button in header area */}
         {isMobile && !isRootRoute && (
           <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 bg-white/95 backdrop-blur-sm border-b border-gray-200"
-            style={{ height: '48px', paddingTop: 'env(safe-area-inset-top)' }}
+            style={{ height: '48px', paddingTop: 'env(safe-area-inset-top)', background: darkMode ? 'rgba(20,20,40,0.97)' : undefined, borderColor: darkMode ? 'rgba(255,255,255,0.1)' : undefined }}
           >
             <button
               onClick={() => navigate(-1)}
