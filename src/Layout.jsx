@@ -247,15 +247,38 @@ function LayoutContent({ children }) {
           overscroll-behavior: none;
         }
 
+        /* Dark mode CSS variable overrides */
+        .dark {
+          --background: 231 39% 10%;
+          --foreground: 210 40% 92%;
+          --card: 231 35% 13%;
+          --card-foreground: 210 40% 92%;
+          --popover: 231 35% 13%;
+          --popover-foreground: 210 40% 92%;
+          --primary: 210 40% 92%;
+          --primary-foreground: 231 39% 10%;
+          --secondary: 231 30% 18%;
+          --secondary-foreground: 210 40% 92%;
+          --muted: 231 30% 18%;
+          --muted-foreground: 215 20% 60%;
+          --accent: 231 30% 20%;
+          --accent-foreground: 210 40% 92%;
+          --destructive: 0 62.8% 40%;
+          --destructive-foreground: 0 0% 98%;
+          --border: 231 30% 22%;
+          --input: 231 30% 18%;
+          --ring: 215 60% 60%;
+        }
+
         /* Dark mode overrides for clay/custom styles */
         .dark body,
         .dark #root {
-          background: #1a1a2e !important;
-          color: #e2e8f0;
+          background: #131929 !important;
+          color: #e2e8f0 !important;
         }
 
         .dark .clay-card {
-          background: linear-gradient(145deg, rgba(40, 40, 60, 0.95), rgba(30, 30, 50, 0.9)) !important;
+          background: linear-gradient(145deg, rgba(40, 44, 68, 0.95), rgba(30, 33, 55, 0.9)) !important;
           box-shadow:
             8px 8px 20px rgba(0, 0, 0, 0.4),
             -8px -8px 20px rgba(255, 255, 255, 0.03),
@@ -269,6 +292,79 @@ function LayoutContent({ children }) {
             -4px -4px 12px rgba(255, 255, 255, 0.03),
             inset 1px 1px 4px rgba(255, 255, 255, 0.05),
             inset -1px -1px 4px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* General dark mode overrides */
+        .dark input,
+        .dark textarea {
+          background-color: hsl(231, 35%, 16%) !important;
+          color: hsl(210, 40%, 92%) !important;
+          border-color: hsl(231, 30%, 28%) !important;
+        }
+
+        .dark th {
+          background-color: hsl(231, 35%, 15%) !important;
+          color: hsl(210, 40%, 85%) !important;
+          border-color: hsl(231, 30%, 22%) !important;
+        }
+
+        .dark td {
+          border-color: hsl(231, 30%, 22%) !important;
+        }
+
+        .dark .bg-white {
+          background-color: hsl(231, 35%, 13%) !important;
+          color: hsl(210, 40%, 92%) !important;
+        }
+
+        .dark [class*="bg-white"] {
+          background-color: hsl(231, 35%, 13%) !important;
+        }
+
+        .dark [class*="bg-gray-50"] {
+          background-color: hsl(231, 35%, 11%) !important;
+        }
+
+        .dark [class*="bg-gray-100"] {
+          background-color: hsl(231, 35%, 15%) !important;
+        }
+
+        .dark [class*="bg-gray-200"] {
+          background-color: hsl(231, 30%, 20%) !important;
+        }
+
+        .dark [class*="text-gray-900"],
+        .dark [class*="text-gray-800"] {
+          color: hsl(210, 40%, 88%) !important;
+        }
+
+        .dark [class*="text-gray-700"],
+        .dark [class*="text-gray-600"] {
+          color: hsl(215, 20%, 65%) !important;
+        }
+
+        .dark [class*="text-gray-500"],
+        .dark [class*="text-gray-400"] {
+          color: hsl(215, 20%, 55%) !important;
+        }
+
+        .dark [class*="border-gray-100"],
+        .dark [class*="border-gray-200"],
+        .dark [class*="border-gray-300"] {
+          border-color: hsl(231, 30%, 25%) !important;
+        }
+
+        .dark [class*="divide-gray"] > * + * {
+          border-color: hsl(231, 30%, 25%) !important;
+        }
+
+        .dark [style*="background: white"],
+        .dark [style*="background: #fff"],
+        .dark [style*="background: #ffffff"],
+        .dark [style*="background-color: white"],
+        .dark [style*="background-color: #fff"],
+        .dark [style*="background-color: #ffffff"] {
+          background: hsl(231, 35%, 13%) !important;
         }
 
         button, a {
