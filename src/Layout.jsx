@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   Clock,
 } from "lucide-react";
+import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
