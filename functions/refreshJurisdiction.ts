@@ -6,10 +6,11 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { jurisdiction_id } = await req.json();
-    if (!jurisdiction_id) return Response.json({ error: 'jurisdiction_id required' }, { status: 400 });
+    const { jurisdiction_id, jurisdictionId, settings } = await req.json();
+    const id = jurisdiction_id || jurisdictionId;
+    if (!id) return Response.json({ error: 'jurisdiction_id required' }, { status: 400 });
 
-    const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdiction_id);
+    const jurisdiction = await base44.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) return Response.json({ error: 'Jurisdiction not found' }, { status: 404 });
 
     // Use AI to find and extract document content
@@ -69,56 +70,77 @@ Return as JSON:
 
     const data = typeof result === 'string' ? JSON.parse(result) : result;
 
-    // Preserve manual documents, merge/update AI-discovered ones
-    const manualDocs = (jurisdiction.documents || []).filter(d => d.source === 'manual');
-    const newAiDocs = (data.documents || []).map((d, i) => ({
-      id: `ai_${Date.now()}_${i}`,
-      title: d.title || "Untitled",
-      url: d.url || "",
-      doc_type: d.doc_type || "other",
-      ai_summary: d.ai_summary || "",
-      source: "ai_discovered",
-      last_fetched: new Date().toISOString()
-    }));
+    // Build update object based on settings
+    const updateData = {};
+    const batchSettings = settings || { updateWebsites: true, updatePermittingUrls: true, updateRequirements: true, updateDocuments: true, skipManualData: true };
 
-    // Now attempt to extract text from PDFs for AI Q&A
-    const docsWithText = await Promise.all(newAiDocs.map(async (doc) => {
-      if (!doc.url || !doc.url.toLowerCase().includes('.pdf')) return doc;
-      try {
-        const extractResult = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
-          file_url: doc.url,
-          json_schema: {
-            type: "object",
-            properties: {
-              content: { type: "string", description: "Full text content of the document" },
-              summary: { type: "string", description: "Summary of key sign permit requirements in this document" }
+    if (batchSettings.updateWebsites && (!batchSettings.skipManualData || !jurisdiction._manual_website_url)) {
+      updateData.website_url = data.website_url || jurisdiction.website_url;
+    }
+
+    if (batchSettings.updatePermittingUrls && (!batchSettings.skipManualData || !jurisdiction._manual_permitting_url)) {
+      updateData.permitting_url = data.permitting_url || jurisdiction.permitting_url;
+    }
+
+    if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
+      updateData.permit_requirements = data.permit_requirements || jurisdiction.permit_requirements;
+      updateData.ai_summary = data.ai_summary || jurisdiction.ai_summary;
+      updateData.contact_info = data.contact_info || jurisdiction.contact_info;
+    }
+
+    // Handle documents
+    let finalDocs = jurisdiction.documents || [];
+    if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
+      const manualDocs = (jurisdiction.documents || []).filter(d => d.source === 'manual');
+      const newAiDocs = (data.documents || []).map((d, i) => ({
+        id: `ai_${Date.now()}_${i}`,
+        title: d.title || "Untitled",
+        url: d.url || "",
+        doc_type: d.doc_type || "other",
+        ai_summary: d.ai_summary || "",
+        source: "ai_discovered",
+        last_fetched: new Date().toISOString()
+      }));
+      finalDocs = [...manualDocs, ...newAiDocs];
+    }
+
+    // Extract text from PDFs if documents were updated
+    if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
+      const newAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && !d.extracted_text);
+      const docsWithText = await Promise.all(newAiDocs.map(async (doc) => {
+        if (!doc.url || !doc.url.toLowerCase().includes('.pdf')) return doc;
+        try {
+          const extractResult = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
+            file_url: doc.url,
+            json_schema: {
+              type: "object",
+              properties: {
+                content: { type: "string", description: "Full text content of the document" },
+                summary: { type: "string", description: "Summary of key sign permit requirements in this document" }
+              }
             }
+          });
+          if (extractResult?.status === 'success' && extractResult.output) {
+            return {
+              ...doc,
+              extracted_text: extractResult.output.content || "",
+              ai_summary: extractResult.output.summary || doc.ai_summary
+            };
           }
-        });
-        if (extractResult?.status === 'success' && extractResult.output) {
-          return {
-            ...doc,
-            extracted_text: extractResult.output.content || "",
-            ai_summary: extractResult.output.summary || doc.ai_summary
-          };
+        } catch (e) {
+          // Extraction failed, keep doc without text
         }
-      } catch (e) {
-        // Extraction failed, keep doc without text
-      }
-      return doc;
-    }));
+        return doc;
+      }));
 
-    const updatedJurisdiction = {
-      website_url: data.website_url || jurisdiction.website_url,
-      permitting_url: data.permitting_url || jurisdiction.permitting_url,
-      ai_summary: data.ai_summary || jurisdiction.ai_summary,
-      contact_info: data.contact_info || jurisdiction.contact_info,
-      permit_requirements: data.permit_requirements || jurisdiction.permit_requirements,
-      documents: [...manualDocs, ...docsWithText],
-      last_updated: new Date().toISOString()
-    };
+      const manualDocs = finalDocs.filter(d => d.source === 'manual');
+      const existingAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && d.extracted_text);
+      updateData.documents = [...manualDocs, ...existingAiDocs, ...docsWithText];
+    }
 
-    const updated = await base44.entities.JurisdictionProfile.update(jurisdiction_id, updatedJurisdiction);
+    updateData.last_updated = new Date().toISOString();
+
+    const updated = await base44.entities.JurisdictionProfile.update(id, updateData);
 
     return Response.json({ success: true, jurisdiction: updated });
   } catch (error) {
