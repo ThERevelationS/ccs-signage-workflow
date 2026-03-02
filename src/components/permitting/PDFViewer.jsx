@@ -13,6 +13,17 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError("PDF took too long to load. Try opening in a new tab.");
+        setLoading(false);
+      }
+    }, 15000);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setLoading(false);
@@ -20,7 +31,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
   };
 
   const onDocumentLoadError = (error) => {
-    setError(error.message);
+    setError(error.message || "Failed to load PDF");
     setLoading(false);
   };
 
