@@ -92,6 +92,15 @@ export default function CAGISSearchBar({ onLocationSelect }) {
 
           {expanded && (
             <div className="p-3 space-y-3 text-xs max-h-80 overflow-y-auto">
+              <a 
+                href={`https://cagis.tax.ohio.gov/cagis/Common/QuickSearch.aspx?term=${encodeURIComponent(searchTerm)}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+              >
+                View on CAGIS Website →
+              </a>
+
               {results.address && (
                 <div>
                   <p className="font-semibold text-gray-700">Address</p>
