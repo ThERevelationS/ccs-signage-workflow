@@ -252,31 +252,19 @@ Answer the question based on the documents and information available. Be specifi
             {(jurisdiction.documents || []).map(doc => (
               <div key={doc.id} className="border rounded-lg overflow-hidden">
                 <div
-                  className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50"
+                  className="flex items-center gap-2 p-3 cursor-pointer hover:bg-gray-50"
                   onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
                 >
                   <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-800 truncate">{doc.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-[10px] text-gray-400 capitalize">{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
                       {doc.last_fetched && <span className="text-[10px] text-gray-400">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
                       <span className="text-[10px] bg-blue-50 text-blue-600 px-1 rounded">{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {doc.file_url && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingPDF(doc);
-                        }}
-                        className="text-green-500 hover:text-green-700" title="View PDF">
-                        <FileText className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    {expandedDoc === doc.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
-                  </div>
+                  {expandedDoc === doc.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
                 </div>
                 {expandedDoc === doc.id && (
                   <div className="px-3 pb-3 border-t bg-gray-50">
