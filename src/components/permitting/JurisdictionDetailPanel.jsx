@@ -25,6 +25,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
   const [viewingPDF, setViewingPDF] = useState(null);
+  const [docSearchTerm, setDocSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
   // Auto-download all PDFs on load
   useEffect(() => {
