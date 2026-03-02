@@ -69,7 +69,7 @@ export default function PermittingRepositoryAdmin() {
       return;
     }
 
-    setConfirmDialog(true);
+    proceedWithUpdate();
   };
 
   const proceedWithUpdate = async () => {
