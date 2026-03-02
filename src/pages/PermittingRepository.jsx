@@ -43,7 +43,7 @@ export default function PermittingRepository() {
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
     try {
-      const res = await refreshJurisdiction({ jurisdiction_id: jurisdiction.id });
+      const res = await base44.functions.invoke('refreshJurisdiction', { jurisdiction_id: jurisdiction.id });
       if (res.data?.jurisdiction) {
         setJurisdictions(prev => prev.map(j => j.id === jurisdiction.id ? res.data.jurisdiction : j));
         if (selectedJurisdiction?.id === jurisdiction.id) setSelectedJurisdiction(res.data.jurisdiction);
