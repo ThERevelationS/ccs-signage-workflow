@@ -25,11 +25,13 @@ Please:
 1. Find the most current sign ordinance, zoning code sections about signs, permit applications, and fee schedules
 2. Extract key permitting requirements
 3. Check if any document URLs have changed or new documents are available
+4. Find the CAGIS or property/parcel lookup database URL specific to ${jurisdiction.name} or ${jurisdiction.state} (most counties have their own)
 
 Return as JSON:
 {
   "website_url": "updated official url or same",
   "permitting_url": "updated permitting url or same",
+  "cagis_database_url": "property/parcel lookup database URL for this jurisdiction (CAGIS or equivalent)",
   "ai_summary": "updated 3-4 sentence summary of current sign permit requirements",
   "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
   "permit_requirements": {
@@ -60,6 +62,7 @@ Return as JSON:
         properties: {
           website_url: { type: "string" },
           permitting_url: { type: "string" },
+          cagis_database_url: { type: "string" },
           ai_summary: { type: "string" },
           contact_info: { type: "object" },
           permit_requirements: { type: "object" },
@@ -80,6 +83,11 @@ Return as JSON:
 
     if (batchSettings.updatePermittingUrls && (!batchSettings.skipManualData || !jurisdiction._manual_permitting_url)) {
       updateData.permitting_url = data.permitting_url || jurisdiction.permitting_url;
+    }
+
+    // Always update CAGIS database URL if found
+    if (data.cagis_database_url) {
+      updateData.cagis_database_url = data.cagis_database_url;
     }
 
     if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
