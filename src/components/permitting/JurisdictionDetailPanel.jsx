@@ -171,10 +171,31 @@ Answer the question based on the documents and information available. Be specifi
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {doc.url && (
+                    {doc.file_url ? (
+                      <a href={doc.file_url} download={`${doc.title}.pdf`}
+                        onClick={e => e.stopPropagation()}
+                        className="text-green-500 hover:text-green-700 flex items-center gap-1" title="Download PDF">
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                    ) : doc.url && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadPDF(doc);
+                        }}
+                        disabled={downloadingDocId === doc.id}
+                        className="text-blue-500 hover:text-blue-700 disabled:text-gray-300" title="Download to app">
+                        {downloadingDocId === doc.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+                    {doc.url && !doc.file_url && (
                       <a href={doc.url} target="_blank" rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="text-blue-500 hover:text-blue-700">
+                        className="text-gray-400 hover:text-gray-600" title="Open external link">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     )}
