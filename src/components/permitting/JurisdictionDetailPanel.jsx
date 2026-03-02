@@ -117,6 +117,10 @@ Answer the question based on the documents and information available. Be specifi
     setDownloadingDocId(null);
   };
 
+  if (viewingPDF) {
+    return <PDFViewer fileUrl={viewingPDF.file_url} fileName={viewingPDF.title} onBack={() => setViewingPDF(null)} />;
+  }
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
