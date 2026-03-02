@@ -60,12 +60,12 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
       </div>
 
       {/* PDF Viewer */}
-      <div className="flex-1 overflow-auto flex items-center justify-center">
+      <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-900">
         {error ? (
-          <div className="flex flex-col items-center gap-4 p-6 text-center">
-            <div className="text-red-400 text-sm max-w-xs">
+          <div className="flex flex-col items-center gap-4 p-6 text-center max-w-xs">
+            <div className="text-yellow-400">
               <p className="font-medium mb-2">Unable to load PDF in viewer</p>
-              <p className="text-xs text-gray-400 mb-4">{error}</p>
+              <p className="text-xs text-gray-400 mb-4">This PDF cannot be displayed inline. Please open it in a new tab to view.</p>
             </div>
             <Button
               onClick={() => window.open(fileUrl, '_blank')}
@@ -77,17 +77,25 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
         ) : loading ? (
           <div className="flex items-center gap-2 text-gray-400">
             <Loader2 className="w-5 h-5 animate-spin" />
-            Loading PDF...
+            <span>Loading PDF...</span>
           </div>
         ) : (
-          <Document 
-            file={{ url: fileUrl, withCredentials: false }} 
-            onLoadSuccess={onDocumentLoadSuccess} 
-            onLoadError={onDocumentLoadError}
-            loading=""
-          >
-            <Page pageNumber={pageNumber} width={Math.min(window.innerWidth - 40, 900)} />
-          </Document>
+          <div className="w-full h-full flex items-center justify-center p-4">
+            <Document 
+              file={{ url: fileUrl, withCredentials: false }} 
+              onLoadSuccess={onDocumentLoadSuccess} 
+              onLoadError={onDocumentLoadError}
+              loading={null}
+              error={null}
+            >
+              <Page 
+                pageNumber={pageNumber} 
+                width={Math.min(window.innerWidth - 40, 900)}
+                loading={null}
+                error={null}
+              />
+            </Document>
+          </div>
         )}
       </div>
 
