@@ -744,8 +744,11 @@ export default function AdminSettings() {
                   <TabsContent value="wip_import">
                     <WipImporter />
                   </TabsContent>
-                </Tabs>
-              </TabsContent>
+                  <TabsContent value="permitting">
+                    <PermittingRepositoryAdmin />
+                  </TabsContent>
+                  </Tabs>
+                  </TabsContent>
 
               <TabsContent value="corebridge">
                 <CorebridgeAISettings />
