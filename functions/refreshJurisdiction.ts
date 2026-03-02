@@ -103,7 +103,7 @@ Return as JSON:
     let finalDocs = jurisdiction.documents || [];
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
       const manualDocs = (jurisdiction.documents || []).filter(d => d.source === 'manual');
-      const newAiDocs = (data.documents || []).map((d, i) => ({
+      const newAiDocs = (verifiedData.documents || []).map((d, i) => ({
         id: `ai_${Date.now()}_${i}`,
         title: d.title || "Untitled",
         url: d.url || "",
