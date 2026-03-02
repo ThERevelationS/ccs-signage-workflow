@@ -69,9 +69,21 @@ export default function PermittingRepositoryAdmin() {
       return;
     }
 
-    if (!confirm(`Update ${idsToUpdate.length} jurisdiction(s) with AI research? This respects manual data protection rules.`)) {
-      return;
-    }
+    setConfirmDialog(true);
+  };
+
+  const proceedWithUpdate = async () => {
+    setConfirmDialog(false);
+    const idsToUpdate = Array.from(selectedIds);
+
+    setProgressDialog({
+      total: idsToUpdate.length,
+      processed: 0,
+      updated: 0,
+      skipped: 0,
+      currentJurisdiction: null,
+      results: []
+    });
 
     setBatchUpdating(true);
     try {
@@ -81,15 +93,33 @@ export default function PermittingRepositoryAdmin() {
       });
 
       if (res.data?.success) {
-        alert(`Updated: ${res.data.updated} | Skipped: ${res.data.skipped}`);
-        loadJurisdictions();
-        setSelectedIds(new Set());
+        setProgressDialog(prev => ({
+          ...prev,
+          processed: res.data.total,
+          updated: res.data.updated,
+          skipped: res.data.skipped,
+          isComplete: true
+        }));
+        
+        setTimeout(() => {
+          loadJurisdictions();
+          setSelectedIds(new Set());
+          setProgressDialog(null);
+        }, 2000);
       } else {
-        alert("Update failed: " + (res.data?.message || "Unknown error"));
+        setProgressDialog(prev => ({
+          ...prev,
+          error: res.data?.message || "Unknown error",
+          isComplete: true
+        }));
       }
     } catch (e) {
       console.error("Batch update error:", e);
-      alert("Error: " + e.message);
+      setProgressDialog(prev => ({
+        ...prev,
+        error: e.message,
+        isComplete: true
+      }));
     }
     setBatchUpdating(false);
   };
