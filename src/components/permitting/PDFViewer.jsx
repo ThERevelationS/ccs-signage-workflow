@@ -61,7 +61,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
         {error ? (
           <div className="flex flex-col items-center gap-4 p-6 text-center">
             <div className="text-red-400 text-sm max-w-xs">
-              <p className="font-medium mb-2">Unable to load PDF</p>
+              <p className="font-medium mb-2">Unable to load PDF in viewer</p>
               <p className="text-xs text-gray-400 mb-4">{error}</p>
             </div>
             <Button
@@ -76,27 +76,14 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
             <Loader2 className="w-5 h-5 animate-spin" />
             Loading PDF...
           </div>
-        ) : numPages ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <Document 
-              file={{ url: fileUrl, withCredentials: false }} 
-              onLoadSuccess={onDocumentLoadSuccess} 
-              onLoadError={onDocumentLoadError}
-              loading=""
-              error="Failed to load PDF"
-            >
-              <Page pageNumber={pageNumber} width={Math.min(window.innerWidth - 40, 900)} />
-            </Document>
-          </div>
         ) : (
           <Document 
             file={{ url: fileUrl, withCredentials: false }} 
             onLoadSuccess={onDocumentLoadSuccess} 
             onLoadError={onDocumentLoadError}
             loading=""
-            error="Failed to load PDF"
           >
-            <Page pageNumber={1} width={Math.min(window.innerWidth - 40, 900)} />
+            <Page pageNumber={pageNumber} width={Math.min(window.innerWidth - 40, 900)} />
           </Document>
         )}
       </div>
