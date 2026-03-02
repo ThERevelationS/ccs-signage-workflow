@@ -454,5 +454,6 @@ export default function PermittingRepositoryAdmin() {
         </div>
       </div>
     </div>
+    </>
   );
 }
