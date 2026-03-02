@@ -366,18 +366,7 @@ Answer the question based on the documents and information available. Be specifi
           </div>
         </div>
 
-        {/* Contact Info */}
-        {jurisdiction.contact_info?.department && (
-          <div className="border rounded-lg p-3">
-            <p className="text-xs font-semibold text-gray-700 mb-2">Contact Information</p>
-            <div className="space-y-1 text-xs text-gray-600">
-              {jurisdiction.contact_info.department && <div><span className="font-medium">Dept:</span> {jurisdiction.contact_info.department}</div>}
-              {jurisdiction.contact_info.phone && <div><span className="font-medium">Phone:</span> {jurisdiction.contact_info.phone}</div>}
-              {jurisdiction.contact_info.email && <div><span className="font-medium">Email:</span> {jurisdiction.contact_info.email}</div>}
-              {jurisdiction.contact_info.address && <div><span className="font-medium">Address:</span> {jurisdiction.contact_info.address}</div>}
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Chat Interface */}
