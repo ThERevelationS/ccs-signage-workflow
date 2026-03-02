@@ -26,6 +26,8 @@ export default function PermittingRepositoryAdmin() {
     updateDocuments: true,
     skipManualData: true
   });
+  const [progressDialog, setProgressDialog] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(false);
 
   useEffect(() => {
     loadJurisdictions();
