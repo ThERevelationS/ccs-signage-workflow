@@ -8,8 +8,6 @@ import { Loader2, Plus, Search, Wand2, RefreshCw, MapPin, FileText, Filter } fro
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
-import { refreshJurisdiction } from "@/functions/refreshJurisdiction";
-import { searchJurisdictions } from "@/functions/searchJurisdictions";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
