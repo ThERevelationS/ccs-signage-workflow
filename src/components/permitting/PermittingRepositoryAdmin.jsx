@@ -87,7 +87,7 @@ export default function PermittingRepositoryAdmin() {
     console.log = function(...args) {
       const message = args.join(' ');
       if (message.includes('[RESEARCH_PROGRESS]')) {
-        const match = message.match(/Processing \\(\\d+\\)\\/\\(\\d+\\): (.+)/);
+        const match = message.match(/Processing \((\d+)\/(\d+)\): (.+)/);
         if (match) {
           currentProcessed = parseInt(match[1]);
           const jurisdictionName = match[3];
