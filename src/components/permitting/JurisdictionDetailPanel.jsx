@@ -334,6 +334,19 @@ Answer the question based on the documents and information available. Be specifi
                 </div>
                 {expandedDoc === doc.id && (
                   <div className="px-3 pb-3 border-t bg-gray-50 space-y-3">
+                    {/* Search within document */}
+                    {(doc.extracted_text || doc.ai_summary) && (
+                      <div className="mt-3">
+                        <Input
+                          type="text"
+                          placeholder="Search within document..."
+                          value={expandedDocSearch[doc.id] || ""}
+                          onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
+                          className="text-xs h-7"
+                        />
+                      </div>
+                    )}
+
                     {doc.file_url ? (
                       <Button
                         onClick={(e) => {
