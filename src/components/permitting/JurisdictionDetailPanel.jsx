@@ -267,15 +267,47 @@ Answer the question based on the documents and information available. Be specifi
                   {expandedDoc === doc.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
                 </div>
                 {expandedDoc === doc.id && (
-                  <div className="px-3 pb-3 border-t bg-gray-50">
-                    {doc.ai_summary && (
+                  <div className="px-3 pb-3 border-t bg-gray-50 space-y-3">
+                    {doc.file_url ? (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingPDF(doc);
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 mt-3"
+                      >
+                        <FileText className="w-5 h-5 mr-2" />
+                        Open {doc.title} PDF
+                      </Button>
+                    ) : (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                        <p className="font-medium">No file available</p>
+                        <p className="text-xs mt-1">This document could not be downloaded. Check the source link below.</p>
+                      </div>
+                    )}
+                    
+                    {doc.url && (
                       <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-gray-500 mb-1">Original Source</p>
+                        <a 
+                          href={doc.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline break-all block p-2 bg-white rounded border border-gray-200 hover:bg-blue-50"
+                        >
+                          {doc.url}
+                        </a>
+                      </div>
+                    )}
+                    
+                    {doc.ai_summary && (
+                      <div>
                         <p className="text-[10px] font-semibold text-purple-600 mb-1">AI Summary</p>
                         <p className="text-xs text-gray-700">{doc.ai_summary}</p>
                       </div>
                     )}
                     {doc.extracted_text && (
-                      <div className="mt-2">
+                      <div>
                         <p className="text-[10px] font-semibold text-gray-500 mb-1">Extracted Content (preview)</p>
                         <p className="text-xs text-gray-600 line-clamp-4 font-mono bg-white p-2 rounded border">{doc.extracted_text.substring(0, 500)}...</p>
                       </div>
