@@ -104,82 +104,15 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     if (!form.name || !form.state) return;
     setAiLoading(true);
     try {
-      const isNonCounty = form.type !== 'county';
-      const prompt = `CRITICAL: Research ONLY REAL, VERIFIED information for ${form.name} ${form.type}, ${form.state}. 
-
-**DO NOT FABRICATE URLs OR INFORMATION.** If you cannot find verified information, leave that field empty/null or state "information not found."
-
-Only research ${form.state}. Do not provide information from other states.
-
-Find ONLY verified information from official government websites:
-1. Official ${form.name} government website URL (verify it's real and current)
-2. Actual permitting/zoning department website URL (from official government sources only)
-3. Real permit application forms and ordinances (must link to actual government documents)
-4. Contact information (must be from official sources)
-5. Specific sign permit rules found in actual ordinances or zoning codes
-6. Document links (must be verified to exist and be from official sources)
-
-**VERIFICATION RULE:** Only include URLs that you can verify are from official ${form.name} or ${form.state} government websites. Do not make up, guess, or assume URLs exist. If a URL cannot be verified as real, do not include it.
-
-${isNonCounty ? `For this ${form.type}, also research:
-   - Actual parent county name and real contact information
-   - Real parent county government website and verified permitting URLs
-   - Only include parent county documents that actually exist
-   - Note which documents are from county vs. local jurisdiction` : ''}
-
-Return as JSON with this structure (add parent_county fields if applicable):
-{
-  "website_url": "...",
-  "permitting_url": "...",
-  "ai_summary": "2-3 sentence summary of sign permit requirements",
-  "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-  "permit_requirements": {
-    "requires_permit": true/false,
-    "max_sign_area_sqft": number or null,
-    "max_height_ft": number or null,
-    "setback_requirements": "...",
-    "illumination_allowed": true/false/null,
-    "electronic_signs_allowed": true/false/null,
-    "fee_range": "...",
-    "processing_time": "..."
-  },
-  "documents": [
-    { "title": "...", "url": "...", "doc_type": "sign_ordinance|permit_application|zoning_code|fee_schedule|checklist|other", "source_type": "local|county" }
-  ],
-  "parent_county": {
-    "name": "...",
-    "website_url": "...",
-    "permitting_url": "...",
-    "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-    "documents": []
-  },
-  "sqft_width_height_rules": "...",
-  "height_allowances": "...",
-  "setback_rules": "...",
-  "lighting_allowances": "..."
-  }`;
-     const result = await base44.integrations.Core.InvokeLLM({
-       prompt,
-       add_context_from_internet: true,
-       response_json_schema: {
-          type: "object",
-          properties: {
-            website_url: { type: "string" },
-            permitting_url: { type: "string" },
-            ai_summary: { type: "string" },
-            contact_info: { type: "object" },
-            permit_requirements: { type: "object" },
-            documents: { type: "array", items: { type: "object" } },
-            parent_county: { type: "object" },
-            sqft_width_height_rules: { type: "string" },
-            height_allowances: { type: "string" },
-            setback_rules: { type: "string" },
-            lighting_allowances: { type: "string" }
-          }
-        }
+      // Call the jurisdiction research agent
+      const result = await base44.functions.invoke('callJurisdictionAgent', {
+        jurisdictionName: form.name,
+        jurisdictionState: form.state,
+        jurisdictionType: form.type,
+        includeParentCounty: form.type !== 'county'
       });
 
-      const data = typeof result === 'string' ? JSON.parse(result) : result;
+      const data = result.data || result;
       const newDocs = (data.documents || []).map((d, i) => ({
         id: `ai_${Date.now()}_${i}`,
         title: d.title || "Untitled",
