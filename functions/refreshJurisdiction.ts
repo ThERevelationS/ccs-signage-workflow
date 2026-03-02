@@ -190,3 +190,152 @@ Return as JSON:
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+// Data verification function with multiple checks
+async function verifyJurisdictionData(base44, jurisdiction, initialData) {
+  const verified = { ...initialData };
+  const MAX_VERIFICATION_ATTEMPTS = 3;
+
+  // Verify URLs by checking if they're valid and contain relevant content
+  const verifyURLs = async () => {
+    const urlsToCheck = [
+      { name: 'website_url', value: verified.website_url },
+      { name: 'permitting_url', value: verified.permitting_url },
+      { name: 'cagis_database_url', value: verified.cagis_database_url }
+    ];
+
+    for (const urlItem of urlsToCheck) {
+      if (!urlItem.value) continue;
+
+      try {
+        const response = await fetch(urlItem.value, { method: 'HEAD', timeout: 5000 });
+        if (!response.ok && response.status !== 405) {
+          console.warn(`URL validation failed for ${urlItem.name}: ${urlItem.value}`);
+          verified[urlItem.name] = undefined;
+        }
+      } catch (e) {
+        console.warn(`URL check failed for ${urlItem.name}: ${urlItem.value}`);
+        verified[urlItem.name] = undefined;
+      }
+    }
+  };
+
+  // Verify requirements data with cross-check
+  const verifyRequirements = async (attempt = 1) => {
+    if (!verified.permit_requirements || Object.keys(verified.permit_requirements).length === 0) {
+      return;
+    }
+
+    if (attempt <= MAX_VERIFICATION_ATTEMPTS) {
+      const verificationPrompt = `Verify the following sign permit requirements for ${jurisdiction.name}, ${jurisdiction.state}:
+      
+${JSON.stringify(verified.permit_requirements, null, 2)}
+
+Check if these values are accurate and reasonable. Return JSON with:
+{
+  "verified": true/false,
+  "issues": ["list of any inaccuracies or unreasonable values"],
+  "corrected_values": { "field": "corrected_value" } or null
+}
+
+Be strict - if you cannot verify a value, mark it as unverified.`;
+
+      try {
+        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: verificationPrompt,
+          add_context_from_internet: true,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              verified: { type: "boolean" },
+              issues: { type: "array", items: { type: "string" } },
+              corrected_values: { type: ["object", "null"] }
+            }
+          }
+        });
+
+        const verification = typeof result === 'string' ? JSON.parse(result) : result;
+
+        if (!verification.verified) {
+          if (verification.issues.length > 0) {
+            console.warn(`Verification issues found: ${verification.issues.join(', ')}`);
+          }
+
+          if (attempt < MAX_VERIFICATION_ATTEMPTS) {
+            // Re-research if verification failed
+            console.warn(`Re-researching requirements for ${jurisdiction.name} (attempt ${attempt + 1})`);
+            const reresearchPrompt = `Research sign permit requirements for ${jurisdiction.name}, ${jurisdiction.state} again. 
+            
+Previous data had these issues: ${verification.issues?.join(', ') || 'Unknown'}
+
+Return ONLY accurate, verifiable information. Omit any fields you cannot confirm.`;
+
+            const reresult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+              prompt: reresearchPrompt,
+              add_context_from_internet: true,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  permit_requirements: { type: "object" },
+                  ai_summary: { type: "string" }
+                }
+              }
+            });
+
+            const redata = typeof reresult === 'string' ? JSON.parse(reresult) : reresult;
+            verified.permit_requirements = redata.permit_requirements || {};
+            if (redata.ai_summary) verified.ai_summary = redata.ai_summary;
+
+            // Recurse for another verification
+            await verifyRequirements(attempt + 1);
+          } else {
+            // Max attempts reached - remove unverified data
+            console.warn(`Max verification attempts reached for ${jurisdiction.name}. Removing unverified requirements.`);
+            verified.permit_requirements = {};
+          }
+        } else if (verification.corrected_values) {
+          verified.permit_requirements = { ...verified.permit_requirements, ...verification.corrected_values };
+        }
+      } catch (e) {
+        console.error(`Verification error: ${e.message}`);
+        verified.permit_requirements = {};
+      }
+    }
+  };
+
+  // Verify documents by checking URLs are accessible
+  const verifyDocuments = async () => {
+    if (!verified.documents || !Array.isArray(verified.documents)) {
+      verified.documents = [];
+      return;
+    }
+
+    const validDocs = [];
+    for (const doc of verified.documents) {
+      if (!doc.url) {
+        validDocs.push(doc);
+        continue;
+      }
+
+      try {
+        const response = await fetch(doc.url, { method: 'HEAD', timeout: 5000 });
+        if (response.ok || response.status === 405) {
+          validDocs.push(doc);
+        } else {
+          console.warn(`Document URL inaccessible: ${doc.title} (${doc.url})`);
+        }
+      } catch (e) {
+        console.warn(`Document verification failed: ${doc.title}`);
+      }
+    }
+
+    verified.documents = validDocs;
+  };
+
+  // Run all verifications
+  await verifyURLs();
+  await verifyRequirements();
+  await verifyDocuments();
+
+  return verified;
+}
