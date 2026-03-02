@@ -330,9 +330,9 @@ export default function PermittingRepositoryAdmin() {
             variant="outline"
             size="sm"
             onClick={handleSelectMissing}
-            className="ml-auto"
+            className="ml-2"
           >
-            Select Missing Info
+            Select Jurisdictions Missing Information
           </Button>
         </div>
 
