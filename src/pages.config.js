@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AdminPermittingSettings from './pages/AdminPermittingSettings';
 import AdminSettings from './pages/AdminSettings';
 import CompletedReports from './pages/CompletedReports';
 import Design from './pages/Design';
@@ -74,11 +75,11 @@ import TemplateBuilder from './pages/TemplateBuilder';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
 import WorkOrderCalendar from './pages/WorkOrderCalendar';
-import AdminPermittingSettings from './pages/AdminPermittingSettings';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminPermittingSettings": AdminPermittingSettings,
     "AdminSettings": AdminSettings,
     "CompletedReports": CompletedReports,
     "Design": Design,
@@ -106,7 +107,6 @@ export const PAGES = {
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
     "WorkOrderCalendar": WorkOrderCalendar,
-    "AdminPermittingSettings": AdminPermittingSettings,
 }
 
 export const pagesConfig = {

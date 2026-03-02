@@ -73,6 +73,7 @@ import ResourceAllocationView from "@/components/workflow/ResourceAllocationView
 import CorebridgeAISettings from "@/components/admin/CorebridgeAISettings";
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
+import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
