@@ -66,7 +66,7 @@ export default function PermittingRepositoryAdmin() {
     setBatchUpdating(true);
     try {
       const res = await base44.functions.invoke('batchUpdateJurisdictions', {
-        jurisdiction_ids: idsToUpdate,
+        jurisdictionIds: idsToUpdate,
         settings: batchSettings
       });
 
