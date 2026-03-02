@@ -133,7 +133,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setSearchingDocId(docId);
     try {
       const doc = jurisdiction.documents.find(d => d.id === docId);
-      const searchContent = (doc.extracted_text || doc.ai_summary || "").toLowerCase();
+      const searchContent = doc.extracted_text || doc.ai_summary || "";
       const searchTerm = searchText.toLowerCase();
       
       if (!searchContent) {
@@ -142,27 +142,30 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
           [docId]: { matches: 0, snippets: [] }
         }));
       } else {
-        // Find all matches with context
-        const matches = [];
-        const words = searchContent.split(/\s+/);
-        const searchWords = searchTerm.split(/\s+/);
+        // Search for the term in the content
+        const contentLower = searchContent.toLowerCase();
+        const allMatches = [];
+        let index = 0;
         
-        let currentIndex = 0;
-        for (let i = 0; i < words.length; i++) {
-          if (searchWords.every(sw => 
-            words.slice(i, i + searchWords.length).join(' ').toLowerCase().includes(sw)
-          )) {
-            const snippetStart = Math.max(0, i - 5);
-            const snippetEnd = Math.min(words.length, i + searchWords.length + 5);
-            const snippet = words.slice(snippetStart, snippetEnd).join(' ');
-            matches.push(snippet);
-            i += searchWords.length - 1;
-          }
+        while ((index = contentLower.indexOf(searchTerm, index)) !== -1) {
+          const start = Math.max(0, index - 100);
+          const end = Math.min(searchContent.length, index + searchTerm.length + 100);
+          const snippet = searchContent.substring(start, end);
+          
+          allMatches.push({
+            position: index,
+            snippet: (start > 0 ? '...' : '') + snippet.trim() + (end < searchContent.length ? '...' : '')
+          });
+          
+          index += 1;
         }
         
         setDocSearchResults(prev => ({
           ...prev,
-          [docId]: { matches: matches.length, snippets: matches.slice(0, 3) }
+          [docId]: { 
+            matches: allMatches.length, 
+            snippets: allMatches.slice(0, 3).map(m => m.snippet)
+          }
         }));
       }
     } catch (e) {
