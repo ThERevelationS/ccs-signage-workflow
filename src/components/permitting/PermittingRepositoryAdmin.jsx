@@ -292,7 +292,7 @@ export default function PermittingRepositoryAdmin() {
         </Dialog>
       )}
 
-    <div className="space-y-6">
+      <div className="space-y-6">
       {/* Protection Rules Info */}
       <div className="clay-card border-l-4 border-l-blue-400 p-4 bg-blue-50">
         <div className="flex gap-3">
