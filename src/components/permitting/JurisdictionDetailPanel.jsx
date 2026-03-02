@@ -55,6 +55,35 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     autoDownloadPDFs();
   }, [jurisdiction.id]);
 
+  const searchDocuments = (term) => {
+    setDocSearchTerm(term);
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    const lowerTerm = term.toLowerCase();
+    const results = [];
+    
+    (jurisdiction.documents || []).forEach(doc => {
+      const titleMatch = doc.title?.toLowerCase().includes(lowerTerm);
+      const summaryMatch = doc.ai_summary?.toLowerCase().includes(lowerTerm);
+      const contentMatch = doc.extracted_text?.toLowerCase().includes(lowerTerm);
+      const requirementsMatch = JSON.stringify(jurisdiction.permit_requirements || {}).toLowerCase().includes(lowerTerm);
+      
+      if (titleMatch || summaryMatch || contentMatch || requirementsMatch) {
+        results.push({
+          type: 'document',
+          id: doc.id,
+          title: doc.title,
+          snippet: (doc.ai_summary || doc.extracted_text || "").substring(0, 150) + "..."
+        });
+      }
+    });
+    
+    setSearchResults(results);
+  };
+
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
     const q = question.trim();
