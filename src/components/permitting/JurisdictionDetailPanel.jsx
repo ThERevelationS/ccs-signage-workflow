@@ -24,6 +24,34 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [expandedDoc, setExpandedDoc] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
+  const [viewingPDF, setViewingPDF] = useState(null);
+
+  // Auto-download all PDFs on load
+  useEffect(() => {
+    const autoDownloadPDFs = async () => {
+      const docsToDownload = (jurisdiction.documents || []).filter(doc => doc.url && !doc.file_url);
+      for (const doc of docsToDownload) {
+        try {
+          const res = await downloadPermitPDF({
+            jurisdiction_id: jurisdiction.id,
+            document_url: doc.url,
+            document_title: doc.title
+          });
+          if (res.data?.file_url) {
+            onUpdate({
+              ...jurisdiction,
+              documents: (jurisdiction.documents || []).map(d => 
+                d.id === doc.id ? { ...d, file_url: res.data.file_url, downloaded_at: new Date().toISOString() } : d
+              )
+            });
+          }
+        } catch (e) {
+          console.error(`Failed to auto-download ${doc.title}:`, e);
+        }
+      }
+    };
+    autoDownloadPDFs();
+  }, [jurisdiction.id]);
 
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
