@@ -92,9 +92,11 @@ export default function PermittingRepository() {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `Research and create a profile for this jurisdiction for sign permitting: "${aiDiscoverQuery}"
 
+IMPORTANT: ONLY research jurisdictions in Ohio (OH), Kentucky (KY), or Indiana (IN). Do not provide information about any other states.
+
 Identify:
 1. Is this a county, city, township, or municipality?
-2. What state is it in?
+2. What state is it in? (Must be OH, KY, or IN)
 3. Official name
 
 Return JSON:
