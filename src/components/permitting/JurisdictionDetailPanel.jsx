@@ -634,14 +634,11 @@ Answer the question based on the documents and information available. Be specifi
                     {doc.ai_summary && (
                       <div>
                         <p className="text-[10px] font-semibold text-purple-600 mb-1">AI Summary</p>
-                        <p className="text-xs text-gray-700">{doc.ai_summary}</p>
+                        <p className="text-xs text-gray-700 leading-relaxed">{doc.ai_summary}</p>
                       </div>
                     )}
                     {doc.extracted_text && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-gray-500 mb-1">Extracted Content {expandedDocSearch[doc.id] && `(${doc.extracted_text.toLowerCase().includes(expandedDocSearch[doc.id].toLowerCase()) ? 'match found' : 'no matches'})`}</p>
-                        <p className="text-xs text-gray-600 line-clamp-4 font-mono bg-white p-2 rounded border">{doc.extracted_text.substring(0, 500)}...</p>
-                      </div>
+                      <ExtractedContentDisplay extractedText={doc.extracted_text} />
                     )}
                   </div>
                 )}
