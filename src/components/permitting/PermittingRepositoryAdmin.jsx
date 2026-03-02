@@ -29,6 +29,7 @@ export default function PermittingRepositoryAdmin() {
   });
   const [progressDialog, setProgressDialog] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(false);
+  const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
     loadJurisdictions();
