@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw,
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
+import PDFViewer from "./PDFViewer";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
