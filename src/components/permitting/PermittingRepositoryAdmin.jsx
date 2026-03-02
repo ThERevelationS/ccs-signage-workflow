@@ -14,6 +14,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 
 export default function PermittingRepositoryAdmin() {
@@ -32,6 +41,8 @@ export default function PermittingRepositoryAdmin() {
   const [bulkAddText, setBulkAddText] = useState('');
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const [bulkAddError, setBulkAddError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
@@ -191,6 +202,25 @@ export default function PermittingRepositoryAdmin() {
     setBatchUpdating(false);
   };
 
+  const handleDeleteAll = async () => {
+    setIsDeleting(true);
+    try {
+      for (const jurisdiction of jurisdictions) {
+        try {
+          await base44.entities.JurisdictionProfile.delete(jurisdiction.id);
+        } catch (e) {
+          console.error(`Failed to delete ${jurisdiction.id}:`, e);
+        }
+      }
+      await loadJurisdictions();
+      setShowDeleteConfirm(false);
+    } catch (e) {
+      console.error("Delete all error:", e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getDataStatus = (j) => {
     const hasWebsite = !!j.website_url;
     const hasPermitting = !!j.permitting_url;
@@ -331,23 +361,33 @@ export default function PermittingRepositoryAdmin() {
           </div>
         </div>
 
-        <Button 
-          onClick={handleBatchUpdate}
-          disabled={isBatchUpdating || selectedIds.size === 0}
-          className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
-        >
-          {isBatchUpdating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Updating {selectedIds.size} jurisdiction(s)...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4" />
-              AI Research Selected ({selectedIds.size})
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleBatchUpdate}
+            disabled={isBatchUpdating || selectedIds.size === 0}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 gap-2"
+          >
+            {isBatchUpdating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Updating {selectedIds.size} jurisdiction(s)...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4" />
+                AI Research Selected ({selectedIds.size})
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isDeleting || jurisdictions.length === 0}
+            variant="destructive"
+            className="gap-2"
+          >
+            Delete All
+          </Button>
+        </div>
       </div>
 
       {/* Jurisdictions List */}
@@ -438,6 +478,35 @@ export default function PermittingRepositoryAdmin() {
           <p className="text-xs text-gray-500">Need Updates</p>
         </div>
       </div>
+
+      {/* Delete All Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Jurisdictions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all {jurisdictions.length} jurisdictions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2">
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete All'
+              )}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
