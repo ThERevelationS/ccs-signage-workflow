@@ -224,6 +224,11 @@ export default function PermittingRepositoryAdmin() {
         } catch (e) {
           console.error(`Failed to delete ${jurisdiction.id}:`, e);
         }
+        
+        // Small delay to avoid rate limiting
+        if (i < jurisdictions.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
       
       await loadJurisdictions();
