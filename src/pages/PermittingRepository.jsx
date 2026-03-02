@@ -207,6 +207,7 @@ Return JSON:
               {aiDiscoverLoading ? "Researching..." : "Discover"}
             </Button>
           </div>
+          <p className="text-[10px] text-gray-500 mb-2">AI validates all discovered document URLs to prevent 404 errors</p>
 
           {/* Content Search */}
           <div className="flex gap-2 mb-2">
