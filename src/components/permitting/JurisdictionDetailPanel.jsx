@@ -256,13 +256,15 @@ Answer the question based on the documents and information available. Be specifi
               <div className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
                 {searchResults.map(result => (
                   <div 
-                    key={result.id}
+                    key={`${result.type}-${result.id}`}
                     onClick={() => {
-                      setExpandedDoc(result.id);
+                      if (result.type === 'document') {
+                        setExpandedDoc(result.id);
+                      }
                       setDocSearchTerm("");
                       setSearchResults([]);
                     }}
-                    className="text-xs p-2 bg-white rounded cursor-pointer hover:bg-blue-100 border border-blue-200"
+                    className={`text-xs p-2 rounded cursor-pointer border ${result.type === 'jurisdiction' ? 'bg-purple-50 border-purple-200 hover:bg-purple-100' : 'bg-white border-blue-200 hover:bg-blue-100'}`}
                   >
                     <p className="font-medium text-gray-800">{result.title}</p>
                     <p className="text-gray-600 text-[11px] mt-0.5">{result.snippet}</p>
