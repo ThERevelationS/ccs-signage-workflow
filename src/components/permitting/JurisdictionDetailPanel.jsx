@@ -547,14 +547,51 @@ Answer the question based on the documents and information available. Be specifi
 
                     {/* Search within document */}
                     {(doc.extracted_text || doc.ai_summary) && (
-                      <div className="mt-3">
-                        <Input
-                          type="text"
-                          placeholder="Search within document..."
-                          value={expandedDocSearch[doc.id] || ""}
-                          onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
-                          className="text-xs h-7"
-                        />
+                      <div className="mt-3 space-y-2">
+                        <div className="relative flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Search within document..."
+                            value={expandedDocSearch[doc.id] || ""}
+                            onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
+                            className="text-xs h-7 flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
+                            disabled={searchingDocId === doc.id || !expandedDocSearch[doc.id]?.trim()}
+                            className="h-7 px-2 text-xs gap-1"
+                          >
+                            {searchingDocId === doc.id ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              </>
+                            ) : (
+                              <>
+                                <Search className="w-3 h-3" />
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {docSearchResults[doc.id] && (
+                          <div className="bg-white p-2 rounded border border-blue-200">
+                            {docSearchResults[doc.id].matches === 0 ? (
+                              <p className="text-xs text-gray-500">No matches found</p>
+                            ) : (
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-blue-700">{docSearchResults[doc.id].matches} match{docSearchResults[doc.id].matches !== 1 ? 'es' : ''} found</p>
+                                {docSearchResults[doc.id].snippets.map((snippet, i) => (
+                                  <p key={i} className="text-xs text-gray-600 italic line-clamp-2">
+                                    ...{snippet}...
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
