@@ -114,11 +114,60 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setSearchResults(results);
   };
 
-  const searchWithinDocument = (docId, searchText) => {
+  const searchWithinDocument = async (docId, searchText) => {
     setExpandedDocSearch(prev => ({
       ...prev,
       [docId]: searchText
     }));
+    
+    if (!searchText.trim()) {
+      setDocSearchResults(prev => {
+        const newResults = { ...prev };
+        delete newResults[docId];
+        return newResults;
+      });
+      return;
+    }
+
+    setSearchingDocId(docId);
+    try {
+      const doc = jurisdiction.documents.find(d => d.id === docId);
+      const searchContent = (doc.extracted_text || doc.ai_summary || "").toLowerCase();
+      const searchTerm = searchText.toLowerCase();
+      
+      if (!searchContent) {
+        setDocSearchResults(prev => ({
+          ...prev,
+          [docId]: { matches: 0, snippets: [] }
+        }));
+      } else {
+        // Find all matches with context
+        const matches = [];
+        const words = searchContent.split(/\s+/);
+        const searchWords = searchTerm.split(/\s+/);
+        
+        let currentIndex = 0;
+        for (let i = 0; i < words.length; i++) {
+          if (searchWords.every(sw => 
+            words.slice(i, i + searchWords.length).join(' ').toLowerCase().includes(sw)
+          )) {
+            const snippetStart = Math.max(0, i - 5);
+            const snippetEnd = Math.min(words.length, i + searchWords.length + 5);
+            const snippet = words.slice(snippetStart, snippetEnd).join(' ');
+            matches.push(snippet);
+            i += searchWords.length - 1;
+          }
+        }
+        
+        setDocSearchResults(prev => ({
+          ...prev,
+          [docId]: { matches: matches.length, snippets: matches.slice(0, 3) }
+        }));
+      }
+    } catch (e) {
+      console.error("Search error:", e);
+    }
+    setSearchingDocId(null);
   };
 
   const analyzeDocument = async (doc) => {
