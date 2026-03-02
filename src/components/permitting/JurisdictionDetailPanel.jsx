@@ -22,6 +22,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [asking, setAsking] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
+  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
