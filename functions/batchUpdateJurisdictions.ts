@@ -89,10 +89,59 @@ Return as JSON with this structure:
               website_url: { type: "string" },
               permitting_url: { type: "string" },
               ai_summary: { type: "string" },
-              contact_info: { type: "object" },
-              permit_requirements: { type: "object" },
-              documents: { type: "array" },
-              parent_county: { type: "object" },
+              contact_info: { 
+                type: "object",
+                properties: {
+                  department: { type: "string" },
+                  phone: { type: "string" },
+                  email: { type: "string" },
+                  address: { type: "string" }
+                }
+              },
+              permit_requirements: { 
+                type: "object",
+                properties: {
+                  requires_permit: { type: "boolean" },
+                  max_sign_area_sqft: { type: "number" },
+                  max_height_ft: { type: "number" },
+                  setback_requirements: { type: "string" },
+                  illumination_allowed: { type: "boolean" },
+                  electronic_signs_allowed: { type: "boolean" },
+                  fee_range: { type: "string" },
+                  processing_time: { type: "string" }
+                }
+              },
+              documents: { 
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    url: { type: "string" },
+                    doc_type: { type: "string" }
+                  }
+                }
+              },
+              parent_county: { 
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  website_url: { type: "string" },
+                  permitting_url: { type: "string" },
+                  contact_info: { type: "object" },
+                  documents: { 
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        url: { type: "string" },
+                        doc_type: { type: "string" }
+                      }
+                    }
+                  }
+                }
+              },
               sqft_width_height_rules: { type: "string" },
               height_allowances: { type: "string" },
               setback_rules: { type: "string" },
