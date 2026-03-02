@@ -73,22 +73,10 @@ export default function PermittingRepositoryAdmin() {
   };
 
   const proceedWithUpdate = async () => {
-    setConfirmDialog(false);
     const idsToUpdate = Array.from(selectedIds);
-    const jurisdictionMap = Object.fromEntries(jurisdictions.map(j => [j.id, j.name]));
 
     // Update global progress
     startResearch(idsToUpdate.length);
-    
-    // Also update local progress dialog for admin panel feedback
-    setProgressDialog({
-      total: idsToUpdate.length,
-      processed: 0,
-      updated: 0,
-      skipped: 0,
-      currentJurisdiction: null,
-      results: []
-    });
 
     setBatchUpdating(true);
     
@@ -107,11 +95,6 @@ export default function PermittingRepositoryAdmin() {
             processed: currentProcessed,
             currentJurisdiction: jurisdictionName
           });
-          setProgressDialog(prev => prev ? {
-            ...prev,
-            processed: currentProcessed,
-            currentJurisdiction: jurisdictionName
-          } : null);
         }
       }
       originalLog.apply(console, args);
@@ -125,36 +108,18 @@ export default function PermittingRepositoryAdmin() {
 
       if (res.data?.success) {
         completeResearch(res.data.updated, res.data.skipped);
-        setProgressDialog(prev => ({
-          ...prev,
-          processed: res.data.total,
-          updated: res.data.updated,
-          skipped: res.data.skipped,
-          isComplete: true
-        }));
         
         setTimeout(() => {
           loadJurisdictions();
           setSelectedIds(new Set());
-          setProgressDialog(null);
         }, 2000);
       } else {
         const errorMsg = res.data?.message || "Unknown error";
         completeResearch(0, 0, errorMsg);
-        setProgressDialog(prev => ({
-          ...prev,
-          error: errorMsg,
-          isComplete: true
-        }));
       }
     } catch (e) {
       console.error("Batch update error:", e);
       completeResearch(0, 0, e.message);
-      setProgressDialog(prev => ({
-        ...prev,
-        error: e.message,
-        isComplete: true
-      }));
     } finally {
       console.log = originalLog;
     }
