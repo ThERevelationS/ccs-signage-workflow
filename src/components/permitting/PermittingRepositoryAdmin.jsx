@@ -30,6 +30,8 @@ export default function PermittingRepositoryAdmin() {
   });
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [bulkAddText, setBulkAddText] = useState('');
+  const [isBulkAdding, setIsBulkAdding] = useState(false);
+  const [bulkAddError, setBulkAddError] = useState('');
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
@@ -68,31 +70,48 @@ export default function PermittingRepositoryAdmin() {
   const handleBulkAdd = async () => {
     if (!bulkAddText.trim()) return;
     
-    const lines = bulkAddText.trim().split('\n');
-    const created = [];
+    setIsBulkAdding(true);
+    setBulkAddError('');
     
-    for (const line of lines) {
-      const parts = line.trim().split(',').map(p => p.trim());
-      if (parts.length >= 2) {
-        const [name, state, type = 'county'] = parts;
-        try {
-          const newJ = await base44.entities.JurisdictionProfile.create({
-            name,
-            state,
-            type,
-            auto_refresh: true
-          });
-          created.push(newJ);
-        } catch (e) {
-          console.error(`Failed to create ${name}, ${state}:`, e);
+    try {
+      const lines = bulkAddText.trim().split('\n');
+      const created = [];
+      let failed = 0;
+      
+      for (const line of lines) {
+        const parts = line.trim().split(',').map(p => p.trim());
+        if (parts.length >= 2) {
+          const [name, state, type = 'county'] = parts;
+          try {
+            const newJ = await base44.entities.JurisdictionProfile.create({
+              name,
+              state,
+              type,
+              auto_refresh: true
+            });
+            created.push(newJ);
+          } catch (e) {
+            failed++;
+            console.error(`Failed to create ${name}, ${state}:`, e);
+          }
         }
       }
-    }
-    
-    if (created.length > 0) {
-      loadJurisdictions();
-      setBulkAddText('');
-      setShowBulkAdd(false);
+      
+      if (created.length > 0) {
+        await loadJurisdictions();
+        setBulkAddText('');
+        setShowBulkAdd(false);
+        if (failed > 0) {
+          setBulkAddError(`Created ${created.length} jurisdictions, ${failed} failed.`);
+        }
+      } else if (failed > 0) {
+        setBulkAddError(`Failed to create any jurisdictions. Check the format.`);
+      }
+    } catch (e) {
+      setBulkAddError(`Error: ${e.message}`);
+      console.error('Bulk add error:', e);
+    } finally {
+      setIsBulkAdding(false);
     }
   };
 
@@ -242,13 +261,26 @@ export default function PermittingRepositoryAdmin() {
               onChange={(e) => setBulkAddText(e.target.value)}
               className="w-full h-32 p-2 border rounded text-sm"
               placeholder="Hamilton County, OH, county&#10;Cincinnati, OH, city&#10;Northern Kentucky, KY, county"
+              disabled={isBulkAdding}
             />
+            {bulkAddError && (
+              <div className={`text-xs p-2 rounded ${bulkAddError.includes('Failed') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                {bulkAddError}
+              </div>
+            )}
             <Button
               onClick={handleBulkAdd}
-              disabled={!bulkAddText.trim()}
+              disabled={!bulkAddText.trim() || isBulkAdding}
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              Add Jurisdictions
+              {isBulkAdding ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Adding...
+                </>
+              ) : (
+                'Add Jurisdictions'
+              )}
             </Button>
           </div>
         )}
