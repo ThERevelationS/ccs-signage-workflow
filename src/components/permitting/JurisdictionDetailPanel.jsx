@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
+import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
