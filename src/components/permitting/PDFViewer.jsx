@@ -12,17 +12,18 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const timeoutRef = React.useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        setError("PDF took too long to load. Try opening in a new tab.");
-        setLoading(false);
-      }
-    }, 15000);
+    timeoutRef.current = setTimeout(() => {
+      setError("Unable to load PDF in viewer");
+      setLoading(false);
+    }, 12000);
 
-    return () => clearTimeout(timer);
-  }, [loading]);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
