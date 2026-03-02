@@ -104,14 +104,42 @@ Return as JSON:
       finalDocs = [...manualDocs, ...newAiDocs];
     }
 
-    // Extract text from PDFs if documents were updated
+    // Download and extract text from PDFs if documents were updated
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
       const newAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && !d.extracted_text);
-      const docsWithText = await Promise.all(newAiDocs.map(async (doc) => {
-        if (!doc.url || !doc.url.toLowerCase().includes('.pdf')) return doc;
+      
+      // Process PDFs sequentially to avoid overwhelming the system
+      const docsWithText = [];
+      for (const doc of newAiDocs) {
+        if (!doc.url || !doc.url.toLowerCase().includes('.pdf')) {
+          docsWithText.push(doc);
+          continue;
+        }
+        
         try {
+          // Download the PDF first
+          const downloadResult = await fetch(doc.url);
+          if (!downloadResult.ok) {
+            docsWithText.push(doc);
+            continue;
+          }
+          
+          const pdfBuffer = await downloadResult.arrayBuffer();
+          const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+          
+          // Upload the downloaded PDF
+          const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({
+            file: pdfBlob
+          });
+          
+          if (!uploadResult?.file_url) {
+            docsWithText.push(doc);
+            continue;
+          }
+          
+          // Extract text from the uploaded PDF
           const extractResult = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
-            file_url: doc.url,
+            file_url: uploadResult.file_url,
             json_schema: {
               type: "object",
               properties: {
@@ -120,18 +148,22 @@ Return as JSON:
               }
             }
           });
+          
           if (extractResult?.status === 'success' && extractResult.output) {
-            return {
+            docsWithText.push({
               ...doc,
               extracted_text: extractResult.output.content || "",
-              ai_summary: extractResult.output.summary || doc.ai_summary
-            };
+              ai_summary: extractResult.output.summary || doc.ai_summary,
+              file_url: uploadResult.file_url
+            });
+          } else {
+            docsWithText.push(doc);
           }
         } catch (e) {
-          // Extraction failed, keep doc without text
+          // Download or extraction failed, keep doc without text
+          docsWithText.push(doc);
         }
-        return doc;
-      }));
+      }
 
       const manualDocs = finalDocs.filter(d => d.source === 'manual');
       const existingAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && d.extracted_text);
