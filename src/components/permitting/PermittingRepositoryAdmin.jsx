@@ -43,6 +43,7 @@ export default function PermittingRepositoryAdmin() {
   const [bulkAddError, setBulkAddError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState({ processed: 0, total: 0, currentJurisdiction: '' });
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
@@ -204,16 +205,30 @@ export default function PermittingRepositoryAdmin() {
 
   const handleDeleteAll = async () => {
     setIsDeleting(true);
+    const total = jurisdictions.length;
+    setDeleteProgress({ processed: 0, total, currentJurisdiction: '' });
+    
+    let deleted = 0;
     try {
-      for (const jurisdiction of jurisdictions) {
+      for (let i = 0; i < jurisdictions.length; i++) {
+        const jurisdiction = jurisdictions[i];
+        setDeleteProgress({
+          processed: i,
+          total,
+          currentJurisdiction: `${jurisdiction.name}, ${jurisdiction.state}`
+        });
+        
         try {
           await base44.entities.JurisdictionProfile.delete(jurisdiction.id);
+          deleted++;
         } catch (e) {
           console.error(`Failed to delete ${jurisdiction.id}:`, e);
         }
       }
+      
       await loadJurisdictions();
       setShowDeleteConfirm(false);
+      setDeleteProgress({ processed: 0, total: 0, currentJurisdiction: '' });
     } catch (e) {
       console.error("Delete all error:", e);
     } finally {
@@ -488,6 +503,19 @@ export default function PermittingRepositoryAdmin() {
               This will permanently delete all {jurisdictions.length} jurisdictions. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {isDeleting && deleteProgress.total > 0 && (
+            <div className="space-y-2 my-4">
+              <Progress value={(deleteProgress.processed / deleteProgress.total) * 100} className="h-2" />
+              <div className="text-xs text-gray-600 space-y-1">
+                <p className="font-medium">{deleteProgress.processed} of {deleteProgress.total} deleted</p>
+                {deleteProgress.currentJurisdiction && (
+                  <p className="text-gray-500 truncate">Deleting: {deleteProgress.currentJurisdiction}</p>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
