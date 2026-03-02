@@ -11,9 +11,16 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setLoading(false);
+    setError(null);
+  };
+
+  const onDocumentLoadError = (error) => {
+    setError(error.message);
     setLoading(false);
   };
 
@@ -40,15 +47,29 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
 
       {/* PDF Viewer */}
       <div className="flex-1 overflow-auto flex items-center justify-center">
-        {loading && (
+        {error ? (
+          <div className="flex flex-col items-center gap-4 p-6 text-center">
+            <div className="text-red-400 text-sm max-w-xs">
+              <p className="font-medium mb-2">Unable to load PDF</p>
+              <p className="text-xs text-gray-400 mb-4">{error}</p>
+            </div>
+            <Button
+              onClick={() => window.open(fileUrl, '_blank')}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Open in New Tab
+            </Button>
+          </div>
+        ) : loading ? (
           <div className="flex items-center gap-2 text-gray-400">
             <Loader2 className="w-5 h-5 animate-spin" />
             Loading PDF...
           </div>
+        ) : (
+          <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading="">
+            <Page pageNumber={pageNumber} />
+          </Document>
         )}
-        <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess} loading="">
-          <Page pageNumber={pageNumber} />
-        </Document>
       </div>
 
       {/* Navigation */}
