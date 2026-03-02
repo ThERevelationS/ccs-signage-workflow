@@ -90,7 +90,7 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Research and create a profile for this jurisdiction for sign permitting: "${aiDiscoverQuery}"
+        prompt: `Research and create a comprehensive profile for this jurisdiction for sign permitting: "${aiDiscoverQuery}"
 
 IMPORTANT: ONLY research jurisdictions in Ohio (OH), Kentucky (KY), or Indiana (IN). Do not provide information about any other states.
 
@@ -98,6 +98,16 @@ Identify:
 1. Is this a county, city, township, or municipality?
 2. What state is it in? (Must be OH, KY, or IN)
 3. Official name
+4. Specific permit requirements:
+   - SQFT/Width/Height allowance rules
+   - Height allowances and rules
+   - Setback requirements and rules
+   - Lighting allowances and restrictions
+5. Available permit forms (electrical IBI, signage/construction, zoning, building, NIC, NKYEI, locality-specific)
+6. If this is a city/town/village/township, also research:
+   - Parent county name and information
+   - Parent county permitting URLs and contacts
+   - Parent county permit forms and documents
 
 Return JSON:
 {
@@ -120,7 +130,18 @@ Return JSON:
   },
   "documents": [
     { "title": "", "url": "", "doc_type": "sign_ordinance|permit_application|zoning_code|fee_schedule|checklist|other", "ai_summary": "" }
-  ]
+  ],
+  "sqft_width_height_rules": "",
+  "height_allowances": "",
+  "setback_rules": "",
+  "lighting_allowances": "",
+  "parent_county": {
+    "name": "",
+    "website_url": "",
+    "permitting_url": "",
+    "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
+    "documents": []
+  }
 }`,
         add_context_from_internet: true,
         response_json_schema: {
@@ -130,7 +151,12 @@ Return JSON:
             website_url: { type: "string" }, permitting_url: { type: "string" },
             ai_summary: { type: "string" }, contact_info: { type: "object" },
             permit_requirements: { type: "object" },
-            documents: { type: "array", items: { type: "object" } }
+            documents: { type: "array", items: { type: "object" } },
+            sqft_width_height_rules: { type: "string" },
+            height_allowances: { type: "string" },
+            setback_rules: { type: "string" },
+            lighting_allowances: { type: "string" },
+            parent_county: { type: "object" }
           }
         }
       });
@@ -146,9 +172,20 @@ Return JSON:
         last_fetched: new Date().toISOString()
       }));
 
+      // Add parent county documents if applicable
+      const countyDocs = (data.parent_county?.documents || []).map((d, i) => ({
+        id: `ai_county_${Date.now()}_${i}`,
+        title: `[${data.parent_county.name}] ${d.title || "Untitled"}`,
+        url: d.url || "",
+        doc_type: d.doc_type || "other",
+        ai_summary: d.ai_summary || "",
+        source: "ai_discovered",
+        last_fetched: new Date().toISOString()
+      }));
+
       const created = await JurisdictionProfile.create({
         ...data,
-        documents: docs,
+        documents: [...docs, ...countyDocs],
         last_updated: new Date().toISOString(),
         auto_refresh: true
       });
