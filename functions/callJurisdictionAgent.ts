@@ -88,7 +88,6 @@ Return ONLY valid JSON with these fields (use null for unfound data):
     return Response.json({ 
       success: true,
       data: researchData,
-      conversation_id: conversation.id,
       timestamp: new Date().toISOString()
     });
 
