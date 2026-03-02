@@ -66,7 +66,13 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
             Loading PDF...
           </div>
         ) : (
-          <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading="">
+          <Document 
+            file={{ url: fileUrl, withCredentials: false }} 
+            onLoadSuccess={onDocumentLoadSuccess} 
+            onLoadError={onDocumentLoadError}
+            loading=""
+            error="Failed to load PDF"
+          >
             <Page pageNumber={pageNumber} />
           </Document>
         )}
