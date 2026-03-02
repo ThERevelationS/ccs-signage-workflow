@@ -155,9 +155,11 @@ Return as JSON with this structure (add parent_county fields if applicable):
   "height_allowances": "...",
   "setback_rules": "...",
   "lighting_allowances": "..."
-}`,
-        add_context_from_internet: true,
-        response_json_schema: {
+  }`;
+     const result = await base44.integrations.Core.InvokeLLM({
+       prompt,
+       add_context_from_internet: true,
+       response_json_schema: {
           type: "object",
           properties: {
             website_url: { type: "string" },
