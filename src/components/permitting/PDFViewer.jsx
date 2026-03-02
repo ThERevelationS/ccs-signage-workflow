@@ -76,6 +76,18 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
             <Loader2 className="w-5 h-5 animate-spin" />
             Loading PDF...
           </div>
+        ) : numPages ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <Document 
+              file={{ url: fileUrl, withCredentials: false }} 
+              onLoadSuccess={onDocumentLoadSuccess} 
+              onLoadError={onDocumentLoadError}
+              loading=""
+              error="Failed to load PDF"
+            >
+              <Page pageNumber={pageNumber} width={Math.min(window.innerWidth - 40, 900)} />
+            </Document>
+          </div>
         ) : (
           <Document 
             file={{ url: fileUrl, withCredentials: false }} 
@@ -84,7 +96,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
             loading=""
             error="Failed to load PDF"
           >
-            <Page pageNumber={pageNumber} />
+            <Page pageNumber={1} width={Math.min(window.innerWidth - 40, 900)} />
           </Document>
         )}
       </div>
