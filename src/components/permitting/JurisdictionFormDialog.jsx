@@ -221,8 +221,43 @@ Return as JSON with this structure (add parent_county fields if applicable):
   };
 
   const handleSave = async () => {
+    // Check for duplicates
+    if (!form.name || !form.state) {
+      alert('Please fill in Name and State');
+      return;
+    }
+
     setSaving(true);
-    await onSave(form);
+    try {
+      // Check if this jurisdiction already exists (excluding current edit)
+      const existing = await base44.entities.JurisdictionProfile.filter({
+        name: form.name,
+        state: form.state
+      });
+
+      if (existing && existing.length > 0) {
+        // If editing, check if it's a different record
+        if (isEdit && existing[0].id === jurisdiction.id) {
+          // Same jurisdiction, proceed
+          await onSave(form);
+        } else if (!isEdit) {
+          // Creating new and duplicate exists
+          alert(`${form.name}, ${form.state} already exists in the repository. Please edit the existing profile instead.`);
+          setSaving(false);
+          return;
+        } else {
+          // Editing but different duplicate exists
+          alert(`Another jurisdiction named ${form.name}, ${form.state} already exists. Please use a different name.`);
+          setSaving(false);
+          return;
+        }
+      } else {
+        await onSave(form);
+      }
+    } catch (e) {
+      console.error("Save error:", e);
+      alert("Error saving jurisdiction");
+    }
     setSaving(false);
   };
 
