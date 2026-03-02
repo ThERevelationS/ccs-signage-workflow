@@ -182,12 +182,9 @@ Return JSON:
     setAiDiscoverLoading(false);
   };
 
-  const displayList = searchResults !== null ? searchResults : jurisdictions.filter(j => {
-    if (stateFilter !== "All" && j.state !== stateFilter) return false;
-    if (typeFilter !== "all" && j.type !== typeFilter) return false;
+  const displayList = jurisdictions.filter(j => {
     if (searchTerm) {
-      const s = searchTerm.toLowerCase();
-      return j.name?.toLowerCase().includes(s) || j.state?.toLowerCase().includes(s) || j.ai_summary?.toLowerCase().includes(s);
+      return j.name?.toLowerCase().includes(searchTerm.toLowerCase());
     }
     return true;
   });
