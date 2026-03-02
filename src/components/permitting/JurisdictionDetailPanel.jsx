@@ -236,7 +236,7 @@ Answer the question based on the documents and information available. Be specifi
               <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search documents..."
+                placeholder="Search City/Locality/Info..."
                 value={docSearchTerm}
                 onChange={(e) => searchDocuments(e.target.value)}
                 className="text-xs pl-8 h-7"
