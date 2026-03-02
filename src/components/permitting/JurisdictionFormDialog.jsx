@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Wand2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Wand2, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
+const US_STATES = ["OH","KY","IN"]; // Restricted to Ohio, Kentucky, Indiana
 const DOC_TYPES = ["sign_ordinance","permit_application","zoning_code","fee_schedule","checklist","other"];
 
 export default function JurisdictionFormDialog({ open, onClose, jurisdiction, onSave }) {
@@ -21,6 +21,9 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   });
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingPDF, setUploadingPDF] = useState(false);
+  const [analyzingPDF, setAnalyzingPDF] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (jurisdiction) setForm({ ...form, ...jurisdiction });
@@ -45,12 +48,64 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     setForm(f => ({ ...f, documents: f.documents.filter(d => d.id !== id) }));
   };
 
+  const handlePDFUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.includes('pdf')) return;
+    
+    setUploadingPDF(true);
+    try {
+      // Upload PDF
+      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const fileUrl = uploadRes.url;
+
+      // Extract text from PDF
+      setAnalyzingPDF(true);
+      const analysisRes = await base44.integrations.Core.InvokeLLM({
+        prompt: `This is a permit-related PDF document. Extract the key information:\n1. Document title/type\n2. Jurisdiction name (if mentioned)\n3. Key permit requirements\n4. Fees\n5. Processing time\n\nProvide a structured summary.`,
+        file_urls: [fileUrl],
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            summary: { type: "string" },
+            jurisdiction: { type: "string" }
+          }
+        }
+      });
+
+      const analysis = typeof analysisRes === 'string' ? JSON.parse(analysisRes) : analysisRes;
+      
+      // Add document to form
+      setForm(f => ({
+        ...f,
+        documents: [...(f.documents || []), {
+          id: Date.now().toString(),
+          title: analysis.title || file.name.replace('.pdf', ''),
+          url: fileUrl,
+          file_url: fileUrl,
+          doc_type: "other",
+          source: "manual",
+          extracted_text: analysis.summary,
+          ai_summary: analysis.summary,
+          last_fetched: new Date().toISOString()
+        }]
+      }));
+    } catch (err) {
+      console.error("PDF upload/analysis error:", err);
+    } finally {
+      setUploadingPDF(false);
+      setAnalyzingPDF(false);
+      e.target.value = '';
+    }
+  };
+
   const aiGenerate = async () => {
     if (!form.name || !form.state) return;
     setAiLoading(true);
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Research ${form.name} ${form.type}, ${form.state} sign permit requirements.
+        prompt: `Research ${form.name} ${form.type}, ${form.state} sign permit requirements. IMPORTANT: Only research ${form.state}. Do not provide information from other states.
 Find:
 1. Official permitting/zoning department website URL
 2. Sign ordinance or zoning code URL
@@ -206,16 +261,24 @@ Return as JSON with this structure:
           </div>
 
           {/* Documents */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-700">Documents ({form.documents?.length || 0})</label>
-              <Button size="sm" variant="outline" onClick={addDocument} className="h-7 text-xs gap-1">
-                <Plus className="w-3 h-3" /> Add Manually
-              </Button>
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-semibold text-gray-800">Documents ({form.documents?.length || 0})</label>
+              <div className="flex gap-1">
+                <label className="cursor-pointer">
+                  <input type="file" accept=".pdf" onChange={handlePDFUpload} disabled={uploadingPDF || analyzingPDF} className="hidden" />
+                  <Button size="sm" variant="outline" asChild className="h-7 text-xs gap-1 cursor-pointer">
+                    <span>{uploadingPDF || analyzingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Upload PDF</span>
+                  </Button>
+                </label>
+                <Button size="sm" variant="outline" onClick={addDocument} className="h-7 text-xs gap-1">
+                  <Plus className="w-3 h-3" /> Add Manually
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="space-y-2 max-h-48 overflow-y-auto bg-white rounded-lg">
               {(form.documents || []).map(doc => (
-                <div key={doc.id} className="flex items-center gap-2 p-2 border rounded-lg bg-gray-50">
+                <div key={doc.id} className={`flex items-center gap-2 p-3 border-l-4 rounded-lg ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
                   <div className="flex-1 space-y-1">
                     <Input value={doc.title} onChange={e => updateDoc(doc.id, "title", e.target.value)} placeholder="Document title" className="h-7 text-xs" />
                     <Input value={doc.url} onChange={e => updateDoc(doc.id, "url", e.target.value)} placeholder="URL" className="h-7 text-xs" />
@@ -227,13 +290,28 @@ Return as JSON with this structure:
                         {DOC_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs capitalize">{t.replace("_", " ")}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <span className={`text-[10px] text-center px-1 rounded ${doc.source === 'ai_discovered' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className={`text-[10px] text-center px-1 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-purple-200 text-purple-700' : 'bg-amber-200 text-amber-700'}`}>
                       {doc.source === 'ai_discovered' ? 'AI' : 'Manual'}
                     </span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeDoc(doc.id)} className="h-7 w-7 flex-shrink-0">
-                    <Trash2 className="w-3 h-3 text-red-400" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setDeletingId(deletingId === doc.id ? null : doc.id)} 
+                    className="h-7 w-7 flex-shrink-0"
+                  >
+                    {deletingId === doc.id ? <X className="w-3 h-3 text-gray-500" /> : <Trash2 className="w-3 h-3 text-red-400" />}
                   </Button>
+                  {deletingId === doc.id && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => { removeDoc(doc.id); setDeletingId(null); }} 
+                      className="h-6 text-xs bg-red-100 hover:bg-red-200 text-red-700 flex-shrink-0"
+                    >
+                      Confirm
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
