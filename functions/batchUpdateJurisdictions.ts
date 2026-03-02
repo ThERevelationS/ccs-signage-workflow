@@ -158,7 +158,7 @@ Return as JSON with this structure:
         // Build update object, respecting manual data protection
         const updateData = {};
 
-        if (settings.updateWebsiteUrls && (!settings.skipManualData || !jurisdiction._manual_website_url)) {
+        if (settings.updateWebsites && (!settings.skipManualData || !jurisdiction._manual_website_url)) {
           updateData.website_url = data.website_url || jurisdiction.website_url;
         }
 
