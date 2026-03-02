@@ -29,12 +29,19 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [docSearchTerm, setDocSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
-  // Auto-download all PDFs on load
+  // Auto-download all PDFs on load (with URL validation)
   useEffect(() => {
     const autoDownloadPDFs = async () => {
       const docsToDownload = (jurisdiction.documents || []).filter(doc => doc.url && !doc.file_url);
       for (const doc of docsToDownload) {
         try {
+          // Validate URL first
+          const validation = await base44.functions.invoke('validateDocumentUrl', { url: doc.url });
+          if (!validation.data?.valid) {
+            console.warn(`Skipping invalid URL for ${doc.title}: ${doc.url}`);
+            continue;
+          }
+          
           const res = await downloadPermitPDF({
             jurisdiction_id: jurisdiction.id,
             document_url: doc.url,
@@ -49,7 +56,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
             });
           }
         } catch (e) {
-          console.error(`Failed to auto-download ${doc.title}:`, e);
+          console.error(`Failed to process ${doc.title}:`, e);
         }
       }
     };
