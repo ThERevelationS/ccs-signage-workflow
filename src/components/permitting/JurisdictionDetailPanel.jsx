@@ -33,7 +33,6 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [expandedDocSearch, setExpandedDocSearch] = useState({});
   const [analyzingDocId, setAnalyzingDocId] = useState(null);
   const [docAnalysis, setDocAnalysis] = useState({});
-  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
   // Close PDF viewer when jurisdiction changes
   useEffect(() => {
