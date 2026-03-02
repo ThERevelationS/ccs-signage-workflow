@@ -218,6 +218,36 @@ Answer the question based on the documents and information available. Be specifi
           <p className="text-xs font-semibold text-gray-700 mb-2">
             Documents ({jurisdiction.documents?.length || 0})
           </p>
+          <div className="mb-3">
+            <div className="relative">
+              <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search documents..."
+                value={docSearchTerm}
+                onChange={(e) => searchDocuments(e.target.value)}
+                className="text-xs pl-8 h-7"
+              />
+            </div>
+            {searchResults.length > 0 && (
+              <div className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
+                {searchResults.map(result => (
+                  <div 
+                    key={result.id}
+                    onClick={() => {
+                      setExpandedDoc(result.id);
+                      setDocSearchTerm("");
+                      setSearchResults([]);
+                    }}
+                    className="text-xs p-2 bg-white rounded cursor-pointer hover:bg-blue-100 border border-blue-200"
+                  >
+                    <p className="font-medium text-gray-800">{result.title}</p>
+                    <p className="text-gray-600 text-[11px] mt-0.5">{result.snippet}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="space-y-2">
             {(jurisdiction.documents || []).map(doc => (
               <div key={doc.id} className="border rounded-lg overflow-hidden">
