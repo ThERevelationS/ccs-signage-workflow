@@ -81,22 +81,22 @@ Return as JSON:
     const batchSettings = settings || { updateWebsites: true, updatePermittingUrls: true, updateRequirements: true, updateDocuments: true, skipManualData: true };
 
     if (batchSettings.updateWebsites && (!batchSettings.skipManualData || !jurisdiction._manual_website_url)) {
-      updateData.website_url = data.website_url || jurisdiction.website_url;
+      updateData.website_url = verifiedData.website_url || jurisdiction.website_url;
     }
 
     if (batchSettings.updatePermittingUrls && (!batchSettings.skipManualData || !jurisdiction._manual_permitting_url)) {
-      updateData.permitting_url = data.permitting_url || jurisdiction.permitting_url;
+      updateData.permitting_url = verifiedData.permitting_url || jurisdiction.permitting_url;
     }
 
-    // Always update CAGIS database URL if found
-    if (data.cagis_database_url) {
-      updateData.cagis_database_url = data.cagis_database_url;
+    // Always update CAGIS database URL if verified
+    if (verifiedData.cagis_database_url) {
+      updateData.cagis_database_url = verifiedData.cagis_database_url;
     }
 
     if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
-      updateData.permit_requirements = data.permit_requirements || jurisdiction.permit_requirements;
-      updateData.ai_summary = data.ai_summary || jurisdiction.ai_summary;
-      updateData.contact_info = data.contact_info || jurisdiction.contact_info;
+      updateData.permit_requirements = verifiedData.permit_requirements || jurisdiction.permit_requirements;
+      updateData.ai_summary = verifiedData.ai_summary || jurisdiction.ai_summary;
+      updateData.contact_info = verifiedData.contact_info || jurisdiction.contact_info;
     }
 
     // Handle documents
