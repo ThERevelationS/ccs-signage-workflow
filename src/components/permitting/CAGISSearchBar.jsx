@@ -24,7 +24,7 @@ export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
         searchTerm: searchTerm.trim()
       });
       
-      if (response.data?.propertyData) {
+      if (response?.data?.propertyData) {
         setResults(response.data.propertyData);
         setExpanded(true);
         if (onLocationSelect) {
@@ -34,14 +34,17 @@ export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
             data: response.data.propertyData
           });
         }
+      } else if (response?.data?.error) {
+        setError(response.data.error);
       } else {
-        setError(response.data?.error || "Unable to retrieve property information");
+        setError("Unable to retrieve property information. Property database may not be available for this jurisdiction.");
       }
     } catch (err) {
-      setError("Failed to search property database");
-      console.error(err);
+      setError("Property search unavailable. This feature may not be configured.");
+      console.error("Property search error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
