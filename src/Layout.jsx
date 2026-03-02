@@ -956,7 +956,10 @@ function LayoutContentWrapper({ children }) {
   const { currentUser } = useAuth();
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
-      <LayoutContent>{children}</LayoutContent>
+      <ResearchProgressProvider>
+        <LayoutContent>{children}</LayoutContent>
+        <ResearchProgressBar />
+      </ResearchProgressProvider>
     </ImportProgressProvider>
   );
 }
