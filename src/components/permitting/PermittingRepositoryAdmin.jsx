@@ -77,6 +77,7 @@ export default function PermittingRepositoryAdmin() {
   const proceedWithUpdate = async () => {
     setConfirmDialog(false);
     const idsToUpdate = Array.from(selectedIds);
+    const jurisdictionMap = Object.fromEntries(jurisdictions.map(j => [j.id, j.name]));
 
     // Update global progress
     startResearch(idsToUpdate.length);
@@ -92,6 +93,32 @@ export default function PermittingRepositoryAdmin() {
     });
 
     setBatchUpdating(true);
+    
+    // Create event listener for progress updates via console (backend sends via console.log)
+    const originalLog = console.log;
+    let currentProcessed = 0;
+    
+    console.log = function(...args) {
+      const message = args.join(' ');
+      if (message.includes('[RESEARCH_PROGRESS]')) {
+        const match = message.match(/Processing (\d+)\/(\d+): (.+)/);
+        if (match) {
+          currentProcessed = parseInt(match[1]);
+          const jurisdictionName = match[3];
+          updateProgress({
+            processed: currentProcessed,
+            currentJurisdiction: jurisdictionName
+          });
+          setProgressDialog(prev => prev ? {
+            ...prev,
+            processed: currentProcessed,
+            currentJurisdiction: jurisdictionName
+          } : null);
+        }
+      }
+      originalLog.apply(console, args);
+    };
+
     try {
       const res = await base44.functions.invoke('batchUpdateJurisdictions', {
         jurisdictionIds: idsToUpdate,
@@ -130,6 +157,8 @@ export default function PermittingRepositoryAdmin() {
         error: e.message,
         isComplete: true
       }));
+    } finally {
+      console.log = originalLog;
     }
     setBatchUpdating(false);
   };
