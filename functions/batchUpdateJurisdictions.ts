@@ -17,10 +17,13 @@ Deno.serve(async (req) => {
 
     let updated = 0;
     let skipped = 0;
+    let processed = 0;
 
     for (const jurisdictionId of jurisdictionIds) {
-      try {
-        const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdictionId);
+     processed++;
+     try {
+       const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdictionId);
+       console.log(`[RESEARCH_PROGRESS] Processing ${processed}/${jurisdictionIds.length}: ${jurisdiction?.name}`);
         
         if (!jurisdiction) continue;
 
