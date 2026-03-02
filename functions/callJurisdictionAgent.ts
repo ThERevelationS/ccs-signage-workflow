@@ -17,69 +17,72 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'jurisdictionName and jurisdictionState required' }, { status: 400 });
     }
 
-    // Call the jurisdictionResearch agent via conversation API
-    const conversation = await base44.agents.createConversation({
-      agent_name: "jurisdictionResearch",
-      metadata: {
-        name: `Research: ${jurisdictionName}, ${jurisdictionState}`,
-        type: "api_call",
-        jurisdiction_type: jurisdictionType
-      }
-    });
-
-    // Send the research request to the agent
-    const userMessage = `Research sign permitting requirements for ${jurisdictionName} ${jurisdictionType}, ${jurisdictionState}. ${includeParentCounty && jurisdictionType !== 'county' ? 'Include parent county information.' : ''}`;
+    // For now, fallback to direct LLM call since agent API may have timing issues
+    // The agent prompt instructions are documented in agents/jurisdictionResearch.json
     
-    await base44.agents.addMessage(conversation, {
-      role: "user",
-      content: userMessage
-    });
+    const researchPrompt = `You are a specialized jurisdiction research assistant for sign permit information.
 
-    // Wait for agent to complete research and parse the structured response
-    // The agent will return structured JSON data based on its instructions
-    let researchData = null;
-    let maxAttempts = 60; // 30 seconds with 500ms polling
-    
-    while (maxAttempts > 0) {
-      const updatedConversation = await base44.agents.getConversation(conversation.id);
-      
-      if (updatedConversation.messages.length > 1) {
-        const lastMessage = updatedConversation.messages[updatedConversation.messages.length - 1];
-        
-        if (lastMessage.role === 'assistant' && lastMessage.content) {
-          // Try to extract JSON from the response
-          try {
-            const jsonMatch = lastMessage.content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              researchData = JSON.parse(jsonMatch[0]);
-              break;
-            }
-          } catch (e) {
-            // If JSON parsing fails, return the raw response and let caller handle it
-            researchData = {
-              raw_response: lastMessage.content,
-              website_url: null,
-              permitting_url: null,
-              documents: [],
-              permit_requirements: {},
-              contact_info: {}
-            };
-            break;
-          }
+JURISDICTION: ${jurisdictionName} ${jurisdictionType}, ${jurisdictionState}
+
+CRITICAL RESEARCH RULES:
+1. ONLY use official government sources (city/county/state websites)
+2. DO NOT fabricate, guess, or hallucinate URLs
+3. If information cannot be verified, explicitly state "INFORMATION NOT FOUND"
+4. Cross-reference information when possible
+5. Prioritize official ordinances and zoning codes
+
+RESEARCH OBJECTIVES:
+- Official website URL (verify it's real and current)
+- Permitting/zoning department URL
+- Sign permit requirements (area, height, setback, illumination, electronic signs, fees, processing time)
+- Regulatory documents (ordinances, zoning codes, applications, fee schedules)
+- Contact information from official sources
+- Property lookup database URL (CAGIS or equivalent)
+${includeParentCounty && jurisdictionType !== 'county' ? `- Parent county information and documents (identify local vs. county rules)` : ''}
+
+Return ONLY valid JSON with these fields (use null for unfound data):
+{
+  "website_url": null,
+  "permitting_url": null,
+  "cagis_database_url": null,
+  "ai_summary": null,
+  "contact_info": { "department": null, "phone": null, "email": null, "address": null },
+  "permit_requirements": { "requires_permit": null, "max_sign_area_sqft": null, "max_height_ft": null, "setback_requirements": null, "illumination_allowed": null, "electronic_signs_allowed": null, "fee_range": null, "processing_time": null },
+  "documents": [],
+  "sqft_width_height_rules": null,
+  "height_allowances": null,
+  "setback_rules": null,
+  "lighting_allowances": null
+  ${includeParentCounty && jurisdictionType !== 'county' ? `,
+  "parent_county": { "name": null, "website_url": null, "permitting_url": null, "contact_info": {}, "documents": [] }` : ''}
+}`;
+
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: researchPrompt,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          website_url: { type: ["string", "null"] },
+          permitting_url: { type: ["string", "null"] },
+          cagis_database_url: { type: ["string", "null"] },
+          ai_summary: { type: ["string", "null"] },
+          contact_info: { type: "object" },
+          permit_requirements: { type: "object" },
+          documents: { type: "array" },
+          parent_county: { type: ["object", "null"] },
+          sqft_width_height_rules: { type: ["string", "null"] },
+          height_allowances: { type: ["string", "null"] },
+          setback_rules: { type: ["string", "null"] },
+          lighting_allowances: { type: ["string", "null"] }
         }
       }
-      
-      maxAttempts--;
-      if (maxAttempts > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
+    });
 
+    const researchData = typeof result === 'string' ? JSON.parse(result) : result;
+    
     if (!researchData) {
-      return Response.json({ 
-        error: 'Agent did not complete research within timeout',
-        conversation_id: conversation.id
-      }, { status: 408 });
+      return Response.json({ error: 'Failed to parse research results' }, { status: 400 });
     }
 
     return Response.json({ 
