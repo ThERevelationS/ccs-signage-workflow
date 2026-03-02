@@ -65,6 +65,29 @@ Answer the question based on the documents and information available. Be specifi
 
   const req = jurisdiction.permit_requirements || {};
 
+  const handleDownloadPDF = async (doc) => {
+    if (!doc.url || doc.file_url) return; // Already downloaded or no URL
+    setDownloadingDocId(doc.id);
+    try {
+      const res = await downloadPermitPDF({
+        jurisdiction_id: jurisdiction.id,
+        document_url: doc.url,
+        document_title: doc.title
+      });
+      if (res.data?.file_url) {
+        onUpdate({
+          ...jurisdiction,
+          documents: (jurisdiction.documents || []).map(d => 
+            d.id === doc.id ? { ...d, file_url: res.data.file_url, downloaded_at: new Date().toISOString() } : d
+          )
+        });
+      }
+    } catch (e) {
+      console.error("Download error:", e);
+    }
+    setDownloadingDocId(null);
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
