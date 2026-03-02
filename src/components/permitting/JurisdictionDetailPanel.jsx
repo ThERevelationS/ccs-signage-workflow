@@ -177,21 +177,33 @@ Answer the question based on the documents and information available. Be specifi
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
-            <Badge variant="outline">{jurisdiction.state}</Badge>
-            <Badge className="bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
+      <div className="p-4 border-b space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <h2 className="font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
+              <Badge variant="outline">{jurisdiction.state}</Badge>
+              <Badge className="bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
+            </div>
+            {jurisdiction.permitting_url && (
+              <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                <ExternalLink className="w-3 h-3" /> Official Permitting Page
+              </a>
+            )}
           </div>
-          {jurisdiction.permitting_url && (
-            <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
-              <ExternalLink className="w-3 h-3" /> Official Permitting Page
-            </a>
-          )}
+          <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+        
+        {/* Contact Info in Header */}
+        {jurisdiction.contact_info?.department && (
+          <div className="text-xs space-y-1 bg-gray-50 p-2 rounded border border-gray-200">
+            {jurisdiction.contact_info.department && <div><span className="font-semibold text-gray-700">Dept:</span> <span className="text-gray-600">{jurisdiction.contact_info.department}</span></div>}
+            {jurisdiction.contact_info.phone && <div><span className="font-semibold text-gray-700">Phone:</span> <a href={`tel:${jurisdiction.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.phone}</a></div>}
+            {jurisdiction.contact_info.email && <div><span className="font-semibold text-gray-700">Email:</span> <a href={`mailto:${jurisdiction.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.email}</a></div>}
+            {jurisdiction.contact_info.address && <div><span className="font-semibold text-gray-700">Address:</span> <span className="text-gray-600">{jurisdiction.contact_info.address}</span></div>}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
