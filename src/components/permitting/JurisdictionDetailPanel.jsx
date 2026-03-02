@@ -239,6 +239,38 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setDownloadingDocId(null);
   };
 
+  const handleResearch = async () => {
+    setIsResearching(true);
+    startResearch(1);
+    
+    try {
+      updateProgress({ processed: 0, currentJurisdiction: `${jurisdiction.name}, ${jurisdiction.state}` });
+      
+      const res = await base44.functions.invoke('refreshJurisdiction', {
+        jurisdictionId: jurisdiction.id,
+        settings: {
+          updateWebsites: !jurisdiction._manual_website_url,
+          updatePermittingUrls: !jurisdiction._manual_permitting_url,
+          updateRequirements: !jurisdiction._manual_requirements,
+          updateDocuments: !jurisdiction._manual_documents,
+          skipManualData: true
+        }
+      });
+      
+      if (res.data?.jurisdiction) {
+        onUpdate(res.data.jurisdiction);
+        completeResearch(1, 0);
+      } else {
+        completeResearch(0, 1, "Research completed but no updates");
+      }
+    } catch (e) {
+      console.error("Research error:", e);
+      completeResearch(0, 1, e.message);
+    }
+    
+    setIsResearching(false);
+  };
+
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
     const q = question.trim();
