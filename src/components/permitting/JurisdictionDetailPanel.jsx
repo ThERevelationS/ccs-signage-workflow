@@ -212,7 +212,7 @@ Answer the question based on the documents and information available. Be specifi
           <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
             <MapPin className="w-3 h-3" /> Location Lookup
           </p>
-          <CAGISSearchBar onLocationSelect={(loc) => {}} />
+          <CAGISSearchBar key={jurisdiction.id} onLocationSelect={(loc) => {}} />
         </div>
 
         {/* AI Summary */}
