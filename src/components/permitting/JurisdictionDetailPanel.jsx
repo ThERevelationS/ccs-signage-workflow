@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle, DownloadCloud } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
