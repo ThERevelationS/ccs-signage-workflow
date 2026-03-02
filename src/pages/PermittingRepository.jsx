@@ -239,11 +239,7 @@ Return JSON:
           />
         </div>
 
-        {searchResults !== null && (
-          <div className="px-4 py-1 bg-blue-50 border-b text-xs text-blue-700">
-            Document search: {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{globalQuery}"
-          </div>
-        )}
+
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
