@@ -361,7 +361,23 @@ Answer the question based on the documents and information available. Be specifi
               </a>
             )}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+          <div className="flex gap-1">
+            <Button 
+              size="icon" 
+              variant="outline"
+              onClick={handleResearch}
+              disabled={isResearching}
+              title="Run AI research to fill in jurisdiction data"
+              className="gap-1"
+            >
+              {isResearching ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+          </div>
         </div>
         
         {/* Contact Info in Header */}
