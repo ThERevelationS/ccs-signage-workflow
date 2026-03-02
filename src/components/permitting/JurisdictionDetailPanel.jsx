@@ -122,6 +122,47 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     }));
   };
 
+  const analyzeDocument = async (doc) => {
+    if (docAnalysis[doc.id]) return; // Already analyzed
+    if (!doc.extracted_text && !doc.ai_summary) {
+      console.warn("No content to analyze");
+      return;
+    }
+
+    setAnalyzingDocId(doc.id);
+    try {
+      const res = await base44.integrations.Core.InvokeLLM({
+        prompt: `Extract structured permit information from this document:\n\nTitle: ${doc.title}\nContent: ${(doc.extracted_text || doc.ai_summary || "").substring(0, 3000)}`,
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            permits_required: { type: ["boolean", "null"] },
+            permit_types: { type: ["array", "null"], items: { type: "string" } },
+            fees: { type: "object" },
+            deadlines: { type: "object" },
+            requirements: { type: ["array", "null"] },
+            contact_info: { type: "object" },
+            max_sign_height: { type: ["string", "null"] },
+            max_sign_area: { type: ["string", "null"] },
+            setback_requirements: { type: ["string", "null"] },
+            illumination_allowed: { type: ["boolean", "null"] },
+            electronic_signs_allowed: { type: ["boolean", "null"] },
+            key_restrictions: { type: ["array", "null"] }
+          }
+        }
+      });
+      
+      setDocAnalysis(prev => ({
+        ...prev,
+        [doc.id]: res
+      }));
+    } catch (e) {
+      console.error("Analysis error:", e);
+    }
+    setAnalyzingDocId(null);
+  };
+
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
     const q = question.trim();
