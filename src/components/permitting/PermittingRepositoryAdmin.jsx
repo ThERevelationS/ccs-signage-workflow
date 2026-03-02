@@ -453,7 +453,7 @@ export default function PermittingRepositoryAdmin() {
           <p className="text-xs text-gray-500">Need Updates</p>
         </div>
       </div>
-    </div>
+      </div>
     </>
   );
 }
