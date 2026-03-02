@@ -74,6 +74,7 @@ import CorebridgeAISettings from "@/components/admin/CorebridgeAISettings";
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
+import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;
