@@ -230,47 +230,13 @@ Return JSON:
           </div>
           <p className="text-[10px] text-gray-500 mb-2">AI validates all discovered document URLs to prevent 404 errors</p>
 
-          {/* Content Search */}
-          <div className="flex gap-2 mb-2">
-            <Input
-              value={globalQuery}
-              onChange={e => setGlobalQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder="Search inside documents..."
-              className="text-sm h-8"
-            />
-            <Button onClick={handleSearch} disabled={searching} size="sm" className="h-8 flex-shrink-0" variant="outline">
-              {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-            </Button>
-            {searchResults !== null && (
-              <Button size="sm" variant="ghost" className="h-8 text-xs flex-shrink-0" onClick={() => { setSearchResults(null); setGlobalQuery(""); }}>
-                Clear
-              </Button>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-2">
-            <Select value={stateFilter} onValueChange={setStateFilter}>
-              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {US_STATES.map(s => <SelectItem key={s} value={s} className="text-xs">{s === "All" ? "All States" : s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">All Types</SelectItem>
-                {["county","city","township","municipality"].map(t => <SelectItem key={t} value={t} className="text-xs capitalize">{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Filter..."
-              className="h-8 text-xs flex-1"
-            />
-          </div>
+          {/* Search Jurisdictions */}
+          <Input
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search jurisdiction names..."
+            className="text-sm h-8"
+          />
         </div>
 
         {searchResults !== null && (
