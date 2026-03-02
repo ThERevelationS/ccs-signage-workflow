@@ -38,15 +38,7 @@ export default function PermittingRepository() {
     setLoading(false);
   };
 
-  const handleSearch = async () => {
-    if (!globalQuery.trim()) { setSearchResults(null); return; }
-    setSearching(true);
-    try {
-      const res = await searchJurisdictions({ query: globalQuery, state: stateFilter !== "All" ? stateFilter : undefined });
-      setSearchResults(res.data?.results || []);
-    } catch (e) { console.error(e); }
-    setSearching(false);
-  };
+
 
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
