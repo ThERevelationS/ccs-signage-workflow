@@ -26,13 +26,15 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
   }, []);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setNumPages(numPages);
     setLoading(false);
     setError(null);
   };
 
   const onDocumentLoadError = (error) => {
-    setError(error.message || "Failed to load PDF");
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setError("Unable to load PDF in viewer");
     setLoading(false);
   };
 
