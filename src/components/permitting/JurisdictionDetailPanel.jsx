@@ -304,34 +304,90 @@ Answer the question based on the documents and information available. Be specifi
            </div>
          )}
 
-        {/* Key Requirements */}
-        {Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") && (
-          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400">
-            <p className="text-xs font-semibold text-red-800 mb-2">Key Requirements</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {req.requires_permit !== undefined && (
-                <div className="flex items-center gap-1">
-                  {req.requires_permit ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                  <span>Permit Required</span>
+        {/* Key Requirements & Rules */}
+        {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
+          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
+            <div>
+              <p className="text-xs font-semibold text-red-800 mb-2">Permit Requirements</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {req.requires_permit !== undefined && (
+                  <div className="flex items-center gap-1">
+                    {req.requires_permit ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                    <span>Permit Required</span>
+                  </div>
+                )}
+                {req.max_sign_area_sqft && <div><span className="text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
+                {req.max_height_ft && <div><span className="text-gray-500">Max Height:</span> {req.max_height_ft} ft</div>}
+                {req.fee_range && <div><span className="text-gray-500">Fees:</span> {req.fee_range}</div>}
+                {req.processing_time && <div><span className="text-gray-500">Processing:</span> {req.processing_time}</div>}
+                {req.illumination_allowed !== undefined && (
+                  <div className="flex items-center gap-1">
+                    {req.illumination_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                    <span>Illumination Allowed</span>
+                  </div>
+                )}
+                {req.electronic_signs_allowed !== undefined && (
+                  <div className="flex items-center gap-1">
+                    {req.electronic_signs_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
+                    <span>Electronic Signs</span>
+                  </div>
+                )}
+                {req.setback_requirements && <div className="col-span-2"><span className="text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
+              </div>
+            </div>
+
+            {(jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
+              <div className="border-t border-red-200 pt-3">
+                <p className="text-xs font-semibold text-red-800 mb-2">Detailed Rules</p>
+                <div className="space-y-2 text-xs text-gray-700">
+                  {jurisdiction.sqft_width_height_rules && (
+                    <div>
+                      <span className="font-medium text-red-700">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
+                    </div>
+                  )}
+                  {jurisdiction.height_allowances && (
+                    <div>
+                      <span className="font-medium text-red-700">Height Allowances:</span> {jurisdiction.height_allowances}
+                    </div>
+                  )}
+                  {jurisdiction.setback_rules && (
+                    <div>
+                      <span className="font-medium text-red-700">Setback Rules:</span> {jurisdiction.setback_rules}
+                    </div>
+                  )}
+                  {jurisdiction.lighting_allowances && (
+                    <div>
+                      <span className="font-medium text-red-700">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Parent County Info */}
+        {jurisdiction.parent_county?.name && (
+          <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-l-orange-400">
+            <p className="text-xs font-semibold text-orange-800 mb-2">Parent County: {jurisdiction.parent_county.name}</p>
+            <div className="space-y-1 text-xs text-gray-700">
+              {jurisdiction.parent_county.website_url && (
+                <div>
+                  <a href={jurisdiction.parent_county.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    {jurisdiction.parent_county.website_url}
+                  </a>
                 </div>
               )}
-              {req.max_sign_area_sqft && <div><span className="text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
-              {req.max_height_ft && <div><span className="text-gray-500">Max Height:</span> {req.max_height_ft} ft</div>}
-              {req.fee_range && <div><span className="text-gray-500">Fees:</span> {req.fee_range}</div>}
-              {req.processing_time && <div><span className="text-gray-500">Processing:</span> {req.processing_time}</div>}
-              {req.illumination_allowed !== undefined && (
-                <div className="flex items-center gap-1">
-                  {req.illumination_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                  <span>Illumination Allowed</span>
+              {jurisdiction.parent_county.contact_info?.phone && (
+                <div>
+                  <span className="font-medium text-orange-700">Phone:</span> <a href={`tel:${jurisdiction.parent_county.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.parent_county.contact_info.phone}</a>
                 </div>
               )}
-              {req.electronic_signs_allowed !== undefined && (
-                <div className="flex items-center gap-1">
-                  {req.electronic_signs_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                  <span>Electronic Signs</span>
+              {jurisdiction.parent_county.contact_info?.email && (
+                <div>
+                  <span className="font-medium text-orange-700">Email:</span> <a href={`mailto:${jurisdiction.parent_county.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.parent_county.contact_info.email}</a>
                 </div>
               )}
-              {req.setback_requirements && <div className="col-span-2"><span className="text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
             </div>
           </div>
         )}
