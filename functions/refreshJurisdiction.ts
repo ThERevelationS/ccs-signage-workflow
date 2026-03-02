@@ -13,65 +13,15 @@ Deno.serve(async (req) => {
     const jurisdiction = await base44.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) return Response.json({ error: 'Jurisdiction not found' }, { status: 404 });
 
-    // Use AI to find and extract document content
-    const researchPrompt = `You are a permitting research assistant for a sign company.
-
-Research ${jurisdiction.name} ${jurisdiction.type}, ${jurisdiction.state} for sign/signage permitting requirements.
-
-Current known permitting URL: ${jurisdiction.permitting_url || 'unknown'}
-Current known website: ${jurisdiction.website_url || 'unknown'}
-
-Please:
-1. Find the most current sign ordinance, zoning code sections about signs, permit applications, and fee schedules
-2. Extract key permitting requirements
-3. Check if any document URLs have changed or new documents are available
-4. Find the CAGIS or property/parcel lookup database URL specific to ${jurisdiction.name} or ${jurisdiction.state} (most counties have their own)
-
-Return as JSON:
-{
-  "website_url": "updated official url or same",
-  "permitting_url": "updated permitting url or same",
-  "cagis_database_url": "property/parcel lookup database URL for this jurisdiction (CAGIS or equivalent)",
-  "ai_summary": "updated 3-4 sentence summary of current sign permit requirements",
-  "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-  "permit_requirements": {
-    "requires_permit": true/false,
-    "max_sign_area_sqft": number or null,
-    "max_height_ft": number or null,
-    "setback_requirements": "description or null",
-    "illumination_allowed": true/false/null,
-    "electronic_signs_allowed": true/false/null,
-    "fee_range": "e.g. $50-$200 or null",
-    "processing_time": "e.g. 5-10 business days or null"
-  },
-  "documents": [
-    {
-      "title": "document name",
-      "url": "direct URL to document",
-      "doc_type": "sign_ordinance|permit_application|zoning_code|fee_schedule|checklist|other",
-      "ai_summary": "1-2 sentence description of this document"
-    }
-  ]
-}`;
-
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: researchPrompt,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          website_url: { type: "string" },
-          permitting_url: { type: "string" },
-          cagis_database_url: { type: "string" },
-          ai_summary: { type: "string" },
-          contact_info: { type: "object" },
-          permit_requirements: { type: "object" },
-          documents: { type: "array", items: { type: "object" } }
-        }
-      }
+    // Call the jurisdiction research agent for refreshed data
+    const agentResult = await base44.asServiceRole.functions.invoke('callJurisdictionAgent', {
+      jurisdictionName: jurisdiction.name,
+      jurisdictionState: jurisdiction.state,
+      jurisdictionType: jurisdiction.type,
+      includeParentCounty: jurisdiction.type !== 'county'
     });
 
-    const data = typeof result === 'string' ? JSON.parse(result) : result;
+    const data = agentResult.data || agentResult;
 
     // Verify data accuracy with cross-checks
     const verifiedData = await verifyJurisdictionData(base44, jurisdiction, data);
