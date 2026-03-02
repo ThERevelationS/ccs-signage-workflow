@@ -78,6 +78,10 @@ export default function PermittingRepositoryAdmin() {
     setConfirmDialog(false);
     const idsToUpdate = Array.from(selectedIds);
 
+    // Update global progress
+    startResearch(idsToUpdate.length);
+    
+    // Also update local progress dialog for admin panel feedback
     setProgressDialog({
       total: idsToUpdate.length,
       processed: 0,
@@ -95,6 +99,7 @@ export default function PermittingRepositoryAdmin() {
       });
 
       if (res.data?.success) {
+        completeResearch(res.data.updated, res.data.skipped);
         setProgressDialog(prev => ({
           ...prev,
           processed: res.data.total,
@@ -109,14 +114,17 @@ export default function PermittingRepositoryAdmin() {
           setProgressDialog(null);
         }, 2000);
       } else {
+        const errorMsg = res.data?.message || "Unknown error";
+        completeResearch(0, 0, errorMsg);
         setProgressDialog(prev => ({
           ...prev,
-          error: res.data?.message || "Unknown error",
+          error: errorMsg,
           isComplete: true
         }));
       }
     } catch (e) {
       console.error("Batch update error:", e);
+      completeResearch(0, 0, e.message);
       setProgressDialog(prev => ({
         ...prev,
         error: e.message,
