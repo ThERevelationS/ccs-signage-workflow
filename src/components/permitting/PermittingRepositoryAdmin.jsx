@@ -118,55 +118,57 @@ export default function PermittingRepositoryAdmin() {
 
   const proceedWithUpdate = async () => {
     const idsToUpdate = Array.from(selectedIds);
+    const total = idsToUpdate.length;
 
-    // Update global progress
-    startResearch(idsToUpdate.length);
-
+    startResearch(total);
     setBatchUpdating(true);
-    
-    // Create event listener for progress updates via console (backend sends via console.log)
-    const originalLog = console.log;
-    let currentProcessed = 0;
-    
-    console.log = function(...args) {
-      const message = args.join(' ');
-      if (message.includes('[RESEARCH_PROGRESS]')) {
-        const match = message.match(/Processing \((\d+)\/(\d+)\): (.+)/);
-        if (match) {
-          currentProcessed = parseInt(match[1]);
-          const jurisdictionName = match[3];
-          updateProgress({
-            processed: currentProcessed,
-            currentJurisdiction: jurisdictionName
-          });
-        }
-      }
-      originalLog.apply(console, args);
-    };
+
+    let updated = 0;
+    let skipped = 0;
 
     try {
-      const res = await base44.functions.invoke('batchUpdateJurisdictions', {
-        jurisdictionIds: idsToUpdate,
-        settings: batchSettings
-      });
-
-      if (res.data?.success) {
-        completeResearch(res.data.updated, res.data.skipped);
+      for (let i = 0; i < idsToUpdate.length; i++) {
+        const jurisdictionId = idsToUpdate[i];
         
-        setTimeout(() => {
-          loadJurisdictions();
-          setSelectedIds(new Set());
-        }, 2000);
-      } else {
-        const errorMsg = res.data?.message || "Unknown error";
-        completeResearch(0, 0, errorMsg);
+        try {
+          // Get jurisdiction name for progress display
+          const jurisdiction = jurisdictions.find(j => j.id === jurisdictionId);
+          const jurisdictionName = jurisdiction ? `${jurisdiction.name}, ${jurisdiction.state}` : 'Unknown';
+          
+          // Update progress with current jurisdiction
+          updateProgress({
+            processed: i,
+            currentJurisdiction: jurisdictionName
+          });
+
+          // Call refreshJurisdiction for individual jurisdiction
+          const res = await base44.functions.invoke('refreshJurisdiction', {
+            jurisdictionId,
+            settings: batchSettings
+          });
+
+          if (res.data?.success) {
+            updated++;
+          } else {
+            skipped++;
+          }
+        } catch (e) {
+          console.error(`Error updating jurisdiction ${jurisdictionId}:`, e);
+          skipped++;
+        }
       }
+
+      completeResearch(updated, skipped);
+      
+      setTimeout(() => {
+        loadJurisdictions();
+        setSelectedIds(new Set());
+      }, 2000);
     } catch (e) {
       console.error("Batch update error:", e);
-      completeResearch(0, 0, e.message);
-    } finally {
-      console.log = originalLog;
+      completeResearch(updated, skipped, e.message);
     }
+    
     setBatchUpdating(false);
   };
 
