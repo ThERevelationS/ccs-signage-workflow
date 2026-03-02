@@ -77,14 +77,12 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setDocSearchTerm(term);
     if (!term.trim()) {
       setSearchResults([]);
-      setDocSearching(false);
       return;
     }
-    
-    setDocSearching(true);
+
     const lowerTerm = term.toLowerCase();
     const results = [];
-    
+
     // Search jurisdiction name/location info
     if (jurisdiction.name?.toLowerCase().includes(lowerTerm) || jurisdiction.type?.toLowerCase().includes(lowerTerm) || jurisdiction.state?.toLowerCase().includes(lowerTerm)) {
       results.push({
@@ -94,13 +92,13 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
         snippet: `${jurisdiction.type.charAt(0).toUpperCase() + jurisdiction.type.slice(1)} in ${jurisdiction.state}`
       });
     }
-    
+
     // Search documents
     (jurisdiction.documents || []).forEach(doc => {
       const titleMatch = doc.title?.toLowerCase().includes(lowerTerm);
       const summaryMatch = doc.ai_summary?.toLowerCase().includes(lowerTerm);
       const contentMatch = doc.extracted_text?.toLowerCase().includes(lowerTerm);
-      
+
       if (titleMatch || summaryMatch || contentMatch) {
         results.push({
           type: 'document',
@@ -110,9 +108,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
         });
       }
     });
-    
+
     setSearchResults(results);
-    setDocSearching(false);
   };
 
   const searchWithinDocument = (docId, searchText) => {
