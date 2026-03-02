@@ -17,17 +17,12 @@ export default function PermittingRepository() {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stateFilter, setStateFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [selectedJurisdiction, setSelectedJurisdiction] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingJurisdiction, setEditingJurisdiction] = useState(null);
   const [refreshingIds, setRefreshingIds] = useState(new Set());
-  const [searchResults, setSearchResults] = useState(null);
-  const [searching, setSearching] = useState(false);
   const [aiDiscoverLoading, setAiDiscoverLoading] = useState(false);
   const [aiDiscoverQuery, setAiDiscoverQuery] = useState("");
-  const [globalQuery, setGlobalQuery] = useState("");
 
   useEffect(() => {
     loadJurisdictions();
