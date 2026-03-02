@@ -74,9 +74,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setDocSearchTerm(term);
     if (!term.trim()) {
       setSearchResults([]);
+      setDocSearching(false);
       return;
     }
     
+    setDocSearching(true);
     const lowerTerm = term.toLowerCase();
     const results = [];
     
@@ -107,6 +109,14 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     });
     
     setSearchResults(results);
+    setDocSearching(false);
+  };
+
+  const searchWithinDocument = (docId, searchText) => {
+    setExpandedDocSearch(prev => ({
+      ...prev,
+      [docId]: searchText
+    }));
   };
 
   const askQuestion = async () => {
