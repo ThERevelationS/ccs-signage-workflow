@@ -29,6 +29,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [docSearchTerm, setDocSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
+  // Close PDF viewer when jurisdiction changes
+  useEffect(() => {
+    setViewingPDF(null);
+  }, [jurisdiction.id]);
+
   // Auto-download all PDFs on load (with URL validation)
   useEffect(() => {
     const autoDownloadPDFs = async () => {
