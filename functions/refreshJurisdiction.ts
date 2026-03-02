@@ -73,6 +73,9 @@ Return as JSON:
 
     const data = typeof result === 'string' ? JSON.parse(result) : result;
 
+    // Verify data accuracy with cross-checks
+    const verifiedData = await verifyJurisdictionData(base44, jurisdiction, data);
+
     // Build update object based on settings
     const updateData = {};
     const batchSettings = settings || { updateWebsites: true, updatePermittingUrls: true, updateRequirements: true, updateDocuments: true, skipManualData: true };
