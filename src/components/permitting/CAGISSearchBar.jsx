@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, MapPin, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function CAGISSearchBar({ onLocationSelect }) {
+export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
@@ -92,14 +92,25 @@ export default function CAGISSearchBar({ onLocationSelect }) {
 
           {expanded && (
             <div className="p-3 space-y-3 text-xs max-h-80 overflow-y-auto">
-              <a 
-                href={`https://cagis.hamilton-co.org/cagisonline/`}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
-              >
-                View on CAGIS →
-              </a>
+              {cagisUrl ? (
+                <a 
+                  href={cagisUrl}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                >
+                  View on Database →
+                </a>
+              ) : (
+                <a 
+                  href={`https://cagis.hamilton-co.org/cagisonline/`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                >
+                  View on CAGIS →
+                </a>
+              )}
 
               {results.address && (
                 <div>
