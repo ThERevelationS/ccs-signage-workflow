@@ -509,9 +509,9 @@ export default function PermittingRepositoryAdmin() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {isDeleting && deleteProgress.total > 0 && (
+          {isDeleting && (
             <div className="space-y-2 my-4">
-              <Progress value={(deleteProgress.processed / deleteProgress.total) * 100} className="h-2" />
+              <Progress value={deleteProgress.total > 0 ? (deleteProgress.processed / deleteProgress.total) * 100 : 0} className="h-2" />
               <div className="text-xs text-gray-600 space-y-1">
                 <p className="font-medium">{deleteProgress.processed} of {deleteProgress.total} deleted</p>
                 {deleteProgress.currentJurisdiction && (
