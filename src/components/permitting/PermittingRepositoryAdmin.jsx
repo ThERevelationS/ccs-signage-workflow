@@ -27,8 +27,6 @@ export default function PermittingRepositoryAdmin() {
     updateDocuments: true,
     skipManualData: true
   });
-  const [progressDialog, setProgressDialog] = useState(null);
-  const [confirmDialog, setConfirmDialog] = useState(false);
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
