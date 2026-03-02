@@ -93,12 +93,12 @@ export default function CAGISSearchBar({ onLocationSelect }) {
           {expanded && (
             <div className="p-3 space-y-3 text-xs max-h-80 overflow-y-auto">
               <a 
-                href={`https://tax.ohio.gov/`}
+                href={`https://cagis.hamilton-co.org/cagisonline/`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
               >
-                View Ohio Tax Records →
+                View on CAGIS →
               </a>
 
               {results.address && (
