@@ -74,6 +74,7 @@ import TemplateBuilder from './pages/TemplateBuilder';
 import TimeClock from './pages/TimeClock';
 import UserSettings from './pages/UserSettings';
 import WorkOrderCalendar from './pages/WorkOrderCalendar';
+import AdminPermittingSettings from './pages/AdminPermittingSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +106,7 @@ export const PAGES = {
     "TimeClock": TimeClock,
     "UserSettings": UserSettings,
     "WorkOrderCalendar": WorkOrderCalendar,
+    "AdminPermittingSettings": AdminPermittingSettings,
 }
 
 export const pagesConfig = {
