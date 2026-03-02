@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Upload, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
+import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
