@@ -121,15 +121,16 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
 
   const analyzeDocument = async (doc) => {
     if (docAnalysis[doc.id]) return; // Already analyzed
-    if (!doc.extracted_text && !doc.ai_summary) {
-      console.warn("No content to analyze");
+    if (!doc.file_url && !doc.url) {
+      console.warn("No file URL available");
       return;
     }
 
     setAnalyzingDocId(doc.id);
     try {
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extract structured permit information from this document:\n\nTitle: ${doc.title}\nContent: ${(doc.extracted_text || doc.ai_summary || "").substring(0, 3000)}`,
+        prompt: `Extract structured permit information from this document:\n\nTitle: ${doc.title}`,
+        file_urls: [doc.file_url || doc.url],
         add_context_from_internet: false,
         response_json_schema: {
           type: "object",
@@ -149,7 +150,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
           }
         }
       });
-      
+
       setDocAnalysis(prev => ({
         ...prev,
         [doc.id]: res
