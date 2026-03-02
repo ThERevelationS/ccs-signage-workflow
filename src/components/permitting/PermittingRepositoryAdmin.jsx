@@ -27,6 +27,8 @@ export default function PermittingRepositoryAdmin() {
     updateDocuments: true,
     skipManualData: true
   });
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [bulkAddText, setBulkAddText] = useState('');
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
@@ -49,6 +51,47 @@ export default function PermittingRepositoryAdmin() {
       setSelectedIds(new Set(jurisdictions.map(j => j.id)));
     } else {
       setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectMissing = () => {
+    const missingIds = jurisdictions
+      .filter(j => {
+        const status = getDataStatus(j);
+        return status.score < 4;
+      })
+      .map(j => j.id);
+    setSelectedIds(new Set(missingIds));
+  };
+
+  const handleBulkAdd = async () => {
+    if (!bulkAddText.trim()) return;
+    
+    const lines = bulkAddText.trim().split('\n');
+    const created = [];
+    
+    for (const line of lines) {
+      const parts = line.trim().split(',').map(p => p.trim());
+      if (parts.length >= 2) {
+        const [name, state, type = 'county'] = parts;
+        try {
+          const newJ = await base44.entities.JurisdictionProfile.create({
+            name,
+            state,
+            type,
+            auto_refresh: true
+          });
+          created.push(newJ);
+        } catch (e) {
+          console.error(`Failed to create ${name}, ${state}:`, e);
+        }
+      }
+    }
+    
+    if (created.length > 0) {
+      loadJurisdictions();
+      setBulkAddText('');
+      setShowBulkAdd(false);
     }
   };
 
@@ -171,6 +214,43 @@ export default function PermittingRepositoryAdmin() {
         </div>
       </div>
 
+      {/* Bulk Add Jurisdictions */}
+      <div className="clay-card p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800">Bulk Add Jurisdictions</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBulkAdd(!showBulkAdd)}
+          >
+            {showBulkAdd ? 'Hide' : 'Show'} Bulk Add
+          </Button>
+        </div>
+
+        {showBulkAdd && (
+          <div className="space-y-3 bg-gray-50 p-3 rounded-lg border">
+            <p className="text-xs text-gray-600">
+              Enter one jurisdiction per line in format: <strong>Name, State, Type</strong> (Type is optional, defaults to "county")
+              <br />
+              Example: <code className="bg-gray-200 px-1 rounded">Hamilton County, OH, county</code>
+            </p>
+            <textarea
+              value={bulkAddText}
+              onChange={(e) => setBulkAddText(e.target.value)}
+              className="w-full h-32 p-2 border rounded text-sm"
+              placeholder="Hamilton County, OH, county&#10;Cincinnati, OH, city&#10;Northern Kentucky, KY, county"
+            />
+            <Button
+              onClick={handleBulkAdd}
+              disabled={!bulkAddText.trim()}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              Add Jurisdictions
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Batch Update Settings */}
       <div className="clay-card p-4 space-y-4">
         <div className="flex items-center justify-between">
@@ -243,6 +323,14 @@ export default function PermittingRepositoryAdmin() {
             onCheckedChange={(checked) => handleSelectAll(checked)}
           />
           <span className="text-sm font-medium text-gray-700">Select All</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSelectMissing}
+            className="ml-auto"
+          >
+            Select Missing Info
+          </Button>
         </div>
 
         <div className="divide-y max-h-[600px] overflow-y-auto">
