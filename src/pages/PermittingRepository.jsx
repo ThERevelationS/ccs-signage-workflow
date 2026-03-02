@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Search, Wand2, RefreshCw, MapPin, FileText, Filter } from "lucide-react";
+import { Loader2, Plus, Wand2, RefreshCw, MapPin, FileText } from "lucide-react";
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
