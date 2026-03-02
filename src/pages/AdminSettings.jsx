@@ -727,7 +727,8 @@ export default function AdminSettings() {
                     <TabsTrigger value="order_trash">Order Trash</TabsTrigger>
                     <TabsTrigger value="default_sort">Default Sort</TabsTrigger>
                     <TabsTrigger value="wip_import">WIP Import</TabsTrigger>
-                    </TabsList>
+                      <TabsTrigger value="permitting">Permitting Repository</TabsTrigger>
+                      </TabsList>
                     <TabsContent value="backup">
                     <BackupManager />
                   </TabsContent>
