@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle, DownloadCloud } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
@@ -33,6 +33,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [expandedDocSearch, setExpandedDocSearch] = useState({});
   const [analyzingDocId, setAnalyzingDocId] = useState(null);
   const [docAnalysis, setDocAnalysis] = useState({});
+  const [downloadingDocId, setDownloadingDocId] = useState(null);
 
   // Close PDF viewer when jurisdiction changes
   useEffect(() => {
@@ -163,6 +164,26 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     setAnalyzingDocId(null);
   };
 
+  const downloadDocument = async (doc) => {
+    if (!doc.file_url && !doc.url) return;
+    setDownloadingDocId(doc.id);
+    try {
+      const url = doc.file_url || doc.url;
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = doc.title || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch (e) {
+      console.error("Download error:", e);
+    }
+    setDownloadingDocId(null);
+  };
+
   const askQuestion = async () => {
     if (!question.trim() || asking) return;
     const q = question.trim();
@@ -277,17 +298,17 @@ Answer the question based on the documents and information available. Be specifi
         </div>
 
         {/* AI Summary */}
-        {jurisdiction.ai_summary && (
-          <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-            <p className="text-xs font-semibold text-purple-700 mb-1">AI Summary</p>
-            <p className="text-sm text-gray-700">{jurisdiction.ai_summary}</p>
-          </div>
-        )}
+         {jurisdiction.ai_summary && (
+           <div className="bg-indigo-50 rounded-lg p-3 border-l-4 border-l-indigo-400">
+             <p className="text-xs font-semibold text-indigo-800 mb-1">AI Summary</p>
+             <p className="text-sm text-gray-700 leading-relaxed">{jurisdiction.ai_summary}</p>
+           </div>
+         )}
 
         {/* Key Requirements */}
         {Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") && (
-          <div className="bg-gray-50 rounded-lg p-3 border">
-            <p className="text-xs font-semibold text-gray-700 mb-2">Key Requirements</p>
+          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400">
+            <p className="text-xs font-semibold text-red-800 mb-2">Key Requirements</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               {req.requires_permit !== undefined && (
                 <div className="flex items-center gap-1">
@@ -317,10 +338,10 @@ Answer the question based on the documents and information available. Be specifi
         )}
 
         {/* Documents */}
-        <div>
-          <p className="text-xs font-semibold text-gray-700 mb-2">
-            Documents ({jurisdiction.documents?.length || 0})
-          </p>
+         <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+           <p className="text-xs font-semibold text-green-800 mb-2">
+             Documents ({jurisdiction.documents?.length || 0})
+           </p>
           <div className="mb-3">
             <div className="relative">
               {docSearching && <Loader2 className="absolute left-2 top-2 w-4 h-4 text-blue-500 animate-spin" />}
@@ -359,47 +380,65 @@ Answer the question based on the documents and information available. Be specifi
             )}
           </div>
           <div className="space-y-2">
-            {(jurisdiction.documents || []).map(doc => (
-              <div key={doc.id} className="border rounded-lg overflow-hidden">
-                <div
-                  className="flex items-center gap-2 p-3 cursor-pointer hover:bg-gray-50"
-                  onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
-                >
-                  <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-800 truncate">{doc.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-gray-400 capitalize">{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
-                      {doc.last_fetched && <span className="text-[10px] text-gray-400">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
-                      <span className="text-[10px] bg-blue-50 text-blue-600 px-1 rounded">{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
-                    </div>
-                  </div>
-                  {expandedDoc === doc.id ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-                </div>
+             {(jurisdiction.documents || []).map(doc => (
+               <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
+                 <div
+                   className="flex items-center gap-2 p-3 cursor-pointer hover:opacity-80 transition-opacity"
+                   onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
+                 >
+                   <FileText className={`w-4 h-4 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />
+                   <div className="flex-1 min-w-0">
+                     <p className="text-xs font-medium text-gray-800 truncate">{doc.title}</p>
+                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                       <span className={`text-[10px] capitalize px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-purple-200 text-purple-700' : 'bg-amber-200 text-amber-700'}`}>{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
+                       {doc.last_fetched && <span className="text-[10px] text-gray-500">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
+                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-blue-200 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
+                     </div>
+                   </div>
+                   {expandedDoc === doc.id ? <ChevronUp className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} /> : <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />}
+                 </div>
                 {expandedDoc === doc.id && (
-                  <div className="px-3 pb-3 border-t bg-gray-50 space-y-3">
-                    {/* AI Analysis Section */}
-                    {(doc.extracted_text || doc.ai_summary) && (
-                      <div className="mt-3 space-y-2">
+                  <div className="px-3 pb-3 border-t space-y-3" style={{ background: doc.source === 'ai_discovered' ? '#f3e8ff' : '#fef3c7' }}>
+                    {/* Action Buttons */}
+                    <div className="mt-3 flex gap-2">
+                      {(doc.file_url || doc.url) && (
                         <Button
                           size="sm"
-                          onClick={() => analyzeDocument(doc)}
-                          disabled={analyzingDocId === doc.id || docAnalysis[doc.id]}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                          onClick={() => downloadDocument(doc)}
+                          disabled={downloadingDocId === doc.id}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 gap-1"
                         >
-                          {analyzingDocId === doc.id ? (
+                          {downloadingDocId === doc.id ? (
                             <>
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Analyzing...
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Downloading...
                             </>
                           ) : (
-                            "Extract Key Info"
+                            <>
+                              <DownloadCloud className="w-3 h-3" />
+                              Download
+                            </>
                           )}
                         </Button>
-                        {docAnalysis[doc.id] && (
-                          <DocumentAnalysisPanel analysis={docAnalysis[doc.id]} isLoading={false} />
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => analyzeDocument(doc)}
+                        disabled={analyzingDocId === doc.id || docAnalysis[doc.id]}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-1"
+                      >
+                        {analyzingDocId === doc.id ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          "Extract Info"
                         )}
-                      </div>
+                      </Button>
+                    </div>
+                    {docAnalysis[doc.id] && (
+                      <DocumentAnalysisPanel analysis={docAnalysis[doc.id]} isLoading={false} />
                     )}
 
                     {/* Search within document */}
@@ -473,9 +512,9 @@ Answer the question based on the documents and information available. Be specifi
       </div>
 
       {/* Chat Interface */}
-      <div className="border-t p-3 bg-gray-50">
-        <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
-          <MessageSquare className="w-3 h-3" /> Ask about this jurisdiction
+      <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">
+        <p className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1">
+          <MessageSquare className="w-3 h-3" /> Ask AI about this jurisdiction
         </p>
         {chatHistory.length > 0 && (
           <div className="max-h-48 overflow-y-auto space-y-2 mb-2 bg-white rounded-lg p-2 border">
