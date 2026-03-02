@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle, CheckCircle2, RefreshCw, Loader2, Lock, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle2, RefreshCw, Loader2, Lock, AlertTriangle, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 export default function PermittingRepositoryAdmin() {
   const [jurisdictions, setJurisdictions] = useState([]);
