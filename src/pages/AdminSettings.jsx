@@ -749,6 +749,9 @@ export default function AdminSettings() {
                   <TabsContent value="permitting">
                     <PermittingRepositoryAdmin />
                   </TabsContent>
+                  <TabsContent value="monitoring">
+                    <JurisdictionMonitoringSettings />
+                  </TabsContent>
                   </Tabs>
                   </TabsContent>
 
