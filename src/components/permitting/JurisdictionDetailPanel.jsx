@@ -66,13 +66,23 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
     const lowerTerm = term.toLowerCase();
     const results = [];
     
+    // Search jurisdiction name/location info
+    if (jurisdiction.name?.toLowerCase().includes(lowerTerm) || jurisdiction.type?.toLowerCase().includes(lowerTerm) || jurisdiction.state?.toLowerCase().includes(lowerTerm)) {
+      results.push({
+        type: 'jurisdiction',
+        id: jurisdiction.id,
+        title: `${jurisdiction.name}, ${jurisdiction.state}`,
+        snippet: `${jurisdiction.type.charAt(0).toUpperCase() + jurisdiction.type.slice(1)} in ${jurisdiction.state}`
+      });
+    }
+    
+    // Search documents
     (jurisdiction.documents || []).forEach(doc => {
       const titleMatch = doc.title?.toLowerCase().includes(lowerTerm);
       const summaryMatch = doc.ai_summary?.toLowerCase().includes(lowerTerm);
       const contentMatch = doc.extracted_text?.toLowerCase().includes(lowerTerm);
-      const requirementsMatch = JSON.stringify(jurisdiction.permit_requirements || {}).toLowerCase().includes(lowerTerm);
       
-      if (titleMatch || summaryMatch || contentMatch || requirementsMatch) {
+      if (titleMatch || summaryMatch || contentMatch) {
         results.push({
           type: 'document',
           id: doc.id,
