@@ -105,25 +105,27 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     setAiLoading(true);
     try {
       const isNonCounty = form.type !== 'county';
-      const prompt = `Research ${form.name} ${form.type}, ${form.state} sign permit requirements. IMPORTANT: Only research ${form.state}. Do not provide information from other states.
+      const prompt = `CRITICAL: Research ONLY REAL, VERIFIED information for ${form.name} ${form.type}, ${form.state}. 
 
-Find:
-1. Official permitting/zoning department website URL
-2. Sign ordinance or zoning code URL
-3. Permit application forms (signage/construction permit, electrical IBI application, zoning forms, building forms, NIC forms, NKYEI forms, locality-specific forms)
-4. Contact information for the permitting department
-5. Specific sign permit rules:
-   - SQFT/Width/Height allowance rules
-   - Height allowances and rules
-   - Setback requirements and rules
-   - Lighting allowances and restrictions
-6. Any other relevant permitting document URLs
+**DO NOT FABRICATE URLs OR INFORMATION.** If you cannot find verified information, leave that field empty/null or state "information not found."
 
-${isNonCounty ? `IMPORTANT: Since this is a ${form.type}, also research and include:
-   - The parent county name and contact information
-   - Parent county's official website and permitting URLs
-   - Parent county's relevant permit forms and documents
-   - Note which documents are from the county vs. local jurisdiction` : ''}
+Only research ${form.state}. Do not provide information from other states.
+
+Find ONLY verified information from official government websites:
+1. Official ${form.name} government website URL (verify it's real and current)
+2. Actual permitting/zoning department website URL (from official government sources only)
+3. Real permit application forms and ordinances (must link to actual government documents)
+4. Contact information (must be from official sources)
+5. Specific sign permit rules found in actual ordinances or zoning codes
+6. Document links (must be verified to exist and be from official sources)
+
+**VERIFICATION RULE:** Only include URLs that you can verify are from official ${form.name} or ${form.state} government websites. Do not make up, guess, or assume URLs exist. If a URL cannot be verified as real, do not include it.
+
+${isNonCounty ? `For this ${form.type}, also research:
+   - Actual parent county name and real contact information
+   - Real parent county government website and verified permitting URLs
+   - Only include parent county documents that actually exist
+   - Note which documents are from county vs. local jurisdiction` : ''}
 
 Return as JSON with this structure (add parent_county fields if applicable):
 {
