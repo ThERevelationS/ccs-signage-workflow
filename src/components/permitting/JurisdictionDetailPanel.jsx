@@ -378,6 +378,30 @@ Answer the question based on the documents and information available. Be specifi
                 </div>
                 {expandedDoc === doc.id && (
                   <div className="px-3 pb-3 border-t bg-gray-50 space-y-3">
+                    {/* AI Analysis Section */}
+                    {(doc.extracted_text || doc.ai_summary) && (
+                      <div className="mt-3 space-y-2">
+                        <Button
+                          size="sm"
+                          onClick={() => analyzeDocument(doc)}
+                          disabled={analyzingDocId === doc.id || docAnalysis[doc.id]}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          {analyzingDocId === doc.id ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Analyzing...
+                            </>
+                          ) : (
+                            "Extract Key Info"
+                          )}
+                        </Button>
+                        {docAnalysis[doc.id] && (
+                          <DocumentAnalysisPanel analysis={docAnalysis[doc.id]} isLoading={false} />
+                        )}
+                      </div>
+                    )}
+
                     {/* Search within document */}
                     {(doc.extracted_text || doc.ai_summary) && (
                       <div className="mt-3">
