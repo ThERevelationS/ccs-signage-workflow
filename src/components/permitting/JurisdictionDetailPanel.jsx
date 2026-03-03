@@ -379,15 +379,25 @@ Answer the question based on the documents and information available. Be specifi
           </div>
         </div>
         
-        {/* Contact Info in Header */}
-        {jurisdiction.contact_info?.department && (
-          <div className="text-xs space-y-1 bg-gray-50 p-2 rounded border border-gray-200">
-            {jurisdiction.contact_info.department && <div><span className="font-semibold text-gray-700">Dept:</span> <span className="text-gray-600">{jurisdiction.contact_info.department}</span></div>}
-            {jurisdiction.contact_info.phone && <div><span className="font-semibold text-gray-700">Phone:</span> <a href={`tel:${jurisdiction.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.phone}</a></div>}
-            {jurisdiction.contact_info.email && <div><span className="font-semibold text-gray-700">Email:</span> <a href={`mailto:${jurisdiction.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.email}</a></div>}
-            {jurisdiction.contact_info.address && <div><span className="font-semibold text-gray-700">Address:</span> <span className="text-gray-600">{jurisdiction.contact_info.address}</span></div>}
-          </div>
-        )}
+        {/* Contact Info in Header — always shown */}
+        <div className="text-xs space-y-1 bg-gray-50 p-2 rounded border border-gray-200">
+          <p className="font-semibold text-gray-700 mb-1">Contact Information</p>
+          {jurisdiction.contact_info?.department ? (
+            <div><span className="font-semibold text-gray-600">Dept:</span> <span className="text-gray-700">{jurisdiction.contact_info.department}</span></div>
+          ) : null}
+          {jurisdiction.contact_info?.phone ? (
+            <div><span className="font-semibold text-gray-600">Phone:</span> <a href={`tel:${jurisdiction.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.phone}</a></div>
+          ) : null}
+          {jurisdiction.contact_info?.email ? (
+            <div><span className="font-semibold text-gray-600">Email:</span> <a href={`mailto:${jurisdiction.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.email}</a></div>
+          ) : null}
+          {jurisdiction.contact_info?.address ? (
+            <div><span className="font-semibold text-gray-600">Address:</span> <span className="text-gray-700">{jurisdiction.contact_info.address}</span></div>
+          ) : null}
+          {!jurisdiction.contact_info?.department && !jurisdiction.contact_info?.phone && !jurisdiction.contact_info?.email && !jurisdiction.contact_info?.address && (
+            <p className="text-gray-400 italic">No contact info yet. Use AI refresh to populate.</p>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
