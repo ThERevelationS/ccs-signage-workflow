@@ -870,8 +870,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       let bVal = b[key] ?? '';
       
       if (isDateField) {
-        aVal = aVal ? new Date(aVal).getTime() : 0;
-        bVal = bVal ? new Date(bVal).getTime() : 0;
+        const aDate = aVal ? new Date(aVal) : null;
+        const bDate = bVal ? new Date(bVal) : null;
+        aVal = aDate && !isNaN(aDate.getTime()) ? aDate.getTime() : 0;
+        bVal = bDate && !isNaN(bDate.getTime()) ? bDate.getTime() : 0;
       } else if (isNumberField) {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
