@@ -184,6 +184,69 @@ export default function JurisdictionMonitoringSettings() {
           </div>
         )}
 
+        {/* Notification Emails */}
+        <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Mail className="w-4 h-4 text-gray-600" />
+            Notification Recipients
+          </h4>
+          <p className="text-xs text-gray-500">These email addresses will receive alerts when regulation changes are detected.</p>
+
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="Add email address..."
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newEmail.trim()) {
+                  const emails = monitoringSettings.notification_emails || [];
+                  if (!emails.includes(newEmail.trim())) {
+                    setMonitoringSettings({ ...monitoringSettings, notification_emails: [...emails, newEmail.trim()] });
+                  }
+                  setNewEmail("");
+                }
+              }}
+              className="flex-1"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (newEmail.trim()) {
+                  const emails = monitoringSettings.notification_emails || [];
+                  if (!emails.includes(newEmail.trim())) {
+                    setMonitoringSettings({ ...monitoringSettings, notification_emails: [...emails, newEmail.trim()] });
+                  }
+                  setNewEmail("");
+                }
+              }}
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {(monitoringSettings.notification_emails || []).map(email => (
+              <div key={email} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                <span>{email}</span>
+                <button
+                  onClick={() => setMonitoringSettings({
+                    ...monitoringSettings,
+                    notification_emails: monitoringSettings.notification_emails.filter(e => e !== email)
+                  })}
+                  className="hover:text-red-600 ml-1"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            {(monitoringSettings.notification_emails || []).length === 0 && (
+              <p className="text-xs text-gray-400 italic">No recipients added. Only the triggering user will be notified.</p>
+            )}
+          </div>
+        </div>
+
         {/* Save Button */}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button
