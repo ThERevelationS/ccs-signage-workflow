@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
@@ -13,47 +13,155 @@ Deno.serve(async (req) => {
     const jurisdiction = await base44.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) return Response.json({ error: 'Jurisdiction not found' }, { status: 404 });
 
-    // Call the jurisdiction research agent for refreshed data
-    const agentResult = await base44.asServiceRole.functions.invoke('callJurisdictionAgent', {
-      jurisdictionName: jurisdiction.name,
-      jurisdictionState: jurisdiction.state,
-      jurisdictionType: jurisdiction.type,
-      includeParentCounty: jurisdiction.type !== 'county'
+    const batchSettings = settings || {
+      updateWebsites: true,
+      updatePermittingUrls: true,
+      updateRequirements: true,
+      updateDocuments: true,
+      skipManualData: true
+    };
+
+    // Deep research prompt — get everything
+    const includeParentCounty = jurisdiction.type !== 'county';
+    const researchPrompt = `You are an expert sign permit researcher. Do a THOROUGH, DEEP research on this jurisdiction.
+
+JURISDICTION: ${jurisdiction.name} ${jurisdiction.type}, ${jurisdiction.state}
+
+You MUST search the internet extensively and return REAL, ACCURATE data from official government sources.
+DO NOT return null for fields you can find. Search hard for everything.
+
+Find ALL of the following:
+1. Official government website URL
+2. Permitting/zoning/building department URL (direct link to sign permit info)
+3. Property lookup/parcel database URL (CAGIS or county GIS equivalent)
+4. Sign permit requirements — be SPECIFIC with actual numbers:
+   - Does it require a permit? (yes/no)
+   - Maximum sign area in square feet (actual number)
+   - Maximum sign height in feet (actual number)
+   - Setback requirements (exact distances)
+   - Illumination allowed? (yes/no with restrictions)
+   - Electronic/LED signs allowed? (yes/no with restrictions)
+   - Fee range (actual dollar amounts)
+   - Processing/approval time
+5. Detailed SQFT/Width/Height rules (quote the actual ordinance if possible)
+6. Height allowances (specific rules)
+7. Setback rules (specific distances)
+8. Lighting/illumination allowances (specific rules)
+9. ALL available permit documents with REAL URLs:
+   - Sign ordinances
+   - Permit applications (PDF links)
+   - Zoning codes
+   - Fee schedules
+   - Checklists
+10. Department contact info: name, phone, email, address
+11. AI summary: comprehensive paragraph about sign permitting in this jurisdiction
+${includeParentCounty ? `12. Parent county info: name, website, permitting URL, contact info, documents` : ''}
+
+Return comprehensive JSON. Fill in every field you can find. Only use null if truly not findable.`;
+
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: researchPrompt,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          website_url: { type: ["string", "null"] },
+          permitting_url: { type: ["string", "null"] },
+          cagis_database_url: { type: ["string", "null"] },
+          ai_summary: { type: ["string", "null"] },
+          contact_info: {
+            type: "object",
+            properties: {
+              department: { type: ["string", "null"] },
+              phone: { type: ["string", "null"] },
+              email: { type: ["string", "null"] },
+              address: { type: ["string", "null"] }
+            }
+          },
+          permit_requirements: {
+            type: "object",
+            properties: {
+              requires_permit: { type: ["boolean", "null"] },
+              max_sign_area_sqft: { type: ["number", "null"] },
+              max_height_ft: { type: ["number", "null"] },
+              setback_requirements: { type: ["string", "null"] },
+              illumination_allowed: { type: ["boolean", "null"] },
+              electronic_signs_allowed: { type: ["boolean", "null"] },
+              fee_range: { type: ["string", "null"] },
+              processing_time: { type: ["string", "null"] }
+            }
+          },
+          sqft_width_height_rules: { type: ["string", "null"] },
+          height_allowances: { type: ["string", "null"] },
+          setback_rules: { type: ["string", "null"] },
+          lighting_allowances: { type: ["string", "null"] },
+          documents: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                url: { type: "string" },
+                doc_type: { type: "string" },
+                ai_summary: { type: "string" }
+              }
+            }
+          },
+          parent_county: {
+            type: ["object", "null"],
+            properties: {
+              name: { type: ["string", "null"] },
+              website_url: { type: ["string", "null"] },
+              permitting_url: { type: ["string", "null"] },
+              contact_info: { type: "object" },
+              documents: { type: "array" }
+            }
+          }
+        }
+      }
     });
 
-    const data = agentResult.data || agentResult;
+    const researchData = typeof result === 'string' ? JSON.parse(result) : result;
+    if (!researchData) return Response.json({ error: 'No research data returned' }, { status: 400 });
 
-    // Verify data accuracy with cross-checks
-    const verifiedData = await verifyJurisdictionData(base44, jurisdiction, data);
-
-    // Build update object based on settings
+    // Build update object — replace with new data, keep manual overrides
     const updateData = {};
-    const batchSettings = settings || { updateWebsites: true, updatePermittingUrls: true, updateRequirements: true, updateDocuments: true, skipManualData: true };
 
     if (batchSettings.updateWebsites && (!batchSettings.skipManualData || !jurisdiction._manual_website_url)) {
-      updateData.website_url = verifiedData.website_url || jurisdiction.website_url;
+      if (researchData.website_url) updateData.website_url = researchData.website_url;
     }
 
     if (batchSettings.updatePermittingUrls && (!batchSettings.skipManualData || !jurisdiction._manual_permitting_url)) {
-      updateData.permitting_url = verifiedData.permitting_url || jurisdiction.permitting_url;
+      if (researchData.permitting_url) updateData.permitting_url = researchData.permitting_url;
     }
 
-    // Always update CAGIS database URL if verified
-    if (verifiedData.cagis_database_url) {
-      updateData.cagis_database_url = verifiedData.cagis_database_url;
+    if (researchData.cagis_database_url) {
+      updateData.cagis_database_url = researchData.cagis_database_url;
     }
 
     if (batchSettings.updateRequirements && (!batchSettings.skipManualData || !jurisdiction._manual_requirements)) {
-      updateData.permit_requirements = verifiedData.permit_requirements || jurisdiction.permit_requirements;
-      updateData.ai_summary = verifiedData.ai_summary || jurisdiction.ai_summary;
-      updateData.contact_info = verifiedData.contact_info || jurisdiction.contact_info;
+      // Always replace with new research data — don't fall back to old
+      if (researchData.permit_requirements && Object.keys(researchData.permit_requirements).length > 0) {
+        updateData.permit_requirements = researchData.permit_requirements;
+      }
+      if (researchData.ai_summary) updateData.ai_summary = researchData.ai_summary;
+      if (researchData.contact_info && Object.keys(researchData.contact_info).some(k => researchData.contact_info[k])) {
+        updateData.contact_info = researchData.contact_info;
+      }
+      if (researchData.sqft_width_height_rules) updateData.sqft_width_height_rules = researchData.sqft_width_height_rules;
+      if (researchData.height_allowances) updateData.height_allowances = researchData.height_allowances;
+      if (researchData.setback_rules) updateData.setback_rules = researchData.setback_rules;
+      if (researchData.lighting_allowances) updateData.lighting_allowances = researchData.lighting_allowances;
     }
 
-    // Handle documents
-    let finalDocs = jurisdiction.documents || [];
+    if (includeParentCounty && researchData.parent_county?.name) {
+      updateData.parent_county = researchData.parent_county;
+    }
+
+    // Handle documents — preserve manual docs, replace AI docs
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
       const manualDocs = (jurisdiction.documents || []).filter(d => d.source === 'manual');
-      const newAiDocs = (verifiedData.documents || []).map((d, i) => ({
+      const newAiDocs = (researchData.documents || []).map((d, i) => ({
         id: `ai_${Date.now()}_${i}`,
         title: d.title || "Untitled",
         url: d.url || "",
@@ -62,49 +170,42 @@ Deno.serve(async (req) => {
         source: "ai_discovered",
         last_fetched: new Date().toISOString()
       }));
-      finalDocs = [...manualDocs, ...newAiDocs];
-    }
 
-    // Download and extract text from PDFs if documents were updated
-    if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
-      const newAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && !d.extracted_text);
-      
-      // Process documents sequentially (PDF, Excel, Word, text)
-      const SUPPORTED_EXTS = ['.pdf', '.xlsx', '.xls', '.docx', '.doc', '.txt', '.csv'];
-      const docsWithText = [];
+      // Download and extract text from all new docs
+      const processedDocs = [];
       for (const doc of newAiDocs) {
-        const urlLower = (doc.url || '').toLowerCase();
-        const isSupported = SUPPORTED_EXTS.some(ext => urlLower.includes(ext));
-        if (!doc.url || !isSupported) {
-          docsWithText.push(doc);
+        if (!doc.url) {
+          processedDocs.push(doc);
           continue;
         }
-        
         try {
-          // Download the document first
-          const downloadResult = await fetch(doc.url);
-          if (!downloadResult.ok) {
-            docsWithText.push(doc);
-            continue;
-          }
-          
-          const pdfBuffer = await downloadResult.arrayBuffer();
-          const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
-          const ext = (doc.url.split('.').pop() || 'pdf').toLowerCase();
-          const mimeType = mimeMap[ext] || 'application/octet-stream';
-          const pdfBlob = new Blob([pdfBuffer], { type: mimeType });
-          
-          // Upload the downloaded PDF
-          const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({
-            file: pdfBlob
+          const downloadResult = await fetch(doc.url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
           });
-          
-          if (!uploadResult?.file_url) {
-            docsWithText.push(doc);
+          if (!downloadResult.ok) {
+            processedDocs.push(doc);
             continue;
           }
-          
-          // Extract text from the uploaded PDF
+
+          const buffer = await downloadResult.arrayBuffer();
+          if (!buffer || buffer.byteLength === 0) {
+            processedDocs.push(doc);
+            continue;
+          }
+
+          const contentType = downloadResult.headers.get('content-type') || 'application/octet-stream';
+          const ext = doc.url.split('?')[0].split('.').pop()?.toLowerCase() || 'pdf';
+          const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
+          const mimeType = mimeMap[ext] || contentType.split(';')[0].trim() || 'application/octet-stream';
+
+          const fileBlob = new Blob([buffer], { type: mimeType });
+          const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob });
+
+          if (!uploadResult?.file_url) {
+            processedDocs.push(doc);
+            continue;
+          }
+
           const extractResult = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
             file_url: uploadResult.file_url,
             json_schema: {
@@ -115,26 +216,20 @@ Deno.serve(async (req) => {
               }
             }
           });
-          
-          if (extractResult?.status === 'success' && extractResult.output) {
-            docsWithText.push({
-              ...doc,
-              extracted_text: extractResult.output.content || "",
-              ai_summary: extractResult.output.summary || doc.ai_summary,
-              file_url: uploadResult.file_url
-            });
-          } else {
-            docsWithText.push(doc);
-          }
+
+          processedDocs.push({
+            ...doc,
+            file_url: uploadResult.file_url,
+            extracted_text: extractResult?.output?.content || "",
+            ai_summary: extractResult?.output?.summary || doc.ai_summary
+          });
         } catch (e) {
-          // Download or extraction failed, keep doc without text
-          docsWithText.push(doc);
+          console.error(`Failed to process doc ${doc.title}:`, e.message);
+          processedDocs.push(doc);
         }
       }
 
-      const manualDocs = finalDocs.filter(d => d.source === 'manual');
-      const existingAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && d.extracted_text);
-      updateData.documents = [...manualDocs, ...existingAiDocs, ...docsWithText];
+      updateData.documents = [...manualDocs, ...processedDocs];
     }
 
     updateData.last_updated = new Date().toISOString();
@@ -146,152 +241,3 @@ Deno.serve(async (req) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
-
-// Data verification function with multiple checks
-async function verifyJurisdictionData(base44, jurisdiction, initialData) {
-  const verified = { ...initialData };
-  const MAX_VERIFICATION_ATTEMPTS = 3;
-
-  // Verify URLs by checking if they're valid and contain relevant content
-  const verifyURLs = async () => {
-    const urlsToCheck = [
-      { name: 'website_url', value: verified.website_url },
-      { name: 'permitting_url', value: verified.permitting_url },
-      { name: 'cagis_database_url', value: verified.cagis_database_url }
-    ];
-
-    for (const urlItem of urlsToCheck) {
-      if (!urlItem.value) continue;
-
-      try {
-        const response = await fetch(urlItem.value, { method: 'HEAD', timeout: 5000 });
-        if (!response.ok && response.status !== 405) {
-          console.warn(`URL validation failed for ${urlItem.name}: ${urlItem.value}`);
-          verified[urlItem.name] = undefined;
-        }
-      } catch (e) {
-        console.warn(`URL check failed for ${urlItem.name}: ${urlItem.value}`);
-        verified[urlItem.name] = undefined;
-      }
-    }
-  };
-
-  // Verify requirements data with cross-check
-  const verifyRequirements = async (attempt = 1) => {
-    if (!verified.permit_requirements || Object.keys(verified.permit_requirements).length === 0) {
-      return;
-    }
-
-    if (attempt <= MAX_VERIFICATION_ATTEMPTS) {
-      const verificationPrompt = `Verify the following sign permit requirements for ${jurisdiction.name}, ${jurisdiction.state}:
-      
-${JSON.stringify(verified.permit_requirements, null, 2)}
-
-Check if these values are accurate and reasonable. Return JSON with:
-{
-  "verified": true/false,
-  "issues": ["list of any inaccuracies or unreasonable values"],
-  "corrected_values": { "field": "corrected_value" } or null
-}
-
-Be strict - if you cannot verify a value, mark it as unverified.`;
-
-      try {
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: verificationPrompt,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              verified: { type: "boolean" },
-              issues: { type: "array", items: { type: "string" } },
-              corrected_values: { type: ["object", "null"] }
-            }
-          }
-        });
-
-        const verification = typeof result === 'string' ? JSON.parse(result) : result;
-
-        if (!verification.verified) {
-          if (verification.issues.length > 0) {
-            console.warn(`Verification issues found: ${verification.issues.join(', ')}`);
-          }
-
-          if (attempt < MAX_VERIFICATION_ATTEMPTS) {
-            // Re-research if verification failed
-            console.warn(`Re-researching requirements for ${jurisdiction.name} (attempt ${attempt + 1})`);
-            const reresearchPrompt = `Research sign permit requirements for ${jurisdiction.name}, ${jurisdiction.state} again. 
-            
-Previous data had these issues: ${verification.issues?.join(', ') || 'Unknown'}
-
-Return ONLY accurate, verifiable information. Omit any fields you cannot confirm.`;
-
-            const reresult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-              prompt: reresearchPrompt,
-              add_context_from_internet: true,
-              response_json_schema: {
-                type: "object",
-                properties: {
-                  permit_requirements: { type: "object" },
-                  ai_summary: { type: "string" }
-                }
-              }
-            });
-
-            const redata = typeof reresult === 'string' ? JSON.parse(reresult) : reresult;
-            verified.permit_requirements = redata.permit_requirements || {};
-            if (redata.ai_summary) verified.ai_summary = redata.ai_summary;
-
-            // Recurse for another verification
-            await verifyRequirements(attempt + 1);
-          } else {
-            // Max attempts reached - remove unverified data
-            console.warn(`Max verification attempts reached for ${jurisdiction.name}. Removing unverified requirements.`);
-            verified.permit_requirements = {};
-          }
-        } else if (verification.corrected_values) {
-          verified.permit_requirements = { ...verified.permit_requirements, ...verification.corrected_values };
-        }
-      } catch (e) {
-        console.error(`Verification error: ${e.message}`);
-        verified.permit_requirements = {};
-      }
-    }
-  };
-
-  // Verify documents by checking URLs are accessible
-  const verifyDocuments = async () => {
-    if (!verified.documents || !Array.isArray(verified.documents)) {
-      verified.documents = [];
-      return;
-    }
-
-    const validDocs = [];
-    for (const doc of verified.documents) {
-      if (!doc.url) {
-        validDocs.push(doc);
-        continue;
-      }
-
-      try {
-        const response = await fetch(doc.url, { method: 'HEAD', timeout: 5000 });
-        if (response.ok || response.status === 405) {
-          validDocs.push(doc);
-        } else {
-          console.warn(`Document URL inaccessible: ${doc.title} (${doc.url})`);
-        }
-      } catch (e) {
-        console.warn(`Document verification failed: ${doc.title}`);
-      }
-    }
-
-    verified.documents = validDocs;
-  };
-
-  // Run all verifications
-  await verifyURLs();
-  await verifyRequirements();
-  await verifyDocuments();
-
-  return verified;
-}
