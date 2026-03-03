@@ -39,52 +39,24 @@ Deno.serve(async (req) => {
         });
         const freshData = agentResult?.data?.data || agentResult?.data || agentResult;
 
-        // Compare fresh vs stored to detect changes
-        const comparePrompt = `You are a permitting regulation change detector for a sign company.
-
-Compare the STORED data against FRESH data just researched from official sources and detect genuine changes.
-
-Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
-
-STORED data:
-- Website: ${jurisdiction.website_url || 'unknown'}
-- Permitting URL: ${jurisdiction.permitting_url || 'unknown'}
-- Max Height: ${jurisdiction.permit_requirements?.max_height_ft || 'unknown'} ft
-- Max Area: ${jurisdiction.permit_requirements?.max_sign_area_sqft || 'unknown'} sq ft
-- Fee Range: ${jurisdiction.permit_requirements?.fee_range || 'unknown'}
-- Processing Time: ${jurisdiction.permit_requirements?.processing_time || 'unknown'}
-- Illumination: ${jurisdiction.permit_requirements?.illumination_allowed ?? 'unknown'}
-- Electronic Signs: ${jurisdiction.permit_requirements?.electronic_signs_allowed ?? 'unknown'}
-- Last Updated: ${jurisdiction.last_updated || 'unknown'}
-
-FRESH data (just researched):
-${JSON.stringify(freshData, null, 2)}
-
-Identify any genuine changes between stored and fresh data. Only flag real discrepancies, not null/missing fresh data.
-
-Return JSON:
-{
-  "changes_detected": true/false,
-  "alerts": [{ "type": "requirement_change|url_change|contact_change|other", "title": "...", "field": "...", "previous": "...", "current": "...", "impact": "..." }],
-  "severity": "low|medium|high|critical",
-  "updated_profile": { "website_url": null, "permitting_url": null, "permit_requirements": {} }
-}`;
-
-        const compareResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: comparePrompt,
-          add_context_from_internet: false,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              changes_detected: { type: "boolean" },
-              alerts: { type: "array", items: { type: "object" } },
-              severity: { type: "string" },
-              updated_profile: { type: "object" }
-            }
-          }
+        // Use the change monitor agent to compare stored vs fresh data
+        const monitorConversation = await base44.asServiceRole.agents.createConversation({
+          agent_name: 'jurisdictionChangeMonitor'
         });
 
-        const data = typeof compareResult === 'string' ? JSON.parse(compareResult) : compareResult;
+        const monitorResponse = await base44.asServiceRole.agents.addMessage(monitorConversation, {
+          role: 'user',
+          content: `Monitor this jurisdiction for changes.\n\nJurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})\n\nSTORED data:\n- Website: ${jurisdiction.website_url || 'unknown'}\n- Permitting URL: ${jurisdiction.permitting_url || 'unknown'}\n- Max Height: ${jurisdiction.permit_requirements?.max_height_ft || 'unknown'} ft\n- Max Area: ${jurisdiction.permit_requirements?.max_sign_area_sqft || 'unknown'} sq ft\n- Fee Range: ${jurisdiction.permit_requirements?.fee_range || 'unknown'}\n- Processing Time: ${jurisdiction.permit_requirements?.processing_time || 'unknown'}\n- Illumination: ${jurisdiction.permit_requirements?.illumination_allowed ?? 'unknown'}\n- Electronic Signs: ${jurisdiction.permit_requirements?.electronic_signs_allowed ?? 'unknown'}\n- Last Updated: ${jurisdiction.last_updated || 'unknown'}\n\nFRESH data (just researched):\n${JSON.stringify(freshData, null, 2)}\n\nReturn JSON with changes_detected, alerts array, severity, and updated_profile.`
+        });
+
+        const lastMsg = monitorResponse?.messages?.filter(m => m.role === 'assistant').pop();
+        let data = { changes_detected: false, alerts: [], severity: 'low', updated_profile: {} };
+        try {
+          const parsed = typeof lastMsg?.content === 'string' ? JSON.parse(lastMsg.content) : lastMsg?.content;
+          if (parsed) data = parsed;
+        } catch (e) {
+          console.warn('Could not parse monitor agent response:', e.message);
+        }
 
         if (data.changes_detected && data.alerts && Array.isArray(data.alerts)) {
           // Apply profile updates if any
