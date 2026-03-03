@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download } from "lucide-react";
+import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download, Bot } from "lucide-react";
+import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAudit";
+import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 
 export default function AdminPermittingSettings() {
   const [jurisdictions, setJurisdictions] = useState([]);
