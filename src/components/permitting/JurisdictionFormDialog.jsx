@@ -336,11 +336,51 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || !form.name || !form.state} className="flex-1 bg-purple-600 hover:bg-purple-700">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : isEdit ? "Save Changes" : "Create Profile"}
-            </Button>
+          <div className="pt-2 border-t space-y-2">
+            {isEdit && onDelete && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <span className="text-xs text-red-700 flex-1">Delete <strong>{jurisdiction.name}</strong>? This cannot be undone.</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConfirmDelete(false)}
+                    className="h-7 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      setDeleting(true);
+                      await onDelete(jurisdiction.id);
+                      setDeleting(false);
+                      setConfirmDelete(false);
+                      onClose();
+                    }}
+                    disabled={deleting}
+                    className="h-7 text-xs bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Delete"}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50 gap-2"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete Jurisdiction
+                </Button>
+              )
+            )}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+              <Button onClick={handleSave} disabled={saving || !form.name || !form.state} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : isEdit ? "Save Changes" : "Create Profile"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
