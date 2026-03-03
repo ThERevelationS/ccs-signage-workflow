@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Wand2, Upload, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Wand2, Upload, X, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const US_STATES = ["OH","KY","IN"]; // Restricted to Ohio, Kentucky, Indiana
