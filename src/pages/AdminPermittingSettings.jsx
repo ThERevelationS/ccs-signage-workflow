@@ -127,12 +127,33 @@ export default function AdminPermittingSettings() {
           <SettingsIcon className="w-8 h-8 text-purple-600" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Permitting Repository Admin</h1>
-            <p className="text-sm text-gray-500">Batch updates, safeguards, and backup management</p>
+            <p className="text-sm text-gray-500">Batch updates, safeguards, backup, and AI monitoring</p>
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-gray-200">
+          {[
+            { key: "batch", label: "Batch Updates" },
+            { key: "monitoring", label: "Change Monitoring" },
+            { key: "audit", label: "AI Accuracy Auditor" }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 ${
+                activeTab === tab.key
+                  ? 'border-purple-500 text-purple-700 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Message Alert */}
-        {message && (
+        {message && activeTab === "batch" && (
           <div className={`p-4 rounded-lg border flex items-start gap-3 ${
             message.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
             message.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
