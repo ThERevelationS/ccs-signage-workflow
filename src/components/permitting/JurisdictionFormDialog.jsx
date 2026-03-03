@@ -48,51 +48,54 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     setForm(f => ({ ...f, documents: f.documents.filter(d => d.id !== id) }));
   };
 
-  const handlePDFUpload = async (e) => {
+  const handleDocUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.includes('pdf')) return;
+    if (!file) return;
     
+    const supportedTypes = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'txt', 'csv'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!supportedTypes.includes(ext)) {
+      alert(`Unsupported file type. Supported: ${supportedTypes.join(', ')}`);
+      e.target.value = '';
+      return;
+    }
+
     setUploadingPDF(true);
     try {
-      // Upload PDF
       const uploadRes = await base44.integrations.Core.UploadFile({ file });
-      const fileUrl = uploadRes.url;
+      const fileUrl = uploadRes.file_url || uploadRes.url;
 
-      // Extract text from PDF
       setAnalyzingPDF(true);
-      const analysisRes = await base44.integrations.Core.InvokeLLM({
-        prompt: `This is a permit-related PDF document. Extract the key information:\n1. Document title/type\n2. Jurisdiction name (if mentioned)\n3. Key permit requirements\n4. Fees\n5. Processing time\n\nProvide a structured summary.`,
-        file_urls: [fileUrl],
-        add_context_from_internet: false,
-        response_json_schema: {
+      const analysisRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: fileUrl,
+        json_schema: {
           type: "object",
           properties: {
-            title: { type: "string" },
-            summary: { type: "string" },
-            jurisdiction: { type: "string" }
+            title: { type: "string", description: "Document title or best descriptive name" },
+            summary: { type: "string", description: "Summary of key sign permit requirements in this document" },
+            content: { type: "string", description: "Full text content of the document" }
           }
         }
       });
 
-      const analysis = typeof analysisRes === 'string' ? JSON.parse(analysisRes) : analysisRes;
+      const analysis = analysisRes?.output || {};
       
-      // Add document to form
       setForm(f => ({
         ...f,
         documents: [...(f.documents || []), {
           id: Date.now().toString(),
-          title: analysis.title || file.name.replace('.pdf', ''),
+          title: analysis.title || file.name,
           url: fileUrl,
           file_url: fileUrl,
           doc_type: "other",
           source: "manual",
-          extracted_text: analysis.summary,
-          ai_summary: analysis.summary,
+          extracted_text: analysis.content || analysis.summary || "",
+          ai_summary: analysis.summary || "",
           last_fetched: new Date().toISOString()
         }]
       }));
     } catch (err) {
-      console.error("PDF upload/analysis error:", err);
+      console.error("Document upload/analysis error:", err);
     } finally {
       setUploadingPDF(false);
       setAnalyzingPDF(false);
