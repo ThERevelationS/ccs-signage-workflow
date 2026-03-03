@@ -283,9 +283,9 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
               <label className="text-xs font-semibold text-gray-800">Documents ({form.documents?.length || 0})</label>
               <div className="flex gap-1">
                 <label className="cursor-pointer">
-                  <input type="file" accept=".pdf" onChange={handlePDFUpload} disabled={uploadingPDF || analyzingPDF} className="hidden" />
+                  <input type="file" accept=".pdf,.xlsx,.xls,.docx,.doc,.txt,.csv" onChange={handleDocUpload} disabled={uploadingPDF || analyzingPDF} className="hidden" />
                   <Button size="sm" variant="outline" asChild className="h-7 text-xs gap-1 cursor-pointer">
-                    <span>{uploadingPDF || analyzingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Upload PDF</span>
+                    <span>{uploadingPDF || analyzingPDF ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Upload Doc</span>
                   </Button>
                 </label>
                 <Button size="sm" variant="outline" onClick={addDocument} className="h-7 text-xs gap-1">
