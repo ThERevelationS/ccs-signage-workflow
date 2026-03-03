@@ -16,8 +16,10 @@ export default function JurisdictionMonitoringSettings() {
   const [monitoringSettings, setMonitoringSettings] = useState({
     enabled: true,
     run_time: "09:00",
-    frequency: "daily"
+    frequency: "daily",
+    notification_emails: []
   });
+  const [newEmail, setNewEmail] = useState("");
   const [lastRunInfo, setLastRunInfo] = useState(null);
   const [alerts, setAlerts] = useState([]);
 
