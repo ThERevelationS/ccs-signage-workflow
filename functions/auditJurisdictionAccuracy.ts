@@ -68,28 +68,43 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
     if (options.checkRequirements) checkSections.push('2. Do the permit requirements (max height, area, fees, processing time) match current official information from government websites?');
     if (options.checkContact) checkSections.push('3. Is the contact information (department, phone, email) still accurate?');
 
-    const prompt = `You are a data accuracy auditor for sign permitting information. Your job is to cross-reference the stored data with current official government sources and identify inaccuracies or outdated information.
+    // Fetch fresh data from the research agent, then compare against stored data
+    const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+      jurisdictionName: jurisdiction.name,
+      jurisdictionState: jurisdiction.state,
+      jurisdictionType: jurisdiction.type,
+      includeParentCounty: false
+    });
+    const freshData = agentResult?.data?.data || agentResult?.data || agentResult;
+
+    // Now use the agent's fresh data to build audit findings
+    const auditPrompt = `You are a data accuracy auditor for sign permitting information.
+
+Compare the STORED data against FRESH data just researched from official government sources.
+Identify genuine inaccuracies or outdated fields.
 
 Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
 
-Current stored data:
+STORED data:
 ${JSON.stringify(currentData, null, 2)}
 
-Please investigate the following using official government websites and sources:
+FRESH data (just researched from official sources):
+${JSON.stringify(freshData, null, 2)}
+
+Checks to perform:
 ${checkSections.join('\n')}
 
-IMPORTANT RULES:
-- Only flag genuine, verifiable inaccuracies you found from official sources
-- Do NOT flag things that appear correct or cannot be verified
-- Be specific about what the source says vs what we have stored
-- If data looks reasonable and you cannot find contradicting info, report no issues for that field
-- Focus on information that would affect a sign company's permit application
+RULES:
+- Only flag genuine discrepancies between stored and fresh data
+- Do NOT flag fields where data matches or fresh data is null/missing
+- Be specific about what changed
+- Focus on info that affects a sign company's permit application
 
-Return your findings.`;
+Return findings as JSON.`;
 
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt,
-      add_context_from_internet: true,
+      prompt: auditPrompt,
+      add_context_from_internet: false,
       response_json_schema: {
         type: "object",
         properties: {
