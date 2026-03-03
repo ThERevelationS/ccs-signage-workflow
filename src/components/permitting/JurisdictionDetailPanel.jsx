@@ -653,16 +653,30 @@ Answer the question based on the documents and information available. Be specifi
                     )}
 
                     {doc.file_url ? (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingPDF(doc);
-                        }}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 mt-3"
-                      >
-                        <FileText className="w-5 h-5 mr-2" />
-                        Open {doc.title} PDF
-                      </Button>
+                      isPDF(doc) ? (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingPDF(doc);
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 mt-3"
+                        >
+                          <FileText className="w-5 h-5 mr-2" />
+                          Open {doc.title}
+                        </Button>
+                      ) : (
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full mt-3"
+                        >
+                          <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6">
+                            <FileText className="w-5 h-5 mr-2" />
+                            Open {doc.title}
+                          </Button>
+                        </a>
+                      )
                     ) : (
                       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                         <p className="font-medium">No file available</p>
