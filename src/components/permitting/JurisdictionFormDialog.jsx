@@ -24,6 +24,8 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   const [uploadingPDF, setUploadingPDF] = useState(false);
   const [analyzingPDF, setAnalyzingPDF] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (jurisdiction) setForm({ ...form, ...jurisdiction });
