@@ -334,9 +334,8 @@ export default function AdminPermittingSettings() {
               )}
             </CardContent>
           </Card>
-        </div>}
+        </div>
 
-        {activeTab === "batch" && (
           <Card className="bg-blue-50 border-blue-200">
             <CardHeader>
               <CardTitle className="text-base">How This Works</CardTitle>
@@ -353,7 +352,7 @@ export default function AdminPermittingSettings() {
               </p>
             </CardContent>
           </Card>
-        )}
+        </div>}
       </div>
     </div>
   );
