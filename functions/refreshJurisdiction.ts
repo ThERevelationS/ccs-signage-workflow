@@ -21,107 +21,16 @@ Deno.serve(async (req) => {
       skipManualData: true
     };
 
-    // Deep research prompt — get everything
+    // Use the full jurisdiction research agent (same prompt used for new jurisdiction creation)
     const includeParentCounty = jurisdiction.type !== 'county';
-    const researchPrompt = `You are an expert sign permit researcher. Do a THOROUGH, DEEP research on this jurisdiction.
-
-JURISDICTION: ${jurisdiction.name} ${jurisdiction.type}, ${jurisdiction.state}
-
-You MUST search the internet extensively and return REAL, ACCURATE data from official government sources.
-DO NOT return null for fields you can find. Search hard for everything.
-
-Find ALL of the following:
-1. Official government website URL
-2. Permitting/zoning/building department URL (direct link to sign permit info)
-3. Property lookup/parcel database URL (CAGIS or county GIS equivalent)
-4. Sign permit requirements — be SPECIFIC with actual numbers:
-   - Does it require a permit? (yes/no)
-   - Maximum sign area in square feet (actual number)
-   - Maximum sign height in feet (actual number)
-   - Setback requirements (exact distances)
-   - Illumination allowed? (yes/no with restrictions)
-   - Electronic/LED signs allowed? (yes/no with restrictions)
-   - Fee range (actual dollar amounts)
-   - Processing/approval time
-5. Detailed SQFT/Width/Height rules (quote the actual ordinance if possible)
-6. Height allowances (specific rules)
-7. Setback rules (specific distances)
-8. Lighting/illumination allowances (specific rules)
-9. ALL available permit documents with REAL URLs:
-   - Sign ordinances
-   - Permit applications (PDF links)
-   - Zoning codes
-   - Fee schedules
-   - Checklists
-10. Department contact info: name, phone, email, address
-11. AI summary: comprehensive paragraph about sign permitting in this jurisdiction
-${includeParentCounty ? `12. Parent county info: name, website, permitting URL, contact info, documents` : ''}
-
-Return comprehensive JSON. Fill in every field you can find. Only use null if truly not findable.`;
-
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: researchPrompt,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          website_url: { type: ["string", "null"] },
-          permitting_url: { type: ["string", "null"] },
-          cagis_database_url: { type: ["string", "null"] },
-          ai_summary: { type: ["string", "null"] },
-          contact_info: {
-            type: "object",
-            properties: {
-              department: { type: ["string", "null"] },
-              phone: { type: ["string", "null"] },
-              email: { type: ["string", "null"] },
-              address: { type: ["string", "null"] }
-            }
-          },
-          permit_requirements: {
-            type: "object",
-            properties: {
-              requires_permit: { type: ["boolean", "null"] },
-              max_sign_area_sqft: { type: ["number", "null"] },
-              max_height_ft: { type: ["number", "null"] },
-              setback_requirements: { type: ["string", "null"] },
-              illumination_allowed: { type: ["boolean", "null"] },
-              electronic_signs_allowed: { type: ["boolean", "null"] },
-              fee_range: { type: ["string", "null"] },
-              processing_time: { type: ["string", "null"] }
-            }
-          },
-          sqft_width_height_rules: { type: ["string", "null"] },
-          height_allowances: { type: ["string", "null"] },
-          setback_rules: { type: ["string", "null"] },
-          lighting_allowances: { type: ["string", "null"] },
-          documents: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                url: { type: "string" },
-                doc_type: { type: "string" },
-                ai_summary: { type: "string" }
-              }
-            }
-          },
-          parent_county: {
-            type: ["object", "null"],
-            properties: {
-              name: { type: ["string", "null"] },
-              website_url: { type: ["string", "null"] },
-              permitting_url: { type: ["string", "null"] },
-              contact_info: { type: "object" },
-              documents: { type: "array" }
-            }
-          }
-        }
-      }
+    const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+      jurisdictionName: jurisdiction.name,
+      jurisdictionState: jurisdiction.state,
+      jurisdictionType: jurisdiction.type,
+      includeParentCounty
     });
 
-    const researchData = typeof result === 'string' ? JSON.parse(result) : result;
+    const researchData = agentResult?.data?.data || agentResult?.data || agentResult;
     if (!researchData) return Response.json({ error: 'No research data returned' }, { status: 400 });
 
     // Build update object — replace with new data, keep manual overrides
