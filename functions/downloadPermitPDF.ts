@@ -1,4 +1,28 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+// Maps content-type to file extension
+function getExtFromContentType(contentType, fallbackUrl) {
+  if (!contentType) contentType = '';
+  const ct = contentType.toLowerCase().split(';')[0].trim();
+  const map = {
+    'application/pdf': 'pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/msword': 'doc',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.ms-excel': 'xls',
+    'text/plain': 'txt',
+    'text/csv': 'csv',
+    'text/html': 'html',
+    'application/octet-stream': null, // fall through to URL
+  };
+  if (map[ct]) return map[ct];
+  // Try to get from URL
+  if (fallbackUrl) {
+    const urlExt = fallbackUrl.split('?')[0].split('.').pop()?.toLowerCase();
+    if (urlExt && urlExt.length <= 5) return urlExt;
+  }
+  return 'pdf'; // final fallback
+}
 
 Deno.serve(async (req) => {
   try {
@@ -15,40 +39,42 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing jurisdiction_id or document_url' }, { status: 400 });
     }
 
-    // Download the PDF from the URL with various headers to work around CORS
+    // Download the file with browser-like headers
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'application/pdf,*/*'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': '*/*'
     };
 
-    let pdfResponse;
+    let fileResponse;
     try {
-      pdfResponse = await fetch(document_url, { headers });
+      fileResponse = await fetch(document_url, { headers });
     } catch (fetchErr) {
-      // Try without headers if first attempt fails
-      pdfResponse = await fetch(document_url);
+      fileResponse = await fetch(document_url);
     }
 
-    if (!pdfResponse.ok) {
-      return Response.json({ error: `Failed to download PDF: ${pdfResponse.statusText}` }, { status: 400 });
+    if (!fileResponse.ok) {
+      return Response.json({ error: `Failed to download file: ${fileResponse.statusText}` }, { status: 400 });
     }
 
-    const pdfBlob = await pdfResponse.blob();
-    
-    // Validate it's a PDF
-    if (!pdfBlob.type.includes('pdf') && !pdfBlob.type.includes('octet-stream')) {
-      return Response.json({ error: `Invalid file type: ${pdfBlob.type}` }, { status: 400 });
+    const contentType = fileResponse.headers.get('content-type') || '';
+    const ext = getExtFromContentType(contentType, document_url);
+
+    // Accept any non-empty file — don't filter by content type
+    const arrayBuffer = await fileResponse.arrayBuffer();
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      return Response.json({ error: 'Downloaded file is empty' }, { status: 400 });
     }
 
-    // Convert blob to ArrayBuffer for upload
-    const arrayBuffer = await pdfBlob.arrayBuffer();
-    const file = new File([arrayBuffer], `${document_title || 'document'}.pdf`, { type: 'application/pdf' });
+    const safeTitle = (document_title || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
+    const fileName = `${safeTitle}.${ext}`;
+    const mimeType = contentType.split(';')[0].trim() || 'application/octet-stream';
+    const file = new File([arrayBuffer], fileName, { type: mimeType });
 
     // Upload to app's file system
     const uploadResult = await base44.integrations.Core.UploadFile({ file });
 
-    if (!uploadResult.file_url) {
-      return Response.json({ error: 'Failed to upload PDF' }, { status: 500 });
+    if (!uploadResult?.file_url) {
+      return Response.json({ error: 'Failed to upload file' }, { status: 500 });
     }
 
     // Update the jurisdiction profile with the file URL
