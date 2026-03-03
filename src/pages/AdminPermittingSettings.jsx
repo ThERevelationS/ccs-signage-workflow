@@ -10,6 +10,7 @@ import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAu
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 
 export default function AdminPermittingSettings() {
+  const [activeTab, setActiveTab] = useState("batch");
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [batchUpdating, setBatchUpdating] = useState(false);
