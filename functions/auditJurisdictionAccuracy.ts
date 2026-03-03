@@ -77,59 +77,24 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
     });
     const freshData = agentResult?.data?.data || agentResult?.data || agentResult;
 
-    // Now use the agent's fresh data to build audit findings
-    const auditPrompt = `You are a data accuracy auditor for sign permitting information.
-
-Compare the STORED data against FRESH data just researched from official government sources.
-Identify genuine inaccuracies or outdated fields.
-
-Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
-
-STORED data:
-${JSON.stringify(currentData, null, 2)}
-
-FRESH data (just researched from official sources):
-${JSON.stringify(freshData, null, 2)}
-
-Checks to perform:
-${checkSections.join('\n')}
-
-RULES:
-- Only flag genuine discrepancies between stored and fresh data
-- Do NOT flag fields where data matches or fresh data is null/missing
-- Be specific about what changed
-- Focus on info that affects a sign company's permit application
-
-Return findings as JSON.`;
-
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: auditPrompt,
-      add_context_from_internet: false,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          issues_found: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                alert_type: { type: "string" },
-                severity: { type: "string" },
-                title: { type: "string" },
-                description: { type: "string" },
-                field_changed: { type: "string" },
-                previous_value: { type: "string" },
-                new_value: { type: "string" },
-                impact_summary: { type: "string" }
-              }
-            }
-          }
-        }
-      }
+    // Use the accuracy audit agent to compare stored vs fresh data
+    const auditConversation = await base44.asServiceRole.agents.createConversation({
+      agent_name: 'jurisdictionAccuracyAudit'
     });
 
-    const auditResult = typeof result === 'string' ? JSON.parse(result) : result;
-    const issues = auditResult?.issues_found || [];
+    const auditResponse = await base44.asServiceRole.agents.addMessage(auditConversation, {
+      role: 'user',
+      content: `Audit this jurisdiction.\n\nJurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})\n\nSTORED data:\n${JSON.stringify(currentData, null, 2)}\n\nFRESH data (just researched from official sources):\n${JSON.stringify(freshData, null, 2)}\n\nChecks to perform:\n${checkSections.join('\n')}\n\nReturn findings as a JSON object with an 'issues_found' array.`
+    });
+
+    const lastMessage = auditResponse?.messages?.filter(m => m.role === 'assistant').pop();
+    let issues = [];
+    try {
+      const parsed = typeof lastMessage?.content === 'string' ? JSON.parse(lastMessage.content) : lastMessage?.content;
+      issues = parsed?.issues_found || [];
+    } catch (e) {
+      console.warn('Could not parse audit agent response:', e.message);
+    }
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
