@@ -336,23 +336,24 @@ export default function AdminPermittingSettings() {
           </Card>
         </div>
 
-        {/* Info Card */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-base">How This Works</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-gray-700 space-y-2">
-            <p>
-              <strong>Manual Data Protection:</strong> When "Protect Manual Data" is enabled, any fields you've manually edited won't be overwritten during batch updates. The system tracks which data is manual vs. AI-generated.
-            </p>
-            <p>
-              <strong>Backup System:</strong> Each jurisdiction gets its own folder in your "Permitting Repository" Google Drive folder. PDFs and documents are automatically backed up with every update.
-            </p>
-            <p>
-              <strong>Selective Updates:</strong> Choose which information types to refresh—website URLs, requirements, documents, etc.—without touching the rest.
-            </p>
-          </CardContent>
-        </Card>
+        {activeTab === "batch" && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-base">How This Works</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-gray-700 space-y-2">
+              <p>
+                <strong>Manual Data Protection:</strong> When "Protect Manual Data" is enabled, any fields you've manually edited won't be overwritten during batch updates. The system tracks which data is manual vs. AI-generated.
+              </p>
+              <p>
+                <strong>Backup System:</strong> Each jurisdiction gets its own folder in your "Permitting Repository" Google Drive folder. PDFs and documents are automatically backed up with every update.
+              </p>
+              <p>
+                <strong>Selective Updates:</strong> Choose which information types to refresh—website URLs, requirements, documents, etc.—without touching the rest.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
