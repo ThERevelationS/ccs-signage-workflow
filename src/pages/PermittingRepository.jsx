@@ -291,6 +291,7 @@ Return JSON:
         onClose={() => { setShowForm(false); setEditingJurisdiction(null); }}
         jurisdiction={editingJurisdiction}
         onSave={handleSave}
+        onDelete={handleDelete}
       />
     </div>
   );
