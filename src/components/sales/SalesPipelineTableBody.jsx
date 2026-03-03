@@ -15,11 +15,18 @@ const parseLocalDate = (dateString) => {
 };
 
 function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered }) {
+  const displayDate = () => {
+    if (!value) return "-";
+    const parsed = parseLocalDate(value);
+    if (!parsed || isNaN(parsed.getTime())) return "-";
+    return format(parsed, "MM/dd/yy");
+  };
+
   return (
     <Popover open={openDatePopover === popoverKey} onOpenChange={(open) => setOpenDatePopover(open ? popoverKey : null)}>
       <PopoverTrigger asChild disabled={!isRegistered}>
         <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
-          {value ? format(parseLocalDate(value), "MM/dd/yy") : "-"}
+          {displayDate()}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
