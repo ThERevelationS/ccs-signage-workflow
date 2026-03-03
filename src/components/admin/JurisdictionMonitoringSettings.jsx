@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-react";
 import { format } from "date-fns";
 
 export default function JurisdictionMonitoringSettings() {
