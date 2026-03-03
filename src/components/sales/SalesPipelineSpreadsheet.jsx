@@ -636,12 +636,65 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
   };
 
-  const importFromExcel = (e) => {
+  const importFromExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     importStateRef.current = { paused: false, cancelled: false };
-    runExcelImport(file, workOrders, users, cancelCtx, updateProgress, completeImport, setWorkOrders, WorkOrder, format);
     e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+      updateProgress(0, rows.length, "Starting import...");
+
+      for (let i = 0; i < rows.length; i++) {
+        if (importStateRef.current.cancelled) break;
+        const row = rows[i];
+        const clientName = row["Customer"] || row["client_name"] || "";
+        if (!clientName) continue;
+
+        const woData = {
+          client_name: clientName,
+          lead_source: row["Source"] || row["lead_source"] || "",
+          current_task_deadline: row["Current Task Deadline"] || row["current_task_deadline"] || "",
+          current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
+          designer: row["Designer"] || row["designer"] || "",
+          project_manager: row["Project Manager"] || row["project_manager"] || "",
+          estimator: row["Estimator"] || row["estimator"] || "",
+          est_inv_at: row["Est/Inv @"] || row["est_inv_at"] || "",
+          estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
+          current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
+          date_initial_contact: row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"] || "",
+          site_survey_date: row["Site Survey"] || row["site_survey_date"] || "",
+          date_estimate_sent: row["Date Estimate Sent to Customer"] || row["date_estimate_sent"] || "",
+          date_order_created: row["Date Order Created"] || row["date_order_created"] || "",
+          project_install_date: row["Project Install Date"] || row["project_install_date"] || "",
+          permit_submitted_date: row["Permit Submitted"] || row["permit_submitted_date"] || "",
+          title: row["Notes"] || row["title"] || clientName,
+          permit_receipt_confirmed_date: row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"] || "",
+          permit_number: row["Permit Number"] || row["permit_number"] || "",
+          permit_approved_date: row["Date Permit Approved/Received"] || row["permit_approved_date"] || "",
+          sales_status: row["sales_status"] || "lead",
+          in_pipeline: false,
+        };
+
+        try {
+          const created = await WorkOrder.create(woData);
+          setWorkOrders(prev => [created, ...prev]);
+        } catch (err) {
+          console.error("Import row error:", err);
+        }
+
+        updateProgress(i + 1, rows.length, `Importing ${clientName}...`);
+      }
+
+      completeImport();
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const handleCreateFromForm = async (data) => {
