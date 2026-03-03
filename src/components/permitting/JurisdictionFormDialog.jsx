@@ -10,7 +10,7 @@ import { base44 } from "@/api/base44Client";
 const US_STATES = ["OH","KY","IN"]; // Restricted to Ohio, Kentucky, Indiana
 const DOC_TYPES = ["sign_ordinance","permit_application","zoning_code","fee_schedule","checklist","other"];
 
-export default function JurisdictionFormDialog({ open, onClose, jurisdiction, onSave }) {
+export default function JurisdictionFormDialog({ open, onClose, jurisdiction, onSave, onDelete }) {
   const isEdit = !!jurisdiction?.id;
   const [form, setForm] = useState({
     name: "", state: "", type: "county",
