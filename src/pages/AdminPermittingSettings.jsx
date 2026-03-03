@@ -334,7 +334,7 @@ export default function AdminPermittingSettings() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </div>}
 
         {activeTab === "batch" && (
           <Card className="bg-blue-50 border-blue-200">
