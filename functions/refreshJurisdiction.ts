@@ -69,16 +69,19 @@ Deno.serve(async (req) => {
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
       const newAiDocs = finalDocs.filter(d => d.source === 'ai_discovered' && !d.extracted_text);
       
-      // Process PDFs sequentially to avoid overwhelming the system
+      // Process documents sequentially (PDF, Excel, Word, text)
+      const SUPPORTED_EXTS = ['.pdf', '.xlsx', '.xls', '.docx', '.doc', '.txt', '.csv'];
       const docsWithText = [];
       for (const doc of newAiDocs) {
-        if (!doc.url || !doc.url.toLowerCase().includes('.pdf')) {
+        const urlLower = (doc.url || '').toLowerCase();
+        const isSupported = SUPPORTED_EXTS.some(ext => urlLower.includes(ext));
+        if (!doc.url || !isSupported) {
           docsWithText.push(doc);
           continue;
         }
         
         try {
-          // Download the PDF first
+          // Download the document first
           const downloadResult = await fetch(doc.url);
           if (!downloadResult.ok) {
             docsWithText.push(doc);
