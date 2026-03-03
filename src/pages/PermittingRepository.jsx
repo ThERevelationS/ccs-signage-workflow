@@ -68,6 +68,12 @@ export default function PermittingRepository() {
     setShowForm(true);
   };
 
+  const handleDelete = async (id) => {
+    await JurisdictionProfile.delete(id);
+    setJurisdictions(prev => prev.filter(j => j.id !== id));
+    if (selectedJurisdiction?.id === id) setSelectedJurisdiction(null);
+  };
+
   const aiDiscover = async () => {
     if (!aiDiscoverQuery.trim()) return;
     setAiDiscoverLoading(true);
