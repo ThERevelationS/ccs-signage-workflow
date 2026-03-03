@@ -89,7 +89,10 @@ Deno.serve(async (req) => {
           }
           
           const pdfBuffer = await downloadResult.arrayBuffer();
-          const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+          const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
+          const ext = (doc.url.split('.').pop() || 'pdf').toLowerCase();
+          const mimeType = mimeMap[ext] || 'application/octet-stream';
+          const pdfBlob = new Blob([pdfBuffer], { type: mimeType });
           
           // Upload the downloaded PDF
           const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({
