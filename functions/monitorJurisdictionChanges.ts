@@ -30,80 +30,61 @@ Deno.serve(async (req) => {
 
     for (const jurisdiction of jurisdictions) {
       try {
-        const researchPrompt = `You are a permitting regulation monitor for a sign company.
+        // Use the research agent to get fresh data, then compare against stored data
+        const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+          jurisdictionName: jurisdiction.name,
+          jurisdictionState: jurisdiction.state,
+          jurisdictionType: jurisdiction.type,
+          includeParentCounty: false
+        });
+        const freshData = agentResult?.data?.data || agentResult?.data || agentResult;
 
-Check if there have been ANY RECENT CHANGES to sign permit regulations for:
+        // Compare fresh vs stored to detect changes
+        const comparePrompt = `You are a permitting regulation change detector for a sign company.
+
+Compare the STORED data against FRESH data just researched from official sources and detect genuine changes.
+
 Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
 
-Current known data:
+STORED data:
 - Website: ${jurisdiction.website_url || 'unknown'}
 - Permitting URL: ${jurisdiction.permitting_url || 'unknown'}
 - Max Height: ${jurisdiction.permit_requirements?.max_height_ft || 'unknown'} ft
 - Max Area: ${jurisdiction.permit_requirements?.max_sign_area_sqft || 'unknown'} sq ft
 - Fee Range: ${jurisdiction.permit_requirements?.fee_range || 'unknown'}
 - Processing Time: ${jurisdiction.permit_requirements?.processing_time || 'unknown'}
-- Illumination Allowed: ${jurisdiction.permit_requirements?.illumination_allowed !== undefined ? jurisdiction.permit_requirements.illumination_allowed : 'unknown'}
-- Electronic Signs: ${jurisdiction.permit_requirements?.electronic_signs_allowed !== undefined ? jurisdiction.permit_requirements.electronic_signs_allowed : 'unknown'}
+- Illumination: ${jurisdiction.permit_requirements?.illumination_allowed ?? 'unknown'}
+- Electronic Signs: ${jurisdiction.permit_requirements?.electronic_signs_allowed ?? 'unknown'}
 - Last Updated: ${jurisdiction.last_updated || 'unknown'}
 
-Return JSON with any changes detected:
+FRESH data (just researched):
+${JSON.stringify(freshData, null, 2)}
+
+Identify any genuine changes between stored and fresh data. Only flag real discrepancies, not null/missing fresh data.
+
+Return JSON:
 {
   "changes_detected": true/false,
-  "alerts": [
-    {
-      "type": "requirement_change|document_update|url_change|contact_change|other",
-      "title": "brief title",
-      "field": "field_name",
-      "previous": "old value",
-      "current": "new value",
-      "impact": "summary of impact to sign companies"
-    }
-  ],
+  "alerts": [{ "type": "requirement_change|url_change|contact_change|other", "title": "...", "field": "...", "previous": "...", "current": "...", "impact": "..." }],
   "severity": "low|medium|high|critical",
-  "summary": "overall summary of changes",
-  "updated_profile": {
-    "website_url": "updated url or null if unchanged",
-    "permitting_url": "updated url or null if unchanged",
-    "permit_requirements": {
-      "max_height_ft": null,
-      "max_sign_area_sqft": null,
-      "fee_range": null,
-      "processing_time": null,
-      "illumination_allowed": null,
-      "electronic_signs_allowed": null
-    }
-  }
+  "updated_profile": { "website_url": null, "permitting_url": null, "permit_requirements": {} }
 }`;
 
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: researchPrompt,
-          add_context_from_internet: true,
+        const compareResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: comparePrompt,
+          add_context_from_internet: false,
           response_json_schema: {
             type: "object",
             properties: {
               changes_detected: { type: "boolean" },
-              alerts: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    type: { type: "string" },
-                    title: { type: "string" },
-                    field: { type: "string" },
-                    previous: { type: "string" },
-                    current: { type: "string" },
-                    impact: { type: "string" }
-                  }
-                }
-              },
+              alerts: { type: "array", items: { type: "object" } },
               severity: { type: "string" },
-              summary: { type: "string" },
               updated_profile: { type: "object" }
             }
           }
         });
 
-        const data = typeof result === 'string' ? JSON.parse(result) : result;
+        const data = typeof compareResult === 'string' ? JSON.parse(compareResult) : compareResult;
 
         if (data.changes_detected && data.alerts && Array.isArray(data.alerts)) {
           // Apply profile updates if any
