@@ -165,7 +165,17 @@ export default function AdminPermittingSettings() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {activeTab === "monitoring" && (
+          <JurisdictionMonitoringSettings />
+        )}
+
+        {activeTab === "audit" && (
+          <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <JurisdictionAccuracyAudit />
+          </div>
+        )}
+
+        {activeTab === "batch" && <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Batch Settings Panel */}
           <Card className="lg:col-span-1">
             <CardHeader>
