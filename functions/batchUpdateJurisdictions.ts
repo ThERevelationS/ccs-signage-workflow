@@ -27,133 +27,15 @@ Deno.serve(async (req) => {
         
         if (!jurisdiction) continue;
 
-        // Re-research jurisdiction if updates are enabled
-        const isNonCounty = jurisdiction.type !== 'county';
-        const prompt = `CRITICAL: Research ONLY REAL, VERIFIED information for ${jurisdiction.name} ${jurisdiction.type}, ${jurisdiction.state}. 
-
-**DO NOT FABRICATE URLs OR INFORMATION.** If you cannot find verified information, leave that field empty/null or state "information not found."
-
-Only research ${jurisdiction.state}. Do not provide information from other states.
-
-Find ONLY verified information from official government websites:
-1. Official ${jurisdiction.name} government website URL (verify it's real and current)
-2. Actual permitting/zoning department website URL (from official government sources only)
-3. Real permit application forms and ordinances (must link to actual government documents)
-4. Contact information (must be from official sources)
-5. Specific sign permit rules found in actual ordinances or zoning codes
-6. Document links (must be verified to exist and be from official sources)
-
-**VERIFICATION RULE:** Only include URLs that you can verify are from official ${jurisdiction.name} or ${jurisdiction.state} government websites. Do not make up, guess, or assume URLs exist. If a URL cannot be verified as real, do not include it.
-
-${isNonCounty ? `For this ${jurisdiction.type}, also research:
-   - Actual parent county name and real contact information
-   - Real parent county government website and verified permitting URLs
-   - Only include parent county documents that actually exist
-   - Note which documents are from county vs. local jurisdiction` : ''}
-
-Return as JSON with this structure:
-{
-  "website_url": "...",
-  "permitting_url": "...",
-  "ai_summary": "2-3 sentence summary",
-  "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-  "permit_requirements": {
-    "requires_permit": true/false,
-    "max_sign_area_sqft": number or null,
-    "max_height_ft": number or null,
-    "setback_requirements": "...",
-    "illumination_allowed": true/false/null,
-    "electronic_signs_allowed": true/false/null,
-    "fee_range": "...",
-    "processing_time": "..."
-  },
-  "documents": [
-    { "title": "...", "url": "...", "doc_type": "sign_ordinance|permit_application|zoning_code|fee_schedule|checklist|other" }
-  ],
-  "parent_county": {
-    "name": "...",
-    "website_url": "...",
-    "permitting_url": "...",
-    "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-    "documents": []
-  },
-  "sqft_width_height_rules": "...",
-  "height_allowances": "...",
-  "setback_rules": "...",
-  "lighting_allowances": "..."
-}`;
-
-        const aiResult = await base44.integrations.Core.InvokeLLM({
-          prompt,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              website_url: { type: "string" },
-              permitting_url: { type: "string" },
-              ai_summary: { type: "string" },
-              contact_info: { 
-                type: "object",
-                properties: {
-                  department: { type: "string" },
-                  phone: { type: "string" },
-                  email: { type: "string" },
-                  address: { type: "string" }
-                }
-              },
-              permit_requirements: { 
-                type: "object",
-                properties: {
-                  requires_permit: { type: "boolean" },
-                  max_sign_area_sqft: { type: "number" },
-                  max_height_ft: { type: "number" },
-                  setback_requirements: { type: "string" },
-                  illumination_allowed: { type: "boolean" },
-                  electronic_signs_allowed: { type: "boolean" },
-                  fee_range: { type: "string" },
-                  processing_time: { type: "string" }
-                }
-              },
-              documents: { 
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    url: { type: "string" },
-                    doc_type: { type: "string" }
-                  }
-                }
-              },
-              parent_county: { 
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  website_url: { type: "string" },
-                  permitting_url: { type: "string" },
-                  contact_info: { type: "object" },
-                  documents: { 
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        url: { type: "string" },
-                        doc_type: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              },
-              sqft_width_height_rules: { type: "string" },
-              height_allowances: { type: "string" },
-              setback_rules: { type: "string" },
-              lighting_allowances: { type: "string" }
-            }
-          }
+        // Use the jurisdiction research agent for all searches
+        const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+          jurisdictionName: jurisdiction.name,
+          jurisdictionState: jurisdiction.state,
+          jurisdictionType: jurisdiction.type,
+          includeParentCounty: jurisdiction.type !== 'county'
         });
 
-        const data = typeof aiResult === 'string' ? JSON.parse(aiResult) : aiResult;
+        const data = agentResult?.data?.data || agentResult?.data || agentResult;
 
         // Build update object, respecting manual data protection
         const updateData = {};
