@@ -452,33 +452,9 @@ function LayoutContent({ children }) {
             font-size: 16px !important;
           }
           
-          /* Hide top nav on mobile, show only when expanded */
+          /* Hide top nav on mobile */
           .top-nav {
             display: none !important;
-          }
-          
-          /* Ensure minimum touch target size (48px recommended by Apple/Google) */
-          button, a, [role="button"] {
-            min-height: 48px !important;
-            min-width: 48px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-          }
-          
-          /* Mobile menu items - larger touch targets */
-          .grid a {
-            min-height: 56px !important;
-            min-width: 100% !important;
-            width: 100% !important;
-            padding: 12px 16px !important;
-          }
-          
-          /* Mobile bottom nav touch targets */
-          .mobile-bottom-nav a,
-          .mobile-bottom-nav button {
-            min-height: 64px !important;
-            min-width: 100% !important;
           }
         }
       `}</style>
