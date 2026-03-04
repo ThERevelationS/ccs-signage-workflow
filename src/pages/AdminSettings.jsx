@@ -319,7 +319,6 @@ export default function AdminSettings() {
   const [passwordError, setPasswordError] = useState("");
   const [allUsers, setAllUsers] = useState([]);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [showFaceLogin, setShowFaceLogin] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -713,14 +712,11 @@ export default function AdminSettings() {
   };
 
   const handleFaceRecognized = (recognizedUser) => {
-    // allUsers contains AuthorizedEmail records with face_descriptors (same as time clock)
     const matched = allUsers.find(u => u.id === recognizedUser.id || u.email === recognizedUser.email);
     if (matched?.role === 'admin') {
       setIsUnlocked(true);
-      setShowFaceLogin(false);
     } else {
       setPasswordError("Face recognized but admin privileges required");
-      setShowFaceLogin(false);
     }
   };
 
