@@ -57,6 +57,7 @@ import {
   Bot,
   UserCheck
 } from "lucide-react";
+import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
 import GmailConnector from "../components/admin/GmailConnector";
 import UserManagement from "../components/admin/UserManagement";
