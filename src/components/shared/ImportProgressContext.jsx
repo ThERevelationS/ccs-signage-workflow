@@ -70,28 +70,71 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     }
   }, [importState]);
 
-  const startImport = (total, userEmail) => {
+  const startImport = async (total, userEmail, importType = "sales_pipeline") => {
     cancelRef.current = { cancelled: false, paused: false };
-    const newState = { show: true, current: 0, total, currentItem: "Starting...", paused: false, userEmail, startedAt: Date.now() };
-    setImportState(newState);
+    try {
+      const job = await base44.entities.ImportJob.create({
+        user_email: userEmail,
+        import_type: importType,
+        total_items: total,
+        processed_items: 0,
+        current_item: "Starting...",
+        started_at: new Date().toISOString()
+      });
+      importJobIdRef.current = job.id;
+      const newState = { show: true, current: 0, total, currentItem: "Starting...", paused: false, userEmail, startedAt: Date.now(), importJobId: job.id };
+      setImportState(newState);
+    } catch (err) {
+      console.error("Failed to create import job:", err);
+    }
     return cancelRef;
   };
 
-  const updateProgress = (current, total, currentItem) => {
+  const updateProgress = async (current, total, currentItem) => {
     setImportState(prev => ({ ...prev, current, total, currentItem }));
+    if (importJobIdRef.current) {
+      try {
+        await base44.entities.ImportJob.update(importJobIdRef.current, {
+          processed_items: current,
+          current_item: currentItem
+        });
+      } catch (err) {
+        console.error("Failed to update import job:", err);
+      }
+    }
   };
 
-  const completeImport = () => {
+  const completeImport = async () => {
     setImportState(prev => ({ ...prev, currentItem: "Import complete!", current: prev.total }));
+    if (importJobIdRef.current) {
+      try {
+        await base44.entities.ImportJob.update(importJobIdRef.current, {
+          status: "completed",
+          processed_items: importState.total,
+          completed_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Failed to mark import as complete:", err);
+      }
+    }
     setTimeout(() => {
-      setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null });
+      setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null });
+      importJobIdRef.current = null;
       localStorage.removeItem(STORAGE_KEY);
     }, 2000);
   };
 
-  const cancelImport = () => {
+  const cancelImport = async () => {
     cancelRef.current.cancelled = true;
-    setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null });
+    if (importJobIdRef.current) {
+      try {
+        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "cancelled" });
+      } catch (err) {
+        console.error("Failed to cancel import job:", err);
+      }
+    }
+    setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null });
+    importJobIdRef.current = null;
     localStorage.removeItem(STORAGE_KEY);
   };
 
