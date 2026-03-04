@@ -642,7 +642,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const importFromExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    importStateRef.current = { paused: false, cancelled: false };
     e.target.value = "";
 
     const reader = new FileReader();
@@ -652,102 +651,59 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-      updateProgress(0, rows.length, "Starting import...");
+      const normalizeDate = (val) => {
+        if (!val) return "";
+        if (val instanceof Date) return isNaN(val.getTime()) ? "" : format(val, "yyyy-MM-dd");
+        return String(val);
+      };
 
-      // Load all existing work orders for deduplication matching
-      let existingOrders = [];
-      try {
-        existingOrders = await WorkOrder.filter({ is_rider: false, deleted: { $ne: true } });
-      } catch {}
-
-      let created = 0, updated = 0;
-
-      // Helper to parse a single row into woData
-      const parseRow = (row) => {
+      const validRows = rows.map(row => {
         const clientName = row["Customer"] || row["client_name"] || "";
         if (!clientName) return null;
         const estInvAt = row["Est/Inv @"] || row["est_inv_at"] || "";
-        const normalizeDate = (val) => {
-          if (!val) return "";
-          if (val instanceof Date) return isNaN(val.getTime()) ? "" : format(val, "yyyy-MM-dd");
-          return String(val);
-        };
         return {
           clientName,
           estInvAt,
-          woData: {
-            client_name: clientName,
-            lead_source: row["Source"] || row["lead_source"] || "",
-            current_task_deadline: normalizeDate(row["Current Task Deadline"] || row["current_task_deadline"]),
-            current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
-            designer: row["Designer"] || row["designer"] || "",
-            project_manager: row["Project Manager"] || row["project_manager"] || "",
-            estimator: row["Estimator"] || row["estimator"] || "",
-            est_inv_at: estInvAt,
-            estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
-            current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
-            date_initial_contact: normalizeDate(row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"]),
-            site_survey_date: normalizeDate(row["Site Survey"] || row["site_survey_date"]),
-            date_estimate_sent: normalizeDate(row["Date Estimate Sent to Customer"] || row["date_estimate_sent"]),
-            date_order_created: normalizeDate(row["Date Order Created"] || row["date_order_created"]),
-            project_install_date: normalizeDate(row["Project Install Date"] || row["project_install_date"]),
-            permit_submitted_date: normalizeDate(row["Permit Submitted"] || row["permit_submitted_date"]),
-            title: row["Notes"] || row["title"] || clientName,
-            permit_receipt_confirmed_date: normalizeDate(row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"]),
-            permit_number: row["Permit Number"] || row["permit_number"] || "",
-            permit_approved_date: normalizeDate(row["Date Permit Approved/Received"] || row["permit_approved_date"]),
-            sales_status: row["sales_status"] || "lead",
-            in_pipeline: false,
-          }
+          client_name: clientName,
+          lead_source: row["Source"] || row["lead_source"] || "",
+          current_task_deadline: normalizeDate(row["Current Task Deadline"] || row["current_task_deadline"]),
+          current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
+          designer: row["Designer"] || row["designer"] || "",
+          project_manager: row["Project Manager"] || row["project_manager"] || "",
+          estimator: row["Estimator"] || row["estimator"] || "",
+          est_inv_at: estInvAt,
+          estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
+          current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
+          date_initial_contact: normalizeDate(row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"]),
+          site_survey_date: normalizeDate(row["Site Survey"] || row["site_survey_date"]),
+          date_estimate_sent: normalizeDate(row["Date Estimate Sent to Customer"] || row["date_estimate_sent"]),
+          date_order_created: normalizeDate(row["Date Order Created"] || row["date_order_created"]),
+          project_install_date: normalizeDate(row["Project Install Date"] || row["project_install_date"]),
+          permit_submitted_date: normalizeDate(row["Permit Submitted"] || row["permit_submitted_date"]),
+          title: row["Notes"] || row["title"] || clientName,
+          permit_receipt_confirmed_date: normalizeDate(row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"]),
+          permit_number: row["Permit Number"] || row["permit_number"] || "",
+          permit_approved_date: normalizeDate(row["Date Permit Approved/Received"] || row["permit_approved_date"]),
+          sales_status: row["sales_status"] || "lead",
+          in_pipeline: false,
         };
-      };
+      }).filter(Boolean);
 
-      const BATCH_SIZE = 10;
-      const validRows = rows.map(parseRow).filter(Boolean);
+      if (validRows.length === 0) return;
 
-      for (let batchStart = 0; batchStart < validRows.length; batchStart += BATCH_SIZE) {
-        if (importStateRef.current.cancelled) break;
-        while (importStateRef.current.paused && !importStateRef.current.cancelled) {
-          await new Promise(r => setTimeout(r, 300));
-        }
-        if (importStateRef.current.cancelled) break;
+      updateProgress(0, validRows.length, `Sending ${validRows.length} rows to server...`);
 
-        const batch = validRows.slice(batchStart, batchStart + BATCH_SIZE);
-
-        await Promise.all(batch.map(async ({ clientName, estInvAt, woData }) => {
-          let existing = null;
-          if (estInvAt) {
-            existing = existingOrders.find(wo =>
-              (wo.est_inv_at && wo.est_inv_at === estInvAt) ||
-              (wo.corbridge_invoice_number && wo.corbridge_invoice_number === estInvAt)
-            );
-          }
-          if (!existing) {
-            existing = existingOrders.find(wo =>
-              wo.client_name?.toLowerCase().trim() === clientName.toLowerCase().trim()
-            );
-          }
-
-          try {
-            if (existing) {
-              await WorkOrder.update(existing.id, woData);
-              setWorkOrders(prev => prev.map(wo => wo.id === existing.id ? { ...wo, ...woData } : wo));
-              created; updated++;
-            } else {
-              const newOrder = await WorkOrder.create(woData);
-              setWorkOrders(prev => [newOrder, ...prev]);
-              existingOrders.push(newOrder);
-              created++;
-            }
-          } catch (err) {
-            console.error("Import row error:", err);
-          }
-        }));
-
-        updateProgress(Math.min(batchStart + BATCH_SIZE, validRows.length), validRows.length, `Importing... (${created} created, ${updated} updated)`);
+      try {
+        const res = await importSalesPipeline({ rows: validRows });
+        const result = res.data;
+        updateProgress(validRows.length, validRows.length, `Done! ${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
+        completeImport();
+        // Reload work orders after backend completes
+        await loadWorkOrders(false);
+      } catch (err) {
+        console.error("Import failed:", err);
+        completeImport();
       }
-
-      completeImport();
     };
     reader.readAsArrayBuffer(file);
   };
