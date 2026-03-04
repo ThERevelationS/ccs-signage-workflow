@@ -518,11 +518,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     updateProgress(0, 1, "Uploading file to server...");
 
     try {
-      const { importOrders } = await import("@/functions/importOrders");
+      const importOrdersFn = (await import("@/functions/importOrders")).importOrders;
       const fd = new FormData();
       fd.append('file', file);
       if (workOrderFilter) fd.append('work_order_filter', workOrderFilter);
-      const res = await importOrders(fd);
+      const res = await importOrdersFn(fd);
       const result = res.data;
       updateProgress(1, 1, `Done! ${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);
       completeImport();
