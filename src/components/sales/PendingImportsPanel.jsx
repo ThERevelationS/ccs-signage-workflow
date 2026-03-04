@@ -62,6 +62,65 @@ function buildInitialData(item) {
   };
 }
 
+function DuplicateCard({ item, onReject, allWorkOrders }) {
+  const [rejectLoading, setRejectLoading] = useState(false);
+  const ed = item.extracted_data || {};
+  const recA = ed.record_a || {};
+  const recB = ed.record_b || {};
+
+  const handleMerge = async (keepId, removeId) => {
+    const removeWo = allWorkOrders.find(w => w.id === removeId);
+    if (!removeWo) return;
+    await base44.entities.WorkOrder.update(removeId, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'duplicate_merge' });
+    await PendingImport.update(item.id, { status: 'merged', merged_into_id: keepId });
+    onReject(item.id);
+  };
+
+  return (
+    <div className="border border-orange-300 bg-orange-50 rounded-xl p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-gray-900 text-sm">Possible Duplicate</span>
+              <Badge className="bg-orange-100 text-orange-800">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {ed.match_score}% match
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">{ed.reasons?.join(' · ')}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {[recA, recB].map((rec, idx) => (
+          <div key={idx} className="bg-white rounded-lg border border-orange-200 p-3 text-xs space-y-1">
+            <p className="font-semibold text-gray-900">{rec.client_name}</p>
+            {rec.title && rec.title !== rec.client_name && <p className="text-gray-500 truncate">{rec.title}</p>}
+            {rec.est_inv_at && <p className="text-gray-400">Est/Inv: {rec.est_inv_at}</p>}
+            <Button size="sm" variant="destructive" className="h-6 text-xs w-full mt-2"
+              onClick={() => handleMerge(idx === 0 ? recB.id : recA.id, rec.id)}>
+              Delete this one
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      <Button size="sm" variant="ghost" onClick={async () => {
+        setRejectLoading(true);
+        await PendingImport.update(item.id, { status: 'rejected' });
+        onReject(item.id);
+        setRejectLoading(false);
+      }} disabled={rejectLoading} className="h-7 text-xs text-gray-500 hover:bg-gray-100 w-full">
+        {rejectLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <X className="w-3 h-3 mr-1" />}
+        Not a duplicate — dismiss
+      </Button>
+    </div>
+  );
+}
+
 function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedMergeId, setSelectedMergeId] = useState(item.match_candidates?.[0]?.work_order_id || "");
