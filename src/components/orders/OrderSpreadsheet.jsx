@@ -504,244 +504,33 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const importFromExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
 
-    // Validate file name contains "Order Request" to prevent importing wrong file
+    // Validate file name
     const fileName = file.name.toLowerCase();
     if (!fileName.includes('order') && !fileName.includes('request')) {
-      alert('Invalid file. Please select a file with "Order" or "Request" in the name for the Order Form. This appears to be a Workflow file.');
-      e.target.value = "";
+      alert('Invalid file. Please select a file with "Order" or "Request" in the name.');
       return;
     }
 
     const cancelCtx = startImport(1, currentUser?.email);
     importStateRef.current = cancelCtx.current;
+    updateProgress(0, 1, "Uploading file to server...");
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const data = new Uint8Array(event.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      const maxRowNumber = orders.length > 0 
-        ? Math.max(...orders.map(o => o.row_number || 0)) 
-        : 0;
-
-      updateProgress(0, jsonData.length, "Starting import...");
-
-      // Track existing orders to check for duplicates - map key to order object
-      const existingOrdersMap = new Map();
-      orders.forEach(o => {
-        const key = `${o.customer_name}|${o.description}|${o.request_type}`.toLowerCase();
-        existingOrdersMap.set(key, o);
-      });
-
-      let importedCount = 0;
-
-      for (let i = 0; i < jsonData.length; i++) {
-        // Check for cancel
-        if (cancelCtx.current.cancelled) return;
-        while (cancelCtx.current.paused) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
-        const row = jsonData[i];
-        
-        // Get customer name - try multiple possible column names and handle various data types
-        let customerRaw = row["Customer"] ?? row["Customer Name"] ?? row["customer"] ?? row["customer_name"] ?? "";
-        let customer = "";
-        if (customerRaw !== undefined && customerRaw !== null) {
-          if (typeof customerRaw === 'number') {
-            customer = String(customerRaw);
-          } else {
-            customer = String(customerRaw).trim();
-          }
-        }
-        
-        // Skip empty rows - check all key fields
-        const description = row["Description"] ?? row["description"] ?? "";
-        const requestType = row["Type"] ?? row["Request Type"] ?? row["type"] ?? "";
-        const quantity = row["How much?"] ?? row["Quantity"] ?? row["quantity"] ?? "";
-        
-        if (!customer && !description && !requestType && !quantity) {
-          updateProgress(i + 1, jsonData.length, "Skipping empty row...");
-          continue;
-        }
-
-        // Check for duplicates - if found, fill in missing fields instead of skipping
-        const uniqueKey = `${customer}|${description}|${requestType}`.toLowerCase();
-        const existingOrder = existingOrdersMap.get(uniqueKey);
-        
-        if (existingOrder) {
-          // Update ALL columns from import if different (not just missing)
-          const updates = {};
-          
-          // Parse Excel dates helper
-          const parseExcelDateForUpdate = (value) => {
-            if (!value) return null;
-            if (typeof value === 'number') {
-              const date = new Date((value - 25569) * 86400 * 1000);
-              if (!isNaN(date.getTime())) {
-                return format(date, "yyyy-MM-dd");
-              }
-            }
-            if (typeof value === 'string' && value.trim()) {
-              const parsed = new Date(value);
-              if (!isNaN(parsed.getTime())) {
-                return format(parsed, "yyyy-MM-dd");
-              }
-            }
-            return null;
-          };
-          
-          // Helper to check and update string fields
-          const checkStringField = (dbField, ...columns) => {
-            for (const col of columns) {
-              if (row[col] != null && row[col] !== "") {
-                const newVal = String(row[col]).trim();
-                if (newVal && newVal !== (existingOrder[dbField] || "")) {
-                  updates[dbField] = newVal;
-                }
-                return;
-              }
-            }
-          };
-          
-          // Helper to check and update date fields
-          const checkDateField = (dbField, ...columns) => {
-            for (const col of columns) {
-              if (row[col] != null && row[col] !== "") {
-                const parsed = parseExcelDateForUpdate(row[col]);
-                if (parsed && parsed !== (existingOrder[dbField] || "")) {
-                  updates[dbField] = parsed;
-                }
-                return;
-              }
-            }
-          };
-          
-          // Check all text fields
-          checkStringField('quantity', 'How much?', 'Quantity', 'quantity');
-          checkStringField('requestor_name', 'Requestor', 'requestor', 'Requestor Name');
-          checkStringField('vendor', 'Vendor (Anyone can fill out this column)', 'Vendor', 'vendor');
-          checkStringField('request_type', 'Type', 'Request Type', 'type');
-          checkStringField('description', 'Description', 'description');
-          
-          // Check all date fields
-          checkDateField('date_needed', 'Date Needed (Requester fills out this column)', 'Date Needed', 'date_needed');
-          checkDateField('date_ordered', 'Ordered Date (Carl Fills out this column)', 'Date Ordered', 'date_ordered');
-          checkDateField('date_received', 'Date Recieved (Anyone can fill out this column)', 'Date Received', 'date_received');
-          
-          // Update status based on dates
-          const finalDateReceived = updates.date_received || existingOrder.date_received;
-          const finalDateOrdered = updates.date_ordered || existingOrder.date_ordered;
-          
-          if (finalDateReceived) {
-            if (existingOrder.status !== "received") updates.status = "received";
-          } else if (finalDateOrdered) {
-            if (existingOrder.status !== "ordered") updates.status = "ordered";
-          }
-          
-          // Only update if there are actual changes
-          if (Object.keys(updates).length > 0) {
-            await Order.update(existingOrder.id, updates);
-            
-            // Update local state and map
-            const updatedOrder = { ...existingOrder, ...updates };
-            existingOrdersMap.set(uniqueKey, updatedOrder);
-            setOrders(prev => prev.map(o => o.id === existingOrder.id ? updatedOrder : o));
-            originalOrdersRef.current[existingOrder.id] = { ...originalOrdersRef.current[existingOrder.id], ...updates };
-            
-            // Longer delay for updates to prevent rate limiting
-            await new Promise(resolve => setTimeout(resolve, 800));
-          }
-          
-          updateProgress(i + 1, jsonData.length, `Updated: ${customer}`);
-          continue;
-        }
-
-        const dateReceivedRaw = row["Date Recieved (Anyone can fill out this column)"] ?? row["Date Received"] ?? row["date_received"] ?? "";
-        const dateOrderedRaw = row["Ordered Date (Carl Fills out this column)"] ?? row["Date Ordered"] ?? row["date_ordered"] ?? "";
-        
-        // Determine status based on dates
-        let status = "pending";
-        if (dateReceivedRaw) {
-          status = "received";
-        } else if (dateOrderedRaw) {
-          status = "ordered";
-        }
-
-        // Get other fields with fallbacks for different column names
-        const requestorRaw = row["Requestor"] ?? row["requestor"] ?? row["Requestor Name"] ?? "";
-        const vendorRaw = row["Vendor (Anyone can fill out this column)"] ?? row["Vendor"] ?? row["vendor"] ?? "";
-        const dateNeededRaw = row["Date Needed (Requester fills out this column)"] ?? row["Date Needed"] ?? row["date_needed"] ?? "";
-
-        const orderData = {
-          customer_name: customer,
-          request_type: String(requestType || requestTypes[0] || "Other"),
-          description: String(description || ""),
-          quantity: String(quantity || ""),
-          requestor_email: currentUser?.email || "",
-          requestor_name: String(requestorRaw || currentUser?.full_name || ""),
-          vendor: String(vendorRaw || ""),
-          status: status,
-          row_number: maxRowNumber + importedCount + 1,
-          work_order_id: workOrderFilter || "",
-          is_import: true // Flag to suppress email notifications
-        };
-        // Only add date fields if they have valid values
-        // Excel dates can be numbers (serial dates) or strings
-        const parseExcelDate = (value) => {
-          if (!value) return null;
-          if (typeof value === 'number') {
-            // Excel serial date - convert to JS date
-            const date = new Date((value - 25569) * 86400 * 1000);
-            if (!isNaN(date.getTime())) {
-              return format(date, "yyyy-MM-dd");
-            }
-          }
-          if (typeof value === 'string' && value.trim()) {
-            // Try to parse string date
-            const parsed = new Date(value);
-            if (!isNaN(parsed.getTime())) {
-              return format(parsed, "yyyy-MM-dd");
-            }
-          }
-          return null;
-        };
-        
-        const parsedDateNeeded = parseExcelDate(dateNeededRaw);
-        if (parsedDateNeeded) {
-          orderData.date_needed = parsedDateNeeded;
-        }
-        const parsedDateOrdered = parseExcelDate(dateOrderedRaw);
-        if (parsedDateOrdered) {
-          orderData.date_ordered = parsedDateOrdered;
-        }
-        const parsedDateReceived = parseExcelDate(dateReceivedRaw);
-        if (parsedDateReceived) {
-          orderData.date_received = parsedDateReceived;
-        }
-        const newOrder = await Order.create(orderData);
-        
-        existingOrdersMap.set(uniqueKey, newOrder);
-        originalOrdersRef.current[newOrder.id] = { ...newOrder };
-        
-        // Add to orders state immediately so UI updates
-        setOrders(prev => [...prev, newOrder]);
-        
-        importedCount++;
-        updateProgress(i + 1, jsonData.length, `Imported: ${customer}`);
-        
-        // Delay to prevent rate limiting - use longer delay every 5 items
-        const batchDelay = (importedCount % 5 === 0) ? 2000 : 800;
-        await new Promise(resolve => setTimeout(resolve, batchDelay));
-      }
-
+    try {
+      const { importOrders } = await import("@/functions/importOrders");
+      const fd = new FormData();
+      fd.append('file', file);
+      if (workOrderFilter) fd.append('work_order_filter', workOrderFilter);
+      const res = await importOrders(fd);
+      const result = res.data;
+      updateProgress(1, 1, `Done! ${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);
       completeImport();
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value = "";
+      await loadData(false);
+    } catch (err) {
+      console.error("Import failed:", err);
+      completeImport();
+    }
   };
 
   React.useImperativeHandle(ref, () => ({
