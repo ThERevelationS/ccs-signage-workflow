@@ -730,78 +730,63 @@ export default function AdminSettings() {
               <Settings className="w-8 h-8 text-purple-700" />
             </div>
             <h2 className="text-xl font-bold text-gray-800">Admin Settings</h2>
-            <p className="text-sm text-gray-500 mt-1">Enter your credentials or use Face ID to access admin settings</p>
+            <p className="text-sm text-gray-500 mt-1">Use Face ID or enter your credentials</p>
           </div>
 
-          {showFaceLogin ? (
-            <div className="space-y-4">
-              <FaceRecognition
-                allUsers={allUsers}
-                onRecognized={handleFaceRecognized}
+          <div className="space-y-4">
+            {/* Face Recognition - always visible, starts automatically */}
+            <FaceRecognition
+              allUsers={allUsers}
+              onRecognized={handleFaceRecognized}
+            />
+
+            {passwordError && <p className="text-red-500 text-sm text-center">{passwordError}</p>}
+
+            <div className="relative flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400">or enter credentials</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <div>
+              <Label>Username</Label>
+              <Input
+                type="text"
+                placeholder="Enter your username"
+                value={usernameInput}
+                onChange={(e) => { setUsernameInput(e.target.value); setPasswordError(""); }}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                className="mt-1"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
               />
-              {passwordError && <p className="text-red-500 text-sm text-center">{passwordError}</p>}
-              <Button variant="outline" className="w-full" onClick={() => { setShowFaceLogin(false); setPasswordError(""); }}>
-                Use Password Instead
-              </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <Label>Username</Label>
-                <Input
-                  type="text"
-                  placeholder="Enter your username"
-                  value={usernameInput}
-                  onChange={(e) => { setUsernameInput(e.target.value); setPasswordError(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
-                  className="mt-1"
-                  autoComplete="off"
-                  data-lpignore="true"
-                  data-form-type="other"
-                />
-              </div>
-              <div>
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  placeholder="Enter your Time Clock password"
-                  value={passwordInput}
-                  onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
-                  className="mt-1"
-                  autoComplete="new-password"
-                  data-lpignore="true"
-                  data-form-type="other"
-                />
-                {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
-              </div>
-
-              <Button
-                onClick={handlePasswordSubmit}
-                disabled={isVerifying}
-                className="w-full clay-button border-none"
-                style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
-              >
-                {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Unlock Admin Settings
-              </Button>
-
-              <div className="relative flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">or</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => { setShowFaceLogin(true); setPasswordError(""); }}
-              >
-                <UserCheck className="w-4 h-4 text-purple-600" />
-                Use Face Recognition
-              </Button>
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                placeholder="Enter your Time Clock password"
+                value={passwordInput}
+                onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(""); }}
+                onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                className="mt-1"
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+              />
             </div>
-          )}
+
+            <Button
+              onClick={handlePasswordSubmit}
+              disabled={isVerifying}
+              className="w-full clay-button border-none"
+              style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
+            >
+              {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Unlock Admin Settings
+            </Button>
+          </div>
         </div>
       </div>
     );
