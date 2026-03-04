@@ -644,68 +644,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!file) return;
     e.target.value = "";
 
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    updateProgress(0, 1, `Uploading file to server...`);
 
-      const normalizeDate = (val) => {
-        if (!val) return "";
-        if (val instanceof Date) return isNaN(val.getTime()) ? "" : format(val, "yyyy-MM-dd");
-        return String(val);
-      };
-
-      const validRows = rows.map(row => {
-        const clientName = row["Customer"] || row["client_name"] || "";
-        if (!clientName) return null;
-        const estInvAt = row["Est/Inv @"] || row["est_inv_at"] || "";
-        return {
-          clientName,
-          estInvAt,
-          client_name: clientName,
-          lead_source: row["Source"] || row["lead_source"] || "",
-          current_task_deadline: normalizeDate(row["Current Task Deadline"] || row["current_task_deadline"]),
-          current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
-          designer: row["Designer"] || row["designer"] || "",
-          project_manager: row["Project Manager"] || row["project_manager"] || "",
-          estimator: row["Estimator"] || row["estimator"] || "",
-          est_inv_at: estInvAt,
-          estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
-          current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
-          date_initial_contact: normalizeDate(row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"]),
-          site_survey_date: normalizeDate(row["Site Survey"] || row["site_survey_date"]),
-          date_estimate_sent: normalizeDate(row["Date Estimate Sent to Customer"] || row["date_estimate_sent"]),
-          date_order_created: normalizeDate(row["Date Order Created"] || row["date_order_created"]),
-          project_install_date: normalizeDate(row["Project Install Date"] || row["project_install_date"]),
-          permit_submitted_date: normalizeDate(row["Permit Submitted"] || row["permit_submitted_date"]),
-          title: row["Notes"] || row["title"] || clientName,
-          permit_receipt_confirmed_date: normalizeDate(row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"]),
-          permit_number: row["Permit Number"] || row["permit_number"] || "",
-          permit_approved_date: normalizeDate(row["Date Permit Approved/Received"] || row["permit_approved_date"]),
-          sales_status: row["sales_status"] || "lead",
-          in_pipeline: false,
-        };
-      }).filter(Boolean);
-
-      if (validRows.length === 0) return;
-
-      updateProgress(0, validRows.length, `Sending ${validRows.length} rows to server...`);
-
-      try {
-        const res = await importSalesPipeline({ rows: validRows });
-        const result = res.data;
-        updateProgress(validRows.length, validRows.length, `Done! ${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
-        completeImport();
-        // Reload work orders after backend completes
-        await loadWorkOrders(false);
-      } catch (err) {
-        console.error("Import failed:", err);
-        completeImport();
-      }
-    };
-    reader.readAsArrayBuffer(file);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await importSalesPipeline(fd);
+      const result = res.data;
+      updateProgress(1, 1, `Done! ${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
+      completeImport();
+      await loadWorkOrders(false);
+    } catch (err) {
+      console.error("Import failed:", err);
+      completeImport();
+    }
   };
 
   const handleCreateFromForm = async (data) => {
