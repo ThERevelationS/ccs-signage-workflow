@@ -13,6 +13,8 @@ import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
+  if (dateString instanceof Date) return isNaN(dateString.getTime()) ? undefined : dateString;
+  if (typeof dateString !== 'string') return undefined;
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
