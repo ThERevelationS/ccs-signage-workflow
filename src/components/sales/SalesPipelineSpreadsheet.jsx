@@ -651,11 +651,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       updateProgress(0, rows.length, "Starting import...");
 
+      // Load all existing work orders for deduplication matching
+      let existingOrders = [];
+      try {
+        existingOrders = await WorkOrder.filter({ is_rider: false, deleted: { $ne: true } });
+      } catch {}
+
+      let created = 0, updated = 0;
+
       for (let i = 0; i < rows.length; i++) {
         if (importStateRef.current.cancelled) break;
         const row = rows[i];
         const clientName = row["Customer"] || row["client_name"] || "";
         if (!clientName) continue;
+
+        const estInvAt = row["Est/Inv @"] || row["est_inv_at"] || "";
 
         const woData = {
           client_name: clientName,
@@ -665,7 +675,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           designer: row["Designer"] || row["designer"] || "",
           project_manager: row["Project Manager"] || row["project_manager"] || "",
           estimator: row["Estimator"] || row["estimator"] || "",
-          est_inv_at: row["Est/Inv @"] || row["est_inv_at"] || "",
+          est_inv_at: estInvAt,
           estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
           current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
           date_initial_contact: row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"] || "",
@@ -682,14 +692,36 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           in_pipeline: false,
         };
 
+        // Try to find an existing matching record
+        let existing = null;
+        if (estInvAt) {
+          existing = existingOrders.find(wo =>
+            (wo.est_inv_at && wo.est_inv_at === estInvAt) ||
+            (wo.corbridge_invoice_number && wo.corbridge_invoice_number === estInvAt)
+          );
+        }
+        if (!existing) {
+          existing = existingOrders.find(wo =>
+            wo.client_name?.toLowerCase().trim() === clientName.toLowerCase().trim()
+          );
+        }
+
         try {
-          const created = await WorkOrder.create(woData);
-          setWorkOrders(prev => [created, ...prev]);
+          if (existing) {
+            await WorkOrder.update(existing.id, woData);
+            setWorkOrders(prev => prev.map(wo => wo.id === existing.id ? { ...wo, ...woData } : wo));
+            updated++;
+          } else {
+            const newOrder = await WorkOrder.create(woData);
+            setWorkOrders(prev => [newOrder, ...prev]);
+            existingOrders.push(newOrder); // prevent duplicates within same import
+            created++;
+          }
         } catch (err) {
           console.error("Import row error:", err);
         }
 
-        updateProgress(i + 1, rows.length, `Importing ${clientName}...`);
+        updateProgress(i + 1, rows.length, `Importing ${clientName}... (${created} created, ${updated} updated)`);
       }
 
       completeImport();
