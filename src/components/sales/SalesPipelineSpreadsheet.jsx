@@ -661,74 +661,89 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       let created = 0, updated = 0;
 
-      for (let i = 0; i < rows.length; i++) {
+      // Helper to parse a single row into woData
+      const parseRow = (row) => {
+        const clientName = row["Customer"] || row["client_name"] || "";
+        if (!clientName) return null;
+        const estInvAt = row["Est/Inv @"] || row["est_inv_at"] || "";
+        const normalizeDate = (val) => {
+          if (!val) return "";
+          if (val instanceof Date) return isNaN(val.getTime()) ? "" : format(val, "yyyy-MM-dd");
+          return String(val);
+        };
+        return {
+          clientName,
+          estInvAt,
+          woData: {
+            client_name: clientName,
+            lead_source: row["Source"] || row["lead_source"] || "",
+            current_task_deadline: normalizeDate(row["Current Task Deadline"] || row["current_task_deadline"]),
+            current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
+            designer: row["Designer"] || row["designer"] || "",
+            project_manager: row["Project Manager"] || row["project_manager"] || "",
+            estimator: row["Estimator"] || row["estimator"] || "",
+            est_inv_at: estInvAt,
+            estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
+            current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
+            date_initial_contact: normalizeDate(row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"]),
+            site_survey_date: normalizeDate(row["Site Survey"] || row["site_survey_date"]),
+            date_estimate_sent: normalizeDate(row["Date Estimate Sent to Customer"] || row["date_estimate_sent"]),
+            date_order_created: normalizeDate(row["Date Order Created"] || row["date_order_created"]),
+            project_install_date: normalizeDate(row["Project Install Date"] || row["project_install_date"]),
+            permit_submitted_date: normalizeDate(row["Permit Submitted"] || row["permit_submitted_date"]),
+            title: row["Notes"] || row["title"] || clientName,
+            permit_receipt_confirmed_date: normalizeDate(row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"]),
+            permit_number: row["Permit Number"] || row["permit_number"] || "",
+            permit_approved_date: normalizeDate(row["Date Permit Approved/Received"] || row["permit_approved_date"]),
+            sales_status: row["sales_status"] || "lead",
+            in_pipeline: false,
+          }
+        };
+      };
+
+      const BATCH_SIZE = 10;
+      const validRows = rows.map(parseRow).filter(Boolean);
+
+      for (let batchStart = 0; batchStart < validRows.length; batchStart += BATCH_SIZE) {
         if (importStateRef.current.cancelled) break;
-        // Wait while paused
         while (importStateRef.current.paused && !importStateRef.current.cancelled) {
           await new Promise(r => setTimeout(r, 300));
         }
         if (importStateRef.current.cancelled) break;
-        const row = rows[i];
-        const clientName = row["Customer"] || row["client_name"] || "";
-        if (!clientName) continue;
 
-        const estInvAt = row["Est/Inv @"] || row["est_inv_at"] || "";
+        const batch = validRows.slice(batchStart, batchStart + BATCH_SIZE);
 
-        const woData = {
-          client_name: clientName,
-          lead_source: row["Source"] || row["lead_source"] || "",
-          current_task_deadline: row["Current Task Deadline"] || row["current_task_deadline"] || "",
-          current_task_assigned_to: row["Current Task Assigned to"] || row["current_task_assigned_to"] || "",
-          designer: row["Designer"] || row["designer"] || "",
-          project_manager: row["Project Manager"] || row["project_manager"] || "",
-          estimator: row["Estimator"] || row["estimator"] || "",
-          est_inv_at: estInvAt,
-          estimate_amount: parseFloat(row["Estimate Amount"] || row["estimate_amount"]) || null,
-          current_task_description: row["Current Task Description"] || row["current_task_description"] || "",
-          date_initial_contact: row["Date Est. Requested/Initial Contact"] || row["date_initial_contact"] || "",
-          site_survey_date: row["Site Survey"] || row["site_survey_date"] || "",
-          date_estimate_sent: row["Date Estimate Sent to Customer"] || row["date_estimate_sent"] || "",
-          date_order_created: row["Date Order Created"] || row["date_order_created"] || "",
-          project_install_date: row["Project Install Date"] || row["project_install_date"] || "",
-          permit_submitted_date: row["Permit Submitted"] || row["permit_submitted_date"] || "",
-          title: row["Notes"] || row["title"] || clientName,
-          permit_receipt_confirmed_date: row["Date Permit Receipt Confirmed"] || row["permit_receipt_confirmed_date"] || "",
-          permit_number: row["Permit Number"] || row["permit_number"] || "",
-          permit_approved_date: row["Date Permit Approved/Received"] || row["permit_approved_date"] || "",
-          sales_status: row["sales_status"] || "lead",
-          in_pipeline: false,
-        };
-
-        // Try to find an existing matching record
-        let existing = null;
-        if (estInvAt) {
-          existing = existingOrders.find(wo =>
-            (wo.est_inv_at && wo.est_inv_at === estInvAt) ||
-            (wo.corbridge_invoice_number && wo.corbridge_invoice_number === estInvAt)
-          );
-        }
-        if (!existing) {
-          existing = existingOrders.find(wo =>
-            wo.client_name?.toLowerCase().trim() === clientName.toLowerCase().trim()
-          );
-        }
-
-        try {
-          if (existing) {
-            await WorkOrder.update(existing.id, woData);
-            setWorkOrders(prev => prev.map(wo => wo.id === existing.id ? { ...wo, ...woData } : wo));
-            updated++;
-          } else {
-            const newOrder = await WorkOrder.create(woData);
-            setWorkOrders(prev => [newOrder, ...prev]);
-            existingOrders.push(newOrder); // prevent duplicates within same import
-            created++;
+        await Promise.all(batch.map(async ({ clientName, estInvAt, woData }) => {
+          let existing = null;
+          if (estInvAt) {
+            existing = existingOrders.find(wo =>
+              (wo.est_inv_at && wo.est_inv_at === estInvAt) ||
+              (wo.corbridge_invoice_number && wo.corbridge_invoice_number === estInvAt)
+            );
           }
-        } catch (err) {
-          console.error("Import row error:", err);
-        }
+          if (!existing) {
+            existing = existingOrders.find(wo =>
+              wo.client_name?.toLowerCase().trim() === clientName.toLowerCase().trim()
+            );
+          }
 
-        updateProgress(i + 1, rows.length, `Importing ${clientName}... (${created} created, ${updated} updated)`);
+          try {
+            if (existing) {
+              await WorkOrder.update(existing.id, woData);
+              setWorkOrders(prev => prev.map(wo => wo.id === existing.id ? { ...wo, ...woData } : wo));
+              created; updated++;
+            } else {
+              const newOrder = await WorkOrder.create(woData);
+              setWorkOrders(prev => [newOrder, ...prev]);
+              existingOrders.push(newOrder);
+              created++;
+            }
+          } catch (err) {
+            console.error("Import row error:", err);
+          }
+        }));
+
+        updateProgress(Math.min(batchStart + BATCH_SIZE, validRows.length), validRows.length, `Importing... (${created} created, ${updated} updated)`);
       }
 
       completeImport();
