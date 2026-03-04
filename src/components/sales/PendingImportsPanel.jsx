@@ -415,34 +415,67 @@ export default function PendingImportsPanel({ onCountChange }) {
     );
   }
 
+  const duplicates = items.filter(i => i.doc_type === 'duplicate');
+  const imports = items.filter(i => i.doc_type !== 'duplicate');
+
   if (items.length === 0) {
     return (
       <div className="text-center py-12 text-gray-400">
         <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-green-400" />
-        <p className="text-sm font-medium">No pending imports</p>
-        <p className="text-xs mt-1">All Corebridge emails have been processed.</p>
+        <p className="text-sm font-medium">No pending imports or duplicates</p>
+        <p className="text-xs mt-1">All Corebridge emails have been processed and no duplicates detected.</p>
       </div>
     );
   }
 
+  const removeById = (id) => {
+    setItems(prev => {
+      const updated = prev.filter(i => i.id !== id);
+      if (onCountChange) onCountChange(updated.length);
+      return updated;
+    });
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">{items.length} import{items.length !== 1 ? 's' : ''} awaiting review</p>
+        <p className="text-sm text-gray-600">
+          {imports.length > 0 && `${imports.length} import${imports.length !== 1 ? 's' : ''}`}
+          {imports.length > 0 && duplicates.length > 0 && ' · '}
+          {duplicates.length > 0 && `${duplicates.length} possible duplicate${duplicates.length !== 1 ? 's' : ''}`}
+          {' '}awaiting review
+        </p>
         <button onClick={load} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
           <RefreshCw className="w-3 h-3" /> Refresh
         </button>
       </div>
-      {items.map(item => (
-        <PendingImportCard
-          key={item.id}
-          item={item}
-          onApprove={handleApprove}
-          onMerge={handleMerge}
-          onReject={handleReject}
-          allWorkOrders={allWorkOrders}
-        />
-      ))}
+
+      {duplicates.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide flex items-center gap-1">
+            <AlertTriangle className="w-3.5 h-3.5" /> Possible Duplicates
+          </p>
+          {duplicates.map(item => (
+            <DuplicateCard key={item.id} item={item} onReject={removeById} allWorkOrders={allWorkOrders} />
+          ))}
+        </div>
+      )}
+
+      {imports.length > 0 && (
+        <div className="space-y-3">
+          {duplicates.length > 0 && <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> Pending AI Imports</p>}
+          {imports.map(item => (
+            <PendingImportCard
+              key={item.id}
+              item={item}
+              onApprove={handleApprove}
+              onMerge={handleMerge}
+              onReject={handleReject}
+              allWorkOrders={allWorkOrders}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
