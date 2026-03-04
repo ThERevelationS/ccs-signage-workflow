@@ -26,7 +26,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
-import * as XLSX from "xlsx";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
