@@ -218,14 +218,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const calculateDays = (fromDate, toDate) => {
-    if (!fromDate) return null;
-    // If toDate is not provided or is falsy, use today
-    const useToday = toDate === undefined || toDate === null || toDate === '';
+    // Guard against falsy values
+    if (!fromDate || fromDate === '' || fromDate === null || fromDate === undefined) return null;
+    
     try {
       const from = parseLocalDate(fromDate);
       if (!from || isNaN(from.getTime())) return null;
       
+      // If toDate is not provided or is falsy, use today
+      const useToday = toDate === undefined || toDate === null || toDate === '';
       let to;
+      
       if (useToday) {
         to = new Date();
         to.setHours(0, 0, 0, 0);
@@ -234,8 +237,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (!to || isNaN(to.getTime())) return null;
       }
       
-      return differenceInDays(to, from);
-    } catch {
+      const result = differenceInDays(to, from);
+      return isNaN(result) ? null : result;
+    } catch (error) {
       return null;
     }
   };
