@@ -319,6 +319,7 @@ export default function AdminSettings() {
   const [passwordError, setPasswordError] = useState("");
   const [allUsers, setAllUsers] = useState([]);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [showFaceLogin, setShowFaceLogin] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
