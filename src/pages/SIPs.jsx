@@ -133,12 +133,6 @@ export default function SIPs() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const parseLocalDate = (ds) => {
-    if (!ds) return null;
-    const [y, m, d] = ds.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  };
-
   const isRevisitFuture = (wo) => {
     if (!wo.sip_revisit_date) return false;
     const d = parseLocalDate(wo.sip_revisit_date);
