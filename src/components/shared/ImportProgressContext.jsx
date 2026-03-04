@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { base44 } from "@/api/base44Client";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Loader2, X, CheckCircle2 } from "lucide-react";
@@ -24,10 +25,41 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
         }
       }
     } catch {}
-    return { show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null };
+    return { show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null };
   });
 
   const cancelRef = useRef({ cancelled: false, paused: false });
+  const importJobIdRef = useRef(null);
+
+  // Restore active import from database on mount
+  useEffect(() => {
+    const restoreActiveImport = async () => {
+      if (!currentUserEmail) return;
+      try {
+        const activeJobs = await base44.entities.ImportJob.filter({
+          user_email: currentUserEmail,
+          status: { $in: ["running", "paused"] }
+        });
+        if (activeJobs.length > 0) {
+          const job = activeJobs[0];
+          importJobIdRef.current = job.id;
+          setImportState({
+            show: true,
+            current: job.processed_items || 0,
+            total: job.total_items || 0,
+            currentItem: job.current_item || "Restoring import...",
+            paused: job.status === "paused",
+            userEmail: currentUserEmail,
+            startedAt: new Date(job.started_at).getTime(),
+            importJobId: job.id
+          });
+        }
+      } catch (err) {
+        console.error("Failed to restore import job:", err);
+      }
+    };
+    restoreActiveImport();
+  }, [currentUserEmail]);
 
   // Sync to localStorage whenever state changes
   useEffect(() => {
