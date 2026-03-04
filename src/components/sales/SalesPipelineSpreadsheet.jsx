@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { base44 } from "@/api/base44Client";
+import { importSalesPipeline } from "@/functions/importSalesPipeline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
