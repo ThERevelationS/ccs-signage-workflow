@@ -649,10 +649,11 @@ function LayoutContent({ children }) {
 
                 {/* Mobile Menu Button */}
                 <button 
-                  className="lg:hidden clay-button p-2"
+                  className="lg:hidden clay-button p-3 min-h-[48px] min-w-[48px]"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  title={mobileMenuOpen ? "Close menu" : "Open menu"}
                 >
-                  {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
 
                 {/* Desktop Navigation Links */}
