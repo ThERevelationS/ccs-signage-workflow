@@ -83,30 +83,131 @@ const EmailGroup = base44.entities.EmailGroup;
 
 
 const TRIGGER_TYPES = [
+  // ── Work Orders ──
   { value: "work_order_created", label: "Work Order Created", category: "Work Orders" },
+  { value: "work_order_updated", label: "Work Order Updated (Any Field)", category: "Work Orders" },
   { value: "work_order_completed", label: "Work Order Completed", category: "Work Orders" },
-  { value: "work_order_deleted", label: "Work Order Deleted", category: "Work Orders" },
-  { value: "rider_created", label: "Rider Created", category: "Work Orders" },
-  { value: "rider_all_tasks_completed", label: "Rider All Tasks Completed", category: "Work Orders" },
+  { value: "work_order_deleted", label: "Work Order Deleted / Trashed", category: "Work Orders" },
+  { value: "work_order_restored", label: "Work Order Restored from Trash", category: "Work Orders" },
+  { value: "work_order_client_changed", label: "Client Name Changed", category: "Work Orders" },
+  { value: "work_order_description_changed", label: "Description Changed", category: "Work Orders" },
+  { value: "work_order_title_changed", label: "Title Changed", category: "Work Orders" },
+  { value: "work_order_estimate_changed", label: "Estimate Amount Changed", category: "Work Orders" },
+  { value: "work_order_quoted_amount_changed", label: "Quoted Amount Changed", category: "Work Orders" },
+  { value: "work_order_contact_changed", label: "Contact Info Changed", category: "Work Orders" },
+  { value: "work_order_install_location_changed", label: "Install Location Changed", category: "Work Orders" },
+  { value: "work_order_permit_number_set", label: "Permit Number Set", category: "Work Orders" },
+  { value: "work_order_permit_approved", label: "Permit Approved Date Set", category: "Work Orders" },
+  { value: "work_order_permit_submitted", label: "Permit Submitted Date Set", category: "Work Orders" },
+  { value: "work_order_est_inv_set", label: "Est/Inv Number Set", category: "Work Orders" },
+  { value: "work_order_install_date_set", label: "Install Date Set", category: "Work Orders" },
+  { value: "work_order_install_date_approaching", label: "Install Date Approaching", category: "Work Orders" },
+  { value: "work_order_install_date_passed", label: "Install Date Passed", category: "Work Orders" },
+  { value: "work_order_project_health_changed", label: "Project Health Changed", category: "Work Orders" },
+  { value: "work_order_production_type_changed", label: "Production Type Changed (In-house/Outsource)", category: "Work Orders" },
+  { value: "work_order_file_uploaded", label: "File Uploaded to Work Order", category: "Work Orders" },
+
+  // ── Riders ──
+  { value: "rider_created", label: "Rider Created", category: "Riders" },
+  { value: "rider_completed", label: "Rider Completed", category: "Riders" },
+  { value: "rider_deleted", label: "Rider Deleted", category: "Riders" },
+  { value: "rider_all_tasks_completed", label: "Rider — All Tasks Completed", category: "Riders" },
+  { value: "rider_stage_changed", label: "Rider Stage Changed", category: "Riders" },
+  { value: "rider_assigned_to_changed", label: "Rider Assignment Changed", category: "Riders" },
+
+  // ── Stage Movement ──
   { value: "stage_changed", label: "Stage Changed (Any)", category: "Stage Movement" },
   { value: "stage_entered", label: "Stage Entered (Specific)", category: "Stage Movement" },
   { value: "stage_exited", label: "Stage Exited (Specific)", category: "Stage Movement" },
+  { value: "stage_estimating_entered", label: "Entered Estimating Stage", category: "Stage Movement" },
+  { value: "stage_sales_entered", label: "Entered Sales Stage", category: "Stage Movement" },
+  { value: "stage_permitting_entered", label: "Entered Permitting Stage", category: "Stage Movement" },
+  { value: "stage_design_entered", label: "Entered Design Stage", category: "Stage Movement" },
+  { value: "stage_production_entered", label: "Entered Production Stage", category: "Stage Movement" },
+  { value: "stage_fabrication_entered", label: "Entered Fabrication Stage", category: "Stage Movement" },
+  { value: "stage_installation_entered", label: "Entered Installation Stage", category: "Stage Movement" },
+  { value: "stage_completed_entered", label: "Entered Completed Stage", category: "Stage Movement" },
+
+  // ── Tasks ──
   { value: "task_added", label: "Task Added", category: "Tasks" },
   { value: "task_completed", label: "Task Completed", category: "Tasks" },
+  { value: "task_uncompleted", label: "Task Marked Incomplete", category: "Tasks" },
+  { value: "task_edited", label: "Task Text Edited", category: "Tasks" },
   { value: "task_deleted", label: "Task Deleted", category: "Tasks" },
+  { value: "task_due_date_set", label: "Task Due Date Set", category: "Tasks" },
+  { value: "task_due_date_approaching", label: "Task Due Date Approaching", category: "Tasks" },
+  { value: "task_due_date_passed", label: "Task Due Date Passed (Overdue)", category: "Tasks" },
+  { value: "task_assigned", label: "Task Assigned to Person", category: "Tasks" },
+  { value: "all_tasks_completed", label: "All Tasks Completed on Work Order", category: "Tasks" },
+
+  // ── Notes ──
   { value: "note_added", label: "Note Added", category: "Notes" },
   { value: "note_deleted", label: "Note Deleted", category: "Notes" },
-  { value: "image_uploaded", label: "Image Uploaded", category: "Media" },
+  { value: "note_completed", label: "Note Marked Complete", category: "Notes" },
+  { value: "sub_note_added", label: "Sub-Note Added", category: "Notes" },
+  { value: "sub_note_deleted", label: "Sub-Note Deleted", category: "Notes" },
+  { value: "follow_up_added", label: "Follow-Up Item Added", category: "Notes" },
+  { value: "follow_up_completed", label: "Follow-Up Item Completed", category: "Notes" },
+
+  // ── Sales Pipeline ──
+  { value: "sales_status_changed", label: "Sales Status Changed", category: "Sales Pipeline" },
+  { value: "sales_lead_created", label: "New Lead Created in Pipeline", category: "Sales Pipeline" },
+  { value: "sales_status_won", label: "Status Changed to WON", category: "Sales Pipeline" },
+  { value: "sales_status_lost", label: "Status Changed to LOST", category: "Sales Pipeline" },
+  { value: "sales_status_on_hold", label: "Status Changed to ON HOLD", category: "Sales Pipeline" },
+  { value: "sales_follow_up_date_approaching", label: "Follow-Up Date Approaching", category: "Sales Pipeline" },
+  { value: "sales_follow_up_date_passed", label: "Follow-Up Date Passed", category: "Sales Pipeline" },
+  { value: "sales_close_date_approaching", label: "Close Date Approaching", category: "Sales Pipeline" },
+  { value: "sales_quote_date_set", label: "Quote Date Set", category: "Sales Pipeline" },
+  { value: "sales_rep_changed", label: "Sales Rep Changed", category: "Sales Pipeline" },
+  { value: "sales_probability_changed", label: "Probability % Changed", category: "Sales Pipeline" },
+  { value: "sales_in_pipeline_toggled", label: "Added / Removed from Pipeline", category: "Sales Pipeline" },
+
+  // ── Pending Imports ──
+  { value: "pending_import_created", label: "New Pending Import Arrived", category: "Pending Imports" },
+  { value: "pending_import_approved", label: "Pending Import Approved", category: "Pending Imports" },
+  { value: "pending_import_merged", label: "Pending Import Merged", category: "Pending Imports" },
+  { value: "pending_import_rejected", label: "Pending Import Rejected", category: "Pending Imports" },
+  { value: "duplicate_detected", label: "Duplicate Record Detected", category: "Pending Imports" },
+
+  // ── Priority / ASAP ──
   { value: "asap_toggled_on", label: "ASAP Toggled ON", category: "Priority" },
   { value: "asap_toggled_off", label: "ASAP Toggled OFF", category: "Priority" },
+  { value: "priority_changed", label: "Row Priority Changed", category: "Priority" },
+  { value: "project_health_at_risk", label: "Project Health → At Risk", category: "Priority" },
+  { value: "project_health_delayed", label: "Project Health → Delayed", category: "Priority" },
+  { value: "project_health_blocked", label: "Project Health → Blocked", category: "Priority" },
+  { value: "project_health_on_track", label: "Project Health → On Track", category: "Priority" },
+
+  // ── Assignment ──
+  { value: "assigned_to_changed", label: "Work Order Assignment Changed", category: "Assignment" },
+  { value: "designer_assigned", label: "Designer Assigned", category: "Assignment" },
+  { value: "surveyor_assigned", label: "Surveyor Assigned", category: "Assignment" },
+  { value: "project_manager_assigned", label: "Project Manager Assigned", category: "Assignment" },
+  { value: "estimator_assigned", label: "Estimator Assigned", category: "Assignment" },
+
+  // ── Dates ──
   { value: "due_date_approaching", label: "Due Date Approaching", category: "Dates" },
   { value: "due_date_passed", label: "Due Date Passed", category: "Dates" },
-  { value: "assigned_to_changed", label: "Assignment Changed", category: "Assignment" },
-  { value: "priority_changed", label: "Priority Changed", category: "Priority" },
+  { value: "due_date_set", label: "Due Date Set / Changed", category: "Dates" },
+  { value: "due_date_cleared", label: "Due Date Cleared", category: "Dates" },
+  { value: "start_date_set", label: "Start Date Set / Changed", category: "Dates" },
+  { value: "site_survey_scheduled", label: "Site Survey Date Scheduled", category: "Dates" },
+  { value: "site_survey_approaching", label: "Site Survey Date Approaching", category: "Dates" },
+
+  // ── Media ──
+  { value: "image_uploaded", label: "Image Uploaded to Work Order", category: "Media" },
+  { value: "file_attached", label: "File Attached to Work Order", category: "Media" },
+  { value: "google_drive_linked", label: "Google Drive Folder Linked", category: "Media" },
+
+  // ── Orders ──
   { value: "order_created", label: "Order Created", category: "Orders" },
   { value: "order_ordered", label: "Order Placed (Ordered)", category: "Orders" },
   { value: "order_received", label: "Order Received", category: "Orders" },
+  { value: "order_cancelled", label: "Order Cancelled", category: "Orders" },
   { value: "order_date_needed_approaching", label: "Order Date Needed Approaching", category: "Orders" },
+  { value: "order_date_needed_passed", label: "Order Date Needed Passed", category: "Orders" },
+  { value: "order_overdue", label: "Order Overdue (Not Received)", category: "Orders" },
   { value: "order_customer_name_changed", label: "Order Customer Name Updated", category: "Order Fields" },
   { value: "order_request_type_changed", label: "Order Request Type Updated", category: "Order Fields" },
   { value: "order_description_changed", label: "Order Description Updated", category: "Order Fields" },
@@ -116,13 +217,47 @@ const TRIGGER_TYPES = [
   { value: "order_date_ordered_changed", label: "Order Date Ordered Updated", category: "Order Fields" },
   { value: "order_vendor_changed", label: "Order Vendor Updated", category: "Order Fields" },
   { value: "order_date_received_changed", label: "Order Date Received Updated", category: "Order Fields" },
+
+  // ── Time Clock ──
   { value: "time_clock_in", label: "Employee Clocked In", category: "Time Clock" },
   { value: "time_clock_out", label: "Employee Clocked Out", category: "Time Clock" },
+  { value: "time_clock_in_late", label: "Employee Clocked In Late (after 8am)", category: "Time Clock" },
+  { value: "time_clock_out_early", label: "Employee Clocked Out Early", category: "Time Clock" },
   { value: "time_entry_notes_updated", label: "Time Entry Notes Updated", category: "Time Clock" },
+  { value: "time_entry_long_shift", label: "Shift Exceeds 10 Hours", category: "Time Clock" },
+  { value: "time_entry_no_clock_out", label: "No Clock-Out Detected (forgot)", category: "Time Clock" },
+  { value: "job_allocation_added", label: "Job Time Allocation Added", category: "Time Clock" },
   { value: "time_off_requested", label: "Time Off Requested", category: "Time Clock" },
   { value: "time_off_approved", label: "Time Off Approved", category: "Time Clock" },
   { value: "time_off_denied", label: "Time Off Denied", category: "Time Clock" },
-  { value: "time_off_updated", label: "Time Off Request Updated", category: "Time Clock" }
+  { value: "time_off_updated", label: "Time Off Request Updated", category: "Time Clock" },
+  { value: "time_off_cancelled", label: "Time Off Request Cancelled", category: "Time Clock" },
+  { value: "pto_balance_low", label: "PTO Balance Running Low", category: "Time Clock" },
+
+  // ── Users / HR ──
+  { value: "user_registered", label: "New User Registered / Onboarded", category: "Users" },
+  { value: "user_role_changed", label: "User Role Changed", category: "Users" },
+  { value: "user_face_enrolled", label: "User Face ID Enrolled", category: "Users" },
+  { value: "user_password_reset", label: "User Password Reset Requested", category: "Users" },
+
+  // ── SIPs / Monday Meeting ──
+  { value: "sip_item_completed", label: "SIP Item Marked Complete", category: "SIPs / Meetings" },
+  { value: "sip_item_revisit_set", label: "SIP Revisit Date Set", category: "SIPs / Meetings" },
+  { value: "sip_revisit_date_approaching", label: "SIP Revisit Date Approaching", category: "SIPs / Meetings" },
+  { value: "mmm_item_completed", label: "Monday Meeting Item Completed", category: "SIPs / Meetings" },
+
+  // ── Permitting ──
+  { value: "jurisdiction_profile_created", label: "Jurisdiction Profile Created", category: "Permitting" },
+  { value: "jurisdiction_profile_updated", label: "Jurisdiction Profile Updated", category: "Permitting" },
+  { value: "regulation_alert_created", label: "Regulation Alert / Change Detected", category: "Permitting" },
+  { value: "permit_submitted", label: "Permit Submitted", category: "Permitting" },
+  { value: "permit_approved", label: "Permit Approved", category: "Permitting" },
+  { value: "permit_receipt_confirmed", label: "Permit Receipt Confirmed", category: "Permitting" },
+
+  // ── Financials / Reports ──
+  { value: "feature_report_submitted", label: "Feature / Bug Report Submitted", category: "Reports" },
+  { value: "feature_report_status_changed", label: "Feature Report Status Changed", category: "Reports" },
+  { value: "feature_report_completed", label: "Feature Report Marked Complete", category: "Reports" },
 ];
 
 const ACTION_TYPES = [
