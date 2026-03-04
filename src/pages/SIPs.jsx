@@ -470,7 +470,7 @@ export default function SIPs() {
                       >
                         <PopoverTrigger asChild disabled={!isRegistered}>
                           <button className={`h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-medium ${wo.sip_revisit_date ? 'text-amber-700' : 'text-gray-400'}`}>
-                            {wo.sip_revisit_date ? format(parseLocalDate(wo.sip_revisit_date), "MM/dd/yy") : "-"}
+                            {wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
