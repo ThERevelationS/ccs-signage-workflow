@@ -98,7 +98,7 @@ export default function SalesPipeline() {
             className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
           >
             <Inbox className="w-4 h-4" />
-            {showPendingImports ? '← Return' : 'Pending Imports'}
+            {showPendingImports ? '← Return' : 'Pending Imports / Duplicates'}
             {!showPendingImports && pendingCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                 {pendingCount}
