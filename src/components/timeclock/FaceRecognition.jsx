@@ -122,10 +122,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   // Auto-start scanning when models are loaded (recognition mode only)
   useEffect(() => {
-    if (modelsLoaded && !isEnrollMode) {
+    if (modelsLoaded && !isEnrollMode && !isScanning) {
       startScanning();
     }
-  }, [modelsLoaded, isEnrollMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelsLoaded]);
 
   const detectFace = async () => {
     if (!videoRef.current || !modelsLoaded) return null;
