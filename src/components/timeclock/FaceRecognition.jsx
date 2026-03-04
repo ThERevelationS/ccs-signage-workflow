@@ -84,7 +84,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Loading face models...");
   };
 
-  // Load models after camera is ready
+  // Load models after camera is ready, then auto-start scanning in recognition mode
   useEffect(() => {
     if (!cameraReady) return;
     
@@ -100,7 +100,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         if (mounted) {
           setModelsLoaded(true);
-          setScanStatus("Ready! Position your face and click Capture.");
+          if (!isEnrollMode) {
+            // Auto-start scanning for recognition mode
+            setScanStatus("Looking for face...");
+          } else {
+            setScanStatus("Ready! Position your face and click Capture.");
+          }
         }
       } catch (err) {
         console.error("Model load error:", err);
@@ -113,7 +118,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     loadModels();
     
     return () => { mounted = false; };
-  }, [cameraReady]);
+  }, [cameraReady, isEnrollMode]);
+
+  // Auto-start scanning when models are loaded (recognition mode only)
+  useEffect(() => {
+    if (modelsLoaded && !isEnrollMode) {
+      startScanning();
+    }
+  }, [modelsLoaded, isEnrollMode]);
 
   const detectFace = async () => {
     if (!videoRef.current || !modelsLoaded) return null;
