@@ -774,8 +774,8 @@ function LayoutContent({ children }) {
 
               {/* Mobile Navigation Menu */}
               {mobileMenuOpen && (
-                <div className="lg:hidden mt-2 pb-2 border-t border-gray-200 pt-2">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="lg:hidden mt-2 pb-4 border-t border-gray-200 pt-4 max-h-[calc(100vh-120px)] overflow-y-auto">
+                  <div className="grid grid-cols-1 gap-2 px-2">
                     {[...navigationItems, ...meetingsDropdownItems].map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -791,7 +791,7 @@ function LayoutContent({ children }) {
                             }
                             setMobileMenuOpen(false);
                           }}
-                          className={`px-3 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 ${
+                          className={`px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 min-h-[48px] ${
                             isActive ? 'clay-card' : isInSplit ? 'bg-purple-50' : 'hover:bg-gray-100'
                           }`}
                           style={isActive ? { 
@@ -799,11 +799,11 @@ function LayoutContent({ children }) {
                           } : {}}
                           title="Ctrl+Click to open in split view"
                         >
-                          <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
-                          <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-600'}`}>
+                          <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                          <span className={`font-medium text-base ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-600'}`}>
                             {item.title}
                           </span>
-                          {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
+                          {isInSplit && <Columns className="w-4 h-4 text-purple-500" />}
                         </Link>
                       );
                     })}
