@@ -712,8 +712,10 @@ export default function AdminSettings() {
     }
   };
 
-  const handleFaceRecognized = (user) => {
-    if (user?.role === 'admin') {
+  const handleFaceRecognized = (recognizedUser) => {
+    // allUsers contains AuthorizedEmail records with face_descriptors (same as time clock)
+    const matched = allUsers.find(u => u.id === recognizedUser.id || u.email === recognizedUser.email);
+    if (matched?.role === 'admin') {
       setIsUnlocked(true);
       setShowFaceLogin(false);
     } else {
