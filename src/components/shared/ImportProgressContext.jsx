@@ -138,14 +138,28 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  const pauseImport = () => {
+  const pauseImport = async () => {
     cancelRef.current.paused = true;
     setImportState(prev => ({ ...prev, paused: true }));
+    if (importJobIdRef.current) {
+      try {
+        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "paused" });
+      } catch (err) {
+        console.error("Failed to pause import job:", err);
+      }
+    }
   };
 
-  const resumeImport = () => {
+  const resumeImport = async () => {
     cancelRef.current.paused = false;
     setImportState(prev => ({ ...prev, paused: false }));
+    if (importJobIdRef.current) {
+      try {
+        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "running" });
+      } catch (err) {
+        console.error("Failed to resume import job:", err);
+      }
+    }
   };
 
   const isMyImport = importState.show && importState.userEmail === currentUserEmail;
