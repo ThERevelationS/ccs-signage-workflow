@@ -10,6 +10,8 @@ import { Trash2, Link as LinkIcon, Copy } from "lucide-react";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
+  if (dateString instanceof Date) return isNaN(dateString.getTime()) ? undefined : dateString;
+  if (typeof dateString !== 'string') return undefined;
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
