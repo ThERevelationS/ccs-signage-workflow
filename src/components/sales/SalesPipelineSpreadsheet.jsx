@@ -661,6 +661,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       for (let i = 0; i < rows.length; i++) {
         if (importStateRef.current.cancelled) break;
+        // Wait while paused
+        while (importStateRef.current.paused && !importStateRef.current.cancelled) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+        if (importStateRef.current.cancelled) break;
         const row = rows[i];
         const clientName = row["Customer"] || row["client_name"] || "";
         if (!clientName) continue;
@@ -1320,6 +1325,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         showGradientDialog={showGradientDialog} setShowGradientDialog={setShowGradientDialog}
         deadlineGradientSettings={deadlineGradientSettings} saveGradientSettings={saveGradientSettings}
         importProgress={importProgress}
+        importStateRef={importStateRef}
         deleteConfirm={deleteConfirm} setDeleteConfirm={setDeleteConfirm}
         confirmDelete={confirmDelete}
       />
