@@ -145,20 +145,42 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   const findMatchingUser = (descriptor) => {
     let bestMatch = null;
-    let bestDistance = 0.6;
+    let bestDistance = Infinity;
+    // Stricter threshold: 0.45 instead of 0.6 for better accuracy with similar faces
+    const CONFIDENCE_THRESHOLD = 0.45;
+    // Require match to be at least this much better than second-best to avoid ambiguity
+    const SEPARATION_RATIO = 1.25;
+
+    const allMatches = [];
 
     for (const user of allUsers) {
       if (!user.face_descriptors?.length) continue;
       
+      let userBestDistance = Infinity;
       for (const stored of user.face_descriptors) {
         const distance = faceapi.euclideanDistance(descriptor, new Float32Array(stored));
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestMatch = user;
-        }
+        userBestDistance = Math.min(userBestDistance, distance);
+      }
+      
+      allMatches.push({ user, distance: userBestDistance });
+      if (userBestDistance < bestDistance) {
+        bestDistance = userBestDistance;
+        bestMatch = user;
       }
     }
-    return bestMatch;
+
+    // Only return match if it's confident AND clearly better than alternatives
+    if (bestDistance <= CONFIDENCE_THRESHOLD && allMatches.length > 0) {
+      allMatches.sort((a, b) => a.distance - b.distance);
+      const secondBest = allMatches[1]?.distance || Infinity;
+      
+      // Ensure best match is significantly better than runner-up
+      if (secondBest / bestDistance >= SEPARATION_RATIO) {
+        return bestMatch;
+      }
+    }
+    
+    return null;
   };
 
   const startScanning = () => {
