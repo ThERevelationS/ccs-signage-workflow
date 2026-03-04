@@ -13,7 +13,7 @@ export default function SalesPipelineDialogs({
   handleColumnSort, handleCustomSort, clearSort, sortConfig, workOrders, currentUser,
   handleHeaderContextMenuAction,
   showGradientDialog, setShowGradientDialog, deadlineGradientSettings, saveGradientSettings,
-  importProgress,
+  importProgress, importStateRef,
   deleteConfirm, setDeleteConfirm, confirmDelete
 }) {
   return (
@@ -94,7 +94,7 @@ export default function SalesPipelineDialogs({
         onSave={saveGradientSettings}
       />
 
-      <SalesPipelineImportProgress importProgress={importProgress} />
+      <SalesPipelineImportProgress importProgress={importProgress} importStateRef={importStateRef} />
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
