@@ -416,6 +416,18 @@ export default function UserSettings() {
               section="clothing"
             />
           </TabsContent>
+
+          <TabsContent value="calendar">
+            <div className="clay-card p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-purple-600" />
+                My Calendar Preferences
+              </h2>
+              <UserCalendarSettingsPanel
+                userEmail={userData?.email}
+              />
+            </div>
+          </TabsContent>
         </Tabs>
 
         <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
