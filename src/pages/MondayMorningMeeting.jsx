@@ -268,7 +268,7 @@ export default function MondayMorningMeeting() {
                         >
                           <PopoverTrigger asChild disabled={!isRegistered}>
                             <button className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium">
-                              {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
+                              {wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
