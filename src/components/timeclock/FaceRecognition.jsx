@@ -146,10 +146,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const findMatchingUser = (descriptor) => {
     let bestMatch = null;
     let bestDistance = Infinity;
-    // Stricter threshold: 0.45 instead of 0.6 for better accuracy with similar faces
-    const CONFIDENCE_THRESHOLD = 0.45;
-    // Require match to be at least this much better than second-best to avoid ambiguity
-    const SEPARATION_RATIO = 1.25;
+    // Very strict threshold to prevent face confusion
+    const CONFIDENCE_THRESHOLD = 0.38;
+    // Require match to be clearly better than second-best to avoid ambiguity
+    const SEPARATION_RATIO = 1.5;
 
     const allMatches = [];
 
