@@ -460,7 +460,7 @@ export default function MondayMorningMeeting() {
                     </td>
                     <td className="px-2 py-2 border-r text-xs" style={{ maxWidth: '150px' }}><span className="truncate block">{wo.current_task_description || "-"}</span></td>
                     <td className="px-2 py-2 border-r text-xs">
-                      {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}
+                      {wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
                     </td>
                     <td className="px-2 py-2 border-r text-xs truncate">{wo.designer || "-"}</td>
                     <td className="px-2 py-2 border-r text-xs truncate">{wo.project_manager || "-"}</td>
