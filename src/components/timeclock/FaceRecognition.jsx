@@ -242,7 +242,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   };
 
   const startCountdown = (currentDescriptors) => {
-    if (currentDescriptors.length >= 3) return;
+    if (currentDescriptors.length >= 10) return;
     
     setAutoCapturing(true);
     setCountdown(3);
