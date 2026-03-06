@@ -354,6 +354,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             updateData.sales_status = estToInvSalesStatus;
           }
           if (extractedData.install_location) updateData.install_location = extractedData.install_location;
+          if (extractedData.description) updateData.description = extractedData.description;
 
           await WorkOrder.update(exactMatch.id, updateData);
           // Update in-memory so subsequent emails in this run see the change
