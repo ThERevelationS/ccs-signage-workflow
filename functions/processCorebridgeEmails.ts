@@ -283,7 +283,7 @@ Return a JSON object with these fields (use null for anything not found):
 - contact_phone: Customer phone if shown
 - billing_address: Full billing address (street, city, state, zip)
 - install_location: Full installation address if different from billing
-- description: The DESCRIPTION field value
+- description: The full job description or scope of work — include the "Description" field text AND any notes, scope, or line item descriptions that describe what work is being done. Concatenate multiple description lines together if needed.
 - products: Array of product names (top-level products only, not sub-parts)
 - quoted_amount: The Grand Total number only (no $ sign)
 - sales_rep: Salesperson name
