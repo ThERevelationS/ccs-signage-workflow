@@ -398,7 +398,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             {!autoCapturing ? (
               <Button 
                 onClick={startAutoEnrollment}
-                disabled={capturedDescriptors.length >= 3 || !modelsLoaded}
+                disabled={capturedDescriptors.length >= 10 || !modelsLoaded}
                 className="gap-2 bg-purple-600 hover:bg-purple-700"
               >
                 <Camera className="w-4 h-4" />
