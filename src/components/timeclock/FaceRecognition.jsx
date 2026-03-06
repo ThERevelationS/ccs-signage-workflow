@@ -387,7 +387,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       {isEnrollMode ? (
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5].map(i => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
               <div 
                 key={i}
                 className={`w-4 h-4 rounded-full ${capturedDescriptors.length >= i ? "bg-green-500" : "bg-gray-300"}`}
