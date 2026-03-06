@@ -916,42 +916,96 @@ function LayoutContent({ children }) {
 
         {/* Mobile Bottom Navigation */}
         {isMobile && (
-          <nav
-            className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 flex border-t border-gray-200"
-            style={{
-              background: darkMode ? 'rgba(20,20,40,0.97)' : 'rgba(255,255,255,0.97)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
-              height: 'calc(64px + env(safe-area-inset-bottom))',
-            }}
-          >
-            {[
-                  { label: 'My Workflow', icon: User, url: createPageUrl('MyWorkflow') },
-                  { label: 'Sales', icon: DollarSign, url: createPageUrl('SalesPipeline') },
-                  { label: 'Timeclock', icon: Clock, url: createPageUrl('TimeClock') },
-                  { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
-                ].map((item) => {
-                  const isActive = location.pathname === item.url;
-                  return (
-                    <Link
-                      key={item.label}
-                      to={item.url}
-                      onClick={(e) => {
-                        if (isActive) {
-                          e.preventDefault();
-                          navigate(item.url, { replace: true });
-                          window.scrollTo(0, 0);
-                        }
-                      }}
-                      className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
-                      style={{ minHeight: '44px', userSelect: 'none', color: isActive ? '#7C3AED' : '#6B7280' }}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="text-xs font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-          </nav>
+          <>
+            <nav
+              className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 flex border-t border-gray-200"
+              style={{
+                background: darkMode ? 'rgba(20,20,40,0.97)' : 'rgba(255,255,255,0.97)',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
+                height: 'calc(64px + env(safe-area-inset-bottom))',
+              }}
+            >
+              {[
+                    { label: 'My Workflow', icon: User, url: createPageUrl('MyWorkflow') },
+                    { label: 'Sales', icon: DollarSign, url: createPageUrl('SalesPipeline') },
+                    { label: 'Timeclock', icon: Clock, url: createPageUrl('TimeClock') },
+                    { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
+                  ].map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={item.url}
+                        onClick={(e) => {
+                          if (isActive) {
+                            e.preventDefault();
+                            navigate(item.url, { replace: true });
+                            window.scrollTo(0, 0);
+                          }
+                          setMobileMenuOpen(false);
+                        }}
+                        className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+                        style={{ minHeight: '44px', userSelect: 'none', color: isActive ? '#7C3AED' : '#6B7280' }}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span className="text-xs font-medium">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+              {/* More button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+                style={{ minHeight: '44px', userSelect: 'none', color: mobileMenuOpen ? '#7C3AED' : '#6B7280' }}
+              >
+                <Menu className="w-5 h-5" />
+                <span className="text-xs font-medium">More</span>
+              </button>
+            </nav>
+
+            {/* Mobile full-page menu overlay */}
+            {mobileMenuOpen && (
+              <div
+                className="fixed inset-0 z-40"
+                style={{ background: darkMode ? 'rgba(20,20,40,0.97)' : 'rgba(255,255,255,0.97)', paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
+              >
+                <div className="h-full overflow-y-auto p-4 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold" style={{ color: darkMode ? '#e2e8f0' : '#1f2937' }}>All Pages</h2>
+                    <button onClick={() => setMobileMenuOpen(false)} className="p-2">
+                      <X className="w-5 h-5" style={{ color: darkMode ? '#e2e8f0' : '#6B7280' }} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[...navigationItems, ...meetingsDropdownItems].map((item) => {
+                      const isActive = location.pathname === item.url;
+                      return (
+                        <Link
+                          key={item.title}
+                          to={item.url}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="px-4 py-3 rounded-xl flex items-center gap-3 min-h-[48px] border"
+                          style={{
+                            background: isActive
+                              ? `linear-gradient(135deg, ${item.borderColor} 0%, ${item.color} 100%)`
+                              : `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
+                            borderColor: isActive ? item.borderColor : item.borderColor,
+                            borderWidth: isActive ? '2px' : '1px',
+                          }}
+                        >
+                          <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: isActive ? '#3730A3' : '#6B7280' }} />
+                          <span className={`font-medium text-base ${isActive ? 'text-indigo-900 font-bold' : 'text-gray-700'}`}>
+                            {item.title}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
