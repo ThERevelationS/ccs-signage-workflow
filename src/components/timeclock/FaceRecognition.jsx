@@ -223,12 +223,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       const newDescriptors = [...capturedDescriptors, Array.from(detection.descriptor)];
       setCapturedDescriptors(newDescriptors);
       
-      if (newDescriptors.length >= 5) {
+      if (newDescriptors.length >= 10) {
         setScanStatus("Ready to save!");
         setAutoCapturing(false);
         handleEnrollCapture?.(newDescriptors);
       } else {
-        setScanStatus(`Captured ${newDescriptors.length}/5. Move slightly...`);
+        setScanStatus(`Captured ${newDescriptors.length}/10. Move slightly...`);
         // Auto-start next countdown
         startCountdown(newDescriptors);
       }
