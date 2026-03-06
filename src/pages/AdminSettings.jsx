@@ -76,6 +76,7 @@ import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
+import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const AutomationRule = base44.entities.AutomationRule;

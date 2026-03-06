@@ -1,26 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/components/auth/EmailGate";
+import {
+  format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  addDays, addMonths, subMonths, addWeeks, subWeeks,
+  isSameMonth, isSameDay, isToday, addDays as add, parseISO
+} from "date-fns";
+import {
+  ChevronLeft, ChevronRight, Plus, Settings, CalendarDays,
+  LayoutGrid, List, Columns, AlignLeft, Loader2, RefreshCw, X, Filter
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, CalendarDays, X } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay, parseISO } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import CalendarEventForm from "@/components/calendar/CalendarEventForm";
+import CalendarEventPopover from "@/components/calendar/CalendarEventPopover";
+import AgendaView from "@/components/calendar/AgendaView";
+import WeekView from "@/components/calendar/WeekView";
+import DayView from "@/components/calendar/DayView";
+import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSettingsPanel";
 
 const STAGE_COLORS = {
-  estimating: { bg: "#FFF9C4", text: "#92400E" },
-  sales: { bg: "#B2DFDB", text: "#065F46" },
-  permitting: { bg: "#FFE4D6", text: "#9A3412" },
-  design: { bg: "#D4E9F7", text: "#1E40AF" },
-  production: { bg: "#C8F4E9", text: "#065F46" },
-  fabrication: { bg: "#FFD6E8", text: "#9D174D" },
-  installation: { bg: "#E0D4F7", text: "#5B21B6" },
-  completed: { bg: "#A5D6A7", text: "#14532D" }
+  estimating: "#F59E0B", sales: "#10B981", permitting: "#F97316",
+  design: "#3B82F6", production: "#06B6D4", fabrication: "#EC4899",
+  installation: "#8B5CF6", completed: "#22C55E"
 };
 
 const STAGE_LABELS = {
   estimating: "Estimating", sales: "Sales", permitting: "Permitting",
   design: "Design", production: "Production", fabrication: "Fabrication",
-  installation: "Installation"
+  installation: "Installation", completed: "Completed"
 };
 
 const parseLocalDate = (str) => {
@@ -29,34 +38,193 @@ const parseLocalDate = (str) => {
   return new Date(y, m - 1, d);
 };
 
+const VIEW_MODES = [
+  { value: "month", label: "Month", icon: LayoutGrid },
+  { value: "week", label: "Week", icon: Columns },
+  { value: "day", label: "Day", icon: AlignLeft },
+  { value: "agenda", label: "Agenda", icon: List },
+];
+
 export default function WorkOrderCalendar() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { currentUser } = useAuth();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState("month");
   const [workOrders, setWorkOrders] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userSettings, setUserSettings] = useState(null);
   const [stageFilter, setStageFilter] = useState("all");
-  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+
+  // UI state
+  const [selectedWO, setSelectedWO] = useState(null);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [defaultDate, setDefaultDate] = useState(null);
+  const [popoverEvent, setPopoverEvent] = useState(null);
+  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
+  const [showSettings, setShowSettings] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    document.title = "Work Order Calendar - Workflow Manager";
-    loadWorkOrders();
+    document.title = "Calendar – Workflow Manager";
+    loadAll();
   }, []);
 
-  const loadWorkOrders = async () => {
+  const loadAll = async () => {
     setLoading(true);
-    const wos = await base44.entities.WorkOrder.filter({ deleted: false, completed: false });
+    const [wos, evs] = await Promise.all([
+      base44.entities.WorkOrder.filter({ deleted: false, completed: false }),
+      base44.entities.CalendarEvent.list("-start_datetime", 500),
+    ]);
     setWorkOrders(wos || []);
+    setCalendarEvents(evs || []);
+
+    // Load user calendar settings
+    if (currentUser?.email) {
+      const settings = await base44.entities.UserCalendarSettings.filter({ user_email: currentUser.email });
+      if (settings?.length > 0) {
+        setUserSettings(settings[0]);
+        if (settings[0].default_view) setViewMode(settings[0].default_view);
+      }
+    }
     setLoading(false);
   };
 
-  const filtered = workOrders.filter(wo => {
-    if (!wo.due_date) return false;
-    if (stageFilter !== "all" && wo.current_stage !== stageFilter) return false;
-    return true;
-  });
+  // Build unified event list from all sources
+  const allEvents = useCallback(() => {
+    const events = [];
+    const ss = userSettings;
 
-  // Build calendar grid
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
+    // Universal + personal calendar events
+    calendarEvents.forEach(ev => {
+      if (!ev.start_datetime) return;
+      if (ev.is_universal && (ss?.show_universal !== false)) {
+        events.push({ ...ev, _color: ev.color || "#7C3AED" });
+      } else if (!ev.is_universal && ev.created_by === currentUser?.email && (ss?.show_personal !== false)) {
+        events.push({ ...ev, _color: ev.color || "#9333EA" });
+      }
+    });
+
+    // Work order due dates
+    if (ss?.show_work_orders !== false) {
+      workOrders.forEach(wo => {
+        const allowedStages = ss?.work_order_stages?.length > 0 ? ss.work_order_stages : null;
+        if (allowedStages && !allowedStages.includes(wo.current_stage)) return;
+        if (stageFilter !== "all" && wo.current_stage !== stageFilter) return;
+
+        if (wo.due_date) {
+          const d = parseLocalDate(wo.due_date);
+          if (d) {
+            events.push({
+              id: `wo-due-${wo.id}`,
+              title: wo.title || wo.client_name,
+              start_datetime: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 17, 0).toISOString(),
+              end_datetime: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 18, 0).toISOString(),
+              all_day: true,
+              color: STAGE_COLORS[wo.current_stage] || "#6B7280",
+              _color: STAGE_COLORS[wo.current_stage] || "#6B7280",
+              _isWorkOrder: true,
+              _stage: STAGE_LABELS[wo.current_stage] || wo.current_stage,
+              _client: wo.client_name,
+              _woId: wo.id,
+              _woObj: wo,
+              description: `${wo.client_name} · ${STAGE_LABELS[wo.current_stage] || wo.current_stage}`
+            });
+          }
+        }
+
+        // Site survey dates
+        if (wo.site_survey_date && ss?.show_site_surveys !== false) {
+          const d = parseLocalDate(wo.site_survey_date);
+          if (d) {
+            events.push({
+              id: `wo-survey-${wo.id}`,
+              title: `Survey: ${wo.title || wo.client_name}`,
+              start_datetime: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 10, 0).toISOString(),
+              all_day: false,
+              color: "#D97706",
+              _color: "#D97706",
+              _isWorkOrder: true,
+              _stage: "Site Survey",
+              _client: wo.client_name,
+              _woId: wo.id,
+              _woObj: wo
+            });
+          }
+        }
+
+        // Install dates
+        if (wo.project_install_date && ss?.show_installs !== false) {
+          const d = parseLocalDate(wo.project_install_date);
+          if (d) {
+            events.push({
+              id: `wo-install-${wo.id}`,
+              title: `Install: ${wo.title || wo.client_name}`,
+              start_datetime: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 8, 0).toISOString(),
+              all_day: false,
+              color: "#059669",
+              _color: "#059669",
+              _isWorkOrder: true,
+              _stage: "Installation",
+              _client: wo.client_name,
+              _woId: wo.id,
+              _woObj: wo
+            });
+          }
+        }
+      });
+    }
+
+    return events.sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+  }, [calendarEvents, workOrders, userSettings, stageFilter, currentUser]);
+
+  const events = allEvents();
+
+  // Navigation
+  const navigate = (dir) => {
+    if (viewMode === "month") setCurrentDate(dir > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+    else if (viewMode === "week") setCurrentDate(dir > 0 ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+    else if (viewMode === "day") setCurrentDate(dir > 0 ? addDays(currentDate, 1) : addDays(currentDate, -1));
+    else if (viewMode === "agenda") setCurrentDate(dir > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+  };
+
+  const getHeaderTitle = () => {
+    if (viewMode === "month" || viewMode === "agenda") return format(currentDate, "MMMM yyyy");
+    if (viewMode === "week") {
+      const ws = startOfWeek(currentDate);
+      const we = endOfWeek(currentDate);
+      return `${format(ws, "MMM d")} – ${format(we, "MMM d, yyyy")}`;
+    }
+    if (viewMode === "day") return format(currentDate, "EEEE, MMMM d, yyyy");
+    return "";
+  };
+
+  // Event click
+  const handleEventClick = (ev, domEvent) => {
+    if (ev._isWorkOrder && ev._woObj) {
+      setSelectedWO(ev._woObj);
+      return;
+    }
+    if (domEvent) {
+      const rect = domEvent.currentTarget.getBoundingClientRect();
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      const top = rect.bottom - (containerRect?.top || 0) + 8;
+      const left = Math.min(rect.left - (containerRect?.left || 0), (containerRect?.width || 800) - 290);
+      setPopoverPos({ top, left });
+    }
+    setPopoverEvent(ev);
+  };
+
+  // Day click
+  const handleDayClick = (date) => {
+    setDefaultDate(date);
+    setEditingEvent(null);
+    setShowEventForm(true);
+  };
+
+  // Month grid
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart);
   const calEnd = endOfWeek(monthEnd);
 
@@ -64,146 +232,294 @@ export default function WorkOrderCalendar() {
   let day = calStart;
   while (day <= calEnd) {
     const week = [];
-    for (let i = 0; i < 7; i++) {
-      week.push(day);
-      day = addDays(day, 1);
-    }
+    for (let i = 0; i < 7; i++) { week.push(day); day = addDays(day, 1); }
     weeks.push(week);
   }
 
-  const getWOsForDay = (date) =>
-    filtered.filter(wo => {
-      const d = parseLocalDate(wo.due_date);
-      return d && isSameDay(d, date);
-    });
+  const getEventsForDay = (date) =>
+    events.filter(ev => isSameDay(new Date(ev.start_datetime), date));
 
-  const today = new Date();
+  const agendaEvents = events.filter(ev => new Date(ev.start_datetime) >= startOfMonth(currentDate));
 
   return (
-    <div className="p-4 sm:p-6 min-h-full flex flex-col" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
-      <div className="max-w-7xl mx-auto w-full flex flex-col flex-1">
-        {/* Header */}
-        <div className="flex flex-wrap items-center gap-3 mb-5">
-          <div className="clay-card p-3 flex-shrink-0">
-            <CalendarDays className="w-6 h-6 text-purple-600" />
-          </div>
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-gray-800">Work Order Calendar</h1>
-            <p className="text-gray-500 text-sm">View work orders by due date</p>
-          </div>
+    <div
+      ref={containerRef}
+      className="h-full flex flex-col relative"
+      style={{ background: "linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)" }}
+      onClick={() => setPopoverEvent(null)}
+    >
+      {/* ── Top Bar ── */}
+      <div className="flex-shrink-0 px-4 py-3 flex flex-wrap items-center gap-2 border-b bg-white/80 backdrop-blur-sm">
+        {/* Icon + title */}
+        <div className="clay-card p-2 flex-shrink-0">
+          <CalendarDays className="w-5 h-5 text-purple-600" />
+        </div>
+        <div className="flex-shrink-0">
+          <h1 className="text-lg font-bold text-gray-800 leading-tight">Company Calendar</h1>
+        </div>
 
-          <div className="flex-1" />
+        {/* Nav */}
+        <div className="flex items-center gap-1 clay-card px-2 py-1 ml-2">
+          <button onClick={() => navigate(-1)} className="p-1 hover:bg-purple-100 rounded-lg transition-colors">
+            <ChevronLeft className="w-4 h-4 text-purple-700" />
+          </button>
+          <span className="font-semibold text-gray-800 min-w-[160px] text-center text-sm">
+            {getHeaderTitle()}
+          </span>
+          <button onClick={() => navigate(1)} className="p-1 hover:bg-purple-100 rounded-lg transition-colors">
+            <ChevronRight className="w-4 h-4 text-purple-700" />
+          </button>
+          <button onClick={() => setCurrentDate(new Date())} className="ml-1 text-xs text-purple-600 hover:underline font-medium px-1">
+            Today
+          </button>
+        </div>
 
-          {/* Stage Filter */}
+        <div className="flex-1" />
+
+        {/* Stage filter (month view) */}
+        {viewMode === "month" && (
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="w-44 h-9">
+            <SelectTrigger className="w-40 h-8 text-xs">
               <SelectValue placeholder="All Stages" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Stages</SelectItem>
-              {Object.entries(STAGE_LABELS).map(([val, label]) => (
-                <SelectItem key={val} value={val}>{label}</SelectItem>
+              {Object.entries(STAGE_LABELS).map(([v, l]) => (
+                <SelectItem key={v} value={v}>{l}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+        )}
 
-          {/* Month Navigation */}
-          <div className="flex items-center gap-2 clay-card px-3 py-1.5">
-            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1 hover:bg-purple-100 rounded-lg transition-colors">
-              <ChevronLeft className="w-4 h-4 text-purple-700" />
+        {/* View mode switcher */}
+        <div className="flex items-center gap-0.5 clay-card p-0.5">
+          {VIEW_MODES.map(vm => (
+            <button
+              key={vm.value}
+              onClick={() => setViewMode(vm.value)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+              style={{
+                background: viewMode === vm.value ? "linear-gradient(135deg, #E0D4F7, #D4E9F7)" : "transparent",
+                color: viewMode === vm.value ? "#4C1D95" : "#6B7280"
+              }}
+            >
+              <vm.icon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{vm.label}</span>
             </button>
-            <span className="font-semibold text-gray-800 min-w-[120px] text-center text-sm">
-              {format(currentMonth, "MMMM yyyy")}
-            </span>
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1 hover:bg-purple-100 rounded-lg transition-colors">
-              <ChevronRight className="w-4 h-4 text-purple-700" />
-            </button>
-            <button onClick={() => setCurrentMonth(new Date())} className="ml-1 text-xs text-purple-600 hover:underline font-medium">
-              Today
-            </button>
-          </div>
+          ))}
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center flex-1 min-h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-          </div>
-        ) : (
-          <div className="clay-card overflow-hidden flex-1">
-            {/* Day headers */}
-            <div className="grid grid-cols-7 border-b border-gray-200">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                <div key={d} className="py-2 text-center text-xs font-semibold text-gray-500 bg-gray-50">
-                  {d}
-                </div>
-              ))}
-            </div>
+        {/* Settings + Add */}
+        <button
+          onClick={() => setShowSettings(s => !s)}
+          className={`p-1.5 rounded-lg transition-colors ${showSettings ? "bg-purple-100" : "hover:bg-gray-100"}`}
+          title="Calendar Settings"
+        >
+          <Settings className="w-4 h-4 text-gray-500" />
+        </button>
 
-            {/* Calendar grid */}
-            <div className="grid" style={{ gridTemplateRows: `repeat(${weeks.length}, minmax(90px, 1fr))` }}>
-              {weeks.map((week, wi) => (
-                <div key={wi} className="grid grid-cols-7 border-b border-gray-100 last:border-b-0" style={{ minHeight: 90 }}>
-                  {week.map((date, di) => {
-                    const isToday = isSameDay(date, today);
-                    const inMonth = isSameMonth(date, currentMonth);
-                    const dayWOs = getWOsForDay(date);
-                    return (
-                      <div
-                        key={di}
-                        className={`p-1.5 border-r border-gray-100 last:border-r-0 ${!inMonth ? 'bg-gray-50/50' : 'bg-white'}`}
-                        style={{ minHeight: 90 }}
-                      >
-                        <div className={`text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
-                          isToday ? 'bg-purple-600 text-white' : inMonth ? 'text-gray-700' : 'text-gray-300'
-                        }`}>
-                          {format(date, "d")}
-                        </div>
-                        <div className="space-y-0.5 overflow-hidden" style={{ maxHeight: 70, overflowY: 'auto' }}>
-                          {dayWOs.map(wo => {
-                            const colors = STAGE_COLORS[wo.current_stage] || { bg: "#E5E7EB", text: "#374151" };
-                            return (
-                              <button
-                                key={wo.id}
-                                onClick={() => setSelectedWorkOrder(wo)}
-                                className="w-full text-left px-1.5 py-0.5 rounded text-[10px] font-medium truncate hover:opacity-80 transition-opacity"
-                                style={{ background: colors.bg, color: colors.text }}
-                                title={`${wo.title} — ${wo.client_name}`}
-                              >
-                                {wo.asap && <span className="text-red-600 font-bold mr-0.5">!</span>}
-                                {wo.title || wo.client_name}
-                              </button>
-                            );
-                          })}
-                        </div>
+        <Button
+          size="sm"
+          onClick={() => { setDefaultDate(currentDate); setEditingEvent(null); setShowEventForm(true); }}
+          className="clay-button border-none gap-1 h-8"
+          style={{ background: "linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)" }}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline text-xs">Event</span>
+        </Button>
+
+        <button onClick={loadAll} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Refresh">
+          <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      {/* ── Main Content ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Calendar area */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {loading ? (
+            <div className="flex items-center justify-center flex-1">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+            </div>
+          ) : (
+            <>
+              {/* Month View */}
+              {viewMode === "month" && (
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  {/* Day headers */}
+                  <div className="grid grid-cols-7 border-b bg-white flex-shrink-0">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                      <div key={d} className="py-2 text-center text-xs font-semibold text-gray-500 bg-gray-50">
+                        {d}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+
+                  {/* Weeks */}
+                  <div className="flex-1 overflow-y-auto">
+                    {weeks.map((week, wi) => (
+                      <div key={wi} className="grid grid-cols-7 border-b border-gray-100 last:border-b-0" style={{ minHeight: 100 }}>
+                        {week.map((date, di) => {
+                          const dayEvs = getEventsForDay(date);
+                          const inMonth = isSameMonth(date, currentDate);
+                          const _isToday = isToday(date);
+                          return (
+                            <div
+                              key={di}
+                              onClick={() => handleDayClick(date)}
+                              className={`p-1.5 border-r border-gray-100 last:border-r-0 cursor-pointer group transition-colors ${
+                                !inMonth ? "bg-gray-50/60" : "bg-white hover:bg-purple-50/30"
+                              }`}
+                              style={{ minHeight: 100 }}
+                            >
+                              {/* Date number */}
+                              <div className={`text-xs font-bold mb-1 w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
+                                _isToday ? "bg-purple-600 text-white" :
+                                inMonth ? "text-gray-700 group-hover:bg-purple-100" : "text-gray-300"
+                              }`}>
+                                {format(date, "d")}
+                              </div>
+
+                              {/* Events */}
+                              <div className="space-y-0.5 overflow-hidden" style={{ maxHeight: 80 }}>
+                                {dayEvs.slice(0, 4).map((ev, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={e => { e.stopPropagation(); handleEventClick(ev, e); }}
+                                    className="w-full text-left px-1.5 py-0.5 rounded text-[10px] font-medium truncate hover:opacity-80 transition-all"
+                                    style={{
+                                      background: (ev._color || "#7C3AED") + "22",
+                                      color: ev._color || "#7C3AED",
+                                      borderLeft: `3px solid ${ev._color || "#7C3AED"}`
+                                    }}
+                                    title={ev.title}
+                                  >
+                                    {ev.title}
+                                  </button>
+                                ))}
+                                {dayEvs.length > 4 && (
+                                  <div className="text-[10px] text-gray-400 px-1 font-medium">
+                                    +{dayEvs.length - 4} more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex-shrink-0 px-4 py-2 border-t bg-white/80 flex flex-wrap gap-3">
+                    {Object.entries(STAGE_LABELS).map(([stage, label]) => (
+                      <div key={stage} className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="w-2 h-2 rounded-sm" style={{ background: STAGE_COLORS[stage] }} />
+                        {label}
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="w-2 h-2 rounded-sm" style={{ background: "#7C3AED" }} />
+                      Event
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="w-2 h-2 rounded-sm" style={{ background: "#D97706" }} />
+                      Survey
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="w-2 h-2 rounded-sm" style={{ background: "#059669" }} />
+                      Install
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
+
+              {/* Week View */}
+              {viewMode === "week" && (
+                <WeekView
+                  currentDate={currentDate}
+                  events={events}
+                  onEventClick={(ev) => handleEventClick(ev, null)}
+                  onDayClick={(d) => { setCurrentDate(d); setViewMode("day"); }}
+                />
+              )}
+
+              {/* Day View */}
+              {viewMode === "day" && (
+                <DayView
+                  currentDate={currentDate}
+                  events={events}
+                  onEventClick={(ev) => handleEventClick(ev, null)}
+                />
+              )}
+
+              {/* Agenda View */}
+              {viewMode === "agenda" && (
+                <div className="flex-1 overflow-y-auto">
+                  <AgendaView
+                    events={agendaEvents}
+                    onEventClick={(ev) => {
+                      if (ev._isWorkOrder && ev._woObj) setSelectedWO(ev._woObj);
+                      else setPopoverEvent(ev);
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Settings Sidebar */}
+        {showSettings && (
+          <div className="w-72 flex-shrink-0 border-l bg-white overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-800">My Calendar Settings</h3>
+                <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {currentUser?.email ? (
+                <UserCalendarSettingsPanel
+                  userEmail={currentUser.email}
+                  onSettingsChange={(s) => { setUserSettings(s); loadAll(); }}
+                />
+              ) : (
+                <p className="text-sm text-gray-500">Please log in to manage your calendar settings.</p>
+              )}
             </div>
           </div>
         )}
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {Object.entries(STAGE_LABELS).map(([stage, label]) => (
-            <div key={stage} className="flex items-center gap-1 text-xs text-gray-600">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: STAGE_COLORS[stage]?.bg }} />
-              {label}
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Details Dialog */}
-      {selectedWorkOrder && (
-        <WorkOrderDetailsDialog
-          isOpen={!!selectedWorkOrder}
-          onClose={() => setSelectedWorkOrder(null)}
-          workOrder={selectedWorkOrder}
-          onUpdate={loadWorkOrders}
+      {/* Event Popover */}
+      {popoverEvent && (
+        <CalendarEventPopover
+          event={popoverEvent}
+          onEdit={(ev) => { setEditingEvent(ev); setShowEventForm(true); setPopoverEvent(null); }}
+          onClose={() => setPopoverEvent(null)}
+          style={{ top: popoverPos.top, left: popoverPos.left }}
         />
       )}
+
+      {/* Work Order Details */}
+      {selectedWO && (
+        <WorkOrderDetailsDialog
+          isOpen={!!selectedWO}
+          onClose={() => setSelectedWO(null)}
+          workOrder={selectedWO}
+          onUpdate={loadAll}
+        />
+      )}
+
+      {/* Event Form */}
+      <CalendarEventForm
+        isOpen={showEventForm}
+        onClose={() => { setShowEventForm(false); setEditingEvent(null); }}
+        onSaved={loadAll}
+        event={editingEvent}
+        defaultDate={defaultDate}
+      />
     </div>
   );
 }
