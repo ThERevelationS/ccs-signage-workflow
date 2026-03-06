@@ -418,7 +418,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             )}
           </div>
           <p className="text-xs text-gray-500 text-center max-w-xs">
-            Auto-captures 5 photos with a 3-second countdown. Move your head slightly between captures for better accuracy.
+            Auto-captures 10 photos with a 3-second countdown. Move your head slightly between captures for better accuracy.
           </p>
           {onCancel && (
             <Button variant="outline" onClick={onCancel} className="mt-2">
