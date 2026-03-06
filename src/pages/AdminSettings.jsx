@@ -919,6 +919,10 @@ export default function AdminSettings() {
             <TaskAssignmentRules />
           </TabsContent>
 
+          <TabsContent value="calendar">
+            <AdminCalendarSettings />
+          </TabsContent>
+
           <TabsContent value="activity">
             <ActivityFeed />
           </TabsContent>
