@@ -55,7 +55,8 @@ import {
   Clock,
   Activity,
   Bot,
-  UserCheck
+  UserCheck,
+  CalendarDays
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -826,6 +827,10 @@ export default function AdminSettings() {
               <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                 <UserCheck className="w-4 h-4 mr-2" />
                 Task Assignments
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Calendar
               </TabsTrigger>
               <TabsTrigger value="activity" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                 <Activity className="w-4 h-4 mr-2" />
