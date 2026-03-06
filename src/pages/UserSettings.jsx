@@ -31,8 +31,10 @@ import {
   GraduationCap,
   Shirt,
   Users,
-  Trash2
+  Trash2,
+  CalendarDays
 } from "lucide-react";
+import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSettingsPanel";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
@@ -255,6 +257,10 @@ export default function UserSettings() {
             <TabsTrigger value="clothing" className="gap-2">
               <Shirt className="w-4 h-4" />
               Clothing
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Calendar
             </TabsTrigger>
           </TabsList>
 
