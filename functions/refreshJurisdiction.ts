@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 
     updateData.last_updated = new Date().toISOString();
 
-    const updated = await base44.entities.JurisdictionProfile.update(id, updateData);
+    const updated = await base44.asServiceRole.entities.JurisdictionProfile.update(id, updateData);
 
     return Response.json({ success: true, jurisdiction: updated });
   } catch (error) {
