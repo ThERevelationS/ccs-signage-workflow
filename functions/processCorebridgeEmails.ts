@@ -307,7 +307,8 @@ Return a JSON object with these fields (use null for anything not found):
 - doc_numeric_id: Just the numeric part
 ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
 
-        const aiRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        // Timeout for AI call — if it hangs, skip this email gracefully
+        const aiCallPromise = base44.asServiceRole.integrations.Core.InvokeLLM({
           prompt: aiPrompt,
           file_urls: [pdfUrl],
           response_json_schema: {
