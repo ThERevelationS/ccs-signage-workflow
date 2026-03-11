@@ -260,7 +260,21 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
       });
       
       if (res.data?.jurisdiction) {
-        onUpdate(res.data.jurisdiction);
+        const updated = res.data.jurisdiction;
+        // Append activity log entry
+        const newEntry = {
+          id: `act_${Date.now()}`,
+          action: "ai_refresh",
+          description: `AI refreshed jurisdiction data — websites, requirements, and documents updated.`,
+          user: "AI (Automated)",
+          timestamp: new Date().toISOString(),
+          changes: {}
+        };
+        const existingLog = updated.activity_log || jurisdiction.activity_log || [];
+        await base44.entities.JurisdictionProfile.update(jurisdiction.id, {
+          activity_log: [...existingLog, newEntry]
+        });
+        onUpdate({ ...updated, activity_log: [...existingLog, newEntry] });
         completeResearch(1, 0);
       } else {
         completeResearch(0, 1, "Research completed but no updates");
