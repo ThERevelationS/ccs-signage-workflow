@@ -432,6 +432,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
               status: 'pending',
               pdf_url: pdfUrl
             });
+            pendingImportDocNumbers.add(docNumber.toUpperCase());
             results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
           }
         }
