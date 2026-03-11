@@ -89,7 +89,7 @@ export default function PermittingRepository() {
       );
 
       const result = await response.json();
-      const text = result.response || [result.me](https://result.me)ssage || "";
+      const text = result.response || result.reply || result.content || "";
 
       const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/(\{[\s\S]*\})/);
       if (!jsonMatch) throw new Error("No JSON found in agent response");
