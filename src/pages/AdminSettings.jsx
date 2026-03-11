@@ -315,7 +315,7 @@ export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Password protection state
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem('adminUnlocked') === 'true');
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
