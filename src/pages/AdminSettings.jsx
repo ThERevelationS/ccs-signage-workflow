@@ -840,14 +840,7 @@ export default function AdminSettings() {
                 <Activity className="w-4 h-4 mr-2" />
                 Activity
               </TabsTrigger>
-              {isAdmin && (
-                <>
-                  <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
-                    <Users className="w-4 h-4 mr-2" />
-                    Resources
-                  </TabsTrigger>
-                </>
-              )}
+
             </TabsList>
           </div>
 
