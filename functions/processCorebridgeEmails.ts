@@ -148,6 +148,8 @@ Deno.serve(async (req) => {
     logData.emails_found = searchData.messages.length;
     let processed = 0;
     const results = [];
+    const RUN_START = Date.now();
+    const MAX_RUN_MS = 55_000; // leave ~5s buffer before 60s timeout
 
     // Pre-load ALL existing work orders once (not inside the loop)
     const existingOrdersRaw = await WorkOrder.filter({ deleted: { $ne: true } });
