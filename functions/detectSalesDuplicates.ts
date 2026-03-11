@@ -34,12 +34,9 @@ Deno.serve(async (req) => {
     isScheduled = true;
   }
 
-  const workOrders = await base44.asServiceRole.entities.WorkOrder.filter({
-    deleted: { $ne: true },
-    completed: { $ne: true },
-    is_rider: { $ne: true },
-    in_pipeline: false, // Sales pipeline only
-  });
+  // Limit to 300 most-recent to prevent timeout on large datasets
+  const workOrders = await base44.asServiceRole.entities.WorkOrder.list('-created_date', 300)
+    .then(all => all.filter(wo => !wo.deleted && !wo.completed && !wo.is_rider));
 
   const groups = [];
   const flagged = new Set();
