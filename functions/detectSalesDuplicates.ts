@@ -81,16 +81,15 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Create PendingImport records for each duplicate pair (skip if already flagged)
+  // Fetch existing flags in parallel with nothing (already done), build dedup set
   const existing = await base44.asServiceRole.entities.PendingImport.filter({ doc_type: 'duplicate', status: 'pending' });
   const existingPairs = new Set(existing.map(e => e.doc_number));
 
-  let created = 0;
+  const toCreate = [];
   for (const group of groups) {
     const pairKey = [group.a.id, group.b.id].sort().join('__');
     if (existingPairs.has(pairKey)) continue;
-
-    await base44.asServiceRole.entities.PendingImport.create({
+    toCreate.push({
       doc_number: pairKey,
       doc_type: 'duplicate',
       email_subject: `Possible duplicate: "${group.a.client_name}" and "${group.b.client_name}"`,
@@ -108,8 +107,11 @@ Deno.serve(async (req) => {
       ],
       status: 'pending',
     });
-    created++;
   }
 
-  return Response.json({ duplicates_found: groups.length, new_flags_created: created });
+  if (toCreate.length > 0) {
+    await base44.asServiceRole.entities.PendingImport.bulkCreate(toCreate);
+  }
+
+  return Response.json({ duplicates_found: groups.length, new_flags_created: toCreate.length });
 });
