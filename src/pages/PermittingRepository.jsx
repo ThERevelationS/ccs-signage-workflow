@@ -9,8 +9,6 @@ import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDial
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
-
-
 export default function PermittingRepository() {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +22,7 @@ export default function PermittingRepository() {
 
   useEffect(() => {
     loadJurisdictions();
-    const interval = setInterval(loadJurisdictions, 300000); // refresh every 5 min
+    const interval = setInterval(loadJurisdictions, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -35,8 +33,6 @@ export default function PermittingRepository() {
     } catch (e) { console.error(e); }
     setLoading(false);
   };
-
-
 
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
@@ -78,96 +74,43 @@ export default function PermittingRepository() {
     if (!aiDiscoverQuery.trim()) return;
     setAiDiscoverLoading(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Research and create a comprehensive profile for this jurisdiction for sign permitting: "${aiDiscoverQuery}"
-
-IMPORTANT: ONLY research jurisdictions in Ohio (OH), Kentucky (KY), or Indiana (IN). Do not provide information about any other states.
-
-Identify:
-1. Is this a county, city, township, or municipality?
-2. What state is it in? (Must be OH, KY, or IN)
-3. Official name
-4. Specific permit requirements:
-   - SQFT/Width/Height allowance rules
-   - Height allowances and rules
-   - Setback requirements and rules
-   - Lighting allowances and restrictions
-5. Available permit forms (electrical IBI, signage/construction, zoning, building, NIC, NKYEI, locality-specific)
-6. If this is a city/town/village/township, also research:
-   - Parent county name and information
-   - Parent county permitting URLs and contacts
-   - Parent county permit forms and documents
-
-Return JSON:
-{
-  "name": "official name",
-  "state": "two-letter state code",
-  "type": "county|city|township|municipality",
-  "website_url": "official website",
-  "permitting_url": "permitting/planning department URL",
-  "ai_summary": "3 sentence summary of sign permit requirements",
-  "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-  "permit_requirements": {
-    "requires_permit": true/false,
-    "max_sign_area_sqft": null,
-    "max_height_ft": null,
-    "setback_requirements": "",
-    "illumination_allowed": null,
-    "electronic_signs_allowed": null,
-    "fee_range": "",
-    "processing_time": ""
-  },
-  "documents": [
-    { "title": "", "url": "", "doc_type": "sign_ordinance|permit_application|zoning_code|fee_schedule|checklist|other", "ai_summary": "" }
-  ],
-  "sqft_width_height_rules": "",
-  "height_allowances": "",
-  "setback_rules": "",
-  "lighting_allowances": "",
-  "parent_county": {
-    "name": "",
-    "website_url": "",
-    "permitting_url": "",
-    "contact_info": { "department": "", "phone": "", "email": "", "address": "" },
-    "documents": []
-  }
-}`,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            name: { type: "string" }, state: { type: "string" }, type: { type: "string" },
-            website_url: { type: "string" }, permitting_url: { type: "string" },
-            ai_summary: { type: "string" }, contact_info: { type: "object" },
-            permit_requirements: { type: "object" },
-            documents: { type: "array", items: { type: "object" } },
-            sqft_width_height_rules: { type: "string" },
-            height_allowances: { type: "string" },
-            setback_rules: { type: "string" },
-            lighting_allowances: { type: "string" },
-            parent_county: { type: "object" }
-          }
+      const response = await fetch(
+        "https://api.base44.com/api/apps/69b1840cf75aba55e115d020/agent/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "570bd85bbd4248b396864e2c628a6028"
+          },
+          body: JSON.stringify({
+            message: `Research this jurisdiction for sign permitting and return a complete JurisdictionProfile JSON: "${aiDiscoverQuery}"`
+          })
         }
-      });
+      );
 
-      const data = typeof result === 'string' ? JSON.parse(result) : result;
+      const result = await response.json();
+      const text = result.response || [result.me](https://result.me)ssage || "";
+
+      const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/(\{[\s\S]*\})/);
+      if (!jsonMatch) throw new Error("No JSON found in agent response");
+      const data = JSON.parse(jsonMatch[1]);
+
       const docs = (data.documents || []).map((d, i) => ({
         id: `ai_${Date.now()}_${i}`,
         title: d.title || "Untitled",
         url: d.url || "",
         doc_type: d.doc_type || "other",
-        ai_summary: d.ai_summary || "",
+        ai_summary: [d.ai](https://d.ai)_summary || "",
         source: "ai_discovered",
         last_fetched: new Date().toISOString()
       }));
 
-      // Add parent county documents if applicable
       const countyDocs = (data.parent_county?.documents || []).map((d, i) => ({
         id: `ai_county_${Date.now()}_${i}`,
         title: `[${data.parent_county.name}] ${d.title || "Untitled"}`,
         url: d.url || "",
         doc_type: d.doc_type || "other",
-        ai_summary: d.ai_summary || "",
+        ai_summary: [d.ai](https://d.ai)_summary || "",
         source: "ai_discovered",
         last_fetched: new Date().toISOString()
       }));
@@ -197,9 +140,7 @@ Return JSON:
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Left Panel */}
       <div className="flex flex-col w-full" style={{ maxWidth: selectedJurisdiction ? '420px' : '100%', minWidth: '320px', transition: 'max-width 0.3s' }}>
-        {/* Header */}
         <div className="bg-white border-b px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -218,7 +159,6 @@ Return JSON:
             </Button>
           </div>
 
-          {/* AI Discover */}
           <div className="flex gap-2 mb-3">
             <Input
               value={aiDiscoverQuery}
@@ -234,7 +174,6 @@ Return JSON:
           </div>
           <p className="text-[10px] text-gray-500 mb-2">AI validates all discovered document URLs to prevent 404 errors</p>
 
-          {/* Search Jurisdictions */}
           <Input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -243,9 +182,6 @@ Return JSON:
           />
         </div>
 
-
-
-        {/* List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -272,7 +208,6 @@ Return JSON:
         </div>
       </div>
 
-      {/* Detail Panel */}
       {selectedJurisdiction && (
         <div className="flex-1 border-l overflow-hidden">
           <JurisdictionDetailPanel
