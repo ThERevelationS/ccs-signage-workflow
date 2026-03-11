@@ -822,6 +822,10 @@ export default function AdminSettings() {
                     <Bot className="w-4 h-4 mr-2" />
                     CoreBridge AI
                   </TabsTrigger>
+                  <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <Users className="w-4 h-4 mr-2" />
+                    Resources
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
