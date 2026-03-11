@@ -718,6 +718,7 @@ export default function AdminSettings() {
     const matched = allUsers.find(u => u.id === recognizedUser.id || u.email === recognizedUser.email);
     if (matched?.role === 'admin') {
       setIsUnlocked(true);
+      sessionStorage.setItem('adminUnlocked', 'true');
     } else {
       setPasswordError("Face recognized but admin privileges required");
     }
