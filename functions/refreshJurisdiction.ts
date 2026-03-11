@@ -6,11 +6,28 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { jurisdiction_id, jurisdictionId, settings } = await req.json();
+    let body = {};
+    try { body = await req.json(); } catch {}
+    const { jurisdiction_id, jurisdictionId, settings } = body;
     const id = jurisdiction_id || jurisdictionId;
-    if (!id) return Response.json({ error: 'jurisdiction_id required' }, { status: 400 });
 
-    const jurisdiction = await base44.entities.JurisdictionProfile.get(id);
+    // Scheduled/batch mode: refresh up to 5 oldest auto_refresh jurisdictions
+    if (!id) {
+      const all = await base44.asServiceRole.entities.JurisdictionProfile.list('last_updated', 200);
+      const toRefresh = all.filter(j => j.auto_refresh !== false).slice(0, 5);
+      const results = [];
+      for (const j of toRefresh) {
+        try {
+          const r = await base44.asServiceRole.functions.invoke('refreshJurisdiction', { jurisdiction_id: j.id });
+          results.push({ id: j.id, name: j.name, success: true });
+        } catch (e) {
+          results.push({ id: j.id, name: j.name, success: false, error: e.message });
+        }
+      }
+      return Response.json({ batch: true, processed: results.length, results });
+    }
+
+    const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) return Response.json({ error: 'Jurisdiction not found' }, { status: 404 });
 
     const batchSettings = settings || {
