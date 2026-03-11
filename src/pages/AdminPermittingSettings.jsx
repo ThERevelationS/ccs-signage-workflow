@@ -56,7 +56,8 @@ export default function AdminPermittingSettings() {
   };
 
   const researchOne = async (jurisdiction) => {
-    const request = await base44.functions.invoke('proxyResearch', {
+    const request = await base44.functions.invoke('permittingproxy',
+ {
       action: 'create',
       payload: {
         jurisdiction_name: jurisdiction.name,
@@ -73,7 +74,8 @@ export default function AdminPermittingSettings() {
     const start = Date.now();
     while (Date.now() - start < maxWait) {
       await new Promise(r => setTimeout(r, 5000));
-      const record = await base44.functions.invoke('proxyResearch', {
+      const record = await base44.functions.invoke('permittingproxy',
+ {
         action: 'poll',
         payload: { id: request.id }
       });
