@@ -100,7 +100,7 @@ export default function PermittingRepository() {
         title: d.title || "Untitled",
         url: d.url || "",
         doc_type: d.doc_type || "other",
-        ai_summary: [d.ai](https://d.ai)_summary || "",
+        ai_summary: d["ai_summary"] || "",
         source: "ai_discovered",
         last_fetched: new Date().toISOString()
       }));
@@ -110,7 +110,7 @@ export default function PermittingRepository() {
         title: `[${data.parent_county.name}] ${d.title || "Untitled"}`,
         url: d.url || "",
         doc_type: d.doc_type || "other",
-        ai_summary: [d.ai](https://d.ai)_summary || "",
+        ai_summary: d["ai_summary"] || "",
         source: "ai_discovered",
         last_fetched: new Date().toISOString()
       }));
