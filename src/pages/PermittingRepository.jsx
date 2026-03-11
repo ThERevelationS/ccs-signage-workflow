@@ -9,6 +9,25 @@ import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDial
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
+const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
+const PERMITTING_API_KEY = '570bd85bbd4248b396864e2c628a6028';
+
+async function createResearchRequest(payload) {
+  const res = await fetch(`https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api_key': PERMITTING_API_KEY },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+async function pollResearchRequest(id) {
+  const res = await fetch(`https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest/${id}`, {
+    headers: { 'api_key': PERMITTING_API_KEY }
+  });
+  return res.json();
+}
+
 export default function PermittingRepository() {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,31 +56,21 @@ export default function PermittingRepository() {
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
     try {
-      // Create a ResearchRequest via proxy
-      const request = await base44.functions.invoke('permittingproxy',
- {
-        action: 'create',
-        payload: {
-          jurisdiction_name: jurisdiction.name,
-          state: jurisdiction.state || "",
-          city: jurisdiction.name,
-          county: jurisdiction.parent_county?.name || "",
-          ccs_jurisdiction_id: jurisdiction.id,
-          status: 'pending',
-          requested_by: 'refresh'
-        }
+      const request = await createResearchRequest({
+        jurisdiction_name: jurisdiction.name,
+        state: jurisdiction.state || "",
+        city: jurisdiction.name,
+        county: jurisdiction.parent_county?.name || "",
+        ccs_jurisdiction_id: jurisdiction.id,
+        status: 'pending',
+        requested_by: 'refresh'
       });
 
-      // Poll until done
       const maxWait = 180000;
       const start = Date.now();
       while (Date.now() - start < maxWait) {
         await new Promise(r => setTimeout(r, 5000));
-        const record = await base44.functions.invoke('permittingproxy',
- {
-          action: 'poll',
-          payload: { id: request.id }
-        });
+        const record = await pollResearchRequest(request.id);
         const data = record.data || record;
         if (data.status === 'completed') {
           const updated = await JurisdictionProfile.get(jurisdiction.id);
@@ -104,7 +113,6 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(true);
 
     try {
-      // Create placeholder
       const placeholder = await JurisdictionProfile.create({
         name: aiDiscoverQuery,
         state: "",
@@ -117,31 +125,21 @@ export default function PermittingRepository() {
       setJurisdictions(prev => [placeholder, ...prev]);
       setSelectedJurisdiction(placeholder);
 
-      // Queue research via proxy
-      const request = await base44.functions.invoke('permittingproxy',
- {
-        action: 'create',
-        payload: {
-          jurisdiction_name: aiDiscoverQuery,
-          state: "",
-          city: aiDiscoverQuery,
-          county: "",
-          ccs_jurisdiction_id: placeholder.id,
-          status: 'pending',
-          requested_by: 'ccs_app'
-        }
+      const request = await createResearchRequest({
+        jurisdiction_name: aiDiscoverQuery,
+        state: "",
+        city: aiDiscoverQuery,
+        county: "",
+        ccs_jurisdiction_id: placeholder.id,
+        status: 'pending',
+        requested_by: 'ccs_app'
       });
 
-      // Poll until done
       const maxWait = 180000;
       const start = Date.now();
       while (Date.now() - start < maxWait) {
         await new Promise(r => setTimeout(r, 5000));
-        const record = await base44.functions.invoke('permittingproxy',
- {
-          action: 'poll',
-          payload: { id: request.id }
-        });
+        const record = await pollResearchRequest(request.id);
         const data = record.data || record;
         if (data.status === 'completed') {
           const updated = await JurisdictionProfile.get(placeholder.id);
