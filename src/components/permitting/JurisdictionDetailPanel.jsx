@@ -763,7 +763,7 @@ Answer the question based on the documents and information available. Be specifi
         </div>
 
 
-      </div>
+      </div>}
 
       {/* Chat Interface */}
       <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">
