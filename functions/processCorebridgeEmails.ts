@@ -172,6 +172,11 @@ Deno.serve(async (req) => {
     const processedDocNumbers = new Set();
 
     for (const msg of searchData.messages) {
+      // Stop processing if we're running low on time
+      if (Date.now() - RUN_START > MAX_RUN_MS) {
+        results.push({ action: 'skipped', skipped_reason: 'Time budget exhausted, remaining emails will be picked up next run' });
+        break;
+      }
       try {
         const msgRes = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
