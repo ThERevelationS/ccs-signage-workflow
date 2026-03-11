@@ -53,9 +53,18 @@ Deno.serve(async (req) => {
       const bName = (b.client_name || '').toLowerCase().trim();
       const bTitle = (b.title || '').toLowerCase().trim();
 
+      const estInvMatch = a.est_inv_at && b.est_inv_at && a.est_inv_at === b.est_inv_at;
+
+      // Cheap early-exit: skip if names share no first word (avoids expensive similarity call)
+      const aFirstWord = aName.split(' ')[0];
+      const bFirstWord = bName.split(' ')[0];
+      const mayBeRelated = estInvMatch || (aFirstWord && bFirstWord && (
+        aFirstWord === bFirstWord || aName.includes(bFirstWord) || bName.includes(aFirstWord)
+      ));
+      if (!mayBeRelated) continue;
+
       const nameSim = similarity(aName, bName);
       const titleSim = similarity(aTitle, bTitle);
-      const estInvMatch = a.est_inv_at && b.est_inv_at && a.est_inv_at === b.est_inv_at;
 
       let score = 0;
       const reasons = [];
