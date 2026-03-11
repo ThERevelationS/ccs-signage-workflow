@@ -153,6 +153,19 @@ Deno.serve(async (req) => {
     const existingOrdersRaw = await WorkOrder.filter({ deleted: { $ne: true } });
     const allExistingOrders = Array.isArray(existingOrdersRaw) ? existingOrdersRaw : (existingOrdersRaw?.data || existingOrdersRaw?.results || []);
 
+    // Pre-load ALL pending imports once (avoid per-email DB queries)
+    const pendingImportsRaw = await PendingImport.list();
+    const pendingImportDocNumbers = new Set(
+      (Array.isArray(pendingImportsRaw) ? pendingImportsRaw : []).map(p => p.doc_number).filter(Boolean)
+    );
+
+    // Build a Set of already-linked doc numbers from existing work orders (for O(1) lookup)
+    const linkedDocNumbers = new Set();
+    for (const wo of allExistingOrders) {
+      if (wo.est_inv_at) linkedDocNumbers.add(wo.est_inv_at.trim().toUpperCase());
+      if (wo.corbridge_invoice_number) linkedDocNumbers.add(wo.corbridge_invoice_number.trim().toUpperCase());
+    }
+
     // Track doc numbers processed in THIS run to avoid intra-run duplicates
     const processedDocNumbers = new Set();
 
