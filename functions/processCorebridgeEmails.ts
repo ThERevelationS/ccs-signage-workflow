@@ -417,6 +417,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
             // Mark this doc as processed so we don't create another duplicate if email appears again
             processedDocNumbers.add(docNumber);
+            linkedDocNumbers.add(docNumber.toUpperCase());
             results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
           } else {
             // Has potential matches → send to pending review
