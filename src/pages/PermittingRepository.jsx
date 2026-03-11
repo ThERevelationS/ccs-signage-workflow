@@ -9,10 +9,6 @@ import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDial
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
-const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
-const PERMITTING_API_KEY = '570bd85bbd4248b396864e2c628a6028';
-const RESEARCH_URL = `https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest`;
-
 export default function PermittingRepository() {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,10 +37,37 @@ export default function PermittingRepository() {
   const handleRefresh = async (jurisdiction) => {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
     try {
-      const res = await base44.functions.invoke('refreshJurisdiction', { jurisdiction_id: jurisdiction.id });
-      if (res.data?.jurisdiction) {
-        setJurisdictions(prev => prev.map(j => j.id === jurisdiction.id ? res.data.jurisdiction : j));
-        if (selectedJurisdiction?.id === jurisdiction.id) setSelectedJurisdiction(res.data.jurisdiction);
+      // Create a ResearchRequest via proxy
+      const request = await base44.functions.invoke('proxyResearch', {
+        action: 'create',
+        payload: {
+          jurisdiction_name: jurisdiction.name,
+          state: jurisdiction.state || "",
+          city: jurisdiction.name,
+          county: jurisdiction.parent_county?.name || "",
+          ccs_jurisdiction_id: jurisdiction.id,
+          status: 'pending',
+          requested_by: 'refresh'
+        }
+      });
+
+      // Poll until done
+      const maxWait = 180000;
+      const start = Date.now();
+      while (Date.now() - start < maxWait) {
+        await new Promise(r => setTimeout(r, 5000));
+        const record = await base44.functions.invoke('proxyResearch', {
+          action: 'poll',
+          payload: { id: request.id }
+        });
+        const data = record.data || record;
+        if (data.status === 'completed') {
+          const updated = await JurisdictionProfile.get(jurisdiction.id);
+          setJurisdictions(prev => prev.map(j => j.id === jurisdiction.id ? updated : j));
+          if (selectedJurisdiction?.id === jurisdiction.id) setSelectedJurisdiction(updated);
+          break;
+        }
+        if (data.status === 'failed') break;
       }
     } catch (e) { console.error(e); }
     setRefreshingIds(prev => { const n = new Set(prev); n.delete(jurisdiction.id); return n; });
@@ -79,7 +102,7 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(true);
 
     try {
-      // Step 1: Create a placeholder JurisdictionProfile so we have an ID to write back to
+      // Create placeholder
       const placeholder = await JurisdictionProfile.create({
         name: aiDiscoverQuery,
         state: "",
@@ -92,14 +115,10 @@ export default function PermittingRepository() {
       setJurisdictions(prev => [placeholder, ...prev]);
       setSelectedJurisdiction(placeholder);
 
-      // Step 2: Create a ResearchRequest in the Permitting Agent
-      const createRes = await fetch(RESEARCH_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api_key': PERMITTING_API_KEY
-        },
-        body: JSON.stringify({
+      // Queue research via proxy
+      const request = await base44.functions.invoke('proxyResearch', {
+        action: 'create',
+        payload: {
           jurisdiction_name: aiDiscoverQuery,
           state: "",
           city: aiDiscoverQuery,
@@ -107,39 +126,27 @@ export default function PermittingRepository() {
           ccs_jurisdiction_id: placeholder.id,
           status: 'pending',
           requested_by: 'ccs_app'
-        })
+        }
       });
 
-      const request = await createRes.json();
-      if (!createRes.ok) throw new Error(`Failed to create research request: ${JSON.stringify(request)}`);
-
-      // Step 3: Poll until completed (max 3 minutes)
+      // Poll until done
       const maxWait = 180000;
-      const pollInterval = 5000;
       const start = Date.now();
-
       while (Date.now() - start < maxWait) {
-        await new Promise(r => setTimeout(r, pollInterval));
-
-        const pollRes = await fetch(`${RESEARCH_URL}/${request.id}`, {
-          headers: { 'api_key': PERMITTING_API_KEY }
+        await new Promise(r => setTimeout(r, 5000));
+        const record = await base44.functions.invoke('proxyResearch', {
+          action: 'poll',
+          payload: { id: request.id }
         });
-
-        const record = await pollRes.json();
         const data = record.data || record;
-
         if (data.status === 'completed') {
-          // Step 4: Fetch the updated JurisdictionProfile from CCS
           const updated = await JurisdictionProfile.get(placeholder.id);
           setJurisdictions(prev => prev.map(j => j.id === placeholder.id ? updated : j));
           setSelectedJurisdiction(updated);
           setAiDiscoverQuery("");
           break;
         }
-
-        if (data.status === 'failed') {
-          throw new Error(`Research failed: ${data.error}`);
-        }
+        if (data.status === 'failed') throw new Error(`Research failed: ${data.error}`);
       }
 
     } catch (e) {
@@ -149,12 +156,9 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(false);
   };
 
-  const displayList = jurisdictions.filter(j => {
-    if (searchTerm) {
-      return j.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    }
-    return true;
-  });
+  const displayList = jurisdictions.filter(j =>
+    !searchTerm || j.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
