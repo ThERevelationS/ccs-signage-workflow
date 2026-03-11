@@ -331,7 +331,8 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             }
           }
         });
-        const extractedData = aiRes;
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI extraction timed out after 30s')), 30_000));
+        const extractedData = await Promise.race([aiCallPromise, timeoutPromise]);
 
         if (!extractedData || !extractedData.client_name) {
           results.push({ action: 'error', subject, docNumber, error: 'AI could not extract data from PDF' });
