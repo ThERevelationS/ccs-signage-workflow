@@ -9,6 +9,10 @@ import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDial
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
+const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
+const PERMITTING_API_KEY = '570bd85bbd4248b396864e2c628a6028';
+const RESEARCH_URL = `https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest`;
+
 export default function PermittingRepository() {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,59 +77,75 @@ export default function PermittingRepository() {
   const aiDiscover = async () => {
     if (!aiDiscoverQuery.trim()) return;
     setAiDiscoverLoading(true);
+
     try {
-      const response = await fetch(
-        "https://api.base44.com/api/apps/69b1840cf75aba55e115d020/agent/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": "570bd85bbd4248b396864e2c628a6028"
-          },
-          body: JSON.stringify({
-            message: `Research this jurisdiction for sign permitting and return a complete JurisdictionProfile JSON: "${aiDiscoverQuery}"`
-          })
-        }
-      );
-
-      const result = await response.json();
-      const text = result.response || result.reply || result.content || "";
-
-      const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/(\{[\s\S]*\})/);
-      if (!jsonMatch) throw new Error("No JSON found in agent response");
-      const data = JSON.parse(jsonMatch[1]);
-
-      const docs = (data.documents || []).map((d, i) => ({
-        id: `ai_${Date.now()}_${i}`,
-        title: d.title || "Untitled",
-        url: d.url || "",
-        doc_type: d.doc_type || "other",
-        ai_summary: d["ai_summary"] || "",
-        source: "ai_discovered",
-        last_fetched: new Date().toISOString()
-      }));
-
-      const countyDocs = (data.parent_county?.documents || []).map((d, i) => ({
-        id: `ai_county_${Date.now()}_${i}`,
-        title: `[${data.parent_county.name}] ${d.title || "Untitled"}`,
-        url: d.url || "",
-        doc_type: d.doc_type || "other",
-        ai_summary: d["ai_summary"] || "",
-        source: "ai_discovered",
-        last_fetched: new Date().toISOString()
-      }));
-
-      const created = await JurisdictionProfile.create({
-        ...data,
-        documents: [...docs, ...countyDocs],
+      // Step 1: Create a placeholder JurisdictionProfile so we have an ID to write back to
+      const placeholder = await JurisdictionProfile.create({
+        name: aiDiscoverQuery,
+        state: "",
+        type: "city",
+        ai_summary: "Research in progress...",
         last_updated: new Date().toISOString(),
         auto_refresh: true
       });
 
-      setJurisdictions(prev => [created, ...prev]);
-      setSelectedJurisdiction(created);
-      setAiDiscoverQuery("");
-    } catch (e) { console.error("AI Discover error:", e); }
+      setJurisdictions(prev => [placeholder, ...prev]);
+      setSelectedJurisdiction(placeholder);
+
+      // Step 2: Create a ResearchRequest in the Permitting Agent
+      const createRes = await fetch(RESEARCH_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api_key': PERMITTING_API_KEY
+        },
+        body: JSON.stringify({
+          jurisdiction_name: aiDiscoverQuery,
+          state: "",
+          city: aiDiscoverQuery,
+          county: "",
+          ccs_jurisdiction_id: placeholder.id,
+          status: 'pending',
+          requested_by: 'ccs_app'
+        })
+      });
+
+      const request = await createRes.json();
+      if (!createRes.ok) throw new Error(`Failed to create research request: ${JSON.stringify(request)}`);
+
+      // Step 3: Poll until completed (max 3 minutes)
+      const maxWait = 180000;
+      const pollInterval = 5000;
+      const start = Date.now();
+
+      while (Date.now() - start < maxWait) {
+        await new Promise(r => setTimeout(r, pollInterval));
+
+        const pollRes = await fetch(`${RESEARCH_URL}/${request.id}`, {
+          headers: { 'api_key': PERMITTING_API_KEY }
+        });
+
+        const record = await pollRes.json();
+        const data = record.data || record;
+
+        if (data.status === 'completed') {
+          // Step 4: Fetch the updated JurisdictionProfile from CCS
+          const updated = await JurisdictionProfile.get(placeholder.id);
+          setJurisdictions(prev => prev.map(j => j.id === placeholder.id ? updated : j));
+          setSelectedJurisdiction(updated);
+          setAiDiscoverQuery("");
+          break;
+        }
+
+        if (data.status === 'failed') {
+          throw new Error(`Research failed: ${data.error}`);
+        }
+      }
+
+    } catch (e) {
+      console.error("AI Discover error:", e);
+    }
+
     setAiDiscoverLoading(false);
   };
 
