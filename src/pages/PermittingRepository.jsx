@@ -38,7 +38,8 @@ export default function PermittingRepository() {
     setRefreshingIds(prev => new Set([...prev, jurisdiction.id]));
     try {
       // Create a ResearchRequest via proxy
-      const request = await base44.functions.invoke('proxyResearch', {
+      const request = await base44.functions.invoke('permittingproxy',
+ {
         action: 'create',
         payload: {
           jurisdiction_name: jurisdiction.name,
@@ -56,7 +57,8 @@ export default function PermittingRepository() {
       const start = Date.now();
       while (Date.now() - start < maxWait) {
         await new Promise(r => setTimeout(r, 5000));
-        const record = await base44.functions.invoke('proxyResearch', {
+        const record = await base44.functions.invoke('permittingproxy',
+ {
           action: 'poll',
           payload: { id: request.id }
         });
@@ -116,7 +118,8 @@ export default function PermittingRepository() {
       setSelectedJurisdiction(placeholder);
 
       // Queue research via proxy
-      const request = await base44.functions.invoke('proxyResearch', {
+      const request = await base44.functions.invoke('permittingproxy',
+ {
         action: 'create',
         payload: {
           jurisdiction_name: aiDiscoverQuery,
@@ -134,7 +137,8 @@ export default function PermittingRepository() {
       const start = Date.now();
       while (Date.now() - start < maxWait) {
         await new Promise(r => setTimeout(r, 5000));
-        const record = await base44.functions.invoke('proxyResearch', {
+        const record = await base44.functions.invoke('permittingproxy',
+ {
           action: 'poll',
           payload: { id: request.id }
         });
