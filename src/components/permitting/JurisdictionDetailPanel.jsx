@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle, DownloadCloud } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle, DownloadCloud, History } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
@@ -11,6 +11,8 @@ import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
+import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
+import JurisdictionActivityTab from "./JurisdictionActivityTab";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
