@@ -360,6 +360,7 @@ export default function AdminSettings() {
     
     if (userRecord && userRecord.password_hash === passwordInput && userRecord.role === 'admin') {
       setIsUnlocked(true);
+      sessionStorage.setItem('adminUnlocked', 'true');
       setUsernameInput("");
       setPasswordInput("");
     } else if (userRecord && userRecord.password_hash === passwordInput) {
