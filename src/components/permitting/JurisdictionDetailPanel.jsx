@@ -364,13 +364,22 @@ Answer the question based on the documents and information available. Be specifi
             )}
           </div>
           <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => generateJurisdictionPDF(jurisdiction)}
+              title="Download PDF report"
+              className="gap-1 text-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Report
+            </Button>
             <Button 
               size="icon" 
               variant="outline"
               onClick={handleResearch}
               disabled={isResearching}
               title="Run AI research to fill in jurisdiction data"
-              className="gap-1"
             >
               {isResearching ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
