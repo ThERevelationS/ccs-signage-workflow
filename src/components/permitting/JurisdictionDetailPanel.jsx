@@ -452,7 +452,7 @@ Answer the question based on the documents and information available. Be specifi
         </div>
       )}
 
-      {activeTab === "overview" && <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {activeTab === "overview" && <><div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* CAGIS Location Search */}
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
           <p className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
