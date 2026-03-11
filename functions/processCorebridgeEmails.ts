@@ -353,6 +353,32 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           });
         });
 
+        // === FINAL DEDUP GUARD: direct DB queries before any create ===
+        // This catches cases where the in-memory sets missed an already-created record
+        // (e.g. due to WorkOrder.filter pagination limits)
+        const [dbDocCheck, dbPendingCheck] = await Promise.all([
+          WorkOrder.filter({ est_inv_at: docNumber }),
+          PendingImport.filter({ doc_number: docNumber })
+        ]);
+        if ((dbDocCheck?.length ?? 0) > 0) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Doc number already linked to a work order (db check)' });
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
+        if ((dbPendingCheck?.length ?? 0) > 0) {
+          results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Doc number already in pending queue (db check)' });
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+          continue;
+        }
+
         if (exactMatch) {
           // Update the existing linked work order
           const updateData = {
