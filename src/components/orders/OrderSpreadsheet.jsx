@@ -505,16 +505,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (!file) return;
     e.target.value = "";
 
-    // Validate file name
-    const fileName = file.name.toLowerCase();
-    if (!fileName.includes('order') && !fileName.includes('request')) {
-      alert('Invalid file. Please select a file with "Order" or "Request" in the name.');
-      return;
-    }
-
-    const cancelCtx = startImport(1, currentUser?.email);
-    importStateRef.current = cancelCtx.current;
-    updateProgress(0, 1, "Uploading file to server...");
+    const importId = startMultiImport(file.name);
+    const processingTimeout = setTimeout(() => {
+      updateImport(importId, { message: 'Processing rows on server...' });
+    }, 1500);
 
     try {
       const importOrdersFn = (await import("@/functions/importOrders")).importOrders;
@@ -522,13 +516,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       fd.append('file', file);
       if (workOrderFilter) fd.append('work_order_filter', workOrderFilter);
       const res = await importOrdersFn(fd);
+      clearTimeout(processingTimeout);
       const result = res.data;
-      updateProgress(1, 1, `Done! ${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);
-      completeImport();
+      finishImport(importId, `${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);
       await loadData(false);
     } catch (err) {
+      clearTimeout(processingTimeout);
       console.error("Import failed:", err);
-      completeImport();
+      finishImport(importId, 'Import failed. Please try again.', true);
     }
   };
 
