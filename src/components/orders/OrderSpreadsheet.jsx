@@ -102,7 +102,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
-import { useImportProgress } from "@/components/shared/ImportProgressContext";
+import { useMultiImport } from "@/components/shared/MultiImportContext";
 
 
 const Order = base44.entities.Order;

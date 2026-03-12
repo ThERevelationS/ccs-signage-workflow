@@ -32,6 +32,7 @@ import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
+import { useMultiImport } from "@/components/shared/MultiImportContext";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
