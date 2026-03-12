@@ -137,6 +137,9 @@ Deno.serve(async (req) => {
         created++;
       }
     }));
+    if (i + BATCH_SIZE < validRows.length) {
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+    }
   }
 
   return Response.json({ created, updated, skipped, total: validRows.length });
