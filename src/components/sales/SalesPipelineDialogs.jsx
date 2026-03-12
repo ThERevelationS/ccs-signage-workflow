@@ -3,7 +3,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CellContextMenu } from "@/components/shared/CellContextMenu";
 import { ColumnHeaderContextMenu } from "@/components/shared/ColumnHeaderContextMenu";
 import DeadlineGradientDialog from "@/components/sales/DeadlineGradientDialog";
-import SalesPipelineImportProgress from "@/components/sales/SalesPipelineImportProgress";
 
 export default function SalesPipelineDialogs({
   bulkDeleteConfirm, setBulkDeleteConfirm, selectedRows, confirmBulkDelete,
@@ -13,7 +12,6 @@ export default function SalesPipelineDialogs({
   handleColumnSort, handleCustomSort, clearSort, sortConfig, workOrders, currentUser,
   handleHeaderContextMenuAction,
   showGradientDialog, setShowGradientDialog, deadlineGradientSettings, saveGradientSettings,
-  importProgress, importStateRef,
   deleteConfirm, setDeleteConfirm, confirmDelete
 }) {
   return (
@@ -93,8 +91,6 @@ export default function SalesPipelineDialogs({
         settings={deadlineGradientSettings}
         onSave={saveGradientSettings}
       />
-
-      <SalesPipelineImportProgress importProgress={importProgress} importStateRef={importStateRef} />
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
