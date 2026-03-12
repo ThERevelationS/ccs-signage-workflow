@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
   for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
     const batch = validRows.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (row) => {
+
       const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
       const description = String(row['Description'] ?? row['description'] ?? '').trim();
       const requestType = String(row['Type'] ?? row['Request Type'] ?? row['type'] ?? '').trim();
