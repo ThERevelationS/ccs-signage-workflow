@@ -37,6 +37,7 @@ import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiP
 import { base44 } from "@/api/base44Client";
 import { ImportProgressProvider } from "@/components/shared/ImportProgressContext";
 import { ResearchProgressProvider } from "@/components/permitting/ResearchProgressContext";
+import { MultiImportProvider } from "@/components/shared/MultiImportContext";
 import ResearchProgressBar from "@/components/permitting/ResearchProgressBar";
 
 // Context for multi-page view
@@ -1017,8 +1018,10 @@ function LayoutContentWrapper({ children }) {
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
       <ResearchProgressProvider>
-        <LayoutContent>{children}</LayoutContent>
-        <ResearchProgressBar />
+        <MultiImportProvider>
+          <LayoutContent>{children}</LayoutContent>
+          <ResearchProgressBar />
+        </MultiImportProvider>
       </ResearchProgressProvider>
     </ImportProgressProvider>
   );
