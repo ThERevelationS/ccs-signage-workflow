@@ -128,8 +128,8 @@ export default function MainWorkflow() {
 
       {selectedWorkOrder && (
         <WorkOrderDetailsDialog
-          isOpen={true}
-          onClose={() => setSelectedWorkOrder(null)}
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders(false)}
         />
