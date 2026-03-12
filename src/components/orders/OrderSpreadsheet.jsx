@@ -512,10 +512,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
     try {
       const importOrdersFn = (await import("@/functions/importOrders")).importOrders;
-      const fd = new FormData();
-      fd.append('file', file);
-      if (workOrderFilter) fd.append('work_order_filter', workOrderFilter);
-      const res = await importOrdersFn(fd);
+      const fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(btoa(e.target.result));
+        reader.onerror = reject;
+        reader.readAsBinaryString(file);
+      });
+      const res = await importOrdersFn({ fileData, workOrderFilter: workOrderFilter || '' });
       clearTimeout(processingTimeout);
       const result = res.data;
       finishImport(importId, `${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);

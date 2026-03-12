@@ -654,9 +654,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }, 1500);
 
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await importSalesPipeline(fd);
+      const fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(btoa(e.target.result));
+        reader.onerror = reject;
+        reader.readAsBinaryString(file);
+      });
+      const res = await importSalesPipeline({ fileData });
       clearTimeout(processingTimeout);
       const result = res.data;
       finishImport(importId, `${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
