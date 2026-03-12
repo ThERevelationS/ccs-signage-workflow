@@ -121,7 +121,7 @@ export default function MainWorkflow() {
               <p className="text-gray-400 text-sm mt-2">Add start and due dates to work orders to see them here</p>
             </div>
           ) : (
-            <GanttChart workOrders={getSortedWorkOrders()} onWorkOrderClick={setSelectedWorkOrder} />
+            <GanttChart workOrders={getSortedWorkOrders()} onWorkOrderClick={handleWorkOrderClick} />
           )}
         </div>
       </div>
