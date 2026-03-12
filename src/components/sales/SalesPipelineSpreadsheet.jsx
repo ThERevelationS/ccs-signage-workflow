@@ -1258,8 +1258,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         handleHeaderContextMenuAction={handleHeaderContextMenuAction}
         showGradientDialog={showGradientDialog} setShowGradientDialog={setShowGradientDialog}
         deadlineGradientSettings={deadlineGradientSettings} saveGradientSettings={saveGradientSettings}
-        importProgress={importProgress}
-        importStateRef={importStateRef}
         deleteConfirm={deleteConfirm} setDeleteConfirm={setDeleteConfirm}
         confirmDelete={confirmDelete}
       />
