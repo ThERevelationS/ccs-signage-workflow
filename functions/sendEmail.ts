@@ -1,18 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import { EmailClient } from 'npm:@azure/communication-email';
 
-const connectionString = Deno.env.get("AZURE_EMAIL_CONNECTION_STRING");
-const emailClient = new EmailClient(connectionString);
-
 Deno.serve(async (req) => {
   try {
+    const connectionString = Deno.env.get("AZURE_EMAIL_CONNECTION_STRING");
+    if (!connectionString) {
+      return Response.json({ error: 'Azure email not configured' }, { status: 503 });
+    }
+
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    let user = null;
+    try {
+      user = await base44.auth.me();
+    } catch (e) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const emailClient = new EmailClient(connectionString);
     const { to, subject, body, from_email, from_name } = await req.json();
 
     if (!to || !subject || !body || !from_email) {
