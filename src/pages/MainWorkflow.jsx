@@ -17,6 +17,17 @@ export default function MainWorkflow() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState("due_date");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleWorkOrderClick = (wo) => {
+    setSelectedWorkOrder(wo);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setTimeout(() => setSelectedWorkOrder(null), 300);
+  };
 
   useEffect(() => {
     document.title = "Main Workflow - Workflow Manager";
