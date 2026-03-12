@@ -86,6 +86,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { fileUrl, mode } = body;
 
+    if (!fileUrl) {
+      return Response.json({ error: 'Missing required field: fileUrl' }, { status: 400 });
+    }
+
     // Download and parse
     const fileRes = await fetch(fileUrl);
     if (!fileRes.ok) throw new Error(`Failed to download file: ${fileRes.status}`);
