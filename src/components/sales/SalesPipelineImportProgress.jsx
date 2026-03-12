@@ -31,22 +31,21 @@ export default function SalesPipelineImportProgress({ importProgress, importStat
 
       {indeterminate ? (
         // Animated indeterminate bar
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
-          <div
-            className="h-full bg-blue-500 rounded-full"
-            style={{
-              width: '40%',
-              animation: 'importIndeterminate 1.4s ease-in-out infinite',
-            }}
-          />
+        <>
           <style>{`
-            @keyframes importIndeterminate {
-              0% { transform: translateX(-100%) scaleX(1); }
-              50% { transform: translateX(150%) scaleX(1.5); }
-              100% { transform: translateX(300%) scaleX(1); }
+            @keyframes importSlide {
+              0%   { left: -45%; width: 45%; }
+              60%  { left: 100%; width: 100%; }
+              100% { left: 120%; width: 10%; }
             }
           `}</style>
-        </div>
+          <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+            <div
+              className="absolute h-full bg-blue-500 rounded-full"
+              style={{ animation: 'importSlide 1.5s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite' }}
+            />
+          </div>
+        </>
       ) : (
         <Progress value={percent} className="h-2 mb-2" />
       )}
