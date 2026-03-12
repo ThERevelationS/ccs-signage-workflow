@@ -3,7 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+        let user = null;
+        try {
+            user = await base44.auth.me();
+        } catch (e) {
+            return Response.json({ connected: false, error: 'Not authenticated' }, { status: 401 });
+        }
         
         if (!user || user.role !== 'admin') {
             return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
@@ -31,6 +36,9 @@ Deno.serve(async (req) => {
         return Response.json({ connected: true, email: profile.emailAddress });
 
     } catch (error) {
+        if (error.message && (error.message.includes('401') || error.message.includes('Authentication required'))) {
+            return Response.json({ connected: false, error: 'Not authenticated' }, { status: 401 });
+        }
         return Response.json({ connected: false, error: error.message });
     }
 });
