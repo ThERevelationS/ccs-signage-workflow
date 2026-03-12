@@ -61,7 +61,8 @@ Deno.serve(async (req) => {
     : 0;
 
   let created = 0, updated = 0, skipped = 0;
-  const BATCH_SIZE = 15;
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY_MS = 300;
   let importedCount = 0;
 
   const validRows = jsonData.filter(row => {

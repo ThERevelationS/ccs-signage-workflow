@@ -84,7 +84,8 @@ Deno.serve(async (req) => {
   }
 
   let created = 0, updated = 0, failed = 0;
-  const BATCH_SIZE = 15;
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY_MS = 300;
 
   for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
     const batch = validRows.slice(i, i + BATCH_SIZE);
@@ -109,6 +110,9 @@ Deno.serve(async (req) => {
         failed++;
       }
     }));
+    if (i + BATCH_SIZE < validRows.length) {
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+    }
   }
 
   return Response.json({ created, updated, failed, total: validRows.length });
