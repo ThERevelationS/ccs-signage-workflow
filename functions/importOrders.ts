@@ -7,15 +7,26 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const formData = await req.formData();
-  const file = formData.get('file');
-  const workOrderFilter = formData.get('work_order_filter') || '';
-
-  if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
-
-  const arrayBuffer = await file.arrayBuffer();
-  const data = new Uint8Array(arrayBuffer);
-  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  let workbook;
+  let workOrderFilter = '';
+  const contentType = req.headers.get('content-type') || '';
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await req.formData();
+    const file = formData.get('file');
+    workOrderFilter = formData.get('work_order_filter') || '';
+    if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  } else {
+    const body = await req.json();
+    workOrderFilter = body.workOrderFilter || '';
+    if (!body.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
+    const binaryStr = atob(body.fileData);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+    workbook = XLSX.read(bytes, { type: 'array', cellDates: true });
+  }
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 

@@ -7,14 +7,23 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const formData = await req.formData();
-  const file = formData.get('file');
-
-  if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
-
-  const arrayBuffer = await file.arrayBuffer();
-  const data = new Uint8Array(arrayBuffer);
-  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  let workbook;
+  const contentType = req.headers.get('content-type') || '';
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await req.formData();
+    const file = formData.get('file');
+    if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  } else {
+    const body = await req.json();
+    if (!body.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
+    const binaryStr = atob(body.fileData);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+    workbook = XLSX.read(bytes, { type: 'array', cellDates: true });
+  }
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
