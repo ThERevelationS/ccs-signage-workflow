@@ -164,8 +164,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [editingCustomerName, setEditingCustomerName] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
-  const importStateRef = useRef({ paused: false, cancelled: false });
-  const { startImport, updateProgress, completeImport, importState: importProgress, pauseImport, resumeImport, cancelImport } = useImportProgress();
+  const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
 
