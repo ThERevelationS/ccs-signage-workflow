@@ -647,19 +647,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!file) return;
     e.target.value = "";
 
-    updateProgress(0, 1, `Uploading file to server...`);
+    // Show indeterminate progress immediately
+    setImportProgress({ current: 0, total: 0, message: `Uploading "${file.name}"...`, done: false, indeterminate: true });
 
     try {
       const fd = new FormData();
       fd.append('file', file);
+
+      // Switch message once upload is likely sent
+      const processingTimeout = setTimeout(() => {
+        setImportProgress(p => p && !p.done ? { ...p, message: 'Processing rows on server...' } : p);
+      }, 1500);
+
       const res = await importSalesPipeline(fd);
+      clearTimeout(processingTimeout);
       const result = res.data;
-      updateProgress(1, 1, `Done! ${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
-      completeImport();
+      setImportProgress({ current: result.total, total: result.total, message: `✓ Done! ${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`, done: true, indeterminate: false });
+      setTimeout(() => setImportProgress(null), 5000);
       await loadWorkOrders(false);
     } catch (err) {
       console.error("Import failed:", err);
-      completeImport();
+      setImportProgress({ current: 0, total: 0, message: 'Import failed. Please try again.', done: true, indeterminate: false });
+      setTimeout(() => setImportProgress(null), 4000);
     }
   };
 
