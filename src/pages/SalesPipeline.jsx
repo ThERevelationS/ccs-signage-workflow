@@ -9,6 +9,7 @@ import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadshee
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import PendingImportsPanel from "@/components/sales/PendingImportsPanel";
+import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -23,6 +24,7 @@ export default function SalesPipeline() {
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [canImportExport, setCanImportExport] = useState(false);
   const [showPendingImports, setShowPendingImports] = useState(false);
+  const [pendingTab, setPendingTab] = useState("imports"); // "imports" | "duplicates"
   const [pendingCount, setPendingCount] = useState(0);
   const spreadsheetRef = useRef(null);
 
@@ -235,13 +237,31 @@ export default function SalesPipeline() {
         </div>
 
         {showPendingImports ? (
-          <div className="clay-card p-4 overflow-auto" style={{ flex: 1, minHeight: 0 }}>
-            <div className="flex items-center gap-2 mb-4">
-              <Inbox className="w-5 h-5 text-amber-600" />
+          <div className="clay-card p-4 overflow-auto flex flex-col" style={{ flex: 1, minHeight: 0 }}>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <Inbox className="w-5 h-5 text-amber-600 flex-shrink-0" />
               <h2 className="text-lg font-bold text-gray-800">Pending Imports / Duplicates</h2>
-              <span className="text-xs text-gray-500">Review Corebridge imports and possible duplicate entries detected automatically.</span>
+              <div className="flex gap-1 ml-auto">
+                <button
+                  onClick={() => setPendingTab("imports")}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pendingTab === "imports" ? "bg-amber-100 text-amber-800 border border-amber-300" : "text-gray-500 hover:bg-gray-100"}`}
+                >
+                  Corebridge Imports
+                  {pendingCount > 0 && <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full px-1.5">{pendingCount}</span>}
+                </button>
+                <button
+                  onClick={() => setPendingTab("duplicates")}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${pendingTab === "duplicates" ? "bg-orange-100 text-orange-800 border border-orange-300" : "text-gray-500 hover:bg-gray-100"}`}
+                >
+                  🧹 Bulk Duplicate Cleanup
+                </button>
+              </div>
             </div>
-            <PendingImportsPanel onCountChange={setPendingCount} />
+            {pendingTab === "imports" ? (
+              <PendingImportsPanel onCountChange={setPendingCount} />
+            ) : (
+              <BulkDuplicateCleanup />
+            )}
           </div>
         ) : (
           <SalesPipelineSpreadsheet 
