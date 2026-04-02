@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
