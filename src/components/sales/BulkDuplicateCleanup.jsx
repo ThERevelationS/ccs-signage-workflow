@@ -46,9 +46,9 @@ function DuplicateGroup({ group, onResolved }) {
   const handleKeepOne = async (keepWo) => {
     setKeeping(keepWo.id);
     const toDelete = group.filter(w => w.id !== keepWo.id);
-    for (const wo of toDelete) {
-      await WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup' });
-    }
+    await Promise.all(toDelete.map(wo =>
+      WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup' })
+    ));
     setKeeping(null);
     onResolved(...toDelete.map(w => w.id));
   };
@@ -155,15 +155,26 @@ export default function BulkDuplicateCleanup() {
 
   const handleDeleteAllExtras = async () => {
     setDeletingAll(true);
-    let count = 0;
+    const toDeleteAll = [];
     for (const group of groups) {
       const sorted = [...group].sort((a, b) => scoreRecord(b) - scoreRecord(a));
-      const toDelete = sorted.slice(1); // keep first (best), delete rest
-      for (const wo of toDelete) {
-        await WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup_all' });
-        count++;
+      toDeleteAll.push(...sorted.slice(1));
+    }
+
+    const BATCH_SIZE = 5;
+    const DELAY_MS = 600;
+    let count = 0;
+    for (let i = 0; i < toDeleteAll.length; i += BATCH_SIZE) {
+      const batch = toDeleteAll.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(wo =>
+        WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup_all' })
+      ));
+      count += batch.length;
+      if (i + BATCH_SIZE < toDeleteAll.length) {
+        await new Promise(r => setTimeout(r, DELAY_MS));
       }
     }
+
     setDeletingAll(false);
     await loadAndGroup();
     alert(`Done! Deleted ${count} duplicate records.`);
