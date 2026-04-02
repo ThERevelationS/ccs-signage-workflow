@@ -75,7 +75,11 @@ export default function ProjectTrash() {
     setBulkDeleteProgress({ active: true, current: 0, total: allWorkOrders.length });
     
     for (let i = 0; i < allWorkOrders.length; i++) {
-      await WorkOrder.delete(allWorkOrders[i].id);
+      try {
+        await WorkOrder.delete(allWorkOrders[i].id);
+      } catch (e) {
+        // skip already-deleted or not-found records
+      }
       setBulkDeleteProgress({ active: true, current: i + 1, total: allWorkOrders.length });
       await new Promise(r => setTimeout(r, 300));
     }
