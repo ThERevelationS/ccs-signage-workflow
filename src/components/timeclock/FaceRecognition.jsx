@@ -133,7 +133,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     
     try {
       const detection = await faceapi
-        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
+        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.3 }))
         .withFaceLandmarks()
         .withFaceDescriptor();
       return detection;
@@ -189,6 +189,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Looking for face...");
     
     scanIntervalRef.current = setInterval(async () => {
+      if (!videoRef.current) return;
       const detection = await detectFace();
       if (detection) {
         setScanStatus("Face detected, identifying...");
@@ -204,7 +205,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       } else {
         setScanStatus("No face detected. Look at camera.");
       }
-    }, 1000);
+    }, 300);
   };
 
   const stopScanning = () => {

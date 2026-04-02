@@ -1,6 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
-import { format } from 'npm:date-fns@3.6.0';
+import { format } from 'npm:date-fns@2.30.0';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);

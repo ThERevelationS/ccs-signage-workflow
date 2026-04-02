@@ -269,9 +269,15 @@ export default function ProductChecklistDialog({
       }
     });
 
-    // Append to existing checklist instead of replacing
-    console.log("Setting checklist with", newItems.length, "new items, total:", checklist.length + newItems.length);
-    setChecklist(prev => [...prev, ...newItems]);
+    // Get all product names being re-applied
+    const appliedProductNames = new Set(templateData.map(s => s.productName || s.parentProduct).filter(Boolean));
+    
+    // Remove existing items for those products, then append new ones
+    console.log("Setting checklist replacing products:", [...appliedProductNames], "new items:", newItems.length);
+    setChecklist(prev => {
+      const kept = prev.filter(item => !appliedProductNames.has(item.product_name));
+      return [...kept, ...newItems];
+    });
   };
 
   const updateChecklistItem = (itemId, updates) => {
@@ -640,6 +646,8 @@ export default function ProductChecklistDialog({
   const [newGeneralChecklistText, setNewGeneralChecklistText] = useState("");
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemText, setEditingItemText] = useState("");
+  const [editingProductName, setEditingProductName] = useState(null);
+  const [editingProductNameText, setEditingProductNameText] = useState("");
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -652,6 +660,20 @@ export default function ProductChecklistDialog({
     updateChecklistItem(editingItemId, { text: editingItemText.trim() });
     setEditingItemId(null);
     setEditingItemText("");
+  };
+
+  const saveProductName = (oldName, newName) => {
+    if (!newName.trim() || newName.trim() === oldName) {
+      setEditingProductName(null);
+      return;
+    }
+    const trimmed = newName.trim();
+    setChecklist(prev => prev.map(item => {
+      if (item.product_name === oldName) return { ...item, product_name: trimmed };
+      return item;
+    }));
+    setEditingProductName(null);
+    setEditingProductNameText("");
   };
   
   const toggleExpanded = (itemId) => {
@@ -930,14 +952,35 @@ export default function ProductChecklistDialog({
                         +Checklist
                       </button>
                     )}
-                    <h3 className="font-bold text-purple-800 flex items-center gap-2">
-                      📦 {productName}
-                      {group.productType && (
-                        <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
-                          {group.productType}
-                        </span>
-                      )}
-                    </h3>
+                    {editingProductName === productName ? (
+                      <div className="flex items-center gap-1 flex-1">
+                        <span className="text-lg">📦</span>
+                        <Input
+                          value={editingProductNameText}
+                          onChange={(e) => setEditingProductNameText(e.target.value)}
+                          className="h-7 text-sm font-bold flex-1 max-w-xs"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveProductName(productName, editingProductNameText);
+                            if (e.key === 'Escape') setEditingProductName(null);
+                          }}
+                          onBlur={() => saveProductName(productName, editingProductNameText)}
+                        />
+                      </div>
+                    ) : (
+                      <h3
+                        className="font-bold text-purple-800 flex items-center gap-2 cursor-pointer hover:bg-purple-100 rounded px-1"
+                        onDoubleClick={() => { if (isRegistered) { setEditingProductName(productName); setEditingProductNameText(productName); }}}
+                        title="Double-click to rename"
+                      >
+                        📦 {productName}
+                        {group.productType && (
+                          <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
+                            {group.productType}
+                          </span>
+                        )}
+                      </h3>
+                    )}
                   </div>
                   
                   {/* Inline add checklist item for this product */}

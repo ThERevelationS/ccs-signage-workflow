@@ -34,15 +34,17 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [usersData, settings] = await Promise.all([
+      const [freshWO, usersData, settings] = await Promise.all([
+        WorkOrder.filter({ id: workOrder.id }),
         AuthorizedEmail.list(),
         GlobalSettings.list()
       ]);
 
       setUsers(usersData);
 
-      // Load checklist from work order
-      const rawChecklist = workOrder.sip_checklist || [];
+      // Load checklist FRESH from database (not from prop which may be stale)
+      const currentWO = freshWO[0] || workOrder;
+      const rawChecklist = currentWO.sip_checklist || [];
       // Reconstruct hierarchy from IDs if type/parent_id fields are missing
       const reconstructedChecklist = rawChecklist.map(item => {
         if (item.type) return item;

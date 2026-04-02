@@ -130,6 +130,28 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     } catch (error) { console.error("Error saving dropdown conditions:", error); }
   };
 
+  // Pre-populate selected products from existing checklist on open
+  useEffect(() => {
+    if (!isOpen) return;
+    if (existingChecklist.length === 0) return;
+    // Build product groups from existing checklist
+    const productMap = new Map();
+    existingChecklist.forEach(item => {
+      if (!item.product_name || item.product_name === 'General Items') return;
+      if (!productMap.has(item.product_name)) {
+        productMap.set(item.product_name, {
+          id: `existing_${item.product_name}_${Math.random().toString(36).substr(2, 6)}`,
+          productType: item.product_type || '',
+          customName: item.product_name,
+          subTemplates: []
+        });
+      }
+    });
+    if (productMap.size > 0) {
+      setSelectedProducts(Array.from(productMap.values()));
+    }
+  }, [isOpen]);
+
   // Template Selection
   const getExistingProductNames = () => {
     const names = new Set();
@@ -138,13 +160,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const addProductToSelection = (productType) => {
-    const existingNames = getExistingProductNames();
     const selectedNames = new Set(selectedProducts.map(p => p.customName));
-    const allNames = new Set([...existingNames, ...selectedNames]);
     
     let customName = productType;
     let counter = 1;
-    while (allNames.has(customName)) { counter++; customName = `${productType} ${counter}`; }
+    while (selectedNames.has(customName)) { counter++; customName = `${productType} ${counter}`; }
     
     setSelectedProducts([...selectedProducts, {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -860,10 +880,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
                   ) : (
-                    <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-                      {selectedProducts.map(product => (
-                        <div key={product.id} className="border rounded p-2 bg-white">
+                    <DragDropContext onDragEnd={(result) => {
+                      if (!result.destination) return;
+                      const reordered = Array.from(selectedProducts);
+                      const [removed] = reordered.splice(result.source.index, 1);
+                      reordered.splice(result.destination.index, 0, removed);
+                      setSelectedProducts(reordered);
+                    }}>
+                    <Droppable droppableId="selected-products">
+                      {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 max-h-[50vh] overflow-y-auto">
+                      {selectedProducts.map((product, idx) => (
+                        <Draggable key={product.id} draggableId={product.id} index={idx}>
+                          {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} className="border rounded p-2 bg-white">
                           <div className="flex items-center gap-2 mb-1">
+                            <div {...provided.dragHandleProps}><GripVertical className="w-4 h-4 text-gray-400 cursor-grab" /></div>
                             <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} className="h-7 text-sm flex-1" />
                             <button onClick={() => setSelectedProducts(selectedProducts.filter(p => p.id !== product.id))} className="p-1"><Trash2 className="w-4 h-4 text-red-500" /></button>
                           </div>
@@ -893,15 +925,21 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               </div>
                             );
                           })()}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {selectedProducts.length > 0 && (
-                    <Button onClick={handleApplyTemplate} className="w-full mt-2 bg-purple-600 hover:bg-purple-700">
-                      <CheckSquare className="w-4 h-4 mr-2" />Apply to Project
-                    </Button>
-                  )}
+                          </div>
+                          )}
+                          </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          </div>
+                          )}
+                          </Droppable>
+                          </DragDropContext>
+                          )}
+                          {selectedProducts.length > 0 && (
+                          <Button onClick={handleApplyTemplate} className="w-full mt-2 bg-purple-600 hover:bg-purple-700">
+                          <CheckSquare className="w-4 h-4 mr-2" />Apply to Project
+                          </Button>
+                          )}
                 </div>
 
                 {/* Preview Column */}
