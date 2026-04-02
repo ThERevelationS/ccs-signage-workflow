@@ -1,0 +1,92 @@
+{
+  "name": "Announcement",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Saved name for this announcement template"
+    },
+    "title": {
+      "type": "string",
+      "description": "Announcement title/headline"
+    },
+    "message": {
+      "type": "string",
+      "description": "Announcement body text"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image to display with announcement"
+    },
+    "sound_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "chime",
+        "bell",
+        "alert",
+        "fanfare",
+        "ding",
+        "custom"
+      ],
+      "default": "chime",
+      "description": "Sound to play with announcement"
+    },
+    "custom_sound_url": {
+      "type": "string",
+      "description": "URL for custom uploaded sound file"
+    },
+    "display_pages": {
+      "type": "array",
+      "description": "Pages to show announcement on (empty = all pages)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_users": {
+      "type": "array",
+      "description": "User emails to target (empty = all users)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 10,
+      "description": "How long to show announcement (0 = until dismissed)"
+    },
+    "background_color": {
+      "type": "string",
+      "default": "#FFF9C4",
+      "description": "Background color for announcement banner"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this announcement is currently being broadcast"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this was last sent"
+    },
+    "sent_by": {
+      "type": "string",
+      "description": "Email of admin who sent it"
+    }
+  },
+  "required": [
+    "title",
+    "message"
+  ]
+}

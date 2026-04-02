@@ -28,6 +28,7 @@ import {
   Columns,
   ChevronLeft,
   Clock,
+  Megaphone,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -39,6 +40,9 @@ import { ImportProgressProvider } from "@/components/shared/ImportProgressContex
 import { ResearchProgressProvider } from "@/components/permitting/ResearchProgressContext";
 import { MultiImportProvider } from "@/components/shared/MultiImportContext";
 import ResearchProgressBar from "@/components/permitting/ResearchProgressBar";
+import AnnouncementManager from "@/components/announcements/AnnouncementManager";
+import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
+import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -120,6 +124,7 @@ function LayoutContent({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
+  const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
   const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
   
   // Multi-page view state
@@ -501,6 +506,22 @@ function LayoutContent({ children }) {
 
               {/* Time Clock + Add Task side by side, Search full width below */}
               <div className="space-y-2 mb-4">
+                {/* Announcement button - admin only, above Time Clock */}
+                {isUserAdmin(currentUser) && (
+                  <button
+                    onClick={() => setShowAnnouncementManager(true)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 hover:clay-card transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                      boxShadow: '4px 4px 12px rgba(239,68,68,0.15), -4px -4px 12px rgba(255,255,255,0.9), inset 1px 1px 4px rgba(255,255,255,0.6)',
+                      height: '36px',
+                    }}
+                    title="Announcements (Admin)"
+                  >
+                    <Megaphone className="w-4 h-4 text-red-600" />
+                    <span className="font-bold text-sm text-red-700">Announce</span>
+                  </button>
+                )}
                 <div className="flex gap-2">
                   <Link
                     to={createPageUrl("TimeClock")}
@@ -727,7 +748,23 @@ function LayoutContent({ children }) {
 
                 {/* Time Clock + Add Task on top row, Search spans full width below */}
                 <div className="hidden lg:flex lg:flex-col lg:gap-1">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-stretch">
+                    {/* Announcement button - admin only, square, two rows tall */}
+                    {isUserAdmin(currentUser) && (
+                      <button
+                        onClick={() => setShowAnnouncementManager(true)}
+                        className="clay-button flex-shrink-0 flex flex-col items-center justify-center rounded-xl border-2 border-red-300 hover:opacity-90 transition-all duration-200"
+                        style={{
+                          background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                          boxShadow: '4px 4px 12px rgba(239,68,68,0.15), -4px -4px 12px rgba(255,255,255,0.9), inset 1px 1px 4px rgba(255,255,255,0.6)',
+                          width: '52px',
+                          alignSelf: 'stretch',
+                        }}
+                        title="Announcements (Admin)"
+                      >
+                        <Megaphone className="w-5 h-5 text-red-600" />
+                      </button>
+                    )}
                     <Link
                       to={createPageUrl("TimeClock")}
                       className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
@@ -744,7 +781,7 @@ function LayoutContent({ children }) {
                       <span className="font-bold text-sm text-blue-700">+ Task</span>
                     </button>
                   </div>
-                  
+
                   <GlobalSearch className="w-full justify-center" />
                 </div>
               </div>
@@ -847,6 +884,18 @@ function LayoutContent({ children }) {
           isOpen={showAddTaskDialog} 
           onClose={() => setShowAddTaskDialog(false)} 
         />
+
+        {/* Announcement Manager - admin only */}
+        {isUserAdmin(currentUser) && (
+          <AnnouncementManager
+            isOpen={showAnnouncementManager}
+            onClose={() => setShowAnnouncementManager(false)}
+            currentUserEmail={currentUser?.email}
+          />
+        )}
+
+        {/* Announcement Banner */}
+        <AnnouncementBanner />
 
         {/* Floating Buttons - hidden in fullscreen and on mobile */}
         {!isCollapsed && !isMobile && (
@@ -1013,24 +1062,26 @@ function LayoutContent({ children }) {
   );
 }
 
-function LayoutContentWrapper({ children }) {
+function LayoutContentWrapper({ children, currentPageName }) {
   const { currentUser } = useAuth();
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
       <ResearchProgressProvider>
         <MultiImportProvider>
-          <LayoutContent>{children}</LayoutContent>
-          <ResearchProgressBar />
+          <AnnouncementProvider currentPageName={currentPageName}>
+            <LayoutContent>{children}</LayoutContent>
+            <ResearchProgressBar />
+          </AnnouncementProvider>
         </MultiImportProvider>
       </ResearchProgressProvider>
     </ImportProgressProvider>
   );
 }
 
-export default function Layout({ children }) {
+export default function Layout({ children, currentPageName }) {
   return (
     <AuthProvider>
-      <LayoutContentWrapper>{children}</LayoutContentWrapper>
+      <LayoutContentWrapper currentPageName={currentPageName}>{children}</LayoutContentWrapper>
     </AuthProvider>
   );
 }
