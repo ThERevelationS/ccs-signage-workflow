@@ -74,9 +74,15 @@ export default function ProjectTrash() {
     const allWorkOrders = await WorkOrder.list();
     setBulkDeleteProgress({ active: true, current: 0, total: allWorkOrders.length });
     
-    for (let i = 0; i < allWorkOrders.length; i++) {
-      await WorkOrder.delete(allWorkOrders[i].id);
-      setBulkDeleteProgress({ active: true, current: i + 1, total: allWorkOrders.length });
+    const BATCH_SIZE = 5;
+    const DELAY_MS = 600;
+    for (let i = 0; i < allWorkOrders.length; i += BATCH_SIZE) {
+      const batch = allWorkOrders.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(wo => WorkOrder.delete(wo.id)));
+      setBulkDeleteProgress({ active: true, current: Math.min(i + BATCH_SIZE, allWorkOrders.length), total: allWorkOrders.length });
+      if (i + BATCH_SIZE < allWorkOrders.length) {
+        await new Promise(r => setTimeout(r, DELAY_MS));
+      }
     }
     
     setBulkDeleteProgress({ active: false, current: 0, total: 0 });
