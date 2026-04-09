@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
         }
 
         // Try to get access token from platform's Gmail connector
-        const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+        const { accessToken } = await base44.asServiceRole.connectors.getConnection("gmail");
 
         if (!accessToken) {
             return Response.json({ connected: false });
