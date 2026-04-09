@@ -2,6 +2,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const retryOnRateLimit = async (fn, maxRetries = 3) => {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err.status === 429 && attempt < maxRetries) {
+        console.log(`Rate limited, waiting ${(attempt + 1) * 2}s before retry...`);
+        await sleep((attempt + 1) * 2000);
+      } else {
+        throw err;
+      }
+    }
+  }
+};
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -60,9 +77,7 @@ Deno.serve(async (req) => {
     ? Math.max(...existingOrders.map(o => o.row_number || 0))
     : 0;
 
-  let created = 0, updated = 0, skipped = 0;
-  const BATCH_SIZE = 5;
-  const BATCH_DELAY_MS = 300;
+  let created = 0, updated = 0, skipped = 0, errors = 0;
   let importedCount = 0;
 
   const validRows = jsonData.filter(row => {
@@ -73,24 +88,25 @@ Deno.serve(async (req) => {
     return customer || description || requestType || quantity;
   });
 
-  for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-    const batch = validRows.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(async (row) => {
+  // Process one row at a time with delay to avoid rate limits
+  for (let i = 0; i < validRows.length; i++) {
+    const row = validRows[i];
 
-      const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
-      const description = String(row['Description'] ?? row['description'] ?? '').trim();
-      const requestType = String(row['Type'] ?? row['Request Type'] ?? row['type'] ?? '').trim();
-      const quantity = String(row['How much?'] ?? row['Quantity'] ?? row['quantity'] ?? '').trim();
-      const requestor = String(row['Requestor'] ?? row['requestor'] ?? row['Requestor Name'] ?? '').trim();
-      const vendor = String(row['Vendor (Anyone can fill out this column)'] ?? row['Vendor'] ?? row['vendor'] ?? '').trim();
+    const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
+    const description = String(row['Description'] ?? row['description'] ?? '').trim();
+    const requestType = String(row['Type'] ?? row['Request Type'] ?? row['type'] ?? '').trim();
+    const quantity = String(row['How much?'] ?? row['Quantity'] ?? row['quantity'] ?? '').trim();
+    const requestor = String(row['Requestor'] ?? row['requestor'] ?? row['Requestor Name'] ?? '').trim();
+    const vendor = String(row['Vendor (Anyone can fill out this column)'] ?? row['Vendor'] ?? row['vendor'] ?? '').trim();
 
-      const dateNeeded = parseExcelDate(row['Date Needed (Requester fills out this column)'] ?? row['Date Needed'] ?? row['date_needed']);
-      const dateOrdered = parseExcelDate(row['Ordered Date (Carl Fills out this column)'] ?? row['Date Ordered'] ?? row['date_ordered']);
-      const dateReceived = parseExcelDate(row['Date Recieved (Anyone can fill out this column)'] ?? row['Date Received'] ?? row['date_received']);
+    const dateNeeded = parseExcelDate(row['Date Needed (Requester fills out this column)'] ?? row['Date Needed'] ?? row['date_needed']);
+    const dateOrdered = parseExcelDate(row['Ordered Date (Carl Fills out this column)'] ?? row['Date Ordered'] ?? row['date_ordered']);
+    const dateReceived = parseExcelDate(row['Date Recieved (Anyone can fill out this column)'] ?? row['Date Received'] ?? row['date_received']);
 
-      const uniqueKey = `${customer}|${description}|${requestType}`.toLowerCase();
-      const existing = existingMap.get(uniqueKey);
+    const uniqueKey = `${customer}|${description}|${requestType}`.toLowerCase();
+    const existing = existingMap.get(uniqueKey);
 
+    try {
       if (existing) {
         const updates = {};
         if (quantity && quantity !== (existing.quantity || '')) updates.quantity = quantity;
@@ -106,7 +122,7 @@ Deno.serve(async (req) => {
         else if (finalOrdered && existing.status === 'pending') updates.status = 'ordered';
 
         if (Object.keys(updates).length > 0) {
-          await base44.asServiceRole.entities.Order.update(existing.id, updates);
+          await retryOnRateLimit(() => base44.asServiceRole.entities.Order.update(existing.id, updates));
           updated++;
         } else {
           skipped++;
@@ -131,16 +147,21 @@ Deno.serve(async (req) => {
         if (dateOrdered) newOrder.date_ordered = dateOrdered;
         if (dateReceived) newOrder.date_received = dateReceived;
 
-        const created_ = await base44.asServiceRole.entities.Order.create(newOrder);
+        const created_ = await retryOnRateLimit(() => base44.asServiceRole.entities.Order.create(newOrder));
         existingMap.set(uniqueKey, created_);
         importedCount++;
         created++;
       }
-    }));
-    if (i + BATCH_SIZE < validRows.length) {
-      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+    } catch (err) {
+      console.error(`Error processing row ${i + 1}: ${customer} - ${description}`, err.message);
+      errors++;
+    }
+
+    // Delay between each row to stay under rate limits
+    if (i < validRows.length - 1) {
+      await sleep(500);
     }
   }
 
-  return Response.json({ created, updated, skipped, total: validRows.length });
+  return Response.json({ created, updated, skipped, errors, total: validRows.length });
 });
