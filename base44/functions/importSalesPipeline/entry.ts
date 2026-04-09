@@ -77,10 +77,38 @@ Deno.serve(async (req) => {
 
   const byEstInv = new Map();
   const byClientName = new Map();
+  // Build normalized client name index for fuzzy matching
+  const normalizedClientIndex = [];
   for (const wo of existingOrders) {
     if (wo.est_inv_at) byEstInv.set(wo.est_inv_at, wo);
     if (wo.corbridge_invoice_number) byEstInv.set(wo.corbridge_invoice_number, wo);
-    if (wo.client_name) byClientName.set(wo.client_name.toLowerCase().trim(), wo);
+    if (wo.client_name) {
+      const normalized = wo.client_name.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      byClientName.set(normalized, wo);
+      normalizedClientIndex.push({ normalized, words: normalized.split(' ').filter(w => w.length > 2), wo });
+    }
+  }
+
+  // Fuzzy client name match function
+  function findFuzzyClientMatch(clientName) {
+    const norm = (clientName || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+    if (!norm) return null;
+    // Exact match first
+    if (byClientName.has(norm)) return byClientName.get(norm);
+    // Containment match
+    for (const entry of normalizedClientIndex) {
+      if (entry.normalized.includes(norm) || norm.includes(entry.normalized)) return entry.wo;
+    }
+    // Word overlap match
+    const words = norm.split(' ').filter(w => w.length > 2);
+    if (words.length === 0) return null;
+    for (const entry of normalizedClientIndex) {
+      if (entry.words.length === 0) continue;
+      const overlap = words.filter(w => entry.words.includes(w)).length;
+      const overlapRatio = overlap / Math.min(words.length, entry.words.length);
+      if (overlapRatio >= 0.6) return entry.wo;
+    }
+    return null;
   }
 
   let created = 0, updated = 0, failed = 0;
@@ -94,7 +122,7 @@ Deno.serve(async (req) => {
       try {
         let existing = null;
         if (estInvAt) existing = byEstInv.get(estInvAt);
-        if (!existing && clientName) existing = byClientName.get(clientName.toLowerCase().trim());
+        if (!existing && clientName) existing = findFuzzyClientMatch(clientName);
 
         if (existing) {
           await base44.asServiceRole.entities.WorkOrder.update(existing.id, rest);
@@ -102,7 +130,11 @@ Deno.serve(async (req) => {
         } else {
           const newWo = await base44.asServiceRole.entities.WorkOrder.create(rest);
           if (newWo.est_inv_at) byEstInv.set(newWo.est_inv_at, newWo);
-          if (newWo.client_name) byClientName.set(newWo.client_name.toLowerCase().trim(), newWo);
+          if (newWo.client_name) {
+            const norm = newWo.client_name.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+            byClientName.set(norm, newWo);
+            normalizedClientIndex.push({ normalized: norm, words: norm.split(' ').filter(w => w.length > 2), wo: newWo });
+          }
           created++;
         }
       } catch (err) {

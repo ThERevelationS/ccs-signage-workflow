@@ -127,14 +127,45 @@ export default function BulkDuplicateCleanup() {
     setLoading(true);
     const all = await WorkOrder.filter({ deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } });
 
-    // Group by normalized client name
+    // Normalize: strip punctuation, collapse whitespace
+    const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+    
+    // Group by normalized client name (catches "ABC Corp" vs "ABC Corp." vs "abc corp")
     const byName = {};
     for (const wo of all) {
-      const key = (wo.client_name || '').toLowerCase().trim();
+      const key = normalize(wo.client_name);
       if (!key) continue;
       if (!byName[key]) byName[key] = [];
       byName[key].push(wo);
     }
+
+    // Also merge groups where one name contains another or has high word overlap
+    const keys = Object.keys(byName);
+    const merged = new Set();
+    for (let i = 0; i < keys.length; i++) {
+      if (merged.has(keys[i])) continue;
+      const aWords = keys[i].split(' ').filter(w => w.length > 2);
+      for (let j = i + 1; j < keys.length; j++) {
+        if (merged.has(keys[j])) continue;
+        // Check containment
+        if (keys[i].includes(keys[j]) || keys[j].includes(keys[i])) {
+          byName[keys[i]] = [...byName[keys[i]], ...byName[keys[j]]];
+          merged.add(keys[j]);
+          continue;
+        }
+        // Check word overlap
+        const bWords = keys[j].split(' ').filter(w => w.length > 2);
+        if (aWords.length === 0 || bWords.length === 0) continue;
+        const overlap = aWords.filter(w => bWords.includes(w)).length;
+        const ratio = overlap / Math.min(aWords.length, bWords.length);
+        if (ratio >= 0.6) {
+          byName[keys[i]] = [...byName[keys[i]], ...byName[keys[j]]];
+          merged.add(keys[j]);
+        }
+      }
+    }
+    // Remove merged groups
+    for (const key of merged) delete byName[key];
 
     // Only groups with more than 1
     const dupGroups = Object.values(byName).filter(g => g.length > 1);

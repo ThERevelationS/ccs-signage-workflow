@@ -443,17 +443,61 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           };
 
           if (candidates.length === 0) {
-            // No fuzzy matches → auto-create immediately
-            Object.keys(proposedWorkOrder).forEach(k => {
-              if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
-            });
-            const created = await WorkOrder.create(proposedWorkOrder);
-            // Add to in-memory list so this run won't create a duplicate for the same client
-            allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
-            // Mark this doc as processed so we don't create another duplicate if email appears again
-            processedDocNumbers.add(docNumber);
-            linkedDocNumbers.add(docNumber.toUpperCase());
-            results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
+            // Check for similar client names before auto-creating
+            const normalizedClient = (clientName || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+            const clientWords = normalizedClient.split(' ').filter(w => w.length > 2);
+            
+            const similarClientMatches = allExistingOrders
+              .filter(wo => !wo.deleted && !wo.completed)
+              .filter(wo => {
+                const woClient = (wo.client_name || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+                if (!woClient || !normalizedClient) return false;
+                // Exact match
+                if (woClient === normalizedClient) return true;
+                // One contains the other
+                if (woClient.includes(normalizedClient) || normalizedClient.includes(woClient)) return true;
+                // Significant word overlap
+                const woWords = woClient.split(' ').filter(w => w.length > 2);
+                if (clientWords.length === 0 || woWords.length === 0) return false;
+                const overlap = clientWords.filter(w => woWords.includes(w)).length;
+                const overlapRatio = overlap / Math.min(clientWords.length, woWords.length);
+                return overlapRatio >= 0.6;
+              })
+              .slice(0, 5)
+              .map(wo => ({
+                work_order_id: wo.id,
+                work_order_title: wo.title || wo.client_name,
+                client_name: wo.client_name,
+                current_stage: wo.current_stage,
+                match_score: 35,
+                match_reasons: ['Similar client name (fuzzy match)']
+              }));
+            
+            if (similarClientMatches.length > 0) {
+              // Has similar clients → send to pending review instead of auto-creating
+              await PendingImport.create({
+                doc_number: docNumber,
+                doc_type: docType,
+                email_subject: subject,
+                extracted_data: extractedData,
+                proposed_work_order: proposedWorkOrder,
+                match_candidates: similarClientMatches,
+                status: 'pending',
+                pdf_url: pdfUrl
+              });
+              pendingImportDocNumbers.add(docNumber.toUpperCase());
+              results.push({ action: 'pending_approve', subject, docNumber, client: clientName, candidates: similarClientMatches.length, reason: 'Similar client name found' });
+            } else {
+              // Truly no matches → auto-create
+              Object.keys(proposedWorkOrder).forEach(k => {
+                if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
+              });
+              const created = await WorkOrder.create(proposedWorkOrder);
+              allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
+              processedDocNumbers.add(docNumber);
+              linkedDocNumbers.add(docNumber.toUpperCase());
+              results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
+            }
           } else {
             // Has potential matches → send to pending review
             const action = candidates[0].match_score >= 50 ? 'pending_merge' : 'pending_approve';
