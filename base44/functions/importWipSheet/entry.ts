@@ -71,7 +71,14 @@ const parseSheetRows = (workbook, sheetName) => {
   return { rows: results, headers: headers.filter(Boolean).map(String) };
 };
 
+// Normalize for matching: strip punctuation, common suffixes, whitespace
 const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const normalizeFuzzy = (str) => {
+  return (str || '').toLowerCase()
+    .replace(/\b(inc|llc|ltd|co|corp|corporation|company|the|of|and|&|dba|sign|signs|signage)\b/gi, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+};
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -191,10 +198,14 @@ Deno.serve(async (req) => {
       // Index by normalized client name (for fallback matching)
       const normClient = normalize(wo.client_name);
       if (normClient) {
-        if (!byNormalizedClient.has(normClient)) {
-          byNormalizedClient.set(normClient, []);
-        }
+        if (!byNormalizedClient.has(normClient)) byNormalizedClient.set(normClient, []);
         byNormalizedClient.get(normClient).push(wo);
+      }
+      // Also index by fuzzy-normalized name
+      const fuzzyClient = normalizeFuzzy(wo.client_name);
+      if (fuzzyClient && fuzzyClient !== normClient) {
+        if (!byNormalizedClient.has(fuzzyClient)) byNormalizedClient.set(fuzzyClient, []);
+        byNormalizedClient.get(fuzzyClient).push(wo);
       }
     }
 
@@ -222,10 +233,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Strategy 3: Fallback - match by customer name from WIP row
+      // Strategy 3: Fallback - match by customer name (exact normalized + fuzzy)
       if (!match && wipData.customerName) {
         const normWipCustomer = normalize(wipData.customerName);
-        const candidates = byNormalizedClient.get(normWipCustomer);
+        const fuzzyWipCustomer = normalizeFuzzy(wipData.customerName);
+        let candidates = byNormalizedClient.get(normWipCustomer);
+        if (!candidates || candidates.length === 0) {
+          candidates = byNormalizedClient.get(fuzzyWipCustomer);
+        }
         if (candidates && candidates.length === 1) {
           match = candidates[0];
           matchedByClient++;
@@ -245,14 +260,35 @@ Deno.serve(async (req) => {
       // Strategy 4: Partial client name match (one contains the other)
       if (!match && wipData.customerName) {
         const normWipCustomer = normalize(wipData.customerName);
+        const fuzzyWipCustomer = normalizeFuzzy(wipData.customerName);
         if (normWipCustomer.length >= 4) {
           const partialMatches = allWorkOrders.filter(wo => {
             const normWo = normalize(wo.client_name);
-            return normWo && (normWo.includes(normWipCustomer) || normWipCustomer.includes(normWo));
+            const fuzzyWo = normalizeFuzzy(wo.client_name);
+            return (normWo && (normWo.includes(normWipCustomer) || normWipCustomer.includes(normWo)))
+              || (fuzzyWo && fuzzyWo.length >= 4 && (fuzzyWo.includes(fuzzyWipCustomer) || fuzzyWipCustomer.includes(fuzzyWo)));
           });
           if (partialMatches.length === 1) {
             match = partialMatches[0];
             matchedByClient++;
+          }
+        }
+      }
+
+      // Strategy 5: Match by first significant word of customer name (3+ chars)
+      if (!match && wipData.customerName) {
+        const words = wipData.customerName.split(/[\s\/\-]+/).filter(w => w.length >= 3);
+        if (words.length > 0) {
+          const firstWord = normalize(words[0]);
+          if (firstWord.length >= 4) {
+            const wordMatches = allWorkOrders.filter(wo => {
+              const woFirst = normalize((wo.client_name || '').split(/[\s\/\-]+/)[0] || '');
+              return woFirst === firstWord;
+            });
+            if (wordMatches.length === 1) {
+              match = wordMatches[0];
+              matchedByClient++;
+            }
           }
         }
       }
