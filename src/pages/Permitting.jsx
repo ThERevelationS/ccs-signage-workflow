@@ -160,7 +160,31 @@ export default function Permitting() {
     await PermitLineItem.update(lineItemId, { [field]: value });
   };
 
+  const updateLocality = async (lineItemId, localityId) => {
+    const locality = localities.find(l => l.id === localityId);
+    const updates = {
+      locality_id: localityId || "",
+      locality_name: locality?.name || "",
+    };
+    if (locality?.workflow_steps?.length > 0) {
+      const item = lineItems.find(li => li.id === lineItemId);
+      const existingStepIds = new Set((item?.steps || []).map(s => s.id));
+      const newSteps = [...(item?.steps || [])];
+      locality.workflow_steps.forEach(tmplStep => {
+        if (!existingStepIds.has(tmplStep.id)) {
+          newSteps.push({ ...tmplStep, value: "", checked: false });
+        }
+      });
+      updates.steps = newSteps;
+    }
+    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...updates } : li));
+    await PermitLineItem.update(lineItemId, updates);
+  };
 
+  const openWorkOrder = (workOrderId) => {
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (wo) setSelectedWorkOrder(wo);
+  };
 
   // Get all unique step columns across all line items
   const stepColumns = useMemo(() => {
@@ -230,6 +254,7 @@ export default function Permitting() {
           <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Row Name</th>
           <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Locality</th>
           <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '80px' }}>Assigned</th>
+          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '90px' }}>Notes</th>
           {stepColumns.map(col => (
             <th key={col.id} className="px-1 py-2 border-r text-center font-bold text-gray-700" style={{ minWidth: col.type === 'checkbox' ? '50px' : '85px' }}>
               <div className="text-xs leading-tight">{col.name}</div>
@@ -250,14 +275,19 @@ export default function Permitting() {
             onFocus={() => setFocusedRowIndex(focusedRowIndex === globalIndexOffset + idx ? null : globalIndexOffset + idx)}
             onUpdateStep={updateStep}
             onUpdateField={updateField}
+            onUpdateLocality={updateLocality}
+            onOpenWorkOrder={openWorkOrder}
             onShowLocalityInfo={setLocalityInfoId}
             isRegistered={isRegistered}
             stepColumns={stepColumns}
+            localities={localities}
+            officeTypes={officeTypes}
+            today={today}
           />
         ))}
         {items.length === 0 && (
           <tr>
-            <td colSpan={stepColumns.length + 5} className="px-3 py-8 text-center text-gray-500 text-sm">
+            <td colSpan={stepColumns.length + 6} className="px-3 py-8 text-center text-gray-500 text-sm">
               No {sectionTitle.toLowerCase()} items
             </td>
           </tr>
