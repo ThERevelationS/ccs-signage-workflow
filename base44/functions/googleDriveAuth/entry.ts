@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const { action, workOrderId, fileIds } = body;
 
     if (action === 'getPickerToken') {
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
       return Response.json({ token: accessToken });
     }
 
@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'workOrderId is required' }, { status: 400 });
       }
       
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+      const conn = await base44.asServiceRole.connectors.getConnection('googledrive');
+      const accessToken = conn.accessToken;
 
       if (!accessToken) {
         return Response.json({ error: 'Not authenticated with Google Drive' }, { status: 401 });

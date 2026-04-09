@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     const { jurisdictionIds } = await req.json();
 
     // Get access token for Google Drive
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
 
     if (!accessToken) {
       return Response.json({ error: 'Google Drive not authorized' }, { status: 401 });
