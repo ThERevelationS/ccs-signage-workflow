@@ -160,6 +160,25 @@ export default function WipImporter() {
           {result.matchedByClient > 0 && (
             <p className="text-xs text-blue-600 mt-1">ℹ️ {result.matchedByClient} matched by client name (order # was saved to the work order for future imports)</p>
           )}
+          {result.notFoundOrders?.length > 0 && (
+            <details className="mt-3">
+              <summary className="cursor-pointer text-sm font-medium text-orange-600 hover:text-orange-800">
+                View {result.notFound} Unmatched Orders
+              </summary>
+              <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 max-h-80 overflow-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                  {result.notFoundOrders.map((item, i) => (
+                    <div key={i} className="text-xs text-orange-800 py-0.5 px-2 bg-white rounded">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                {result.notFound > result.notFoundOrders.length && (
+                  <p className="text-xs text-orange-500 mt-2">...and {result.notFound - result.notFoundOrders.length} more</p>
+                )}
+              </div>
+            </details>
+          )}
           {result.debug && (
             <details className="mt-3 text-xs">
               <summary className="cursor-pointer text-gray-500 hover:text-gray-700">Debug Info</summary>

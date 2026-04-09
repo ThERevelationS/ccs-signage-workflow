@@ -399,7 +399,7 @@ Deno.serve(async (req) => {
       notFound,
       matchedByOrderNum,
       matchedByClient,
-      notFoundOrders: notFoundOrders.slice(0, 30),
+      notFoundOrders,
       message: `Updated ${updated} work orders (${matchedByOrderNum} by order#, ${matchedByClient} by client name). ${notFound} not matched.`,
       debug: {
         totalWorkOrdersInDB: allWorkOrders.length,
