@@ -3,11 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Settings, Link as LinkIcon, Search } from "lucide-react";
+import { Loader2, Settings, Search } from "lucide-react";
 import PermitSpreadsheetRow from "@/components/permitting/PermitSpreadsheetRow";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
-import AddPermitLineDialog from "@/components/permitting/AddPermitLineDialog";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 
@@ -26,7 +24,6 @@ export default function Permitting() {
   const [officeTypes, setOfficeTypes] = useState(["Zoning", "Building", "Electrical Inspectors"]);
   const [isLoading, setIsLoading] = useState(true);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
-  const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
@@ -49,7 +46,6 @@ export default function Permitting() {
         AuthorizedEmail.list(),
         GlobalSettings.list()
       ]);
-      setLineItems(items);
       setLocalities(locs);
       setWorkOrders(wos);
       setUsers(usersData);
@@ -58,6 +54,47 @@ export default function Permitting() {
       if (officeTypesSetting?.setting_value?.items) {
         setOfficeTypes(officeTypesSetting.setting_value.items);
       }
+
+      // Get task descriptions assigned to Permitting page
+      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+      const permittingTaskDescs = [];
+      if (taskDescSetting?.setting_value?.items) {
+        taskDescSetting.setting_value.items.forEach(item => {
+          if (item.page === "Permitting") {
+            permittingTaskDescs.push(item.text);
+          }
+        });
+      }
+
+      // Filter work orders that belong on Permitting page
+      const permittingWOs = wos.filter(wo =>
+        wo.current_task_description && permittingTaskDescs.includes(wo.current_task_description)
+      );
+
+      // Auto-create PermitLineItems for work orders that don't have one yet
+      const existingWOIds = new Set(items.map(li => li.work_order_id));
+      const newItems = [];
+      for (const wo of permittingWOs) {
+        if (!existingWOIds.has(wo.id)) {
+          const created = await PermitLineItem.create({
+            work_order_id: wo.id,
+            work_order_title: wo.client_name || "",
+            work_order_description: wo.description || "",
+            row_name: "",
+            status: "active",
+            steps: [],
+            priority: 0
+          });
+          newItems.push(created);
+        }
+      }
+
+      // Only show line items whose work order is still in permitting task descriptions
+      const permittingWOIds = new Set(permittingWOs.map(wo => wo.id));
+      const allItems = [...items, ...newItems];
+      const visibleItems = allItems.filter(li => permittingWOIds.has(li.work_order_id) || li.status === 'completed');
+      
+      setLineItems(visibleItems);
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -123,10 +160,7 @@ export default function Permitting() {
     await PermitLineItem.update(lineItemId, { [field]: value });
   };
 
-  const addLineItem = async (data) => {
-    const created = await PermitLineItem.create(data);
-    setLineItems(prev => [created, ...prev]);
-  };
+
 
   // Get all unique step columns across all line items
   const stepColumns = useMemo(() => {
@@ -252,17 +286,10 @@ export default function Permitting() {
                   className="h-8 text-sm pl-8 w-48"
                 />
               </div>
-              {isRegistered && (
-                <>
-                  <Button onClick={() => setShowAddDialog(true)} size="sm" className="bg-purple-600 hover:bg-purple-700 gap-1">
-                    <Plus className="w-4 h-4" /> Add Row
-                  </Button>
-                  {currentUser?.role === 'admin' && (
-                    <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
-                      <Settings className="w-4 h-4" /> Settings
-                    </Button>
-                  )}
-                </>
+              {isRegistered && currentUser?.role === 'admin' && (
+                <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
+                  <Settings className="w-4 h-4" /> Settings
+                </Button>
               )}
             </div>
           </div>
@@ -298,16 +325,6 @@ export default function Permitting() {
           </div>
         )}
       </div>
-
-      {/* Add Line Dialog */}
-      <AddPermitLineDialog
-        isOpen={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        onSave={addLineItem}
-        workOrders={workOrders}
-        localities={localities}
-        officeTypes={officeTypes}
-      />
 
       {/* Locality Info Popup */}
       <LocalityInfoPopup
