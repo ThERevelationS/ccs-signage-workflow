@@ -186,9 +186,9 @@ export default function WipImporter() {
                 )}
               </div>
             </details>
-            )}
-            </div>
-            )}
-            </div>
-            );
-            }
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
