@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
     try {
@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
         }
 
         // Get access token from platform's Gmail connector
-        const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+        const { accessToken } = await base44.asServiceRole.connectors.getConnection("gmail");
 
         if (!accessToken) {
             return Response.json({ error: 'Gmail not connected. Please connect Gmail in Admin Settings.' }, { status: 400 });
