@@ -266,9 +266,14 @@ Deno.serve(async (req) => {
 
       if (match && !match._matchedByClient) matchedByOrderNum++;
 
+      // Only include fields that actually changed
       const updateData = {};
-      if (wipData.description) updateData.description = wipData.description;
-      if (wipData.installDate) updateData.project_install_date = wipData.installDate;
+      if (wipData.description && wipData.description !== match.description) {
+        updateData.description = wipData.description;
+      }
+      if (wipData.installDate && wipData.installDate !== match.project_install_date) {
+        updateData.project_install_date = wipData.installDate;
+      }
       if (!match.corbridge_invoice_number && orderNumber) {
         updateData.corbridge_invoice_number = orderNumber;
       }
@@ -281,45 +286,38 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Process updates in small batches with aggressive rate limiting
-    const BATCH_SIZE = 5;
-    const BATCH_DELAY = 3000; // 3 seconds between batches
-    
-    for (let i = 0; i < pendingUpdates.length; i += BATCH_SIZE) {
-      const batch = pendingUpdates.slice(i, i + BATCH_SIZE);
-      
-      for (const item of batch) {
-        let attempts = 0;
-        while (attempts < 5) {
-          try {
-            await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
-            updated++;
-            if (debugMatches.length < 5) {
-              debugMatches.push({
-                orderNumber: item.orderNumber,
-                wipCustomer: item.wipData.customerName,
-                matchedClient: item.match.client_name,
-                matchedId: item.id,
-                fieldsUpdated: Object.keys(item.data)
-              });
-            }
-            break;
-          } catch (e) {
-            if (e.message && e.message.includes('429')) {
-              attempts++;
-              console.log(`Rate limited on ${item.orderNumber}, attempt ${attempts}, waiting ${3000 * attempts}ms`);
-              await sleep(3000 * attempts);
-            } else {
-              throw e;
-            }
+    // Process updates sequentially with rate limit handling
+    let skipped = 0;
+    for (let i = 0; i < pendingUpdates.length; i++) {
+      const item = pendingUpdates[i];
+      let attempts = 0;
+      while (attempts < 5) {
+        try {
+          await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
+          updated++;
+          if (debugMatches.length < 5) {
+            debugMatches.push({
+              orderNumber: item.orderNumber,
+              wipCustomer: item.wipData.customerName,
+              matchedClient: item.match.client_name,
+              matchedId: item.id,
+              fieldsUpdated: Object.keys(item.data)
+            });
+          }
+          break;
+        } catch (e) {
+          if (e.message && e.message.includes('429')) {
+            attempts++;
+            console.log(`Rate limited on ${item.orderNumber}, attempt ${attempts}`);
+            await sleep(2000 * attempts);
+          } else {
+            throw e;
           }
         }
-        await sleep(500); // 500ms between individual updates within a batch
       }
-      
-      // Wait between batches
-      if (i + BATCH_SIZE < pendingUpdates.length) {
-        await sleep(BATCH_DELAY);
+      // Pace: 600ms between updates
+      if (i < pendingUpdates.length - 1) {
+        await sleep(600);
       }
     }
 
