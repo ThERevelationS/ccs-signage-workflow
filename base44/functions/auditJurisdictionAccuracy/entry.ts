@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { jurisdictionId, batchSize = 5, auditOptions = {} } = body;
+    const { jurisdictionId, batchSize = 1, auditOptions = {} } = body;
 
     const options = {
       checkUrls: true,
@@ -33,15 +33,30 @@ Deno.serve(async (req) => {
     }
 
     let totalFlagged = 0;
+    const RUN_START = Date.now();
+    const MAX_RUN_MS = 50_000; // 50s budget, leave buffer before 60s timeout
+    let auditedCount = 0;
 
     for (const jurisdiction of jurisdictions) {
-      const issuesFound = await auditSingleJurisdiction(base44, jurisdiction, options);
-      totalFlagged += issuesFound;
+      if (Date.now() - RUN_START > MAX_RUN_MS) {
+        console.warn('Time budget exhausted, remaining jurisdictions will be audited next run');
+        break;
+      }
+      try {
+        const issuesFound = await Promise.race([
+          auditSingleJurisdiction(base44, jurisdiction, options),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Single jurisdiction audit timed out')), 45_000))
+        ]);
+        totalFlagged += issuesFound;
+      } catch (e) {
+        console.error(`Skipping ${jurisdiction.name} due to timeout/error:`, e.message);
+      }
+      auditedCount++;
     }
 
     return Response.json({
       success: true,
-      audited: jurisdictions.length,
+      audited: auditedCount,
       flagged: totalFlagged
     });
 
