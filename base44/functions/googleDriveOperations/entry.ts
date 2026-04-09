@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const { action, folderId, fileName, fileContent, fileType, fileId } = await req.json();
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googledrive");
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
     switch (action) {
       case 'listFiles': {

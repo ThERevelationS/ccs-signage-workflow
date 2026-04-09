@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 
 const GlobalSettings = 'GlobalSettings';
@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
     // Get Google Drive access token
     let accessToken;
     try {
-      accessToken = await base44.asServiceRole.connectors.getAccessToken("googledrive");
+      const conn = await base44.asServiceRole.connectors.getConnection("googledrive");
+      accessToken = conn.accessToken;
     } catch (e) {
       return Response.json({ error: 'Google Drive not connected. Please reconnect Google Drive in settings.' }, { status: 400 });
     }
