@@ -145,16 +145,29 @@ Deno.serve(async (req) => {
     const orderMap = new Map();
     for (const row of allRows) orderMap.set(row.orderNumber, row);
 
-    // Fetch all work orders using pagination
+    // Fetch all work orders using pagination with retry
     let allWorkOrders = [];
     let skip = 0;
     const pageSize = 200;
     while (true) {
-      const page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
+      let page = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          page = await base44.asServiceRole.entities.WorkOrder.list('created_date', pageSize, skip);
+          break;
+        } catch (e) {
+          if (e.message && e.message.includes('429') && attempt < 3) {
+            await sleep(1000 * (attempt + 1));
+          } else {
+            throw e;
+          }
+        }
+      }
       if (!Array.isArray(page) || page.length === 0) break;
       allWorkOrders = allWorkOrders.concat(page);
       if (page.length < pageSize) break;
       skip += pageSize;
+      await sleep(200);
     }
 
     // Build lookup indexes for faster matching
