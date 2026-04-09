@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
           content: `Monitor this jurisdiction for changes.\n\nJurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})\n\nSTORED data:\n- Website: ${jurisdiction.website_url || 'unknown'}\n- Permitting URL: ${jurisdiction.permitting_url || 'unknown'}\n- Max Height: ${jurisdiction.permit_requirements?.max_height_ft || 'unknown'} ft\n- Max Area: ${jurisdiction.permit_requirements?.max_sign_area_sqft || 'unknown'} sq ft\n- Fee Range: ${jurisdiction.permit_requirements?.fee_range || 'unknown'}\n- Processing Time: ${jurisdiction.permit_requirements?.processing_time || 'unknown'}\n- Illumination: ${jurisdiction.permit_requirements?.illumination_allowed ?? 'unknown'}\n- Electronic Signs: ${jurisdiction.permit_requirements?.electronic_signs_allowed ?? 'unknown'}\n- Last Updated: ${jurisdiction.last_updated || 'unknown'}\n\nFRESH data (just researched):\n${JSON.stringify(freshData, null, 2)}\n\nReturn JSON with changes_detected, alerts array, severity, and updated_profile.`
         });
 
-        const lastMsg = monitorResponse?.messages?.filter(m => m.role === 'assistant').pop();
+        const lastMsg = monitorResponse?.messages?.filter(m => m.role === 'assistant')?.pop();
         let data = { changes_detected: false, alerts: [], severity: 'low', updated_profile: {} };
         try {
           const parsed = typeof lastMsg?.content === 'string' ? JSON.parse(lastMsg.content) : lastMsg?.content;
@@ -58,7 +58,10 @@ Deno.serve(async (req) => {
           console.warn('Could not parse monitor agent response:', e.message);
         }
 
-        if (data.changes_detected && data.alerts && Array.isArray(data.alerts)) {
+        // Ensure alerts is always an array
+        if (!Array.isArray(data.alerts)) data.alerts = [];
+
+        if (data.changes_detected && data.alerts.length > 0) {
           // Apply profile updates if any
           if (data.updated_profile) {
             const profileUpdate = {};
