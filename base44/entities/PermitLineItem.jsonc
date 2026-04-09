@@ -1,0 +1,115 @@
+{
+  "name": "PermitLineItem",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string",
+      "description": "Linked work order ID"
+    },
+    "work_order_title": {
+      "type": "string",
+      "description": "Cached work order title/client name"
+    },
+    "work_order_description": {
+      "type": "string",
+      "description": "Cached work order description"
+    },
+    "row_name": {
+      "type": "string",
+      "description": "Custom name for this permit line item row"
+    },
+    "locality_id": {
+      "type": "string",
+      "description": "Reference to PermitLocality"
+    },
+    "locality_name": {
+      "type": "string",
+      "description": "Cached locality display name"
+    },
+    "office_type": {
+      "type": "string",
+      "description": "Office type: Zoning, Building, Electrical, etc."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "waiting",
+        "completed"
+      ],
+      "default": "active",
+      "description": "Current status of this line item"
+    },
+    "priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Sort order"
+    },
+    "steps": {
+      "type": "array",
+      "description": "Custom workflow steps with checkboxes and dates",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checkbox",
+              "submitted_date",
+              "followup_date",
+              "permit_received_date",
+              "text"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean",
+            "default": false
+          },
+          "followup_interval_days": {
+            "type": "number",
+            "default": 14
+          },
+          "next_followup_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the permit was submitted"
+    },
+    "next_followup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next follow-up date (drives sorting)"
+    },
+    "permit_received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the permit was received \u2014 marks complete"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes for this line item"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Person responsible"
+    }
+  },
+  "required": [
+    "work_order_id"
+  ]
+}

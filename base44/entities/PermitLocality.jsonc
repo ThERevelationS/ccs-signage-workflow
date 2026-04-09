@@ -1,0 +1,86 @@
+{
+  "name": "PermitLocality",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Locality name"
+    },
+    "governing_body": {
+      "type": "string",
+      "description": "Governing body name"
+    },
+    "office_type": {
+      "type": "string",
+      "description": "Default office type"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_website": {
+      "type": "string"
+    },
+    "contact_address": {
+      "type": "string"
+    },
+    "contact_department": {
+      "type": "string"
+    },
+    "contact_notes": {
+      "type": "string"
+    },
+    "workflow_steps": {
+      "type": "array",
+      "description": "Default workflow steps template for this locality",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checkbox",
+              "submitted_date",
+              "followup_date",
+              "permit_received_date",
+              "text"
+            ]
+          },
+          "followup_interval_days": {
+            "type": "number",
+            "default": 14
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "description": "Applicable categories: Zoning, Building, Electrical, etc.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
