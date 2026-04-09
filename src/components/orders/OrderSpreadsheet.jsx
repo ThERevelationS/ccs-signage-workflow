@@ -103,6 +103,7 @@ import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/Cell
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
+import { importOrders as importOrdersFn } from "@/functions/importOrders";
 
 
 const Order = base44.entities.Order;
@@ -511,7 +512,6 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }, 1500);
 
     try {
-      const importOrdersFn = (await import("@/functions/importOrders")).importOrders;
       const fileData = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(btoa(e.target.result));
