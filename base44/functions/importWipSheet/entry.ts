@@ -167,7 +167,6 @@ Deno.serve(async (req) => {
       allWorkOrders = allWorkOrders.concat(page);
       if (page.length < pageSize) break;
       skip += pageSize;
-      await sleep(500);
     }
 
     // Build lookup indexes for faster matching
@@ -286,15 +285,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Process updates sequentially with rate limit handling
-    let skipped = 0;
-    for (let i = 0; i < pendingUpdates.length; i++) {
-      const item = pendingUpdates[i];
-      let attempts = 0;
-      while (attempts < 5) {
-        try {
-          await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
+    // Process updates in parallel batches (fast, retry on 429)
+    const PARALLEL_BATCH = 10;
+    for (let i = 0; i < pendingUpdates.length; i += PARALLEL_BATCH) {
+      const batch = pendingUpdates.slice(i, i + PARALLEL_BATCH);
+      const results = await Promise.allSettled(batch.map(async (item) => {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          try {
+            await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
+            return item;
+          } catch (e) {
+            if (e.message && e.message.includes('429') && attempt < 3) {
+              await sleep(1500 * (attempt + 1));
+            } else {
+              throw e;
+            }
+          }
+        }
+      }));
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
           updated++;
+          const item = r.value;
           if (debugMatches.length < 5) {
             debugMatches.push({
               orderNumber: item.orderNumber,
@@ -304,20 +316,7 @@ Deno.serve(async (req) => {
               fieldsUpdated: Object.keys(item.data)
             });
           }
-          break;
-        } catch (e) {
-          if (e.message && e.message.includes('429')) {
-            attempts++;
-            console.log(`Rate limited on ${item.orderNumber}, attempt ${attempts}`);
-            await sleep(2000 * attempts);
-          } else {
-            throw e;
-          }
         }
-      }
-      // Pace: 600ms between updates
-      if (i < pendingUpdates.length - 1) {
-        await sleep(600);
       }
     }
 
