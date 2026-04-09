@@ -22,7 +22,7 @@ const parseSheetRows = (workbook, sheetName) => {
       break;
     }
   }
-  if (headerRowIdx === -1) return [];
+  if (headerRowIdx === -1) return { rows: [], headers: [] };
 
   const headers = rows[headerRowIdx];
   const findCol = (...names) => {
@@ -35,9 +35,10 @@ const parseSheetRows = (workbook, sheetName) => {
 
   const orderNumCol = findCol('Order Number');
   const descCol = findCol('Order Description');
-  const installDateCol = findCol('Proj./Actual Install Date', 'Proj. Install Date');
+  const installDateCol = findCol('Proj./Actual Install Date', 'Proj. Install Date', 'Install Date');
+  const customerCol = findCol('Customer Name', 'Customer', 'Client');
 
-  if (orderNumCol === -1) return [];
+  if (orderNumCol === -1) return { rows: [], headers: headers.filter(Boolean).map(String) };
 
   const results = [];
   for (let i = headerRowIdx + 1; i < rows.length; i++) {
@@ -47,6 +48,7 @@ const parseSheetRows = (workbook, sheetName) => {
     if (!orderNum || orderNum === 'Order Number') continue;
 
     const desc = descCol !== -1 ? row[descCol] : null;
+    const customer = customerCol !== -1 ? row[customerCol] : null;
     let installDate = installDateCol !== -1 ? row[installDateCol] : null;
 
     if (installDate !== null && installDate !== undefined) {
@@ -62,11 +64,14 @@ const parseSheetRows = (workbook, sheetName) => {
     results.push({
       orderNumber: orderNum,
       description: desc ? String(desc).trim() : null,
+      customerName: customer ? String(customer).trim() : null,
       installDate: installDate || null,
     });
   }
-  return results;
+  return { rows: results, headers: headers.filter(Boolean).map(String) };
 };
+
+const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -121,20 +126,26 @@ Deno.serve(async (req) => {
       sheetsToProcess = wipSheets;
     }
 
+    let allHeaders = [];
     const allRows = [];
     for (const sheetName of sheetsToProcess) {
-      allRows.push(...parseSheetRows(workbook, sheetName));
+      const { rows, headers } = parseSheetRows(workbook, sheetName);
+      allRows.push(...rows);
+      if (headers.length > 0 && allHeaders.length === 0) allHeaders = headers;
     }
 
     if (allRows.length === 0) {
-      return Response.json({ error: 'No data rows found in selected sheets' }, { status: 400 });
+      return Response.json({ 
+        error: 'No data rows found in selected sheets',
+        debug: { sheetsToProcess, allHeaders, sheetNames: workbook.SheetNames }
+      }, { status: 400 });
     }
 
     // Deduplicate - later sheet wins
     const orderMap = new Map();
     for (const row of allRows) orderMap.set(row.orderNumber, row);
 
-    // Fetch all work orders
+    // Fetch all work orders using pagination
     let allWorkOrders = [];
     let skip = 0;
     const pageSize = 200;
@@ -146,39 +157,129 @@ Deno.serve(async (req) => {
       skip += pageSize;
     }
 
-    // Match and update - with delay to avoid rate limits
+    // Build lookup indexes for faster matching
+    const byInvoiceNum = new Map();
+    const byEstInvAt = new Map();
+    const byNormalizedClient = new Map();
+
+    for (const wo of allWorkOrders) {
+      // Index by corbridge_invoice_number
+      if (wo.corbridge_invoice_number) {
+        byInvoiceNum.set(wo.corbridge_invoice_number, wo);
+        // Also index the numeric part (strip EST-/INV- prefix)
+        const numPart = wo.corbridge_invoice_number.replace(/^(INV|EST)-?/i, '');
+        if (numPart !== wo.corbridge_invoice_number) byInvoiceNum.set(numPart, wo);
+      }
+      // Index by est_inv_at
+      if (wo.est_inv_at) {
+        byEstInvAt.set(wo.est_inv_at, wo);
+        const numPart = wo.est_inv_at.replace(/^(INV|EST)-?/i, '');
+        if (numPart !== wo.est_inv_at) byEstInvAt.set(numPart, wo);
+      }
+      // Index by normalized client name (for fallback matching)
+      const normClient = normalize(wo.client_name);
+      if (normClient) {
+        if (!byNormalizedClient.has(normClient)) {
+          byNormalizedClient.set(normClient, []);
+        }
+        byNormalizedClient.get(normClient).push(wo);
+      }
+    }
+
+    // Match and update
     let updated = 0;
     let notFound = 0;
+    let matchedByOrderNum = 0;
+    let matchedByClient = 0;
     const notFoundOrders = [];
+    const debugMatches = [];
 
     for (const [orderNumber, wipData] of orderMap.entries()) {
       const numericPart = orderNumber.replace(/^(INV|EST)-?/i, '');
-      const match = allWorkOrders.find(wo => {
-        const inv = wo.corbridge_invoice_number || '';
-        const est = wo.est_inv_at || '';
-        const link = wo.corbridge_link || '';
-        return inv === orderNumber || inv === numericPart ||
-               est === orderNumber || est === numericPart ||
-               link.includes(orderNumber) || link.includes(numericPart);
-      });
+
+      // Strategy 1: Match by corbridge_invoice_number or est_inv_at (exact)
+      let match = byInvoiceNum.get(orderNumber) || byInvoiceNum.get(numericPart)
+                || byEstInvAt.get(orderNumber) || byEstInvAt.get(numericPart);
+
+      // Strategy 2: Check corbridge_link contains order number
+      if (!match) {
+        match = allWorkOrders.find(wo => {
+          const link = wo.corbridge_link || '';
+          return link.includes(orderNumber) || link.includes(numericPart);
+        });
+      }
+
+      // Strategy 3: Fallback - match by customer name from WIP row
+      if (!match && wipData.customerName) {
+        const normWipCustomer = normalize(wipData.customerName);
+        const candidates = byNormalizedClient.get(normWipCustomer);
+        if (candidates && candidates.length === 1) {
+          // Exact client name match with only 1 result - safe to match
+          match = candidates[0];
+          matchedByClient++;
+        } else if (candidates && candidates.length > 1 && wipData.description) {
+          // Multiple work orders for same client - try to disambiguate by description
+          const normDesc = normalize(wipData.description);
+          const descMatch = candidates.find(wo => {
+            const woDesc = normalize(wo.description || wo.title || '');
+            return woDesc.includes(normDesc) || normDesc.includes(woDesc);
+          });
+          if (descMatch) {
+            match = descMatch;
+            matchedByClient++;
+          }
+        }
+      }
+
+      // Strategy 4: Partial client name match (one contains the other)
+      if (!match && wipData.customerName) {
+        const normWipCustomer = normalize(wipData.customerName);
+        if (normWipCustomer.length >= 4) {
+          const partialMatches = allWorkOrders.filter(wo => {
+            const normWo = normalize(wo.client_name);
+            return normWo && (normWo.includes(normWipCustomer) || normWipCustomer.includes(normWo));
+          });
+          if (partialMatches.length === 1) {
+            match = partialMatches[0];
+            matchedByClient++;
+          }
+        }
+      }
 
       if (!match) {
         notFound++;
-        notFoundOrders.push(orderNumber);
+        notFoundOrders.push(orderNumber + (wipData.customerName ? ` (${wipData.customerName})` : ''));
         continue;
       }
+
+      if (match && !match._matchedByClient) matchedByOrderNum++;
 
       const updateData = {};
       if (wipData.description) updateData.description = wipData.description;
       if (wipData.installDate) updateData.project_install_date = wipData.installDate;
+      // If the work order didn't have an order number, save it now
+      if (!match.corbridge_invoice_number && orderNumber) {
+        updateData.corbridge_invoice_number = orderNumber;
+      }
+      if (!match.est_inv_at && orderNumber) {
+        updateData.est_inv_at = orderNumber;
+      }
 
       if (Object.keys(updateData).length > 0) {
-        // Retry with backoff on rate limit
         let attempts = 0;
         while (attempts < 4) {
           try {
             await base44.asServiceRole.entities.WorkOrder.update(match.id, updateData);
             updated++;
+            if (debugMatches.length < 5) {
+              debugMatches.push({
+                orderNumber,
+                wipCustomer: wipData.customerName,
+                matchedClient: match.client_name,
+                matchedId: match.id,
+                fieldsUpdated: Object.keys(updateData)
+              });
+            }
             break;
           } catch (e) {
             if (e.message && e.message.includes('429')) {
@@ -189,10 +290,23 @@ Deno.serve(async (req) => {
             }
           }
         }
-        // Small delay between updates to stay under rate limits
         await sleep(100);
       }
     }
+
+    // Collect debug info
+    const sampleWipRows = Array.from(orderMap.entries()).slice(0, 5).map(([num, data]) => ({
+      orderNumber: num,
+      customer: data.customerName,
+      description: data.description?.substring(0, 80)
+    }));
+
+    const sampleWorkOrders = allWorkOrders.slice(0, 5).map(wo => ({
+      id: wo.id,
+      client_name: wo.client_name,
+      corbridge_invoice_number: wo.corbridge_invoice_number,
+      est_inv_at: wo.est_inv_at,
+    }));
 
     return Response.json({
       success: true,
@@ -200,8 +314,17 @@ Deno.serve(async (req) => {
       totalRows: orderMap.size,
       updated,
       notFound,
-      notFoundOrders: notFoundOrders.slice(0, 20),
-      message: `Updated ${updated} work orders. ${notFound} order numbers not found in database.`
+      matchedByOrderNum,
+      matchedByClient,
+      notFoundOrders: notFoundOrders.slice(0, 30),
+      message: `Updated ${updated} work orders (${matchedByOrderNum} by order#, ${matchedByClient} by client name). ${notFound} not matched.`,
+      debug: {
+        totalWorkOrdersInDB: allWorkOrders.length,
+        headers: allHeaders,
+        sampleWipRows,
+        sampleWorkOrders,
+        sampleMatches: debugMatches,
+      }
     });
 
   } catch (error) {

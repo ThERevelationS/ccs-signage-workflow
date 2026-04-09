@@ -157,16 +157,38 @@ export default function WipImporter() {
             </div>
           </div>
           <p className="text-sm text-green-700">{result.message}</p>
-          {result.notFoundOrders && result.notFoundOrders.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-500 mb-1">Orders not found in system (first 20):</p>
-              <div className="flex flex-wrap gap-1">
-                {result.notFoundOrders.map(o => <Badge key={o} variant="outline" className="text-xs">{o}</Badge>)}
-              </div>
-            </div>
+          {result.matchedByClient > 0 && (
+            <p className="text-xs text-blue-600 mt-1">ℹ️ {result.matchedByClient} matched by client name (order # was saved to the work order for future imports)</p>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
+          {result.debug && (
+            <details className="mt-3 text-xs">
+              <summary className="cursor-pointer text-gray-500 hover:text-gray-700">Debug Info</summary>
+              <div className="mt-2 bg-gray-50 rounded-lg p-3 space-y-2 overflow-auto max-h-64">
+                <p><strong>Work orders in DB:</strong> {result.debug.totalWorkOrdersInDB}</p>
+                <p><strong>WIP sheet headers:</strong> {result.debug.headers?.join(', ')}</p>
+                {result.debug.sampleWipRows?.length > 0 && (
+                  <div>
+                    <strong>Sample WIP rows:</strong>
+                    <pre className="text-[10px] whitespace-pre-wrap">{JSON.stringify(result.debug.sampleWipRows, null, 2)}</pre>
+                  </div>
+                )}
+                {result.debug.sampleWorkOrders?.length > 0 && (
+                  <div>
+                    <strong>Sample DB work orders:</strong>
+                    <pre className="text-[10px] whitespace-pre-wrap">{JSON.stringify(result.debug.sampleWorkOrders, null, 2)}</pre>
+                  </div>
+                )}
+                {result.debug.sampleMatches?.length > 0 && (
+                  <div>
+                    <strong>Sample matches:</strong>
+                    <pre className="text-[10px] whitespace-pre-wrap">{JSON.stringify(result.debug.sampleMatches, null, 2)}</pre>
+                  </div>
+                )}
+              </div>
+            </details>
+            )}
+            </div>
+            )}
+            </div>
+            );
+            }
