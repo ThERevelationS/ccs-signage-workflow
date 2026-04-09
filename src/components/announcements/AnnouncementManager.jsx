@@ -227,16 +227,24 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="px-6 pt-5 pb-3 border-b border-gray-200 flex-shrink-0">
-          <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-red-600" />
-            Announcement System
-            {activeAnnId && (
-              <Badge className="ml-2 bg-green-100 text-green-700 border border-green-300 text-xs">
-                ● Live
-              </Badge>
-            )}
-          </DialogTitle>
+        <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #FEF2F2 0%, #FFF7ED 50%, #FFFBEB 100%)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-md" style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}>
+              <Megaphone className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                Announcements
+                {activeAnnId && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700 border border-green-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Live
+                  </span>
+                )}
+              </DialogTitle>
+              <p className="text-xs text-gray-500 mt-0.5">Broadcast messages to your team</p>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="px-6 py-4 space-y-5">
@@ -478,23 +486,22 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
         </div>
 
         {/* Action Buttons */}
-        <div className="px-6 pb-5 border-t border-gray-200 pt-4 space-y-2">
+        <div className="px-6 pb-5 pt-4 space-y-3" style={{ background: 'linear-gradient(0deg, rgba(254,242,242,0.3) 0%, transparent 100%)' }}>
           {activeAnnId && (
             <Button
-              className="w-full clay-button border-none text-sm font-semibold"
-              style={{ background: "linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)", color: "#991B1B" }}
+              className="w-full h-10 rounded-xl text-sm font-bold shadow-sm transition-all hover:shadow-md"
+              style={{ background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)', color: '#991B1B', border: '1px solid #FCA5A5' }}
               onClick={handleStopAnnouncement}
             >
               <X className="w-4 h-4 mr-2" />
-              Stop Current Announcement
+              Stop Live Announcement
             </Button>
           )}
 
           <div className="grid grid-cols-3 gap-2">
-            {/* Save */}
             <Button
-              className="clay-button border-none text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #DBEAFE 0%, rgba(255,255,255,0.9) 100%)", color: "#1E40AF" }}
+              className="h-9 rounded-xl text-xs font-bold shadow-sm transition-all hover:shadow-md"
+              style={{ background: 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)', color: '#1E40AF', border: '1px solid #93C5FD' }}
               onClick={handleSave}
               disabled={saving || !form.title || !form.message}
             >
@@ -502,10 +509,13 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
               Save
             </Button>
 
-            {/* Update */}
             <Button
-              className="clay-button border-none text-xs font-semibold"
-              style={{ background: editingId ? "linear-gradient(135deg, #FEF3C7 0%, rgba(255,255,255,0.9) 100%)" : "linear-gradient(135deg, #F3F4F6 0%, rgba(255,255,255,0.9) 100%)", color: editingId ? "#92400E" : "#9CA3AF" }}
+              className="h-9 rounded-xl text-xs font-bold shadow-sm transition-all hover:shadow-md"
+              style={{
+                background: editingId ? 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)' : '#F3F4F6',
+                color: editingId ? '#92400E' : '#9CA3AF',
+                border: editingId ? '1px solid #FCD34D' : '1px solid #E5E7EB'
+              }}
               onClick={handleUpdate}
               disabled={saving || !editingId || !form.title || !form.message}
             >
@@ -513,15 +523,14 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
               Update
             </Button>
 
-            {/* Send */}
             <Button
-              className="clay-button border-none text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)", color: "#991B1B" }}
+              className="h-9 rounded-xl text-xs font-bold shadow-sm transition-all hover:shadow-md hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white', border: '1px solid #EF4444' }}
               onClick={handleSend}
               disabled={sending || !form.title || !form.message}
             >
               {sending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
-              Send
+              Broadcast
             </Button>
           </div>
           <p className="text-xs text-gray-400 text-center">
