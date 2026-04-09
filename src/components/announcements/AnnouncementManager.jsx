@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { playSoundEffect } from "./AnnouncementContext";
 
-
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
