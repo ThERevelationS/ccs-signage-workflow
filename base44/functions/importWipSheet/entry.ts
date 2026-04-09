@@ -71,13 +71,69 @@ const parseSheetRows = (workbook, sheetName) => {
   return { rows: results, headers: headers.filter(Boolean).map(String) };
 };
 
-// Normalize for matching: strip punctuation, common suffixes, whitespace
+// Normalize for matching
 const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const normalizeFuzzy = (str) => {
   return (str || '').toLowerCase()
-    .replace(/\b(inc|llc|ltd|co|corp|corporation|company|the|of|and|&|dba|sign|signs|signage)\b/gi, '')
+    .replace(/\b(inc|llc|ltd|co|corp|corporation|company|the|of|and|&|dba|sign|signs|signage|group|enterprises|services|service)\b/gi, '')
     .replace(/[^a-z0-9]/g, '')
     .trim();
+};
+
+// Extract significant words (>=3 chars) from a name
+const getWords = (str) => (str || '').toLowerCase().split(/[\s\/\-\(\)\.,&]+/).filter(w => w.length >= 3 && !['the','and','inc','llc','ltd','for'].includes(w));
+
+// Score how well a WIP row matches a work order (higher = better)
+const scoreMatch = (wipData, wo) => {
+  let score = 0;
+  const wipName = (wipData.customerName || '').toLowerCase();
+  const woName = (wo.client_name || '').toLowerCase();
+  const normWip = normalize(wipName);
+  const normWo = normalize(woName);
+  const fuzzyWip = normalizeFuzzy(wipName);
+  const fuzzyWo = normalizeFuzzy(woName);
+
+  // Exact normalized match
+  if (normWip && normWo && normWip === normWo) score += 100;
+  // Exact fuzzy match
+  else if (fuzzyWip && fuzzyWo && fuzzyWip === fuzzyWo) score += 90;
+  // One contains the other (normalized)
+  else if (normWip.length >= 4 && normWo.length >= 4) {
+    if (normWo.includes(normWip) || normWip.includes(normWo)) score += 70;
+    else if (fuzzyWo.includes(fuzzyWip) || fuzzyWip.includes(fuzzyWo)) score += 60;
+  }
+
+  // Word overlap scoring
+  const wipWords = getWords(wipName);
+  const woWords = getWords(woName);
+  if (wipWords.length > 0 && woWords.length > 0) {
+    const commonWords = wipWords.filter(w => woWords.some(ww => ww === w || ww.includes(w) || w.includes(ww)));
+    const wordRatio = commonWords.length / Math.max(wipWords.length, woWords.length);
+    score += Math.round(wordRatio * 40);
+    // Bonus if first word matches (usually the most important)
+    if (wipWords[0] === woWords[0]) score += 20;
+  }
+
+  // Description similarity bonus
+  if (wipData.description && (wo.description || wo.title)) {
+    const wipDesc = normalize(wipData.description);
+    const woDesc = normalize(wo.description || '') + ' ' + normalize(wo.title || '');
+    if (wipDesc.length >= 5) {
+      // Check word overlap in descriptions
+      const wipDescWords = getWords(wipData.description);
+      const woDescWords = getWords((wo.description || '') + ' ' + (wo.title || ''));
+      const descCommon = wipDescWords.filter(w => woDescWords.some(ww => ww === w));
+      if (descCommon.length >= 2) score += 25;
+      else if (descCommon.length === 1) score += 10;
+    }
+  }
+
+  // Install date match bonus
+  if (wipData.installDate && wo.project_install_date && wipData.installDate === wo.project_install_date) {
+    score += 15;
+  }
+
+  return score;
 };
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -233,63 +289,28 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Strategy 3: Fallback - match by customer name (exact normalized + fuzzy)
+      // Strategy 3: Score-based matching against all work orders
       if (!match && wipData.customerName) {
-        const normWipCustomer = normalize(wipData.customerName);
-        const fuzzyWipCustomer = normalizeFuzzy(wipData.customerName);
-        let candidates = byNormalizedClient.get(normWipCustomer);
-        if (!candidates || candidates.length === 0) {
-          candidates = byNormalizedClient.get(fuzzyWipCustomer);
+        const MIN_SCORE = 50; // minimum score to consider a match
+        let bestScore = 0;
+        let bestMatch = null;
+        let secondBestScore = 0;
+
+        for (const wo of allWorkOrders) {
+          const score = scoreMatch(wipData, wo);
+          if (score > bestScore) {
+            secondBestScore = bestScore;
+            bestScore = score;
+            bestMatch = wo;
+          } else if (score > secondBestScore) {
+            secondBestScore = score;
+          }
         }
-        if (candidates && candidates.length === 1) {
-          match = candidates[0];
+
+        // Only accept if score is high enough AND there's clear separation from 2nd best
+        if (bestMatch && bestScore >= MIN_SCORE && (bestScore - secondBestScore >= 20 || bestScore >= 90)) {
+          match = bestMatch;
           matchedByClient++;
-        } else if (candidates && candidates.length > 1 && wipData.description) {
-          const normDesc = normalize(wipData.description);
-          const descMatch = candidates.find(wo => {
-            const woDesc = normalize(wo.description || wo.title || '');
-            return woDesc.includes(normDesc) || normDesc.includes(woDesc);
-          });
-          if (descMatch) {
-            match = descMatch;
-            matchedByClient++;
-          }
-        }
-      }
-
-      // Strategy 4: Partial client name match (one contains the other)
-      if (!match && wipData.customerName) {
-        const normWipCustomer = normalize(wipData.customerName);
-        const fuzzyWipCustomer = normalizeFuzzy(wipData.customerName);
-        if (normWipCustomer.length >= 4) {
-          const partialMatches = allWorkOrders.filter(wo => {
-            const normWo = normalize(wo.client_name);
-            const fuzzyWo = normalizeFuzzy(wo.client_name);
-            return (normWo && (normWo.includes(normWipCustomer) || normWipCustomer.includes(normWo)))
-              || (fuzzyWo && fuzzyWo.length >= 4 && (fuzzyWo.includes(fuzzyWipCustomer) || fuzzyWipCustomer.includes(fuzzyWo)));
-          });
-          if (partialMatches.length === 1) {
-            match = partialMatches[0];
-            matchedByClient++;
-          }
-        }
-      }
-
-      // Strategy 5: Match by first significant word of customer name (3+ chars)
-      if (!match && wipData.customerName) {
-        const words = wipData.customerName.split(/[\s\/\-]+/).filter(w => w.length >= 3);
-        if (words.length > 0) {
-          const firstWord = normalize(words[0]);
-          if (firstWord.length >= 4) {
-            const wordMatches = allWorkOrders.filter(wo => {
-              const woFirst = normalize((wo.client_name || '').split(/[\s\/\-]+/)[0] || '');
-              return woFirst === firstWord;
-            });
-            if (wordMatches.length === 1) {
-              match = wordMatches[0];
-              matchedByClient++;
-            }
-          }
         }
       }
 
