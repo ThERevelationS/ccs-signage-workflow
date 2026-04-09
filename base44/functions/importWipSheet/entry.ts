@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
       allWorkOrders = allWorkOrders.concat(page);
       if (page.length < pageSize) break;
       skip += pageSize;
-      await sleep(200);
+      await sleep(500);
     }
 
     // Build lookup indexes for faster matching
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
 
       if (Object.keys(updateData).length > 0) {
         let attempts = 0;
-        while (attempts < 4) {
+        while (attempts < 5) {
           try {
             await base44.asServiceRole.entities.WorkOrder.update(match.id, updateData);
             updated++;
@@ -297,13 +297,13 @@ Deno.serve(async (req) => {
           } catch (e) {
             if (e.message && e.message.includes('429')) {
               attempts++;
-              await sleep(500 * attempts);
+              await sleep(2000 * attempts);
             } else {
               throw e;
             }
           }
         }
-        await sleep(100);
+        await sleep(350);
       }
     }
 
