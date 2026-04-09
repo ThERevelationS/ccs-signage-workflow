@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     const titleFormat = cfg.title_format || 'description';
     const aiPromptExtra = cfg.ai_prompt_extra || '';
 
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("gmail");
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("gmail");
 
     const searchUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(gmailQuery)}&maxResults=${maxEmails}`;
     const searchRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
