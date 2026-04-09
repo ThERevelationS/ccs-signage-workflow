@@ -76,39 +76,45 @@ Deno.serve(async (req) => {
   } catch {}
 
   const byEstInv = new Map();
+  // Map from normalized client_name to array of work orders (same client can have multiple jobs)
   const byClientName = new Map();
-  // Build normalized client name index for fuzzy matching
-  const normalizedClientIndex = [];
   for (const wo of existingOrders) {
     if (wo.est_inv_at) byEstInv.set(wo.est_inv_at, wo);
     if (wo.corbridge_invoice_number) byEstInv.set(wo.corbridge_invoice_number, wo);
     if (wo.client_name) {
-      const normalized = wo.client_name.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-      byClientName.set(normalized, wo);
-      normalizedClientIndex.push({ normalized, words: normalized.split(' ').filter(w => w.length > 2), wo });
+      const key = wo.client_name.toLowerCase().trim();
+      if (!byClientName.has(key)) byClientName.set(key, []);
+      byClientName.get(key).push(wo);
     }
   }
 
-  // Fuzzy client name match function
-  function findFuzzyClientMatch(clientName) {
-    const norm = (clientName || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-    if (!norm) return null;
-    // Exact match first
-    if (byClientName.has(norm)) return byClientName.get(norm);
-    // Containment match
-    for (const entry of normalizedClientIndex) {
-      if (entry.normalized.includes(norm) || norm.includes(entry.normalized)) return entry.wo;
+  // Find existing WO that matches this import row (same client + similar title/description, or same est_inv)
+  function findMatchingWorkOrder(clientName, estInvAt, title) {
+    // 1. Exact est/inv match is always definitive
+    if (estInvAt && byEstInv.has(estInvAt)) return byEstInv.get(estInvAt);
+    
+    // 2. Same client name — check if there's already a record with the same or very similar title
+    const key = (clientName || '').toLowerCase().trim();
+    const existing = byClientName.get(key);
+    if (!existing || existing.length === 0) return null;
+    
+    const normTitle = (title || '').toLowerCase().trim();
+    
+    // If the import row's title is just the client name (no real title), match the first record with no distinguishing title
+    if (!normTitle || normTitle === key) {
+      const bareRecord = existing.find(wo => {
+        const woTitle = (wo.title || '').toLowerCase().trim();
+        return !woTitle || woTitle === key;
+      });
+      return bareRecord || null;
     }
-    // Word overlap match
-    const words = norm.split(' ').filter(w => w.length > 2);
-    if (words.length === 0) return null;
-    for (const entry of normalizedClientIndex) {
-      if (entry.words.length === 0) continue;
-      const overlap = words.filter(w => entry.words.includes(w)).length;
-      const overlapRatio = overlap / Math.min(words.length, entry.words.length);
-      if (overlapRatio >= 0.6) return entry.wo;
-    }
-    return null;
+    
+    // If the import row has a real title, only match if an existing record has the same title
+    const titleMatch = existing.find(wo => {
+      const woTitle = (wo.title || '').toLowerCase().trim();
+      return woTitle === normTitle;
+    });
+    return titleMatch || null;
   }
 
   let created = 0, updated = 0, failed = 0;
@@ -120,9 +126,7 @@ Deno.serve(async (req) => {
     await Promise.all(batch.map(async (woData) => {
       const { clientName, estInvAt, ...rest } = woData;
       try {
-        let existing = null;
-        if (estInvAt) existing = byEstInv.get(estInvAt);
-        if (!existing && clientName) existing = findFuzzyClientMatch(clientName);
+        const existing = findMatchingWorkOrder(clientName, estInvAt, rest.title);
 
         if (existing) {
           await base44.asServiceRole.entities.WorkOrder.update(existing.id, rest);
@@ -131,9 +135,9 @@ Deno.serve(async (req) => {
           const newWo = await base44.asServiceRole.entities.WorkOrder.create(rest);
           if (newWo.est_inv_at) byEstInv.set(newWo.est_inv_at, newWo);
           if (newWo.client_name) {
-            const norm = newWo.client_name.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-            byClientName.set(norm, newWo);
-            normalizedClientIndex.push({ normalized: norm, words: norm.split(' ').filter(w => w.length > 2), wo: newWo });
+            const key = newWo.client_name.toLowerCase().trim();
+            if (!byClientName.has(key)) byClientName.set(key, []);
+            byClientName.get(key).push(newWo);
           }
           created++;
         }

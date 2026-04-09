@@ -130,7 +130,7 @@ export default function BulkDuplicateCleanup() {
     // Normalize: strip punctuation, collapse whitespace
     const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
     
-    // Group by normalized client name (catches "ABC Corp" vs "ABC Corp." vs "abc corp")
+    // Group by normalized client name
     const byName = {};
     for (const wo of all) {
       const key = normalize(wo.client_name);
@@ -139,36 +139,49 @@ export default function BulkDuplicateCleanup() {
       byName[key].push(wo);
     }
 
-    // Also merge groups where one name contains another or has high word overlap
-    const keys = Object.keys(byName);
-    const merged = new Set();
-    for (let i = 0; i < keys.length; i++) {
-      if (merged.has(keys[i])) continue;
-      const aWords = keys[i].split(' ').filter(w => w.length > 2);
-      for (let j = i + 1; j < keys.length; j++) {
-        if (merged.has(keys[j])) continue;
-        // Check containment
-        if (keys[i].includes(keys[j]) || keys[j].includes(keys[i])) {
-          byName[keys[i]] = [...byName[keys[i]], ...byName[keys[j]]];
-          merged.add(keys[j]);
-          continue;
+    // Within each client group, identify TRUE duplicates:
+    // - Same est_inv_at number = definite duplicate
+    // - Both have NO est_inv_at and same/similar title = likely duplicate
+    // - Both have NO est_inv_at and no meaningful title = likely duplicate
+    // Different est_inv_at numbers = different jobs, NOT duplicates
+    const dupGroups = [];
+    for (const [clientKey, records] of Object.entries(byName)) {
+      if (records.length <= 1) continue;
+      
+      // Sub-group by est_inv_at — records sharing the same doc number are true duplicates
+      const byDoc = {};
+      const noDoc = [];
+      for (const wo of records) {
+        const doc = (wo.est_inv_at || '').trim();
+        if (doc) {
+          if (!byDoc[doc]) byDoc[doc] = [];
+          byDoc[doc].push(wo);
+        } else {
+          noDoc.push(wo);
         }
-        // Check word overlap
-        const bWords = keys[j].split(' ').filter(w => w.length > 2);
-        if (aWords.length === 0 || bWords.length === 0) continue;
-        const overlap = aWords.filter(w => bWords.includes(w)).length;
-        const ratio = overlap / Math.min(aWords.length, bWords.length);
-        if (ratio >= 0.6) {
-          byName[keys[i]] = [...byName[keys[i]], ...byName[keys[j]]];
-          merged.add(keys[j]);
+      }
+      
+      // Add groups with duplicate doc numbers
+      for (const docRecords of Object.values(byDoc)) {
+        if (docRecords.length > 1) dupGroups.push(docRecords);
+      }
+      
+      // For records with no doc number, sub-group by normalized title
+      if (noDoc.length > 1) {
+        const byTitle = {};
+        for (const wo of noDoc) {
+          const normTitle = normalize(wo.title);
+          // If title is just the client name or empty, use a special key
+          const titleKey = (!normTitle || normTitle === clientKey) ? '__bare__' : normTitle;
+          if (!byTitle[titleKey]) byTitle[titleKey] = [];
+          byTitle[titleKey].push(wo);
+        }
+        for (const titleRecords of Object.values(byTitle)) {
+          if (titleRecords.length > 1) dupGroups.push(titleRecords);
         }
       }
     }
-    // Remove merged groups
-    for (const key of merged) delete byName[key];
 
-    // Only groups with more than 1
-    const dupGroups = Object.values(byName).filter(g => g.length > 1);
     // Sort by most duplicates first
     dupGroups.sort((a, b) => b.length - a.length);
     setGroups(dupGroups);
