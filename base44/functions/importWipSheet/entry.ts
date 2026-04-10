@@ -289,14 +289,25 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Strategy 3: Score-based matching against all work orders
+      // Strategy 3: Score-based matching — first check fuzzy index, then full scan only if needed
       if (!match && wipData.customerName) {
-        const MIN_SCORE = 50; // minimum score to consider a match
+        const MIN_SCORE = 50;
         let bestScore = 0;
         let bestMatch = null;
         let secondBestScore = 0;
 
-        for (const wo of allWorkOrders) {
+        // Quick check: see if normalized/fuzzy client name hits the index
+        const normWipClient = normalize(wipData.customerName);
+        const fuzzyWipClient = normalizeFuzzy(wipData.customerName);
+        const quickCandidates = [
+          ...(byNormalizedClient.get(normWipClient) || []),
+          ...(byNormalizedClient.get(fuzzyWipClient) || []),
+        ];
+
+        // If we have quick candidates, score only those
+        const candidates = quickCandidates.length > 0 ? quickCandidates : allWorkOrders;
+
+        for (const wo of candidates) {
           const score = scoreMatch(wipData, wo);
           if (score > bestScore) {
             secondBestScore = bestScore;
@@ -307,7 +318,6 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Only accept if score is high enough AND there's clear separation from 2nd best
         if (bestMatch && bestScore >= MIN_SCORE && (bestScore - secondBestScore >= 20 || bestScore >= 90)) {
           match = bestMatch;
           matchedByClient++;
@@ -342,18 +352,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Process updates in parallel batches (fast, retry on 429)
-    const PARALLEL_BATCH = 10;
+    // Process updates in smaller batches with less parallelism to avoid timeouts
+    const PARALLEL_BATCH = 5;
     for (let i = 0; i < pendingUpdates.length; i += PARALLEL_BATCH) {
       const batch = pendingUpdates.slice(i, i + PARALLEL_BATCH);
       const results = await Promise.allSettled(batch.map(async (item) => {
-        for (let attempt = 0; attempt < 4; attempt++) {
+        for (let attempt = 0; attempt < 3; attempt++) {
           try {
             await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
             return item;
           } catch (e) {
-            if (e.message && e.message.includes('429') && attempt < 3) {
-              await sleep(1500 * (attempt + 1));
+            if (e.message && e.message.includes('429') && attempt < 2) {
+              await sleep(2000 * (attempt + 1));
             } else {
               throw e;
             }
@@ -375,6 +385,8 @@ Deno.serve(async (req) => {
           }
         }
       }
+      // Small delay between batches
+      if (i + PARALLEL_BATCH < pendingUpdates.length) await sleep(200);
     }
 
     // Collect debug info
