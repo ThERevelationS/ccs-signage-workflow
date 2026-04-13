@@ -47,6 +47,8 @@ const FILTER_FIELDS = [
 const OPERATORS = [
   { value: "is", label: "Is" },
   { value: "is_not", label: "Is Not" },
+  { value: "is_one_of", label: "Is One Of" },
+  { value: "is_not_one_of", label: "Is Not One Of" },
   { value: "equals", label: "Equals" },
   { value: "contains", label: "Contains" },
   { value: "greater_than", label: "Greater Than" },
@@ -563,9 +565,20 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     const isSelectField = selectedField?.type === "select";
                     const isLocalStorageField = selectedField?.type === "localStorage";
                     const hasDropdownOptions = isUserField || isSelectField || isLocalStorageField;
+                    const isMultiOperator = condition.operator === "is_one_of" || condition.operator === "is_not_one_of";
+                    
+                    // For multi-select, value is stored as comma-separated string
+                    const multiValues = isMultiOperator ? (condition.value || "").split(",").filter(Boolean) : [];
+                    
+                    const getDropdownOptions = () => {
+                      if (isUserField) return getUsersForRole(selectedField.role).map(u => ({ value: u.full_name, label: u.full_name }));
+                      if (isSelectField) return selectedField.options.map(opt => ({ value: opt, label: opt.charAt(0).toUpperCase() + opt.slice(1).replace(/_/g, ' ') }));
+                      if (isLocalStorageField) return getLocalStorageOptions(selectedField.storageKey).map(opt => ({ value: opt, label: opt }));
+                      return [];
+                    };
                     
                     return (
-                      <div key={index} className="flex gap-2 mt-2">
+                      <div key={index} className="flex gap-2 mt-2 items-start">
                         <Select
                           value={condition.field}
                           onValueChange={(value) => {
@@ -587,7 +600,13 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                         <Select
                           value={condition.operator}
-                          onValueChange={(value) => updateCondition(index, "operator", value)}
+                          onValueChange={(value) => {
+                            updateCondition(index, "operator", value);
+                            // Reset value when switching between single/multi operators
+                            const wasMulti = condition.operator === "is_one_of" || condition.operator === "is_not_one_of";
+                            const nowMulti = value === "is_one_of" || value === "is_not_one_of";
+                            if (wasMulti !== nowMulti) updateCondition(index, "value", "");
+                          }}
                         >
                           <SelectTrigger className="w-40">
                             <SelectValue />
@@ -603,7 +622,52 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                         {condition.operator !== "empty" && condition.operator !== "not_empty" && (
                           <>
-                            {hasDropdownOptions ? (
+                            {isMultiOperator && hasDropdownOptions ? (
+                              <div className="flex-1 border rounded-md p-2 bg-white min-h-[36px]">
+                                <div className="flex flex-wrap gap-1 mb-1">
+                                  {multiValues.map((val, vi) => (
+                                    <span key={vi} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                                      {val}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newVals = multiValues.filter((_, i) => i !== vi);
+                                          updateCondition(index, "value", newVals.join(","));
+                                        }}
+                                        className="hover:text-blue-600 font-bold"
+                                      >×</button>
+                                    </span>
+                                  ))}
+                                </div>
+                                <Select
+                                  value=""
+                                  onValueChange={(val) => {
+                                    if (!multiValues.includes(val)) {
+                                      updateCondition(index, "value", [...multiValues, val].join(","));
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-7 text-xs">
+                                    <SelectValue placeholder="Add value..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getDropdownOptions()
+                                      .filter(opt => !multiValues.includes(opt.value))
+                                      .map(opt => (
+                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                      ))
+                                    }
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : isMultiOperator && !hasDropdownOptions ? (
+                              <Input
+                                value={condition.value}
+                                onChange={(e) => updateCondition(index, "value", e.target.value)}
+                                placeholder="Comma-separated values"
+                                className="flex-1"
+                              />
+                            ) : hasDropdownOptions ? (
                               <Select
                                 value={condition.value}
                                 onValueChange={(value) => updateCondition(index, "value", value)}
@@ -646,6 +710,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           size="icon"
                           onClick={() => removeCondition(index)}
                           disabled={filterConditions.length === 1}
+                          className="flex-shrink-0"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>

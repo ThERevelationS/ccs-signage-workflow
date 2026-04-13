@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
+import * as XLSX from "xlsx";
 import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown, Strikethrough, Copy } from "lucide-react";
 
 // Helper to parse date string as local date (not UTC)
@@ -723,6 +724,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       switch (condition.operator) {
         case "is_not":
           return fieldValue != condValue;
+        case "is_one_of": {
+          const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
+          if (vals.length === 0) return true;
+          const fv = fieldValue != null ? String(fieldValue) : "";
+          return vals.some(v => fv == v);
+        }
+        case "is_not_one_of": {
+          const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
+          if (vals.length === 0) return true;
+          const fv = fieldValue != null ? String(fieldValue) : "";
+          return !vals.some(v => fv == v);
+        }
         case "contains":
           return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
         case "greater_than":
