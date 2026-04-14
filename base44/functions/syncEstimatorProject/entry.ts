@@ -67,12 +67,6 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { action, project_id, source_project } = body;
 
-    // Verify user is authenticated for all actions
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Action: Webhook-style sync of a single project from the estimator app
     if (action === 'syncProject' && source_project) {
 
