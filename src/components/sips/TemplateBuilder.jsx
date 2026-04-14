@@ -59,6 +59,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   // Multi-select dropdown state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   
+  // Get users list
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const usersData = await base44.entities.AuthorizedEmail.list();
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Error loading users:", error);
+      }
+    };
+    if (isOpen) loadUsers();
+  }, [isOpen]);
+  
   // Track changes and save state for Product Templates and Sub-Templates
   const [productTypeHasChanges, setProductTypeHasChanges] = useState(false);
   const [productTypeSaveStatus, setProductTypeSaveStatus] = useState('idle'); // 'idle' | 'saved'
@@ -514,20 +528,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       </div>
     );
   };
-
-  // Get users list
-  const [users, setUsers] = useState([]);
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const usersData = await base44.entities.AuthorizedEmail.list();
-        setUsers(usersData);
-      } catch (error) {
-        console.error("Error loading users:", error);
-      }
-    };
-    if (isOpen) loadUsers();
-  }, [isOpen]);
 
   // Compact checklist item row
   const renderCompactItem = (item, index, items, setItems, provided, isProductType = false) => {

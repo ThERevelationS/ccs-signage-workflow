@@ -25,14 +25,6 @@ export default function DragDropList({
     onReorder(items);
   };
 
-  if (!workOrders || workOrders.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">No work orders in this stage</p>
-      </div>
-    );
-  }
-
   // Pre-compute riders and parents from the already-loaded list to avoid per-card API calls
   const enrichedWorkOrders = React.useMemo(() => {
     return workOrders.map(wo => ({
@@ -41,6 +33,14 @@ export default function DragDropList({
       _parent: wo.is_rider ? (workOrders.find(p => p.id === wo.parent_work_order_id) || null) : null,
     }));
   }, [workOrders]);
+
+  if (!workOrders || workOrders.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 text-lg">No work orders in this stage</p>
+      </div>
+    );
+  }
 
   // Split work orders into two columns for display, but maintain single index order
   const leftColumn = enrichedWorkOrders.filter((_, i) => i % 2 === 0);
