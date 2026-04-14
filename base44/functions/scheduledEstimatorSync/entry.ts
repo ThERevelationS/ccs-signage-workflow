@@ -51,6 +51,7 @@ const extractProjectData = (raw) => {
 
 Deno.serve(async (req) => {
   try {
+    // Scheduled automations don't have user context, so use service role only
     const base44 = createClientFromRequest(req);
 
     const estimator = getEstimatorClient();
@@ -69,7 +70,6 @@ Deno.serve(async (req) => {
     for (const raw of allProjects) {
       const existing = existingBySourceId[raw.id];
       
-      // Skip if already synced and not updated since last sync
       if (existing && existing.source_updated_date === raw.updated_date) {
         skipped++;
         continue;
@@ -84,7 +84,6 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.EstimatorProject.update(existing.id, projectData);
         updated++;
       } else {
-        // Try auto-match
         if (projectData.client_name) {
           const workOrders = await base44.asServiceRole.entities.WorkOrder.filter({ 
             client_name: projectData.client_name,

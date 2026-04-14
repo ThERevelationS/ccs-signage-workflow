@@ -67,13 +67,14 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { action, project_id, source_project } = body;
 
+    // Verify user is authenticated for all actions
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Action: Webhook-style sync of a single project from the estimator app
-    // Called when a project is saved in the estimator app
     if (action === 'syncProject' && source_project) {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
 
       const projectData = extractProjectData(source_project);
 
@@ -106,11 +107,6 @@ Deno.serve(async (req) => {
 
     // Action: Fetch ALL projects from estimator and sync them
     if (action === 'syncAll') {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       const estimator = getEstimatorClient();
       const allProjects = await estimator.entities.FoundationProject.list();
       
@@ -162,11 +158,6 @@ Deno.serve(async (req) => {
 
     // Action: Link a specific estimator project to a work order
     if (action === 'linkToWorkOrder') {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       const { estimator_project_id, work_order_id } = body;
       if (!estimator_project_id || !work_order_id) {
         return Response.json({ error: 'Missing estimator_project_id or work_order_id' }, { status: 400 });
@@ -178,11 +169,6 @@ Deno.serve(async (req) => {
 
     // Action: Unlink
     if (action === 'unlinkFromWorkOrder') {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       const { estimator_project_id } = body;
       if (!estimator_project_id) {
         return Response.json({ error: 'Missing estimator_project_id' }, { status: 400 });
@@ -194,11 +180,6 @@ Deno.serve(async (req) => {
 
     // Action: Get projects for a specific work order
     if (action === 'getForWorkOrder') {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       const { work_order_id } = body;
       if (!work_order_id) {
         return Response.json({ error: 'Missing work_order_id' }, { status: 400 });
@@ -210,11 +191,6 @@ Deno.serve(async (req) => {
 
     // Action: Get unlinked projects (for matching UI)
     if (action === 'getUnlinked') {
-      const user = await base44.auth.me();
-      if (!user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       const all = await base44.asServiceRole.entities.EstimatorProject.list();
       const unlinked = all.filter(p => !p.work_order_id);
       return Response.json({ projects: unlinked });
