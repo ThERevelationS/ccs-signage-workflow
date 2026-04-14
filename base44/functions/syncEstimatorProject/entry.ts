@@ -121,9 +121,14 @@ Deno.serve(async (req) => {
           const existing = existingBySourceId[raw.id];
 
           if (existing) {
-            // Preserve existing work_order_id if set
+            // Preserve existing work_order_id if set, otherwise try to auto-match
             if (existing.work_order_id) {
               projectData.work_order_id = existing.work_order_id;
+            } else {
+              const matchedWO = await findMatchingWorkOrder(base44, projectData.client_name);
+              if (matchedWO) {
+                projectData.work_order_id = matchedWO.id;
+              }
             }
             await base44.asServiceRole.entities.EstimatorProject.update(existing.id, projectData);
             updated++;
