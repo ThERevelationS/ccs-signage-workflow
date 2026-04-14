@@ -11,6 +11,12 @@ const getEstimatorClient = () => {
   });
 };
 
+// Create a service-role client for this app (no user auth needed)
+const getServiceClient = (req) => {
+  const base44 = createClientFromRequest(req);
+  return base44.asServiceRole;
+};
+
 // Build estimator app URL for a project
 const getEstimatorAppUrl = (projectId) => {
   return `https://app.base44.com/apps/${ESTIMATOR_APP_ID}/FoundationProject?id=${projectId}`;
@@ -52,9 +58,9 @@ const extractProjectData = (raw) => {
 };
 
 // Try to auto-match to a work order by client_name
-const findMatchingWorkOrder = async (base44, clientName) => {
+const findMatchingWorkOrder = async (svc, clientName) => {
   if (!clientName) return null;
-  const workOrders = await base44.asServiceRole.entities.WorkOrder.filter({ 
+  const workOrders = await svc.entities.WorkOrder.filter({ 
     client_name: clientName, 
     deleted: { $ne: true } 
   });
@@ -63,7 +69,7 @@ const findMatchingWorkOrder = async (base44, clientName) => {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const svc = getServiceClient(req);
     const body = await req.json().catch(() => ({}));
     const { action, project_id, source_project } = body;
 
@@ -73,11 +79,11 @@ Deno.serve(async (req) => {
       const projectData = extractProjectData(source_project);
 
       // Check if we already have this project
-      const existing = await base44.asServiceRole.entities.EstimatorProject.filter({ source_id: projectData.source_id });
+      const existing = await svc.entities.EstimatorProject.filter({ source_id: projectData.source_id });
 
       if (existing.length > 0) {
         // Update existing
-        await base44.asServiceRole.entities.EstimatorProject.update(existing[0].id, projectData);
+        await svc.entities.EstimatorProject.update(existing[0].id, projectData);
         return Response.json({ 
           status: 'updated', 
           estimator_project_id: existing[0].id,
@@ -85,11 +91,11 @@ Deno.serve(async (req) => {
         });
       } else {
         // Create new — try to auto-match to work order
-        const matchedWO = await findMatchingWorkOrder(base44, projectData.client_name);
+        const matchedWO = await findMatchingWorkOrder(svc, projectData.client_name);
         if (matchedWO) {
           projectData.work_order_id = matchedWO.id;
         }
-        const created = await base44.asServiceRole.entities.EstimatorProject.create(projectData);
+        const created = await svc.entities.EstimatorProject.create(projectData);
         return Response.json({ 
           status: 'created', 
           estimator_project_id: created.id,
@@ -105,7 +111,7 @@ Deno.serve(async (req) => {
       const allProjects = await estimator.entities.FoundationProject.list();
       
       // Get existing synced projects
-      const existingSynced = await base44.asServiceRole.entities.EstimatorProject.list();
+      const existingSynced = await svc.entities.EstimatorProject.list();
       const existingBySourceId = {};
       for (const ep of existingSynced) {
         existingBySourceId[ep.source_id] = ep;
@@ -125,19 +131,19 @@ Deno.serve(async (req) => {
             if (existing.work_order_id) {
               projectData.work_order_id = existing.work_order_id;
             } else {
-              const matchedWO = await findMatchingWorkOrder(base44, projectData.client_name);
+              const matchedWO = await findMatchingWorkOrder(svc, projectData.client_name);
               if (matchedWO) {
                 projectData.work_order_id = matchedWO.id;
               }
             }
-            await base44.asServiceRole.entities.EstimatorProject.update(existing.id, projectData);
+            await svc.entities.EstimatorProject.update(existing.id, projectData);
             updated++;
           } else {
-            const matchedWO = await findMatchingWorkOrder(base44, projectData.client_name);
+            const matchedWO = await findMatchingWorkOrder(svc, projectData.client_name);
             if (matchedWO) {
               projectData.work_order_id = matchedWO.id;
             }
-            await base44.asServiceRole.entities.EstimatorProject.create(projectData);
+            await svc.entities.EstimatorProject.create(projectData);
             created++;
           }
         } catch (e) {
@@ -162,7 +168,7 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Missing estimator_project_id or work_order_id' }, { status: 400 });
       }
 
-      await base44.asServiceRole.entities.EstimatorProject.update(estimator_project_id, { work_order_id });
+      await svc.entities.EstimatorProject.update(estimator_project_id, { work_order_id });
       return Response.json({ status: 'linked' });
     }
 
@@ -173,7 +179,7 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Missing estimator_project_id' }, { status: 400 });
       }
 
-      await base44.asServiceRole.entities.EstimatorProject.update(estimator_project_id, { work_order_id: '' });
+      await svc.entities.EstimatorProject.update(estimator_project_id, { work_order_id: '' });
       return Response.json({ status: 'unlinked' });
     }
 
@@ -184,13 +190,13 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Missing work_order_id' }, { status: 400 });
       }
 
-      const linked = await base44.asServiceRole.entities.EstimatorProject.filter({ work_order_id });
+      const linked = await svc.entities.EstimatorProject.filter({ work_order_id });
       return Response.json({ projects: linked });
     }
 
     // Action: Get unlinked projects (for matching UI)
     if (action === 'getUnlinked') {
-      const all = await base44.asServiceRole.entities.EstimatorProject.list();
+      const all = await svc.entities.EstimatorProject.list();
       const unlinked = all.filter(p => !p.work_order_id);
       return Response.json({ projects: unlinked });
     }
