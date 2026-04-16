@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight } from "lucide-react";
 
@@ -13,6 +14,12 @@ const stepTypeLabels = {
   permit_received_date: '✅ Permit Received',
   text: '📝 Text'
 };
+
+const ADDON_DEFS = [
+  { key: 'has_checkbox', label: '☑ Checkbox', color: 'bg-green-50 border-green-300 text-green-700' },
+  { key: 'has_followup', label: '🔔 Follow-up', color: 'bg-amber-50 border-amber-300 text-amber-700' },
+  { key: 'has_text', label: '📝 Text', color: 'bg-blue-50 border-blue-300 text-blue-700' },
+];
 
 function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const [expanded, setExpanded] = useState(false);
@@ -136,24 +143,58 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
                       <Draggable key={step.id} draggableId={step.id} index={idx}>
                         {(provided) => (
                           <div ref={provided.innerRef} {...provided.draggableProps}
-                            className="flex items-center gap-2 p-1.5 bg-gray-50 border rounded text-xs">
-                            <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400 cursor-grab" /></div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{stepTypeLabels[step.type] || step.type}</span>
-                            <span className="flex-1 font-medium">{step.name}</span>
-                            {step.type === 'followup_date' && (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  value={step.followup_interval_days || 14}
-                                  onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
-                                  className="h-5 w-12 text-xs"
-                                />
-                                <span className="text-[9px] text-gray-500">days</span>
-                              </div>
-                            )}
-                            <button onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
-                              <Trash2 className="w-3 h-3 text-red-500" />
-                            </button>
+                            className="p-1.5 bg-gray-50 border rounded text-xs space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400 cursor-grab" /></div>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{stepTypeLabels[step.type] || step.type}</span>
+                              <span className="flex-1 font-medium">{step.name}</span>
+                              {step.type === 'followup_date' && (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    value={step.followup_interval_days || 14}
+                                    onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
+                                    className="h-5 w-12 text-xs"
+                                  />
+                                  <span className="text-[9px] text-gray-500">days</span>
+                                </div>
+                              )}
+                              <button onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
+                                <Trash2 className="w-3 h-3 text-red-500" />
+                              </button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 pl-5">
+                              <span className="text-[9px] text-gray-400 uppercase tracking-wide">Tie:</span>
+                              {ADDON_DEFS.map(addon => {
+                                const enabled = !!step[addon.key];
+                                return (
+                                  <label
+                                    key={addon.key}
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer transition-colors ${enabled ? addon.color : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                                  >
+                                    <Checkbox
+                                      checked={enabled}
+                                      onCheckedChange={(v) => updateStepField(step.id, addon.key, !!v)}
+                                      className="h-3 w-3"
+                                    />
+                                    <span className="text-[10px] font-medium">{addon.label}</span>
+                                  </label>
+                                );
+                              })}
+                              {step.has_followup && (
+                                <div className="flex items-center gap-1 ml-1">
+                                  <span className="text-[9px] text-gray-500">every</span>
+                                  <Input
+                                    type="number"
+                                    value={step.followup_interval_days || 14}
+                                    onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
+                                    className="h-5 w-12 text-xs"
+                                  />
+                                  <span className="text-[9px] text-gray-500">days</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </Draggable>

@@ -192,7 +192,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
+      <DialogContent className="clay-card border-none max-w-6xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Permitting Settings</DialogTitle>
@@ -208,8 +208,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           </TabsList>
 
           {/* LOCALITIES */}
-          <TabsContent value="localities" className="flex-1 overflow-hidden" style={{ marginTop: 0 }}>
-            <div className="grid grid-cols-[220px_1fr] gap-4 h-full pt-3">
+          <TabsContent value="localities" className="flex-1 overflow-hidden min-h-0" style={{ marginTop: 0 }}>
+            <div className="grid grid-cols-[220px_1fr] gap-4 h-full pt-3 min-h-0">
               <div className="flex flex-col">
                 <Button onClick={newLocality} size="sm" className="w-full mb-2 bg-purple-600 hover:bg-purple-700 gap-1">
                   <Plus className="w-3 h-3" /> New Locality
@@ -230,7 +230,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                 </div>
               </div>
 
-              <div className="overflow-y-auto bg-gray-50 border rounded-lg p-4">
+              <div className="overflow-y-auto min-h-0 bg-gray-50 border rounded-lg p-4">
                 {editingLocality ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -363,7 +363,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           </TabsContent>
 
           {/* OFFICE CATALOG (full offices with workflow) */}
-          <TabsContent value="catalog" className="flex-1 overflow-y-auto p-3" style={{ marginTop: 0 }}>
+          <TabsContent value="catalog" className="flex-1 overflow-y-auto min-h-0 p-3" style={{ marginTop: 0 }}>
             <OfficeCatalogEditor
               catalog={officeCatalog}
               officeTypes={officeTypes}
@@ -372,7 +372,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           </TabsContent>
 
           {/* OFFICE TYPE CATALOG (simple labels) */}
-          <TabsContent value="types" className="flex-1 overflow-y-auto p-3" style={{ marginTop: 0 }}>
+          <TabsContent value="types" className="flex-1 overflow-y-auto min-h-0 p-3" style={{ marginTop: 0 }}>
             <div className="max-w-lg">
               <h3 className="font-semibold text-sm mb-1">Office Type Catalog</h3>
               <p className="text-xs text-gray-500 mb-4">
