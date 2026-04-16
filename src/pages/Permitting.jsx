@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Settings, Search } from "lucide-react";
-import PermitSpreadsheetRow from "@/components/permitting/PermitSpreadsheetRow";
+import { Loader2, Settings, Search, Plus } from "lucide-react";
+import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import AddPermitLineDialog from "@/components/permitting/AddPermitLineDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -23,8 +24,8 @@ export default function Permitting() {
   const [users, setUsers] = useState([]);
   const [officeTypes, setOfficeTypes] = useState(["Zoning", "Building", "Electrical Inspectors"]);
   const [isLoading, setIsLoading] = useState(true);
-  const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddLine, setShowAddLine] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,18 +52,15 @@ export default function Permitting() {
       setUsers(usersData);
       
       const officeTypesSetting = settings.find(s => s.setting_key === 'permitOfficeTypes');
-      if (officeTypesSetting?.setting_value?.items) {
-        setOfficeTypes(officeTypesSetting.setting_value.items);
-      }
+      const currentOfficeTypes = officeTypesSetting?.setting_value?.items || ["Zoning", "Building", "Electrical Inspectors"];
+      setOfficeTypes(currentOfficeTypes);
 
       // Get task descriptions assigned to Permitting page
       const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const permittingTaskDescs = [];
       if (taskDescSetting?.setting_value?.items) {
         taskDescSetting.setting_value.items.forEach(item => {
-          if (item.page === "Permitting") {
-            permittingTaskDescs.push(item.text);
-          }
+          if (item.page === "Permitting") permittingTaskDescs.push(item.text);
         });
       }
 
@@ -71,21 +69,33 @@ export default function Permitting() {
         wo.current_task_description && permittingTaskDescs.includes(wo.current_task_description)
       );
 
-      // Auto-create PermitLineItems for work orders that don't have one yet
+      // Auto-create PermitLineItems for work orders that don't have ANY rows yet
+      // Create one row per office type for each new work order
       const existingWOIds = new Set(items.map(li => li.work_order_id));
       const newItems = [];
       for (const wo of permittingWOs) {
         if (!existingWOIds.has(wo.id)) {
-          const created = await PermitLineItem.create({
-            work_order_id: wo.id,
-            work_order_title: wo.client_name || "",
-            work_order_description: wo.description || "",
-            row_name: "",
-            status: "active",
-            steps: [],
-            priority: 0
-          });
-          newItems.push(created);
+          for (const officeType of currentOfficeTypes) {
+            // Find locality template for this office type if applicable
+            const localityForWO = locs.find(l => l.categories?.includes(officeType));
+            const steps = localityForWO?.workflow_steps?.map(s => ({
+              ...s, value: "", checked: false
+            })) || [];
+            
+            const created = await PermitLineItem.create({
+              work_order_id: wo.id,
+              work_order_title: wo.client_name || "",
+              work_order_description: wo.description || "",
+              row_name: "",
+              office_type: officeType,
+              locality_id: localityForWO?.id || "",
+              locality_name: localityForWO?.name || "",
+              status: "active",
+              steps,
+              priority: 0
+            });
+            newItems.push(created);
+          }
         }
       }
 
@@ -101,13 +111,25 @@ export default function Permitting() {
     if (showLoading) setIsLoading(false);
   };
 
-  const updateStep = async (lineItemId, stepId, updates) => {
+  const updateStep = useCallback(async (lineItemId, stepId, updates) => {
+    let workOrderId = null;
+    
     setLineItems(prev => prev.map(li => {
       if (li.id !== lineItemId) return li;
+      workOrderId = li.work_order_id;
       const newSteps = (li.steps || []).map(s => s.id === stepId ? { ...s, ...updates } : s);
       
-      // Auto-set next followup date if it's a followup_date type
+      // If a checkbox is being checked, mark associated date/text steps as completed
       const updatedStep = newSteps.find(s => s.id === stepId);
+      if (updatedStep?.type === 'checkbox' && updates.checked === true) {
+        // When checkbox is checked, timestamp it
+        updatedStep.checked_date = new Date().toISOString().split('T')[0];
+      }
+      if (updatedStep?.type === 'checkbox' && updates.checked === false) {
+        updatedStep.checked_date = null;
+      }
+      
+      // Auto-set next followup date if it's a followup_date type
       if (updatedStep?.type === 'followup_date' && updates.value) {
         const interval = updatedStep.followup_interval_days || 14;
         const d = new Date(updates.value);
@@ -136,6 +158,12 @@ export default function Permitting() {
     if (item) {
       const newSteps = (item.steps || []).map(s => s.id === stepId ? { ...s, ...updates } : s);
       const updatedStep = newSteps.find(s => s.id === stepId);
+      if (updatedStep?.type === 'checkbox' && updates.checked === true) {
+        updatedStep.checked_date = new Date().toISOString().split('T')[0];
+      }
+      if (updatedStep?.type === 'checkbox' && updates.checked === false) {
+        updatedStep.checked_date = null;
+      }
       if (updatedStep?.type === 'followup_date' && updates.value) {
         const interval = updatedStep.followup_interval_days || 14;
         const d = new Date(updates.value);
@@ -153,14 +181,42 @@ export default function Permitting() {
       const newStatus = permitReceived ? 'completed' : item.status;
       await PermitLineItem.update(lineItemId, { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, status: newStatus });
     }
-  };
+  }, [lineItems]);
 
-  const updateField = async (lineItemId, field, value) => {
+  const updateField = useCallback(async (lineItemId, field, value) => {
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, [field]: value } : li));
     await PermitLineItem.update(lineItemId, { [field]: value });
-  };
+  }, []);
 
-  const updateLocality = async (lineItemId, localityId) => {
+  // When notes are saved on a permit line item, also add to the work order's work_notes
+  const updateNotesAndSync = useCallback(async (lineItemId, notesText) => {
+    const item = lineItems.find(li => li.id === lineItemId);
+    if (!item) return;
+    
+    // Save to line item
+    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, notes: notesText } : li));
+    await PermitLineItem.update(lineItemId, { notes: notesText });
+    
+    // Also add to work order's work_notes if there's text
+    if (notesText && notesText.trim()) {
+      const wo = workOrders.find(w => w.id === item.work_order_id);
+      if (wo) {
+        const officeLabel = item.office_type || "Permitting";
+        const newNote = {
+          id: Date.now(),
+          type: "permitting",
+          text: `[${officeLabel}] ${notesText}`,
+          timestamp: new Date().toISOString(),
+          created_by: currentUser?.full_name || currentUser?.email || "System",
+          sub_tasks: []
+        };
+        const existingNotes = wo.work_notes || [];
+        await WorkOrder.update(wo.id, { work_notes: [...existingNotes, newNote] });
+      }
+    }
+  }, [lineItems, workOrders, currentUser]);
+
+  const updateLocality = useCallback(async (lineItemId, localityId) => {
     const locality = localities.find(l => l.id === localityId);
     const updates = {
       locality_id: localityId || "",
@@ -179,7 +235,17 @@ export default function Permitting() {
     }
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...updates } : li));
     await PermitLineItem.update(lineItemId, updates);
-  };
+  }, [localities, lineItems]);
+
+  const addLineItem = useCallback(async (data) => {
+    const created = await PermitLineItem.create(data);
+    setLineItems(prev => [...prev, created]);
+  }, []);
+
+  const deleteLineItem = useCallback(async (lineItemId) => {
+    await PermitLineItem.delete(lineItemId);
+    setLineItems(prev => prev.filter(li => li.id !== lineItemId));
+  }, []);
 
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
@@ -199,7 +265,7 @@ export default function Permitting() {
     return Array.from(colMap.values());
   }, [lineItems]);
 
-  // Filter and group line items
+  // Filter items
   const filtered = useMemo(() => {
     let items = lineItems;
     if (searchTerm) {
@@ -208,30 +274,55 @@ export default function Permitting() {
         li.work_order_title?.toLowerCase().includes(q) ||
         li.work_order_description?.toLowerCase().includes(q) ||
         li.row_name?.toLowerCase().includes(q) ||
-        li.locality_name?.toLowerCase().includes(q)
+        li.locality_name?.toLowerCase().includes(q) ||
+        li.office_type?.toLowerCase().includes(q)
       );
     }
     return items;
   }, [lineItems, searchTerm]);
 
+  // Group by work order for multilayered display
   const today = new Date().toISOString().split('T')[0];
 
-  const activeItems = filtered
-    .filter(li => li.status === 'active' && (!li.next_followup_date || li.next_followup_date <= today))
-    .sort((a, b) => {
-      if (!a.next_followup_date && !b.next_followup_date) return 0;
-      if (!a.next_followup_date) return -1;
-      if (!b.next_followup_date) return 1;
-      return a.next_followup_date.localeCompare(b.next_followup_date);
+  const groupItemsByWorkOrder = (items) => {
+    const groups = {};
+    items.forEach(li => {
+      const key = li.work_order_id;
+      if (!groups[key]) {
+        groups[key] = {
+          work_order_id: li.work_order_id,
+          work_order_title: li.work_order_title,
+          work_order_description: li.work_order_description,
+          lines: []
+        };
+      }
+      groups[key].lines.push(li);
     });
+    return Object.values(groups);
+  };
 
-  const waitingItems = filtered
-    .filter(li => li.status === 'active' && li.next_followup_date && li.next_followup_date > today)
-    .sort((a, b) => a.next_followup_date.localeCompare(b.next_followup_date));
+  // Determine status of a group based on its lines
+  const getGroupStatus = (group) => {
+    const allCompleted = group.lines.every(li => li.status === 'completed');
+    if (allCompleted && group.lines.length > 0) return 'completed';
+    
+    const hasActiveNow = group.lines.some(li => 
+      li.status === 'active' && (!li.next_followup_date || li.next_followup_date <= today)
+    );
+    if (hasActiveNow) return 'active';
+    
+    return 'waiting';
+  };
 
-  const completedItems = filtered
-    .filter(li => li.status === 'completed')
-    .sort((a, b) => (b.permit_received_date || "").localeCompare(a.permit_received_date || ""));
+  const activeGroups = groupItemsByWorkOrder(
+    filtered.filter(li => li.status === 'active' && (!li.next_followup_date || li.next_followup_date <= today))
+  );
+  const waitingGroups = groupItemsByWorkOrder(
+    filtered.filter(li => li.status === 'active' && li.next_followup_date && li.next_followup_date > today)
+  );
+  const completedGroups = groupItemsByWorkOrder(
+    filtered.filter(li => li.status === 'completed')
+  );
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
 
@@ -243,41 +334,50 @@ export default function Permitting() {
     );
   }
 
-  const renderTable = (items, sectionTitle, sectionColor, globalIndexOffset = 0) => (
-    <table className="w-full border-collapse" style={{ fontSize: '13px', minWidth: `${600 + stepColumns.length * 90}px`, tableLayout: 'auto' }}>
-      <thead className="bg-gray-100 sticky top-0 z-10">
-        <tr className="border-b">
-          <th className="px-2 py-2 border-r text-center font-bold text-white" style={{ minWidth: '40px', background: sectionColor }}>
-            #
-          </th>
-          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '140px' }}>Client</th>
-          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Row Name</th>
-          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Locality</th>
-          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '80px' }}>Assigned</th>
-          <th className="px-1.5 py-2 border-r text-left font-bold text-gray-700" style={{ minWidth: '90px' }}>Notes</th>
+  const renderSection = (groups, sectionTitle, sectionColor, emoji) => (
+    <div className="clay-card p-4 w-full overflow-x-auto mb-5" style={sectionTitle === 'Waiting' ? { borderLeft: '4px solid #f59e0b' } : {}}>
+      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: sectionTitle === 'Active' ? '#16a34a' : sectionTitle === 'Waiting' ? '#d97706' : '#6b7280' }}>
+        {emoji} {sectionTitle} ({groups.reduce((sum, g) => sum + g.lines.length, 0)} lines across {groups.length} clients)
+        {sectionTitle === 'Active' && <span className="text-xs text-gray-400 font-normal">— needs attention now</span>}
+        {sectionTitle === 'Waiting' && <span className="text-xs text-gray-400 font-normal">— future follow-up dates</span>}
+      </h3>
+      
+      <div style={{ minWidth: `${600 + stepColumns.length * 90}px` }}>
+        {/* Column Headers */}
+        <div className="flex items-end border-b bg-gray-100 sticky top-0 z-10" style={{ fontSize: '12px' }}>
+          <div className="px-2 py-2 font-bold text-white text-center flex-shrink-0" style={{ width: '150px', background: sectionColor }}>#</div>
+          <div className="px-1.5 py-2 font-bold text-gray-700 flex-shrink-0" style={{ width: '90px' }}>Office Type</div>
+          <div className="px-1.5 py-2 font-bold text-gray-700 flex-shrink-0" style={{ width: '120px' }}>Locality</div>
+          <div className="px-1.5 py-2 font-bold text-gray-700 flex-shrink-0" style={{ width: '80px' }}>Assigned</div>
+          <div className="px-1.5 py-2 font-bold text-gray-700 flex-shrink-0" style={{ width: '100px' }}>Notes</div>
           {stepColumns.map(col => (
-            <th key={col.id} className="px-1 py-2 border-r text-center font-bold text-gray-700" style={{ minWidth: col.type === 'checkbox' ? '50px' : '85px' }}>
+            <div key={col.id} className="px-1 py-2 text-center font-bold text-gray-700 flex-shrink-0" style={{ width: col.type === 'checkbox' ? '50px' : '85px' }}>
               <div className="text-xs leading-tight">{col.name}</div>
               <div className="text-[9px] text-gray-400 font-normal">
-                {col.type === 'checkbox' ? '☑' : col.type === 'submitted_date' ? '📅' : col.type === 'followup_date' ? '🔔' : col.type === 'permit_received_date' ? '✅' : ''}
+                {col.type === 'checkbox' ? '☑' : col.type === 'submitted_date' ? '📅' : col.type === 'followup_date' ? '🔔' : col.type === 'permit_received_date' ? '✅' : '📝'}
               </div>
-            </th>
+            </div>
           ))}
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((li, idx) => (
-          <PermitSpreadsheetRow
-            key={li.id}
-            lineItem={li}
-            index={globalIndexOffset + idx}
-            isFocused={focusedRowIndex === globalIndexOffset + idx}
-            onFocus={() => setFocusedRowIndex(focusedRowIndex === globalIndexOffset + idx ? null : globalIndexOffset + idx)}
+        </div>
+        
+        {groups.length === 0 && (
+          <div className="px-3 py-8 text-center text-gray-500 text-sm">
+            No {sectionTitle.toLowerCase()} items
+          </div>
+        )}
+        
+        {groups.map(group => (
+          <PermitClientGroup
+            key={group.work_order_id}
+            group={group}
             onUpdateStep={updateStep}
             onUpdateField={updateField}
+            onUpdateNotes={updateNotesAndSync}
             onUpdateLocality={updateLocality}
             onOpenWorkOrder={openWorkOrder}
             onShowLocalityInfo={setLocalityInfoId}
+            onDeleteLine={deleteLineItem}
+            onAddLine={addLineItem}
             isRegistered={isRegistered}
             stepColumns={stepColumns}
             localities={localities}
@@ -285,15 +385,8 @@ export default function Permitting() {
             today={today}
           />
         ))}
-        {items.length === 0 && (
-          <tr>
-            <td colSpan={stepColumns.length + 6} className="px-3 py-8 text-center text-gray-500 text-sm">
-              No {sectionTitle.toLowerCase()} items
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
+      </div>
+    </div>
   );
 
   return (
@@ -304,7 +397,9 @@ export default function Permitting() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Permitting Tracker</h1>
-              <p className="text-sm text-gray-500 mt-0.5">{lineItems.length} total items · {activeItems.length} active · {waitingItems.length} waiting · {completedItems.length} completed</p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {lineItems.length} total lines · {filtered.filter(li => li.status === 'active').length} active · {filtered.filter(li => li.status === 'completed').length} completed
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -316,6 +411,11 @@ export default function Permitting() {
                   className="h-8 text-sm pl-8 w-48"
                 />
               </div>
+              {isRegistered && (
+                <Button onClick={() => setShowAddLine(true)} size="sm" variant="outline" className="gap-1">
+                  <Plus className="w-4 h-4" /> Add Line
+                </Button>
+              )}
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
                   <Settings className="w-4 h-4" /> Settings
@@ -326,34 +426,13 @@ export default function Permitting() {
         </div>
 
         {/* Active Section */}
-        <div className="clay-card p-4 w-full overflow-x-auto mb-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-            🟢 Active ({activeItems.length})
-            <span className="text-xs text-gray-400 font-normal">— needs attention now</span>
-          </h3>
-          {renderTable(activeItems, "Active", 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', 0)}
-        </div>
+        {renderSection(activeGroups, "Active", 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', '🟢')}
 
         {/* Waiting Section */}
-        {waitingItems.length > 0 && (
-          <div className="clay-card p-4 w-full overflow-x-auto mb-5" style={{ borderLeft: '4px solid #f59e0b' }}>
-            <h3 className="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
-              📅 Waiting / Upcoming ({waitingItems.length})
-              <span className="text-xs text-gray-400 font-normal">— future follow-up dates</span>
-            </h3>
-            {renderTable(waitingItems, "Waiting", 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', activeItems.length)}
-          </div>
-        )}
+        {waitingGroups.length > 0 && renderSection(waitingGroups, "Waiting", 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', '📅')}
 
         {/* Completed Section */}
-        {completedItems.length > 0 && (
-          <div className="clay-card p-4 w-full overflow-x-auto">
-            <h3 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-              ✅ Completed ({completedItems.length})
-            </h3>
-            {renderTable(completedItems, "Completed", 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)', activeItems.length + waitingItems.length)}
-          </div>
-        )}
+        {completedGroups.length > 0 && renderSection(completedGroups, "Completed", 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)', '✅')}
       </div>
 
       {/* Locality Info Popup */}
@@ -368,6 +447,18 @@ export default function Permitting() {
         <PermitSettingsDialog
           isOpen={showSettings}
           onClose={() => { setShowSettings(false); loadData(false); }}
+          localities={localities}
+          officeTypes={officeTypes}
+        />
+      )}
+
+      {/* Add Line Dialog */}
+      {showAddLine && (
+        <AddPermitLineDialog
+          isOpen={showAddLine}
+          onClose={() => setShowAddLine(false)}
+          onSave={addLineItem}
+          workOrders={workOrders}
           localities={localities}
           officeTypes={officeTypes}
         />
