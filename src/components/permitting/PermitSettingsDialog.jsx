@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, Search } from "lucide-react";
 import LocalityOfficeEditor from "./LocalityOfficeEditor";
+import OfficeCatalogEditor from "./OfficeCatalogEditor";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -15,11 +16,25 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const [activeTab, setActiveTab] = useState("localities");
   const [localities, setLocalities] = useState(initialLocalities || []);
   const [officeTypes, setOfficeTypes] = useState(initialOfficeTypes || []);
+  const [officeCatalog, setOfficeCatalog] = useState([]);
+  const [catalogSettingId, setCatalogSettingId] = useState(null);
   const [selectedLocality, setSelectedLocality] = useState(null);
   const [editingLocality, setEditingLocality] = useState(null);
   const [newOfficeType, setNewOfficeType] = useState("");
+  const [catalogSearch, setCatalogSearch] = useState("");
 
-  // Locality form
+  // Load office catalog from GlobalSettings
+  useEffect(() => {
+    const load = async () => {
+      const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeCatalog' });
+      if (settings.length > 0) {
+        setOfficeCatalog(settings[0].setting_value?.items || []);
+        setCatalogSettingId(settings[0].id);
+      }
+    };
+    load();
+  }, []);
+
   const [form, setForm] = useState({
     name: "", governing_body: "", state: "",
     contact_phone: "", contact_email: "", contact_website: "", contact_address: "",
@@ -27,9 +42,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     offices: []
   });
 
-  // Migrate legacy workflow_steps → offices[] if needed
   const migrateLocality = (loc) => {
-    const offices = loc.offices && loc.offices.length > 0
+    return loc.offices && loc.offices.length > 0
       ? loc.offices
       : (loc.workflow_steps && loc.workflow_steps.length > 0)
         ? [{
@@ -40,7 +54,6 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
             order: 0
           }]
         : [];
-    return offices;
   };
 
   const selectLocality = (loc) => {
@@ -58,6 +71,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       contact_notes: loc.contact_notes || "",
       offices: migrateLocality(loc)
     });
+    setCatalogSearch("");
   };
 
   const newLocality = () => {
@@ -69,11 +83,11 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       contact_department: "", contact_notes: "",
       offices: []
     });
+    setCatalogSearch("");
   };
 
   const saveLocality = async () => {
     if (!form.name.trim()) return;
-    // Strip legacy fields
     const payload = { ...form };
     if (editingLocality === "new") {
       const created = await PermitLocality.create(payload);
@@ -96,16 +110,25 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     }
   };
 
-  // Add an office to the locality from the catalog
-  const addOfficeFromCatalog = (officeType) => {
-    const newOffice = {
+  // Add an office to the locality from the full office catalog (deep copy)
+  const addOfficeFromCatalog = (catalogOffice) => {
+    const copy = {
       id: `${Date.now()}-${Math.random()}`,
-      name: officeType,
-      office_type: officeType,
-      workflow_steps: [],
+      name: catalogOffice.name || "",
+      office_type: catalogOffice.office_type || "",
+      contact_phone: catalogOffice.contact_phone || "",
+      contact_email: catalogOffice.contact_email || "",
+      contact_website: catalogOffice.contact_website || "",
+      contact_address: catalogOffice.contact_address || "",
+      contact_notes: catalogOffice.contact_notes || "",
+      workflow_steps: (catalogOffice.workflow_steps || []).map(s => ({
+        ...s,
+        id: `${Date.now()}-${Math.random()}-${s.id}`
+      })),
       order: form.offices.length
     };
-    setForm(prev => ({ ...prev, offices: [...prev.offices, newOffice] }));
+    setForm(prev => ({ ...prev, offices: [...prev.offices, copy] }));
+    setCatalogSearch("");
   };
 
   const addBlankOffice = () => {
@@ -127,11 +150,11 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const deleteOffice = (officeId) => {
-    if (!confirm("Delete this office?")) return;
+    if (!confirm("Delete this office from the locality?")) return;
     setForm(prev => ({ ...prev, offices: prev.offices.filter(o => o.id !== officeId) }));
   };
 
-  // Office Type Catalog
+  // Office Types (simple labels used as categories)
   const saveOfficeTypes = async (types) => {
     setOfficeTypes(types);
     const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeTypes' });
@@ -140,10 +163,32 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const addOfficeType = () => {
-    if (!newOfficeType.trim() || officeTypes.includes(newOfficeType.trim())) return;
-    saveOfficeTypes([...officeTypes, newOfficeType.trim()]);
+    const trimmed = newOfficeType.trim();
+    if (!trimmed || officeTypes.includes(trimmed)) return;
+    saveOfficeTypes([...officeTypes, trimmed]);
     setNewOfficeType("");
   };
+
+  // Office Catalog save
+  const saveOfficeCatalog = async (newCatalog) => {
+    setOfficeCatalog(newCatalog);
+    if (catalogSettingId) {
+      await GlobalSettings.update(catalogSettingId, { setting_value: { items: newCatalog } });
+    } else {
+      const created = await GlobalSettings.create({ setting_key: 'permitOfficeCatalog', setting_value: { items: newCatalog } });
+      setCatalogSettingId(created.id);
+    }
+  };
+
+  // Catalog search results for locality editor
+  const catalogSearchResults = useMemo(() => {
+    if (!catalogSearch.trim()) return [];
+    const q = catalogSearch.toLowerCase();
+    return officeCatalog.filter(o =>
+      (o.name || "").toLowerCase().includes(q) ||
+      (o.office_type || "").toLowerCase().includes(q)
+    ).slice(0, 10);
+  }, [officeCatalog, catalogSearch]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -156,15 +201,15 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-200 h-9">
-            <TabsTrigger value="localities" className="text-sm">Locality Manager</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-gray-200 h-9">
+            <TabsTrigger value="localities" className="text-sm">Localities</TabsTrigger>
             <TabsTrigger value="catalog" className="text-sm">Office Catalog</TabsTrigger>
+            <TabsTrigger value="types" className="text-sm">Office Type Catalog</TabsTrigger>
           </TabsList>
 
-          {/* Localities */}
+          {/* LOCALITIES */}
           <TabsContent value="localities" className="flex-1 overflow-hidden" style={{ marginTop: 0 }}>
             <div className="grid grid-cols-[220px_1fr] gap-4 h-full pt-3">
-              {/* Locality List */}
               <div className="flex flex-col">
                 <Button onClick={newLocality} size="sm" className="w-full mb-2 bg-purple-600 hover:bg-purple-700 gap-1">
                   <Plus className="w-3 h-3" /> New Locality
@@ -185,11 +230,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                 </div>
               </div>
 
-              {/* Locality Editor */}
               <div className="overflow-y-auto bg-gray-50 border rounded-lg p-4">
                 {editingLocality ? (
                   <div className="space-y-4">
-                    {/* Basic Info */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Locality Name *</Label>
@@ -205,7 +248,6 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                       </div>
                     </div>
 
-                    {/* Contact Info */}
                     <div className="border-t pt-3">
                       <h4 className="text-sm font-semibold mb-2">Locality Contact Information</h4>
                       <div className="grid grid-cols-2 gap-3">
@@ -232,7 +274,6 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                       </div>
                     </div>
 
-                    {/* Offices */}
                     <div className="border-t pt-3">
                       <div className="flex items-center justify-between mb-2">
                         <div>
@@ -244,29 +285,49 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                         </Button>
                       </div>
 
-                      {/* Office catalog - click to add */}
-                      {officeTypes.length > 0 && (
-                        <div className="mb-3 p-2 bg-white border border-dashed rounded">
-                          <p className="text-[10px] text-gray-500 mb-1.5 font-medium uppercase tracking-wide">Add from catalog:</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {officeTypes.map(type => (
-                              <button
-                                key={type}
-                                onClick={() => addOfficeFromCatalog(type)}
-                                className="text-xs px-2 py-1 rounded bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors flex items-center gap-1"
-                              >
-                                <Plus className="w-2.5 h-2.5" /> {type}
-                              </button>
-                            ))}
-                          </div>
+                      {/* Search office catalog to add */}
+                      <div className="mb-3 p-2 bg-white border border-dashed rounded">
+                        <p className="text-[10px] text-gray-500 mb-1.5 font-medium uppercase tracking-wide">Add from Office Catalog:</p>
+                        <div className="relative">
+                          <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <Input
+                            value={catalogSearch}
+                            onChange={e => setCatalogSearch(e.target.value)}
+                            placeholder={officeCatalog.length === 0 ? "Office catalog is empty — add offices in the Office Catalog tab" : "Search offices by name or type..."}
+                            className="h-7 text-xs pl-7"
+                            disabled={officeCatalog.length === 0}
+                          />
+                          {catalogSearchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow-lg z-10 max-h-56 overflow-y-auto">
+                              {catalogSearchResults.map(o => (
+                                <button
+                                  key={o.id}
+                                  onClick={() => addOfficeFromCatalog(o)}
+                                  className="w-full text-left px-2.5 py-1.5 hover:bg-purple-50 border-b last:border-b-0 flex items-center justify-between gap-2"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-xs font-medium truncate">{o.name || '(unnamed)'}</div>
+                                    <div className="text-[10px] text-gray-500">
+                                      {o.office_type || '—'} · {(o.workflow_steps || []).length} step{(o.workflow_steps || []).length === 1 ? '' : 's'}
+                                    </div>
+                                  </div>
+                                  <Plus className="w-3 h-3 text-purple-600 flex-shrink-0" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {catalogSearch.trim() && catalogSearchResults.length === 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow-lg z-10 px-2.5 py-2 text-[11px] text-gray-400">
+                              No offices match "{catalogSearch}"
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
 
-                      {/* Office list */}
                       <div className="space-y-2">
                         {form.offices.length === 0 && (
                           <div className="p-4 bg-white border border-dashed rounded text-center text-xs text-gray-400">
-                            No offices added yet. Click a type from the catalog above to add one.
+                            No offices added yet. Search the catalog above or add a blank office.
                           </div>
                         )}
                         {form.offices.map(office => (
@@ -281,7 +342,6 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-2 pt-3 border-t sticky bottom-0 bg-gray-50">
                       <Button onClick={saveLocality} className="bg-purple-600 hover:bg-purple-700 gap-1">
                         <Save className="w-4 h-4" /> Save Locality
@@ -302,19 +362,40 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
             </div>
           </TabsContent>
 
-          {/* Office Catalog */}
+          {/* OFFICE CATALOG (full offices with workflow) */}
           <TabsContent value="catalog" className="flex-1 overflow-y-auto p-3" style={{ marginTop: 0 }}>
+            <OfficeCatalogEditor
+              catalog={officeCatalog}
+              officeTypes={officeTypes}
+              onChange={saveOfficeCatalog}
+            />
+          </TabsContent>
+
+          {/* OFFICE TYPE CATALOG (simple labels) */}
+          <TabsContent value="types" className="flex-1 overflow-y-auto p-3" style={{ marginTop: 0 }}>
             <div className="max-w-lg">
-              <h3 className="font-semibold text-sm mb-1">Office Catalog</h3>
-              <p className="text-xs text-gray-500 mb-4">Define office types (e.g. Zoning, Building, Electrical). You can then click these types from the Locality Editor to quickly add offices to a locality.</p>
+              <h3 className="font-semibold text-sm mb-1">Office Type Catalog</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Simple labels used to categorize offices (e.g. Zoning, Building, Electrical). These appear in the office type dropdown when configuring an office. No workflow steps are attached here.
+              </p>
 
               <div className="flex gap-2 mb-4">
-                <Input value={newOfficeType} onChange={e => setNewOfficeType(e.target.value)} placeholder="New office type..." className="h-8 text-sm"
-                  onKeyDown={e => e.key === 'Enter' && addOfficeType()} />
+                <Input
+                  value={newOfficeType}
+                  onChange={e => setNewOfficeType(e.target.value)}
+                  placeholder="New office type..."
+                  className="h-8 text-sm"
+                  onKeyDown={e => e.key === 'Enter' && addOfficeType()}
+                />
                 <Button size="sm" onClick={addOfficeType} className="h-8"><Plus className="w-3 h-3 mr-1" /> Add</Button>
               </div>
 
               <div className="space-y-1">
+                {officeTypes.length === 0 && (
+                  <div className="p-4 bg-white border border-dashed rounded text-center text-xs text-gray-400">
+                    No office types yet.
+                  </div>
+                )}
                 {officeTypes.map((type, idx) => (
                   <div key={type} className="flex items-center gap-2 p-2 bg-white border rounded text-sm">
                     <span className="flex-1 font-medium">{type}</span>
