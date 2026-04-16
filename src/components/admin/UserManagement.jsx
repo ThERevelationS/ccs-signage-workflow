@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
+import { setPassword as setPasswordFn } from "@/functions/setPassword";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +57,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
 export default function UserManagement() {
+  const { sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -249,12 +252,28 @@ Return valid HTML that will render beautifully in ALL email clients including da
 
   const handleSave = async () => {
     if (editingUser) {
-      // Only update password if a new one was entered
       const dataToSave = { ...formData };
-      if (!dataToSave.password_hash) {
-        delete dataToSave.password_hash;
-      }
+      const newPassword = dataToSave.password_hash;
+      // Never send password_hash directly — use secure backend
+      delete dataToSave.password_hash;
       await base44.entities.AuthorizedEmail.update(editingUser.id, dataToSave);
+
+      // If a new password was entered, save it securely via backend function
+      if (newPassword) {
+        try {
+          const res = await setPasswordFn({
+            user_email: editingUser.email,
+            username: dataToSave.username || editingUser.username,
+            new_password: newPassword,
+            session_token: sessionToken,
+          });
+          if (!res?.data?.success) {
+            alert(`Password not saved: ${res?.data?.error || 'Unknown error'}`);
+          }
+        } catch (e) {
+          alert(`Password save failed: ${e?.response?.data?.error || e?.message}`);
+        }
+      }
       await loadUsers();
     }
     setIsDialogOpen(false);

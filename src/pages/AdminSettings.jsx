@@ -79,6 +79,8 @@ import PermittingRepositoryAdmin from "@/components/permitting/PermittingReposit
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import { useAuth } from "@/components/auth/EmailGate";
+import { verifyLogin } from "@/functions/verifyLogin";
+import PasswordMigrationButton from "@/components/admin/PasswordMigrationButton";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -351,24 +353,28 @@ export default function AdminSettings() {
       setPasswordError("Please enter both username and password");
       return;
     }
-    
+
     setIsVerifying(true);
     setPasswordError("");
-    
-    // Find user by username
-    const userRecord = allUsers.find(u => u.username?.toLowerCase() === usernameInput.toLowerCase().trim());
-    
-    if (userRecord && userRecord.password_hash === passwordInput && userRecord.role === 'admin') {
-      setIsUnlocked(true);
-      sessionStorage.setItem('adminUnlocked', 'true');
-      setUsernameInput("");
-      setPasswordInput("");
-    } else if (userRecord && userRecord.password_hash === passwordInput) {
-      setPasswordError("Access denied - admin privileges required");
-    } else {
-      setPasswordError("Invalid username or password");
+
+    try {
+      const res = await verifyLogin({ username: usernameInput.trim(), password: passwordInput });
+      if (res?.data?.success && res.data.user) {
+        if (res.data.user.role === 'admin') {
+          setIsUnlocked(true);
+          sessionStorage.setItem('adminUnlocked', 'true');
+          setUsernameInput("");
+          setPasswordInput("");
+        } else {
+          setPasswordError("Access denied - admin privileges required");
+        }
+      } else {
+        setPasswordError(res?.data?.error || "Invalid username or password");
+      }
+    } catch (e) {
+      setPasswordError(e?.response?.data?.error || e?.message || "Login failed");
     }
-    
+
     setIsVerifying(false);
   };
 
@@ -847,6 +853,9 @@ export default function AdminSettings() {
           </div>
 
           <TabsContent value="users">
+            <div className="mb-6">
+              <PasswordMigrationButton />
+            </div>
             <UserManagement />
           </TabsContent>
 

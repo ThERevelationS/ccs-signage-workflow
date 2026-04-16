@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -164,23 +165,43 @@ export default function NewUserSetup() {
   const handleSaveCredentialsAndFace = async () => {
     setSaving(true);
     setFormError("");
-    
+
     try {
-      // Update user with credentials and face data
+      // Update user profile (no password)
       await base44.entities.AuthorizedEmail.update(user.id, {
         full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
-        password_hash: password,
         face_descriptors: faceDescriptors.length > 0 ? faceDescriptors : undefined
       });
-      
+
+      // Save password securely via backend using the onboarding token as a one-time auth
+      // We reuse the password_reset_token mechanism — set it to the onboarding token,
+      // then call setPassword with reset_token flow. Simpler: use a short-lived token.
+      // Actually we'll just set password_reset_token to onboarding token first:
+      await base44.entities.AuthorizedEmail.update(user.id, {
+        password_reset_token: user.onboarding_token,
+        password_reset_expires: user.onboarding_expires,
+      });
+
+      const res = await setPasswordFn({
+        reset_token: user.onboarding_token,
+        new_password: password,
+        username: username.toLowerCase().trim(),
+      });
+
+      if (!res?.data?.success) {
+        setFormError(res?.data?.error || "Failed to save password");
+        setSaving(false);
+        return;
+      }
+
       // Move to HR data step
       setStep(4);
     } catch (err) {
       console.error("Error saving:", err);
       setFormError("Failed to save your information. Please try again.");
     }
-    
+
     setSaving(false);
   };
 
