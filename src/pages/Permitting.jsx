@@ -155,28 +155,52 @@ export default function Permitting() {
     }
   }, [lineItems, workOrders, currentUser]);
 
-  // When a locality is selected on a "virtual" (no line items yet) work order,
-  // create one line item per category configured in that locality's settings
+  // When a locality is selected on a work order with no line items yet,
+  // create one line item per OFFICE configured in that locality's settings.
+  // Each office has its own workflow_steps.
   const selectLocalityForWorkOrder = useCallback(async (workOrderId, localityId) => {
     const locality = localities.find(l => l.id === localityId);
     if (!locality) return;
     const wo = workOrders.find(w => w.id === workOrderId);
     if (!wo) return;
 
-    const categories = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
+    // Prefer new offices[] model; fall back to legacy workflow_steps/categories
+    let officesToCreate = [];
+    if (locality.offices && locality.offices.length > 0) {
+      officesToCreate = locality.offices.map(o => ({
+        name: o.name || o.office_type || "Office",
+        office_type: o.office_type || "",
+        office_id: o.id,
+        steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
+      }));
+    } else if (locality.workflow_steps?.length > 0) {
+      // Legacy data
+      const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
+      officesToCreate = cats.map(cat => ({
+        name: cat,
+        office_type: cat,
+        steps: (locality.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
+      }));
+    } else {
+      officesToCreate = [{
+        name: locality.name || "Office",
+        office_type: locality.office_type || "",
+        steps: []
+      }];
+    }
+
     const created = [];
-    for (const cat of categories) {
-      const steps = (locality.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }));
+    for (const office of officesToCreate) {
       const newItem = await PermitLineItem.create({
         work_order_id: wo.id,
         work_order_title: wo.client_name || "",
         work_order_description: wo.description || "",
-        row_name: "",
-        office_type: cat,
+        row_name: office.name,
+        office_type: office.office_type,
         locality_id: locality.id,
         locality_name: locality.name || "",
         status: "active",
-        steps,
+        steps: office.steps,
         priority: 0
       });
       created.push(newItem);
@@ -184,19 +208,27 @@ export default function Permitting() {
     setLineItems(prev => [...prev, ...created]);
   }, [localities, workOrders]);
 
-  // Update locality on an existing line — keeps the row, replaces steps from locality template
+  // Update locality on an existing line — replaces steps using the office this line represents
   const updateLocality = useCallback(async (lineItemId, localityId) => {
     const locality = localities.find(l => l.id === localityId);
     const updates = {
       locality_id: localityId || "",
       locality_name: locality?.name || "",
     };
-    if (locality?.workflow_steps?.length > 0) {
-      updates.steps = locality.workflow_steps.map(s => ({ ...s, value: "", checked: false }));
+    if (locality) {
+      // Try to match an office by office_type on the existing line
+      const item = lineItems.find(li => li.id === lineItemId);
+      const matchingOffice = locality.offices?.find(o => o.office_type === item?.office_type)
+        || locality.offices?.[0];
+      if (matchingOffice) {
+        updates.steps = (matchingOffice.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }));
+      } else if (locality.workflow_steps?.length > 0) {
+        updates.steps = locality.workflow_steps.map(s => ({ ...s, value: "", checked: false }));
+      }
     }
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...updates } : li));
     await PermitLineItem.update(lineItemId, updates);
-  }, [localities]);
+  }, [localities, lineItems]);
 
   const deleteLineItem = useCallback(async (lineItemId) => {
     await PermitLineItem.delete(lineItemId);

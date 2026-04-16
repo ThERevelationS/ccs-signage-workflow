@@ -116,12 +116,15 @@ export default function PermitClientGroup({
                     {localities.length === 0 && (
                       <div className="px-2 py-1 text-xs text-gray-400">No localities configured</div>
                     )}
-                    {localities.map(l => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.name}{l.state ? ` (${l.state})` : ''}
-                        {l.categories?.length > 0 && <span className="text-[10px] text-gray-400 ml-1">· {l.categories.join(', ')}</span>}
-                      </SelectItem>
-                    ))}
+                    {localities.map(l => {
+                      const officeCount = l.offices?.length || (l.workflow_steps?.length > 0 ? 1 : 0);
+                      return (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.name}{l.state ? ` (${l.state})` : ''}
+                          {officeCount > 0 && <span className="text-[10px] text-gray-400 ml-1">· {officeCount} office{officeCount === 1 ? '' : 's'}</span>}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
