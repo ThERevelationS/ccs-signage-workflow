@@ -22,6 +22,7 @@ export default function Permitting() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [officeTypes, setOfficeTypes] = useState(["Zoning", "Building", "Electrical Inspectors"]);
+  const [taskDescriptions, setTaskDescriptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
@@ -55,11 +56,14 @@ export default function Permitting() {
       // Get task descriptions assigned to Permitting page
       const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const permittingTaskDescs = [];
+      const allTaskDescs = [];
       if (taskDescSetting?.setting_value?.items) {
         taskDescSetting.setting_value.items.forEach(item => {
           if (item.page === "Permitting") permittingTaskDescs.push(item.text);
+          if (item.text) allTaskDescs.push(item.text);
         });
       }
+      setTaskDescriptions(allTaskDescs);
 
       // Work orders on the Permitting page
       const permittingWOs = wos.filter(wo =>
@@ -235,6 +239,12 @@ export default function Permitting() {
     setLineItems(prev => prev.filter(li => li.id !== lineItemId));
   }, []);
 
+  // Update a field on the underlying WorkOrder (used by the client group header)
+  const updateWorkOrderField = useCallback(async (workOrderId, field, value) => {
+    setWorkOrders(prev => prev.map(w => w.id === workOrderId ? { ...w, [field]: value } : w));
+    await WorkOrder.update(workOrderId, { [field]: value });
+  }, []);
+
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
     if (wo) setSelectedWorkOrder(wo);
@@ -372,9 +382,11 @@ export default function Permitting() {
             onOpenWorkOrder={openWorkOrder}
             onShowLocalityInfo={setLocalityInfoId}
             onDeleteLine={deleteLineItem}
+            onUpdateWorkOrderField={updateWorkOrderField}
             isRegistered={isRegistered}
             localities={localities}
             users={users}
+            taskDescriptions={taskDescriptions}
             today={today}
           />
         ))}
