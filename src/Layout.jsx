@@ -29,9 +29,11 @@ import {
   ChevronLeft,
   Clock,
   Megaphone,
+  LogIn,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
+import LoginGate from "@/components/auth/LoginGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
@@ -125,7 +127,7 @@ function LayoutContent({ children }) {
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
-  const { currentUser, isRegistered, logout, getUserFirstName } = useAuth();
+  const { currentUser, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
   
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
@@ -506,6 +508,38 @@ function LayoutContent({ children }) {
 
               {/* Time Clock + Add Task side by side, Search full width below */}
               <div className="space-y-2 mb-4">
+                {/* Login / Logout button */}
+                {!currentUser ? (
+                  <button
+                    data-login-gate-allow
+                    onClick={showLoginDialog}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-purple-300 hover:clay-card transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)',
+                      boxShadow: '4px 4px 12px rgba(139,92,246,0.15), -4px -4px 12px rgba(255,255,255,0.9), inset 1px 1px 4px rgba(255,255,255,0.6)',
+                      height: '36px',
+                    }}
+                    title="Sign In"
+                  >
+                    <LogIn className="w-4 h-4 text-purple-700" />
+                    <span className="font-bold text-sm text-purple-800">Sign In</span>
+                  </button>
+                ) : (
+                  <button
+                    data-login-gate-allow
+                    onClick={logout}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 hover:clay-card transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                      height: '36px',
+                    }}
+                    title={`Logout ${getUserFirstName()}`}
+                  >
+                    <LogOut className="w-4 h-4 text-gray-700" />
+                    <span className="font-bold text-sm text-gray-800 truncate">Logout {getUserFirstName()}</span>
+                  </button>
+                )}
+
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
                   <button
@@ -749,6 +783,30 @@ function LayoutContent({ children }) {
                 {/* Time Clock + Add Task on top row, Search spans full width below */}
                 <div className="hidden lg:flex lg:flex-col lg:gap-1">
                   <div className="flex gap-2 items-stretch">
+                    {/* Login / Logout button */}
+                    {!currentUser ? (
+                      <button
+                        data-login-gate-allow
+                        onClick={showLoginDialog}
+                        className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-purple-300"
+                        style={{ background: 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)' }}
+                        title="Sign In"
+                      >
+                        <LogIn className="w-4 h-4 text-purple-700" />
+                        <span className="font-bold text-sm text-purple-800">Sign In</span>
+                      </button>
+                    ) : (
+                      <button
+                        data-login-gate-allow
+                        onClick={logout}
+                        className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-gray-300 bg-gray-50"
+                        title={`Logout ${getUserFirstName()}`}
+                      >
+                        <LogOut className="w-4 h-4 text-gray-700" />
+                        <span className="font-bold text-sm text-gray-800">Logout</span>
+                      </button>
+                    )}
+
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
                       <button
@@ -871,10 +929,10 @@ function LayoutContent({ children }) {
                     transition={{ duration: 0.18, ease: 'easeInOut' }}
                     style={{ minHeight: '100%' }}
                   >
-                    {children}
+                    <LoginGate>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
-              ) : children}
+              ) : <LoginGate>{children}</LoginGate>}
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </main>
@@ -980,8 +1038,24 @@ function LayoutContent({ children }) {
                     { label: 'My Workflow', icon: User, url: createPageUrl('MyWorkflow') },
                     { label: 'Sales', icon: DollarSign, url: createPageUrl('SalesPipeline') },
                     { label: 'Timeclock', icon: Clock, url: createPageUrl('TimeClock') },
-                    { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') },
+                    currentUser
+                      ? { label: 'Settings', icon: Settings, url: createPageUrl('UserSettings') }
+                      : { label: 'Sign In', icon: LogIn, action: showLoginDialog },
                   ].map((item) => {
+                    if (item.action) {
+                      return (
+                        <button
+                          key={item.label}
+                          data-login-gate-allow
+                          onClick={item.action}
+                          className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
+                          style={{ minHeight: '44px', userSelect: 'none', color: '#7C3AED' }}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          <span className="text-xs font-medium">{item.label}</span>
+                        </button>
+                      );
+                    }
                     const isActive = location.pathname === item.url;
                     return (
                       <Link

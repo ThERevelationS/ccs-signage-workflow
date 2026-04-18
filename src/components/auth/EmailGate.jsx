@@ -102,6 +102,15 @@ export function AuthProvider({ children }) {
     }
   }, [isLoading, currentUser, browseOnly]);
 
+  // Gate used by pages/components: if not logged in, pop the login dialog and
+  // return false so the caller can abort the action.
+  const requireLogin = useCallback(() => {
+    if (currentUser) return true;
+    setBrowseOnly(false);
+    setShowLogin(true);
+    return false;
+  }, [currentUser]);
+
   const value = {
     currentUser,
     isRegistered: !!currentUser,
@@ -110,7 +119,8 @@ export function AuthProvider({ children }) {
     loginWithCredentials,
     adminBootstrap,
     getUserFirstName,
-    showLoginDialog: () => setShowLogin(true),
+    showLoginDialog: () => { setBrowseOnly(false); setShowLogin(true); },
+    requireLogin,
   };
 
   if (isLoading) {
@@ -166,8 +176,8 @@ function LoginDialog({ open, onLogin, onBrowseOnly, onAdminBootstrap }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onBrowseOnly(); }}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <LogIn className="w-5 h-5 text-purple-600" /> Sign In
