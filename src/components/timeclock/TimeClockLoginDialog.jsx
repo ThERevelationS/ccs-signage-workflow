@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { verifyLogin } from "@/functions/verifyLogin";
+import { base44 } from "@/api/base44Client";
 import { Loader2, AlertCircle, LogIn } from "lucide-react";
 
 export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUsers }) {
@@ -17,20 +17,22 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
     setError("");
     setSubmitting(true);
     try {
-      const res = await verifyLogin({ username: username.trim(), password });
-      if (res?.data?.success && res.data.user) {
+      const res = await base44.functions.invoke("verifyLogin", { username: username.trim(), password });
+      const data = res?.data || res;
+      if (data?.success && data.user) {
         // Find matching full user record from allUsers list so the page has everything it expects
         const full = (allUsers || []).find(
-          (u) => u.email === res.data.user.email || u.username === res.data.user.username
+          (u) => u.email === data.user.email || u.username === data.user.username
         );
-        onLogin(full || res.data.user);
+        onLogin(full || data.user);
         setUsername("");
         setPassword("");
       } else {
-        setError(res?.data?.error || "Invalid username or password");
+        setError(data?.error || "Invalid username or password");
       }
     } catch (err) {
-      setError(err?.message || "Login failed");
+      const apiError = err?.response?.data?.error;
+      setError(apiError || err?.message || "Login failed");
     }
     setSubmitting(false);
   };

@@ -30,10 +30,10 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const { verifySession } = await import("@/functions/verifySession");
-      const res = await verifySession({ token });
-      if (res?.data?.valid && res.data.user) {
-        setCurrentUser(res.data.user);
+      const res = await base44.functions.invoke("verifySession", { token });
+      const data = res?.data || res;
+      if (data?.valid && data.user) {
+        setCurrentUser(data.user);
       } else {
         localStorage.removeItem(TOKEN_KEY);
       }
@@ -55,29 +55,39 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithCredentials = useCallback(async (username, password) => {
-    const { verifyLogin } = await import("@/functions/verifyLogin");
-    const res = await verifyLogin({ username, password });
-    if (res?.data?.success && res.data.token) {
-      localStorage.setItem(TOKEN_KEY, res.data.token);
-      setCurrentUser(res.data.user);
-      setBrowseOnly(false);
-      setShowLogin(false);
-      return { success: true };
+    try {
+      const res = await base44.functions.invoke("verifyLogin", { username, password });
+      const data = res?.data || res;
+      if (data?.success && data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        setCurrentUser(data.user);
+        setBrowseOnly(false);
+        setShowLogin(false);
+        return { success: true };
+      }
+      return { success: false, error: data?.error || "Invalid username or password" };
+    } catch (err) {
+      const apiError = err?.response?.data?.error;
+      return { success: false, error: apiError || "Invalid username or password" };
     }
-    return { success: false, error: res?.data?.error || "Invalid username or password" };
   }, []);
 
   const adminBootstrap = useCallback(async () => {
-    const { adminBootstrapLogin } = await import("@/functions/adminBootstrapLogin");
-    const res = await adminBootstrapLogin({});
-    if (res?.data?.success && res.data.token) {
-      localStorage.setItem(TOKEN_KEY, res.data.token);
-      setCurrentUser(res.data.user);
-      setBrowseOnly(false);
-      setShowLogin(false);
-      return { success: true };
+    try {
+      const res = await base44.functions.invoke("adminBootstrapLogin", {});
+      const data = res?.data || res;
+      if (data?.success && data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        setCurrentUser(data.user);
+        setBrowseOnly(false);
+        setShowLogin(false);
+        return { success: true };
+      }
+      return { success: false, error: data?.error || "Bootstrap failed" };
+    } catch (err) {
+      const apiError = err?.response?.data?.error;
+      return { success: false, error: apiError || "Bootstrap failed" };
     }
-    return { success: false, error: res?.data?.error || "Bootstrap failed" };
   }, []);
 
   const getUserFirstName = useCallback(() => {
