@@ -67,7 +67,6 @@ import PermittingRepository from './pages/PermittingRepository';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
 import ReportingDashboard from './pages/ReportingDashboard';
-import ResetPassword from './pages/ResetPassword.jsx';
 import ResourcePlanning from './pages/ResourcePlanning';
 import SIPs from './pages/SIPs';
 import SalesPipeline from './pages/SalesPipeline';
@@ -98,7 +97,6 @@ export const PAGES = {
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
     "ReportingDashboard": ReportingDashboard,
-    "ResetPassword": ResetPassword,
     "ResourcePlanning": ResourcePlanning,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
