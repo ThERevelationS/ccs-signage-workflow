@@ -94,7 +94,7 @@ export default function LocalityPickerDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="clay-card border-none max-w-5xl w-[95vw] h-[85vh] max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="clay-card border-none max-w-[1400px] w-[95vw] max-h-[92vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-purple-600" />
@@ -142,10 +142,10 @@ export default function LocalityPickerDialog({
           </div>
         )}
 
-        {/* Split: results left | map right */}
-        <div className="flex-1 grid grid-cols-[1fr_1fr] gap-3 overflow-hidden min-h-0">
-          {/* Left: AI results */}
-          <div className="overflow-y-auto min-h-0 space-y-3 pr-1">
+        {/* Split: results left (fixed width) | map right (square, fills rest) */}
+        <div className="flex gap-3 overflow-hidden min-h-0" style={{ height: '680px' }}>
+          {/* Left: AI results — fixed width */}
+          <div className="overflow-y-auto space-y-3 pr-1" style={{ width: '420px', flexShrink: 0 }}>
             {!result && !searching && (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
                 Enter an address above and click <strong>AI Lookup</strong> to get locality, zoning, and parcel info.
@@ -258,8 +258,8 @@ export default function LocalityPickerDialog({
             )}
           </div>
 
-          {/* Right: Map */}
-          <div className="rounded-lg overflow-hidden border min-h-0 relative h-full w-full">
+          {/* Right: Map — square, fills available width */}
+          <div className="rounded-lg overflow-hidden border relative flex-1 aspect-square self-start" style={{ maxHeight: '680px' }}>
             <MapContainer
               center={mapPosition || defaultCenter}
               zoom={mapPosition ? 16 : 10}
