@@ -31,8 +31,23 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const uname = String(username).toLowerCase().trim();
 
-    // Look up user directly on AuthorizedEmail (the source of truth for credentials)
-    const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ username: uname });
+    // Look up user directly on AuthorizedEmail (the source of truth for credentials).
+    // Retry on 429 (Cloudflare / rate-limit) with exponential backoff.
+    const filterWithRetry = async (attempts = 4) => {
+      let lastErr;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          return await base44.asServiceRole.entities.AuthorizedEmail.filter({ username: uname });
+        } catch (err) {
+          lastErr = err;
+          const status = err?.status || err?.response?.status;
+          if (status !== 429) throw err;
+          await new Promise((r) => setTimeout(r, 400 * Math.pow(2, i)));
+        }
+      }
+      throw lastErr;
+    };
+    const users = await filterWithRetry();
     const user = users?.[0];
     if (!user) {
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
