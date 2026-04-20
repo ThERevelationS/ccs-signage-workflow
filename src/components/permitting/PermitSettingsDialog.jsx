@@ -295,27 +295,25 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
               )}
             </div>
             <div className="flex items-center gap-2">
-              {editingLocality && activeTab === 'localities' && (
-                <>
-                  <Button
-                    onClick={saveLocality}
-                    disabled={!form.name.trim() || !isDirty}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 gap-1"
-                  >
-                    <Save className="w-3.5 h-3.5" /> Save
-                  </Button>
-                  <Button
-                    onClick={saveAndExit}
-                    disabled={!form.name.trim()}
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                  >
-                    <LogOut className="w-3.5 h-3.5" /> Save & Exit
-                  </Button>
-                </>
-              )}
+              <Button
+                onClick={saveLocality}
+                disabled={!editingLocality || !form.name.trim() || !isDirty}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700 gap-1"
+                title={!editingLocality ? "Select a locality to save" : ""}
+              >
+                <Save className="w-3.5 h-3.5" /> Save
+              </Button>
+              <Button
+                onClick={saveAndExit}
+                disabled={!editingLocality || !form.name.trim()}
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                title={!editingLocality ? "Select a locality to save" : ""}
+              >
+                <LogOut className="w-3.5 h-3.5" /> Save & Exit
+              </Button>
               <Button variant="ghost" size="sm" onClick={attemptClose} title="Close">
                 <X className="w-4 h-4" />
               </Button>
