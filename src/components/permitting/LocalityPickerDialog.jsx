@@ -267,8 +267,10 @@ export default function LocalityPickerDialog({
               scrollWheelZoom={true}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                subdomains={['a', 'b', 'c', 'd']}
+                maxZoom={20}
               />
               <MapResizer trigger={`${isOpen}-${mapPosition ? mapPosition.join(',') : 'none'}`} />
               {mapPosition && (
