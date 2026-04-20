@@ -31,23 +31,29 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const uname = String(username).toLowerCase().trim();
 
-    // Look up credential as service role (bypasses RLS)
-    const creds = await base44.asServiceRole.entities.UserCredential.filter({ username: uname });
-    if (!creds || creds.length === 0) {
-      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
-    }
-
-    const cred = creds[0];
-    const match = await bcrypt.compare(password, cred.password_hash);
-    if (!match) {
-      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
-    }
-
-    // Look up full user info
-    const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: cred.user_email });
+    // Look up user directly on AuthorizedEmail (the source of truth for credentials)
+    const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ username: uname });
     const user = users?.[0];
     if (!user) {
-      return Response.json({ success: false, error: 'User record not found' }, { status: 404 });
+      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    const stored = user.password_hash || '';
+    if (!stored) {
+      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    // Support both bcrypt hashes ($2a/$2b/$2y) and legacy plaintext passwords
+    const isBcrypt = /^\$2[aby]\$/.test(stored);
+    let match = false;
+    if (isBcrypt) {
+      match = await bcrypt.compare(password, stored);
+    } else {
+      match = password === stored;
+    }
+
+    if (!match) {
+      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
     // Build signed session token: base64url(payload).base64url(signature)
@@ -58,7 +64,7 @@ Deno.serve(async (req) => {
 
     const payload = {
       email: user.email,
-      username: cred.username,
+      username: user.username,
       role: user.role || 'user',
       iat: Date.now(),
       exp: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30 days
@@ -74,7 +80,7 @@ Deno.serve(async (req) => {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
-        username: cred.username,
+        username: user.username,
         role: user.role,
         sales_roles: user.sales_roles,
         can_import_export: user.can_import_export,
