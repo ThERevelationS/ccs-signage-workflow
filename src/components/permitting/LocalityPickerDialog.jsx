@@ -25,6 +25,18 @@ function MapFlyTo({ position }) {
   return null;
 }
 
+// Force leaflet to recalc its size once the dialog finishes opening
+function MapResizer({ trigger }) {
+  const map = useMap();
+  useEffect(() => {
+    const timers = [50, 200, 500, 1000].map(delay =>
+      setTimeout(() => map.invalidateSize(), delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [trigger, map]);
+  return null;
+}
+
 export default function LocalityPickerDialog({
   isOpen,
   onClose,
@@ -247,17 +259,18 @@ export default function LocalityPickerDialog({
           </div>
 
           {/* Right: Map */}
-          <div className="rounded-lg overflow-hidden border min-h-0 relative">
+          <div className="rounded-lg overflow-hidden border min-h-0 relative h-full w-full">
             <MapContainer
               center={mapPosition || defaultCenter}
               zoom={mapPosition ? 16 : 10}
-              style={{ height: "100%", width: "100%" }}
+              style={{ height: "100%", width: "100%", position: "absolute", inset: 0 }}
               scrollWheelZoom={true}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              <MapResizer trigger={`${isOpen}-${mapPosition ? mapPosition.join(',') : 'none'}`} />
               {mapPosition && (
                 <>
                   <Marker position={mapPosition}>
