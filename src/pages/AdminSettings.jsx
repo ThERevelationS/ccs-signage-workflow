@@ -255,9 +255,12 @@ const TRIGGER_TYPES = [
   { value: "jurisdiction_profile_created", label: "Jurisdiction Profile Created", category: "Permitting" },
   { value: "jurisdiction_profile_updated", label: "Jurisdiction Profile Updated", category: "Permitting" },
   { value: "regulation_alert_created", label: "Regulation Alert / Change Detected", category: "Permitting" },
-  { value: "permit_submitted", label: "Permit Submitted", category: "Permitting" },
+  { value: "permit_submitted", label: "Permit Submitted (Submitted Date Set)", category: "Permitting" },
   { value: "permit_approved", label: "Permit Approved", category: "Permitting" },
+  { value: "permit_received", label: "Permit Received (Line Complete)", category: "Permitting" },
   { value: "permit_receipt_confirmed", label: "Permit Receipt Confirmed", category: "Permitting" },
+  { value: "permit_followup_due", label: "Permit Follow-up Date Reached", category: "Permitting" },
+  { value: "permit_followup_overdue", label: "Permit Follow-up Overdue", category: "Permitting" },
 
   // ── Financials / Reports ──
   { value: "feature_report_submitted", label: "Feature / Bug Report Submitted", category: "Reports" },

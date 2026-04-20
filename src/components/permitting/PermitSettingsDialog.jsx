@@ -1,11 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Save, X, Search } from "lucide-react";
+import { Plus, Trash2, Save, X, Search, LogOut, AlertTriangle } from "lucide-react";
 import LocalityOfficeEditor from "./LocalityOfficeEditor";
 import OfficeCatalogEditor from "./OfficeCatalogEditor";
 
@@ -42,6 +52,26 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     offices: []
   });
 
+  // Unsaved-changes tracking
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  // Snapshot of the form at the last "clean" point (load or save)
+  const cleanSnapshot = useRef(null);
+  // Also track catalog/officeTypes dirty state via separate booleans
+  const [catalogDirty, setCatalogDirty] = useState(false);
+  const [typesDirty, setTypesDirty] = useState(false);
+
+  // Compare current form against last snapshot
+  useEffect(() => {
+    if (!editingLocality || !cleanSnapshot.current) {
+      setIsDirty(false);
+      return;
+    }
+    setIsDirty(JSON.stringify(form) !== cleanSnapshot.current);
+  }, [form, editingLocality]);
+
+  const anyDirty = isDirty || catalogDirty || typesDirty;
+
   const migrateLocality = (loc) => {
     return loc.offices && loc.offices.length > 0
       ? loc.offices
@@ -56,10 +86,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         : [];
   };
 
-  const selectLocality = (loc) => {
-    setSelectedLocality(loc.id);
-    setEditingLocality(loc.id);
-    setForm({
+  const loadFormFromLocality = (loc) => {
+    const next = {
       name: loc.name || "",
       governing_body: loc.governing_body || "",
       state: loc.state || "",
@@ -70,24 +98,38 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       contact_department: loc.contact_department || "",
       contact_notes: loc.contact_notes || "",
       offices: migrateLocality(loc)
-    });
+    };
+    setForm(next);
+    cleanSnapshot.current = JSON.stringify(next);
+    setIsDirty(false);
+  };
+
+  const selectLocality = (loc) => {
+    if (isDirty && !confirm("You have unsaved changes. Discard them?")) return;
+    setSelectedLocality(loc.id);
+    setEditingLocality(loc.id);
+    loadFormFromLocality(loc);
     setCatalogSearch("");
   };
 
   const newLocality = () => {
+    if (isDirty && !confirm("You have unsaved changes. Discard them?")) return;
     setSelectedLocality(null);
     setEditingLocality("new");
-    setForm({
+    const blank = {
       name: "", governing_body: "", state: "",
       contact_phone: "", contact_email: "", contact_website: "", contact_address: "",
       contact_department: "", contact_notes: "",
       offices: []
-    });
+    };
+    setForm(blank);
+    cleanSnapshot.current = JSON.stringify(blank);
+    setIsDirty(false);
     setCatalogSearch("");
   };
 
   const saveLocality = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) return false;
     const payload = { ...form };
     if (editingLocality === "new") {
       const created = await PermitLocality.create(payload);
@@ -98,6 +140,14 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       await PermitLocality.update(editingLocality, payload);
       setLocalities(prev => prev.map(l => l.id === editingLocality ? { ...l, ...payload } : l));
     }
+    cleanSnapshot.current = JSON.stringify(form);
+    setIsDirty(false);
+    return true;
+  };
+
+  const saveAndExit = async () => {
+    const ok = await saveLocality();
+    if (ok) onClose();
   };
 
   const deleteLocality = async (id) => {
@@ -160,6 +210,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeTypes' });
     if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: types } });
     else await GlobalSettings.create({ setting_key: 'permitOfficeTypes', setting_value: { items: types } });
+    setTypesDirty(false);
   };
 
   const addOfficeType = () => {
@@ -178,6 +229,36 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
       const created = await GlobalSettings.create({ setting_key: 'permitOfficeCatalog', setting_value: { items: newCatalog } });
       setCatalogSettingId(created.id);
     }
+    setCatalogDirty(false);
+  };
+
+  // Close-guard handlers
+  const attemptClose = () => {
+    if (anyDirty) {
+      setShowUnsavedConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleOpenChange = (open) => {
+    if (!open) attemptClose();
+  };
+
+  const discardAndExit = () => {
+    setIsDirty(false);
+    setCatalogDirty(false);
+    setTypesDirty(false);
+    setShowUnsavedConfirm(false);
+    onClose();
+  };
+
+  const saveDirtyAndExit = async () => {
+    if (isDirty && editingLocality && form.name.trim()) {
+      await saveLocality();
+    }
+    setShowUnsavedConfirm(false);
+    onClose();
   };
 
   // Catalog search results for locality editor
@@ -190,17 +271,59 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     ).slice(0, 10);
   }, [officeCatalog, catalogSearch]);
 
+  const handleTabChange = (val) => {
+    if (isDirty && !confirm("You have unsaved locality changes. Discard them?")) return;
+    setActiveTab(val);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="clay-card border-none max-w-6xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="clay-card border-none max-w-6xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden"
+        onPointerDownOutside={(e) => { if (anyDirty) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (anyDirty) { e.preventDefault(); attemptClose(); } }}
+        onInteractOutside={(e) => { if (anyDirty) e.preventDefault(); }}
+      >
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Permitting Settings</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <DialogTitle>Permitting Settings</DialogTitle>
+              {anyDirty && (
+                <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium border border-amber-300">
+                  Unsaved changes
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {editingLocality && activeTab === 'localities' && (
+                <>
+                  <Button
+                    onClick={saveLocality}
+                    disabled={!form.name.trim() || !isDirty}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 gap-1"
+                  >
+                    <Save className="w-3.5 h-3.5" /> Save
+                  </Button>
+                  <Button
+                    onClick={saveAndExit}
+                    disabled={!form.name.trim()}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Save & Exit
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="sm" onClick={attemptClose} title="Close">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-3 bg-gray-200 h-9">
             <TabsTrigger value="localities" className="text-sm">Localities</TabsTrigger>
             <TabsTrigger value="catalog" className="text-sm">Office Catalog</TabsTrigger>
@@ -412,6 +535,36 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Unsaved-changes confirmation */}
+      <AlertDialog open={showUnsavedConfirm} onOpenChange={setShowUnsavedConfirm}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Unsaved Changes
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes to this locality. What would you like to do?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={() => setShowUnsavedConfirm(false)}>
+              Keep Editing
+            </AlertDialogCancel>
+            <Button variant="outline" onClick={discardAndExit} className="border-red-300 text-red-700 hover:bg-red-50">
+              Discard & Exit
+            </Button>
+            <AlertDialogAction
+              onClick={saveDirtyAndExit}
+              disabled={isDirty && !form.name.trim()}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              Save & Exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

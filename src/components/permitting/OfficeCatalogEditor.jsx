@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -220,6 +221,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
  */
 export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) {
   const [search, setSearch] = useState("");
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   const addBlank = () => {
     const newOffice = {
@@ -229,6 +231,10 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
       workflow_steps: [],
     };
     onChange([newOffice, ...catalog]);
+  };
+
+  const addFromAI = (office) => {
+    onChange([office, ...catalog]);
   };
 
   const updateOffice = (officeId, updated) => {
@@ -261,14 +267,25 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
             className="h-8 text-sm pl-8"
           />
         </div>
-        <Button size="sm" onClick={addBlank} className="h-8 gap-1 bg-purple-600 hover:bg-purple-700">
-          <Plus className="w-3 h-3" /> New Office
+        <Button size="sm" onClick={() => setAiDialogOpen(true)} className="h-8 gap-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+          <Sparkles className="w-3 h-3" /> AI Create
+        </Button>
+        <Button size="sm" onClick={addBlank} variant="outline" className="h-8 gap-1">
+          <Plus className="w-3 h-3" /> Blank
         </Button>
       </div>
 
       <p className="text-[11px] text-gray-500">
-        These are the full offices with workflow steps. You can add them to a locality from the Locality Editor.
+        These are the full offices with workflow steps. Use <strong>AI Create</strong> to auto-research contact info and suggest a workflow. You can add them to a locality from the Locality Editor.
       </p>
+
+      <AIOfficeResearchDialog
+        isOpen={aiDialogOpen}
+        onClose={() => setAiDialogOpen(false)}
+        onCreate={addFromAI}
+        officeTypes={officeTypes}
+      />
+
 
       <div className="space-y-2">
         {filtered.length === 0 && (

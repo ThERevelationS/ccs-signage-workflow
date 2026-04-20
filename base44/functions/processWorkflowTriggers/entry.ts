@@ -111,7 +111,16 @@ function matchesTrigger(trigger, event_type, work_order, old_data) {
       if (event_type !== 'update') return false;
       if (old_data?.assigned_to === work_order.assigned_to) return false;
       break;
-      
+
+    // ── Permitting line-item events ──
+    // These are fired directly from the Permitting page with a matching event_type.
+    case 'permit_submitted':
+    case 'permit_received':
+    case 'permit_followup_due':
+    case 'permit_followup_overdue':
+      if (event_type !== trigger.trigger_type) return false;
+      break;
+
     default:
       return false;
   }
@@ -266,7 +275,14 @@ async function sendEmailAction(base44, config, work_order, changed_by) {
     '{{is_rider}}': work_order.is_rider ? 'Yes' : 'No',
     '{{is_asap}}': work_order.asap ? 'Yes' : 'No',
     '{{changed_by}}': changed_by || 'System',
-    '{{timestamp}}': new Date().toLocaleString()
+    '{{timestamp}}': new Date().toLocaleString(),
+    // Permit line-item context (empty strings when event is not permit-related)
+    '{{locality_name}}': work_order.locality_name || '',
+    '{{office_type}}': work_order.office_type || '',
+    '{{row_name}}': work_order.row_name || '',
+    '{{submitted_date}}': work_order.submitted_date || '',
+    '{{next_followup_date}}': work_order.next_followup_date || '',
+    '{{permit_received_date}}': work_order.permit_received_date || ''
   };
   
   for (const [key, value] of Object.entries(vars)) {

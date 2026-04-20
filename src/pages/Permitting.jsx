@@ -115,18 +115,59 @@ export default function Permitting() {
     }
 
     let nextFollowup = null;
+    let submittedDate = null;
     let permitReceived = null;
     newSteps.forEach(s => {
       if (s.type === 'followup_date' && s.value) {
         if (!nextFollowup || s.value < nextFollowup) nextFollowup = s.value;
       }
+      if (s.type === 'submitted_date' && s.value) {
+        if (!submittedDate || s.value < submittedDate) submittedDate = s.value;
+      }
       if (s.type === 'permit_received_date' && s.value) permitReceived = s.value;
     });
     const newStatus = permitReceived ? 'completed' : 'active';
 
-    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, status: newStatus } : li));
-    await PermitLineItem.update(lineItemId, { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, status: newStatus });
-  }, [lineItems]);
+    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus } : li));
+    await PermitLineItem.update(lineItemId, { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus });
+
+    // ── Fire email automations for permit events ──
+    const wo = workOrders.find(w => w.id === item.work_order_id);
+    const fireTrigger = async (event_type) => {
+      try {
+        await base44.functions.invoke('processWorkflowTriggers', {
+          event_type,
+          work_order: {
+            ...(wo || {}),
+            id: wo?.id || item.work_order_id,
+            title: wo?.title || item.work_order_title,
+            client_name: wo?.client_name || item.work_order_title,
+            description: wo?.description || item.work_order_description,
+            // Permit line context (exposed as template variables)
+            locality_name: item.locality_name,
+            office_type: item.office_type,
+            row_name: item.row_name,
+            submitted_date: submittedDate,
+            next_followup_date: nextFollowup,
+            permit_received_date: permitReceived
+          },
+          old_data: { submitted_date: item.submitted_date, permit_received_date: item.permit_received_date },
+          changed_by: currentUser?.full_name || currentUser?.email || 'System'
+        });
+      } catch (e) {
+        console.warn('Permit trigger failed:', e);
+      }
+    };
+
+    // Submitted Date newly set
+    if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
+      fireTrigger('permit_submitted');
+    }
+    // Permit Received newly set
+    if (updatedStep?.type === 'permit_received_date' && updates.value && !item.permit_received_date) {
+      fireTrigger('permit_received');
+    }
+  }, [lineItems, workOrders, currentUser]);
 
   const updateField = useCallback(async (lineItemId, field, value) => {
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, [field]: value } : li));
