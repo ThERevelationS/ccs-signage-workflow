@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -331,7 +331,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             }
           }
         });
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI extraction timed out after 30s')), 30_000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI extraction timed out after 20s')), 20_000));
         const extractedData = await Promise.race([aiCallPromise, timeoutPromise]);
 
         if (!extractedData || !extractedData.client_name) {
@@ -484,6 +484,18 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
       } catch (emailError) {
         console.error(`Error processing email ${msg.id}:`, emailError);
         results.push({ action: 'error', messageId: msg.id, error: emailError.message });
+        // Mark the failing email as read so it doesn't block future runs.
+        // Without this, a single bad email (e.g. AI timeout) gets retried every
+        // 10 minutes and eventually causes the whole isolate to time out → 502.
+        try {
+          await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}/modify`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ removeLabelIds: ['UNREAD'] })
+          });
+        } catch (markErr) {
+          console.warn(`Failed to mark email ${msg.id} as read after error:`, markErr.message);
+        }
       }
     }
 
