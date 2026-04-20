@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
 
 const stepTypeLabels = {
@@ -16,11 +17,68 @@ const stepTypeLabels = {
   text: '📝 Text'
 };
 
-const ADDON_DEFS = [
-  { key: 'has_checkbox', label: '☑ Checkbox', color: 'bg-green-50 border-green-300 text-green-700' },
-  { key: 'has_followup', label: '🔔 Follow-up', color: 'bg-amber-50 border-amber-300 text-amber-700' },
-  { key: 'has_text', label: '📝 Text', color: 'bg-blue-50 border-blue-300 text-blue-700' },
-];
+// Normalize an office's types to an array (supports legacy string `office_type`)
+const getOfficeTypes = (office) => {
+  if (Array.isArray(office?.office_types) && office.office_types.length) return office.office_types;
+  if (office?.office_type) return [office.office_type];
+  return [];
+};
+
+function OfficeTypeMultiSelect({ selected, options, onChange }) {
+  const [open, setOpen] = useState(false);
+  const toggle = (t) => {
+    if (selected.includes(t)) onChange(selected.filter(x => x !== t));
+    else onChange([...selected, t]);
+  };
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="h-7 text-xs px-2 border rounded bg-white flex items-center gap-1 hover:bg-gray-50 min-w-[160px] max-w-[240px]"
+        >
+          {selected.length === 0 ? (
+            <span className="text-gray-400">Office type(s)...</span>
+          ) : (
+            <div className="flex flex-wrap gap-0.5 items-center flex-1 min-w-0">
+              {selected.map(t => (
+                <span
+                  key={t}
+                  className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-[10px] font-medium flex items-center gap-0.5"
+                >
+                  {t}
+                  <X
+                    className="w-2.5 h-2.5 hover:text-red-600"
+                    onClick={(e) => { e.stopPropagation(); toggle(t); }}
+                  />
+                </span>
+              ))}
+            </div>
+          )}
+          <ChevronDown className="w-3 h-3 text-gray-400 ml-auto" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-1" align="start">
+        {options.length === 0 ? (
+          <div className="text-xs text-gray-400 p-2">No office types configured</div>
+        ) : (
+          options.map(t => {
+            const checked = selected.includes(t);
+            return (
+              <label
+                key={t}
+                className="flex items-center gap-2 px-2 py-1.5 text-xs rounded hover:bg-gray-50 cursor-pointer"
+              >
+                <Checkbox checked={checked} onCheckedChange={() => toggle(t)} className="h-3.5 w-3.5" />
+                <span>{t}</span>
+              </label>
+            );
+          })
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const [expanded, setExpanded] = useState(false);
@@ -29,6 +87,16 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
 
   const update = (patch) => onChange({ ...office, ...patch });
 
+  const selectedTypes = getOfficeTypes(office);
+
+  const setSelectedTypes = (arr) => {
+    // Keep legacy office_type in sync with first entry for backwards-compat
+    update({ office_types: arr, office_type: arr[0] || "" });
+  };
+
+  const steps = office.workflow_steps || [];
+  const checkboxSteps = steps.filter(s => s.type === 'checkbox');
+
   const addStep = () => {
     if (!newStepName.trim()) return;
     const step = {
@@ -36,19 +104,23 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
       name: newStepName.trim(),
       type: newStepType,
       followup_interval_days: newStepType === 'followup_date' ? 14 : undefined,
-      order: (office.workflow_steps || []).length
+      order: steps.length
     };
-    update({ workflow_steps: [...(office.workflow_steps || []), step] });
+    update({ workflow_steps: [...steps, step] });
     setNewStepName("");
   };
 
   const removeStep = (stepId) => {
-    update({ workflow_steps: (office.workflow_steps || []).filter(s => s.id !== stepId) });
+    // Also clear any ties pointing at this step
+    const cleaned = steps
+      .filter(s => s.id !== stepId)
+      .map(s => s.tied_to_step_id === stepId ? { ...s, tied_to_step_id: "" } : s);
+    update({ workflow_steps: cleaned });
   };
 
   const handleStepDragEnd = (result) => {
     if (!result.destination) return;
-    const reordered = Array.from(office.workflow_steps || []);
+    const reordered = Array.from(steps);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
     update({ workflow_steps: reordered.map((s, i) => ({ ...s, order: i })) });
@@ -56,7 +128,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
 
   const updateStepField = (stepId, field, value) => {
     update({
-      workflow_steps: (office.workflow_steps || []).map(s =>
+      workflow_steps: steps.map(s =>
         s.id === stepId ? { ...s, [field]: value } : s
       )
     });
@@ -74,15 +146,12 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
           placeholder="Office name (e.g. Hamilton County Zoning)"
           className="h-7 text-sm font-semibold flex-1 border-none shadow-none bg-transparent focus:bg-white"
         />
-        <Select value={office.office_type || ""} onValueChange={v => update({ office_type: v })}>
-          <SelectTrigger className="h-7 text-xs w-40">
-            <SelectValue placeholder="Office type..." />
-          </SelectTrigger>
-          <SelectContent>
-            {officeTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <span className="text-[10px] text-gray-400">{(office.workflow_steps || []).length} steps</span>
+        <OfficeTypeMultiSelect
+          selected={selectedTypes}
+          options={officeTypes}
+          onChange={setSelectedTypes}
+        />
+        <span className="text-[10px] text-gray-400">{steps.length} steps</span>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete} title="Delete office">
           <Trash2 className="w-3 h-3 text-red-500" />
         </Button>
@@ -140,68 +209,64 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
               <Droppable droppableId={`steps-${office.id}`}>
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1">
-                    {(office.workflow_steps || []).map((step, idx) => (
-                      <Draggable key={step.id} draggableId={step.id} index={idx}>
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps}
-                            className="p-1.5 bg-gray-50 border rounded text-xs space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400 cursor-grab" /></div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{stepTypeLabels[step.type] || step.type}</span>
-                              <span className="flex-1 font-medium">{step.name}</span>
-                              {step.type === 'followup_date' && (
-                                <div className="flex items-center gap-1">
-                                  <Input
-                                    type="number"
-                                    value={step.followup_interval_days || 14}
-                                    onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
-                                    className="h-5 w-12 text-xs"
-                                  />
-                                  <span className="text-[9px] text-gray-500">days</span>
-                                </div>
-                              )}
-                              <button onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
-                                <Trash2 className="w-3 h-3 text-red-500" />
-                              </button>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 pl-5">
-                              <span className="text-[9px] text-gray-400 uppercase tracking-wide">Tie:</span>
-                              {ADDON_DEFS.map(addon => {
-                                const enabled = !!step[addon.key];
-                                return (
-                                  <label
-                                    key={addon.key}
-                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer transition-colors ${enabled ? addon.color : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
-                                  >
-                                    <Checkbox
-                                      checked={enabled}
-                                      onCheckedChange={(v) => updateStepField(step.id, addon.key, !!v)}
-                                      className="h-3 w-3"
+                    {steps.map((step, idx) => {
+                      const isCheckbox = step.type === 'checkbox';
+                      return (
+                        <Draggable key={step.id} draggableId={step.id} index={idx}>
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps}
+                              className="p-1.5 bg-gray-50 border rounded text-xs space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400 cursor-grab" /></div>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{stepTypeLabels[step.type] || step.type}</span>
+                                <Input
+                                  value={step.name}
+                                  onChange={e => updateStepField(step.id, 'name', e.target.value)}
+                                  className="h-6 text-xs flex-1 border-none shadow-none bg-transparent font-medium focus:bg-white"
+                                />
+                                {step.type === 'followup_date' && (
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      value={step.followup_interval_days || 14}
+                                      onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
+                                      className="h-5 w-12 text-xs"
                                     />
-                                    <span className="text-[10px] font-medium">{addon.label}</span>
-                                  </label>
-                                );
-                              })}
-                              {step.has_followup && (
-                                <div className="flex items-center gap-1 ml-1">
-                                  <span className="text-[9px] text-gray-500">every</span>
-                                  <Input
-                                    type="number"
-                                    value={step.followup_interval_days || 14}
-                                    onChange={e => updateStepField(step.id, 'followup_interval_days', parseInt(e.target.value) || 14)}
-                                    className="h-5 w-12 text-xs"
-                                  />
-                                  <span className="text-[9px] text-gray-500">days</span>
+                                    <span className="text-[9px] text-gray-500">days</span>
+                                  </div>
+                                )}
+                                <button onClick={() => removeStep(step.id)} className="p-0.5 hover:bg-red-50 rounded">
+                                  <Trash2 className="w-3 h-3 text-red-500" />
+                                </button>
+                              </div>
+
+                              {/* Tie-to-checkbox dropdown — only for non-checkbox steps */}
+                              {!isCheckbox && checkboxSteps.length > 0 && (
+                                <div className="flex items-center gap-2 pl-5">
+                                  <span className="text-[9px] text-gray-400 uppercase tracking-wide">Tie to checkbox:</span>
+                                  <Select
+                                    value={step.tied_to_step_id || "__none__"}
+                                    onValueChange={(v) => updateStepField(step.id, 'tied_to_step_id', v === "__none__" ? "" : v)}
+                                  >
+                                    <SelectTrigger className="h-6 text-xs w-48">
+                                      <SelectValue placeholder="Not tied" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__none__"><span className="text-gray-400">Not tied</span></SelectItem>
+                                      {checkboxSteps.map(cb => (
+                                        <SelectItem key={cb.id} value={cb.id}>☑ {cb.name}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
+                          )}
+                        </Draggable>
+                      );
+                    })}
                     {provided.placeholder}
-                    {(office.workflow_steps || []).length === 0 && (
+                    {steps.length === 0 && (
                       <p className="text-[11px] text-gray-400 text-center py-2">No steps yet — add some above</p>
                     )}
                   </div>
@@ -227,6 +292,7 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
     const newOffice = {
       id: `${Date.now()}-${Math.random()}`,
       name: "",
+      office_types: [],
       office_type: "",
       workflow_steps: [],
     };
@@ -249,10 +315,10 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
   const filtered = useMemo(() => {
     if (!search.trim()) return catalog;
     const q = search.toLowerCase();
-    return catalog.filter(o =>
-      (o.name || "").toLowerCase().includes(q) ||
-      (o.office_type || "").toLowerCase().includes(q)
-    );
+    return catalog.filter(o => {
+      const types = getOfficeTypes(o).join(" ").toLowerCase();
+      return (o.name || "").toLowerCase().includes(q) || types.includes(q);
+    });
   }, [catalog, search]);
 
   return (
@@ -276,7 +342,7 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
       </div>
 
       <p className="text-[11px] text-gray-500">
-        These are the full offices with workflow steps. Use <strong>AI Create</strong> to auto-research contact info and suggest a workflow. You can add them to a locality from the Locality Editor.
+        These are the full offices with workflow steps. An office can cover multiple office types. Use <strong>AI Create</strong> to auto-research contact info and suggest a workflow.
       </p>
 
       <AIOfficeResearchDialog
@@ -286,11 +352,10 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
         officeTypes={officeTypes}
       />
 
-
       <div className="space-y-2">
         {filtered.length === 0 && (
           <div className="p-6 bg-white border border-dashed rounded text-center text-xs text-gray-400">
-            {catalog.length === 0 ? 'No offices in catalog yet. Click "New Office" to create one.' : 'No offices match your search.'}
+            {catalog.length === 0 ? 'No offices in catalog yet. Click "Blank" or "AI Create" to add one.' : 'No offices match your search.'}
           </div>
         )}
         {filtered.map(office => (

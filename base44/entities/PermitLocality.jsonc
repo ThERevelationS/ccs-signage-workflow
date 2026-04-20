@@ -51,7 +51,14 @@
           },
           "office_type": {
             "type": "string",
-            "description": "Office category from the catalog (e.g. Zoning, Building, Electrical)"
+            "description": "LEGACY single office category. Use office_types (array) for multi-select."
+          },
+          "office_types": {
+            "type": "array",
+            "description": "Office categories this office covers (e.g. ['Zoning', 'Building']).",
+            "items": {
+              "type": "string"
+            }
           },
           "contact_phone": {
             "type": "string"
@@ -96,6 +103,10 @@
                 },
                 "order": {
                   "type": "number"
+                },
+                "tied_to_step_id": {
+                  "type": "string",
+                  "description": "Optional \u2014 links a non-checkbox step to a checkbox step that marks completion."
                 }
               }
             }

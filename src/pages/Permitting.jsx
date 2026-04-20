@@ -210,25 +210,38 @@ export default function Permitting() {
     if (!wo) return;
 
     // Prefer new offices[] model; fall back to legacy workflow_steps/categories
+    // Each office can have multiple office_types (new) or a single office_type (legacy)
+    const normalizeTypes = (o) => {
+      if (Array.isArray(o?.office_types) && o.office_types.length) return o.office_types;
+      if (o?.office_type) return [o.office_type];
+      return [];
+    };
+
     let officesToCreate = [];
     if (locality.offices && locality.offices.length > 0) {
-      officesToCreate = locality.offices.map(o => ({
-        name: o.name || o.office_type || "Office",
-        office_type: o.office_type || "",
-        office_id: o.id,
-        steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
-      }));
+      officesToCreate = locality.offices.map(o => {
+        const types = normalizeTypes(o);
+        return {
+          name: o.name || types[0] || "Office",
+          office_types: types,
+          office_type: types[0] || "",
+          office_id: o.id,
+          steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
+        };
+      });
     } else if (locality.workflow_steps?.length > 0) {
       // Legacy data
       const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];
       officesToCreate = cats.map(cat => ({
         name: cat,
+        office_types: [cat],
         office_type: cat,
         steps: (locality.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
       }));
     } else {
       officesToCreate = [{
         name: locality.name || "Office",
+        office_types: locality.office_type ? [locality.office_type] : [],
         office_type: locality.office_type || "",
         steps: []
       }];
@@ -242,6 +255,7 @@ export default function Permitting() {
         work_order_description: wo.description || "",
         row_name: office.name,
         office_type: office.office_type,
+        office_types: office.office_types,
         locality_id: locality.id,
         locality_name: locality.name || "",
         status: "active",

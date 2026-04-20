@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
+import PermitLineNotesSection from "./PermitLineNotesSection";
 import InlineEditField from "./InlineEditField";
 
 export default function PermitClientGroup({
@@ -169,25 +170,33 @@ export default function PermitClientGroup({
               </div>
             </div>
           ) : (
-            <div className="divide-y">
-              {group.lines.map(li => (
-                <PermitSpreadsheetRow
-                  key={li.id}
-                  lineItem={li}
+            <>
+              <div className="divide-y">
+                {group.lines.map(li => (
+                  <PermitSpreadsheetRow
+                    key={li.id}
+                    lineItem={li}
+                    onUpdateStep={onUpdateStep}
+                    onUpdateField={onUpdateField}
+                    onShowLocalityInfo={onShowLocalityInfo}
+                    onDeleteLine={onDeleteLine}
+                    isRegistered={isRegistered}
+                    today={today}
+                  />
+                ))}
+              </div>
+
+              {/* Single shared notes section for the whole project — expanded by default */}
+              {wo && (
+                <PermitLineNotesSection
                   workOrder={wo}
+                  officeLabel=""
                   currentUser={currentUser}
-                  onUpdateStep={onUpdateStep}
-                  onUpdateField={onUpdateField}
-                  onUpdateLocality={onUpdateLocality}
-                  onShowLocalityInfo={onShowLocalityInfo}
-                  onDeleteLine={onDeleteLine}
-                  onWorkNotesChanged={onWorkNotesChanged}
-                  isRegistered={isRegistered}
-                  localities={localities}
-                  today={today}
+                  disabled={!isRegistered}
+                  onUpdated={onWorkNotesChanged}
                 />
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}

@@ -28,7 +28,14 @@
     },
     "office_type": {
       "type": "string",
-      "description": "Office type: Zoning, Building, Electrical, etc."
+      "description": "LEGACY \u2014 single office type. Use office_types (array) instead."
+    },
+    "office_types": {
+      "type": "array",
+      "description": "Office categories this line represents (e.g. ['Zoning', 'Building']).",
+      "items": {
+        "type": "string"
+      }
     },
     "status": {
       "type": "string",
@@ -81,6 +88,10 @@
           "next_followup_date": {
             "type": "string",
             "format": "date"
+          },
+          "tied_to_step_id": {
+            "type": "string",
+            "description": "Optional \u2014 links a non-checkbox step to a checkbox step that marks completion."
           }
         }
       }

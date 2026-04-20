@@ -56,10 +56,15 @@ export default function AIOfficeResearchDialog({ isOpen, onClose, onCreate, offi
       followup_interval_days: s.type === 'followup_date' ? (s.followup_interval_days || 14) : undefined,
       order: i
     }));
+    // Normalize office_types: prefer array, fall back to single office_type
+    const types = Array.isArray(result.office_types) && result.office_types.length
+      ? result.office_types
+      : (result.office_type ? [result.office_type] : []);
     onCreate({
       id: `${Date.now()}-${Math.random()}`,
       name: result.name || "",
-      office_type: result.office_type || "",
+      office_types: types,
+      office_type: types[0] || "",
       contact_phone: result.contact_phone || "",
       contact_email: result.contact_email || "",
       contact_website: result.contact_website || "",
@@ -148,8 +153,19 @@ export default function AIOfficeResearchDialog({ isOpen, onClose, onCreate, offi
                   <div className="font-semibold">{result.name}</div>
                 </div>
                 <div>
-                  <span className="text-[10px] text-gray-500 uppercase">Office Type</span>
-                  <div>{result.office_type || <span className="text-gray-400">—</span>}</div>
+                  <span className="text-[10px] text-gray-500 uppercase">Office Type(s)</span>
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {(() => {
+                      const types = Array.isArray(result.office_types) && result.office_types.length
+                        ? result.office_types
+                        : (result.office_type ? [result.office_type] : []);
+                      return types.length === 0
+                        ? <span className="text-gray-400">—</span>
+                        : types.map(t => (
+                            <span key={t} className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">{t}</span>
+                          ));
+                    })()}
+                  </div>
                 </div>
                 {(result.contact_phone || result.contact_email || result.contact_website) && (
                   <div className="grid grid-cols-2 gap-2 text-xs">
