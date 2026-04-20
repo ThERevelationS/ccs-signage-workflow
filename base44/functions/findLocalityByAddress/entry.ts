@@ -32,27 +32,32 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: "Address is required" }, { status: 400 });
     }
 
-    // 1) Geocode with OpenStreetMap Nominatim (free, no key required)
+    // 1) Geocode with Google Maps Geocoding API
     let geocode = null;
     try {
-      const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&addressdetails=1&limit=1`;
-      const geoRes = await fetch(geoUrl, {
-        headers: {
-          'User-Agent': 'SignShopWorkflow/1.0 (permitting-locality-lookup)',
-          'Accept': 'application/json'
+      const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
+      if (apiKey) {
+        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+        const geoRes = await fetch(geoUrl);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData.status === 'OK' && Array.isArray(geoData.results) && geoData.results.length > 0) {
+            const g = geoData.results[0];
+            geocode = {
+              lat: g.geometry.location.lat,
+              lon: g.geometry.location.lng,
+              display_name: g.formatted_address,
+              address_parts: (g.address_components || []).reduce((acc, c) => {
+                (c.types || []).forEach(t => { acc[t] = c.long_name; });
+                return acc;
+              }, {})
+            };
+          } else {
+            console.warn('Google geocoding returned status:', geoData.status, geoData.error_message);
+          }
         }
-      });
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        if (Array.isArray(geoData) && geoData.length > 0) {
-          const g = geoData[0];
-          geocode = {
-            lat: parseFloat(g.lat),
-            lon: parseFloat(g.lon),
-            display_name: g.display_name,
-            address_parts: g.address || {}
-          };
-        }
+      } else {
+        console.warn('GOOGLE_MAPS_API_KEY not set — geocoding skipped');
       }
     } catch (e) {
       console.warn('Geocoding failed:', e.message);
