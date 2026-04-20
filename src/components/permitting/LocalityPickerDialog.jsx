@@ -5,37 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Loader2, MapPin, AlertTriangle, CheckCircle2, Zap, ZapOff, X, Save } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-
-// Fix default marker icon paths (leaflet default assumes hosting from /images)
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-// Pan map when location changes
-function MapFlyTo({ position }) {
-  const map = useMap();
-  useEffect(() => {
-    if (position) map.flyTo(position, 16, { duration: 1 });
-  }, [position, map]);
-  return null;
-}
-
-// Force leaflet to recalc its size once the dialog finishes opening
-function MapResizer({ trigger }) {
-  const map = useMap();
-  useEffect(() => {
-    const timers = [50, 200, 500, 1000].map(delay =>
-      setTimeout(() => map.invalidateSize(), delay)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [trigger, map]);
-  return null;
-}
+import GoogleMapView from "./GoogleMapView";
 
 export default function LocalityPickerDialog({
   isOpen,
@@ -89,8 +59,8 @@ export default function LocalityPickerDialog({
     onClose();
   };
 
-  const mapPosition = result?.geocode ? [result.geocode.lat, result.geocode.lon] : null;
-  const defaultCenter = [39.1031, -84.5120]; // Cincinnati-ish default
+  const mapPosition = result?.geocode ? { lat: result.geocode.lat, lng: result.geocode.lon } : null;
+  const markerTitle = result?.geocode?.display_name || "";
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
@@ -259,34 +229,8 @@ export default function LocalityPickerDialog({
           </div>
 
           {/* Right: Map — square, fills available width */}
-          <div className="rounded-lg overflow-hidden border relative flex-1 aspect-square self-start" style={{ maxHeight: '680px' }}>
-            <MapContainer
-              center={mapPosition || defaultCenter}
-              zoom={mapPosition ? 16 : 10}
-              style={{ height: "100%", width: "100%", position: "absolute", inset: 0 }}
-              scrollWheelZoom={true}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                subdomains={['a', 'b', 'c', 'd']}
-                maxZoom={20}
-              />
-              <MapResizer trigger={`${isOpen}-${mapPosition ? mapPosition.join(',') : 'none'}`} />
-              {mapPosition && (
-                <>
-                  <Marker position={mapPosition}>
-                    <Popup>
-                      <div className="text-xs">
-                        <strong>{result.geocode.display_name}</strong>
-                        {result.ai_locality_name && <div className="mt-1">Locality: {result.ai_locality_name}</div>}
-                      </div>
-                    </Popup>
-                  </Marker>
-                  <MapFlyTo position={mapPosition} />
-                </>
-              )}
-            </MapContainer>
+          <div className="rounded-lg overflow-hidden border relative flex-1 aspect-square self-start bg-gray-100" style={{ maxHeight: '680px' }}>
+            <GoogleMapView position={mapPosition} markerTitle={markerTitle} />
           </div>
         </div>
 
