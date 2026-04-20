@@ -424,6 +424,8 @@ export default function Permitting() {
             onShowLocalityInfo={setLocalityInfoId}
             onDeleteLine={deleteLineItem}
             onUpdateWorkOrderField={updateWorkOrderField}
+            onWorkNotesChanged={() => loadData(false)}
+            currentUser={currentUser}
             isRegistered={isRegistered}
             localities={localities}
             users={users}

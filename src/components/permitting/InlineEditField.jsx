@@ -16,6 +16,7 @@ export default function InlineEditField({
   title,
   icon,
   label,
+  textSizeClass = "text-[11px]",
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value || "");
@@ -33,7 +34,7 @@ export default function InlineEditField({
   if (options) {
     return (
       <div
-        className="flex items-center gap-1 text-[11px] flex-shrink-0 min-w-0"
+        className={`flex items-center gap-1 ${textSizeClass} flex-shrink-0 min-w-0`}
         style={{ maxWidth }}
         onClick={e => e.stopPropagation()}
       >
@@ -44,7 +45,7 @@ export default function InlineEditField({
           onValueChange={(v) => !disabled && onSave(v === "__clear__" ? "" : v)}
           disabled={disabled}
         >
-          <SelectTrigger className="h-6 text-[11px] px-1.5 border-none shadow-none bg-transparent hover:bg-white/60 focus:bg-white w-auto min-w-0 gap-1 [&>svg]:ml-0.5 [&>svg]:opacity-50">
+          <SelectTrigger className={`h-6 ${textSizeClass} px-1.5 border-none shadow-none bg-transparent hover:bg-white/60 focus:bg-white w-auto min-w-0 gap-1 [&>svg]:ml-0.5 [&>svg]:opacity-50`}>
             <SelectValue placeholder={placeholder}>
               <span className="truncate" title={value || placeholder}>
                 {value || <span className="text-gray-400">{placeholder}</span>}
@@ -67,7 +68,7 @@ export default function InlineEditField({
   // Text input mode
   return (
     <div
-      className="flex items-center gap-1 text-[11px] min-w-0"
+      className={`flex items-center gap-1 ${textSizeClass} min-w-0`}
       style={{ maxWidth }}
       onClick={e => e.stopPropagation()}
     >
@@ -83,7 +84,7 @@ export default function InlineEditField({
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') { setDraft(value || ""); setEditing(false); }
           }}
-          className="h-6 text-[11px] px-1.5 border border-purple-300 rounded bg-white outline-none focus:ring-1 focus:ring-purple-400 min-w-0 flex-1"
+          className={`h-7 ${textSizeClass} px-1.5 border border-purple-300 rounded bg-white outline-none focus:ring-1 focus:ring-purple-400 min-w-0 flex-1`}
         />
       ) : (
         <button

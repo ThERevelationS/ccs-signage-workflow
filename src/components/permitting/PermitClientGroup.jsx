@@ -15,6 +15,8 @@ export default function PermitClientGroup({
   onShowLocalityInfo,
   onDeleteLine,
   onUpdateWorkOrderField,
+  onWorkNotesChanged,
+  currentUser,
   isRegistered,
   localities,
   users,
@@ -85,13 +87,14 @@ export default function PermitClientGroup({
 
         {/* Job Description (from Sales Pipeline — wo.description) */}
         <InlineEditField
-          icon={<Briefcase className="w-3 h-3 text-gray-400 flex-shrink-0" />}
+          icon={<Briefcase className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
           label="Job:"
           value={wo?.description || ""}
           placeholder="Add job description…"
           onSave={(v) => saveWO('description', v)}
           disabled={!isRegistered}
-          maxWidth={380}
+          maxWidth={420}
+          textSizeClass="text-[13px]"
         />
 
         {/* Task Assigned */}
@@ -171,12 +174,14 @@ export default function PermitClientGroup({
                 <PermitSpreadsheetRow
                   key={li.id}
                   lineItem={li}
+                  workOrder={wo}
+                  currentUser={currentUser}
                   onUpdateStep={onUpdateStep}
                   onUpdateField={onUpdateField}
-                  onUpdateNotes={onUpdateNotes}
                   onUpdateLocality={onUpdateLocality}
                   onShowLocalityInfo={onShowLocalityInfo}
                   onDeleteLine={onDeleteLine}
+                  onWorkNotesChanged={onWorkNotesChanged}
                   isRegistered={isRegistered}
                   localities={localities}
                   today={today}
