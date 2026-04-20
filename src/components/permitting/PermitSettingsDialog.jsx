@@ -46,11 +46,12 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   }, []);
 
   const [form, setForm] = useState({
-    name: "", governing_body: "", state: "",
-    contact_phone: "", contact_email: "", contact_website: "", contact_address: "",
-    contact_department: "", contact_notes: "",
+    name: "", state: "", zip: "",
     offices: []
   });
+
+  // Permanent office types that cannot be edited or deleted
+  const PERMANENT_OFFICE_TYPES = ["Zoning", "Building", "Electrical Inspectors"];
 
   // Unsaved-changes tracking
   const [isDirty, setIsDirty] = useState(false);
@@ -89,14 +90,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const loadFormFromLocality = (loc) => {
     const next = {
       name: loc.name || "",
-      governing_body: loc.governing_body || "",
       state: loc.state || "",
-      contact_phone: loc.contact_phone || "",
-      contact_email: loc.contact_email || "",
-      contact_website: loc.contact_website || "",
-      contact_address: loc.contact_address || "",
-      contact_department: loc.contact_department || "",
-      contact_notes: loc.contact_notes || "",
+      zip: loc.zip || "",
       offices: migrateLocality(loc)
     };
     setForm(next);
@@ -117,9 +112,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     setSelectedLocality(null);
     setEditingLocality("new");
     const blank = {
-      name: "", governing_body: "", state: "",
-      contact_phone: "", contact_email: "", contact_website: "", contact_address: "",
-      contact_department: "", contact_notes: "",
+      name: "", state: "", zip: "",
       offices: []
     };
     setForm(blank);
@@ -205,11 +198,27 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   // Office Types (simple labels used as categories)
+  // Ensure permanent types are always present at the top of the list
+  const ensurePermanentTypes = (types) => {
+    const custom = (types || []).filter(t => !PERMANENT_OFFICE_TYPES.includes(t));
+    return [...PERMANENT_OFFICE_TYPES, ...custom];
+  };
+
+  // On load, make sure permanent types exist in saved settings
+  useEffect(() => {
+    const enriched = ensurePermanentTypes(initialOfficeTypes || []);
+    if (JSON.stringify(enriched) !== JSON.stringify(initialOfficeTypes || [])) {
+      setOfficeTypes(enriched);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOfficeTypes]);
+
   const saveOfficeTypes = async (types) => {
-    setOfficeTypes(types);
+    const finalTypes = ensurePermanentTypes(types);
+    setOfficeTypes(finalTypes);
     const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeTypes' });
-    if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: types } });
-    else await GlobalSettings.create({ setting_key: 'permitOfficeTypes', setting_value: { items: types } });
+    if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: finalTypes } });
+    else await GlobalSettings.create({ setting_key: 'permitOfficeTypes', setting_value: { items: finalTypes } });
     setTypesDirty(false);
   };
 
@@ -354,44 +363,18 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
               <div className="overflow-y-auto min-h-0 bg-gray-50 border rounded-lg p-4">
                 {editingLocality ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs">Locality Name *</Label>
                         <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="h-8 text-sm" />
                       </div>
                       <div>
                         <Label className="text-xs">State</Label>
-                        <Input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} className="h-8 text-sm" placeholder="e.g. KY" />
+                        <Input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} className="h-8 text-sm" placeholder="e.g. OH" />
                       </div>
-                      <div className="col-span-2">
-                        <Label className="text-xs">Governing Body</Label>
-                        <Input value={form.governing_body} onChange={e => setForm(f => ({ ...f, governing_body: e.target.value }))} className="h-8 text-sm" />
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-3">
-                      <h4 className="text-sm font-semibold mb-2">Locality Contact Information</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">Department</Label>
-                          <Input value={form.contact_department} onChange={e => setForm(f => ({ ...f, contact_department: e.target.value }))} className="h-8 text-sm" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Phone</Label>
-                          <Input value={form.contact_phone} onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))} className="h-8 text-sm" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Email</Label>
-                          <Input value={form.contact_email} onChange={e => setForm(f => ({ ...f, contact_email: e.target.value }))} className="h-8 text-sm" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Website</Label>
-                          <Input value={form.contact_website} onChange={e => setForm(f => ({ ...f, contact_website: e.target.value }))} className="h-8 text-sm" />
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Address</Label>
-                          <Input value={form.contact_address} onChange={e => setForm(f => ({ ...f, contact_address: e.target.value }))} className="h-8 text-sm" />
-                        </div>
+                      <div>
+                        <Label className="text-xs">Zip Code</Label>
+                        <Input value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} className="h-8 text-sm" placeholder="e.g. 45040" />
                       </div>
                     </div>
 
@@ -512,22 +495,29 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
               </div>
 
               <div className="space-y-1">
-                {officeTypes.length === 0 && (
-                  <div className="p-4 bg-white border border-dashed rounded text-center text-xs text-gray-400">
-                    No office types yet.
-                  </div>
-                )}
-                {officeTypes.map((type, idx) => (
-                  <div key={type} className="flex items-center gap-2 p-2 bg-white border rounded text-sm">
-                    <span className="flex-1 font-medium">{type}</span>
-                    <button
-                      onClick={() => saveOfficeTypes(officeTypes.filter((_, i) => i !== idx))}
-                      className="p-1 hover:bg-red-50 rounded"
+                {officeTypes.map((type, idx) => {
+                  const isPermanent = PERMANENT_OFFICE_TYPES.includes(type);
+                  return (
+                    <div
+                      key={type}
+                      className={`flex items-center gap-2 p-2 border rounded text-sm ${isPermanent ? 'bg-purple-50 border-purple-200' : 'bg-white'}`}
                     >
-                      <Trash2 className="w-3 h-3 text-red-500" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="flex-1 font-medium">{type}</span>
+                      {isPermanent ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-200 text-purple-800 font-semibold uppercase tracking-wide">
+                          Permanent
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => saveOfficeTypes(officeTypes.filter((_, i) => i !== idx))}
+                          className="p-1 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-500" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>

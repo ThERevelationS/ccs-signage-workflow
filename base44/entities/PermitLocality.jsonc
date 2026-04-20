@@ -6,35 +6,45 @@
       "type": "string",
       "description": "Locality name"
     },
-    "governing_body": {
-      "type": "string",
-      "description": "Governing body name"
-    },
-    "office_type": {
-      "type": "string",
-      "description": "Default office type (legacy)"
-    },
     "state": {
       "type": "string",
       "description": "State abbreviation"
     },
+    "zip": {
+      "type": "string",
+      "description": "ZIP / postal code"
+    },
+    "governing_body": {
+      "type": "string",
+      "description": "LEGACY \u2014 Governing body name"
+    },
+    "office_type": {
+      "type": "string",
+      "description": "LEGACY \u2014 Default office type"
+    },
     "contact_phone": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "contact_email": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "contact_website": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "contact_address": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "contact_department": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "contact_notes": {
-      "type": "string"
+      "type": "string",
+      "description": "LEGACY"
     },
     "offices": {
       "type": "array",

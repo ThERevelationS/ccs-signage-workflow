@@ -203,7 +203,8 @@ export default function Permitting() {
   // When a locality is selected on a work order with no line items yet,
   // create one line item per OFFICE configured in that locality's settings.
   // Each office has its own workflow_steps.
-  const selectLocalityForWorkOrder = useCallback(async (workOrderId, localityId) => {
+  const selectLocalityForWorkOrder = useCallback(async (workOrderId, localityId, opts = {}) => {
+    const { excludeElectrical = false } = opts;
     const locality = localities.find(l => l.id === localityId);
     if (!locality) return;
     const wo = workOrders.find(w => w.id === workOrderId);
@@ -217,6 +218,8 @@ export default function Permitting() {
       return [];
     };
 
+    const isElectrical = (types) => types.some(t => /electrical/i.test(t));
+
     let officesToCreate = [];
     if (locality.offices && locality.offices.length > 0) {
       officesToCreate = locality.offices.map(o => {
@@ -229,6 +232,9 @@ export default function Permitting() {
           steps: (o.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }))
         };
       });
+      if (excludeElectrical) {
+        officesToCreate = officesToCreate.filter(o => !isElectrical(o.office_types));
+      }
     } else if (locality.workflow_steps?.length > 0) {
       // Legacy data
       const cats = locality.categories?.length > 0 ? locality.categories : [locality.office_type || "General"];

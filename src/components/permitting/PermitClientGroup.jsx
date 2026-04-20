@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
 import InlineEditField from "./InlineEditField";
+import LocalityPickerDialog from "./LocalityPickerDialog";
 
 export default function PermitClientGroup({
   group,
@@ -25,6 +26,7 @@ export default function PermitClientGroup({
   today
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
 
@@ -143,31 +145,15 @@ export default function PermitClientGroup({
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex items-center gap-3">
               <span className="text-xs text-gray-500">Select a locality to apply its configured line items:</span>
-              <div className="max-w-xs">
-                <Select
-                  value=""
-                  onValueChange={(val) => val && onSelectLocalityForWorkOrder(group.work_order_id, val)}
-                  disabled={!isRegistered}
-                >
-                  <SelectTrigger className="h-7 text-xs w-56">
-                    <SelectValue placeholder="Select locality..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {localities.length === 0 && (
-                      <div className="px-2 py-1 text-xs text-gray-400">No localities configured</div>
-                    )}
-                    {localities.map(l => {
-                      const officeCount = l.offices?.length || (l.workflow_steps?.length > 0 ? 1 : 0);
-                      return (
-                        <SelectItem key={l.id} value={l.id}>
-                          {l.name}{l.state ? ` (${l.state})` : ''}
-                          {officeCount > 0 && <span className="text-[10px] text-gray-400 ml-1">· {officeCount} office{officeCount === 1 ? '' : 's'}</span>}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Button
+                onClick={() => setShowLocalityPicker(true)}
+                disabled={!isRegistered}
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <MapPin className="w-3.5 h-3.5" /> Select Locality…
+              </Button>
             </div>
           ) : (
             <>
@@ -199,6 +185,17 @@ export default function PermitClientGroup({
             </>
           )}
         </div>
+      )}
+
+      {showLocalityPicker && (
+        <LocalityPickerDialog
+          isOpen={showLocalityPicker}
+          onClose={() => setShowLocalityPicker(false)}
+          localities={localities}
+          onApply={(localityId, opts) => {
+            onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
+          }}
+        />
       )}
     </div>
   );
