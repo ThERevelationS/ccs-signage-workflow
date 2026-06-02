@@ -1,0 +1,61 @@
+{
+  "name": "UserCapacity",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "User's display name"
+    },
+    "weekly_hours_capacity": {
+      "type": "number",
+      "default": 40,
+      "description": "Maximum hours available per week"
+    },
+    "daily_hours_capacity": {
+      "type": "number",
+      "default": 8,
+      "description": "Maximum hours available per day"
+    },
+    "skills": {
+      "type": "array",
+      "description": "User's skills for resource matching",
+      "items": {
+        "type": "string"
+      }
+    },
+    "role_preferences": {
+      "type": "array",
+      "description": "Preferred roles/task types",
+      "items": {
+        "type": "string"
+      }
+    },
+    "time_off_dates": {
+      "type": "array",
+      "description": "Scheduled time off",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

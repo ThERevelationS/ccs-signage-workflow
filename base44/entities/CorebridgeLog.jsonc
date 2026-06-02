@@ -1,0 +1,83 @@
+{
+  "name": "CorebridgeLog",
+  "type": "object",
+  "properties": {
+    "run_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this run occurred"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "scheduled"
+      ],
+      "default": "scheduled",
+      "description": "How this run was triggered"
+    },
+    "emails_found": {
+      "type": "number",
+      "description": "Number of matching emails found in Gmail"
+    },
+    "processed": {
+      "type": "number",
+      "description": "Number of emails successfully processed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "error",
+        "no_emails"
+      ],
+      "default": "success"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Top-level error message if the run failed"
+    },
+    "results": {
+      "type": "array",
+      "description": "Per-email results",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "docNumber": {
+            "type": "string"
+          },
+          "client": {
+            "type": "string"
+          },
+          "workOrderId": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "estToInv": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "skipped_reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "debug_info": {
+      "type": "string",
+      "description": "Extra debug details"
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,61 @@
+{
+  "name": "BackupLog",
+  "type": "object",
+  "properties": {
+    "backup_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "scheduled"
+      ],
+      "description": "Whether backup was manual or scheduled"
+    },
+    "data_types": {
+      "type": "array",
+      "description": "List of data types backed up",
+      "items": {
+        "type": "string"
+      }
+    },
+    "results": {
+      "type": "array",
+      "description": "Results for each backup type",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "skipped": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "success_count": {
+      "type": "number",
+      "description": "Number of successful backups"
+    },
+    "error_count": {
+      "type": "number",
+      "description": "Number of failed backups"
+    },
+    "triggered_by": {
+      "type": "string",
+      "description": "User email who triggered (or 'system' for scheduled)"
+    }
+  },
+  "required": [
+    "backup_type",
+    "data_types"
+  ]
+}

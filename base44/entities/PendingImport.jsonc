@@ -1,0 +1,83 @@
+{
+  "name": "PendingImport",
+  "type": "object",
+  "properties": {
+    "doc_number": {
+      "type": "string",
+      "description": "EST or INV document number from Corebridge"
+    },
+    "doc_type": {
+      "type": "string",
+      "enum": [
+        "estimate",
+        "invoice"
+      ],
+      "description": "Type of document"
+    },
+    "email_subject": {
+      "type": "string",
+      "description": "Original email subject line"
+    },
+    "extracted_data": {
+      "type": "object",
+      "description": "Full AI-extracted data from the PDF"
+    },
+    "proposed_work_order": {
+      "type": "object",
+      "description": "The work order object that would be created on approval"
+    },
+    "match_candidates": {
+      "type": "array",
+      "description": "Existing work orders that may be a match",
+      "items": {
+        "type": "object",
+        "properties": {
+          "work_order_id": {
+            "type": "string"
+          },
+          "work_order_title": {
+            "type": "string"
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "current_stage": {
+            "type": "string"
+          },
+          "match_score": {
+            "type": "number"
+          },
+          "match_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "merged",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Current status of this pending import"
+    },
+    "merged_into_id": {
+      "type": "string",
+      "description": "Work order ID this was merged into"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "URL of the uploaded PDF"
+    }
+  },
+  "required": [
+    "doc_number",
+    "doc_type"
+  ]
+}

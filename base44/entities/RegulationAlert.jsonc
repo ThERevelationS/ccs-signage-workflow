@@ -1,0 +1,109 @@
+{
+  "name": "RegulationAlert",
+  "type": "object",
+  "properties": {
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "Reference to JurisdictionProfile"
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Display name of jurisdiction (cached)"
+    },
+    "jurisdiction_state": {
+      "type": "string",
+      "description": "State of jurisdiction (cached)"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "requirement_change",
+        "document_update",
+        "url_change",
+        "contact_change",
+        "other"
+      ],
+      "description": "Type of change detected"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the alert"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of what changed"
+    },
+    "previous_value": {
+      "type": "string",
+      "description": "Previous value (if applicable)"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "New value or change summary"
+    },
+    "impact_summary": {
+      "type": "string",
+      "description": "AI-generated summary of potential impact to sign companies"
+    },
+    "field_changed": {
+      "type": "string",
+      "description": "Which field changed (e.g., 'max_sign_height', 'fee_range')"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Severity level of the change"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the change was detected"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has read this alert"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user read the alert"
+    },
+    "read_by": {
+      "type": "string",
+      "description": "Email of user who read the alert"
+    },
+    "notification_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether notification was sent to user"
+    },
+    "notification_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When notification was sent"
+    },
+    "notification_method": {
+      "type": "string",
+      "enum": [
+        "email",
+        "in_app",
+        "both"
+      ],
+      "default": "both",
+      "description": "How the user was notified"
+    }
+  },
+  "required": [
+    "jurisdiction_id",
+    "alert_type",
+    "title",
+    "description"
+  ]
+}

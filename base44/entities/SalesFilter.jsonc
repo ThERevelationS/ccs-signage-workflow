@@ -1,0 +1,54 @@
+{
+  "name": "SalesFilter",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Filter name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "filter",
+        "column_preset"
+      ],
+      "default": "filter",
+      "description": "Type of configuration"
+    },
+    "conditions": {
+      "type": "array",
+      "description": "Filter conditions",
+      "items": {
+        "type": "object"
+      }
+    },
+    "column_settings": {
+      "type": "array",
+      "description": "Column visibility and order",
+      "items": {
+        "type": "object"
+      }
+    },
+    "is_standard": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a standard (non-deletable) filter"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Name of creator"
+    },
+    "selected_by": {
+      "type": "array",
+      "description": "List of user emails who have selected this filter",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "EmailGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the email group"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the email group"
+    },
+    "emails": {
+      "type": "array",
+      "description": "List of email addresses in this group",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "emails"
+  ]
+}

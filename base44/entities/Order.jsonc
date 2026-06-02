@@ -1,0 +1,93 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name (can be linked to work order)"
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Linked work order ID"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "Substrate",
+        "Vinyl",
+        "Supplies",
+        "Other"
+      ],
+      "description": "Type of request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Order description"
+    },
+    "quantity": {
+      "type": "string",
+      "description": "How much / quantity"
+    },
+    "requestor_email": {
+      "type": "string",
+      "description": "Email of the requestor (from user database)"
+    },
+    "requestor_name": {
+      "type": "string",
+      "description": "Name of the requestor"
+    },
+    "date_needed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the order is needed"
+    },
+    "date_ordered": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the order was placed"
+    },
+    "vendor": {
+      "type": "string",
+      "description": "Vendor name"
+    },
+    "date_received": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the order was received"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "ordered",
+        "received",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Order status"
+    },
+    "row_number": {
+      "type": "number",
+      "description": "Row number for display order"
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft delete flag"
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the item was deleted"
+    },
+    "deleted_by": {
+      "type": "string",
+      "description": "Who deleted the item"
+    }
+  },
+  "required": [
+    "customer_name",
+    "request_type",
+    "description"
+  ]
+}

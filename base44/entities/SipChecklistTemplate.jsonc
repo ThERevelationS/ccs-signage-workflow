@@ -1,0 +1,34 @@
+{
+  "name": "SipChecklistTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "items": {
+      "type": "array",
+      "description": "Checklist items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is the default template"
+    }
+  },
+  "required": [
+    "name",
+    "items"
+  ]
+}

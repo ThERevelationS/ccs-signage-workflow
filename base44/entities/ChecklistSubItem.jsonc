@@ -1,0 +1,25 @@
+{
+  "name": "ChecklistSubItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Sub-item name/text"
+    },
+    "applies_to_product_types": {
+      "type": "array",
+      "description": "Product types this sub-item applies to",
+      "items": {
+        "type": "string"
+      }
+    },
+    "order": {
+      "type": "number",
+      "description": "Display order",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

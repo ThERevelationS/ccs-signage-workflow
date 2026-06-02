@@ -1,0 +1,331 @@
+{
+  "name": "CustomerInfo",
+  "type": "object",
+  "properties": {
+    "designer": {
+      "type": "string",
+      "description": "Designer assigned"
+    },
+    "surveyor": {
+      "type": "string",
+      "description": "Surveyor assigned"
+    },
+    "initial_contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of initial contact"
+    },
+    "site_survey_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Site survey date"
+    },
+    "site_survey_time": {
+      "type": "string",
+      "description": "Site survey time"
+    },
+    "site_survey_am_pm": {
+      "type": "string",
+      "enum": [
+        "AM",
+        "PM"
+      ],
+      "description": "AM or PM for site survey"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name"
+    },
+    "representative": {
+      "type": "string",
+      "description": "Customer representative"
+    },
+    "address": {
+      "type": "string",
+      "description": "Customer address"
+    },
+    "address_line_2": {
+      "type": "string",
+      "description": "Address line 2"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "billing_address": {
+      "type": "string",
+      "description": "Billing address"
+    },
+    "billing_address_line_2": {
+      "type": "string",
+      "description": "Billing address line 2"
+    },
+    "additional_contact": {
+      "type": "string",
+      "description": "Additional contact person"
+    },
+    "permitting": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "description": "Permitting required"
+    },
+    "township_city": {
+      "type": "string",
+      "description": "Township or City"
+    },
+    "county": {
+      "type": "string",
+      "description": "County"
+    },
+    "code": {
+      "type": "string",
+      "description": "Permit code"
+    },
+    "class": {
+      "type": "string",
+      "description": "Permit class"
+    },
+    "owner": {
+      "type": "string",
+      "description": "Property owner"
+    },
+    "pud": {
+      "type": "string",
+      "description": "PUD"
+    },
+    "parcel_number": {
+      "type": "string",
+      "description": "Parcel number"
+    },
+    "electrical_ibi": {
+      "type": "boolean",
+      "default": false,
+      "description": "IBI electrical"
+    },
+    "electrical_nkyei": {
+      "type": "boolean",
+      "default": false,
+      "description": "NKYEI electrical"
+    },
+    "electrical_nec": {
+      "type": "boolean",
+      "default": false,
+      "description": "NEC electrical"
+    },
+    "electrical_city": {
+      "type": "boolean",
+      "default": false,
+      "description": "City electrical"
+    },
+    "electrical_county": {
+      "type": "boolean",
+      "default": false,
+      "description": "County electrical"
+    },
+    "customer_is_building_owner": {
+      "type": "boolean",
+      "default": false,
+      "description": "Customer is building owner"
+    },
+    "customer_is_tenant": {
+      "type": "boolean",
+      "default": false,
+      "description": "Customer is tenant"
+    },
+    "customer_is_marketing_co": {
+      "type": "boolean",
+      "default": false,
+      "description": "Customer is marketing company"
+    },
+    "business_co_coo_reminder": {
+      "type": "boolean",
+      "default": false,
+      "description": "Business CO or COO reminder"
+    },
+    "business_co_coo_date": {
+      "type": "string",
+      "description": "CO/COO reminder date"
+    },
+    "install_yes": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install yes"
+    },
+    "install_no": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install no"
+    },
+    "install_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Install due date"
+    },
+    "budget_less_than": {
+      "type": "number",
+      "description": "Budget less than amount"
+    },
+    "removal_yes": {
+      "type": "boolean",
+      "default": false,
+      "description": "Removal yes"
+    },
+    "removal_no": {
+      "type": "boolean",
+      "default": false,
+      "description": "Removal no"
+    },
+    "service_repair": {
+      "type": "string",
+      "description": "Service/Repair description"
+    },
+    "origination": {
+      "type": "string",
+      "description": "Lead origination source"
+    },
+    "patch": {
+      "type": "string",
+      "description": "Patch details"
+    },
+    "paint": {
+      "type": "string",
+      "description": "Paint details"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color specification"
+    },
+    "product_1": {
+      "type": "string",
+      "description": "Product #1"
+    },
+    "product_2": {
+      "type": "string",
+      "description": "Product #2"
+    },
+    "product_3": {
+      "type": "string",
+      "description": "Product #3"
+    },
+    "product_4": {
+      "type": "string",
+      "description": "Product #4"
+    },
+    "product_5": {
+      "type": "string",
+      "description": "Product #5"
+    },
+    "product_6": {
+      "type": "string",
+      "description": "Product #6"
+    },
+    "cb_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "CB complete"
+    },
+    "cf_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "CF complete"
+    },
+    "cc_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "CC complete"
+    },
+    "sms_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "SMS complete"
+    },
+    "notes": {
+      "type": "array",
+      "description": "Notes with timestamps and completion status",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "follow_up": {
+      "type": "array",
+      "description": "Follow up items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "on_hold",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "Form status"
+    },
+    "linked_work_order_id": {
+      "type": "string",
+      "description": "Linked work order ID"
+    }
+  },
+  "required": [
+    "customer_name"
+  ]
+}

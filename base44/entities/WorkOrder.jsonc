@@ -1,0 +1,709 @@
+{
+  "name": "WorkOrder",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Work order title"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the work"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the work order image"
+    },
+    "files": {
+      "type": "array",
+      "description": "Uploaded files for this work order",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "uploaded_by": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "google_drive_folder_url": {
+      "type": "string",
+      "description": "Google Drive folder URL for this work order"
+    },
+    "google_drive_file_ids": {
+      "type": "array",
+      "description": "Array of Google Drive file IDs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_stage": {
+      "type": "string",
+      "enum": [
+        "estimating",
+        "sales",
+        "permitting",
+        "design",
+        "production",
+        "fabrication",
+        "installation",
+        "completed"
+      ],
+      "default": "estimating",
+      "description": "Current workflow stage"
+    },
+    "priority": {
+      "type": "number",
+      "description": "Priority order"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of assigned user"
+    },
+    "notes": {
+      "type": "array",
+      "description": "Array of tasks with timestamps, completion status, and dependencies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "estimated_hours": {
+            "type": "number"
+          },
+          "actual_hours": {
+            "type": "number"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "is_milestone": {
+            "type": "boolean",
+            "default": false
+          },
+          "is_critical_path": {
+            "type": "boolean",
+            "default": false
+          },
+          "checklist_context": {
+            "type": "string"
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "assigned_to": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "completed": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "assigned_to": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "linked_task_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "project_health": {
+      "type": "string",
+      "enum": [
+        "on_track",
+        "at_risk",
+        "delayed",
+        "blocked"
+      ],
+      "default": "on_track"
+    },
+    "health_override": {
+      "type": "boolean",
+      "default": false
+    },
+    "health_notes": {
+      "type": "string"
+    },
+    "work_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "fabrication",
+              "vinyl",
+              "permitting",
+              "design",
+              "installation",
+              "client",
+              "other"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "follow_up": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_rider": {
+      "type": "boolean",
+      "default": false
+    },
+    "parent_work_order_id": {
+      "type": "string"
+    },
+    "rider_stage": {
+      "type": "string",
+      "enum": [
+        "estimating",
+        "sales",
+        "permitting",
+        "design",
+        "production",
+        "fabrication",
+        "installation"
+      ]
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "asap": {
+      "type": "boolean",
+      "default": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "in_pipeline": {
+      "type": "boolean",
+      "default": false
+    },
+    "sales_status": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "quoted",
+        "follow_up",
+        "won",
+        "lost",
+        "on_hold"
+      ],
+      "default": "lead"
+    },
+    "lead_source": {
+      "type": "string"
+    },
+    "current_task_deadline": {
+      "type": "string",
+      "format": "date"
+    },
+    "current_task_assigned_to": {
+      "type": "string"
+    },
+    "designer": {
+      "type": "string"
+    },
+    "surveyor": {
+      "type": "string"
+    },
+    "site_survey_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "site_survey_time": {
+      "type": "string"
+    },
+    "site_survey_am_pm": {
+      "type": "string",
+      "enum": [
+        "AM",
+        "PM"
+      ]
+    },
+    "project_manager": {
+      "type": "string"
+    },
+    "estimator": {
+      "type": "string"
+    },
+    "est_inv_at": {
+      "type": "string"
+    },
+    "corbridge_invoice_number": {
+      "type": "string"
+    },
+    "corbridge_link": {
+      "type": "string"
+    },
+    "estimate_amount": {
+      "type": "number"
+    },
+    "current_task_description": {
+      "type": "string"
+    },
+    "date_initial_contact": {
+      "type": "string",
+      "format": "date"
+    },
+    "date_estimate_sent": {
+      "type": "string",
+      "format": "date"
+    },
+    "date_order_created": {
+      "type": "string",
+      "format": "date"
+    },
+    "project_install_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_submitted_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_receipt_confirmed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "permit_number": {
+      "type": "string"
+    },
+    "permit_approved_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quoted_amount": {
+      "type": "number"
+    },
+    "actual_cost": {
+      "type": "number"
+    },
+    "profit_margin": {
+      "type": "number"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "representative": {
+      "type": "string"
+    },
+    "additional_contact": {
+      "type": "string"
+    },
+    "quote_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "close_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "probability": {
+      "type": "number"
+    },
+    "project_type": {
+      "type": "string"
+    },
+    "install_location": {
+      "type": "string"
+    },
+    "address_line_2": {
+      "type": "string"
+    },
+    "billing_address": {
+      "type": "string"
+    },
+    "billing_address_line_2": {
+      "type": "string"
+    },
+    "sales_rep": {
+      "type": "string"
+    },
+    "permitting": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ]
+    },
+    "township_city": {
+      "type": "string"
+    },
+    "county": {
+      "type": "string"
+    },
+    "permit_code": {
+      "type": "string"
+    },
+    "permit_class": {
+      "type": "string"
+    },
+    "property_owner": {
+      "type": "string"
+    },
+    "pud": {
+      "type": "string"
+    },
+    "parcel_number": {
+      "type": "string"
+    },
+    "electrical_ibi": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_nkyei": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_nec": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_city": {
+      "type": "boolean",
+      "default": false
+    },
+    "electrical_county": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_building_owner": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_tenant": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_is_marketing_co": {
+      "type": "boolean",
+      "default": false
+    },
+    "business_co_coo_reminder": {
+      "type": "boolean",
+      "default": false
+    },
+    "business_co_coo_date": {
+      "type": "string"
+    },
+    "install_yes": {
+      "type": "boolean",
+      "default": false
+    },
+    "install_no": {
+      "type": "boolean",
+      "default": false
+    },
+    "budget_less_than": {
+      "type": "number"
+    },
+    "removal_yes": {
+      "type": "boolean",
+      "default": false
+    },
+    "removal_no": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_repair": {
+      "type": "string"
+    },
+    "origination": {
+      "type": "string"
+    },
+    "patch": {
+      "type": "string"
+    },
+    "paint": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "product_type": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "product_1": {
+      "type": "string"
+    },
+    "product_2": {
+      "type": "string"
+    },
+    "product_3": {
+      "type": "string"
+    },
+    "product_4": {
+      "type": "string"
+    },
+    "product_5": {
+      "type": "string"
+    },
+    "product_6": {
+      "type": "string"
+    },
+    "cb_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "cf_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "cc_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "sms_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted_by": {
+      "type": "string"
+    },
+    "production_type": {
+      "type": "string",
+      "enum": [
+        "inhouse",
+        "outsource"
+      ]
+    },
+    "sip_checklist": {
+      "type": "array",
+      "description": "SIP meeting checklist with product groupings and hierarchy",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mmm_sip_checklist": {
+      "type": "array",
+      "description": "Monday Morning Meeting checklist - completely separate from SIPs",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mmm_checklist": {
+      "type": "array",
+      "description": "Legacy Monday Morning Meeting checklist items",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sip_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this item has been completed/discussed in SIPs or MMM meeting"
+    },
+    "sip_revisit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date to revisit this project in SIPs - jobs with a future date are separated from the active list"
+    }
+  },
+  "required": [
+    "title",
+    "client_name"
+  ]
+}

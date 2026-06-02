@@ -1,0 +1,117 @@
+{
+  "name": "EmailNotificationSettings",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of this notification rule"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this notification is active"
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "work_order_created",
+        "work_order_completed",
+        "work_order_deleted",
+        "rider_created",
+        "stage_changed",
+        "stage_entered",
+        "stage_exited",
+        "task_added",
+        "task_completed",
+        "task_deleted",
+        "note_added",
+        "note_deleted",
+        "image_uploaded",
+        "asap_toggled_on",
+        "asap_toggled_off",
+        "due_date_approaching",
+        "due_date_passed",
+        "assigned_to_changed",
+        "priority_changed",
+        "automation_triggered"
+      ],
+      "description": "What triggers this notification"
+    },
+    "trigger_condition": {
+      "type": "object",
+      "description": "Additional conditions for the trigger",
+      "properties": {
+        "stage": {
+          "type": "string",
+          "description": "Specific stage for stage-based triggers"
+        },
+        "from_stage": {
+          "type": "string",
+          "description": "From stage for stage_changed trigger"
+        },
+        "to_stage": {
+          "type": "string",
+          "description": "To stage for stage_changed trigger"
+        },
+        "days_before_due": {
+          "type": "number",
+          "description": "Days before due date for due_date_approaching"
+        },
+        "assigned_to": {
+          "type": "string",
+          "description": "Filter by assigned person"
+        },
+        "is_asap": {
+          "type": "boolean",
+          "description": "Only trigger for ASAP work orders"
+        },
+        "is_rider": {
+          "type": "boolean",
+          "description": "Only trigger for riders"
+        }
+      }
+    },
+    "recipients": {
+      "type": "array",
+      "description": "Who receives this notification",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "email",
+              "assigned_user",
+              "creator",
+              "all_admins",
+              "custom_list"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "description": "Email address or comma-separated list"
+          }
+        }
+      }
+    },
+    "email_subject": {
+      "type": "string",
+      "description": "Email subject template (supports {{variables}})"
+    },
+    "email_body": {
+      "type": "string",
+      "description": "Email body template (supports {{variables}})"
+    },
+    "priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Order of execution if multiple rules match"
+    }
+  },
+  "required": [
+    "name",
+    "trigger_type",
+    "email_subject",
+    "email_body"
+  ]
+}

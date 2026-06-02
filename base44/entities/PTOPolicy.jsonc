@@ -1,0 +1,117 @@
+{
+  "name": "PTOPolicy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Policy name (e.g., 'Standard Full-Time', 'Part-Time')"
+    },
+    "is_template": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is a company template policy"
+    },
+    "time_off_types": {
+      "type": "array",
+      "description": "Different types of time off in this policy",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Type name (Vacation, Sick, etc.)"
+          },
+          "accrual_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "hourly",
+              "daily",
+              "weekly",
+              "bi_weekly",
+              "semi_monthly",
+              "monthly",
+              "quarterly",
+              "yearly",
+              "anniversary"
+            ],
+            "description": "How time accrues"
+          },
+          "accrual_rate": {
+            "type": "number",
+            "description": "Hours accrued per period"
+          },
+          "accrual_cap": {
+            "type": "number",
+            "description": "Maximum hours that can be accrued (0 = unlimited)"
+          },
+          "starting_balance": {
+            "type": "number",
+            "description": "Initial hours granted"
+          },
+          "waiting_period_days": {
+            "type": "number",
+            "description": "Days before accrual begins"
+          },
+          "carryover_max": {
+            "type": "number",
+            "description": "Max hours that can carry over to next year (0 = none)"
+          },
+          "carryover_expiry_months": {
+            "type": "number",
+            "description": "Months until carryover expires (0 = never)"
+          },
+          "can_go_negative": {
+            "type": "boolean",
+            "default": false,
+            "description": "Allow negative balance"
+          },
+          "requires_approval": {
+            "type": "boolean",
+            "default": true,
+            "description": "Requires manager approval"
+          },
+          "color": {
+            "type": "string",
+            "description": "Display color"
+          }
+        }
+      }
+    },
+    "holidays": {
+      "type": "array",
+      "description": "Company holidays included in this policy",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "recurring": {
+            "type": "boolean",
+            "default": true
+          },
+          "paid": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    "floating_holidays_per_year": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of floating holidays per year"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

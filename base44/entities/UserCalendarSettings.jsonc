@@ -1,0 +1,78 @@
+{
+  "name": "UserCalendarSettings",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user these settings belong to"
+    },
+    "show_universal": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show the universal company calendar"
+    },
+    "show_work_orders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show work order due dates on calendar"
+    },
+    "show_site_surveys": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show site survey dates"
+    },
+    "show_installs": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show project install dates"
+    },
+    "show_personal": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show personal events created by this user"
+    },
+    "default_view": {
+      "type": "string",
+      "enum": [
+        "month",
+        "week",
+        "day",
+        "agenda"
+      ],
+      "default": "month"
+    },
+    "work_order_stages": {
+      "type": "array",
+      "description": "Which stages of work orders to show (empty = all)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outlook_connected": {
+      "type": "boolean",
+      "default": false
+    },
+    "google_connected": {
+      "type": "boolean",
+      "default": false
+    },
+    "outlook_calendar_id": {
+      "type": "string"
+    },
+    "google_calendar_id": {
+      "type": "string"
+    },
+    "color_scheme": {
+      "type": "string",
+      "enum": [
+        "default",
+        "colorblind",
+        "dark"
+      ],
+      "default": "default"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "name": "ImportJob",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of user running the import"
+    },
+    "import_type": {
+      "type": "string",
+      "enum": [
+        "sales_pipeline",
+        "orders"
+      ],
+      "description": "Type of import"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "paused",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "running",
+      "description": "Current import status"
+    },
+    "total_items": {
+      "type": "number",
+      "description": "Total items to import"
+    },
+    "processed_items": {
+      "type": "number",
+      "default": 0,
+      "description": "Items processed so far"
+    },
+    "current_item": {
+      "type": "string",
+      "description": "Currently processing item description"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When import started"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When import completed"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message if failed"
+    }
+  },
+  "required": [
+    "user_email",
+    "import_type",
+    "total_items"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

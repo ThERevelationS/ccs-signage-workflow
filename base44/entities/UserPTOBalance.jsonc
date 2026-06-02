@@ -1,0 +1,98 @@
+{
+  "name": "UserPTOBalance",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "User's display name"
+    },
+    "policy_id": {
+      "type": "string",
+      "description": "ID of the PTO policy assigned"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Employee hire date for anniversary calculations"
+    },
+    "balances": {
+      "type": "array",
+      "description": "Current balance for each time off type",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type_id": {
+            "type": "string"
+          },
+          "type_name": {
+            "type": "string"
+          },
+          "available_hours": {
+            "type": "number"
+          },
+          "used_hours": {
+            "type": "number"
+          },
+          "pending_hours": {
+            "type": "number"
+          },
+          "accrued_ytd": {
+            "type": "number"
+          },
+          "carryover_hours": {
+            "type": "number"
+          },
+          "last_accrual_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "floating_holidays_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "custom_overrides": {
+      "type": "object",
+      "description": "Per-user overrides to the policy"
+    }
+  },
+  "required": [
+    "user_email",
+    "policy_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

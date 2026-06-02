@@ -1,0 +1,121 @@
+{
+  "name": "TimeEntry",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the employee"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the employee"
+    },
+    "clock_in": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Clock in timestamp"
+    },
+    "clock_out": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Clock out timestamp"
+    },
+    "lunch_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Lunch break duration in minutes"
+    },
+    "total_hours": {
+      "type": "number",
+      "description": "Total hours worked (minus lunch)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "clocked_in",
+        "clocked_out"
+      ],
+      "default": "clocked_in",
+      "description": "Current status"
+    },
+    "job_allocations": {
+      "type": "array",
+      "description": "Time allocated to each job",
+      "items": {
+        "type": "object",
+        "properties": {
+          "work_order_id": {
+            "type": "string"
+          },
+          "work_order_title": {
+            "type": "string"
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "number"
+          },
+          "is_inhouse": {
+            "type": "boolean",
+            "default": false
+          },
+          "inhouse_task": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "user_email",
+    "clock_in"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

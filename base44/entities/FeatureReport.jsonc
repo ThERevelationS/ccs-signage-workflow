@@ -1,0 +1,66 @@
+{
+  "name": "FeatureReport",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the report"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature",
+        "improvement"
+      ],
+      "default": "feature",
+      "description": "Type of report"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "completed"
+      ],
+      "default": "open",
+      "description": "Current status"
+    },
+    "submitted_by_name": {
+      "type": "string",
+      "description": "Name of submitter"
+    },
+    "submitted_by_email": {
+      "type": "string",
+      "description": "Email of submitter"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the item was completed"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Notes from admin"
+    }
+  },
+  "required": [
+    "title",
+    "type"
+  ]
+}

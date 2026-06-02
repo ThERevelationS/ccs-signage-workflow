@@ -1,0 +1,57 @@
+{
+  "name": "ChecklistTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "product_type": {
+      "type": "string",
+      "description": "Product type this template applies to"
+    },
+    "items": {
+      "type": "array",
+      "description": "Checklist items for this template",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "custom_dropdown_key": {
+            "type": "string",
+            "description": "Key to lookup custom dropdown options"
+          },
+          "sub_items": {
+            "type": "array",
+            "description": "Sub-items that appear when this item is selected",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "is_standard": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a standard template"
+    }
+  },
+  "required": [
+    "name",
+    "items"
+  ]
+}

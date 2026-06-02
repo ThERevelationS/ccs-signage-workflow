@@ -1,0 +1,76 @@
+{
+  "name": "AutomationRule",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the automation rule"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this automation is active"
+    },
+    "triggers": {
+      "type": "array",
+      "description": "Array of trigger conditions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "trigger_type": {
+            "type": "string"
+          },
+          "trigger_condition": {
+            "type": "object"
+          },
+          "logic": {
+            "type": "string",
+            "enum": [
+              "or",
+              "and"
+            ],
+            "default": "or",
+            "description": "How this trigger relates to the previous one"
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "description": "Array of actions to perform (all executed)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "send_email",
+              "change_stage",
+              "set_asap",
+              "assign_to",
+              "add_task",
+              "add_note",
+              "set_due_date",
+              "set_priority",
+              "create_rider",
+              "mark_complete"
+            ]
+          },
+          "action_config": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Order of execution"
+    }
+  },
+  "required": [
+    "name",
+    "triggers",
+    "actions"
+  ]
+}

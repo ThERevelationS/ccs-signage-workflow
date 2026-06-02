@@ -1,0 +1,116 @@
+{
+  "name": "TimeOffRequest",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the employee"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the employee"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "vacation",
+        "sick",
+        "personal",
+        "bereavement",
+        "jury_duty",
+        "other"
+      ],
+      "description": "Type of time off"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date of time off"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date of time off"
+    },
+    "hours_requested": {
+      "type": "number",
+      "description": "Total hours requested"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for request"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied"
+      ],
+      "default": "pending",
+      "description": "Request status"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Email of approver"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was approved/denied"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Notes from admin"
+    }
+  },
+  "required": [
+    "user_email",
+    "request_type",
+    "start_date",
+    "end_date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

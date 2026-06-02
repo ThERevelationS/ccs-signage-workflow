@@ -1,0 +1,46 @@
+{
+  "name": "TaskTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "tasks": {
+      "type": "array",
+      "description": "List of task texts",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sub_tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                }
+              }
+            },
+            "default": []
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "name",
+    "tasks"
+  ]
+}

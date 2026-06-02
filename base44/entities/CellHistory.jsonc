@@ -1,0 +1,43 @@
+{
+  "name": "CellHistory",
+  "type": "object",
+  "properties": {
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "WorkOrder",
+        "Order"
+      ],
+      "description": "Type of entity (WorkOrder or Order)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the entity record"
+    },
+    "field_name": {
+      "type": "string",
+      "description": "Name of the field that was changed"
+    },
+    "old_value": {
+      "type": "string",
+      "description": "Previous value before change"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "New value after change"
+    },
+    "changed_by_email": {
+      "type": "string",
+      "description": "Email of user who made the change"
+    },
+    "changed_by_name": {
+      "type": "string",
+      "description": "Name of user who made the change"
+    }
+  },
+  "required": [
+    "entity_type",
+    "entity_id",
+    "field_name"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "GlobalSettings",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "description": "Unique key for the setting (e.g., 'salesLeadSources', 'salesTaskDescriptions', 'deadlineGradientSettings')"
+    },
+    "setting_value": {
+      "type": "object",
+      "description": "The setting value as JSON object"
+    }
+  },
+  "required": [
+    "setting_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

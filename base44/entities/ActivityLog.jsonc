@@ -1,0 +1,86 @@
+{
+  "name": "ActivityLog",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string",
+      "description": "ID of the related work order"
+    },
+    "work_order_title": {
+      "type": "string",
+      "description": "Title of the work order for display"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "work_order_created",
+        "work_order_updated",
+        "work_order_completed",
+        "work_order_deleted",
+        "rider_created",
+        "stage_changed",
+        "note_added",
+        "note_deleted",
+        "sub_note_added",
+        "sub_note_deleted",
+        "task_added",
+        "task_completed",
+        "task_uncompleted",
+        "task_deleted",
+        "task_edited",
+        "image_uploaded",
+        "asap_toggled",
+        "priority_changed",
+        "restored"
+      ],
+      "description": "Type of action performed"
+    },
+    "action_details": {
+      "type": "string",
+      "description": "Human-readable description of the action"
+    },
+    "previous_value": {
+      "type": "string",
+      "description": "Previous value before change (if applicable)"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "New value after change (if applicable)"
+    },
+    "performed_by_email": {
+      "type": "string",
+      "description": "Email of user who performed the action"
+    },
+    "performed_by_name": {
+      "type": "string",
+      "description": "Name of user who performed the action"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "action_type",
+    "performed_by_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
