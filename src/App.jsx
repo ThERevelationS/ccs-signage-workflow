@@ -17,6 +17,7 @@ import VinylEstimator from './pages/VinylEstimator';
 import MaintenanceEstimator from './pages/MaintenanceEstimator';
 import ChannelLetterEstimator from './pages/ChannelLetterEstimator';
 import CNCEstimator from './pages/CNCEstimator';
+import LaserEstimator from './pages/LaserEstimator';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -95,6 +96,11 @@ const AuthenticatedApp = () => {
       <Route path="/CNCEstimator" element={
         <LayoutWrapper currentPageName="CNCEstimator">
           <CNCEstimator />
+        </LayoutWrapper>
+      } />
+      <Route path="/LaserEstimator" element={
+        <LayoutWrapper currentPageName="LaserEstimator">
+          <LaserEstimator />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
