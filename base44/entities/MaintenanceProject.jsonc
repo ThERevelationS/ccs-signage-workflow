@@ -1,7 +1,7 @@
 {
   "name": "MaintenanceProject",
   "type": "object",
-  "description": "Sign Maintenance estimator project \u2014 signs being serviced with per-action rates, equipment, personnel, travel and supplies.",
+  "description": "Sign Maintenance estimator project \u2014 signs being serviced with per-action rates, materials, equipment, travel and supplies.",
   "properties": {
     "project_name": {
       "type": "string"
@@ -60,6 +60,14 @@
         "type": "object",
         "additionalProperties": true
       }
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 85
+    },
+    "travel_cost_per_mile": {
+      "type": "number",
+      "default": 1.25
     },
     "travel_miles_round_trip": {
       "type": "number",

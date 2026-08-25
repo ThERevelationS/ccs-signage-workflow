@@ -8,7 +8,7 @@ export const ESTIMATOR_MODULES = [
   { key: "laser", label: "Laser", entity: "LaserProject" },
   { key: "metal", label: "Metal Fabrication", entity: "MetalProject" },
   { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject" },
-  { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject" },
+  { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
 ];
 
 export const getModule = (key) => ESTIMATOR_MODULES.find((m) => m.key === key);
