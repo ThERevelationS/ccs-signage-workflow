@@ -13,6 +13,7 @@ import Estimator from './pages/Estimator';
 import EstimateDetail from './pages/EstimateDetail';
 import FoundationEstimator from './pages/FoundationEstimator';
 import FoundationCatalog from './pages/FoundationCatalog';
+import VinylEstimator from './pages/VinylEstimator';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -71,6 +72,11 @@ const AuthenticatedApp = () => {
       <Route path="/FoundationCatalog" element={
         <LayoutWrapper currentPageName="FoundationCatalog">
           <FoundationCatalog />
+        </LayoutWrapper>
+      } />
+      <Route path="/VinylEstimator" element={
+        <LayoutWrapper currentPageName="VinylEstimator">
+          <VinylEstimator />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
