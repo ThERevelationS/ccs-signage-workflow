@@ -133,21 +133,6 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         <Check label="Forming" checked={item.include_forming} onChange={(v) => set({ include_forming: v })} />
         <Check label="Finishing" checked={item.include_finishing} onChange={(v) => set({ include_finishing: v })} />
         <Check
-          label="Wall material"
-          checked={item.include_wall_material}
-          onChange={(v) => set({ include_wall_material: v })}
-        />
-        <Check
-          label="Fill material"
-          checked={item.include_fill_material}
-          onChange={(v) => set({ include_fill_material: v })}
-        />
-        <Check
-          label="Paint pole"
-          checked={item.include_pole_painting}
-          onChange={(v) => set({ include_pole_painting: v })}
-        />
-        <Check
           label="This is a new sign location"
           checked={item.is_new_sign_location}
           onChange={(v) => set({ is_new_sign_location: v })}
@@ -211,89 +196,12 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         </div>
       )}
 
-      {/* Pole */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-        <Picker
-          label="Pole"
-          value={item.selected_pole_id}
-          onChange={(v) => set({ selected_pole_id: v })}
-          options={catalog.poles}
-          placeholder="None"
-        />
-        <Field
-          label="Pole height (in)"
-          type="number"
-          value={item.pole_total_height_inches ?? 0}
-          onChange={numSet("pole_total_height_inches")}
-        />
-        <Field
-          label="Embed offset (in)"
-          type="number"
-          value={item.pole_offset_from_bottom_inches ?? 0}
-          onChange={numSet("pole_offset_from_bottom_inches")}
-        />
-      </div>
-
-      {item.include_wall_material && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-          <Picker
-            label="Brick / wall unit"
-            value={item.selected_brick_id}
-            onChange={(v) => set({ selected_brick_id: v })}
-            options={catalog.walls}
-            placeholder="Select"
-          />
-          <Field
-            label="Wall length (in)"
-            type="number"
-            value={item.wall_length_inches ?? 0}
-            onChange={numSet("wall_length_inches")}
-          />
-          <Field
-            label="Wall height (in)"
-            type="number"
-            value={item.wall_height_inches ?? 0}
-            onChange={numSet("wall_height_inches")}
-          />
-          <Field
-            label="Wall width (in)"
-            type="number"
-            value={item.wall_width_inches ?? 8}
-            onChange={numSet("wall_width_inches")}
-          />
-          <Field
-            label="Mortar gap (in)"
-            type="number"
-            value={item.mortar_gap_inches ?? 0.375}
-            onChange={numSet("mortar_gap_inches")}
-          />
-          <div className="col-span-2 sm:col-span-3 self-end text-xs text-gray-500">
-            {Number(item.brick_count || 0).toFixed(0)} units · {money(item.brick_cost)}
-          </div>
-        </div>
-      )}
-
-      {item.include_fill_material && (
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          <Picker
-            label="Fill material"
-            value={item.selected_fill_material_id}
-            onChange={(v) => set({ selected_fill_material_id: v })}
-            options={catalog.fill}
-            placeholder="Select"
-          />
-          <div className="self-end text-xs text-gray-500">
-            {Number(item.fill_volume_cy || 0).toFixed(2)} CY · {money(item.fill_cost)}
-          </div>
-        </div>
-      )}
-
       {/* Cost breakdown */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-gray-100 text-xs">
         {[
           ["Concrete", item.concrete_cost],
           ["Excavation", item.excavation_cost],
-          ["Forming", (item.forming_cost || 0) + (item.forming_materials_cost || 0)],
+          ["Forming", item.forming_cost],
           ["Pour + finish", (item.pouring_cost || 0) + (item.finishing_cost || 0)],
         ].map(([label, value]) => (
           <div key={label} className="bg-slate-50 rounded-lg px-2 py-1.5">

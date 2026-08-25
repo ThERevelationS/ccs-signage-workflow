@@ -12,6 +12,7 @@ import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDel
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
+import FoundationPolesPanel from "@/components/estimator/foundation/FoundationPolesPanel";
 import { calcProject } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
@@ -117,6 +118,7 @@ export default function FoundationEstimator() {
         selected_equipment: calc.equipment,
         walls: calc.walls,
         wall_caps: project.wall_caps || [],
+        poles: project.poles || [],
         excavation_method: project.excavation_method,
         concrete_cost_per_cy: project.concrete_cost_per_cy,
         rebar_cost_per_ft: project.rebar_cost_per_ft,
@@ -198,7 +200,7 @@ export default function FoundationEstimator() {
 
             <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
 
-            <FoundationRatesPanel project={project} onChange={patch} />
+            <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
 
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Foundations</h2>
@@ -237,6 +239,13 @@ export default function FoundationEstimator() {
               onChange={(walls) => patch({ walls })}
             />
 
+            <FoundationPolesPanel
+              poles={calc.poles}
+              options={catalog.poles}
+              items={calc.items}
+              onChange={(poles) => patch({ poles })}
+            />
+
             <FoundationWallCapsPanel
               caps={calc.wallCaps}
               walls={calc.walls}
@@ -246,6 +255,8 @@ export default function FoundationEstimator() {
 
             <FoundationBOM
               items={calc.items}
+              poles={calc.poles}
+              walls={calc.walls}
               delivery={calc.delivery}
               totals={calc.totals}
               inventory={inventory}

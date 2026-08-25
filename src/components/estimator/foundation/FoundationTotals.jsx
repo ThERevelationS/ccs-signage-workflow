@@ -10,9 +10,9 @@ export default function FoundationTotals({ totals }) {
     ["Labor", totals.total_labor_cost],
     ["Poles", totals.total_pole_cost],
     ["Pole painting", totals.total_pole_painting_cost],
-    ["Brick / wall", totals.total_brick_cost],
-    ["Fill material", totals.total_fill_cost],
-    ["Masonry walls", totals.total_wall_cost],
+    ["Wall material", totals.total_brick_cost],
+    ["Internal fill wall", totals.total_fill_cost],
+    ["Wall mortar + labor", (totals.total_wall_cost || 0) - (totals.total_brick_cost || 0) - (totals.total_fill_cost || 0)],
     ["Wall caps", totals.total_wall_cap_cost],
     ["Equipment", totals.total_equipment_cost],
   ];

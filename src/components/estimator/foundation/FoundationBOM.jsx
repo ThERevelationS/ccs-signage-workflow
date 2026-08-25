@@ -4,7 +4,14 @@ import { money } from "./foundationCalc";
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const qty = (n, unit) => `${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
 
-export default function FoundationBOM({ items = [], delivery, totals = {}, inventory = [] }) {
+export default function FoundationBOM({
+  items = [],
+  poles = [],
+  walls = [],
+  delivery,
+  totals = {},
+  inventory = [],
+}) {
   const rows = useMemo(() => {
     const out = [];
     const add = (material, quantity, cost) => {
@@ -30,12 +37,11 @@ export default function FoundationBOM({ items = [], delivery, totals = {}, inven
     if (formingQty > 0) add("Forming material", qty(formingQty, "units"), totals.total_forming_materials_cost);
 
     const poleGroups = {};
-    items.forEach((i) => {
-      if (!i.selected_pole_id || num(i.pole_cost) <= 0) return;
-      const key = i.selected_pole_id;
-      poleGroups[key] = poleGroups[key] || { ft: 0, cost: 0 };
-      poleGroups[key].ft += (num(i.pole_total_height_inches) / 12) * num(i.quantity);
-      poleGroups[key].cost += num(i.pole_cost);
+    poles.forEach((p) => {
+      if (!p.pole_id || num(p.pole_cost) <= 0) return;
+      poleGroups[p.pole_id] = poleGroups[p.pole_id] || { ft: 0, cost: 0 };
+      poleGroups[p.pole_id].ft += (num(p.height_inches) + num(p.y_offset_inches)) / 12;
+      poleGroups[p.pole_id].cost += num(p.pole_cost);
     });
     Object.entries(poleGroups).forEach(([id, g]) => add(nameOf(id), qty(g.ft, "LF"), g.cost));
 
@@ -43,27 +49,25 @@ export default function FoundationBOM({ items = [], delivery, totals = {}, inven
       add("Pole painting", "—", totals.total_pole_painting_cost);
     }
 
-    const brickGroups = {};
-    items.forEach((i) => {
-      if (!i.selected_brick_id || num(i.brick_count) <= 0) return;
-      brickGroups[i.selected_brick_id] = brickGroups[i.selected_brick_id] || { count: 0, cost: 0 };
-      brickGroups[i.selected_brick_id].count += num(i.brick_count);
-      brickGroups[i.selected_brick_id].cost += num(i.brick_cost);
+    walls.forEach((w, i) => {
+      const c = w.calculatedCosts || {};
+      const label = w.name || `Wall ${i + 1}`;
+      if (num(c.materialCost) > 0) add(`${label} — ${nameOf(w.materialId)}`, qty(c.totalBricks, "units"), c.materialCost);
+      if (num(c.mortarCost) > 0) add(`${label} — mortar`, "—", c.mortarCost);
+      if (num(c.internalMaterialCost) > 0) {
+        add(
+          `${label} — ${nameOf(w.internalMaterialId)} (internal)`,
+          qty(c.internalTotalBricks, "units"),
+          c.internalMaterialCost
+        );
+      }
+      if (num(c.internalMortarCost) > 0) add(`${label} — internal mortar`, "—", c.internalMortarCost);
     });
-    Object.entries(brickGroups).forEach(([id, g]) => add(nameOf(id), qty(g.count, "units"), g.cost));
 
-    const fillGroups = {};
-    items.forEach((i) => {
-      if (!i.selected_fill_material_id || num(i.fill_cost) <= 0) return;
-      fillGroups[i.selected_fill_material_id] =
-        fillGroups[i.selected_fill_material_id] || { cy: 0, cost: 0 };
-      fillGroups[i.selected_fill_material_id].cy += num(i.fill_volume_cy);
-      fillGroups[i.selected_fill_material_id].cost += num(i.fill_cost);
-    });
-    Object.entries(fillGroups).forEach(([id, g]) => add(nameOf(id), qty(g.cy, "CY"), g.cost));
+    (totals.wall_caps_by_material || []).forEach((g) => add(g.name || "Wall cap", qty(g.qty, "pcs"), g.cost));
 
     return out;
-  }, [items, delivery, totals, inventory]);
+  }, [items, poles, walls, delivery, totals, inventory]);
 
   const materialTotal = rows.reduce((s, r) => s + num(r.cost), 0);
 
