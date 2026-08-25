@@ -94,7 +94,7 @@ export default function EstimateDetail() {
   };
 
   return (
-    <div className="min-h-full" style={{ background: 'linear-gradient(135deg, #FFF5F5 0%, #FFF9F5 100%)' }}>
+    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-4 mb-5">
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
