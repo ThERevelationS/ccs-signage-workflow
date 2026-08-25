@@ -89,7 +89,14 @@ export function calcEquipment(selected, inventory) {
 export function calcProject(project, inventory, settings = {}) {
   const items = (project.items || []).map((item) => ({ ...item, ...calcItem(item, project, inventory, settings) }));
   const equipment = calcEquipment(project.selected_equipment, inventory);
-  const delivery = calcConcreteDelivery({ ...project, settings }, project.items || [], inventory);
+  const delivery = calcConcreteDelivery(
+    { ...project, settings },
+    (project.items || []).map((i) => ({
+      ...i,
+      excavation_method: i.excavation_method || project.excavation_method,
+    })),
+    inventory
+  );
   const walls = calcWalls(project, inventory, settings);
   const poles = calcPoles(project.poles, inventory, settings);
   const wallCaps = calcWallCaps(project.wall_caps, inventory);
