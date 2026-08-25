@@ -9,6 +9,7 @@ import PricingSummary from "@/components/estimator/PricingSummary";
 import AddSectionDialog from "@/components/estimator/AddSectionDialog";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import { computePricing } from "@/components/estimator/aioPricing";
+import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 
 export default function EstimateDetail() {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -22,8 +23,9 @@ export default function EstimateDetail() {
       setLoading(false);
       return;
     }
-    base44.entities.AllInOneEstimate.get(id).then((res) => {
-      setEstimate(res);
+    base44.entities.AllInOneEstimate.get(id).then(async (res) => {
+      const line_items = await refreshSectionSnapshots(res.line_items);
+      setEstimate({ ...res, line_items });
       setLoading(false);
     });
   }, [id]);
@@ -41,8 +43,11 @@ export default function EstimateDetail() {
       line_items: prev.line_items.map((l, i) => (i === index ? { ...l, ...changes } : l)),
     }));
 
-  const removeLine = (index) =>
+  const removeLine = async (index) => {
+    const line = estimate.line_items[index];
     setEstimate((prev) => ({ ...prev, line_items: prev.line_items.filter((_, i) => i !== index) }));
+    await deleteOwnedSection(line);
+  };
 
   const addSection = async (mod) => {
     const sectionName = `${estimate.project_name} — ${mod.label}`;
