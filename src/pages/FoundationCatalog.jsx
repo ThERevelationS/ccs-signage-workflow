@@ -31,7 +31,7 @@ export default function FoundationCatalog() {
   };
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-5xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">

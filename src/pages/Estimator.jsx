@@ -38,19 +38,25 @@ export default function Estimator() {
     : estimates;
 
   return (
-    <div className="min-h-full bg-slate-50">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="min-h-full" style={{ background: 'linear-gradient(135deg, #FFF5F5 0%, #FFF9F5 100%)' }}>
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
+        <div className="clay-card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-red-600 flex items-center justify-center">
-              <Calculator className="w-6 h-6 text-white" />
+            <div
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.08)',
+              }}
+            >
+              <Calculator className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Estimator</h1>
+              <h1 className="text-2xl font-bold text-gray-800">Estimator</h1>
               <p className="text-sm text-gray-500">Build and price multi-section sign estimates</p>
             </div>
           </div>
-          <Button onClick={() => setShowNew(true)} className="bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={() => setShowNew(true)} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Plus className="w-4 h-4" /> New Estimate
           </Button>
         </div>
@@ -61,14 +67,14 @@ export default function Estimator() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by description, client or estimate number"
-            className="pl-9 bg-white"
+            className="pl-9 clay-card border-none h-11"
           />
         </div>
 
         {loading ? (
           <div className="text-center py-16 text-gray-400">Loading estimates…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+          <div className="clay-card text-center py-16">
             <Calculator className="w-8 h-8 text-red-300 mx-auto mb-3" />
             <p className="text-gray-600 font-medium">
               {estimates.length === 0 ? "No estimates yet" : "No estimates match your search"}

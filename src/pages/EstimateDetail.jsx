@@ -94,13 +94,13 @@ export default function EstimateDetail() {
   };
 
   return (
-    <div className="min-h-full bg-slate-50">
-      <div className="max-w-6xl mx-auto p-6">
+    <div className="min-h-full" style={{ background: 'linear-gradient(135deg, #FFF5F5 0%, #FFF9F5 100%)' }}>
+      <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-4 mb-5">
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
             <ArrowLeft className="w-4 h-4" /> All estimates
           </Link>
-          <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Estimate"}
           </Button>
         </div>
@@ -111,13 +111,13 @@ export default function EstimateDetail() {
 
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Sections</h2>
-              <Button variant="outline" onClick={() => setShowAdd(true)}>
+              <Button variant="outline" onClick={() => setShowAdd(true)} className="clay-button border-2 border-red-200 bg-white/70 text-red-700">
                 <Plus className="w-4 h-4" /> Add Section
               </Button>
             </div>
 
             {(estimate.line_items || []).length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">
+              <div className="clay-card text-center py-12 text-gray-500">
                 No sections yet — add one to start pricing this estimate.
               </div>
             ) : (

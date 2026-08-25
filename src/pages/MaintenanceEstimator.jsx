@@ -108,7 +108,7 @@ export default function MaintenanceEstimator() {
   };
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-4 mb-5">
           <Link
@@ -117,7 +117,7 @@ export default function MaintenanceEstimator() {
           >
             <ArrowLeft className="w-4 h-4" /> Back to estimate
           </Link>
-          <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
         </div>

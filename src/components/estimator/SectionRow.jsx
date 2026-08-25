@@ -10,7 +10,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
   const editorPage = getModule(line.module_key)?.page;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-500 p-4">
+    <div className="clay-card p-4 border-l-4 border-l-red-400">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <Layers className="w-4 h-4 text-red-500 flex-shrink-0" />

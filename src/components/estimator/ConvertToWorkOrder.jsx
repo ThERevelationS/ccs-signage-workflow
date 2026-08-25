@@ -54,7 +54,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
 
   if (workOrderId) {
     return (
-      <div className="bg-white rounded-xl border border-emerald-200 p-4">
+      <div className="clay-card p-4 border-l-4 border-l-emerald-400">
         <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm mb-1">
           <CheckCircle2 className="w-4 h-4" /> Job created
         </div>
@@ -72,15 +72,15 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h3 className="font-semibold text-gray-900 text-sm mb-1">Convert to Job</h3>
+    <div className="clay-card p-4">
+      <h3 className="font-semibold text-gray-800 text-sm mb-1">Convert to Job</h3>
       <p className="text-xs text-gray-500 mb-3">
         Creates a work order in the sales pipeline linked to this estimate and customer.
       </p>
       <Button
         onClick={handleConvert}
         disabled={busy || !(estimate.line_items || []).length}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+        className="w-full clay-button border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold"
       >
         <Briefcase className="w-4 h-4" /> {busy ? "Creating job…" : "Create Work Order"}
       </Button>

@@ -16,7 +16,7 @@ export default function EstimateCard({ estimate, onDelete }) {
   const sections = (estimate.line_items || []).length;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-500 p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="clay-card p-4 border-l-4 border-l-red-400">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Link to={`/EstimateDetail?id=${estimate.id}`} className="flex items-center gap-2 group">
