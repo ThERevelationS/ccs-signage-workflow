@@ -1,11 +1,13 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2, Layers } from "lucide-react";
-import { getModuleLabel } from "./moduleRegistry";
+import { Link } from "react-router-dom";
+import { getModule, getModuleLabel } from "./moduleRegistry";
 import { money as fmt } from "./aioPricing";
 
-export default function SectionRow({ line, index, onChange, onRemove }) {
+export default function SectionRow({ line, index, estimateId, onChange, onRemove }) {
   const set = (patch) => onChange(index, patch);
+  const editorPage = getModule(line.module_key)?.page;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-500 p-4">
@@ -13,7 +15,16 @@ export default function SectionRow({ line, index, onChange, onRemove }) {
         <div className="flex items-center gap-2 min-w-0">
           <Layers className="w-4 h-4 text-red-500 flex-shrink-0" />
           <div className="min-w-0">
-            <div className="font-semibold text-gray-900 truncate">{getModuleLabel(line.module_key)}</div>
+            {editorPage ? (
+              <Link
+                to={`/${editorPage}?id=${line.project_id}&estimateId=${estimateId}`}
+                className="font-semibold text-gray-900 truncate hover:text-red-600 block"
+              >
+                {getModuleLabel(line.module_key)} →
+              </Link>
+            ) : (
+              <div className="font-semibold text-gray-900 truncate">{getModuleLabel(line.module_key)}</div>
+            )}
             <div className="text-xs text-gray-400">{line.project_name}</div>
           </div>
         </div>

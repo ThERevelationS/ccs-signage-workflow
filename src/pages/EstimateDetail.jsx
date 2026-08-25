@@ -121,6 +121,7 @@ export default function EstimateDetail() {
                     key={line.project_id || index}
                     line={line}
                     index={index}
+                    estimateId={estimate.id}
                     onChange={patchLine}
                     onRemove={removeLine}
                   />

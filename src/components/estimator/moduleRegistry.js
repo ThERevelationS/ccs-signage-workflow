@@ -1,7 +1,7 @@
 // Registry of estimator modules. Each section of an All-In-One estimate is a
 // sub-estimate record living in its module's own entity.
 export const ESTIMATOR_MODULES = [
-  { key: "foundation", label: "Concrete | Masonry | Poles", entity: "FoundationProject" },
+  { key: "foundation", label: "Concrete | Masonry | Poles", entity: "FoundationProject", page: "FoundationEstimator" },
   { key: "channel_letters", label: "Channel & Dimensional Letters", entity: "ChannelLetterInstallation" },
   { key: "vinyl", label: "Vinyl & Graphics", entity: "VinylProject" },
   { key: "cnc", label: "CNC Router", entity: "CNCProject" },
