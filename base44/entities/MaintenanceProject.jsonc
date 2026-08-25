@@ -1,0 +1,140 @@
+{
+  "name": "MaintenanceProject",
+  "type": "object",
+  "description": "Sign Maintenance estimator project \u2014 signs being serviced with per-action rates, equipment, personnel, travel and supplies.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "install_environment": {
+      "type": "string",
+      "enum": [
+        "interior",
+        "exterior"
+      ],
+      "default": "exterior"
+    },
+    "items": {
+      "type": "array",
+      "description": "Service items being maintained (signs being serviced + actions being performed on each).",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "personnel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "travel_miles_round_trip": {
+      "type": "number",
+      "default": 0
+    },
+    "total_travel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 10
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "total_materials_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "total_personnel_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

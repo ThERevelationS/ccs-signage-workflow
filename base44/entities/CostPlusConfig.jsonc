@@ -1,0 +1,57 @@
+{
+  "name": "CostPlusConfig",
+  "type": "object",
+  "properties": {
+    "config_name": {
+      "type": "string",
+      "default": "default",
+      "description": "Identifier for this cost-plus configuration. Currently only one ('default') is used, but kept extensible."
+    },
+    "labor_multiplier": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Multiplier applied to direct labor cost to cover burden (taxes, benefits, insurance). 1.0 = no burden."
+    },
+    "overhead_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Overhead added as a flat percentage of (materials + burdened labor)."
+    },
+    "profit_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Profit margin added after overhead, as a percentage of the running subtotal."
+    },
+    "category_markups": {
+      "type": "object",
+      "description": "Per-category markup % applied to direct cost BEFORE labor burden / overhead / profit. Keys match MarkupCategory.category_key. Values are percentages (e.g. 15 = 15% markup on that category's cost).",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "config_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

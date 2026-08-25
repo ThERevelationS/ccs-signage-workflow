@@ -1,0 +1,184 @@
+{
+  "name": "QuoteDefaults",
+  "type": "object",
+  "description": "Company-wide default Quote Settings. One record ('default'). Every field mirrors a quote setting on AllInOneEstimate \u2014 the Quote Settings panel can load these onto an estimate, and new estimates start from them.",
+  "properties": {
+    "config_name": {
+      "type": "string",
+      "default": "default"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "company_phone": {
+      "type": "string"
+    },
+    "company_email": {
+      "type": "string"
+    },
+    "company_address": {
+      "type": "string"
+    },
+    "company_website": {
+      "type": "string"
+    },
+    "company_license": {
+      "type": "string",
+      "description": "License / registration number printed under the company block."
+    },
+    "company_logo_url": {
+      "type": "string"
+    },
+    "quote_title": {
+      "type": "string",
+      "default": "Project Estimate"
+    },
+    "quote_accent_color": {
+      "type": "string",
+      "default": "#4f46e5"
+    },
+    "quote_valid_days": {
+      "type": "number",
+      "default": 30
+    },
+    "payment_terms": {
+      "type": "string"
+    },
+    "quote_intro_text": {
+      "type": "string"
+    },
+    "quote_footer_text": {
+      "type": "string"
+    },
+    "quote_terms_conditions": {
+      "type": "string"
+    },
+    "warranty_text": {
+      "type": "string"
+    },
+    "lead_time_text": {
+      "type": "string"
+    },
+    "scope_auto_apply": {
+      "type": "boolean",
+      "default": true
+    },
+    "hide_section_prices": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_company_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_logo": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_contact_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_estimate_number": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_po_number": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_site_address": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_dates": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_category_column": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_section_descriptions": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_quantity_column": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_scope_lists": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_subtotal_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_discount_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_fees_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_tax_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_deposit_lines": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_notes_on_quote": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_terms_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_warranty_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_lead_time_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_signature_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_validity_footer": {
+      "type": "boolean",
+      "default": true
+    },
+    "round_prices_to_dollar": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "config_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

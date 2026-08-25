@@ -1,0 +1,201 @@
+{
+  "name": "CNCProject",
+  "type": "object",
+  "description": "CNC router estimator project \u2014 cut/carve items with machine time, setup and hold-down advisor inputs.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "panel",
+              "lettering",
+              "3d_carving"
+            ],
+            "default": "panel"
+          },
+          "description": {
+            "type": "string"
+          },
+          "material_type": {
+            "type": "string",
+            "enum": [
+              "Acrylic",
+              "Wood",
+              "MDF",
+              "Plywood",
+              "PVC",
+              "HDPE",
+              "Aluminum",
+              "Corian"
+            ],
+            "default": "Wood"
+          },
+          "material_thickness": {
+            "type": "string",
+            "description": "e.g., 1/8\", 1/4\", up to 4\""
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "length": {
+            "type": "number",
+            "default": 0
+          },
+          "width": {
+            "type": "number",
+            "default": 0
+          },
+          "letter_height": {
+            "type": "number",
+            "default": 0
+          },
+          "num_letters": {
+            "type": "number",
+            "default": 0
+          },
+          "carve_area_sqin": {
+            "type": "number",
+            "default": 0
+          },
+          "carve_depth": {
+            "type": "number",
+            "default": 0
+          },
+          "total_cut_length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "cut_speed_ipm": {
+            "type": "number",
+            "default": 50
+          },
+          "carve_speed_sqipm": {
+            "type": "number",
+            "default": 10
+          },
+          "machine_time_hours": {
+            "type": "number"
+          },
+          "setup_time_hours": {
+            "type": "number"
+          },
+          "machine_cost": {
+            "type": "number"
+          },
+          "labor_cost": {
+            "type": "number"
+          },
+          "force_enhanced": {
+            "type": "boolean",
+            "default": false,
+            "description": "User flagged this item as requiring enhanced/special hold-down regardless of the calculated risk."
+          },
+          "cutter_diameter_in": {
+            "type": "number",
+            "default": 0,
+            "description": "Cutter diameter in inches \u2014 used by the Hold-Down Advisor."
+          },
+          "smallest_detail_in": {
+            "type": "number",
+            "default": 0,
+            "description": "Narrowest stroke/feature width in inches \u2014 used by the Hold-Down Advisor."
+          },
+          "workholding_method": {
+            "type": "string",
+            "enum": [
+              "vacuum_full",
+              "vacuum_zoned",
+              "tape_glue",
+              "screws",
+              "clamps",
+              "none"
+            ],
+            "description": "Existing base workholding on the machine \u2014 used by the Hold-Down Advisor."
+          },
+          "creates_loose_pieces": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the cut releases small individual pieces at cut-through (always true for lettering)."
+          }
+        }
+      }
+    },
+    "machine_rate_per_hour": {
+      "type": "number",
+      "default": 75
+    },
+    "labor_rate": {
+      "type": "number",
+      "default": 45
+    },
+    "setup_time_percentage": {
+      "type": "number",
+      "default": 20
+    },
+    "fixed_setup_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed setup time for the entire project in hours."
+    },
+    "total_machine_cost": {
+      "type": "number"
+    },
+    "total_labor_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

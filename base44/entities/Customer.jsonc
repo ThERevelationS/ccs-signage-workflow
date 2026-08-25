@@ -1,0 +1,264 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "description": "Shared Client record for the whole app. Used by the estimator (Step 1 of the estimate workflow, Customers area) AND by the workflow side \u2014 WorkOrders and Orders link to it via customer_id, so estimates, work orders and material orders all hang off the same client.",
+  "properties": {
+    "company_name": {
+      "type": "string"
+    },
+    "company_phone": {
+      "type": "string"
+    },
+    "company_fax": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "additional_phone": {
+      "type": "string"
+    },
+    "additional_phone_type": {
+      "type": "string",
+      "enum": [
+        "",
+        "office",
+        "cell",
+        "fax",
+        "home",
+        "other"
+      ],
+      "default": ""
+    },
+    "customer_status": {
+      "type": "string",
+      "enum": [
+        "prospect",
+        "active",
+        "inactive"
+      ],
+      "default": "prospect",
+      "description": "Account status shown in the customer header."
+    },
+    "contact_first_name": {
+      "type": "string"
+    },
+    "contact_last_name": {
+      "type": "string"
+    },
+    "contact_position": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_office_phone": {
+      "type": "string"
+    },
+    "contact_office_ext": {
+      "type": "string"
+    },
+    "contact_cell_phone": {
+      "type": "string"
+    },
+    "contact_additional_phone": {
+      "type": "string"
+    },
+    "contact_additional_phone_type": {
+      "type": "string",
+      "enum": [
+        "",
+        "office",
+        "cell",
+        "fax",
+        "home",
+        "other"
+      ],
+      "default": ""
+    },
+    "contact_status": {
+      "type": "string"
+    },
+    "job_authority": {
+      "type": "string"
+    },
+    "billing_contact_same": {
+      "type": "boolean",
+      "default": true
+    },
+    "billing_contact_name": {
+      "type": "string"
+    },
+    "billing_contact_email": {
+      "type": "string"
+    },
+    "billing_contact_phone": {
+      "type": "string"
+    },
+    "additional_contacts": {
+      "type": "array",
+      "description": "Extra people at this customer, managed on the Contacts tab.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "office_phone": {
+            "type": "string"
+          },
+          "office_ext": {
+            "type": "string"
+          },
+          "cell_phone": {
+            "type": "string"
+          },
+          "contact_status": {
+            "type": "string"
+          },
+          "job_authority": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    "billing_address_1": {
+      "type": "string"
+    },
+    "billing_address_2": {
+      "type": "string"
+    },
+    "billing_city": {
+      "type": "string"
+    },
+    "billing_state": {
+      "type": "string"
+    },
+    "billing_postal_code": {
+      "type": "string"
+    },
+    "billing_postal_ext": {
+      "type": "string"
+    },
+    "billing_country": {
+      "type": "string",
+      "default": "United States"
+    },
+    "location_same_as_billing": {
+      "type": "boolean",
+      "default": true
+    },
+    "location_address_1": {
+      "type": "string"
+    },
+    "location_address_2": {
+      "type": "string"
+    },
+    "location_city": {
+      "type": "string"
+    },
+    "location_state": {
+      "type": "string"
+    },
+    "location_postal_code": {
+      "type": "string"
+    },
+    "salesperson": {
+      "type": "string",
+      "description": "Screen name of the user assigned to this account."
+    },
+    "location": {
+      "type": "string",
+      "description": "Sales center / location this customer belongs to."
+    },
+    "default_tax_group": {
+      "type": "string"
+    },
+    "customer_origination": {
+      "type": "string"
+    },
+    "industry_type": {
+      "type": "string"
+    },
+    "master_account": {
+      "type": "string"
+    },
+    "terms": {
+      "type": "string"
+    },
+    "tax_exempt": {
+      "type": "boolean",
+      "default": false
+    },
+    "tax_id_number": {
+      "type": "string"
+    },
+    "tax_exempt_expiration": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+    },
+    "tax_exempt_reason": {
+      "type": "string"
+    },
+    "require_purchase_order": {
+      "type": "boolean",
+      "default": false
+    },
+    "shipping_account": {
+      "type": "string"
+    },
+    "credit_limit": {
+      "type": "number",
+      "default": 0
+    },
+    "pricing_tier": {
+      "type": "number",
+      "default": 1,
+      "description": "Overall markup pricing tier applied to this customer's estimates."
+    },
+    "send_monthly_statements": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "legacy_client_names": {
+      "type": "array",
+      "description": "Workflow client_name strings reconciled into this Customer record, used to match existing WorkOrders and Orders.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "company_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

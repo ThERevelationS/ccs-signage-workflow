@@ -1,0 +1,83 @@
+{
+  "name": "BrickStoneInventory",
+  "type": "object",
+  "description": "Brick / stone / block / paver catalog used by the Brick & Stone and Foundation wall estimators.",
+  "properties": {
+    "material_name": {
+      "type": "string",
+      "description": "Name of the brick or stone"
+    },
+    "material_type": {
+      "type": "string",
+      "enum": [
+        "brick",
+        "stone",
+        "block",
+        "pavers"
+      ],
+      "default": "brick"
+    },
+    "length": {
+      "type": "number",
+      "description": "Length in inches"
+    },
+    "width": {
+      "type": "number",
+      "description": "Width in inches"
+    },
+    "height": {
+      "type": "number",
+      "description": "Height in inches"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Cost per brick/stone"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color name or code"
+    },
+    "texture": {
+      "type": "string",
+      "enum": [
+        "smooth",
+        "rough",
+        "textured",
+        "glazed"
+      ],
+      "default": "smooth"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "material_name",
+    "material_type",
+    "length",
+    "width",
+    "height",
+    "cost_per_unit"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

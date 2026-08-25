@@ -1,0 +1,148 @@
+{
+  "name": "MetalProject",
+  "type": "object",
+  "description": "Metal fabrication estimator project \u2014 items drawn from the Inventory catalog with fabrication, welding and finishing labor.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "channel_letters",
+              "cabinet_sign",
+              "monument_sign",
+              "pole_sign",
+              "flat_cut_letters",
+              "fabricated_letters",
+              "frame_assembly",
+              "custom_brackets"
+            ],
+            "default": "channel_letters"
+          },
+          "description": {
+            "type": "string"
+          },
+          "inventory_item_id": {
+            "type": "string",
+            "description": "ID of the material from inventory"
+          },
+          "material_length_ft": {
+            "type": "number",
+            "default": 0,
+            "description": "Length of the inventory material used in feet"
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "fabrication_hours": {
+            "type": "number",
+            "default": 0
+          },
+          "welding_hours": {
+            "type": "number",
+            "default": 0
+          },
+          "finishing_hours": {
+            "type": "number",
+            "default": 0
+          },
+          "material_cost": {
+            "type": "number"
+          },
+          "supplies_cost": {
+            "type": "number"
+          },
+          "fabrication_cost": {
+            "type": "number"
+          },
+          "welding_cost": {
+            "type": "number"
+          },
+          "finishing_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "fabrication_rate": {
+      "type": "number",
+      "default": 65
+    },
+    "welding_rate": {
+      "type": "number",
+      "default": 75
+    },
+    "finishing_rate": {
+      "type": "number",
+      "default": 55
+    },
+    "total_material_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_fabrication_cost": {
+      "type": "number"
+    },
+    "total_welding_cost": {
+      "type": "number"
+    },
+    "total_finishing_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

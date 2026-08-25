@@ -1,0 +1,133 @@
+{
+  "name": "Report",
+  "type": "object",
+  "description": "Estimator bug report / feature request, with discussion thread. Surfaced on the estimator Report page.",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature"
+      ],
+      "description": "Whether this is a bug report or feature request"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short summary"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the bug or feature"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "completed",
+        "wont_fix"
+      ],
+      "default": "open",
+      "description": "Current workflow status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ui_ux",
+        "calculation",
+        "inventory",
+        "performance",
+        "data",
+        "auth",
+        "integration",
+        "other"
+      ],
+      "default": "other",
+      "description": "Broad area of the app this report relates to"
+    },
+    "page_location": {
+      "type": "string",
+      "description": "Where in the app the bug occurred or the feature should live"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal notes added by admins"
+    },
+    "comments": {
+      "type": "array",
+      "description": "Discussion thread on the report",
+      "items": {
+        "type": "object",
+        "properties": {
+          "author_email": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "description"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

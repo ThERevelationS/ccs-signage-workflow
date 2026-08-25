@@ -1,0 +1,47 @@
+{
+  "name": "ModuleStatus",
+  "type": "object",
+  "properties": {
+    "module_name": {
+      "type": "string",
+      "enum": [
+        "painting",
+        "laser",
+        "cnc",
+        "metal_fabrication",
+        "channel_letter_installation",
+        "foundation",
+        "brick_stone",
+        "sign_maintenance",
+        "vinyl_estimator"
+      ],
+      "description": "The unique identifier for the module."
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the module is currently active."
+    }
+  },
+  "required": [
+    "module_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

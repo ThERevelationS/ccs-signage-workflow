@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Customer name (can be linked to work order)"
     },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer (Client) record id."
+    },
     "work_order_id": {
       "type": "string",
       "description": "Linked work order ID"

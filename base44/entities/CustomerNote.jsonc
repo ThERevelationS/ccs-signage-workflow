@@ -1,0 +1,42 @@
+{
+  "name": "CustomerNote",
+  "type": "object",
+  "description": "A note or a flag attached to a Customer. Notes are internal history entries; flags are short warnings shown on the customer header and on estimates for that customer (e.g. 'Credit hold', 'Prepay only').",
+  "properties": {
+    "customer_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "note",
+        "flag"
+      ],
+      "default": "note"
+    },
+    "text": {
+      "type": "string"
+    },
+    "flag_color": {
+      "type": "string",
+      "enum": [
+        "red",
+        "amber",
+        "blue",
+        "green"
+      ],
+      "default": "amber",
+      "description": "Badge color used when kind = flag."
+    }
+  },
+  "required": [
+    "customer_id",
+    "text"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {}
+  }
+}

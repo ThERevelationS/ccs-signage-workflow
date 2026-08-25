@@ -1,0 +1,289 @@
+{
+  "name": "ChannelLetterInstallation",
+  "type": "object",
+  "description": "Channel Letter Installation estimator project \u2014 letters purchased/fabricated, install equipment (with idle running), personnel, travel, supplies and markup.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "project_scope": {
+      "type": "string",
+      "enum": [
+        "full",
+        "install_only",
+        "letters_only"
+      ],
+      "default": "full"
+    },
+    "install_environment": {
+      "type": "string",
+      "enum": [
+        "interior",
+        "exterior"
+      ],
+      "default": "exterior"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "letter_purchases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "letters_delivery_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_design_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_install_supplies_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_permitting_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_other_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "letters_subtotal": {
+      "type": "number"
+    },
+    "total_letters_cost": {
+      "type": "number"
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "string"
+          },
+          "equipment_name": {
+            "type": "string"
+          },
+          "equipment_type": {
+            "type": "string"
+          },
+          "pricing_mode": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number",
+            "default": 1
+          },
+          "include_delivery": {
+            "type": "boolean",
+            "default": false
+          },
+          "delivery_pickup_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "unit_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "total_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "idle_hours": {
+            "type": "number",
+            "default": 0,
+            "description": "Hours this boom equipment will idle running on-site (added on top of the rental/flat rate)."
+          },
+          "idle_running_cost_per_hour": {
+            "type": "number",
+            "default": 0
+          },
+          "idle_cost": {
+            "type": "number",
+            "default": 0
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "personnel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "hourly_rate": {
+            "type": "number",
+            "default": 0
+          },
+          "hours": {
+            "type": "number",
+            "default": 0
+          },
+          "total_cost": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "travel_miles_round_trip": {
+      "type": "number",
+      "default": 0
+    },
+    "total_travel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 10
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "total_materials_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "total_personnel_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "installation_type": {
+      "type": "string",
+      "description": "Legacy"
+    },
+    "qty_letters": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "letter_size": {
+      "type": "string",
+      "description": "Legacy"
+    },
+    "letter_height_inches": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "installation_height_feet": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "raceway_length_feet": {
+      "type": "number",
+      "description": "Legacy"
+    },
+    "thick_hollow_walls": {
+      "type": "boolean",
+      "description": "Legacy"
+    },
+    "parapet": {
+      "type": "boolean",
+      "description": "Legacy"
+    },
+    "poor_electrical_access": {
+      "type": "boolean",
+      "description": "Legacy"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

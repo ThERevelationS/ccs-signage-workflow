@@ -1,0 +1,197 @@
+{
+  "name": "VinylProject",
+  "type": "object",
+  "description": "A Vinyl Estimator project. Holds many vinyl workflows (each with parts + machine config + materials), the chosen vinyl(s), laminate selections, machine references, and the rolled-up totals.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "install_environment": {
+      "type": "string",
+      "enum": [
+        "interior",
+        "exterior"
+      ],
+      "default": "exterior"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "description": "Multi-workflow model. Each workflow has its own vinyl + machines + parts + per-personnel + per-part labor settings.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "printer_id": {
+      "type": "string"
+    },
+    "cutter_id": {
+      "type": "string"
+    },
+    "laminator_id": {
+      "type": "string"
+    },
+    "default_vinyl_id": {
+      "type": "string"
+    },
+    "default_laminate_id": {
+      "type": "string"
+    },
+    "personnel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "travel_miles_round_trip": {
+      "type": "number",
+      "default": 0
+    },
+    "total_travel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 5
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "setup_fee_floor": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum charge per workflow. If a workflow's subtotal (materials+machine+labor) falls below this, the workflow total is raised to this floor."
+    },
+    "spoilage_buffer_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Adds N% extra qty to every part for first-article / reprint waste BEFORE nesting."
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "customer_pricing_tier": {
+      "type": "number",
+      "description": "Selected MarkupTier number (1-8) used by the Customer Pricing tab."
+    },
+    "total_print_sqft": {
+      "type": "number"
+    },
+    "total_vinyl_sqft": {
+      "type": "number"
+    },
+    "total_laminate_sqft": {
+      "type": "number"
+    },
+    "total_vinyl_cost": {
+      "type": "number"
+    },
+    "total_laminate_cost": {
+      "type": "number"
+    },
+    "total_ink_cost": {
+      "type": "number"
+    },
+    "total_machine_cost": {
+      "type": "number"
+    },
+    "total_blade_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_personnel_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

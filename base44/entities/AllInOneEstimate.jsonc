@@ -1,0 +1,411 @@
+{
+  "name": "AllInOneEstimate",
+  "type": "object",
+  "description": "A multifaceted estimate BUILT from sections. Each section is a dedicated sub-estimate created by (and owned by) this estimate in its module's own entity, edited with that module's full estimator INLINE on the same page. Project info (client, estimate #, hyperlink, site address) is shared down to every owned section automatically. Totals live-sync from the source projects via real-time subscriptions and refresh-on-open. Customer pricing waterfall (per-section adjustments \u2192 discount \u2192 contingency \u2192 fees \u2192 tax \u2192 deposit) is computed by components/estimator/allInOne/aioPricing.js. Step 1 fields come from the shared Customer / TaxGroup / EstimateOption entities. Links to the workflow through customer_id (shared Client) and work_order_id.",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Estimate description shown in Step 1."
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Customer company name."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Optional linked WorkOrder id \u2014 ties this estimate to a job in the workflow."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "po_number": {
+      "type": "string",
+      "description": "Customer purchase order number, shown on the customer quote."
+    },
+    "terms": {
+      "type": "string",
+      "description": "Payment terms selected from the admin-managed terms list."
+    },
+    "order_contact": {
+      "type": "string",
+      "description": "Contact on the order (from the customer's contacts)."
+    },
+    "office_phone": {
+      "type": "string"
+    },
+    "office_phone_ext": {
+      "type": "string"
+    },
+    "salesperson": {
+      "type": "string"
+    },
+    "sales_center": {
+      "type": "string"
+    },
+    "tax_group": {
+      "type": "string",
+      "description": "Name of the selected TaxGroup \u2014 sets tax_percent."
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string",
+      "description": "Job site address \u2014 shared down to sections whose module supports it."
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "target_install_date": {
+      "type": "string",
+      "description": "Target install/completion date (YYYY-MM-DD)."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "rush"
+      ],
+      "default": "normal"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated tags for filtering/search (e.g. 'pylon, rebrand, phase 1')."
+    },
+    "tax_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Sales tax % \u2014 tax = taxable base \u00d7 tax%."
+    },
+    "deposit_percent": {
+      "type": "number",
+      "default": 50,
+      "description": "Deposit % \u2014 deposit = quote total \u00d7 deposit%."
+    },
+    "discount_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Project-level discount % applied to the adjusted sections subtotal."
+    },
+    "contingency_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Contingency % applied AFTER discount: contingency = (subtotal \u2212 discount) \u00d7 contingency%."
+    },
+    "shipping_fee": {
+      "type": "number",
+      "default": 0,
+      "description": "Flat project-level shipping/freight fee added before tax."
+    },
+    "permit_fee": {
+      "type": "number",
+      "default": 0,
+      "description": "Flat project-level permit/admin fee added before tax."
+    },
+    "quote_valid_days": {
+      "type": "number",
+      "default": 30,
+      "description": "How many days the customer quote stays valid."
+    },
+    "payment_terms": {
+      "type": "string",
+      "description": "Payment terms text shown on the customer quote."
+    },
+    "scope_inclusions": {
+      "type": "string",
+      "description": "Newline-separated list of what's INCLUDED \u2014 rendered as bullets on the customer quote."
+    },
+    "scope_exclusions": {
+      "type": "string",
+      "description": "Newline-separated list of what's EXCLUDED \u2014 rendered as bullets on the customer quote."
+    },
+    "scope_auto_apply": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, scope library lines flagged always_include, or whose auto_modules match a section on this estimate, are added automatically."
+    },
+    "hide_section_prices": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true the customer quote shows ONE bundled project price instead of per-section pricing."
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Your company name shown in the customer quote header."
+    },
+    "company_phone": {
+      "type": "string"
+    },
+    "company_email": {
+      "type": "string"
+    },
+    "company_address": {
+      "type": "string"
+    },
+    "company_website": {
+      "type": "string"
+    },
+    "company_license": {
+      "type": "string",
+      "description": "License / registration number printed under the company block."
+    },
+    "company_logo_url": {
+      "type": "string"
+    },
+    "quote_title": {
+      "type": "string",
+      "default": "Project Estimate",
+      "description": "Headline printed at the top of the quote."
+    },
+    "quote_accent_color": {
+      "type": "string",
+      "default": "#4f46e5",
+      "description": "Hex accent color for the quote header rule and highlight text."
+    },
+    "quote_intro_text": {
+      "type": "string",
+      "description": "Optional paragraph printed above the pricing table."
+    },
+    "quote_footer_text": {
+      "type": "string",
+      "description": "Optional paragraph printed at the very bottom of the quote."
+    },
+    "quote_terms_conditions": {
+      "type": "string",
+      "description": "Terms & conditions block printed on the quote."
+    },
+    "warranty_text": {
+      "type": "string",
+      "description": "Warranty statement printed on the quote."
+    },
+    "lead_time_text": {
+      "type": "string",
+      "description": "Production / install lead time statement printed on the quote."
+    },
+    "show_company_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_logo": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_contact_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_estimate_number": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_po_number": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_site_address": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_dates": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_category_column": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_section_descriptions": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_quantity_column": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_scope_lists": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_subtotal_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_discount_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_fees_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_tax_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_deposit_lines": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_notes_on_quote": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_terms_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_warranty_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_lead_time_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_signature_block": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_validity_footer": {
+      "type": "boolean",
+      "default": true
+    },
+    "round_prices_to_dollar": {
+      "type": "boolean",
+      "default": false,
+      "description": "Display-only: rounds every price shown on the customer quote to the nearest dollar."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "sent",
+        "approved",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "line_items": {
+      "type": "array",
+      "description": "Estimate sections. Totals are refreshed from the source projects whenever the estimate is opened, and in real time while it is open.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module_key": {
+            "type": "string",
+            "description": "Key from the estimator registry (e.g. 'painting', 'foundation')."
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "project_name": {
+            "type": "string"
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "total_snapshot": {
+            "type": "number",
+            "default": 0,
+            "description": "Last-known total of the sub-estimate."
+          },
+          "adjustment_percent": {
+            "type": "number",
+            "default": 0,
+            "description": "Per-section price adjustment %. Positive = markup, negative = discount. adjusted = total \u00d7 (1 + adj%/100)."
+          },
+          "section_status": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "complete"
+            ],
+            "default": "in_progress",
+            "description": "Estimating workflow status of this section."
+          },
+          "section_note": {
+            "type": "string",
+            "description": "Internal note about this section (not shown to the customer)."
+          },
+          "customer_description": {
+            "type": "string",
+            "description": "Customer-facing description shown under the section on the quote."
+          },
+          "customer_quantity": {
+            "type": "number",
+            "default": 1,
+            "description": "Display-only quantity shown on the quote when the quantity column is enabled."
+          },
+          "include_in_customer": {
+            "type": "boolean",
+            "default": true,
+            "description": "When false, this section's price is bundled into a single 'Additional project scope' quote line instead of being listed."
+          },
+          "owned": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when this sub-estimate was created BY this All-In-One estimate (a built-in section). Owned sections are deleted together with the section / estimate."
+          },
+          "linked_date": {
+            "type": "string"
+          },
+          "updated_date_snapshot": {
+            "type": "string",
+            "description": "Last-known updated_date of the source sub-estimate."
+          }
+        }
+      }
+    },
+    "total_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of raw section totals (before adjustments/discount/tax)."
+    },
+    "quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer-facing quote total after the full pricing waterfall (adjustments, discount, contingency, fees, tax)."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "edit_reason": {
+      "type": "string",
+      "description": "Required reason captured on Step 3 (Finalize Estimate) before saving. Must be filled to save the estimate."
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

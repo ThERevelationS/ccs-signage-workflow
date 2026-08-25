@@ -1,0 +1,103 @@
+{
+  "name": "Inventory",
+  "type": "object",
+  "description": "Extruded / sheet metal stock catalog used by the Metal Fabrication estimator. Rows flagged is_pole are also selectable as sign poles in the Foundation estimator.",
+  "properties": {
+    "material_type": {
+      "type": "string",
+      "enum": [
+        "Aluminum",
+        "Steel",
+        "Stainless_Steel",
+        "Galvanized_Steel",
+        "Brass",
+        "Copper",
+        "Plastic",
+        "Other"
+      ],
+      "description": "Type of material"
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "Angle",
+        "Channel",
+        "Tube_Square",
+        "Tube_Round",
+        "Flat_Bar",
+        "Round_Bar",
+        "Sheet",
+        "Plate",
+        "I_Beam",
+        "H_Beam",
+        "Pipe",
+        "Other"
+      ],
+      "description": "Type of product/extrusion"
+    },
+    "size": {
+      "type": "string",
+      "description": "Dimensions (e.g., 2x2x1/4, 4x8, 1.5 OD)"
+    },
+    "thickness_gauge": {
+      "type": "string",
+      "description": "Thickness or gauge (e.g., 1/8, 14ga, 0.125)"
+    },
+    "standard_length": {
+      "type": "number",
+      "description": "Standard length in feet"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Cost per unit"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "per_foot",
+        "per_piece",
+        "per_pound",
+        "per_sqft"
+      ],
+      "default": "per_foot",
+      "description": "Unit pricing type"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Supplier or vendor name"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the material"
+    },
+    "is_pole": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this extruded-metal row is also available to the Concrete | Masonry | Poles estimator as a sign pole. Geometry is auto-derived from product_type + size, $/ft from cost_per_unit, and paint rate from the global Foundation Settings."
+    }
+  },
+  "required": [
+    "material_type",
+    "product_type",
+    "size",
+    "cost_per_unit"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

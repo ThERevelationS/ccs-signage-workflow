@@ -1,0 +1,190 @@
+{
+  "name": "LaserProject",
+  "type": "object",
+  "description": "Laser estimator project \u2014 cut/engrave items priced off machine and labor rates for the parameter and engraving lasers.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "panel",
+              "lettering",
+              "engraving",
+              "engrave_and_cut"
+            ],
+            "default": "panel"
+          },
+          "description": {
+            "type": "string"
+          },
+          "material_type": {
+            "type": "string",
+            "enum": [
+              "Acrylic",
+              "Wood",
+              "Leather"
+            ],
+            "default": "Acrylic"
+          },
+          "material_thickness": {
+            "type": "string",
+            "description": "e.g., 1/8\", 1/4\""
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "length": {
+            "type": "number",
+            "default": 0,
+            "description": "Length for a panel"
+          },
+          "width": {
+            "type": "number",
+            "default": 0,
+            "description": "Width for a panel"
+          },
+          "letter_height": {
+            "type": "number",
+            "default": 0,
+            "description": "Height of letters"
+          },
+          "num_letters": {
+            "type": "number",
+            "default": 0,
+            "description": "Number of letters"
+          },
+          "engrave_area_sqin": {
+            "type": "number",
+            "default": 0,
+            "description": "Area in square inches for engraving"
+          },
+          "total_cut_length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "cut_speed_ipm": {
+            "type": "number",
+            "default": 20
+          },
+          "engrave_speed_sqipm": {
+            "type": "number",
+            "default": 5
+          },
+          "machine_time_hours": {
+            "type": "number"
+          },
+          "handling_time_hours": {
+            "type": "number"
+          },
+          "machine_cost": {
+            "type": "number"
+          },
+          "labor_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "machine_rate_per_hour": {
+      "type": "number",
+      "default": 100,
+      "description": "Parameter laser machine rate (legacy/base)"
+    },
+    "labor_rate": {
+      "type": "number",
+      "default": 75,
+      "description": "Parameter laser labor rate (legacy/base)"
+    },
+    "engraving_machine_rate_per_hour": {
+      "type": "number",
+      "default": 80,
+      "description": "Engraving laser machine rate"
+    },
+    "engraving_labor_rate": {
+      "type": "number",
+      "default": 40,
+      "description": "Engraving laser labor rate"
+    },
+    "parameter_handling_time_percentage": {
+      "type": "number",
+      "default": 15
+    },
+    "engraving_handling_time_percentage": {
+      "type": "number",
+      "default": 20
+    },
+    "fixed_setup_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed setup time for the entire project in hours."
+    },
+    "fixed_material_setup_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed material setup cost for the entire project."
+    },
+    "total_machine_cost": {
+      "type": "number"
+    },
+    "total_supplies_cost": {
+      "type": "number"
+    },
+    "total_labor_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

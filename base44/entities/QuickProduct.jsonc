@@ -1,0 +1,136 @@
+{
+  "name": "QuickProduct",
+  "type": "object",
+  "description": "A reusable 'Quick Product' \u2014 a saved, pre-priced product built from a list of parts (fabrication, materials, design, service, install, etc.). Each part line = override ?? (part_price + modifier_price) x part_qty; parts total + setup fee - discount = product retail (x product_quantity for the extended total).",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "product_group": {
+      "type": "string",
+      "enum": [
+        "my",
+        "global"
+      ],
+      "default": "my",
+      "description": "'my' = this user's products, 'global' = shared company products."
+    },
+    "categories": {
+      "type": "array",
+      "description": "Category names this product belongs to (matches QuickProductCategory.category_name).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "product_quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "is_vended": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "setup_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "discount": {
+      "type": "number",
+      "default": 0,
+      "description": "Flat dollar discount subtracted from the parts total."
+    },
+    "price_override": {
+      "type": "number",
+      "description": "When set, replaces the calculated product retail price."
+    },
+    "product_notes": {
+      "type": "string"
+    },
+    "parts": {
+      "type": "array",
+      "description": "Ordered parts that make up the product.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part_label": {
+            "type": "string",
+            "description": "Editable label shown on the part header (e.g. 'Channel Letters')."
+          },
+          "part_name": {
+            "type": "string",
+            "description": "Underlying part name (e.g. 'Fabricated Part')."
+          },
+          "part_type": {
+            "type": "string",
+            "enum": [
+              "fabrication",
+              "material",
+              "design_production",
+              "service",
+              "installation",
+              "equipment",
+              "permit",
+              "other"
+            ],
+            "default": "fabrication"
+          },
+          "part_qty": {
+            "type": "number",
+            "default": 1
+          },
+          "vendor_info": {
+            "type": "string"
+          },
+          "modifiers": {
+            "type": "array",
+            "description": "Free-form modifier/spec lines shown in the Modifier Information column.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "part_price": {
+            "type": "number",
+            "default": 0
+          },
+          "modifier_price": {
+            "type": "number",
+            "default": 0
+          },
+          "price_override": {
+            "type": "number",
+            "description": "When set, replaces this part's calculated line total."
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "total_price": {
+      "type": "number",
+      "default": 0,
+      "description": "Last-saved product retail price (extended, includes product quantity)."
+    }
+  },
+  "required": [
+    "product_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {}
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "name": "CustomerSummary",
+  "type": "object",
+  "description": "A saved multi-module summary for a client, bundling projects from different estimator modules under one tier.",
+  "properties": {
+    "summary_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "tier_number": {
+      "type": "number",
+      "default": 1,
+      "description": "Selected pricing tier 1-8."
+    },
+    "linked_projects": {
+      "type": "array",
+      "description": "List of projects from different modules included in this summary.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "enum": [
+              "channel_letter_installation",
+              "foundation",
+              "brick_stone",
+              "paint",
+              "laser",
+              "cnc",
+              "metal_fabrication",
+              "vinyl",
+              "sign_maintenance"
+            ]
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "project_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "summary_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

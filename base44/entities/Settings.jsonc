@@ -1,0 +1,94 @@
+{
+  "name": "Settings",
+  "type": "object",
+  "description": "Estimator rate/setting key-value records, grouped by category. Drives the per-module estimator calculations and Settings pages.",
+  "properties": {
+    "setting_name": {
+      "type": "string",
+      "description": "Name of the setting"
+    },
+    "setting_value": {
+      "type": "string",
+      "description": "Value of the setting"
+    },
+    "setting_type": {
+      "type": "string",
+      "enum": [
+        "number",
+        "text",
+        "boolean"
+      ],
+      "description": "Type of the setting"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this setting controls"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "labor",
+        "pricing",
+        "calculations",
+        "general",
+        "painting_pricing",
+        "painting_labor",
+        "painting_supplies",
+        "laser_rates",
+        "laser_labor",
+        "laser_calc",
+        "laser_material",
+        "laser_speed",
+        "laser_calculator",
+        "shared_calculator",
+        "cnc_rates",
+        "cnc_labor",
+        "cnc_calc",
+        "cnc_material",
+        "cnc_speed",
+        "metal_rates",
+        "metal_labor",
+        "metal_calc",
+        "metal_material",
+        "install_pricing",
+        "install_rates",
+        "install_multipliers",
+        "foundation_pricing",
+        "foundation_labor",
+        "foundation_calc",
+        "brick_stone_pricing",
+        "brick_stone_labor",
+        "brick_stone_calc",
+        "vinyl_pricing",
+        "vinyl_labor",
+        "vinyl_calc",
+        "maintenance_pricing",
+        "maintenance_labor"
+      ],
+      "description": "Category of the setting"
+    }
+  },
+  "required": [
+    "setting_name",
+    "setting_value",
+    "setting_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

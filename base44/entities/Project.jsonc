@@ -1,0 +1,175 @@
+{
+  "name": "Project",
+  "type": "object",
+  "description": "Painting estimator project (paint / paint mask / supplies / labor).",
+  "properties": {
+    "client_name": {
+      "type": "string",
+      "description": "Client company or person name"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project"
+    },
+    "estimate_number": {
+      "type": "string",
+      "description": "Unique estimate number for tracking"
+    },
+    "hyperlink": {
+      "type": "string",
+      "description": "Optional hyperlink related to the project"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Project status"
+    },
+    "items": {
+      "type": "array",
+      "description": "List of items in the project",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "panel",
+              "lettering",
+              "complex_shapes"
+            ],
+            "default": "panel"
+          },
+          "description": {
+            "type": "string"
+          },
+          "thickness": {
+            "type": "string",
+            "default": "1/2"
+          },
+          "length": {
+            "type": "number",
+            "default": 0
+          },
+          "width": {
+            "type": "number",
+            "default": 0
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "edge_complexity_multiplier": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Multiplier for complex shapes edge painting"
+          },
+          "paint_sides": {
+            "type": "string",
+            "enum": [
+              "one_side",
+              "both_sides"
+            ],
+            "default": "one_side"
+          },
+          "paint_colors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of paint color codes (e.g., PMS 186C)"
+          },
+          "letter_size": {
+            "type": "string",
+            "enum": [
+              "extra_small",
+              "small",
+              "normal",
+              "medium",
+              "large",
+              "extra_large"
+            ],
+            "default": "normal"
+          },
+          "paint_mask_sqft": {
+            "type": "number",
+            "default": 0,
+            "description": "Square feet of paint mask needed"
+          },
+          "supplies_cost": {
+            "type": "number"
+          },
+          "paint_cost": {
+            "type": "number"
+          },
+          "labor_hours": {
+            "type": "number"
+          },
+          "labor_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "labor_rate": {
+      "type": "number",
+      "default": 60,
+      "description": "Hourly labor rate"
+    },
+    "supplies_rate_per_sqft": {
+      "type": "number",
+      "default": 2.5,
+      "description": "Supplies cost per square foot"
+    },
+    "paint_supplies_per_sqft": {
+      "type": "number",
+      "default": 1.25,
+      "description": "Paint supplies cost per square foot"
+    },
+    "total_paint_mask_cost": {
+      "type": "number",
+      "description": "Total paint mask cost"
+    },
+    "total_liquid_paint_and_supplies_cost": {
+      "type": "number",
+      "description": "Total liquid paint and supplies cost"
+    },
+    "total_labor_cost": {
+      "type": "number",
+      "description": "Total labor cost"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Project notes"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

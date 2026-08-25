@@ -1,0 +1,155 @@
+{
+  "name": "BrickStoneProject",
+  "type": "object",
+  "description": "Brick & Stone estimator project \u2014 hollow rectangular masonry base with course/layer geometry, mortar and waste factors.",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string",
+      "description": "Unique estimate number"
+    },
+    "hyperlink": {
+      "type": "string",
+      "description": "Project reference link"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "base_type": {
+      "type": "string",
+      "enum": [
+        "hollow_rectangular"
+      ],
+      "default": "hollow_rectangular"
+    },
+    "base_length": {
+      "type": "number",
+      "default": 0,
+      "description": "Base length in inches"
+    },
+    "base_width": {
+      "type": "number",
+      "default": 0,
+      "description": "Base width in inches"
+    },
+    "base_height": {
+      "type": "number",
+      "default": 0,
+      "description": "Base height in inches"
+    },
+    "bricks_along_length": {
+      "type": "number",
+      "default": 6
+    },
+    "bricks_along_width": {
+      "type": "number",
+      "default": 9
+    },
+    "courses_high": {
+      "type": "number",
+      "default": 5
+    },
+    "layers": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of brick layers for depth"
+    },
+    "mortar_gap": {
+      "type": "number",
+      "default": 0.375,
+      "description": "Mortar gap in inches (3/8\" standard)"
+    },
+    "waste_factor": {
+      "type": "number",
+      "default": 1.1,
+      "description": "Waste factor multiplier (1.1 = 10% waste)"
+    },
+    "selected_material_id": {
+      "type": "string",
+      "description": "ID of selected brick/stone from inventory"
+    },
+    "material_name": {
+      "type": "string",
+      "description": "Name of material"
+    },
+    "material_dimensions": {
+      "type": "object",
+      "properties": {
+        "length": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      }
+    },
+    "calculated_bricks": {
+      "type": "number",
+      "description": "Total number of bricks/stones needed"
+    },
+    "calculated_surface_area": {
+      "type": "number",
+      "description": "Total surface area in sq ft"
+    },
+    "mortar_bags_needed": {
+      "type": "number",
+      "description": "Number of 60lb mortar bags"
+    },
+    "material_cost": {
+      "type": "number",
+      "description": "Total material cost"
+    },
+    "mortar_cost": {
+      "type": "number",
+      "description": "Total mortar cost"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Grand total"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

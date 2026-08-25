@@ -1,0 +1,29 @@
+{
+  "name": "DocNumberCounter",
+  "type": "object",
+  "description": "Singleton counter backing the atomic EST-XXXXX / INV-XXXXX number generator (generateDocNumber function). One record (config_name 'default') holds the next shared sequence number. Estimates and orders draw from the same counter so numbers never overlap.",
+  "properties": {
+    "config_name": {
+      "type": "string",
+      "default": "default"
+    },
+    "next_seq": {
+      "type": "number",
+      "default": 1,
+      "description": "Next sequence number to hand out (shared by EST- and INV- prefixed numbers)."
+    }
+  },
+  "required": [
+    "config_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

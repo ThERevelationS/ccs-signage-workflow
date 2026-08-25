@@ -1,0 +1,39 @@
+{
+  "name": "PricingMode",
+  "type": "object",
+  "properties": {
+    "active_mode": {
+      "type": "string",
+      "enum": [
+        "tier",
+        "cost_plus"
+      ],
+      "default": "tier",
+      "description": "Which pricing system is currently active. 'tier' = % Tier Markups (default). 'cost_plus' = Cost-Plus."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "active_mode"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

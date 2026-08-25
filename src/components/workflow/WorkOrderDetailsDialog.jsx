@@ -70,7 +70,6 @@ import SipChecklistSection from "./SipChecklistSection";
 import CreateRiderDialog from "./CreateRiderDialog";
 import WorkOrderForm from "./WorkOrderForm";
 import WorkOrderFiles from "./WorkOrderFiles";
-import EstimatorProjectsPanel from "./EstimatorProjectsPanel";
 import { useAuth } from "@/components/auth/EmailGate";
 import ProjectHealthBadge, { calculateProjectHealth } from "./ProjectHealthBadge";
 import TaskDependencyManager from "./TaskDependencyManager";
@@ -1676,14 +1675,6 @@ export default function WorkOrderDetailsDialog({
                     </div>
                   </div>
                 }
-
-              {/* Foundation Estimates */}
-              <div className="clay-card p-4">
-                <EstimatorProjectsPanel 
-                  workOrderId={workOrder.id}
-                  clientName={workOrder.client_name}
-                />
-              </div>
 
               </div>
               </div>
