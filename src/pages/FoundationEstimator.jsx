@@ -9,6 +9,7 @@ import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRa
 import FoundationEquipmentPanel from "@/components/estimator/foundation/FoundationEquipmentPanel";
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
+import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import { calcProject } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
@@ -222,6 +223,13 @@ export default function FoundationEstimator() {
                 ))}
               </div>
             )}
+
+            <FoundationBOM
+              items={calc.items}
+              delivery={calc.delivery}
+              totals={calc.totals}
+              inventory={inventory}
+            />
 
             <FoundationEquipmentPanel
               equipment={calc.equipment}
