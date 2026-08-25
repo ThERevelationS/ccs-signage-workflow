@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail } from "lucide-react";
+import { backfillCustomersFromWorkOrders } from "@/components/estimator/customerSync";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -20,9 +21,18 @@ export default function EstimatorCustomers() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await base44.entities.Customer.list("company_name", 500);
+      const res = await base44.entities.Customer.list("company_name", 1000);
       setCustomers(res || []);
       setLoading(false);
+      // Pull in any client that only exists in the Sales Pipeline / workflow
+      const merged = await backfillCustomersFromWorkOrders(res || []);
+      if (merged.length !== (res || []).length) {
+        setCustomers(
+          [...merged].sort((a, b) =>
+            String(a.company_name || "").localeCompare(String(b.company_name || ""))
+          )
+        );
+      }
     };
     load();
   }, []);
@@ -44,6 +54,7 @@ export default function EstimatorCustomers() {
         <div className="bg-white px-4 py-3 flex items-center gap-2">
           <Users className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">CUSTOMERS</h1>
+          <span className="ml-auto text-xs text-gray-400">{customers.length} total</span>
         </div>
 
         <div className="flex flex-wrap gap-2">

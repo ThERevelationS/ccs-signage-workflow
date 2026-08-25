@@ -5,6 +5,7 @@ import { generateDocNumber } from "@/functions/generateDocNumber";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
+import { upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -65,10 +66,10 @@ export default function NewAllInOneEstimate() {
     }
     setSaving(true);
     try {
-      let customer = customers.find(
-        (c) => (c.company_name || "").toLowerCase() === clientName.toLowerCase()
+      const customer = await upsertCustomerFromEstimate(
+        { ...form, client_name: clientName },
+        customers
       );
-      if (!customer) customer = await base44.entities.Customer.create({ company_name: clientName });
 
       const estimate = await base44.entities.AllInOneEstimate.create({
         ...form,
@@ -77,6 +78,7 @@ export default function NewAllInOneEstimate() {
         customer_id: customer.id,
         status: "draft",
       });
+      await syncEstimateToPipeline(estimate, customer);
       navigate(`/EstimateDetail?id=${estimate.id}`);
     } catch (e) {
       setError(e.message || "Could not save the estimate.");
