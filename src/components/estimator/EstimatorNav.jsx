@@ -5,14 +5,15 @@ import { ESTIMATOR_TABS, ESTIMATOR_RIGHT_TABS } from "@/components/estimator/nav
 function TabMenu({ tab, isActive, open, onOpen, onToggle, onClose, align = "left" }) {
   return (
     <div className="relative" onMouseEnter={onOpen}>
-      <button
-        onClick={onToggle}
+      <Link
+        to={tab.to}
+        onClick={onClose}
         className={`h-[26px] px-4 flex items-center text-[13px] font-semibold whitespace-nowrap transition-colors ${
           isActive || open ? "bg-red-800 text-white" : "text-white hover:bg-red-700"
         }`}
       >
         {tab.label}
-      </button>
+      </Link>
       {open && (
         <div
           className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} z-[60] min-w-[230px] py-1 bg-white shadow-2xl border border-gray-200`}

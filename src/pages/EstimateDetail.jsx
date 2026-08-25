@@ -10,6 +10,7 @@ import AddSectionDialog from "@/components/estimator/AddSectionDialog";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
+import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
 export default function EstimateDetail() {
   const id = new URLSearchParams(window.location.search).get("id");
@@ -83,11 +84,19 @@ export default function EstimateDetail() {
     setSaving(true);
     try {
       const { id: _id, created_date, updated_date, created_by_id, created_by, ...data } = estimate;
+      const saved = {
+        ...data,
+        id: estimate.id,
+        total_cost: pricing.rawTotal,
+        quote_total: pricing.quoteTotal,
+      };
       await base44.entities.AllInOneEstimate.update(estimate.id, {
         ...data,
         total_cost: pricing.rawTotal,
         quote_total: pricing.quoteTotal,
       });
+      // Keep the shared customer record and the Sales Pipeline lead in step
+      await syncEstimateEverywhere(saved);
     } finally {
       setSaving(false);
     }

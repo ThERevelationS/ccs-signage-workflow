@@ -9,7 +9,7 @@ export const ESTIMATOR_TABS = [
     items: [
       { label: "Notifications & Activity", to: "/SalesHome" },
       { label: "Estimate Queues", to: "/EstimatorQueues" },
-      { label: "New Estimate", to: "/Estimator?new=1" },
+      { label: "New Estimate", to: "/NewAllInOneEstimate" },
     ],
   },
   {
@@ -50,7 +50,7 @@ export const ESTIMATOR_TABS = [
     to: "/Estimator",
     items: [
       { label: "All Estimates", to: "/Estimator" },
-      { label: "New Estimate", to: "/Estimator?new=1" },
+      { label: "New Estimate", to: "/NewAllInOneEstimate" },
     ],
   },
   {

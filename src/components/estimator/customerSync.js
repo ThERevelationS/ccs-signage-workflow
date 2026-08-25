@@ -58,17 +58,14 @@ export const upsertCustomerFromEstimate = async (form, customers = []) => {
  * carrying over every piece of contact/project info we have.
  */
 export const syncEstimateToPipeline = async (estimate, customer) => {
-  const existing = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-  if (existing && existing.length) return existing[0];
-
-  return base44.entities.WorkOrder.create({
+  const salesStatusByEstimate = { sent: "quoted", approved: "won", archived: "lost" };
+  const fields = {
     title: estimate.project_name,
     client_name: estimate.client_name,
     customer_id: customer?.id,
     estimate_id: estimate.id,
     in_pipeline: true,
-    sales_status: "lead",
-    current_stage: "estimating",
+    sales_status: salesStatusByEstimate[estimate.status] || "lead",
     contact_name: estimate.order_contact,
     contact_email: estimate.contact_email,
     contact_phone: estimate.office_phone,
@@ -76,9 +73,32 @@ export const syncEstimateToPipeline = async (estimate, customer) => {
     sales_rep: estimate.salesperson,
     estimator: estimate.salesperson,
     estimate_amount: estimate.quote_total || 0,
+    quoted_amount: estimate.quote_total || 0,
     install_location: estimate.site_address,
+  };
+
+  const existing = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
+  if (existing && existing.length) {
+    await base44.entities.WorkOrder.update(existing[0].id, fields);
+    return { ...existing[0], ...fields };
+  }
+
+  return base44.entities.WorkOrder.create({
+    ...fields,
+    current_stage: "estimating",
     date_initial_contact: new Date().toISOString().slice(0, 10),
   });
+};
+
+/**
+ * One call used when an estimate is saved: keep the shared Customer record and the
+ * Sales Pipeline lead in step with the estimate.
+ */
+export const syncEstimateEverywhere = async (estimate) => {
+  const customers = await base44.entities.Customer.list("company_name", 1000);
+  const customer = await upsertCustomerFromEstimate(estimate, customers || []);
+  await syncEstimateToPipeline(estimate, customer);
+  return customer;
 };
 
 /**
