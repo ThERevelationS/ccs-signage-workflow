@@ -37,7 +37,7 @@ export const ESTIMATOR_TABS = [
     label: "Quick Price",
     to: "/QuickPrice",
     items: [
-      { label: "Full Estimate", to: "/Estimator?new=1" },
+      { label: "Full Estimate", to: "/NewAllInOneEstimate" },
       { label: "QUICK ESTIMATORS", header: true },
       ...ESTIMATOR_MODULES.map((m) => ({
         label: m.label,

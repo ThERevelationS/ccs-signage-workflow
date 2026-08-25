@@ -28,8 +28,10 @@ import EstimatorProducts from './pages/EstimatorProducts';
 import EstimatorSettings from './pages/EstimatorSettings';
 import EstimatorTools from './pages/EstimatorTools';
 import EstimatorShell from './components/estimator/EstimatorShell';
+import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
 
 const ESTIMATOR_PAGES = {
+  NewAllInOneEstimate,
   Estimator,
   EstimateDetail,
   FoundationEstimator,

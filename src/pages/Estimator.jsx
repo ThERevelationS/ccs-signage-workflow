@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Calculator, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import EstimateCard from "@/components/estimator/EstimateCard";
 import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 
 export default function Estimator() {
+  const navigate = useNavigate();
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -58,7 +60,7 @@ export default function Estimator() {
               <p className="text-sm text-gray-500">Build and price multi-section sign estimates</p>
             </div>
           </div>
-          <Button onClick={() => setShowNew(true)} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+          <Button onClick={() => navigate("/NewAllInOneEstimate")} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Plus className="w-4 h-4" /> New Estimate
           </Button>
         </div>
