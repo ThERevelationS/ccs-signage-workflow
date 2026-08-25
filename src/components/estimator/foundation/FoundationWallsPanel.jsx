@@ -64,6 +64,44 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
         </label>
       </div>
 
+      <div className="rounded-lg bg-slate-50 p-2 space-y-2">
+        <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+          <input
+            type="checkbox"
+            checked={!!wall.includeInternalWall}
+            onChange={(e) => set({ includeInternalWall: e.target.checked })}
+          />
+          Internal fill wall
+        </label>
+        {wall.includeInternalWall && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <label className="text-xs text-gray-500 md:col-span-2">
+              Fill material
+              <select
+                className="w-full h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                value={wall.internalMaterialId || ""}
+                onChange={(e) => set({ internalMaterialId: e.target.value })}
+              >
+                <option value="">Select material…</option>
+                {options.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.material_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-gray-500">
+              Fill height (in)
+              <Input
+                type="number"
+                value={wall.internalWallHeightInches ?? wall.heightInches ?? 24}
+                onChange={(e) => set({ internalWallHeightInches: num(e.target.value) })}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-600">
         <div>Units: <span className="font-semibold text-gray-900">{Math.round(num(c.totalBricks))}</span></div>
         <div>Courses: <span className="font-semibold text-gray-900">{Math.ceil(num(c.numCourses))}</span></div>
