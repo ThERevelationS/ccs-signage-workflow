@@ -1,14 +1,16 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, PenLine } from "lucide-react";
 import { money } from "./foundationCalc";
+import WallShapeEditor from "./WallShapeEditor";
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 function WallRow({ wall, index, options, onChange, onRemove }) {
   const c = wall.calculatedCosts || {};
   const set = (changes) => onChange(index, changes);
+  const [showEditor, setShowEditor] = React.useState(false);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
@@ -72,10 +74,19 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
         <div>Linear in: <span className="font-semibold text-gray-900">{Math.round(num(c.totalLinearInches))}</span></div>
       </div>
 
-      {!wall.shape?.segments?.length && (
-        <p className="text-xs text-amber-600">
-          No wall outline yet — draw this wall's footprint in the layout designer to price it.
-        </p>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}>
+          <PenLine className="w-4 h-4" /> {showEditor ? "Hide outline" : "Wall outline"}
+        </Button>
+        {!wall.shape?.segments?.length && (
+          <span className="text-xs text-amber-600">
+            No outline yet — this wall stays at $0 until its footprint is drawn.
+          </span>
+        )}
+      </div>
+
+      {showEditor && (
+        <WallShapeEditor shape={wall.shape} onChange={(shape) => set({ shape })} />
       )}
     </div>
   );
