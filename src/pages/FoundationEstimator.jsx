@@ -11,6 +11,7 @@ import FoundationTotals from "@/components/estimator/foundation/FoundationTotals
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
+import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
 import { calcProject } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
@@ -82,6 +83,7 @@ export default function FoundationEstimator() {
       walls: inventory.filter((i) => ["brick_stone", "wall_material"].includes(i.material_type)),
       fill: inventory.filter((i) => i.material_type === "fill_material"),
       forming: inventory.filter((i) => ["forming", "forming_material"].includes(i.material_type)),
+      caps: inventory.filter((i) => i.material_type === "wall_cap"),
       equipment: inventory.filter((i) => i.material_type === "excavation_equipment"),
     }),
     [inventory]
@@ -114,6 +116,7 @@ export default function FoundationEstimator() {
         items: calc.items,
         selected_equipment: calc.equipment,
         walls: calc.walls,
+        wall_caps: project.wall_caps || [],
         excavation_method: project.excavation_method,
         concrete_cost_per_cy: project.concrete_cost_per_cy,
         rebar_cost_per_ft: project.rebar_cost_per_ft,
@@ -138,6 +141,7 @@ export default function FoundationEstimator() {
         total_brick_cost: calc.totals.total_brick_cost,
         total_fill_cost: calc.totals.total_fill_cost,
         total_wall_cost: calc.totals.total_wall_cost,
+        total_wall_cap_cost: calc.totals.total_wall_cap_cost,
       });
 
       // Push the new total back to the parent estimate's section line.
@@ -231,6 +235,13 @@ export default function FoundationEstimator() {
               walls={calc.walls}
               options={catalog.walls}
               onChange={(walls) => patch({ walls })}
+            />
+
+            <FoundationWallCapsPanel
+              caps={calc.wallCaps}
+              walls={calc.walls}
+              options={catalog.caps}
+              onChange={(wall_caps) => patch({ wall_caps })}
             />
 
             <FoundationBOM

@@ -5,6 +5,7 @@
 
 import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery } from "./legacyFoundationCalc";
 import { calcWalls } from "./wallCalculator";
+import { calcWallCaps } from "./wallCapCalculator";
 
 const CF_PER_CY = 27;
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
@@ -123,6 +124,7 @@ export function calcProject(project, inventory, settings = {}) {
   const equipment = calcEquipment(project.selected_equipment, inventory);
   const delivery = calcConcreteDelivery({ ...project, settings }, project.items || [], inventory);
   const walls = calcWalls(project, inventory, settings);
+  const wallCaps = calcWallCaps(project.wall_caps, inventory);
 
   const sum = (key) => items.reduce((s, i) => s + num(i[key]), 0);
   const totals = {
@@ -143,14 +145,20 @@ export function calcProject(project, inventory, settings = {}) {
     total_fill_cost: sum("fill_cost"),
     total_equipment_cost: equipment.reduce((s, e) => s + num(e.equipment_cost), 0),
     total_wall_cost: walls.reduce((s, w) => s + num(w.calculatedCosts?.totalCost), 0),
+    total_wall_cap_cost: wallCaps.total,
+    wall_caps_by_material: wallCaps.byInventory,
     total_concrete_volume_cy: sum("concrete_volume_cy"),
     total_excavation_volume_cy: sum("excavation_volume_cy"),
     total_labor_hours: sum("finishing_hours") + sum("excavation_hours"),
   };
   totals.grand_total =
-    sum("item_total_cost") + totals.total_equipment_cost + delivery.concreteTotal + totals.total_wall_cost;
+    sum("item_total_cost") +
+    totals.total_equipment_cost +
+    delivery.concreteTotal +
+    totals.total_wall_cost +
+    totals.total_wall_cap_cost;
 
-  return { items, equipment, walls, totals, delivery };
+  return { items, equipment, walls, wallCaps: wallCaps.caps, totals, delivery };
 }
 
 export const money = (n) =>
