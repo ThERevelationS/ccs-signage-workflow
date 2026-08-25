@@ -10,6 +10,7 @@ import FoundationEquipmentPanel from "@/components/estimator/foundation/Foundati
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
+import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import { calcProject } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
@@ -112,6 +113,7 @@ export default function FoundationEstimator() {
         status: "calculated",
         items: calc.items,
         selected_equipment: calc.equipment,
+        walls: calc.walls,
         excavation_method: project.excavation_method,
         concrete_cost_per_cy: project.concrete_cost_per_cy,
         rebar_cost_per_ft: project.rebar_cost_per_ft,
@@ -135,6 +137,7 @@ export default function FoundationEstimator() {
         total_pole_painting_cost: calc.totals.total_pole_painting_cost,
         total_brick_cost: calc.totals.total_brick_cost,
         total_fill_cost: calc.totals.total_fill_cost,
+        total_wall_cost: calc.totals.total_wall_cost,
       });
 
       // Push the new total back to the parent estimate's section line.
@@ -223,6 +226,12 @@ export default function FoundationEstimator() {
                 ))}
               </div>
             )}
+
+            <FoundationWallsPanel
+              walls={calc.walls}
+              options={catalog.walls}
+              onChange={(walls) => patch({ walls })}
+            />
 
             <FoundationBOM
               items={calc.items}
