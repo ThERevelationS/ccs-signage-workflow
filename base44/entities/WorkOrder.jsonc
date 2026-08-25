@@ -10,6 +10,14 @@
       "type": "string",
       "description": "Client name"
     },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer (Client) record id."
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "Linked AllInOneEstimate id, when this job was created from an estimate."
+    },
     "description": {
       "type": "string",
       "description": "Detailed description of the work"
