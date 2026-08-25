@@ -7,6 +7,7 @@ import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import SectionRow from "@/components/estimator/SectionRow";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import AddSectionDialog from "@/components/estimator/AddSectionDialog";
+import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import { computePricing } from "@/components/estimator/aioPricing";
 
 export default function EstimateDetail() {
@@ -130,8 +131,13 @@ export default function EstimateDetail() {
             )}
           </div>
 
-          <div>
+          <div className="space-y-4">
             <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
+            <ConvertToWorkOrder
+              estimate={estimate}
+              pricing={pricing}
+              onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
+            />
           </div>
         </div>
       </div>
