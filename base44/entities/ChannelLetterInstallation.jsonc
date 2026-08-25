@@ -1,7 +1,7 @@
 {
   "name": "ChannelLetterInstallation",
   "type": "object",
-  "description": "Channel Letter Installation estimator project \u2014 letters purchased/fabricated, install equipment (with idle running), personnel, travel, supplies and markup.",
+  "description": "Channel Letter Installation estimator project \u2014 letters purchased/fabricated, install items, install equipment (with idle running), personnel, travel, supplies and markup.",
   "properties": {
     "project_name": {
       "type": "string"
@@ -173,6 +173,18 @@
           }
         }
       }
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 85
+    },
+    "raceway_minutes_per_foot": {
+      "type": "number",
+      "default": 6
+    },
+    "travel_cost_per_mile": {
+      "type": "number",
+      "default": 1.25
     },
     "travel_miles_round_trip": {
       "type": "number",

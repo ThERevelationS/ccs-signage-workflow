@@ -15,6 +15,7 @@ import FoundationEstimator from './pages/FoundationEstimator';
 import FoundationCatalog from './pages/FoundationCatalog';
 import VinylEstimator from './pages/VinylEstimator';
 import MaintenanceEstimator from './pages/MaintenanceEstimator';
+import ChannelLetterEstimator from './pages/ChannelLetterEstimator';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +84,11 @@ const AuthenticatedApp = () => {
       <Route path="/MaintenanceEstimator" element={
         <LayoutWrapper currentPageName="MaintenanceEstimator">
           <MaintenanceEstimator />
+        </LayoutWrapper>
+      } />
+      <Route path="/ChannelLetterEstimator" element={
+        <LayoutWrapper currentPageName="ChannelLetterEstimator">
+          <ChannelLetterEstimator />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

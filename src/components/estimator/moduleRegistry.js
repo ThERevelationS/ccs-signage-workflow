@@ -2,7 +2,7 @@
 // sub-estimate record living in its module's own entity.
 export const ESTIMATOR_MODULES = [
   { key: "foundation", label: "Concrete | Masonry | Poles", entity: "FoundationProject", page: "FoundationEstimator" },
-  { key: "channel_letters", label: "Channel & Dimensional Letters", entity: "ChannelLetterInstallation" },
+  { key: "channel_letters", label: "Channel & Dimensional Letters", entity: "ChannelLetterInstallation", page: "ChannelLetterEstimator" },
   { key: "vinyl", label: "Vinyl & Graphics", entity: "VinylProject", page: "VinylEstimator" },
   { key: "cnc", label: "CNC Router", entity: "CNCProject" },
   { key: "laser", label: "Laser", entity: "LaserProject" },
