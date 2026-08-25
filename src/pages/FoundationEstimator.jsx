@@ -144,9 +144,14 @@ export default function FoundationEstimator() {
           >
             <ArrowLeft className="w-4 h-4" /> Back to estimate
           </Link>
-          <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
-            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link to="/FoundationCatalog" className="text-sm text-gray-600 hover:text-red-600">
+              Catalog
+            </Link>
+            <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+              <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
+            </Button>
+          </div>
         </div>
 
         <div className="mb-4">

@@ -12,6 +12,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Estimator from './pages/Estimator';
 import EstimateDetail from './pages/EstimateDetail';
 import FoundationEstimator from './pages/FoundationEstimator';
+import FoundationCatalog from './pages/FoundationCatalog';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -65,6 +66,11 @@ const AuthenticatedApp = () => {
       <Route path="/FoundationEstimator" element={
         <LayoutWrapper currentPageName="FoundationEstimator">
           <FoundationEstimator />
+        </LayoutWrapper>
+      } />
+      <Route path="/FoundationCatalog" element={
+        <LayoutWrapper currentPageName="FoundationCatalog">
+          <FoundationCatalog />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
