@@ -20,6 +20,35 @@ import CNCEstimator from './pages/CNCEstimator';
 import LaserEstimator from './pages/LaserEstimator';
 import MetalEstimator from './pages/MetalEstimator';
 import BrickStoneEstimator from './pages/BrickStoneEstimator';
+import SalesHome from './pages/SalesHome';
+import EstimatorQueues from './pages/EstimatorQueues';
+import EstimatorCustomers from './pages/EstimatorCustomers';
+import QuickPrice from './pages/QuickPrice';
+import EstimatorProducts from './pages/EstimatorProducts';
+import EstimatorSettings from './pages/EstimatorSettings';
+import EstimatorTools from './pages/EstimatorTools';
+import EstimatorShell from './components/estimator/EstimatorShell';
+
+const ESTIMATOR_PAGES = {
+  Estimator,
+  EstimateDetail,
+  FoundationEstimator,
+  FoundationCatalog,
+  VinylEstimator,
+  MaintenanceEstimator,
+  ChannelLetterEstimator,
+  CNCEstimator,
+  LaserEstimator,
+  MetalEstimator,
+  BrickStoneEstimator,
+  SalesHome,
+  EstimatorQueues,
+  EstimatorCustomers,
+  QuickPrice,
+  EstimatorProducts,
+  EstimatorSettings,
+  EstimatorTools,
+};
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -60,61 +89,19 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
-      <Route path="/Estimator" element={
-        <LayoutWrapper currentPageName="Estimator">
-          <Estimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/EstimateDetail" element={
-        <LayoutWrapper currentPageName="EstimateDetail">
-          <EstimateDetail />
-        </LayoutWrapper>
-      } />
-      <Route path="/FoundationEstimator" element={
-        <LayoutWrapper currentPageName="FoundationEstimator">
-          <FoundationEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/FoundationCatalog" element={
-        <LayoutWrapper currentPageName="FoundationCatalog">
-          <FoundationCatalog />
-        </LayoutWrapper>
-      } />
-      <Route path="/VinylEstimator" element={
-        <LayoutWrapper currentPageName="VinylEstimator">
-          <VinylEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/MaintenanceEstimator" element={
-        <LayoutWrapper currentPageName="MaintenanceEstimator">
-          <MaintenanceEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/ChannelLetterEstimator" element={
-        <LayoutWrapper currentPageName="ChannelLetterEstimator">
-          <ChannelLetterEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/CNCEstimator" element={
-        <LayoutWrapper currentPageName="CNCEstimator">
-          <CNCEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/LaserEstimator" element={
-        <LayoutWrapper currentPageName="LaserEstimator">
-          <LaserEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/MetalEstimator" element={
-        <LayoutWrapper currentPageName="MetalEstimator">
-          <MetalEstimator />
-        </LayoutWrapper>
-      } />
-      <Route path="/BrickStoneEstimator" element={
-        <LayoutWrapper currentPageName="BrickStoneEstimator">
-          <BrickStoneEstimator />
-        </LayoutWrapper>
-      } />
+      {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
+        <Route
+          key={name}
+          path={`/${name}`}
+          element={
+            <LayoutWrapper currentPageName={name}>
+              <EstimatorShell>
+                <Page />
+              </EstimatorShell>
+            </LayoutWrapper>
+          }
+        />
+      ))}
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

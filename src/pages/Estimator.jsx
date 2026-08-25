@@ -10,7 +10,9 @@ export default function Estimator() {
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [showNew, setShowNew] = useState(false);
+  const [showNew, setShowNew] = useState(
+    new URLSearchParams(window.location.search).get("new") === "1"
+  );
 
   const load = async () => {
     const res = await base44.entities.AllInOneEstimate.list("-created_date", 200);

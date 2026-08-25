@@ -1,0 +1,34 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { Settings, ArrowRight } from "lucide-react";
+
+const LINKS = [
+  { label: "Foundation / Masonry Catalog", desc: "Concrete, brick, poles and fill materials", to: "/FoundationCatalog" },
+  { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
+  { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
+];
+
+export default function EstimatorSettings() {
+  return (
+    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
+      <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-3">
+        <div className="bg-white px-4 py-3 flex items-center gap-2">
+          <Settings className="w-4 h-4 text-red-500" />
+          <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATOR SETTINGS</h1>
+        </div>
+
+        <div className="bg-white divide-y divide-gray-100">
+          {LINKS.map((l) => (
+            <Link key={l.to} to={l.to} className="flex items-center justify-between px-4 py-3 hover:bg-red-50/50">
+              <div>
+                <div className="text-sm font-semibold text-gray-800">{l.label}</div>
+                <div className="text-xs text-gray-500">{l.desc}</div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-red-400" />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
