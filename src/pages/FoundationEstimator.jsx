@@ -8,7 +8,9 @@ import FoundationItemCard from "@/components/estimator/foundation/FoundationItem
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
 import FoundationEquipmentPanel from "@/components/estimator/foundation/FoundationEquipmentPanel";
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
+import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import { calcProject } from "@/components/estimator/foundation/foundationCalc";
+import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
 const blankItem = (type) => ({
   foundation_type: type,
@@ -26,6 +28,11 @@ const blankItem = (type) => ({
   rebar_spacing_length: 12,
   rebar_spacing_width: 12,
   rebar_layers: 1,
+  pillar_rebar_size: "#4",
+  pillar_rebar_layers: 1,
+  pillar_vertical_rebar_count: 4,
+  excavation_method: "hand_dig",
+  is_new_sign_location: false,
   mortar_gap_inches: 0.375,
   wall_width_inches: 8,
 });
@@ -37,6 +44,7 @@ export default function FoundationEstimator() {
 
   const [project, setProject] = useState(null);
   const [inventory, setInventory] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -48,14 +56,22 @@ export default function FoundationEstimator() {
     Promise.all([
       base44.entities.FoundationProject.get(id),
       base44.entities.FoundationInventory.filter({ show_in_foundation: true }),
-    ]).then(([proj, inv]) => {
+      base44.entities.LaborServiceInventory.filter({ service_category: "concrete_service", is_active: true }),
+      base44.entities.Settings.list(),
+    ]).then(([proj, inv, concreteServices, settingRows]) => {
       setProject(proj);
-      setInventory(inv || []);
+      setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+      setSettings(
+        Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
+      );
       setLoading(false);
     });
   }, [id]);
 
-  const calc = useMemo(() => (project ? calcProject(project, inventory) : null), [project, inventory]);
+  const calc = useMemo(
+    () => (project ? calcProject(project, inventory, settings) : null),
+    [project, inventory, settings]
+  );
 
   const catalog = useMemo(
     () => ({
@@ -63,6 +79,7 @@ export default function FoundationEstimator() {
       poles: inventory.filter((i) => i.material_type === "pole"),
       walls: inventory.filter((i) => ["brick_stone", "wall_material"].includes(i.material_type)),
       fill: inventory.filter((i) => i.material_type === "fill_material"),
+      forming: inventory.filter((i) => ["forming", "forming_material"].includes(i.material_type)),
       equipment: inventory.filter((i) => i.material_type === "excavation_equipment"),
     }),
     [inventory]
@@ -170,6 +187,8 @@ export default function FoundationEstimator() {
                 />
               </label>
             </div>
+
+            <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
 
             <FoundationRatesPanel project={project} onChange={patch} />
 

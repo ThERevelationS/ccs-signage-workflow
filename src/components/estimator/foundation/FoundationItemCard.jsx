@@ -112,6 +112,13 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             <option value="equipment_excavation">Equipment</option>
           </select>
         </label>
+        <Picker
+          label="Forming material"
+          value={item.selected_forming_id}
+          onChange={(v) => set({ selected_forming_id: v })}
+          options={catalog.forming || []}
+          placeholder="None"
+        />
         <Field
           label="Concrete $/CY override"
           type="number"
@@ -140,6 +147,11 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           checked={item.include_pole_painting}
           onChange={(v) => set({ include_pole_painting: v })}
         />
+        <Check
+          label="This is a new sign location"
+          checked={item.is_new_sign_location}
+          onChange={(v) => set({ is_new_sign_location: v })}
+        />
       </div>
 
       {item.include_rebar && (
@@ -158,10 +170,10 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
                 onChange={numSet("pillar_rebar_hoop_diameter")}
               />
               <Field
-                label="Hoop spacing (in)"
+                label="Hoops (layers)"
                 type="number"
-                value={item.pillar_rebar_layer_separation_inches ?? 12}
-                onChange={numSet("pillar_rebar_layer_separation_inches")}
+                value={item.pillar_rebar_layers ?? 1}
+                onChange={numSet("pillar_rebar_layers")}
               />
               <Field
                 label="Vertical bars"

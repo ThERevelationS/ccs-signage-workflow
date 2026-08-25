@@ -1,93 +1,30 @@
 // Cost engine for the Concrete | Masonry | Poles estimator.
-// All linear inputs are inches. Volumes are cubic yards.
+// Concrete / rebar / forming / finishing / pouring / excavation math comes straight
+// from SignEstimate Pro (legacyFoundationCalc.js) — do not re-derive it here.
+// This file only adds the pole / wall / fill / equipment extras on top.
+
+import { calcItemCost as legacyCalcItemCost, calcConcreteDelivery } from "./legacyFoundationCalc";
 
 const CF_PER_CY = 27;
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
 
 const REBAR_LB_PER_FT = { "#3": 0.376, "#4": 0.668, "#5": 1.043, "#6": 1.502, "#7": 2.044, "#8": 2.67 };
 
-export function calcItem(item, project, inventory) {
+export function calcItem(item, project, inventory, settings = {}) {
   const qty = Math.max(1, num(item.quantity, 1));
   const isPillar = item.foundation_type === "pillar";
   const depth = num(item.depth_inches);
   const L = num(item.length_inches);
   const W = num(item.width_inches);
   const dia = num(item.diameter);
-  const radius = dia / 2;
 
-  // ── Geometry ──
-  const topAreaSqIn = isPillar ? Math.PI * radius * radius : L * W;
-  const perimeterIn = isPillar ? Math.PI * dia : 2 * (L + W);
-  const volumeCf = (topAreaSqIn * depth) / 1728;
-  const concreteVolumeCy = volumeCf / CF_PER_CY;
-  const excavationVolumeCy =
-    ((topAreaSqIn * (depth + num(item.grade_offset_inches))) / 1728 / CF_PER_CY) * 1.15;
-
-  // ── Concrete ──
-  const concreteRow = inventory.find((i) => i.id === item.selected_concrete_id);
-  const concreteRate =
-    num(item.custom_concrete_cost_per_cy) ||
-    num(concreteRow?.cost_per_unit) ||
-    num(project.concrete_cost_per_cy, 135);
-  const concreteCost = concreteVolumeCy * concreteRate;
-
-  // ── Excavation ──
-  const method = item.excavation_method || project.excavation_method || "hand_dig";
-  const isHandDig = method === "hand_dig";
-  const excavationMaterialRate = isHandDig
-    ? num(project.hand_dig_excavation_cost_per_cy, 10)
-    : num(project.equipment_excavation_cost_per_cy, 15);
-  const excavationLaborRate = isHandDig
-    ? num(project.hand_dig_labor_rate, 45)
-    : num(project.equipment_excavation_labor_rate, 35);
-  const excavationHours = Math.max(
-    num(project.min_excavation_time_hours, 1),
-    excavationVolumeCy * (isHandDig ? 3 : 0.75)
-  );
-  const excavationCost =
-    excavationVolumeCy * excavationMaterialRate + excavationHours * excavationLaborRate;
-
-  // ── Rebar ──
-  let rebarFeet = 0;
-  if (item.include_rebar) {
-    if (isPillar) {
-      const hoopDia = num(item.pillar_rebar_hoop_diameter, Math.max(dia - 6, 6));
-      const hoops = Math.max(1, Math.floor(depth / num(item.pillar_rebar_layer_separation_inches, 12)) + 1);
-      rebarFeet += (Math.PI * hoopDia * hoops) / 12;
-      rebarFeet += (num(item.pillar_vertical_rebar_count, 4) * depth) / 12;
-    } else {
-      const spacingL = num(item.rebar_spacing_length, 12) || 12;
-      const spacingW = num(item.rebar_spacing_width, 12) || 12;
-      const layers = Math.max(1, num(item.rebar_layers, 1));
-      const barsAlongL = Math.floor(W / spacingW) + 1;
-      const barsAlongW = Math.floor(L / spacingL) + 1;
-      rebarFeet += ((barsAlongL * L + barsAlongW * W) / 12) * layers;
-    }
-  }
+  // ── Legacy SignEstimate Pro math (already quantity-aware) ──
+  const legacy = legacyCalcItemCost(item, inventory, settings);
+  const concreteVolumeCy = legacy.volumeCY;
+  const excavationVolumeCy = concreteVolumeCy * 1.25;
+  const rebarFeet = legacy.rebarFt;
   const rebarSize = (isPillar ? item.pillar_rebar_size : item.rebar_size) || "#4";
-  const rebarRow = inventory.find((i) => i.material_type === "rebar" && i.rebar_size === rebarSize);
-  const rebarRate =
-    num(item.custom_rebar_cost_per_ft) ||
-    num(rebarRow?.cost_per_unit) ||
-    num(project.rebar_cost_per_ft, 0.75);
-  const rebarCost = rebarFeet * rebarRate;
   const rebarWeightLbs = rebarFeet * (REBAR_LB_PER_FT[rebarSize] || 0.668);
-
-  // ── Forming ──
-  const formAreaSqft = (perimeterIn * depth) / 144;
-  const formingHours = item.include_forming ? formAreaSqft * 0.1 : 0;
-  const formingCost = formingHours * num(project.forming_labor_rate, 55);
-  const formingMaterialRate = isPillar
-    ? num(project.forming_materials_cost_pillar, 0.75)
-    : num(project.forming_materials_cost_spread_foot, 0.5);
-  const formingMaterialsCost = item.include_forming ? formAreaSqft * formingMaterialRate : 0;
-
-  // ── Pouring & finishing ──
-  const pouringHours = Math.max(0.5, concreteVolumeCy * 0.5);
-  const pouringCost = pouringHours * num(project.pouring_labor_rate, 60);
-  const topAreaSqft = topAreaSqIn / 144;
-  const finishingHours = item.include_finishing ? topAreaSqft * 0.05 : 0;
-  const finishingCost = finishingHours * num(project.finishing_labor_rate, 50);
 
   // ── Pole ──
   let poleCost = 0;
@@ -134,43 +71,34 @@ export function calcItem(item, project, inventory) {
     fillCost = fillVolumeCy * num(fillRow.cost_per_unit);
   }
 
-  const perUnit =
-    concreteCost +
-    rebarCost +
-    excavationCost +
-    formingCost +
-    formingMaterialsCost +
-    pouringCost +
-    finishingCost +
-    poleCost +
-    polePaintingCost +
-    brickCost +
-    fillCost;
+  const extras = (poleCost + polePaintingCost + brickCost + fillCost) * qty;
 
   return {
     quantity: qty,
-    concrete_volume_cy: concreteVolumeCy * qty,
-    excavation_volume_cy: excavationVolumeCy * qty,
-    rebar_feet: rebarFeet * qty,
-    rebar_weight_lbs: rebarWeightLbs * qty,
-    concrete_cost: concreteCost * qty,
-    rebar_cost: rebarCost * qty,
-    excavation_cost: excavationCost * qty,
-    excavation_hours: excavationHours * qty,
-    forming_hours: formingHours * qty,
-    forming_cost: formingCost * qty,
-    forming_materials_cost: formingMaterialsCost * qty,
-    pouring_hours: pouringHours * qty,
-    pouring_cost: pouringCost * qty,
-    finishing_hours: finishingHours * qty,
-    finishing_cost: finishingCost * qty,
+    concrete_volume_cy: concreteVolumeCy,
+    excavation_volume_cy: excavationVolumeCy,
+    concrete_bags: legacy.concreteBags,
+    rebar_feet: rebarFeet,
+    rebar_weight_lbs: rebarWeightLbs,
+    concrete_cost: legacy.concreteCost,
+    concrete_rate: legacy.concreteRate,
+    rebar_cost: legacy.rebarCost,
+    rebar_rate: legacy.rebarRate,
+    excavation_cost: legacy.excavationCost,
+    excavation_hours: legacy.excavationHours,
+    forming_cost: legacy.formingCost,
+    forming_qty: legacy.formingQty,
+    forming_materials_cost: 0,
+    pouring_cost: legacy.pouringCost,
+    finishing_cost: legacy.finishingCost,
+    finishing_hours: legacy.finishingHours,
     pole_cost: poleCost * qty,
     pole_painting_cost: polePaintingCost * qty,
     brick_count: brickCount * qty,
     brick_cost: brickCost * qty,
     fill_volume_cy: fillVolumeCy * qty,
     fill_cost: fillCost * qty,
-    item_total_cost: perUnit * qty,
+    item_total_cost: legacy.total + extras,
   };
 }
 
@@ -189,17 +117,24 @@ export function calcEquipment(selected, inventory) {
   });
 }
 
-export function calcProject(project, inventory) {
-  const items = (project.items || []).map((item) => ({ ...item, ...calcItem(item, project, inventory) }));
+export function calcProject(project, inventory, settings = {}) {
+  const items = (project.items || []).map((item) => ({ ...item, ...calcItem(item, project, inventory, settings) }));
   const equipment = calcEquipment(project.selected_equipment, inventory);
+  const delivery = calcConcreteDelivery({ ...project, settings }, project.items || [], inventory);
 
   const sum = (key) => items.reduce((s, i) => s + num(i[key]), 0);
   const totals = {
-    total_concrete_cost: sum("concrete_cost"),
+    // Bagged concrete is priced per item; ready-mix is priced per delivered truck.
+    total_concrete_cost: sum("concrete_cost") + delivery.concreteTotal,
+    concrete_delivery_cost: delivery.concreteTotal,
+    concrete_delivered_yards: delivery.roundedYards,
+    concrete_rate_per_yard: delivery.ratePerYard,
+    concrete_trucks: delivery.trucksList,
+    additional_stops_cost: delivery.additionalStopsCost,
     total_rebar_cost: sum("rebar_cost"),
     total_excavation_cost: sum("excavation_cost"),
-    total_forming_materials_cost: sum("forming_materials_cost"),
-    total_labor_cost: sum("forming_cost") + sum("pouring_cost") + sum("finishing_cost"),
+    total_forming_materials_cost: sum("forming_cost"),
+    total_labor_cost: sum("pouring_cost") + sum("finishing_cost"),
     total_pole_cost: sum("pole_cost"),
     total_pole_painting_cost: sum("pole_painting_cost"),
     total_brick_cost: sum("brick_cost"),
@@ -207,12 +142,11 @@ export function calcProject(project, inventory) {
     total_equipment_cost: equipment.reduce((s, e) => s + num(e.equipment_cost), 0),
     total_concrete_volume_cy: sum("concrete_volume_cy"),
     total_excavation_volume_cy: sum("excavation_volume_cy"),
-    total_labor_hours:
-      sum("forming_hours") + sum("pouring_hours") + sum("finishing_hours") + sum("excavation_hours"),
+    total_labor_hours: sum("finishing_hours") + sum("excavation_hours"),
   };
-  totals.grand_total = sum("item_total_cost") + totals.total_equipment_cost;
+  totals.grand_total = sum("item_total_cost") + totals.total_equipment_cost + delivery.concreteTotal;
 
-  return { items, equipment, totals };
+  return { items, equipment, totals, delivery };
 }
 
 export const money = (n) =>
