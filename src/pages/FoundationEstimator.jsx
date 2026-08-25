@@ -74,7 +74,17 @@ export default function FoundationEstimator() {
       base44.entities.LaborServiceInventory.filter({ service_category: "concrete_service", is_active: true }),
       base44.entities.Settings.list(),
     ]).then(([proj, inv, concreteServices, settingRows]) => {
-      setProject(proj);
+      setProject({
+        ...proj,
+        excavation_method: proj.excavation_method || "hand_dig",
+        project_concrete_type: proj.project_concrete_type || "4000_ae",
+        project_concrete_admixtures: proj.project_concrete_admixtures || [],
+        items: proj.items || [],
+        walls: proj.walls || [],
+        poles: proj.poles || [],
+        wall_caps: proj.wall_caps || [],
+        selected_equipment: proj.selected_equipment || [],
+      });
       setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
       setSettings(
         Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
@@ -131,6 +141,9 @@ export default function FoundationEstimator() {
         wall_caps: project.wall_caps || [],
         poles: project.poles || [],
         excavation_method: project.excavation_method,
+        selected_concrete_id: project.selected_concrete_id,
+        project_concrete_type: project.project_concrete_type,
+        project_concrete_admixtures: project.project_concrete_admixtures || [],
         concrete_cost_per_cy: project.concrete_cost_per_cy,
         rebar_cost_per_ft: project.rebar_cost_per_ft,
         forming_materials_cost_spread_foot: project.forming_materials_cost_spread_foot,

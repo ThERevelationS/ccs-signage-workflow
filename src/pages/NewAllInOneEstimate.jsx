@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { generateDocNumber } from "@/functions/generateDocNumber";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
@@ -49,7 +48,7 @@ export default function NewAllInOneEstimate() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const res = await generateDocNumber({ doc_type: "estimate" });
+      const res = await base44.functions.invoke("generateDocNumber", { doc_type: "estimate" });
       if (res?.data?.number) patch({ estimate_number: res.data.number });
     } finally {
       setGenerating(false);

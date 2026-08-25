@@ -46,7 +46,9 @@ export default function EstimateDetail() {
 
   const removeLine = async (index) => {
     const line = estimate.line_items[index];
-    setEstimate((prev) => ({ ...prev, line_items: prev.line_items.filter((_, i) => i !== index) }));
+    const line_items = estimate.line_items.filter((_, i) => i !== index);
+    setEstimate((prev) => ({ ...prev, line_items }));
+    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     await deleteOwnedSection(line);
   };
 
@@ -58,25 +60,25 @@ export default function EstimateDetail() {
       customer_id: estimate.customer_id,
       estimate_number: estimate.estimate_number,
     });
-    setEstimate((prev) => ({
-      ...prev,
-      line_items: [
-        ...(prev.line_items || []),
-        {
-          module_key: mod.key,
-          project_id: created.id,
-          project_name: sectionName,
-          client_name: estimate.client_name,
-          total_snapshot: 0,
-          adjustment_percent: 0,
-          section_status: "in_progress",
-          customer_quantity: 1,
-          include_in_customer: true,
-          owned: true,
-          linked_date: new Date().toISOString(),
-        },
-      ],
-    }));
+    const line_items = [
+      ...(estimate.line_items || []),
+      {
+        module_key: mod.key,
+        project_id: created.id,
+        project_name: sectionName,
+        client_name: estimate.client_name,
+        total_snapshot: 0,
+        adjustment_percent: 0,
+        section_status: "in_progress",
+        customer_quantity: 1,
+        include_in_customer: true,
+        owned: true,
+        linked_date: new Date().toISOString(),
+      },
+    ];
+    // Persist immediately — the user navigates straight into the new section.
+    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    setEstimate((prev) => ({ ...prev, line_items }));
     setShowAdd(false);
   };
 
