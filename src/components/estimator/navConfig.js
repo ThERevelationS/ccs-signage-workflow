@@ -36,10 +36,14 @@ export const ESTIMATOR_TABS = [
   {
     label: "Quick Price",
     to: "/QuickPrice",
-    items: ESTIMATOR_MODULES.map((m) => ({
-      label: m.label,
-      to: `/QuickPrice?module=${m.key}`,
-    })),
+    items: [
+      { label: "Full Estimate", to: "/Estimator?new=1" },
+      { label: "QUICK ESTIMATORS", header: true },
+      ...ESTIMATOR_MODULES.map((m) => ({
+        label: m.label,
+        to: `/QuickPrice?module=${m.key}`,
+      })),
+    ],
   },
   {
     label: "Estimates",
