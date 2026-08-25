@@ -103,6 +103,22 @@
         }
       }
     },
+    "mortar_bag_cost": {
+      "type": "number",
+      "default": 12
+    },
+    "bricks_per_hour": {
+      "type": "number",
+      "default": 40
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "default": 55
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
     "calculated_bricks": {
       "type": "number",
       "description": "Total number of bricks/stones needed"
@@ -122,6 +138,18 @@
     "mortar_cost": {
       "type": "number",
       "description": "Total mortar cost"
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "labor_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
     },
     "total_cost": {
       "type": "number",

@@ -18,6 +18,8 @@ import MaintenanceEstimator from './pages/MaintenanceEstimator';
 import ChannelLetterEstimator from './pages/ChannelLetterEstimator';
 import CNCEstimator from './pages/CNCEstimator';
 import LaserEstimator from './pages/LaserEstimator';
+import MetalEstimator from './pages/MetalEstimator';
+import BrickStoneEstimator from './pages/BrickStoneEstimator';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -101,6 +103,16 @@ const AuthenticatedApp = () => {
       <Route path="/LaserEstimator" element={
         <LayoutWrapper currentPageName="LaserEstimator">
           <LaserEstimator />
+        </LayoutWrapper>
+      } />
+      <Route path="/MetalEstimator" element={
+        <LayoutWrapper currentPageName="MetalEstimator">
+          <MetalEstimator />
+        </LayoutWrapper>
+      } />
+      <Route path="/BrickStoneEstimator" element={
+        <LayoutWrapper currentPageName="BrickStoneEstimator">
+          <BrickStoneEstimator />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

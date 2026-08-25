@@ -6,8 +6,8 @@ export const ESTIMATOR_MODULES = [
   { key: "vinyl", label: "Vinyl & Graphics", entity: "VinylProject", page: "VinylEstimator" },
   { key: "cnc", label: "CNC Router", entity: "CNCProject", page: "CNCEstimator" },
   { key: "laser", label: "Laser", entity: "LaserProject", page: "LaserEstimator" },
-  { key: "metal", label: "Metal Fabrication", entity: "MetalProject" },
-  { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject" },
+  { key: "metal", label: "Metal Fabrication", entity: "MetalProject", page: "MetalEstimator" },
+  { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject", page: "BrickStoneEstimator" },
   { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
 ];
 

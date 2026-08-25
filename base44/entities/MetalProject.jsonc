@@ -105,6 +105,18 @@
       "type": "number",
       "default": 55
     },
+    "supplies_percent_of_materials": {
+      "type": "number",
+      "default": 8
+    },
+    "extra_supplies_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percent": {
+      "type": "number",
+      "default": 0
+    },
     "total_material_cost": {
       "type": "number"
     },
@@ -118,6 +130,15 @@
       "type": "number"
     },
     "total_finishing_cost": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "markup_amount": {
+      "type": "number"
+    },
+    "total_cost": {
       "type": "number"
     },
     "notes": {
