@@ -1,0 +1,155 @@
+{
+  "name": "SignLightingInventory",
+  "type": "object",
+  "description": "Sign lighting catalog \u2014 LED modules, strips, neon, power supplies, drivers, transformers, ballasts, fluorescent tubes, photocells, and timers. Used by Channel Letters, Sign Maintenance, and any module that needs to spec illumination.",
+  "properties": {
+    "item_name": {
+      "type": "string"
+    },
+    "lighting_type": {
+      "type": "string",
+      "enum": [
+        "led_module",
+        "led_strip",
+        "led_neon",
+        "power_supply",
+        "led_driver",
+        "transformer",
+        "ballast",
+        "fluorescent_tube",
+        "neon_tube",
+        "photocell",
+        "timer",
+        "wire",
+        "connector",
+        "other"
+      ],
+      "default": "led_module"
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "model_number": {
+      "type": "string"
+    },
+    "color_temperature_k": {
+      "type": "number",
+      "description": "For LEDs/tubes \u2014 color temperature in Kelvin (e.g. 6500 = cool white)."
+    },
+    "color_name": {
+      "type": "string",
+      "description": "e.g. 'Cool White', 'Warm White', 'Red', 'RGB'."
+    },
+    "voltage": {
+      "type": "string",
+      "description": "Operating voltage (e.g. '12V', '24V', '120V')."
+    },
+    "wattage": {
+      "type": "number"
+    },
+    "amperage": {
+      "type": "number"
+    },
+    "max_load_watts": {
+      "type": "number",
+      "description": "Power supply / driver / transformer capacity."
+    },
+    "modules_per_run": {
+      "type": "number",
+      "description": "For LED modules \u2014 max modules per parallel run before voltage drop."
+    },
+    "length_feet": {
+      "type": "number",
+      "description": "For strip/neon/tube/wire \u2014 length per unit."
+    },
+    "ip_rating": {
+      "type": "string",
+      "enum": [
+        "indoor_only",
+        "ip65",
+        "ip66",
+        "ip67",
+        "ip68",
+        "other"
+      ],
+      "default": "ip65"
+    },
+    "indoor_outdoor": {
+      "type": "string",
+      "enum": [
+        "indoor_only",
+        "outdoor",
+        "both"
+      ],
+      "default": "both"
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_piece",
+        "per_foot",
+        "per_roll",
+        "per_box"
+      ],
+      "default": "per_piece"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "default": 0
+    },
+    "units_per_box": {
+      "type": "number",
+      "default": 1
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "supplier_sku": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "item_name",
+    "lighting_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

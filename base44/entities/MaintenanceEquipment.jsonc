@@ -1,0 +1,159 @@
+{
+  "name": "MaintenanceEquipment",
+  "type": "object",
+  "description": "Lifts, boom trucks, ladders, vehicles and tools available to the Sign Maintenance / Installation estimators, with rental or owned pricing, reach geometry and idle-running costs.",
+  "properties": {
+    "equipment_name": {
+      "type": "string"
+    },
+    "equipment_type": {
+      "type": "string",
+      "enum": [
+        "ladder",
+        "scissor_lift",
+        "boom_lift",
+        "boom_truck",
+        "scaffold",
+        "truck",
+        "car",
+        "van",
+        "flatbed",
+        "hand_tool",
+        "power_tool",
+        "safety",
+        "other"
+      ],
+      "default": "ladder"
+    },
+    "ownership": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "rented"
+      ],
+      "default": "rented"
+    },
+    "max_height_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "total_boom_height_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "horizontal_boom_reach_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "deployed_truck_width_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "vertical_reach_safety_margin_feet": {
+      "type": "number",
+      "default": 2
+    },
+    "is_default_for_height": {
+      "type": "boolean",
+      "default": false
+    },
+    "default_height_min_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "default_height_max_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "idle_running_cost_per_hour": {
+      "type": "number",
+      "default": 0
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "owned_flat",
+        "per_hour",
+        "per_day",
+        "per_week",
+        "per_month",
+        "per_project_flat"
+      ],
+      "default": "per_day"
+    },
+    "cost_per_hour": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_day": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_week": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_month": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_flat": {
+      "type": "number",
+      "default": 0
+    },
+    "delivery_pickup_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "mpg": {
+      "type": "number",
+      "default": 0
+    },
+    "fuel_type": {
+      "type": "string",
+      "enum": [
+        "na",
+        "gasoline",
+        "diesel"
+      ],
+      "default": "na"
+    },
+    "rental_company": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "equipment_name",
+    "equipment_type",
+    "pricing_mode"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

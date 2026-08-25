@@ -1,0 +1,190 @@
+{
+  "name": "MaintenanceInventory",
+  "type": "object",
+  "description": "Materials catalog for the Sign Maintenance estimator, scoped by sign type, size and action, with size-tiered or per-unit pricing.",
+  "properties": {
+    "item_name": {
+      "type": "string"
+    },
+    "applies_to_item_types": {
+      "type": "array",
+      "description": "Sign / service item types this material applies to. Empty array = applies to all.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "flush_channel",
+          "halo_channel",
+          "raceway_channel",
+          "capsule_logo",
+          "dimensional_letters",
+          "monument_sign",
+          "pylon_sign",
+          "post_and_panel"
+        ]
+      }
+    },
+    "applies_to_sizes": {
+      "type": "array",
+      "description": "Letter sizes (for channel/dimensional) AND cabinet sizes (for monument/pylon/P&P) this material applies to. Empty = all.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "extra_small",
+          "small",
+          "medium",
+          "large",
+          "extra_large",
+          "extra_extra_large",
+          "cab_small",
+          "cab_medium",
+          "cab_large",
+          "cab_extra_large"
+        ]
+      }
+    },
+    "applies_to_actions": {
+      "type": "array",
+      "description": "Maintenance actions this material applies to. Empty = all.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "clean",
+          "repaint",
+          "led_retrofit",
+          "replace_leds",
+          "replace_power_supplies",
+          "replace_fluorescent_tubes",
+          "fix_electrical",
+          "troubleshoot",
+          "vinyl_replacement",
+          "replace_face",
+          "replace_returns",
+          "replace_trim_cap",
+          "reseal",
+          "rewire",
+          "replace_ballast",
+          "replace_transformer",
+          "replace_breaker",
+          "replace_photocell",
+          "replace_timer",
+          "replace_disconnect"
+        ]
+      }
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_letter_flat",
+        "per_letter_by_size",
+        "per_cabinet_flat",
+        "per_cabinet_by_size",
+        "per_linear_foot",
+        "per_sqft",
+        "per_project_flat"
+      ],
+      "default": "per_letter_flat"
+    },
+    "cost_per_letter": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_cabinet": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_extra_small": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_small": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_medium": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_large": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_extra_large": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_extra_extra_large": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_cab_small": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_cab_medium": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_cab_large": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_cab_extra_large": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_foot": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_sqft": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_flat": {
+      "type": "number",
+      "default": 0
+    },
+    "unit": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "item_name",
+    "pricing_mode"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

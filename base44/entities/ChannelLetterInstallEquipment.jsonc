@@ -1,0 +1,186 @@
+{
+  "name": "ChannelLetterInstallEquipment",
+  "type": "object",
+  "description": "Install equipment catalog (lifts, boom trucks, ladders, vehicles) with reach geometry, owned/rented pricing and idle-running costs. Shared by the Channel Letters, Foundation and Sign Maintenance estimators via the show_in_* flags.",
+  "properties": {
+    "equipment_name": {
+      "type": "string",
+      "description": "Name of the equipment"
+    },
+    "equipment_type": {
+      "type": "string",
+      "enum": [
+        "ladder",
+        "scissor_lift",
+        "boom_lift",
+        "boom_truck",
+        "scaffold",
+        "truck",
+        "car",
+        "van",
+        "flatbed",
+        "hand_tool",
+        "power_tool",
+        "safety",
+        "other"
+      ],
+      "default": "ladder"
+    },
+    "ownership": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "rented"
+      ],
+      "default": "rented",
+      "description": "Whether the equipment is owned by the shop or rented."
+    },
+    "max_height_feet": {
+      "type": "number",
+      "default": 0,
+      "description": "Maximum working/platform height in feet"
+    },
+    "total_boom_height_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "horizontal_boom_reach_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "deployed_truck_width_feet": {
+      "type": "number",
+      "default": 0
+    },
+    "vertical_reach_safety_margin_feet": {
+      "type": "number",
+      "default": 2
+    },
+    "is_default_for_height": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this boom lift / boom truck is the default pick when an install falls inside its height range."
+    },
+    "is_primary_owned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marks your go-to OWNED lift for normal use. The equipment suggester picks this lift first for any job it can reach, only stepping up to a taller/rented lift when the install height exceeds its reach."
+    },
+    "default_height_min_feet": {
+      "type": "number",
+      "default": 0,
+      "description": "Bottom of the install-height range this boom is the default for (inclusive)."
+    },
+    "default_height_max_feet": {
+      "type": "number",
+      "default": 0,
+      "description": "Top of the install-height range this boom is the default for (inclusive)."
+    },
+    "idle_running_cost_per_hour": {
+      "type": "number",
+      "default": 0,
+      "description": "Per-hour cost of running the boom/truck idle on-site (fuel + wear). Charged in addition to rental/flat rate."
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "owned_flat",
+        "per_hour",
+        "per_day",
+        "per_week",
+        "per_month",
+        "per_project_flat"
+      ],
+      "default": "per_day"
+    },
+    "cost_per_hour": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_day": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_week": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_month": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_flat": {
+      "type": "number",
+      "default": 0
+    },
+    "delivery_pickup_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "mpg": {
+      "type": "number",
+      "default": 0
+    },
+    "fuel_type": {
+      "type": "string",
+      "enum": [
+        "na",
+        "gasoline",
+        "diesel"
+      ],
+      "default": "na"
+    },
+    "rental_company": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this equipment in the Channel & Dimensional Letters estimator."
+    },
+    "show_in_foundation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show this equipment in the Concrete | Masonry | Poles estimator."
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show this equipment in the Sign Maintenance estimator."
+    }
+  },
+  "required": [
+    "equipment_name",
+    "equipment_type",
+    "pricing_mode"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

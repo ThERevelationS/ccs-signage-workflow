@@ -1,0 +1,396 @@
+{
+  "name": "FoundationInventory",
+  "type": "object",
+  "description": "Catalog for the Concrete | Masonry | Poles estimator: ready-mix and bagged concrete (with mix/admix/small-load pricing), rebar, forming lumber, excavation equipment with attachment trees, poles, brick/stone, fill, wall material and wall caps.",
+  "properties": {
+    "material_name": {
+      "type": "string",
+      "description": "Name of the material or equipment"
+    },
+    "material_description": {
+      "type": "string",
+      "description": "Detailed description shown in dropdowns"
+    },
+    "material_type": {
+      "type": "string",
+      "enum": [
+        "concrete_service",
+        "bagged_concrete",
+        "rebar",
+        "forming_material",
+        "excavation_equipment",
+        "attachment",
+        "sub_attachment",
+        "pole",
+        "brick_stone",
+        "fill_material",
+        "wall_material",
+        "wall_cap"
+      ],
+      "description": "Type of material"
+    },
+    "foundation_usage": {
+      "type": "string",
+      "enum": [
+        "spread_foot",
+        "pillar",
+        "general"
+      ]
+    },
+    "lumber_size": {
+      "type": "string",
+      "enum": [
+        "2x4",
+        "2x6",
+        "2x8",
+        "2x10",
+        "2x12",
+        "plywood_3/4",
+        "custom"
+      ]
+    },
+    "thickness_inches": {
+      "type": "number"
+    },
+    "pole_shape": {
+      "type": "string",
+      "enum": [
+        "square",
+        "round"
+      ]
+    },
+    "pole_width_inches": {
+      "type": "number"
+    },
+    "pole_depth_inches": {
+      "type": "number"
+    },
+    "pole_wall_thickness_inches": {
+      "type": "number"
+    },
+    "pole_stock_length_ft": {
+      "type": "number"
+    },
+    "pole_stock_price": {
+      "type": "number"
+    },
+    "pole_pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_foot",
+        "stock_price"
+      ]
+    },
+    "paint_rate_per_linear_ft": {
+      "type": "number"
+    },
+    "brick_length_inches": {
+      "type": "number"
+    },
+    "brick_width_inches": {
+      "type": "number"
+    },
+    "brick_height_inches": {
+      "type": "number"
+    },
+    "brick_color": {
+      "type": "string"
+    },
+    "brick_texture": {
+      "type": "string",
+      "enum": [
+        "smooth",
+        "rough",
+        "textured",
+        "glazed"
+      ]
+    },
+    "fill_material_subtype": {
+      "type": "string",
+      "enum": [
+        "cinder_block",
+        "poured_concrete",
+        "gravel",
+        "foam",
+        "sand"
+      ]
+    },
+    "wall_material_subtype": {
+      "type": "string",
+      "enum": [
+        "brick",
+        "cinderblock",
+        "stone",
+        "concrete"
+      ]
+    },
+    "wall_unit_length_inches": {
+      "type": "number"
+    },
+    "wall_unit_width_inches": {
+      "type": "number"
+    },
+    "wall_unit_height_inches": {
+      "type": "number"
+    },
+    "wall_color": {
+      "type": "string"
+    },
+    "wall_texture": {
+      "type": "string",
+      "enum": [
+        "smooth",
+        "rough",
+        "textured",
+        "glazed"
+      ]
+    },
+    "cap_stock_length_inches": {
+      "type": "number"
+    },
+    "cap_width_inches": {
+      "type": "number"
+    },
+    "cap_height_inches": {
+      "type": "number"
+    },
+    "cap_profile": {
+      "type": "string",
+      "enum": [
+        "flat",
+        "beveled",
+        "rounded",
+        "peaked",
+        "stepped"
+      ]
+    },
+    "cap_color": {
+      "type": "string"
+    },
+    "cap_stock_price": {
+      "type": "number"
+    },
+    "is_cuttable": {
+      "type": "boolean"
+    },
+    "equipment_type": {
+      "type": "string",
+      "enum": [
+        "ladder",
+        "scissor_lift",
+        "boom_lift",
+        "boom_truck",
+        "scaffold",
+        "truck",
+        "car",
+        "van",
+        "flatbed",
+        "hand_tool",
+        "power_tool",
+        "safety",
+        "other"
+      ],
+      "description": "Equipment sub-type for excavation_equipment / attachment rows. Drives icon + fuel-cost fields."
+    },
+    "supports_attachments": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this top-level equipment exposes the attachment / sub-attachment tree."
+    },
+    "compatible_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compatible_attachment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compatible_sub_attachment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "parent_attachment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allow_multiple": {
+      "type": "boolean"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "rental_company": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "cost_per_unit": {
+      "type": "number"
+    },
+    "minimum_order_yards": {
+      "type": "number"
+    },
+    "below_minimum_cost_per_cy": {
+      "type": "number"
+    },
+    "minimum_cost": {
+      "type": "number"
+    },
+    "cost_per_day": {
+      "type": "number"
+    },
+    "cost_per_week": {
+      "type": "number"
+    },
+    "cost_per_month": {
+      "type": "number"
+    },
+    "pickup_delivery_cost": {
+      "type": "number"
+    },
+    "rebar_size": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_pillar_excavation": {
+      "type": "boolean"
+    },
+    "is_spread_foot_excavation": {
+      "type": "boolean"
+    },
+    "is_non_excavation_equipment": {
+      "type": "boolean"
+    },
+    "is_miscellaneous_attachment": {
+      "type": "boolean"
+    },
+    "sort_order": {
+      "type": "number"
+    },
+    "mix_3500_price": {
+      "type": "number"
+    },
+    "mix_4000_price": {
+      "type": "number"
+    },
+    "mix_4500_price": {
+      "type": "number"
+    },
+    "mix_5000_price": {
+      "type": "number"
+    },
+    "mix_fast_set_price": {
+      "type": "number"
+    },
+    "admix_calcium_chloride_price": {
+      "type": "number"
+    },
+    "admix_set_retarding_price": {
+      "type": "number"
+    },
+    "admix_water_reducing_price": {
+      "type": "number"
+    },
+    "admix_fibers_price": {
+      "type": "number"
+    },
+    "admix_winter_service_price": {
+      "type": "number"
+    },
+    "small_load_fee_1_1_75": {
+      "type": "number"
+    },
+    "small_load_fee_2_2_75": {
+      "type": "number"
+    },
+    "small_load_fee_3_3_75": {
+      "type": "number"
+    },
+    "small_load_fee_4_4_25": {
+      "type": "number"
+    },
+    "small_load_fee_4_5_4_75": {
+      "type": "number"
+    },
+    "fuel_surcharge": {
+      "type": "number"
+    },
+    "ownership": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "rented"
+      ],
+      "default": "rented",
+      "description": "Equipment ownership. Applies to excavation_equipment / attachment / sub_attachment rows."
+    },
+    "mpg": {
+      "type": "number",
+      "default": 0,
+      "description": "Vehicle / boom fuel economy in miles per gallon (used for driving fuel cost on trips)."
+    },
+    "fuel_type": {
+      "type": "string",
+      "enum": [
+        "na",
+        "gasoline",
+        "diesel"
+      ],
+      "default": "na",
+      "description": "Fuel type \u2014 drives which fuel-price setting is used for driving + idle cost."
+    },
+    "idle_running_cost_per_hour": {
+      "type": "number",
+      "default": 0,
+      "description": "Fuel + wear cost per hour while running idle on-site (e.g. boom lift hold position)."
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show this item in the Channel & Dimensional Letters estimator's equipment / supplies pickers."
+    },
+    "show_in_foundation": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this item in the Concrete | Masonry | Poles estimator."
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show this item in the Sign Maintenance estimator's equipment / supplies pickers."
+    }
+  },
+  "required": [
+    "material_name",
+    "material_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "name": "MaintenanceActionRate",
+  "type": "object",
+  "description": "Per (sign-type \u00d7 action) rate matrix. One row per combination. Drives the Service Items / Labor calculations.",
+  "properties": {
+    "sign_type": {
+      "type": "string",
+      "enum": [
+        "flush_channel",
+        "halo_channel",
+        "raceway_channel",
+        "capsule_logo",
+        "dimensional_letters",
+        "monument_sign",
+        "pylon_sign",
+        "post_and_panel"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "clean",
+        "repaint",
+        "led_retrofit",
+        "replace_leds",
+        "replace_power_supplies",
+        "replace_fluorescent_tubes",
+        "fix_electrical",
+        "troubleshoot",
+        "vinyl_replacement",
+        "replace_face",
+        "replace_returns",
+        "replace_trim_cap",
+        "reseal",
+        "rewire",
+        "replace_ballast",
+        "replace_transformer",
+        "replace_breaker",
+        "replace_photocell",
+        "replace_timer",
+        "replace_disconnect"
+      ]
+    },
+    "rate_basis": {
+      "type": "string",
+      "enum": [
+        "per_letter",
+        "per_cabinet",
+        "per_unit",
+        "per_sqft",
+        "flat"
+      ],
+      "default": "per_letter",
+      "description": "How the time scales. per_letter scales by qty_letters, per_cabinet/flat is a one-shot per service item, per_unit scales by quantity (e.g. LEDs being replaced), per_sqft scales by cabinet face area."
+    },
+    "base_minutes_xs": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_s": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_m": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_l": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_xl": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_xxl": {
+      "type": "number",
+      "default": 0
+    },
+    "base_minutes_cab_s": {
+      "type": "number",
+      "default": 0,
+      "description": "Cabinet size: Small (\u2264 16 sqft)"
+    },
+    "base_minutes_cab_m": {
+      "type": "number",
+      "default": 0,
+      "description": "Cabinet size: Medium (16\u201348 sqft)"
+    },
+    "base_minutes_cab_l": {
+      "type": "number",
+      "default": 0,
+      "description": "Cabinet size: Large (48\u2013100 sqft)"
+    },
+    "base_minutes_cab_xl": {
+      "type": "number",
+      "default": 0,
+      "description": "Cabinet size: XL (100+ sqft)"
+    },
+    "base_minutes_flat": {
+      "type": "number",
+      "default": 0,
+      "description": "Used when rate_basis = 'flat' or 'per_unit' (then this is minutes per unit)."
+    },
+    "default_materials": {
+      "type": "array",
+      "description": "Inventory items typically pulled for this (sign_type \u00d7 action). Used to auto-fill the Materials picker.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "sign_type",
+    "action"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
