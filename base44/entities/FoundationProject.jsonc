@@ -1,0 +1,602 @@
+{
+  "name": "FoundationProject",
+  "type": "object",
+  "description": "Concrete | Masonry | Poles estimator project. Holds foundation items (spread footings / pillars) with concrete, rebar, excavation, forming and finishing costs, plus placed poles, masonry walls, wall caps, selected equipment and the rolled-up totals.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "project_concrete_type": {
+      "type": "string"
+    },
+    "project_concrete_admixtures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "foundation_type": {
+            "type": "string",
+            "enum": [
+              "spread_foot",
+              "pillar"
+            ],
+            "default": "spread_foot"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "width_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "diameter": {
+            "type": "number",
+            "default": 0
+          },
+          "depth_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "grade_offset_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "rotation_degrees": {
+            "type": "number",
+            "default": 0
+          },
+          "include_rebar": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_forming": {
+            "type": "boolean",
+            "default": true
+          },
+          "selected_forming_id": {
+            "type": "string"
+          },
+          "include_finishing": {
+            "type": "boolean",
+            "default": true
+          },
+          "rebar_size": {
+            "type": "string",
+            "default": "#4"
+          },
+          "rebar_spacing_length": {
+            "type": "number"
+          },
+          "rebar_spacing_width": {
+            "type": "number"
+          },
+          "selected_pole_id": {
+            "type": "string"
+          },
+          "pole_offset_from_bottom_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "pole_total_height_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "include_pole_painting": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_wall_material": {
+            "type": "boolean",
+            "default": false
+          },
+          "wall_length_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "wall_width_inches": {
+            "type": "number",
+            "default": 8
+          },
+          "wall_height_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "selected_brick_id": {
+            "type": "string"
+          },
+          "mortar_gap_inches": {
+            "type": "number",
+            "default": 0.375
+          },
+          "brick_layer_offset_inches": {
+            "type": "number"
+          },
+          "include_fill_material": {
+            "type": "boolean",
+            "default": false
+          },
+          "selected_fill_material_id": {
+            "type": "string"
+          },
+          "concrete_volume_cy": {
+            "type": "number"
+          },
+          "excavation_volume_cy": {
+            "type": "number"
+          },
+          "concrete_cost": {
+            "type": "number"
+          },
+          "rebar_cost": {
+            "type": "number"
+          },
+          "excavation_cost": {
+            "type": "number"
+          },
+          "forming_hours": {
+            "type": "number"
+          },
+          "forming_cost": {
+            "type": "number"
+          },
+          "forming_materials_cost": {
+            "type": "number"
+          },
+          "pouring_hours": {
+            "type": "number"
+          },
+          "pouring_cost": {
+            "type": "number"
+          },
+          "finishing_hours": {
+            "type": "number"
+          },
+          "finishing_cost": {
+            "type": "number"
+          },
+          "pole_cost": {
+            "type": "number"
+          },
+          "pole_painting_cost": {
+            "type": "number"
+          },
+          "brick_count": {
+            "type": "number"
+          },
+          "brick_cost": {
+            "type": "number"
+          },
+          "fill_volume_cy": {
+            "type": "number"
+          },
+          "fill_cost": {
+            "type": "number"
+          },
+          "item_total_cost": {
+            "type": "number"
+          },
+          "custom_concrete_cost_per_cy": {
+            "type": "number"
+          },
+          "custom_rebar_cost_per_ft": {
+            "type": "number"
+          },
+          "rebar_layers": {
+            "type": "number"
+          },
+          "rebar_layer_separation_inches": {
+            "type": "number"
+          },
+          "pillar_rebar_size": {
+            "type": "string"
+          },
+          "pillar_rebar_hoop_diameter": {
+            "type": "number"
+          },
+          "pillar_rebar_layer_separation_inches": {
+            "type": "number"
+          },
+          "pillar_rebar_layers": {
+            "type": "number"
+          },
+          "pillar_vertical_rebar_count": {
+            "type": "number"
+          },
+          "selected_concrete_id": {
+            "type": "string"
+          },
+          "excavation_method": {
+            "type": "string",
+            "enum": [
+              "hand_dig",
+              "equipment_excavation"
+            ]
+          },
+          "is_new_sign_location": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "beautify_data_url": {
+      "type": "string"
+    },
+    "poles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pole_id": {
+            "type": "string"
+          },
+          "x_inches": {
+            "type": "number"
+          },
+          "z_inches": {
+            "type": "number"
+          },
+          "height_inches": {
+            "type": "number"
+          },
+          "y_offset_inches": {
+            "type": "number"
+          },
+          "foundation_idx": {
+            "type": "number"
+          },
+          "paint": {
+            "type": "boolean"
+          },
+          "rotation_degrees": {
+            "type": "number"
+          },
+          "signs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "walls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "heightInches": {
+            "type": "number",
+            "default": 24
+          },
+          "materialId": {
+            "type": "string"
+          },
+          "internalMaterialId": {
+            "type": "string"
+          },
+          "includeInternalWall": {
+            "type": "boolean"
+          },
+          "internalWallHeightInches": {
+            "type": "number"
+          },
+          "internalMortarGapInches": {
+            "type": "number"
+          },
+          "useExistingFoundation": {
+            "type": "boolean",
+            "default": false
+          },
+          "mortarGapInches": {
+            "type": "number",
+            "default": 0.375
+          },
+          "offsetFraction": {
+            "type": "number",
+            "default": 0.5
+          },
+          "shape": {
+            "type": "object",
+            "properties": {
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "segments": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "calculatedCosts": {
+            "type": "object",
+            "properties": {
+              "totalBricks": {
+                "type": "number"
+              },
+              "materialCost": {
+                "type": "number"
+              },
+              "mortarCost": {
+                "type": "number"
+              },
+              "laborHours": {
+                "type": "number"
+              },
+              "laborCost": {
+                "type": "number"
+              },
+              "totalCost": {
+                "type": "number"
+              },
+              "totalLinearInches": {
+                "type": "number"
+              },
+              "numCourses": {
+                "type": "number"
+              },
+              "internalTotalBricks": {
+                "type": "number"
+              },
+              "internalMaterialCost": {
+                "type": "number"
+              },
+              "internalMortarCost": {
+                "type": "number"
+              },
+              "internalLaborCost": {
+                "type": "number"
+              },
+              "internalLaborHours": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "wall_caps": {
+      "type": "array",
+      "description": "Wall cap pieces placed on top of outer walls.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "cap_inventory_id": {
+            "type": "string"
+          },
+          "wall_index": {
+            "type": "number"
+          },
+          "segment_index": {
+            "type": "number"
+          },
+          "position_along_segment_inches": {
+            "type": "number"
+          },
+          "length_inches": {
+            "type": "number",
+            "description": "Actual cut length used. May be shorter than stock; full stock is still charged."
+          },
+          "rotation_offset_degrees": {
+            "type": "number",
+            "default": 0
+          },
+          "lateral_offset_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Side-to-side offset from wall centerline (negative = outer side)"
+          }
+        }
+      }
+    },
+    "selected_equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {
+            "type": "string"
+          },
+          "rental_period": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ]
+          },
+          "rental_duration": {
+            "type": "number"
+          },
+          "include_delivery": {
+            "type": "boolean"
+          },
+          "equipment_cost": {
+            "type": "number"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "selected_concrete_id": {
+      "type": "string"
+    },
+    "excavation_method": {
+      "type": "string",
+      "enum": [
+        "hand_dig",
+        "equipment_excavation"
+      ]
+    },
+    "concrete_cost_per_cy": {
+      "type": "number",
+      "default": 135
+    },
+    "rebar_cost_per_ft": {
+      "type": "number",
+      "default": 0.75
+    },
+    "forming_materials_cost_spread_foot": {
+      "type": "number",
+      "default": 0.5
+    },
+    "forming_materials_cost_pillar": {
+      "type": "number",
+      "default": 0.75
+    },
+    "min_excavation_time_hours": {
+      "type": "number",
+      "default": 1
+    },
+    "hand_dig_excavation_cost_per_cy": {
+      "type": "number",
+      "default": 10
+    },
+    "equipment_excavation_cost_per_cy": {
+      "type": "number",
+      "default": 15
+    },
+    "forming_labor_rate": {
+      "type": "number",
+      "default": 55
+    },
+    "pouring_labor_rate": {
+      "type": "number",
+      "default": 60
+    },
+    "finishing_labor_rate": {
+      "type": "number",
+      "default": 50
+    },
+    "hand_dig_labor_rate": {
+      "type": "number",
+      "default": 45
+    },
+    "equipment_excavation_labor_rate": {
+      "type": "number",
+      "default": 35
+    },
+    "total_concrete_cost": {
+      "type": "number"
+    },
+    "total_rebar_cost": {
+      "type": "number"
+    },
+    "total_excavation_cost": {
+      "type": "number"
+    },
+    "total_labor_cost": {
+      "type": "number"
+    },
+    "total_equipment_cost": {
+      "type": "number"
+    },
+    "total_forming_materials_cost": {
+      "type": "number"
+    },
+    "total_pole_cost": {
+      "type": "number"
+    },
+    "total_pole_painting_cost": {
+      "type": "number"
+    },
+    "total_brick_cost": {
+      "type": "number"
+    },
+    "total_fill_cost": {
+      "type": "number"
+    },
+    "total_wall_cost": {
+      "type": "number"
+    },
+    "total_wall_cap_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ai_engineering_recommendation": {
+      "type": "string"
+    },
+    "ai_engineering_data": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
