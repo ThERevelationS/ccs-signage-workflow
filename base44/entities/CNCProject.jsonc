@@ -173,6 +173,9 @@
     "total_labor_cost": {
       "type": "number"
     },
+    "total_cost": {
+      "type": "number"
+    },
     "notes": {
       "type": "string"
     }

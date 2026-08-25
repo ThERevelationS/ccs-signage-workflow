@@ -4,7 +4,7 @@ export const ESTIMATOR_MODULES = [
   { key: "foundation", label: "Concrete | Masonry | Poles", entity: "FoundationProject", page: "FoundationEstimator" },
   { key: "channel_letters", label: "Channel & Dimensional Letters", entity: "ChannelLetterInstallation", page: "ChannelLetterEstimator" },
   { key: "vinyl", label: "Vinyl & Graphics", entity: "VinylProject", page: "VinylEstimator" },
-  { key: "cnc", label: "CNC Router", entity: "CNCProject" },
+  { key: "cnc", label: "CNC Router", entity: "CNCProject", page: "CNCEstimator" },
   { key: "laser", label: "Laser", entity: "LaserProject" },
   { key: "metal", label: "Metal Fabrication", entity: "MetalProject" },
   { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject" },
