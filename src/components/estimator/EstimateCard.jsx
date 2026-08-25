@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { FileText, Trash2, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
@@ -18,10 +19,12 @@ export default function EstimateCard({ estimate, onDelete }) {
     <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-red-500 p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <Link to={`/EstimateDetail?id=${estimate.id}`} className="flex items-center gap-2 group">
             <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <h3 className="font-semibold text-gray-900 truncate">{estimate.project_name}</h3>
-          </div>
+            <h3 className="font-semibold text-gray-900 truncate group-hover:text-red-600">
+              {estimate.project_name}
+            </h3>
+          </Link>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-3.5 h-3.5" />

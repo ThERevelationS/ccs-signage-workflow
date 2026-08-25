@@ -1,0 +1,65 @@
+import React from "react";
+import { Input } from "@/components/ui/input";
+import { money } from "./aioPricing";
+
+const PERCENT_FIELDS = [
+  { key: "discount_percent", label: "Discount %" },
+  { key: "contingency_percent", label: "Contingency %" },
+  { key: "tax_percent", label: "Tax %" },
+  { key: "deposit_percent", label: "Deposit %" },
+];
+
+const FEE_FIELDS = [
+  { key: "shipping_fee", label: "Shipping / freight" },
+  { key: "permit_fee", label: "Permit / admin" },
+];
+
+export default function PricingSummary({ estimate, pricing, onChange }) {
+  const rows = [
+    ["Sections subtotal", pricing.subtotal],
+    ["Discount", -pricing.discount],
+    ["Contingency", pricing.contingency],
+    ["Fees", pricing.fees],
+    ["Tax", pricing.tax],
+  ];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-4">
+      <h2 className="font-semibold text-gray-900 mb-3">Customer Pricing</h2>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[...PERCENT_FIELDS, ...FEE_FIELDS].map((f) => (
+          <label key={f.key} className="text-xs text-gray-500">
+            {f.label}
+            <Input
+              type="number"
+              value={estimate[f.key] ?? 0}
+              onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}
+            />
+          </label>
+        ))}
+      </div>
+
+      <div className="space-y-1.5 text-sm border-t border-gray-100 pt-3">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex justify-between text-gray-600">
+            <span>{label}</span>
+            <span>{money(value)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2">
+          <span>Quote total</span>
+          <span className="text-red-600">{money(pricing.quoteTotal)}</span>
+        </div>
+        <div className="flex justify-between text-gray-600">
+          <span>Deposit due</span>
+          <span>{money(pricing.deposit)}</span>
+        </div>
+        <div className="flex justify-between text-gray-600">
+          <span>Balance</span>
+          <span>{money(pricing.balance)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
