@@ -1,0 +1,151 @@
+{
+  "name": "SignHardwareInventory",
+  "type": "object",
+  "description": "Fasteners, anchors, standoffs, brackets, threaded rod, clips, screws, bolts, nuts, washers \u2014 anything mechanical that holds a sign together or attaches it to a structure.",
+  "properties": {
+    "item_name": {
+      "type": "string"
+    },
+    "hardware_type": {
+      "type": "string",
+      "enum": [
+        "standoff",
+        "screw",
+        "bolt",
+        "nut",
+        "washer",
+        "anchor",
+        "wedge_anchor",
+        "drop_in_anchor",
+        "toggle_bolt",
+        "lag_screw",
+        "threaded_rod",
+        "bracket",
+        "clip",
+        "z_clip",
+        "french_cleat",
+        "hanger",
+        "spacer",
+        "rivet",
+        "stud",
+        "other"
+      ],
+      "default": "screw"
+    },
+    "material": {
+      "type": "string",
+      "enum": [
+        "stainless_steel",
+        "aluminum",
+        "steel_zinc",
+        "steel_galvanized",
+        "brass",
+        "nylon",
+        "other"
+      ],
+      "default": "stainless_steel"
+    },
+    "finish": {
+      "type": "string",
+      "enum": [
+        "polished",
+        "brushed",
+        "satin",
+        "anodized",
+        "powder_coated",
+        "zinc",
+        "galvanized",
+        "raw",
+        "other"
+      ],
+      "default": "satin"
+    },
+    "size": {
+      "type": "string",
+      "description": "Free-form size: '1/2\" x 1\"', '#10 x 1-1/4\"', 'M6 x 25mm', '3/8-16'."
+    },
+    "thread_size": {
+      "type": "string"
+    },
+    "length_inches": {
+      "type": "number"
+    },
+    "diameter_inches": {
+      "type": "number"
+    },
+    "load_rating_lbs": {
+      "type": "number"
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_piece",
+        "per_box",
+        "per_pack"
+      ],
+      "default": "per_piece"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "default": 0
+    },
+    "units_per_box": {
+      "type": "number",
+      "default": 1
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "supplier_sku": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_foundation": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "item_name",
+    "hardware_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

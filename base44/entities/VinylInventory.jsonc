@@ -1,0 +1,298 @@
+{
+  "name": "VinylInventory",
+  "type": "object",
+  "description": "Master catalog of vinyl rolls and sheets used across Channel & Dimensional Letters, Lobby Signs, Sign Maintenance, and the Vinyl Estimator. Captures everything an estimator needs: roll dimensions, costs, application/finish characteristics, expected life, layering rules, and per-estimator visibility. Multiple records can share a `product_group_key` to represent the SAME vinyl in different roll widths.",
+  "properties": {
+    "vinyl_name": {
+      "type": "string"
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "product_series": {
+      "type": "string"
+    },
+    "product_group_key": {
+      "type": "string",
+      "description": "Optional stable key shared by inventory rows that represent the SAME vinyl product in different roll widths. Lets the estimator suggest the cheapest viable roll width for a given workflow."
+    },
+    "color_name": {
+      "type": "string"
+    },
+    "color_hex": {
+      "type": "string"
+    },
+    "vinyl_category": {
+      "type": "string",
+      "enum": [
+        "cast",
+        "calendered",
+        "intermediate",
+        "translucent",
+        "reflective",
+        "perforated_window",
+        "etched_glass",
+        "fluorescent",
+        "metallic",
+        "carbon_fiber",
+        "chrome",
+        "magnetic",
+        "wrap_film",
+        "print_media",
+        "laminate",
+        "transfer_tape",
+        "application_tape",
+        "specialty"
+      ],
+      "default": "calendered"
+    },
+    "vinyl_use_case": {
+      "type": "string",
+      "enum": [
+        "cut_graphics",
+        "printed_graphics",
+        "wrap",
+        "window_graphics",
+        "translucent_face",
+        "reflective_traffic",
+        "floor_graphic",
+        "wall_graphic",
+        "vehicle_lettering",
+        "channel_letter_face",
+        "monument_panel",
+        "general_signage"
+      ],
+      "default": "cut_graphics"
+    },
+    "finish": {
+      "type": "string",
+      "enum": [
+        "gloss",
+        "matte",
+        "satin",
+        "metallic",
+        "reflective",
+        "transparent",
+        "translucent",
+        "frosted",
+        "carbon_fiber",
+        "brushed"
+      ],
+      "default": "gloss"
+    },
+    "roll_width_inches": {
+      "type": "number",
+      "default": 24
+    },
+    "roll_length_yards": {
+      "type": "number",
+      "default": 50
+    },
+    "thickness_mil": {
+      "type": "number",
+      "default": 2
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_roll",
+        "per_sqft",
+        "per_linear_foot"
+      ],
+      "default": "per_roll"
+    },
+    "cost_per_roll": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_sqft": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_per_linear_foot": {
+      "type": "number",
+      "default": 0
+    },
+    "minimum_order_quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "waste_factor_percent": {
+      "type": "number",
+      "default": 15
+    },
+    "yield_factor": {
+      "type": "number",
+      "default": 0.85
+    },
+    "is_laminate": {
+      "type": "boolean",
+      "default": false
+    },
+    "requires_lamination": {
+      "type": "boolean",
+      "default": false
+    },
+    "default_laminate_id": {
+      "type": "string"
+    },
+    "preferred_laminate_id": {
+      "type": "string"
+    },
+    "requires_transfer_tape": {
+      "type": "boolean",
+      "default": true
+    },
+    "preferred_transfer_tape_id": {
+      "type": "string"
+    },
+    "application_method": {
+      "type": "string",
+      "enum": [
+        "dry",
+        "wet",
+        "either"
+      ],
+      "default": "either"
+    },
+    "application_surface": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "flat",
+          "curved",
+          "compound_curves",
+          "rivets",
+          "corrugated",
+          "glass",
+          "concrete",
+          "painted_metal",
+          "polished_metal",
+          "plastic",
+          "wood",
+          "floor"
+        ]
+      }
+    },
+    "indoor_outdoor": {
+      "type": "string",
+      "enum": [
+        "indoor_only",
+        "outdoor",
+        "both"
+      ],
+      "default": "both"
+    },
+    "expected_life_years_outdoor": {
+      "type": "number",
+      "default": 5
+    },
+    "removable": {
+      "type": "boolean",
+      "default": false
+    },
+    "adhesive_type": {
+      "type": "string",
+      "enum": [
+        "permanent",
+        "removable",
+        "repositionable",
+        "high_tack",
+        "low_tack",
+        "air_release",
+        "controltac"
+      ],
+      "default": "permanent"
+    },
+    "weeding_difficulty": {
+      "type": "string",
+      "enum": [
+        "very_easy",
+        "easy",
+        "moderate",
+        "hard",
+        "very_hard"
+      ],
+      "default": "moderate"
+    },
+    "min_recommended_letter_height_inches": {
+      "type": "number",
+      "default": 1
+    },
+    "supports_printing": {
+      "type": "boolean",
+      "default": false
+    },
+    "printer_compatibility": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "solvent",
+          "eco_solvent",
+          "latex",
+          "uv",
+          "aqueous"
+        ]
+      }
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "supplier_sku": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_vinyl_estimator": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_master_only": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "vinyl_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

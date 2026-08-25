@@ -1,0 +1,118 @@
+{
+  "name": "SignPartsSuppliesInventory",
+  "type": "object",
+  "description": "Sign-specific finished parts and shop supplies that don't fit substrates, hardware, lighting, vinyl, or equipment: trim cap, returns, retainers, J-bar, raceway covers, edge trim, paint/inks, adhesives/sealants, blades, cleaners, abrasives, tapes, gloves, etc.",
+  "properties": {
+    "item_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "trim_cap",
+        "returns",
+        "retainer",
+        "j_bar",
+        "raceway_cover",
+        "edge_trim",
+        "paint_ink",
+        "primer",
+        "adhesive_sealant",
+        "tape",
+        "abrasive_blade",
+        "cleaner_solvent",
+        "ppe_safety",
+        "shop_consumable",
+        "other"
+      ],
+      "default": "shop_consumable"
+    },
+    "color": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string",
+      "description": "Free-form size descriptor (e.g. '3/4\" black trim cap', 'quart', '1 gallon')."
+    },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "per_piece",
+        "per_foot",
+        "per_roll",
+        "per_box",
+        "per_gallon",
+        "per_quart",
+        "per_pound",
+        "per_sqft"
+      ],
+      "default": "per_piece"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "default": 0
+    },
+    "units_per_box": {
+      "type": "number",
+      "default": 1
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "supplier_sku": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_in_channel_letters": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_sign_maintenance": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_in_vinyl_estimator": {
+      "type": "boolean",
+      "default": false
+    },
+    "show_in_foundation": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "item_name",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
