@@ -3,7 +3,18 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  Plus,
+  Save,
+  Anchor as AnchorIcon,
+  Wrench as WrenchIcon,
+  LayoutGrid,
+  Layers,
+  ClipboardList,
+  TrendingUp,
+} from "lucide-react";
 import FoundationItemCard from "@/components/estimator/foundation/FoundationItemCard";
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
 import FoundationEquipmentPanel from "@/components/estimator/foundation/FoundationEquipmentPanel";
@@ -13,7 +24,7 @@ import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
 import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWallsPanel";
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
 import FoundationPolesPanel from "@/components/estimator/foundation/FoundationPolesPanel";
-import { calcProject } from "@/components/estimator/foundation/foundationCalc";
+import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
 const blankItem = (type) => ({
@@ -182,12 +193,41 @@ export default function FoundationEstimator() {
         </div>
 
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Concrete | Masonry | Poles</h1>
-          <p className="text-sm text-gray-500">{project.client_name}</p>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Concrete | Masonry | Poles</h1>
+              <p className="text-sm text-gray-500">{project.client_name}</p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-wide text-gray-400">Project total</div>
+              <div className="text-2xl font-bold text-red-700">{money(calc.totals.grand_total)}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-4">
+        <Tabs defaultValue="foundations">
+          <TabsList className="flex flex-wrap h-auto bg-white/70 p-1 mb-4">
+            <TabsTrigger value="foundations" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <AnchorIcon className="w-4 h-4" /> Foundations
+            </TabsTrigger>
+            <TabsTrigger value="landscape" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <LayoutGrid className="w-4 h-4" /> Signage Landscape
+            </TabsTrigger>
+            <TabsTrigger value="caps" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <Layers className="w-4 h-4" /> Wall Caps
+            </TabsTrigger>
+            <TabsTrigger value="equipment" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <WrenchIcon className="w-4 h-4" /> Equipment
+            </TabsTrigger>
+            <TabsTrigger value="bom" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <ClipboardList className="w-4 h-4" /> BOM
+            </TabsTrigger>
+            <TabsTrigger value="summary" className="gap-1.5 data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              <TrendingUp className="w-4 h-4" /> Summary
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="foundations" className="space-y-4">
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <label className="text-xs text-gray-500">
                 Section name
@@ -199,7 +239,6 @@ export default function FoundationEstimator() {
             </div>
 
             <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
-
             <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
 
             <div className="flex items-center justify-between">
@@ -232,27 +271,40 @@ export default function FoundationEstimator() {
                 ))}
               </div>
             )}
+          </TabsContent>
 
+          <TabsContent value="landscape" className="space-y-5">
             <FoundationWallsPanel
               walls={calc.walls}
               options={catalog.walls}
               onChange={(walls) => patch({ walls })}
             />
-
             <FoundationPolesPanel
               poles={calc.poles}
               options={catalog.poles}
               items={calc.items}
               onChange={(poles) => patch({ poles })}
             />
+          </TabsContent>
 
+          <TabsContent value="caps">
             <FoundationWallCapsPanel
               caps={calc.wallCaps}
               walls={calc.walls}
               options={catalog.caps}
               onChange={(wall_caps) => patch({ wall_caps })}
             />
+          </TabsContent>
 
+          <TabsContent value="equipment">
+            <FoundationEquipmentPanel
+              equipment={calc.equipment}
+              options={catalog.equipment}
+              onChange={(rows) => patch({ selected_equipment: rows })}
+            />
+          </TabsContent>
+
+          <TabsContent value="bom">
             <FoundationBOM
               items={calc.items}
               poles={calc.poles}
@@ -261,18 +313,14 @@ export default function FoundationEstimator() {
               totals={calc.totals}
               inventory={inventory}
             />
+          </TabsContent>
 
-            <FoundationEquipmentPanel
-              equipment={calc.equipment}
-              options={catalog.equipment}
-              onChange={(rows) => patch({ selected_equipment: rows })}
-            />
-          </div>
-
-          <div>
-            <FoundationTotals totals={calc.totals} />
-          </div>
-        </div>
+          <TabsContent value="summary">
+            <div className="max-w-xl">
+              <FoundationTotals totals={calc.totals} />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
