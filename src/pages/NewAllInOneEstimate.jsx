@@ -92,6 +92,7 @@ export default function NewAllInOneEstimate() {
       <div className="flex gap-3 px-3 pb-6">
         <AioStepRail
           activeStep={1}
+          estimateNumber={form.estimate_number}
           clientName={form.client_name}
           description={form.project_name}
           taxPercent={form.tax_percent}

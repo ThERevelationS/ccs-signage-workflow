@@ -158,19 +158,27 @@ export default function EstimateDetail() {
         <AioStepRail
           activeStep={step}
           onStepClick={setStep}
-          title="ESTIMATE"
+          estimateNumber={estimate.estimate_number}
+          stepDone={{
+            details: !!(estimate.project_name && estimate.client_name),
+            build: lines.length > 0,
+            customer: estimate.status === "sent" || estimate.status === "approved",
+          }}
           clientName={estimate.client_name}
           description={estimate.project_name}
           taxPercent={estimate.tax_percent}
           summary={{
             subtotal: pricing.subtotal,
             discount: pricing.discount,
+            contingency: pricing.contingency,
+            contingencyPct: estimate.contingency_percent,
             shipping: estimate.shipping_fee,
             permits: estimate.permit_fee,
-            newSubtotal: pricing.subtotal - pricing.discount,
+            newSubtotal: pricing.subtotal - pricing.discount + pricing.contingency + pricing.fees,
             tax: pricing.tax,
             total: pricing.quoteTotal,
             deposit: pricing.deposit,
+            depositPct: estimate.deposit_percent,
           }}
           onSaveProgress={handleSave}
           saving={saving}

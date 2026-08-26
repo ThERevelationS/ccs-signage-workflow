@@ -5,15 +5,15 @@ import NewCustomerDialog from "./NewCustomerDialog";
 
 const Row = ({ label, hint, children }) => (
   <div className="flex items-center gap-2 mb-2">
-    <label className="w-[130px] text-right text-[12px] text-gray-600 flex-shrink-0">
-      {label}: {hint && <span className="text-gray-300">ⓘ</span>}
+    <label className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
+      {label}: {hint && <span className="text-blue-500">ⓘ</span>}
     </label>
     <div className="flex-1 flex items-center gap-1">{children}</div>
   </div>
 );
 
 const inputCls =
-  "w-full h-[26px] px-2 border border-gray-300 rounded-sm text-[12px] focus:outline-none focus:border-red-400";
+  "w-full h-8 px-2 border border-slate-300 bg-white rounded-sm text-sm focus:outline-none focus:border-lime-500";
 
 export default function Step1EstimateDetails({
   form,
@@ -52,11 +52,11 @@ export default function Step1EstimateDetails({
           Next Step →
         </button>
       </div>
-      <div className="text-right text-[10px] italic text-gray-400 mb-2">
+      <div className="text-right text-[11px] italic text-slate-500 mb-2">
         Entered by: {enteredBy || "—"}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-md p-4 mb-3 max-w-[640px] mx-auto">
+      <div className="bg-slate-100 border border-slate-300 rounded-sm p-4 mb-3 max-w-4xl">
         <Row label="Customer">
           <input
             list="aio-customers"
@@ -74,7 +74,7 @@ export default function Step1EstimateDetails({
             type="button"
             onClick={() => setSearchOpen(true)}
             title="Search customers"
-            className="flex-shrink-0 text-gray-400 hover:text-red-600"
+            className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -82,7 +82,7 @@ export default function Step1EstimateDetails({
             type="button"
             onClick={() => setNewOpen(true)}
             title="New customer"
-            className="flex-shrink-0 text-gray-400 hover:text-red-600"
+            className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -136,7 +136,7 @@ export default function Step1EstimateDetails({
         </Row>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-md p-4 max-w-[640px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+      <div className="bg-slate-100 border border-slate-300 rounded-sm p-4 max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-300">
         <div className="md:pr-4">
           <Row label="Order Contact">
             <select
