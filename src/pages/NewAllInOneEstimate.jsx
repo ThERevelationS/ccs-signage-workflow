@@ -116,6 +116,7 @@ export default function NewAllInOneEstimate() {
             onGenerateNumber={handleGenerate}
             generating={generating}
             enteredBy={me?.full_name || me?.email}
+            onCustomerCreated={(c) => setCustomers((prev) => [c, ...prev])}
           />
           <div className="flex justify-end mt-3">
             <button

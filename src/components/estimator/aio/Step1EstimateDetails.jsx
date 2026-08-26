@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
+import CustomerSearchDialog from "./CustomerSearchDialog";
+import NewCustomerDialog from "./NewCustomerDialog";
 
 const Row = ({ label, hint, children }) => (
   <div className="flex items-center gap-2 mb-2">
@@ -24,7 +26,24 @@ export default function Step1EstimateDetails({
   onGenerateNumber,
   generating,
   enteredBy,
+  onCustomerCreated,
 }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
+
+  const applyCustomer = (c) => {
+    patch({
+      client_name: c.company_name || "",
+      customer_id: c.id,
+      contact_email: c.contact_email || form.contact_email,
+      office_phone: c.contact_office_phone || c.company_phone || form.office_phone,
+      office_phone_ext: c.contact_office_ext || form.office_phone_ext,
+      terms: c.terms || form.terms,
+      order_contact:
+        `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
+    });
+  };
+
   return (
     <div className="flex-1 min-w-0">
       <div className="bg-white border border-gray-200 rounded-md px-4 py-2 flex items-center justify-between mb-1">
@@ -51,8 +70,22 @@ export default function Step1EstimateDetails({
               <option key={c.id} value={c.company_name} />
             ))}
           </datalist>
-          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <Plus className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            title="Search customers"
+            className="flex-shrink-0 text-gray-400 hover:text-red-600"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setNewOpen(true)}
+            title="New customer"
+            className="flex-shrink-0 text-gray-400 hover:text-red-600"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </Row>
 
         <Row label="Estimate Description" hint>
@@ -191,6 +224,21 @@ export default function Step1EstimateDetails({
           </p>
         </div>
       </div>
+
+      <CustomerSearchDialog
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        customers={customers}
+        onSelect={applyCustomer}
+      />
+      <NewCustomerDialog
+        open={newOpen}
+        onClose={() => setNewOpen(false)}
+        onCreated={(c) => {
+          onCustomerCreated?.(c);
+          applyCustomer(c);
+        }}
+      />
     </div>
   );
 }
