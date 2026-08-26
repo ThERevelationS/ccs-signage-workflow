@@ -11,6 +11,8 @@ import {
   Layers,
   ClipboardList,
   TrendingUp,
+  Trees,
+  Tag,
 } from "lucide-react";
 import FoundationItemCard from "@/components/estimator/foundation/FoundationItemCard";
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
@@ -26,6 +28,11 @@ import FoundationSectionBanner from "@/components/estimator/foundation/Foundatio
 import AiEngineeringAssistant from "@/components/estimator/foundation/AiEngineeringAssistant";
 import Foundation3DPreview from "@/components/estimator/foundation/Foundation3DPreview";
 import FoundationTemplateDialog from "@/components/estimator/foundation/FoundationTemplateDialog";
+import FoundationLayoutCanvas from "@/components/estimator/foundation/FoundationLayoutCanvas";
+import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
+import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
+import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPricingPanel";
+import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 
@@ -95,6 +102,8 @@ export default function FoundationEstimator() {
         walls: proj.walls || [],
         poles: proj.poles || [],
         wall_caps: proj.wall_caps || [],
+        signage_cabinets: proj.signage_cabinets || [],
+        landscape: proj.landscape || { cell_size_inches: 12, cells: {} },
         selected_equipment: proj.selected_equipment || [],
       });
       setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
@@ -158,6 +167,13 @@ export default function FoundationEstimator() {
 
   const addItem = (type) => commit((prev) => ({ items: [...(prev.items || []), blankItem(type)] }));
 
+  const cabinetCost = (project.signage_cabinets || []).reduce(
+    (s, c) => s + (c.unit_cost || 0) * (c.quantity || 1),
+    0
+  );
+  const landscapeCost = landscapeSummary(project.landscape).total;
+  const sectionTotal = calc.totals.grand_total + cabinetCost + landscapeCost;
+
   const undo = () => {
     if (!history.past.length) return;
     const prevState = history.past[history.past.length - 1];
@@ -183,6 +199,12 @@ export default function FoundationEstimator() {
     walls: calc.walls,
     wall_caps: project.wall_caps || [],
     poles: project.poles || [],
+    signage_cabinets: project.signage_cabinets || [],
+    landscape: project.landscape || { cell_size_inches: 12, cells: {} },
+    total_signage_cabinet_cost: cabinetCost,
+    total_landscape_cost: landscapeCost,
+    customer_markup_percent: project.customer_markup_percent || 0,
+    customer_price_override: project.customer_price_override,
     excavation_method: project.excavation_method,
     selected_concrete_id: project.selected_concrete_id,
     project_concrete_type: project.project_concrete_type,
@@ -225,7 +247,7 @@ export default function FoundationEstimator() {
         const est = await base44.entities.AllInOneEstimate.get(estimateId);
         const line_items = (est.line_items || []).map((l) =>
           l.project_id === project.id
-            ? { ...l, total_snapshot: calc.totals.grand_total, updated_date_snapshot: new Date().toISOString() }
+            ? { ...l, total_snapshot: sectionTotal, updated_date_snapshot: new Date().toISOString() }
             : l
         );
         await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
@@ -268,7 +290,7 @@ export default function FoundationEstimator() {
           title="Edit Concrete | Masonry | Poles Estimate"
           subtitle="Engineering, foundation, excavation, wall & pole estimating"
           backTo={backTo}
-          total={calc.totals.grand_total}
+          total={sectionTotal}
           saving={saving}
           dirty={dirty}
           autoSave={autoSave}
@@ -308,6 +330,9 @@ export default function FoundationEstimator() {
                 <TabsTrigger value="caps" className={TAB_CLASS}>
                   <Layers className="w-3.5 h-3.5" /> Wall Caps
                 </TabsTrigger>
+                <TabsTrigger value="signage" className={TAB_CLASS}>
+                  <Trees className="w-3.5 h-3.5" /> Signage &amp; Landscape
+                </TabsTrigger>
                 <TabsTrigger value="equipment" className={TAB_CLASS}>
                   <WrenchIcon className="w-3.5 h-3.5" /> Equipment
                 </TabsTrigger>
@@ -316,6 +341,9 @@ export default function FoundationEstimator() {
                 </TabsTrigger>
                 <TabsTrigger value="bom" className={TAB_CLASS}>
                   <ClipboardList className="w-3.5 h-3.5" /> Bill of Materials
+                </TabsTrigger>
+                <TabsTrigger value="pricing" className={TAB_CLASS}>
+                  <Tag className="w-3.5 h-3.5" /> Customer Pricing
                 </TabsTrigger>
               </TabsList>
 
@@ -362,6 +390,24 @@ export default function FoundationEstimator() {
                   items={calc.items}
                   onChange={(poles) => patch({ poles })}
                 />
+                <FoundationLayoutCanvas
+                  items={project.items || []}
+                  poles={project.poles || []}
+                  onMoveItem={patchItem}
+                />
+              </TabsContent>
+
+              <TabsContent value="signage" className="space-y-4">
+                <SignageCabinetsPanel
+                  cabinets={project.signage_cabinets || []}
+                  items={project.items || []}
+                  poles={project.poles || []}
+                  onChange={(signage_cabinets) => patch({ signage_cabinets })}
+                />
+                <LandscapeDesigner
+                  landscape={project.landscape}
+                  onChange={(landscape) => patch({ landscape })}
+                />
               </TabsContent>
 
               <TabsContent value="caps">
@@ -393,9 +439,18 @@ export default function FoundationEstimator() {
                 <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
                   <FoundationTotals totals={calc.totals} />
-                  <div className="mt-3 text-right text-[12px] text-gray-500">
-                    Section total flowing to estimate:{" "}
-                    <b className="text-red-700">{money(calc.totals.grand_total)}</b>
+                  <div className="mt-3 space-y-1 text-[12px] text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Signage cabinets</span>
+                      <span>{money(cabinetCost)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Site landscaping</span>
+                      <span>{money(landscapeCost)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-right text-[12px] text-gray-500">
+                    Section total flowing to estimate: <b className="text-red-700">{money(sectionTotal)}</b>
                   </div>
                   <Link
                     to="/FoundationCatalog"
@@ -415,6 +470,10 @@ export default function FoundationEstimator() {
                   totals={calc.totals}
                   inventory={inventory}
                 />
+              </TabsContent>
+
+              <TabsContent value="pricing">
+                <CustomerPricingPanel cost={sectionTotal} project={project} onChange={patch} />
               </TabsContent>
             </Tabs>
           </div>

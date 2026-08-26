@@ -1,7 +1,7 @@
 {
   "name": "FoundationProject",
   "type": "object",
-  "description": "Concrete | Masonry | Poles estimator project. Holds foundation items (spread footings / pillars) with concrete, rebar, excavation, forming and finishing costs, plus placed poles, masonry walls, wall caps, selected equipment and the rolled-up totals.",
+  "description": "Concrete | Masonry | Poles estimator project. Holds foundation items (spread footings / pillars) with concrete, rebar, excavation, forming and finishing costs, plus placed poles, masonry walls, wall caps, signage cabinets, site landscaping, selected equipment and the rolled-up totals.",
   "properties": {
     "project_name": {
       "type": "string"
@@ -80,6 +80,16 @@
           "rotation_degrees": {
             "type": "number",
             "default": 0
+          },
+          "x_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Left/right position on the layout canvas, in inches."
+          },
+          "z_inches": {
+            "type": "number",
+            "default": 0,
+            "description": "Front/back position on the layout canvas, in inches."
           },
           "include_rebar": {
             "type": "boolean",
@@ -439,6 +449,73 @@
         }
       }
     },
+    "signage_cabinets": {
+      "type": "array",
+      "description": "Signage cabinets mounted directly on a foundation or on a placed pole.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mount": {
+            "type": "string",
+            "enum": [
+              "foundation",
+              "pole"
+            ],
+            "default": "foundation"
+          },
+          "foundation_index": {
+            "type": "number"
+          },
+          "pole_index": {
+            "type": "number"
+          },
+          "width_inches": {
+            "type": "number",
+            "default": 48
+          },
+          "height_inches": {
+            "type": "number",
+            "default": 24
+          },
+          "depth_inches": {
+            "type": "number",
+            "default": 8
+          },
+          "mount_height_inches": {
+            "type": "number",
+            "default": 0
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "unit_cost": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "landscape": {
+      "type": "object",
+      "description": "Site landscaping painted on the landscape designer grid. cells maps 'x,y' grid keys to a material key; cell_size_inches is the size of one cell.",
+      "additionalProperties": true
+    },
+    "customer_markup_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Markup applied to this section's cost to reach the customer price."
+    },
+    "customer_price_override": {
+      "type": "number",
+      "description": "Manual customer price for this section; overrides the markup calculation when set."
+    },
     "selected_equipment": {
       "type": "array",
       "items": {
@@ -565,6 +642,12 @@
       "type": "number"
     },
     "total_wall_cap_cost": {
+      "type": "number"
+    },
+    "total_signage_cabinet_cost": {
+      "type": "number"
+    },
+    "total_landscape_cost": {
       "type": "number"
     },
     "notes": {
