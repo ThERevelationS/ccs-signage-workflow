@@ -1,6 +1,6 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Trash2, Box } from "lucide-react";
+import { Trash2, Box, Copy } from "lucide-react";
 import { money } from "./foundationCalc";
 
 const Field = ({ label, ...props }) => (
@@ -35,16 +35,17 @@ const Picker = ({ label, value, onChange, options, placeholder }) => (
   </label>
 );
 
-export default function FoundationItemCard({ item, index, catalog, onChange, onRemove }) {
+export default function FoundationItemCard({ item, index, catalog, onChange, onRemove, onDuplicate }) {
   const set = (patch) => onChange(index, patch);
   const numSet = (key) => (e) => set({ [key]: parseFloat(e.target.value) || 0 });
   const isPillar = item.foundation_type === "pillar";
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-amber-500 p-4">
+    <div className="bg-white rounded-sm border border-gray-200 border-l-4 border-l-amber-500 p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Box className="w-4 h-4 text-amber-500" />
+          <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
           <select
             value={item.foundation_type || "spread_foot"}
             onChange={(e) => set({ foundation_type: e.target.value })}
@@ -60,9 +61,16 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             {Number(item.concrete_volume_cy || 0).toFixed(2)} CY concrete
           </div>
         </div>
-        <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {onDuplicate && (
+            <button onClick={() => onDuplicate(index)} className="text-gray-400 hover:text-blue-600" title="Duplicate">
+              <Copy className="w-4 h-4" />
+            </button>
+          )}
+          <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600" title="Delete">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <Field
@@ -88,6 +96,12 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
           type="number"
           value={item.grade_offset_inches ?? 0}
           onChange={numSet("grade_offset_inches")}
+        />
+        <Field
+          label="Rotation (°)"
+          type="number"
+          value={item.rotation_degrees ?? 0}
+          onChange={numSet("rotation_degrees")}
         />
       </div>
 
