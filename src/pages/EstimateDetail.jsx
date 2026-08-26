@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Save } from "lucide-react";
+import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
+import AioStepRail from "@/components/estimator/aio/AioStepRail";
+import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
+import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
-import SectionRow from "@/components/estimator/SectionRow";
 import PricingSummary from "@/components/estimator/PricingSummary";
-import AddSectionDialog from "@/components/estimator/AddSectionDialog";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
+
+const STEP_TITLES = {
+  1: "Step 1: Estimate Details",
+  2: "Step 2: Edit Products",
+  3: "Step 3: Finalize Estimate",
+};
 
 export default function EstimateDetail() {
   const id = new URLSearchParams(window.location.search).get("id");
   const [estimate, setEstimate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
+  const [step, setStep] = useState(2);
 
   useEffect(() => {
     if (!id) {
@@ -35,6 +40,7 @@ export default function EstimateDetail() {
   if (!estimate) return <div className="p-10 text-center text-gray-500">Estimate not found.</div>;
 
   const pricing = computePricing(estimate);
+  const lines = estimate.line_items || [];
 
   const patch = (changes) => setEstimate((prev) => ({ ...prev, ...changes }));
 
@@ -79,7 +85,6 @@ export default function EstimateDetail() {
     // Persist immediately — the user navigates straight into the new section.
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     setEstimate((prev) => ({ ...prev, line_items }));
-    setShowAdd(false);
   };
 
   const handleSave = async () => {
@@ -104,61 +109,104 @@ export default function EstimateDetail() {
     }
   };
 
+  const counts = lines.reduce((acc, l) => {
+    acc[l.module_key] = (acc[l.module_key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const StepNav = () => (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[15px] font-bold text-gray-900">{STEP_TITLES[step]}</span>
+        {step === 2 && (
+          <span className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200">
+            {lines.length} products
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setStep(Math.max(1, step - 1))}
+          disabled={step === 1}
+          className="h-[28px] px-3 rounded border border-gray-200 bg-white text-[12px] font-semibold text-gray-600 disabled:opacity-40"
+        >
+          ← Previous Step
+        </button>
+        <button
+          onClick={() => setStep(Math.min(3, step + 1))}
+          disabled={step === 3}
+          className="h-[28px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-40"
+        >
+          Next Step →
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6">
-        <div className="flex items-center justify-between gap-4 mb-5">
-          <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
-            <ArrowLeft className="w-4 h-4" /> All estimates
-          </Link>
-          <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
-            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Estimate"}
-          </Button>
-        </div>
+    <div className="min-h-full bg-gray-50">
+      <AioEstimateHeader
+        title={estimate.project_name || "Estimate"}
+        subtitle={`One page, one set of project info, every estimator. · Totals synced ${new Date().toLocaleTimeString()}`}
+        status={estimate.status || "draft"}
+        quoteTotal={pricing.quoteTotal}
+        onSave={handleSave}
+        saving={saving}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-4">
-            <EstimateHeaderForm estimate={estimate} onChange={patch} />
+      <div className="flex gap-3 px-3 pb-6">
+        <AioStepRail
+          activeStep={step}
+          onStepClick={setStep}
+          title="ESTIMATE"
+          clientName={estimate.client_name}
+          description={estimate.project_name}
+          taxPercent={estimate.tax_percent}
+          summary={{
+            subtotal: pricing.subtotal,
+            discount: pricing.discount,
+            shipping: estimate.shipping_fee,
+            permits: estimate.permit_fee,
+            newSubtotal: pricing.subtotal - pricing.discount,
+            tax: pricing.tax,
+            total: pricing.quoteTotal,
+            deposit: pricing.deposit,
+          }}
+          onSaveProgress={handleSave}
+          saving={saving}
+        />
 
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Sections</h2>
-              <Button variant="outline" onClick={() => setShowAdd(true)} className="clay-button border-2 border-red-200 bg-white/70 text-red-700">
-                <Plus className="w-4 h-4" /> Add Section
-              </Button>
+        <div className="flex-1 min-w-0 space-y-3">
+          <StepNav />
+
+          {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} />}
+
+          {step === 2 && (
+            <>
+              <AddProductGrid counts={counts} onAdd={addSection} />
+              <EstimateProductsList
+                lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
+                rawTotal={pricing.rawTotal}
+                onChange={patchLine}
+                onRemove={removeLine}
+              />
+            </>
+          )}
+
+          {step === 3 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
+              <ConvertToWorkOrder
+                estimate={estimate}
+                pricing={pricing}
+                onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
+              />
             </div>
+          )}
 
-            {(estimate.line_items || []).length === 0 ? (
-              <div className="clay-card text-center py-12 text-gray-500">
-                No sections yet — add one to start pricing this estimate.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {estimate.line_items.map((line, index) => (
-                  <SectionRow
-                    key={line.project_id || index}
-                    line={line}
-                    index={index}
-                    estimateId={estimate.id}
-                    onChange={patchLine}
-                    onRemove={removeLine}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
-            <ConvertToWorkOrder
-              estimate={estimate}
-              pricing={pricing}
-              onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
-            />
-          </div>
+          <StepNav />
         </div>
       </div>
-
-      <AddSectionDialog open={showAdd} onClose={() => setShowAdd(false)} onAdd={addSection} />
     </div>
   );
 }

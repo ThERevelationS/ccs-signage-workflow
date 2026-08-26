@@ -1,21 +1,30 @@
 import React from "react";
 import { Layers, Link2, Save, RefreshCw } from "lucide-react";
 
-export default function AioEstimateHeader({ status = "draft", quoteTotal = 0, onSave, saving }) {
+export default function AioEstimateHeader({
+  status = "draft",
+  quoteTotal = 0,
+  onSave,
+  saving,
+  title = "New All-In-One Estimate",
+  subtitle = "One page, one set of project info, every estimator.",
+  metaRight,
+}) {
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
       <div className="flex items-start gap-2">
         <Layers className="w-5 h-5 text-gray-700 mt-0.5" />
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[17px] font-bold text-gray-900">New All-In-One Estimate</h1>
+            <h1 className="text-[17px] font-bold text-gray-900">{title}</h1>
             <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
               {status}
             </span>
             <span className="w-2 h-2 rounded-full bg-yellow-400" />
           </div>
           <p className="text-[11px] text-gray-400">
-            One page, one set of project info, every estimator.
+            {subtitle}
+            {metaRight ? <span className="ml-1 text-gray-300">· {metaRight}</span> : null}
           </p>
         </div>
       </div>

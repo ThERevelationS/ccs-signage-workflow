@@ -4,7 +4,7 @@ import EstimatorBrandBar from "@/components/estimator/EstimatorBrandBar";
 
 export default function EstimatorShell({ children }) {
   return (
-    <div className="min-h-full flex flex-col">
+    <div className="clay-scope min-h-full flex flex-col bg-gray-50">
       <EstimatorBrandBar />
       <EstimatorNav />
       <div className="flex-1">{children}</div>
