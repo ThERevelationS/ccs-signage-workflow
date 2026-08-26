@@ -322,37 +322,6 @@ export default function FoundationEstimator() {
               <TabsContent value="foundations" className="space-y-3">
                 <AiEngineeringAssistant project={project} onResult={patch} />
 
-                <div className="bg-white rounded-sm border border-gray-200 p-3">
-                  <label className="text-[11px] text-gray-500">
-                    Section name
-                    <Input
-                      value={project.project_name || ""}
-                      onChange={(e) => patch({ project_name: e.target.value })}
-                    />
-                  </label>
-                </div>
-
-                <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
-                <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
-
-                <div className="flex items-center justify-between">
-                  <h2 className="text-[13px] font-bold text-gray-900">Foundations</h2>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => addItem("spread_foot")}
-                      className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Spread Footing
-                    </button>
-                    <button
-                      onClick={() => addItem("pillar")}
-                      className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Pillar
-                    </button>
-                  </div>
-                </div>
-
                 {calc.items.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-sm border border-dashed border-gray-300 text-[12px] text-gray-500">
                     No foundations yet — add a spread footing or pillar to start.
@@ -372,6 +341,13 @@ export default function FoundationEstimator() {
                     ))}
                   </div>
                 )}
+
+                <button
+                  onClick={() => addItem("spread_foot")}
+                  className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Foundation Item
+                </button>
               </TabsContent>
 
               <TabsContent value="landscape" className="space-y-4">
@@ -405,7 +381,16 @@ export default function FoundationEstimator() {
                 />
               </TabsContent>
 
-              <TabsContent value="summary">
+              <TabsContent value="summary" className="space-y-3">
+                <label className="block bg-white rounded-sm border border-gray-200 p-3 text-[11px] text-gray-500">
+                  Section name
+                  <Input
+                    value={project.project_name || ""}
+                    onChange={(e) => patch({ project_name: e.target.value })}
+                  />
+                </label>
+                <ConcreteDeliveryPanel project={project} delivery={calc.delivery} onChange={patch} />
+                <FoundationRatesPanel settings={settings} project={project} onChange={patch} />
                 <div className="max-w-xl">
                   <FoundationTotals totals={calc.totals} />
                   <div className="mt-3 text-right text-[12px] text-gray-500">

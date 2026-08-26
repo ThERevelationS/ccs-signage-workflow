@@ -210,19 +210,33 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         </div>
       )}
 
+      {/* Excavation summary */}
+      <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Excavation</div>
+        <div className="text-[11px] text-amber-900">
+          Volume: ~{Number(item.excavation_volume_cy || 0).toFixed(2)} CY · Cost: {money(item.excavation_cost)}
+        </div>
+      </div>
+
       {/* Cost breakdown */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-gray-100 text-xs">
-        {[
-          ["Concrete", item.concrete_cost],
-          ["Excavation", item.excavation_cost],
-          ["Forming", item.forming_cost],
-          ["Pour + finish", (item.pouring_cost || 0) + (item.finishing_cost || 0)],
-        ].map(([label, value]) => (
-          <div key={label} className="bg-slate-50 rounded-lg px-2 py-1.5">
-            <div className="text-gray-400">{label}</div>
-            <div className="font-semibold text-gray-800">{money(value)}</div>
-          </div>
-        ))}
+      <div className="mt-3 rounded-sm border border-gray-200 bg-slate-50 p-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          {[
+            ["Rebar", item.rebar_cost],
+            ["Forming", item.forming_cost],
+            ["Pouring", item.pouring_cost],
+            ["Finishing", item.finishing_cost],
+            ["Excavation", item.excavation_cost],
+          ].map(([label, value]) => (
+            <div key={label} className="px-1">
+              <div className="text-gray-400">{label}</div>
+              <div className="font-semibold text-gray-800">{money(value)}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 text-center text-[11px] italic text-amber-700">
+          Concrete material &amp; truck costs are aggregated for the entire project.
+        </div>
       </div>
     </div>
   );
