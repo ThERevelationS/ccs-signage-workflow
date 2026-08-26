@@ -24,8 +24,8 @@ export default function PricingSummary({ estimate, pricing, onChange }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-4">
-      <h2 className="font-semibold text-gray-900 mb-3">Customer Pricing</h2>
+    <div className="bg-white rounded-md border border-gray-200 p-4">
+      <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">CUSTOMER PRICING</div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         {[...PERCENT_FIELDS, ...FEE_FIELDS].map((f) => (

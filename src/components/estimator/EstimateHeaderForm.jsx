@@ -16,8 +16,8 @@ const FIELDS = [
 
 export default function EstimateHeaderForm({ estimate, onChange }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h2 className="font-semibold text-gray-900 mb-3">Project Info</h2>
+    <div className="bg-white rounded-md border border-gray-200 p-4">
+      <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">ESTIMATE DETAILS</div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="text-xs text-gray-500">
