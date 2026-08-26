@@ -26,12 +26,6 @@ export default function Estimator() {
     load();
   }, []);
 
-  const handleDelete = async (estimate) => {
-    if (!window.confirm(`Delete estimate "${estimate.project_name}"?`)) return;
-    await base44.entities.AllInOneEstimate.delete(estimate.id);
-    setEstimates((prev) => prev.filter((e) => e.id !== estimate.id));
-  };
-
   const term = search.trim().toLowerCase();
   const filtered = term
     ? estimates.filter((e) =>
@@ -90,7 +84,7 @@ export default function Estimator() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filtered.map((estimate) => (
-              <EstimateCard key={estimate.id} estimate={estimate} onDelete={handleDelete} />
+              <EstimateCard key={estimate.id} estimate={estimate} />
             ))}
           </div>
         )}

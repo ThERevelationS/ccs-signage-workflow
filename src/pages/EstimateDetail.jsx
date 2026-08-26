@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FileMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
@@ -7,6 +9,7 @@ import EstimateProductsList from "@/components/estimator/aio/EstimateProductsLis
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
+import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
@@ -18,11 +21,13 @@ const STEP_TITLES = {
 };
 
 export default function EstimateDetail() {
+  const navigate = useNavigate();
   const id = new URLSearchParams(window.location.search).get("id");
   const [estimate, setEstimate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(2);
+  const [showCancel, setShowCancel] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -107,6 +112,15 @@ export default function EstimateDetail() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = async (reason) => {
+    await base44.entities.AllInOneEstimate.update(estimate.id, {
+      status: "cancelled",
+      cancel_reason: reason,
+    });
+    setShowCancel(false);
+    navigate("/Estimator");
   };
 
   const counts = lines.reduce((acc, l) => {
@@ -202,19 +216,37 @@ export default function EstimateDetail() {
           )}
 
           {step === 3 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
-              <ConvertToWorkOrder
-                estimate={estimate}
-                pricing={pricing}
-                onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
-              />
-            </div>
+            <>
+              {estimate.status !== "cancelled" && (
+                <button
+                  onClick={() => setShowCancel(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors text-left"
+                >
+                  <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
+                  <span className="text-sm font-medium text-gray-800">Cancel Estimate</span>
+                </button>
+              )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
+                <ConvertToWorkOrder
+                  estimate={estimate}
+                  pricing={pricing}
+                  onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
+                />
+              </div>
+            </>
           )}
 
           <StepNav />
         </div>
       </div>
+
+      <CancelEstimateModal
+        open={showCancel}
+        onClose={() => setShowCancel(false)}
+        onConfirm={handleCancel}
+        estimateName={estimate.project_name}
+      />
     </div>
   );
 }

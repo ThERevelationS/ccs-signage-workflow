@@ -59,25 +59,30 @@ export default function NewAllInOneEstimate() {
     setError("");
     const clientName = form.client_name.trim();
     const description = form.project_name.trim();
-    if (!clientName || !description) {
-      setError("Customer and estimate description are required.");
+    if (!description) {
+      setError("Estimate description is required.");
       return;
     }
     setSaving(true);
     try {
-      const customer = await upsertCustomerFromEstimate(
-        { ...form, client_name: clientName },
-        customers
-      );
+      let customer = null;
+      if (clientName) {
+        customer = await upsertCustomerFromEstimate(
+          { ...form, client_name: clientName },
+          customers
+        );
+      }
 
       const estimate = await base44.entities.AllInOneEstimate.create({
         ...form,
         client_name: clientName,
         project_name: description,
-        customer_id: customer.id,
+        customer_id: customer?.id || null,
         status: "draft",
       });
-      await syncEstimateToPipeline(estimate, customer);
+      if (customer) {
+        await syncEstimateToPipeline(estimate, customer);
+      }
       navigate(`/EstimateDetail?id=${estimate.id}`);
     } catch (e) {
       setError(e.message || "Could not save the estimate.");

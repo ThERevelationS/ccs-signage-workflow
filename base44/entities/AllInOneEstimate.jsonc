@@ -294,9 +294,14 @@
         "calculated",
         "sent",
         "approved",
-        "archived"
+        "archived",
+        "cancelled"
       ],
       "default": "draft"
+    },
+    "cancel_reason": {
+      "type": "string",
+      "description": "Reason captured when the estimate is cancelled (from the Cancel Estimate modal)."
     },
     "line_items": {
       "type": "array",
@@ -388,8 +393,7 @@
     }
   },
   "required": [
-    "project_name",
-    "client_name"
+    "project_name"
   ],
   "rls": {
     "create": {},

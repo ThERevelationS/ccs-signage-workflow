@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FileText, Trash2, User, Calendar } from "lucide-react";
+import { FileText, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
 const STATUS_STYLES = {
@@ -9,26 +9,30 @@ const STATUS_STYLES = {
   sent: "bg-blue-50 text-blue-700 border-blue-200",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
   archived: "bg-slate-100 text-slate-500 border-slate-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
 };
 
-export default function EstimateCard({ estimate, onDelete }) {
+export default function EstimateCard({ estimate }) {
   const total = Number(estimate.quote_total || estimate.total_cost || 0);
   const sections = (estimate.line_items || []).length;
 
   return (
-    <div className="clay-card p-4 border-l-4 border-l-red-400">
+    <Link
+      to={`/EstimateDetail?id=${estimate.id}`}
+      className="clay-card p-4 border-l-4 border-l-red-400 block hover:shadow-lg transition-shadow cursor-pointer"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to={`/EstimateDetail?id=${estimate.id}`} className="flex items-center gap-2 group">
+          <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <h3 className="font-semibold text-gray-900 truncate group-hover:text-red-600">
+            <h3 className="font-semibold text-gray-900 truncate hover:text-red-600">
               {estimate.project_name}
             </h3>
-          </Link>
+          </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-3.5 h-3.5" />
-              {estimate.client_name}
+              {estimate.client_name || "—"}
             </span>
             {estimate.estimate_number && (
               <span className="font-mono text-xs text-gray-400">{estimate.estimate_number}</span>
@@ -57,14 +61,7 @@ export default function EstimateCard({ estimate, onDelete }) {
         >
           {estimate.status || "draft"}
         </span>
-        <button
-          onClick={() => onDelete(estimate)}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-          title="Delete estimate"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
       </div>
-    </div>
+    </Link>
   );
 }
