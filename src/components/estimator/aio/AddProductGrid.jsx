@@ -361,6 +361,11 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                               : product.source_product_class === "legacy"
                                 ? "Legacy Quick Product"
                                 : "Custom Product";
+                            const quickQuantity = Math.max(0, Number(product.product_quantity ?? 1) || 0);
+                            const quickUnitPrice = Number(product.price_snapshot?.frozen_cost ?? 0);
+                            const quickExtendedPrice = product.total_price !== undefined && product.total_price !== null
+                              ? Number(product.total_price || 0)
+                              : quickUnitPrice * quickQuantity;
                             return (
                               <button
                                 type="button"
@@ -379,7 +384,10 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                                     <div className="mt-1 text-[10px] text-gray-500 truncate">{builderLabel}{product.product_category ? ` · ${product.product_category}` : ""}</div>
                                     <div className="mt-1 flex items-center justify-between gap-2">
                                       <span className="text-[9px] text-gray-400 truncate">{(product.categories || []).join(" · ") || "Uncategorized"}</span>
-                                      <span className="text-[11px] font-bold text-gray-800 flex-shrink-0">{money(product.price_snapshot?.frozen_cost ?? product.total_price ?? 0)}</span>
+                                      <div className="text-right flex-shrink-0">
+                                        <div className="text-[11px] font-bold text-gray-800">{money(quickExtendedPrice)}</div>
+                                        {quickQuantity !== 1 && quickUnitPrice > 0 && <div className="text-[8px] text-gray-400">{quickQuantity} × {money(quickUnitPrice)}</div>}
+                                      </div>
                                     </div>
                                     <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding Quick Product…" : "Add Quick Product"}{!adding && <ArrowRight className="w-3 h-3" />}</div>
                                   </div>
