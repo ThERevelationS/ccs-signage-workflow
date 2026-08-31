@@ -7,9 +7,9 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
-  Settings, ChannelLetterInstallEquipment, ChannelLetterInstallInventory,
+  Settings, ChannelLetterInstallEquipment,
 } from "@/entities/all";
-import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Droplets, Loader2, FileText, Layers, HardHat, Calculator, Plus, MapPin, Settings as SettingsIcon, ChevronsUpDown, ChevronsDownUp, BookmarkPlus, ClipboardPaste, UploadCloud, AlertTriangle, TrendingUp } from "lucide-react";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
-
-import ClientSearchInput from "@/components/ClientSearchInput";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
 import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
@@ -38,10 +37,11 @@ import {
 
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
-export default function NewVinylEstimate({ embeddedId = null, embedded = false }) {
+export default function VinylEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [search] = useSearchParams();
-  // Prop wins when embedded inside the All-In-One estimator.
-  const projectId = embeddedId || search.get("id") || search.get("edit");
+  // Embedded All-In-One context wins over standalone query parameters.
+  const projectId = embeddedProjectId || search.get("id") || search.get("edit");
+  const estimateId = embeddedEstimateId || search.get("estimateId");
   const navigate = useNavigate();
 
   const [project, setProject] = useState(blankVinylProject());
@@ -49,6 +49,7 @@ export default function NewVinylEstimate({ embeddedId = null, embedded = false }
   const [machines, setMachines] = useState([]);
   const [settings, setSettings] = useState({});
   const [equipmentInventory, setEquipmentInventory] = useState([]);
+  const [estimateContext, setEstimateContext] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
