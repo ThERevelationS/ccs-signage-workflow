@@ -21,6 +21,7 @@ import {
 } from "@/components/estimator/builder/builderService";
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes } from "@/components/estimator/products/productOperations";
+import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
 const STEP_TITLES = {
@@ -145,6 +146,21 @@ export default function EstimateDetail() {
 
   const updateProductNotes = async (line, notes) => {
     await saveProductNotes({ estimateId: estimate.id, line, notes });
+    await refreshProducts();
+  };
+
+  const createQuickProduct = async (line, options) => {
+    await saveProductAsQuickProduct({
+      estimateId: estimate.id,
+      line,
+      name: options?.name,
+      productGroup: options?.productGroup,
+      categories: options?.categories,
+    });
+  };
+
+  const addQuickProduct = async (quickProduct) => {
+    await instantiateQuickProduct({ estimateId: estimate.id, quickProduct });
     await refreshProducts();
   };
 
@@ -286,7 +302,7 @@ export default function EstimateDetail() {
             ) : (
               <>
                 <div className="flex justify-end">
-                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} />
+                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
                 </div>
                 <EstimateProductsList
                   lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
@@ -298,9 +314,10 @@ export default function EstimateDetail() {
                   onProductRefresh={refreshProducts}
                   onClone={cloneProduct}
                   onSaveNotes={updateProductNotes}
+                  onCreateQuickProduct={createQuickProduct}
                 />
                 <div className="flex justify-end pt-1">
-                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} />
+                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
                 </div>
               </>
             )
