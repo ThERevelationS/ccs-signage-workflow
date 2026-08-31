@@ -1,19 +1,9 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
+import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
-
-function stripSystemFields(value) {
-  if (Array.isArray(value)) return value.map(stripSystemFields);
-  if (!value || typeof value !== "object") return value;
-  const out = {};
-  Object.entries(value).forEach(([key, item]) => {
-    if (["id", "created_date", "updated_date", "created_by", "created_by_id", "is_sample"].includes(key)) return;
-    out[key] = stripSystemFields(item);
-  });
-  return out;
-}
 
 async function cloneSourceProject(builder, line, copyName) {
   if (!builder?.source_entity || !builder?.source_project_id || line?.module_key === "custom") {
@@ -21,7 +11,7 @@ async function cloneSourceProject(builder, line, copyName) {
   }
   const source = await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null);
   if (!source) return { sourceProjectId: "", sourceProject: null };
-  const data = stripSystemFields(source);
+  const data = stripEntitySystemFields(source);
   if (Object.prototype.hasOwnProperty.call(data, "project_name")) data.project_name = copyName;
   if (Object.prototype.hasOwnProperty.call(data, "estimate_number")) data.estimate_number = line?.estimate_number || data.estimate_number;
   const created = await base44.entities[builder.source_entity].create(data);
@@ -44,7 +34,7 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   const newLineId = makeStableId("line");
   const timestamp = nowIso();
 
-  const builderData = stripSystemFields(builder);
+  const builderData = stripEntitySystemFields(builder);
   const newBuilder = await base44.entities.BuilderProduct.create({
     ...builderData,
     estimate_id: estimateId,
@@ -66,7 +56,7 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   const activeGroups = (groups || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   for (const group of activeGroups) {
     const created = await base44.entities.BuilderPartGroup.create({
-      ...stripSystemFields(group),
+      ...stripEntitySystemFields(group),
       builder_product_id: newBuilder.id,
       group_key: makeStableId("group"),
     });
@@ -77,7 +67,7 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   const clonedParts = [];
   for (const part of activeParts) {
     const created = await base44.entities.BuilderPart.create({
-      ...stripSystemFields(part),
+      ...stripEntitySystemFields(part),
       builder_product_id: newBuilder.id,
       part_group_id: part.part_group_id ? (groupMap.get(part.part_group_id) || "") : "",
       // part_key is the stable reconciliation identity inside a Product. It is
@@ -123,7 +113,7 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   });
 
   const newLine = {
-    ...stripSystemFields(line),
+    ...cloneSnapshot(line),
     line_id: newLineId,
     builder_product_id: newBuilder.id,
     project_id: sourceProjectId,
