@@ -1250,6 +1250,115 @@ function extractFoundation(project, catalogs) {
   return parts;
 }
 
+function extractCNC(project) {
+  const parts = [];
+  (project.items || []).forEach((item, index) => {
+    if (num(item.machine_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `cnc:item:${index}:machine`,
+        name: item.description ? `${item.description} — CNC Machine Time` : "CNC Machine Time",
+        type: "equipment",
+        subtype: "cnc_machine_time",
+        sourcePath: `items[${index}].machine_cost`,
+        cost: item.machine_cost,
+        quantity: item.machine_time_hours || 1,
+        unit: item.machine_time_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { machine_time_hours: item.machine_time_hours, machine_cost: item.machine_cost, rate: project.machine_rate_per_hour },
+      }));
+    }
+    if (num(item.labor_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `cnc:item:${index}:labor`,
+        name: item.description ? `${item.description} — CNC Setup / Handling Labor` : "CNC Setup / Handling Labor",
+        type: "labor",
+        subtype: "cnc_setup_labor",
+        sourcePath: `items[${index}].labor_cost`,
+        cost: item.labor_cost,
+        quantity: item.setup_time_hours || 1,
+        unit: item.setup_time_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { setup_time_hours: item.setup_time_hours, labor_cost: item.labor_cost, rate: project.labor_rate, hold_down: item.hold_down },
+      }));
+    }
+  });
+  const fixedSetupCost = num(project.builder_calculation?.totals?.fixed_setup_cost);
+  if (fixedSetupCost > 0.005) {
+    parts.push(manualCostPart({
+      key: "cnc:fixed-setup",
+      name: "CNC Fixed Setup Labor",
+      type: "labor",
+      subtype: "fixed_setup",
+      sourcePath: "fixed_setup_hours",
+      cost: fixedSetupCost,
+      quantity: project.fixed_setup_hours || 1,
+      unit: project.fixed_setup_hours ? "hour" : "job",
+      calculation: { fixed_setup_hours: project.fixed_setup_hours, labor_rate: project.labor_rate, cost: fixedSetupCost },
+    }));
+  }
+  return parts;
+}
+
+function extractLaser(project) {
+  const parts = [];
+  (project.items || []).forEach((item, index) => {
+    if (num(item.machine_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `laser:item:${index}:machine`,
+        name: item.description ? `${item.description} — Laser Machine Time` : "Laser Machine Time",
+        type: "equipment",
+        subtype: "laser_machine_time",
+        sourcePath: `items[${index}].machine_cost`,
+        cost: item.machine_cost,
+        quantity: item.machine_time_hours || 1,
+        unit: item.machine_time_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { engrave_hours: item.engrave_hours, cut_hours: item.cut_hours, machine_time_hours: item.machine_time_hours, machine_cost: item.machine_cost },
+      }));
+    }
+    if (num(item.labor_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `laser:item:${index}:labor`,
+        name: item.description ? `${item.description} — Laser Handling Labor` : "Laser Handling Labor",
+        type: "labor",
+        subtype: "laser_handling_labor",
+        sourcePath: `items[${index}].labor_cost`,
+        cost: item.labor_cost,
+        quantity: item.handling_time_hours || 1,
+        unit: item.handling_time_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { handling_time_hours: item.handling_time_hours, labor_cost: item.labor_cost },
+      }));
+    }
+  });
+  const fixedSetupCost = num(project.builder_calculation?.totals?.fixed_setup_cost);
+  if (fixedSetupCost > 0.005) {
+    parts.push(manualCostPart({
+      key: "laser:fixed-setup",
+      name: "Laser Fixed Setup Labor",
+      type: "labor",
+      subtype: "fixed_setup",
+      sourcePath: "fixed_setup_hours",
+      cost: fixedSetupCost,
+      quantity: project.fixed_setup_hours || 1,
+      unit: project.fixed_setup_hours ? "hour" : "job",
+      calculation: { fixed_setup_hours: project.fixed_setup_hours, labor_rate: project.labor_rate, cost: fixedSetupCost },
+    }));
+  }
+  const fixedMaterialSetup = num(project.fixed_material_setup_cost, project.builder_calculation?.totals?.total_supplies_cost);
+  if (fixedMaterialSetup > 0.005) {
+    parts.push(manualCostPart({
+      key: "laser:fixed-material-setup",
+      name: "Laser Material Setup / Consumables",
+      type: "consumable",
+      subtype: "material_setup",
+      sourcePath: "fixed_material_setup_cost",
+      cost: fixedMaterialSetup,
+    }));
+  }
+  return parts;
+}
+
 function extractManualItems(project, moduleKey) {
   return (project.items || []).map((item, index) => makePart({
     key: `${moduleKey}:item:${index}`,
