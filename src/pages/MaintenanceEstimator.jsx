@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Save } from "lucide-react";
 import MaintenanceItemCard from "@/components/estimator/maintenance/MaintenanceItemCard";
 import MaintenanceTotals from "@/components/estimator/maintenance/MaintenanceTotals";
 import { calcMaintenanceProject } from "@/components/estimator/maintenance/maintenanceCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const blankItem = () => ({
   description: "",
@@ -94,13 +95,13 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       });
 
       if (estimateId) {
-        const est = await base44.entities.AllInOneEstimate.get(estimateId);
-        const line_items = (est.line_items || []).map((l) =>
-          l.project_id === project.id
-            ? { ...l, total_snapshot: t.total_cost, updated_date_snapshot: new Date().toISOString() }
-            : l
-        );
-        await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
+        const savedProject = await base44.entities.MaintenanceProject.get(project.id);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "maintenance" },
+          sourceProject: savedProject,
+          liveTotal: t.total_cost,
+        });
       }
       onSaved?.();
     } finally {
