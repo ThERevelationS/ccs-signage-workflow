@@ -2041,6 +2041,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
         builder_sync_state: "linked",
         builder_detached_at: "",
         builder_detached_reason: "",
+        detail_overrides: {},
         price_state: "changed",
       });
     } else {
@@ -2048,6 +2049,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
       if (!changed) continue;
       const root = topLevelField(part.source_path);
       if (root) changedRoots.add(root);
+      await base44.entities.BuilderPart.update(part.id, { detail_overrides: {} });
     }
     reattached.push({
       part_id: part.id,
@@ -2060,6 +2062,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
       current_inventory_name: part.reattach_candidate_name || part.inventory_item_name || "",
       frozen_unit_cost: num(part.frozen_unit_cost),
       frozen_extended_cost: num(part.frozen_extended_cost),
+      cleared_detail_overrides: part.detail_overrides || {},
       source_path: part.source_path,
     });
   }
