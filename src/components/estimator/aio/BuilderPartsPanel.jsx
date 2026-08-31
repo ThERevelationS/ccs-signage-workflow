@@ -20,6 +20,7 @@ import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPicker
 import { base44 } from "@/api/base44Client";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
 import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
+import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 
 const num = (value, fallback = 0) =>
@@ -56,6 +57,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   const isManual = part.builder_sync_state === "manual";
   const isDetachedOverride = part.builder_sync_state === "detached_override";
   const isIndependent = isManual || isDetachedOverride;
+  const inventoryDetails = typeDetails(part.inventory_entity, part.frozen_inventory_snapshot || {});
 
   return (
     <div className="border border-gray-200 rounded-sm bg-white overflow-hidden">
@@ -111,7 +113,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
               )}
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           <section className="rounded border border-gray-200 bg-white p-3">
             <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">PART INFORMATION</div>
             <dl className="space-y-1.5 text-[11px]">
@@ -140,6 +142,24 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
               <div className="flex justify-between gap-3"><dt className="text-gray-500">Current unit cost</dt><dd className={differs ? "font-semibold text-amber-700" : "font-semibold text-gray-800"}>{money(num(part.current_unit_cost, num(part.frozen_unit_cost)))}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-gray-500">Current extended</dt><dd className={differs ? "font-semibold text-amber-700" : "font-semibold text-gray-800"}>{money(current)}</dd></div>
             </dl>
+          </section>
+
+          <section className="rounded border border-gray-200 bg-white p-3">
+            <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">TYPE-SPECIFIC DETAILS</div>
+            {inventoryDetails.length ? (
+              <dl className="space-y-1.5 text-[11px] max-h-[170px] overflow-y-auto pr-1">
+                {inventoryDetails.map((detail) => (
+                  <div key={detail.field} className="flex justify-between gap-3 border-b border-gray-50 pb-1 last:border-b-0">
+                    <dt className="text-gray-500">{detail.label}</dt>
+                    <dd className="font-medium text-gray-800 text-right max-w-[190px] break-words">
+                      {Array.isArray(detail.value) ? detail.value.join(", ") : String(detail.value).replaceAll("_", " ")}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <div className="text-[10px] text-gray-400">No additional type-specific inventory fields for this Part.</div>
+            )}
           </section>
           </div>
         </div>
