@@ -379,6 +379,19 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   return nextLines.find((item) => item.project_id === currentLine.project_id) || currentLine;
 }
 
+export async function deleteBuilderProductCascade(builderProductId) {
+  if (!builderProductId) return;
+  const [parts, groups, revisions] = await Promise.all([
+    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }).catch(() => []),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }).catch(() => []),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []),
+  ]);
+  await Promise.all((parts || []).map((row) => base44.entities.BuilderPart.delete(row.id).catch(() => null)));
+  await Promise.all((groups || []).map((row) => base44.entities.BuilderPartGroup.delete(row.id).catch(() => null)));
+  await Promise.all((revisions || []).map((row) => base44.entities.BuilderPriceRevision.delete(row.id).catch(() => null)));
+  await base44.entities.BuilderProduct.delete(builderProductId).catch(() => null);
+}
+
 export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation." }) {
   if (!estimateId || !line?.builder_product_id) return null;
   const [estimate, builder] = await Promise.all([
