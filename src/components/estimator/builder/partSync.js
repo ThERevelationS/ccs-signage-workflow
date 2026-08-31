@@ -645,7 +645,67 @@ function extractBrick(project) {
   return parts;
 }
 
-function extractMaintenance(project) {
+function maintenanceMaterialLine(mat, item, row) {
+  const signQty = num(item.quantity, 1);
+  const rawQty = num(mat.quantity, 1);
+  const sizeKey = {
+    extra_small: "cost_extra_small",
+    small: "cost_small",
+    medium: "cost_medium",
+    large: "cost_large",
+    extra_large: "cost_extra_large",
+    extra_extra_large: "cost_extra_extra_large",
+    cab_small: "cost_cab_small",
+    cab_medium: "cost_cab_medium",
+    cab_large: "cost_cab_large",
+    cab_extra_large: "cost_cab_extra_large",
+  }[item.size] || "cost_medium";
+
+  let quantity = rawQty * signQty;
+  let unit = row?.unit || row?.pricing_mode || "unit";
+  let unitCost = 0;
+  switch (row?.pricing_mode) {
+    case "per_letter_flat":
+      quantity = num(item.qty_letters, 1) * signQty;
+      unitCost = num(row.cost_per_letter);
+      unit = "letter";
+      break;
+    case "per_letter_by_size":
+      quantity = num(item.qty_letters, 1) * signQty;
+      unitCost = num(row[sizeKey]);
+      unit = "letter";
+      break;
+    case "per_cabinet_flat":
+      quantity = signQty;
+      unitCost = num(row.cost_per_cabinet);
+      unit = "cabinet";
+      break;
+    case "per_cabinet_by_size":
+      quantity = signQty;
+      unitCost = num(row[sizeKey]);
+      unit = "cabinet";
+      break;
+    case "per_linear_foot":
+      quantity = rawQty * signQty;
+      unitCost = num(row.cost_per_foot);
+      unit = "ft";
+      break;
+    case "per_sqft":
+      quantity = num(item.face_sqft) * signQty;
+      unitCost = num(row.cost_per_sqft);
+      unit = "sqft";
+      break;
+    case "per_project_flat":
+    default:
+      quantity = rawQty * signQty;
+      unitCost = num(row?.cost_flat);
+      unit = "job";
+      break;
+  }
+  return { quantity, unit, unitCost, extendedCost: quantity * unitCost };
+}
+
+function extractMaintenance(project, catalogs = {}) {
   const parts = [];
   (project.items || []).forEach((item, itemIndex) => {
     (item.actions || []).forEach((action, actionIndex) => {
