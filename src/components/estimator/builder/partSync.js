@@ -512,27 +512,68 @@ function extractVinyl(project) {
 }
 
 function extractMetal(project) {
-  return (project.items || []).map((item, index) => makePart({
-    key: `metal:item:${index}`,
-    name: item.description || item.item_type || "Metal material",
-    type: "material",
-    subtype: item.item_type || "metal",
-    sourcePath: `items[${index}]`,
-    entity: "Inventory",
-    inventoryId: item.inventory_item_id,
-    quantity: item.quantity || 1,
-    unit: "job",
-    unitCost: num(item.quantity, 1) ? num(item.material_cost) / num(item.quantity, 1) : num(item.material_cost),
-    extendedCost: item.material_cost,
-    builderData: item,
-    calculation: {
-      material_cost: item.material_cost,
-      supplies_cost: item.supplies_cost,
-      fabrication_cost: item.fabrication_cost,
-      welding_cost: item.welding_cost,
-      finishing_cost: item.finishing_cost,
-    },
-  }));
+  const parts = [];
+  (project.items || []).forEach((item, index) => {
+    parts.push(makePart({
+      key: `metal:item:${index}:material`,
+      name: item.description || item.item_type || "Metal Material",
+      type: "material",
+      subtype: item.item_type || "metal",
+      sourcePath: `items[${index}].inventory_item_id`,
+      entity: "Inventory",
+      inventoryId: item.inventory_item_id,
+      quantity: item.material_length_ft || item.quantity || 1,
+      unit: item.material_length_ft ? "ft" : "item",
+      unitCost: item.material_length_ft
+        ? num(item.material_cost) / Math.max(num(item.material_length_ft) * num(item.quantity, 1), 0.000001)
+        : num(item.material_cost) / Math.max(num(item.quantity, 1), 1),
+      extendedCost: item.material_cost,
+      builderData: item,
+      calculation: { material_cost: item.material_cost },
+    }));
+    [
+      ["supplies", "Fabrication Consumables", "consumable", item.supplies_cost, 1, "job"],
+      ["fabrication", "Fabrication Labor", "labor", item.fabrication_cost, num(item.fabrication_hours) * num(item.quantity, 1), "hour"],
+      ["welding", "Welding Labor", "labor", item.welding_cost, num(item.welding_hours) * num(item.quantity, 1), "hour"],
+      ["finishing", "Finishing Labor", "labor", item.finishing_cost, num(item.finishing_hours) * num(item.quantity, 1), "hour"],
+    ].forEach(([key, label, type, cost, qty, unit]) => {
+      if (num(cost) <= 0.005) return;
+      parts.push(manualCostPart({
+        key: `metal:item:${index}:${key}`,
+        name: item.description ? `${item.description} — ${label}` : label,
+        type,
+        subtype: key,
+        sourcePath: `items[${index}].${key === "supplies" ? "supplies_cost" : `${key}_cost`}`,
+        cost,
+        quantity: qty || 1,
+        unit: qty ? unit : "job",
+        builderData: item,
+        calculation: item,
+      }));
+    });
+  });
+  if (num(project.extra_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "metal:extra-supplies",
+      name: "Additional Fabrication Supplies",
+      type: "consumable",
+      subtype: "extra_supplies",
+      sourcePath: "extra_supplies_cost",
+      cost: project.extra_supplies_cost,
+    }));
+  }
+  if (num(project.markup_amount) > 0.005) {
+    parts.push(manualCostPart({
+      key: "metal:markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_amount",
+      cost: project.markup_amount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+    }));
+  }
+  return parts;
 }
 
 function extractBrick(project) {
