@@ -8,13 +8,16 @@ import {
   Link2,
   LockKeyhole,
   Pencil,
+  Plus,
   Unlink,
 } from "lucide-react";
 import CreatePartGroupModal from "./CreatePartGroupModal";
 import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
 import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
+import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { base44 } from "@/api/base44Client";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
+import { addCatalogPartToProduct, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { money } from "@/components/estimator/aioPricing";
 
 const num = (value, fallback = 0) =>
@@ -47,6 +50,9 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   const differs = Math.abs(current - frozen) > 0.005;
   const meta = priceStateMeta(part);
   const StatusIcon = meta.icon;
+  const isManual = part.builder_sync_state === "manual";
+  const isDetachedOverride = part.builder_sync_state === "detached_override";
+  const isIndependent = isManual || isDetachedOverride;
 
   return (
     <div className="border border-gray-200 rounded-sm bg-white overflow-hidden">
@@ -84,14 +90,14 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="text-[10px] text-gray-500">
-              {part.builder_sync_state === "detached_override" ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
+              {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
             </div>
             <button
               type="button"
-              onClick={() => part.builder_sync_state === "detached_override" ? setOverrideOpen(true) : setWarningOpen(true)}
+              onClick={() => isIndependent ? setOverrideOpen(true) : setWarningOpen(true)}
               className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
             >
-              {part.builder_sync_state === "detached_override" ? "Edit Override" : "Edit Part"}
+              {isDetachedOverride ? "Edit Override" : "Edit Part"}
             </button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -146,9 +152,11 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
       <DetachedPartOverrideModal
         open={overrideOpen}
         part={part}
+        mode={isManual ? "manual" : "detached"}
         onClose={() => setOverrideOpen(false)}
         onSave={async (changes) => {
-          await updateDetachedPartOverride(part.id, changes);
+          if (isManual) await updateManualProductPart(part.id, changes);
+          else await updateDetachedPartOverride(part.id, changes);
           setOverrideOpen(false);
           await onChanged?.();
         }}
@@ -262,13 +270,14 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [partPickerOpen, setPartPickerOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
@@ -368,8 +377,20 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   if (!parts.length) {
     return (
       <div className="px-4 py-5 text-center border-t border-gray-200 bg-gray-50">
-        <div className="text-[11px] font-semibold text-gray-600">No Parts have been materialized yet.</div>
-        <div className="text-[10px] text-gray-400 mt-1">Open and save this Builder once to generate its frozen BOM Parts.</div>
+        <div className="text-[11px] font-semibold text-gray-600">{allowAddParts ? "This Custom Product is blank." : "No Parts have been materialized yet."}</div>
+        <div className="text-[10px] text-gray-400 mt-1">{allowAddParts ? "Add Parts directly from the Master Inventory to build this Product." : "Open and save this Builder once to generate its frozen BOM Parts."}</div>
+        {allowAddParts && (
+          <button type="button" onClick={() => setPartPickerOpen(true)} className="mt-3 h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+        )}
+        <MasterPartPickerModal
+          open={partPickerOpen}
+          onClose={() => setPartPickerOpen(false)}
+          onAdd={async (item, quantity) => {
+            await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+            setRefreshNonce((value) => value + 1);
+            await onProductRefresh?.();
+          }}
+        />
       </div>
     );
   }
@@ -399,13 +420,18 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setSelectionMode(true)}
-            className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
-          >
-            <Layers3 className="w-3.5 h-3.5" /> Group Parts
-          </button>
+          <div className="flex items-center gap-2">
+            {allowAddParts && (
+              <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+            )}
+            <button
+              type="button"
+              onClick={() => setSelectionMode(true)}
+              className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
+            >
+              <Layers3 className="w-3.5 h-3.5" /> Group Parts
+            </button>
+          </div>
         )}
       </div>
 
@@ -454,6 +480,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         selectedCount={selectedIds.size}
         onClose={() => setGroupModalOpen(false)}
         onCreate={createGroup}
+      />
+      <MasterPartPickerModal
+        open={partPickerOpen}
+        onClose={() => setPartPickerOpen(false)}
+        onAdd={async (item, quantity) => {
+          await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+          setRefreshNonce((value) => value + 1);
+          await onProductRefresh?.();
+        }}
       />
     </div>
   );
