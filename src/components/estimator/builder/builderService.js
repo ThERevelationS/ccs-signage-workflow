@@ -179,6 +179,36 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     builderProduct = { ...builderProduct, current_recalculated_cost: liveTotal, price_state: nextState };
   }
 
+  let partSummary = {
+    partCount: num(builderProduct.part_count),
+    detachedCount: num(builderProduct.detached_part_count),
+    changedCount: 0,
+  };
+  if (source && builderProduct?.id) {
+    partSummary = await syncBuilderParts({
+      builderProduct,
+      sourceProject: source,
+      acceptPrices: false,
+      legacyMode: builderProduct.price_state === "legacy_frozen",
+    });
+    const productPriceState = partSummary.detachedCount > 0
+      ? "detached_parts"
+      : builderProduct.price_state;
+    await base44.entities.BuilderProduct.update(builderProduct.id, {
+      part_count: partSummary.partCount,
+      detached_part_count: partSummary.detachedCount,
+      needs_reattach_review: partSummary.detachedCount > 0,
+      price_state: productPriceState,
+    });
+    builderProduct = {
+      ...builderProduct,
+      part_count: partSummary.partCount,
+      detached_part_count: partSummary.detachedCount,
+      needs_reattach_review: partSummary.detachedCount > 0,
+      price_state: productPriceState,
+    };
+  }
+
   const frozenCost = isNew ? num(builderProduct.frozen_cost) : acceptedTotal;
   const nextLine = {
     ...line,
