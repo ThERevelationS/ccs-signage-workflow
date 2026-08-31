@@ -124,16 +124,28 @@ export default function ProductRow({
         </div>
 
         {meta.differs && line.builder_product_id && (
-          <button
-            type="button"
-            onClick={handleUpdatePrice}
-            disabled={updatingPrice}
-            className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
-            title={`Accept current builder price ${money(live)}`}
-          >
-            <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
-            {updatingPrice ? "Updating…" : "Update Price"}
-          </button>
+          line.needs_reattach_review || line.price_state === "detached_parts" ? (
+            <button
+              type="button"
+              disabled
+              className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-700 cursor-not-allowed"
+              title="Resolve or reattach detached Parts before updating this product's price."
+            >
+              <AlertTriangle className="w-3 h-3" />
+              Resolve Parts First
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleUpdatePrice}
+              disabled={updatingPrice}
+              className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
+              title={`Accept current builder price ${money(live)}`}
+            >
+              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
+              {updatingPrice ? "Updating…" : "Update Price"}
+            </button>
+          )
         )}
 
         <button
