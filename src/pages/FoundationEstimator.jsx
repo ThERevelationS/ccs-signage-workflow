@@ -251,7 +251,21 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "foundation" },
-          sourceProject: savedProject,
+          sourceProject: {
+            ...savedProject,
+            items: calc.items,
+            selected_equipment: calc.equipment,
+            walls: calc.walls,
+            poles: calc.poles,
+            wall_caps: calc.wallCaps,
+            builder_calculation: {
+              totals: calc.totals,
+              delivery: calc.delivery,
+              cabinet_cost: cabinetCost,
+              landscape_cost: landscapeCost,
+              section_total: sectionTotal,
+            },
+          },
           liveTotal: sectionTotal,
         });
       }
