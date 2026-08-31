@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   Unlink,
 } from "lucide-react";
+import CreatePartGroupModal from "./CreatePartGroupModal";
 import { base44 } from "@/api/base44Client";
 import { money } from "@/components/estimator/aioPricing";
 
@@ -33,7 +34,7 @@ const priceStateMeta = (part) => {
   return { label: "Price current", className: "bg-green-50 text-green-700 border-green-200", icon: Link2 };
 };
 
-function PartRow({ part, index }) {
+function PartRow({ part, index, selectionMode = false, selected = false, onSelect }) {
   const [open, setOpen] = useState(false);
   const frozen = num(part.frozen_extended_cost);
   const current = num(part.current_extended_cost, frozen);
@@ -43,11 +44,21 @@ function PartRow({ part, index }) {
 
   return (
     <div className="border border-gray-200 rounded-sm bg-white overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="w-full min-h-[42px] px-3 py-2 flex items-center gap-2 text-left hover:bg-gray-50"
-      >
+      <div className="w-full min-h-[42px] px-3 py-2 flex items-center gap-2 text-left hover:bg-gray-50">
+        {selectionMode && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(event) => onSelect?.(part.id, event.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 accent-lime-500 flex-shrink-0"
+            aria-label={`Select ${part.part_name || "Part"}`}
+          />
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="flex-1 min-w-0 flex items-center gap-2 text-left"
+        >
         {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
         <Box className="w-3.5 h-3.5 text-gray-400" />
         <span className="text-[9px] font-bold tracking-wider text-gray-400 w-[52px] flex-shrink-0">PART {String(index + 1).padStart(2, "0")}</span>
@@ -56,11 +67,12 @@ function PartRow({ part, index }) {
         <span className={`hidden sm:inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border ${meta.className}`}>
           <StatusIcon className="w-3 h-3" /> {meta.label}
         </span>
-        <div className="text-right w-[92px] flex-shrink-0">
-          <div className="text-[11px] font-bold text-gray-800">{money(frozen)}</div>
-          {differs && <div className="text-[9px] text-amber-600">current {money(current)}</div>}
-        </div>
-      </button>
+          <div className="text-right w-[92px] flex-shrink-0">
+            <div className="text-[11px] font-bold text-gray-800">{money(frozen)}</div>
+            {differs && <div className="text-[9px] text-amber-600">current {money(current)}</div>}
+          </div>
+        </button>
+      </div>
 
       {open && (
         <div className="border-t border-gray-200 bg-gray-50 px-3 py-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -99,7 +111,7 @@ function PartRow({ part, index }) {
   );
 }
 
-function PartGroup({ group, parts, globalOffset }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
 
@@ -120,7 +132,14 @@ function PartGroup({ group, parts, globalOffset }) {
       {open && (
         <div className="p-2 space-y-2 border-t border-gray-200">
           {parts.map((part, index) => (
-            <PartRow key={part.id} part={part} index={globalOffset + index} />
+            <PartRow
+              key={part.id}
+              part={part}
+              index={globalOffset + index}
+              selectionMode={selectionMode}
+              selected={selectedIds.has(part.id)}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       )}
@@ -132,6 +151,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -167,7 +190,48 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     return () => {
       active = false;
     };
-  }, [builderProductId, refreshKey]);
+  }, [builderProductId, refreshKey, refreshNonce]);
+
+  const togglePartSelection = (partId, checked) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(partId);
+      else next.delete(partId);
+      return next;
+    });
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setGroupModalOpen(false);
+  };
+
+  const createGroup = async (groupName) => {
+    const selectedParts = parts.filter((part) => selectedIds.has(part.id));
+    if (!builderProductId || selectedParts.length < 2) return;
+    const group = await base44.entities.BuilderPartGroup.create({
+      builder_product_id: builderProductId,
+      group_key: globalThis.crypto?.randomUUID?.() || `group-${Date.now()}`,
+      group_name: groupName,
+      sort_order: groups.length,
+      copy_as_unit: true,
+      is_collapsed: false,
+      is_active: true,
+    });
+    await Promise.all(
+      selectedParts.map((part) =>
+        base44.entities.BuilderPart.update(part.id, { part_group_id: group.id })
+      )
+    );
+    await base44.entities.BuilderProduct.update(builderProductId, {
+      group_count: groups.length + 1,
+    });
+    setGroupModalOpen(false);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setRefreshNonce((value) => value + 1);
+  };
 
   const grouped = useMemo(() => {
     const byGroup = new Map();
@@ -198,16 +262,72 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   let offset = 0;
   return (
     <div className="border-t border-gray-300 bg-[#f6f6f6] px-3 py-3 space-y-2">
+      <div className="flex items-center justify-between gap-2 pb-1">
+        <div className="text-[10px] font-bold tracking-widest text-gray-500">PRODUCT PARTS · {parts.length}</div>
+        {selectionMode ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500">{selectedIds.size} selected</span>
+            <button
+              type="button"
+              onClick={cancelSelection}
+              className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={selectedIds.size < 2}
+              onClick={() => setGroupModalOpen(true)}
+              className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40"
+            >
+              Group Selected Parts
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setSelectionMode(true)}
+            className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
+          >
+            <Layers3 className="w-3.5 h-3.5" /> Group Parts
+          </button>
+        )}
+      </div>
+
       {groups.map((group) => {
         const groupParts = grouped.byGroup.get(group.id) || [];
         if (!groupParts.length) return null;
-        const node = <PartGroup key={group.id} group={group} parts={groupParts} globalOffset={offset} />;
+        const node = (
+          <PartGroup
+            key={group.id}
+            group={group}
+            parts={groupParts}
+            globalOffset={offset}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onSelect={togglePartSelection}
+          />
+        );
         offset += groupParts.length;
         return node;
       })}
       {grouped.ungrouped.map((part, index) => (
-        <PartRow key={part.id} part={part} index={offset + index} />
+        <PartRow
+          key={part.id}
+          part={part}
+          index={offset + index}
+          selectionMode={selectionMode}
+          selected={selectedIds.has(part.id)}
+          onSelect={togglePartSelection}
+        />
       ))}
+
+      <CreatePartGroupModal
+        open={groupModalOpen}
+        selectedCount={selectedIds.size}
+        onClose={() => setGroupModalOpen(false)}
+        onCreate={createGroup}
+      />
     </div>
   );
 }
