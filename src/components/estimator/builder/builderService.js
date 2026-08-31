@@ -187,7 +187,10 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     partCount: num(builderProduct.part_count),
     detachedCount: num(builderProduct.detached_part_count),
     changedCount: 0,
+    manualAddonFrozenTotal: 0,
+    manualAddonCurrentTotal: 0,
   };
+  let effectiveLiveTotal = liveTotal;
   if (source && builderProduct?.id) {
     partSummary = await syncBuilderParts({
       builderProduct,
@@ -195,21 +198,33 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       acceptPrices: false,
       legacyMode: builderProduct.price_state === "legacy_frozen",
     });
+    effectiveLiveTotal = liveTotal + num(partSummary.manualAddonCurrentTotal);
+    const frozenAfterSync = num(builderProduct.frozen_cost, acceptedTotal);
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
-      : builderProduct.price_state;
+      : builderProduct.price_state === "legacy_frozen"
+        ? "legacy_frozen"
+        : Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005
+          ? "changed"
+          : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
+      current_recalculated_cost: effectiveLiveTotal,
       price_state: productPriceState,
+      price_delta: effectiveLiveTotal - frozenAfterSync,
+      price_delta_percent: frozenAfterSync ? ((effectiveLiveTotal - frozenAfterSync) / frozenAfterSync) * 100 : 0,
     });
     builderProduct = {
       ...builderProduct,
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
+      current_recalculated_cost: effectiveLiveTotal,
       price_state: productPriceState,
+      price_delta: effectiveLiveTotal - frozenAfterSync,
+      price_delta_percent: frozenAfterSync ? ((effectiveLiveTotal - frozenAfterSync) / frozenAfterSync) * 100 : 0,
     };
   }
 
@@ -223,7 +238,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     product_category: line.product_category || builderProduct.product_category || "",
     product_notes: line.product_notes ?? builderProduct.product_notes ?? "",
     total_snapshot: frozenCost,
-    live_total_snapshot: liveTotal,
+    live_total_snapshot: effectiveLiveTotal,
     price_state: builderProduct.price_state || (isNew ? "unchecked" : "legacy_frozen"),
     detached_part_count: num(builderProduct.detached_part_count),
     needs_reattach_review: !!builderProduct.needs_reattach_review,
@@ -274,6 +289,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     partCount: num(builder?.part_count),
     detachedCount: num(builder?.detached_part_count),
     changedCount: 0,
+    manualAddonFrozenTotal: 0,
+    manualAddonCurrentTotal: 0,
   };
 
   if (builder) {
@@ -287,11 +304,12 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     });
   }
 
+  const effectiveLiveTotal = nextLiveTotal + num(partSummary.manualAddonCurrentTotal);
   const canInitialFreeze = wantsInitialFreeze && partSummary.detachedCount === 0;
-  const acceptedTotal = canInitialFreeze ? nextLiveTotal : previousFrozenTotal;
+  const acceptedTotal = canInitialFreeze ? effectiveLiveTotal : previousFrozenTotal;
   const calculatedState = canInitialFreeze
     ? "current"
-    : Math.abs(nextLiveTotal - acceptedTotal) > 0.005
+    : Math.abs(effectiveLiveTotal - acceptedTotal) > 0.005
       ? "changed"
       : "current";
   const productState = partSummary.detachedCount > 0
@@ -313,7 +331,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   }
 
   const initialFreezeCompleted = canInitialFreeze && partSummary.detachedCount === 0;
-  const finalAcceptedTotal = initialFreezeCompleted ? nextLiveTotal : previousFrozenTotal;
+  const finalAcceptedTotal = initialFreezeCompleted ? effectiveLiveTotal : previousFrozenTotal;
   const finalProductState = partSummary.detachedCount > 0
     ? "detached_parts"
     : initialFreezeCompleted
@@ -331,10 +349,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       frozen_customer_price: initialFreezeCompleted
         ? finalAcceptedTotal
         : num(builder.frozen_customer_price, finalAcceptedTotal),
-      current_recalculated_cost: nextLiveTotal,
+      current_recalculated_cost: effectiveLiveTotal,
       price_state: finalProductState,
-      price_delta: nextLiveTotal - finalAcceptedTotal,
-      price_delta_percent: finalAcceptedTotal ? ((nextLiveTotal - finalAcceptedTotal) / finalAcceptedTotal) * 100 : 0,
+      price_delta: effectiveLiveTotal - finalAcceptedTotal,
+      price_delta_percent: finalAcceptedTotal ? ((effectiveLiveTotal - finalAcceptedTotal) / finalAcceptedTotal) * 100 : 0,
       last_price_check_at: timestamp,
       last_price_update_at: initialFreezeCompleted ? timestamp : builder.last_price_update_at,
       builder_version: nextRevision,
@@ -372,7 +390,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       builder_name: item.builder_name || ensured.line.builder_name,
       client_product_name: item.client_product_name || ensured.line.client_product_name,
       total_snapshot: finalAcceptedTotal,
-      live_total_snapshot: nextLiveTotal,
+      live_total_snapshot: effectiveLiveTotal,
       price_state: finalProductState,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
