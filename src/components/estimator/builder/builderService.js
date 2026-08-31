@@ -387,6 +387,37 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   ]);
   if (!estimate || !builder) return null;
 
+  // Part prices are accepted first because this call performs the all-or-nothing
+  // detached-link guard. If anything is detached, product pricing remains frozen.
+  const partAcceptance = await acceptBuilderPartPrices(builder.id);
+  if (partAcceptance.detachedCount > 0) {
+    await base44.entities.BuilderProduct.update(builder.id, {
+      price_state: "detached_parts",
+      detached_part_count: partAcceptance.detachedCount,
+      needs_reattach_review: true,
+      last_price_check_at: nowIso(),
+    });
+    const blockedLines = (estimate.line_items || []).map((item) =>
+      item.builder_product_id === builder.id
+        ? {
+            ...item,
+            price_state: "detached_parts",
+            detached_part_count: partAcceptance.detachedCount,
+            needs_reattach_review: true,
+            last_price_check_at: nowIso(),
+          }
+        : item
+    );
+    await base44.entities.AllInOneEstimate.update(estimateId, { line_items: blockedLines });
+    return {
+      blocked: true,
+      reason: "detached_parts",
+      detachedCount: partAcceptance.detachedCount,
+      detachedParts: partAcceptance.detachedParts || [],
+      line: blockedLines.find((item) => item.builder_product_id === builder.id) || line,
+    };
+  }
+
   const timestamp = nowIso();
   const previousTotal = num(builder.frozen_cost, num(line.total_snapshot));
   const nextTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, previousTotal));
@@ -402,7 +433,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     new_total_cost: nextTotal,
     previous_customer_price: num(builder.frozen_customer_price, previousTotal),
     new_customer_price: nextTotal,
-    changed_parts: [],
+    changed_parts: partAcceptance.changedParts || [],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal },
@@ -416,8 +447,11 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     price_state: "current",
     price_delta: 0,
     price_delta_percent: 0,
+    detached_part_count: 0,
+    needs_reattach_review: false,
     last_price_update_at: timestamp,
     last_price_update_note: note,
+    last_price_check_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
 
@@ -428,11 +462,17 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
           total_snapshot: nextTotal,
           live_total_snapshot: nextTotal,
           price_state: "current",
+          detached_part_count: 0,
+          needs_reattach_review: false,
           last_price_update_at: timestamp,
           last_price_check_at: timestamp,
         }
       : item
   );
   await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-  return lineItems.find((item) => item.builder_product_id === builder.id) || null;
+  return {
+    blocked: false,
+    changedParts: partAcceptance.changedParts || [],
+    line: lineItems.find((item) => item.builder_product_id === builder.id) || null,
+  };
 }
