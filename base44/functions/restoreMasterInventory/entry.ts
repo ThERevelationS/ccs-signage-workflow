@@ -349,6 +349,31 @@ Deno.serve(async (req) => {
       unmatched_target: maps[name].unmatchedTarget,
     }]));
 
+    // Foundation projects historically referenced concrete suppliers from two places:
+    // FoundationInventory (old system) and LaborServiceInventory (current system).
+    // Two pre-migration FoundationInventory concrete rows were already deleted in the
+    // source app. CCS carries explicit hidden compatibility rows for those IDs using
+    // SignEstimate Pro's exact missing-supplier fallback rate matrix.
+    const foundationReferenceMap = new Map<string, string>([
+      ...maps.FoundationInventory.mapping.entries(),
+      ...maps.LaborServiceInventory.mapping.entries(),
+    ]);
+    const foundationReferenceTargets = [
+      ...targetCatalogs.FoundationInventory,
+      ...targetCatalogs.LaborServiceInventory,
+    ];
+    const legacyConcreteOverrides = new Map<string, string>();
+    for (const sourceId of LEGACY_REMOVED_CONCRETE_IDS) {
+      const shortId = sourceId.slice(0, 8);
+      const target = targetCatalogs.LaborServiceInventory.find((r: any) =>
+        normalizeString(r.service_name).includes(shortId) &&
+        normalizeString(r.service_name).includes('legacy concrete supplier')
+      );
+      if (!target?.id) throw new Error(`Missing CCS legacy concrete compatibility row for ${sourceId}`);
+      foundationReferenceMap.set(sourceId, target.id);
+      legacyConcreteOverrides.set(sourceId, target.id);
+    }
+
     const historyMaps = (await listAll(base44.asServiceRole.entities.LegacyMigrationMap))
       .filter((m: any) => m.source_app_id === SOURCE_APP_ID && m.migration_batch === HISTORY_BATCH);
     const foundationProjectIds = new Set(historyMaps.filter((m: any) => m.source_entity === 'FoundationProject').map((m: any) => m.target_id));
