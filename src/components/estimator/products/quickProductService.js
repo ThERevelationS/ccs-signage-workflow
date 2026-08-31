@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
+import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -185,7 +186,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     createdParts.push(created);
   }
 
-  const detachedCount = createdParts.filter((part) => part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state)).length;
+  const detachedCount = countBuilderReattachParts(createdParts);
   await base44.entities.BuilderProduct.update(newBuilder.id, {
     part_count: createdParts.length,
     group_count: groups.length,
