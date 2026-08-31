@@ -225,6 +225,8 @@ export default function ProductRow({
               await copyProductToClipboard({ estimateId: line.estimate_id, line });
               setCopiedClipboard(true);
               setTimeout(() => setCopiedClipboard(false), 1500);
+            } catch (error) {
+              window.alert(error?.message || "Product could not be copied to the estimator clipboard.");
             } finally {
               setCopyingClipboard(false);
             }
