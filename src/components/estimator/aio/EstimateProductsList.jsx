@@ -49,7 +49,8 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
           onChange={(e) => setModuleFilter(e.target.value)}
           className="h-[30px] px-2 border border-gray-200 rounded text-[12px] text-gray-600 bg-white"
         >
-          <option value="all">All modules</option>
+          <option value="all">All product types</option>
+          <option value="custom">Custom Products</option>
           {ESTIMATOR_MODULES.map((m) => (
             <option key={m.key} value={m.key}>
               {m.label}
