@@ -21,7 +21,7 @@ import {
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
-import { cloneProductInEstimate, saveProductNotes } from "@/components/estimator/products/productOperations";
+import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
@@ -149,6 +149,11 @@ export default function EstimateDetail() {
   const updateProductNotes = async (line, notes) => {
     await saveProductNotes({ estimateId: estimate.id, line, notes });
     await refreshProducts();
+  };
+
+  const persistProductSettings = async (line, index, patch) => {
+    patchLine(index, patch);
+    await saveProductSettings({ estimateId: estimate.id, line, patch });
   };
 
   const createQuickProduct = async (line, options) => {
@@ -317,6 +322,7 @@ export default function EstimateDetail() {
                   onClone={cloneProduct}
                   onSaveNotes={updateProductNotes}
                   onCreateQuickProduct={createQuickProduct}
+                  onPersistSettings={persistProductSettings}
                 />
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <button
