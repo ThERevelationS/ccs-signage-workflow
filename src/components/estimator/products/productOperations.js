@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId } from "@/components/estimator/builder/builderService";
+import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -54,6 +54,7 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     builder_snapshot: sourceProject || builder.builder_snapshot || {},
     builder_snapshot_at: timestamp,
     builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
+    builder_snapshot_hash: snapshotHash(sourceProject || builder.builder_snapshot || {}),
     builder_version: 1,
     part_count: 0,
     group_count: 0,
