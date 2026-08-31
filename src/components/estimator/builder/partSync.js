@@ -702,23 +702,92 @@ function extractFoundation(project, catalogs) {
         calculation: wall.calculatedCosts || {},
       }));
     }
+    if (num(wall.calculatedCosts?.mortarCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:wall:${index}:mortar`,
+        name: wall.name ? `${wall.name} — Mortar` : "Wall Mortar",
+        type: "consumable",
+        subtype: "mortar",
+        sourcePath: `walls[${index}].calculatedCosts.mortarCost`,
+        cost: wall.calculatedCosts.mortarCost,
+        builderData: wall,
+        calculation: wall.calculatedCosts,
+      }));
+    }
+    if (num(wall.calculatedCosts?.laborCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:wall:${index}:labor`,
+        name: wall.name ? `${wall.name} — Masonry Labor` : "Masonry Labor",
+        type: "labor",
+        subtype: "masonry_labor",
+        sourcePath: `walls[${index}].calculatedCosts.laborCost`,
+        cost: wall.calculatedCosts.laborCost,
+        quantity: wall.calculatedCosts.laborHours || 1,
+        unit: wall.calculatedCosts.laborHours ? "hour" : "job",
+        builderData: wall,
+        calculation: wall.calculatedCosts,
+      }));
+    }
+    if (num(wall.calculatedCosts?.internalMortarCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:wall:${index}:internal-mortar`,
+        name: wall.name ? `${wall.name} — Internal Mortar` : "Internal Wall Mortar",
+        type: "consumable",
+        subtype: "mortar",
+        sourcePath: `walls[${index}].calculatedCosts.internalMortarCost`,
+        cost: wall.calculatedCosts.internalMortarCost,
+        builderData: wall,
+        calculation: wall.calculatedCosts,
+      }));
+    }
+    if (num(wall.calculatedCosts?.internalLaborCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:wall:${index}:internal-labor`,
+        name: wall.name ? `${wall.name} — Internal Masonry Labor` : "Internal Masonry Labor",
+        type: "labor",
+        subtype: "masonry_labor",
+        sourcePath: `walls[${index}].calculatedCosts.internalLaborCost`,
+        cost: wall.calculatedCosts.internalLaborCost,
+        quantity: wall.calculatedCosts.internalLaborHours || 1,
+        unit: wall.calculatedCosts.internalLaborHours ? "hour" : "job",
+        builderData: wall,
+        calculation: wall.calculatedCosts,
+      }));
+    }
   });
 
   (project.poles || []).forEach((pole, index) => {
     if (!pole.pole_id) return;
+    const poleQtyFt = (num(pole.height_inches) + num(pole.y_offset_inches)) / 12 || 1;
     parts.push(makePart({
       key: `foundation:pole:${index}`,
-      name: "Sign pole",
+      name: pole.pole_name || "Sign Pole",
       type: "material",
       subtype: "pole",
       sourcePath: `poles[${index}].pole_id`,
       entity: "FoundationInventory",
       inventoryId: pole.pole_id,
-      quantity: pole.height_inches ? num(pole.height_inches) / 12 : 1,
+      quantity: poleQtyFt,
       unit: "ft",
+      unitCost: num(pole.pole_cost) / poleQtyFt,
+      extendedCost: pole.pole_cost,
       builderData: pole,
       calculation: pole,
     }));
+    if (num(pole.pole_painting_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:pole:${index}:painting`,
+        name: `${pole.pole_name || "Sign Pole"} — Painting`,
+        type: "labor",
+        subtype: "pole_painting",
+        sourcePath: `poles[${index}].pole_painting_cost`,
+        cost: pole.pole_painting_cost,
+        quantity: poleQtyFt,
+        unit: "ft",
+        builderData: pole,
+        calculation: pole,
+      }));
+    }
   });
 
   (project.wall_caps || []).forEach((cap, index) => {
@@ -733,41 +802,50 @@ function extractFoundation(project, catalogs) {
       inventoryId: cap.cap_inventory_id,
       quantity: 1,
       unit: "stock_piece",
+      unitCost: cap.cost,
+      extendedCost: cap.cost,
       builderData: cap,
+      calculation: cap,
     }));
   });
 
   (project.selected_equipment || []).forEach((eq, index) => {
+    const breakdown = foundationEquipmentBreakdown(eq, catalogs);
     if (eq.equipment_id) {
+      const equipmentRow = catalogs.FoundationInventory?.byId.get(eq.equipment_id);
+      const qty = eq.custom_qty ?? eq.rental_duration ?? 1;
       parts.push(makePart({
         key: `foundation:equipment:${index}`,
-        name: "Foundation equipment",
+        name: equipmentRow?.material_name || "Foundation Equipment",
         type: "equipment",
         subtype: "excavation_equipment",
         sourcePath: `selected_equipment[${index}].equipment_id`,
         entity: "FoundationInventory",
         inventoryId: eq.equipment_id,
-        quantity: eq.rental_duration || eq.custom_qty || 1,
-        unit: eq.rental_period || "",
-        unitCost: eq.custom_rate,
-        extendedCost: eq.equipment_cost,
+        quantity: qty,
+        unit: eq.rental_period || "day",
+        unitCost: num(breakdown.baseCost) / Math.max(num(qty, 1), 1),
+        extendedCost: breakdown.baseCost,
         builderData: eq,
-        calculation: eq,
+        calculation: { ...eq, equipment_total_with_attachments: eq.equipment_cost, base_equipment_cost: breakdown.baseCost },
       }));
     }
-    (eq.attachments || []).forEach((attachment, attachmentIndex) => {
-      const id = attachment.id || attachment.inventory_id || "";
-      if (!id) return;
+    breakdown.attachmentCosts.forEach((entry, attachmentIndex) => {
+      if (!entry.id) return;
       parts.push(makePart({
         key: `foundation:equipment:${index}:attachment:${attachmentIndex}`,
-        name: attachment.name || "Equipment attachment",
+        name: entry.row?.material_name || entry.attachment.name || "Equipment Attachment",
         type: "equipment",
-        subtype: "attachment",
+        subtype: entry.row?.material_type || "attachment",
         sourcePath: `selected_equipment[${index}].attachments[${attachmentIndex}]`,
         entity: "FoundationInventory",
-        inventoryId: id,
-        quantity: attachment.qty || 1,
-        builderData: attachment,
+        inventoryId: entry.id,
+        quantity: entry.quantity,
+        unit: eq.rental_period || "day",
+        unitCost: entry.quantity ? entry.cost / entry.quantity : entry.cost,
+        extendedCost: entry.cost,
+        builderData: entry.attachment,
+        calculation: { rental_period: eq.rental_period, rental_duration: eq.rental_duration, total_cost: entry.cost },
       }));
     });
   });
@@ -775,7 +853,7 @@ function extractFoundation(project, catalogs) {
   (project.signage_cabinets || []).forEach((cabinet, index) => {
     parts.push(makePart({
       key: `foundation:cabinet:${cabinet.id || index}`,
-      name: cabinet.description || "Signage cabinet",
+      name: cabinet.description || "Signage Cabinet",
       type: "fabrication",
       subtype: "signage_cabinet",
       sourcePath: `signage_cabinets[${index}]`,
@@ -787,6 +865,18 @@ function extractFoundation(project, catalogs) {
       calculation: cabinet,
     }));
   });
+  if (num(project.builder_calculation?.landscape_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "foundation:landscape",
+      name: "Landscape Materials",
+      type: "material",
+      subtype: "landscape",
+      sourcePath: "builder_calculation.landscape_cost",
+      cost: project.builder_calculation.landscape_cost,
+      builderData: project.landscape || {},
+      calculation: { total_cost: project.builder_calculation.landscape_cost },
+    }));
+  }
   return parts;
 }
 
