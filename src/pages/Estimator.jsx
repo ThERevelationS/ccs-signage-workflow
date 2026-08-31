@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Calculator, Plus, Search } from "lucide-react";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import EstimateCard from "@/components/estimator/EstimateCard";
 import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
+import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
 
 export default function Estimator() {
   const navigate = useNavigate();
@@ -15,11 +16,27 @@ export default function Estimator() {
   const [showNew, setShowNew] = useState(
     new URLSearchParams(window.location.search).get("new") === "1"
   );
+  const backfillStartedRef = useRef(false);
 
   const load = async () => {
     const res = await base44.entities.AllInOneEstimate.list("-created_date", 200);
-    setEstimates(res || []);
+    const rows = res || [];
+    setEstimates(rows);
     setLoading(false);
+
+    if (!backfillStartedRef.current) {
+      backfillStartedRef.current = true;
+      runHistoricalBuilderBackfill({ seedEstimates: rows })
+        .then((result) => {
+          if (result?.estimates?.length) setEstimates(result.estimates);
+        })
+        .catch((error) => {
+          // Historical conversion must never block normal estimating. A failed
+          // pass intentionally leaves the batch marker absent so the next admin
+          // visit resumes from completed per-estimate migration rows.
+          console.error("Historical Product/BOM backfill paused:", error);
+        });
+    }
   };
 
   useEffect(() => {
