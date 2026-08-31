@@ -150,11 +150,14 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     });
   } else {
     const frozen = num(builderProduct.frozen_cost, acceptedTotal);
+    const awaitingInitialFreeze = builderProduct.price_state === "unchecked" && frozen === 0;
     const nextState = builderProduct.price_state === "legacy_frozen"
       ? "legacy_frozen"
-      : Math.abs(liveTotal - frozen) > 0.005
-        ? "changed"
-        : "current";
+      : awaitingInitialFreeze
+        ? "unchecked"
+        : Math.abs(liveTotal - frozen) > 0.005
+          ? "changed"
+          : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
       estimate_line_id: lineId,
       module_key: line.module_key,
