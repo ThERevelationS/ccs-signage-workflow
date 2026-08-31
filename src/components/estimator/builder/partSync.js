@@ -424,7 +424,7 @@ function extractChannel(project) {
   return parts;
 }
 
-function extractVinyl(project) {
+function extractVinylLegacy(project) {
   const parts = [];
   (project.items || []).forEach((item, index) => {
     if (item.vinyl_id) {
@@ -556,6 +556,379 @@ function extractVinyl(project) {
       calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
     }));
   }
+  return parts;
+}
+
+function extractVinyl(project, catalogs = {}) {
+  const workflows = Array.isArray(project.workflows) ? project.workflows : [];
+  if (!workflows.length) return extractVinylLegacy(project);
+
+  const parts = [];
+  let workflowMaterialTotal = 0;
+  let workflowMachineTotal = 0;
+  let workflowLaborTotal = 0;
+  let workflowSetupTotal = 0;
+
+  const addLinkedCost = ({
+    key, name, type = "material", subtype = "", sourcePath = "", entity = "", inventoryId = "",
+    quantity = 1, unit = "job", cost = 0, builderData = {}, calculation = {}, pricingBasis = {}, includeZero = false,
+  }) => {
+    const extended = num(cost);
+    if (!includeZero && Math.abs(extended) <= 0.005) return;
+    const qty = Math.max(num(quantity, 1), 0.000001);
+    parts.push(makePart({
+      key,
+      name,
+      type,
+      subtype,
+      sourcePath,
+      entity,
+      inventoryId,
+      quantity: qty,
+      unit,
+      unitCost: extended / qty,
+      extendedCost: extended,
+      builderData,
+      calculation,
+      pricingBasis,
+    }));
+  };
+
+  const laborInventoryFor = (row = {}) => {
+    const savedId = row.inventory_id || row.labor_service_id || "";
+    if (savedId) {
+      const saved = findRow(catalogs, "LaborServiceInventory", savedId);
+      if (saved) return saved;
+    }
+    return findNameCandidate(catalogs, "LaborServiceInventory", row.role || row.name || "");
+  };
+
+  workflows.forEach((workflow, workflowIndex) => {
+    const prefix = `vinyl:workflow:${workflowIndex}`;
+    const workflowName = workflow.name || `Workflow ${workflowIndex + 1}`;
+    const printer = findRow(catalogs, "VinylMachine", workflow.printer_id);
+    const cutter = findRow(catalogs, "VinylMachine", workflow.cutter_id);
+    const laminator = findRow(catalogs, "VinylMachine", workflow.laminator_id);
+    const vinyl = findRow(catalogs, "VinylInventory", workflow.vinyl_id);
+    const laminate = findRow(catalogs, "VinylInventory", workflow.laminate_id);
+    const transferTape = findRow(catalogs, "VinylInventory", workflow.transfer_tape_id);
+    const operatorRate = printer?.operator_hourly_rate ?? cutter?.operator_hourly_rate ?? laminator?.operator_hourly_rate ?? 45;
+
+    const calc = calculateVinylProject({
+      items: workflow.items || [],
+      printer,
+      cutter,
+      laminator,
+      vinyl,
+      laminate,
+      transferTape,
+      operatorHourlyRate: operatorRate,
+      applyPrint: !!workflow.apply_print,
+      applyCut: !!workflow.apply_cut,
+      applyLaminate: !!workflow.apply_laminate,
+      applyTransferTape: !!workflow.apply_transfer_tape,
+      overrideGutterH: workflow.gutter_h_override === "" || workflow.gutter_h_override == null ? undefined : num(workflow.gutter_h_override),
+      overrideGutterV: workflow.gutter_v_override === "" || workflow.gutter_v_override == null ? undefined : num(workflow.gutter_v_override),
+      printQuality: workflow.print_quality || printer?.default_print_quality || "high_quality",
+      weedingDifficulty: workflow.weeding_difficulty || "moderate",
+      weedingMinutesPerPartOverride: workflow.weeding_minutes_per_part_override,
+      installMinutesPerPart: workflow.install_minutes_per_part,
+      personnel: workflow.personnel || [],
+      spoilageBufferPercent: num(workflow.spoilage_buffer_percent),
+      setupFeeFloor: num(workflow.setup_fee_floor),
+    });
+
+    workflowMaterialTotal += num(calc.materialCost);
+    workflowMachineTotal += num(calc.machineCost);
+    workflowLaborTotal += num(calc.laborCost);
+    workflowSetupTotal += num(calc.setupFeeApplied);
+
+    if (workflow.vinyl_id) {
+      addLinkedCost({
+        key: `${prefix}:vinyl`,
+        name: `${workflowName} — Vinyl`,
+        type: "material",
+        subtype: "vinyl",
+        sourcePath: `workflows[${workflowIndex}].vinyl_id`,
+        entity: "VinylInventory",
+        inventoryId: workflow.vinyl_id,
+        quantity: calc.totalRollSqFtPulled || 1,
+        unit: "sqft",
+        cost: calc.vinylCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { total_roll_sqft_pulled: calc.totalRollSqFtPulled, used_sqft: calc.usedSqFt, wasted_sqft: calc.wastedSqFt, vinyl_cost: calc.vinylCost },
+      });
+    }
+
+    if (workflow.apply_laminate && workflow.laminate_id) {
+      addLinkedCost({
+        key: `${prefix}:laminate`,
+        name: `${workflowName} — Laminate`,
+        type: "material",
+        subtype: "laminate",
+        sourcePath: `workflows[${workflowIndex}].laminate_id`,
+        entity: "VinylInventory",
+        inventoryId: workflow.laminate_id,
+        quantity: calc.laminateSqFt || 1,
+        unit: "sqft",
+        cost: calc.laminateCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { laminate_sqft: calc.laminateSqFt, laminate_cost: calc.laminateCost },
+      });
+    }
+
+    if (workflow.apply_transfer_tape && workflow.transfer_tape_id) {
+      addLinkedCost({
+        key: `${prefix}:transfer-tape`,
+        name: `${workflowName} — Transfer Tape`,
+        type: "material",
+        subtype: "transfer_tape",
+        sourcePath: `workflows[${workflowIndex}].transfer_tape_id`,
+        entity: "VinylInventory",
+        inventoryId: workflow.transfer_tape_id,
+        quantity: calc.transferTapeSqFt || 1,
+        unit: "sqft",
+        cost: calc.transferTapeCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { transfer_tape_sqft: calc.transferTapeSqFt, transfer_tape_cost: calc.transferTapeCost },
+      });
+    }
+
+    if (workflow.apply_print && workflow.printer_id) {
+      addLinkedCost({
+        key: `${prefix}:ink`,
+        name: `${workflowName} — Ink`,
+        type: "consumable",
+        subtype: "ink",
+        sourcePath: `workflows[${workflowIndex}].printer_id`,
+        entity: "VinylMachine",
+        inventoryId: workflow.printer_id,
+        quantity: calc.usedSqFt || 1,
+        unit: "sqft",
+        cost: calc.inkCost,
+        builderData: workflow,
+        calculation: { used_sqft: calc.usedSqFt, ink_rate_per_sqin: calc.inkRatePerSqIn, print_quality: calc.printQuality, ink_cost: calc.inkCost },
+      });
+      addLinkedCost({
+        key: `${prefix}:printer-machine`,
+        name: `${workflowName} — Printer Time`,
+        type: "equipment",
+        subtype: "printer",
+        sourcePath: `workflows[${workflowIndex}].printer_id`,
+        entity: "VinylMachine",
+        inventoryId: workflow.printer_id,
+        quantity: num(calc.printMinutes) / 60 || 1,
+        unit: num(calc.printMinutes) > 0 ? "hour" : "job",
+        cost: calc.printMachineCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { print_minutes: calc.printMinutes, print_machine_cost: calc.printMachineCost },
+      });
+    }
+
+    if (workflow.apply_cut && workflow.cutter_id) {
+      addLinkedCost({
+        key: `${prefix}:blade`,
+        name: `${workflowName} — Blade Wear`,
+        type: "consumable",
+        subtype: "blade_wear",
+        sourcePath: `workflows[${workflowIndex}].cutter_id`,
+        entity: "VinylMachine",
+        inventoryId: workflow.cutter_id,
+        quantity: num(calc.cutMinutes) || 1,
+        unit: num(calc.cutMinutes) > 0 ? "minute" : "job",
+        cost: calc.bladeCost,
+        builderData: workflow,
+        calculation: { cut_minutes: calc.cutMinutes, cut_distance_inches: calc.cutDistanceIn, blade_cost: calc.bladeCost },
+      });
+      addLinkedCost({
+        key: `${prefix}:cutter-machine`,
+        name: `${workflowName} — Cutter Time`,
+        type: "equipment",
+        subtype: "cutter",
+        sourcePath: `workflows[${workflowIndex}].cutter_id`,
+        entity: "VinylMachine",
+        inventoryId: workflow.cutter_id,
+        quantity: num(calc.cutMinutes) / 60 || 1,
+        unit: num(calc.cutMinutes) > 0 ? "hour" : "job",
+        cost: calc.cutMachineCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { cut_minutes: calc.cutMinutes, cut_machine_cost: calc.cutMachineCost },
+      });
+    }
+
+    if (workflow.apply_laminate && workflow.laminator_id) {
+      addLinkedCost({
+        key: `${prefix}:laminator-machine`,
+        name: `${workflowName} — Laminator Time`,
+        type: "equipment",
+        subtype: "laminator",
+        sourcePath: `workflows[${workflowIndex}].laminator_id`,
+        entity: "VinylMachine",
+        inventoryId: workflow.laminator_id,
+        quantity: num(calc.laminateMinutes) / 60 || 1,
+        unit: num(calc.laminateMinutes) > 0 ? "hour" : "job",
+        cost: calc.laminateMachineCost,
+        includeZero: true,
+        builderData: workflow,
+        calculation: { laminate_minutes: calc.laminateMinutes, laminate_machine_cost: calc.laminateMachineCost },
+      });
+    }
+
+    let workflowPersonnelTotal = 0;
+    (workflow.personnel || []).forEach((person, personIndex) => {
+      const personCost = num(person.total_cost, num(person.hourly_rate) * num(person.hours));
+      if (Math.abs(personCost) <= 0.005) return;
+      workflowPersonnelTotal += personCost;
+      const inventoryRow = laborInventoryFor(person);
+      addLinkedCost({
+        key: `${prefix}:personnel:${personIndex}`,
+        name: `${workflowName} — ${person.role || person.name || "Production Labor"}`,
+        type: "labor",
+        subtype: "workflow_personnel",
+        sourcePath: `workflows[${workflowIndex}].personnel[${personIndex}].inventory_id`,
+        entity: inventoryRow ? "LaborServiceInventory" : "",
+        inventoryId: person.inventory_id || inventoryRow?.id || "",
+        quantity: person.hours || 1,
+        unit: person.hours ? "hour" : "job",
+        cost: personCost,
+        builderData: person,
+        calculation: { role: person.role, hourly_rate: person.hourly_rate, hours: person.hours, total_cost: personCost },
+      });
+    });
+
+    const laborResidual = num(calc.laborCost) - workflowPersonnelTotal;
+    if (laborResidual > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:labor`,
+        name: `${workflowName} — Production Labor`,
+        type: "labor",
+        subtype: "production_labor",
+        sourcePath: `workflows[${workflowIndex}]`,
+        cost: laborResidual,
+        quantity: calc.laborHours || 1,
+        unit: calc.laborHours ? "hour" : "job",
+        builderData: workflow,
+        calculation: { labor_hours: calc.laborHours, labor_cost: calc.laborCost, residual_cost: laborResidual },
+      }));
+    }
+
+    if (num(calc.setupFeeApplied) > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:setup-floor`,
+        name: `${workflowName} — Setup Fee Floor`,
+        type: "service",
+        subtype: "setup_fee_floor",
+        sourcePath: `workflows[${workflowIndex}].setup_fee_floor`,
+        cost: calc.setupFeeApplied,
+        builderData: workflow,
+        calculation: { setup_fee_floor: workflow.setup_fee_floor, pre_floor_total: calc.preFloorTotal, setup_fee_applied: calc.setupFeeApplied },
+      }));
+    }
+  });
+
+  const baseSupplies = workflowMaterialTotal * (num(project.supplies_percent_of_materials) / 100);
+  if (baseSupplies > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:base-supplies",
+      name: "Vinyl Production Supplies",
+      type: "consumable",
+      subtype: "production_supplies",
+      sourcePath: "supplies_percent_of_materials",
+      cost: baseSupplies,
+      calculation: { supplies_percent: project.supplies_percent_of_materials, workflow_material_total: workflowMaterialTotal, base_supplies_cost: baseSupplies },
+    }));
+  }
+
+  if (num(project.extra_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:extra-supplies",
+      name: "Additional Vinyl Supplies",
+      type: "consumable",
+      subtype: "extra_supplies",
+      sourcePath: "extra_supplies_cost",
+      cost: project.extra_supplies_cost,
+    }));
+  }
+
+  let equipmentTotal = 0;
+  (project.selected_equipment || []).forEach((entry, index) => {
+    const cost = num(entry.total_cost);
+    equipmentTotal += cost;
+    const inventoryId = entry.equipment_id || "";
+    addLinkedCost({
+      key: `vinyl:equipment:${index}`,
+      name: entry.equipment_name || rowName("ChannelLetterInstallEquipment", findRow(catalogs, "ChannelLetterInstallEquipment", inventoryId)) || `Installation Equipment ${index + 1}`,
+      type: "equipment",
+      subtype: entry.equipment_type || "installation_equipment",
+      sourcePath: `selected_equipment[${index}].equipment_id`,
+      entity: "ChannelLetterInstallEquipment",
+      inventoryId,
+      quantity: entry.duration || 1,
+      unit: entry.pricing_mode === "per_hour" ? "hour" : entry.pricing_mode === "per_week" ? "week" : entry.pricing_mode === "per_month" ? "month" : entry.pricing_mode === "per_day" ? "day" : "job",
+      cost,
+      includeZero: !!inventoryId,
+      builderData: entry,
+      calculation: entry,
+    });
+  });
+
+  let projectPersonnelTotal = 0;
+  (project.personnel || []).forEach((person, index) => {
+    const cost = num(person.total_cost, num(person.hourly_rate) * num(person.hours));
+    if (Math.abs(cost) <= 0.005) return;
+    projectPersonnelTotal += cost;
+    const inventoryRow = laborInventoryFor(person);
+    addLinkedCost({
+      key: `vinyl:installation-personnel:${index}`,
+      name: person.name ? `${person.name} — ${person.role || "Installation Labor"}` : (person.role || "Installation Labor"),
+      type: "labor",
+      subtype: "installation_personnel",
+      sourcePath: `personnel[${index}].inventory_id`,
+      entity: inventoryRow ? "LaborServiceInventory" : "",
+      inventoryId: person.inventory_id || inventoryRow?.id || "",
+      quantity: person.hours || 1,
+      unit: person.hours ? "hour" : "job",
+      cost,
+      builderData: person,
+      calculation: { role: person.role, hourly_rate: person.hourly_rate, hours: person.hours, total_cost: cost },
+    });
+  });
+
+  const travelTotal = num(project.total_travel_cost);
+  if (travelTotal > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:travel",
+      name: "Travel / Fuel",
+      type: "service",
+      subtype: "travel",
+      sourcePath: "total_travel_cost",
+      cost: travelTotal,
+      quantity: project.travel_miles_round_trip || 1,
+      unit: project.travel_miles_round_trip ? "mile" : "job",
+      calculation: { miles: project.travel_miles_round_trip, total_travel_cost: travelTotal },
+    }));
+  }
+
+  const suppliesTotal = baseSupplies + num(project.extra_supplies_cost);
+  const subtotal = workflowMaterialTotal + workflowMachineTotal + workflowLaborTotal + workflowSetupTotal + equipmentTotal + projectPersonnelTotal + travelTotal + suppliesTotal;
+  const markup = subtotal * (num(project.markup_percent) / 100);
+  if (markup > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_percent",
+      cost: markup,
+      calculation: { markup_percent: project.markup_percent, subtotal, markup_amount: markup },
+    }));
+  }
+
   return parts;
 }
 
