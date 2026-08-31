@@ -261,13 +261,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   const builder = ensured.builderProduct;
   const timestamp = nowIso();
   const nextLiveTotal = num(liveTotal, sourceProjectTotal(currentLine, sourceProject));
-  const isInitialFreeze = builder?.price_state === "unchecked" && num(builder?.frozen_cost) === 0;
-  const acceptedTotal = isInitialFreeze ? nextLiveTotal : num(builder?.frozen_cost, num(currentLine.total_snapshot));
-  const priceState = isInitialFreeze
-    ? "current"
-    : Math.abs(nextLiveTotal - acceptedTotal) > 0.005
-      ? "changed"
-      : "current";
+  const previousFrozenTotal = num(builder?.frozen_cost, num(currentLine.total_snapshot));
+  const wantsInitialFreeze = builder?.price_state === "unchecked" && previousFrozenTotal === 0;
 
   let partSummary = {
     partCount: num(builder?.part_count),
@@ -276,48 +271,87 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   };
 
   if (builder) {
+    // Always detect first without accepting prices. A missing inventory link must
+    // block the initial freeze just like it blocks later Update Price actions.
     partSummary = await syncBuilderParts({
       builderProduct: builder,
       sourceProject: sourceProject || {},
-      acceptPrices: isInitialFreeze,
+      acceptPrices: false,
       legacyMode: builder.price_state === "legacy_frozen",
     });
-    const productState = partSummary.detachedCount > 0 ? "detached_parts" : priceState;
-    const nextRevision = num(builder.builder_version, 1) + (isInitialFreeze ? 1 : 0);
+  }
+
+  const canInitialFreeze = wantsInitialFreeze && partSummary.detachedCount === 0;
+  const acceptedTotal = canInitialFreeze ? nextLiveTotal : previousFrozenTotal;
+  const calculatedState = canInitialFreeze
+    ? "current"
+    : Math.abs(nextLiveTotal - acceptedTotal) > 0.005
+      ? "changed"
+      : "current";
+  const productState = partSummary.detachedCount > 0
+    ? "detached_parts"
+    : builder?.price_state === "legacy_frozen"
+      ? "legacy_frozen"
+      : calculatedState;
+
+  let initialPartChanges = [];
+  if (builder && canInitialFreeze) {
+    const partAcceptance = await acceptBuilderPartPrices(builder.id);
+    if (partAcceptance.detachedCount > 0) {
+      // Defensive second guard in case the inventory changed between detection
+      // and acceptance. Keep the product unfrozen rather than accepting partial data.
+      partSummary.detachedCount = partAcceptance.detachedCount;
+    } else {
+      initialPartChanges = partAcceptance.changedParts || [];
+    }
+  }
+
+  const initialFreezeCompleted = canInitialFreeze && partSummary.detachedCount === 0;
+  const finalAcceptedTotal = initialFreezeCompleted ? nextLiveTotal : previousFrozenTotal;
+  const finalProductState = partSummary.detachedCount > 0
+    ? "detached_parts"
+    : initialFreezeCompleted
+      ? "current"
+      : productState;
+
+  if (builder) {
+    const nextRevision = num(builder.builder_version, 1) + (initialFreezeCompleted ? 1 : 0);
     await base44.entities.BuilderProduct.update(builder.id, {
       builder_snapshot: sourceProject || {},
       builder_snapshot_at: timestamp,
       builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
       builder_snapshot_hash: snapshotHash(sourceProject || {}),
-      frozen_cost: acceptedTotal,
-      frozen_customer_price: isInitialFreeze ? acceptedTotal : num(builder.frozen_customer_price, acceptedTotal),
+      frozen_cost: finalAcceptedTotal,
+      frozen_customer_price: initialFreezeCompleted
+        ? finalAcceptedTotal
+        : num(builder.frozen_customer_price, finalAcceptedTotal),
       current_recalculated_cost: nextLiveTotal,
-      price_state: productState,
-      price_delta: nextLiveTotal - acceptedTotal,
-      price_delta_percent: acceptedTotal ? ((nextLiveTotal - acceptedTotal) / acceptedTotal) * 100 : 0,
+      price_state: finalProductState,
+      price_delta: nextLiveTotal - finalAcceptedTotal,
+      price_delta_percent: finalAcceptedTotal ? ((nextLiveTotal - finalAcceptedTotal) / finalAcceptedTotal) * 100 : 0,
       last_price_check_at: timestamp,
-      last_price_update_at: isInitialFreeze ? timestamp : builder.last_price_update_at,
+      last_price_update_at: initialFreezeCompleted ? timestamp : builder.last_price_update_at,
       builder_version: nextRevision,
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
     });
 
-    if (isInitialFreeze) {
+    if (initialFreezeCompleted) {
       await base44.entities.BuilderPriceRevision.create({
         builder_product_id: builder.id,
         estimate_id: estimateId,
         revision_number: 1,
         reason: "initial_freeze",
         previous_total_cost: 0,
-        new_total_cost: acceptedTotal,
+        new_total_cost: finalAcceptedTotal,
         previous_customer_price: 0,
-        new_customer_price: acceptedTotal,
-        changed_parts: [],
+        new_customer_price: finalAcceptedTotal,
+        changed_parts: initialPartChanges,
         builder_snapshot_before: builder.builder_snapshot || {},
         builder_snapshot_after: sourceProject || {},
         price_snapshot_before: { total: 0 },
-        price_snapshot_after: { total: acceptedTotal },
+        price_snapshot_after: { total: finalAcceptedTotal },
         notes: "Initial accepted/frozen product price.",
       });
     }
@@ -331,11 +365,13 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       builder_product_id: builder?.id || item.builder_product_id,
       builder_name: item.builder_name || ensured.line.builder_name,
       client_product_name: item.client_product_name || ensured.line.client_product_name,
-      total_snapshot: acceptedTotal,
+      total_snapshot: finalAcceptedTotal,
       live_total_snapshot: nextLiveTotal,
-      price_state: priceState,
+      price_state: finalProductState,
+      detached_part_count: partSummary.detachedCount,
+      needs_reattach_review: partSummary.detachedCount > 0,
       last_price_check_at: timestamp,
-      last_price_update_at: isInitialFreeze ? timestamp : item.last_price_update_at,
+      last_price_update_at: initialFreezeCompleted ? timestamp : item.last_price_update_at,
       updated_date_snapshot: sourceProject?.updated_date || timestamp,
     };
   });
