@@ -6,6 +6,39 @@
     "product_name": {
       "type": "string"
     },
+    "template_version": {
+      "type": "number",
+      "default": 2,
+      "description": "Quick Product package version. Version 2+ stores a lossless Product/Builder/Parts/Groups snapshot."
+    },
+    "source_product_class": {
+      "type": "string",
+      "enum": [
+        "custom",
+        "builder",
+        "legacy"
+      ],
+      "default": "custom"
+    },
+    "source_module_key": {
+      "type": "string"
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "Dedicated Builder source entity, e.g. FoundationProject. Blank for Custom Products."
+    },
+    "source_builder_name": {
+      "type": "string"
+    },
+    "product_category": {
+      "type": "string"
+    },
+    "created_from_product_id": {
+      "type": "string"
+    },
+    "created_from_estimate_id": {
+      "type": "string"
+    },
     "product_group": {
       "type": "string",
       "enum": [
@@ -49,6 +82,51 @@
     },
     "product_notes": {
       "type": "string"
+    },
+    "client_description": {
+      "type": "string"
+    },
+    "product_snapshot": {
+      "type": "object",
+      "description": "Complete normalized BuilderProduct + estimate-line metadata needed to recreate the Product losslessly.",
+      "additionalProperties": true
+    },
+    "builder_snapshot": {
+      "type": "object",
+      "description": "Complete dedicated Builder/source-project payload. For Builder Products this is the full estimator configuration, not a flattened price summary.",
+      "additionalProperties": true
+    },
+    "builder_snapshot_hash": {
+      "type": "string"
+    },
+    "parts_snapshot": {
+      "type": "array",
+      "description": "Complete BuilderPart records, including master inventory references, frozen/current inventory snapshots, calculation snapshots and detach state.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "part_groups_snapshot": {
+      "type": "array",
+      "description": "Complete Part Group records. Child Part group links are remapped when the Quick Product is instantiated.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "price_snapshot": {
+      "type": "object",
+      "description": "Frozen/current Product pricing state at the time the Quick Product was saved.",
+      "additionalProperties": true
+    },
+    "detached_part_count": {
+      "type": "number",
+      "default": 0
+    },
+    "needs_reattach_review": {
+      "type": "boolean",
+      "default": false
     },
     "parts": {
       "type": "array",
