@@ -66,6 +66,8 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
   const timestamp = nowIso();
   const existingParts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
   const activeParts = (existingParts || []).filter((part) => part.is_active !== false);
+  const isCustomProduct = builder.module_key === "custom";
+  const syncState = isCustomProduct ? "manual" : "manual_addon";
   const created = await base44.entities.BuilderPart.create({
     builder_product_id: builderProductId,
     part_key: `manual-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
@@ -75,7 +77,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     part_subtype: catalogItem.subtype || catalogItem.categoryKey,
     source_module_key: builder.module_key || "custom",
     source_path: "",
-    builder_sync_state: "manual",
+    builder_sync_state: syncState,
     inventory_entity: catalogItem.entity,
     inventory_item_id: catalogItem.inventoryId,
     original_inventory_item_id: catalogItem.inventoryId,
@@ -139,7 +141,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal },
     price_snapshot_after: { total: nextTotal },
-    notes: `Added ${catalogItem.name} from Master Inventory.`,
+    notes: `${isCustomProduct ? "Added" : "Added independent add-on"} ${catalogItem.name} from Master Inventory.`,
   });
   return created;
 }
