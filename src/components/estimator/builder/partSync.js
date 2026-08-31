@@ -1726,7 +1726,10 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
 
   const detached = await getDetachedBuilderParts(builderProductId);
   const selectedIds = new Set(partIds);
-  const selected = detached.filter((part) => selectedIds.has(part.id) && part.reattach_candidate_id);
+  const selected = detached.filter((part) =>
+    selectedIds.has(part.id) &&
+    (part.builder_sync_state === "detached_override" || part.reattach_candidate_id)
+  );
   if (!selected.length) {
     return { reattached: [], remainingDetached: detached };
   }
@@ -1737,18 +1740,29 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
   const reattached = [];
 
   for (const part of selected) {
-    const changed = setAtPath(patchedSource, part.source_path, part.reattach_candidate_id);
-    if (!changed) continue;
-    const root = topLevelField(part.source_path);
-    if (root) changedRoots.add(root);
+    const builderOverride = part.builder_sync_state === "detached_override";
+    if (builderOverride) {
+      await base44.entities.BuilderPart.update(part.id, {
+        builder_sync_state: "linked",
+        builder_detached_at: "",
+        builder_detached_reason: "",
+        price_state: "changed",
+      });
+    } else {
+      const changed = setAtPath(patchedSource, part.source_path, part.reattach_candidate_id);
+      if (!changed) continue;
+      const root = topLevelField(part.source_path);
+      if (root) changedRoots.add(root);
+    }
     reattached.push({
       part_id: part.id,
       part_key: part.part_key,
       part_name: part.part_name,
+      reattach_type: builderOverride ? "builder_override" : "inventory_replacement",
       previous_inventory_item_id: part.inventory_item_id || part.original_inventory_item_id || "",
-      current_inventory_item_id: part.reattach_candidate_id,
+      current_inventory_item_id: part.reattach_candidate_id || part.inventory_item_id || "",
       previous_inventory_name: part.inventory_item_name || "",
-      current_inventory_name: part.reattach_candidate_name || "",
+      current_inventory_name: part.reattach_candidate_name || part.inventory_item_name || "",
       frozen_unit_cost: num(part.frozen_unit_cost),
       frozen_extended_cost: num(part.frozen_extended_cost),
       source_path: part.source_path,
@@ -1763,7 +1777,9 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
   changedRoots.forEach((root) => {
     sourcePatch[root] = patchedSource[root];
   });
-  await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
+  if (Object.keys(sourcePatch).length > 0) {
+    await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
+  }
 
   // Refresh Part linkage/current snapshots only. This intentionally does NOT
   // accept the new pricing; frozen costs remain exactly as quoted.
