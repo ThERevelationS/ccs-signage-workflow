@@ -55,6 +55,7 @@ export function sourceProjectTotal(line, record) {
     const known = [
       "total_concrete_cost",
       "total_rebar_cost",
+      "total_excavation_cost",
       "total_forming_materials_cost",
       "total_labor_cost",
       "total_wall_cost",
