@@ -421,7 +421,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onSelect={togglePartSelection}
-            onChanged={() => setRefreshNonce((value) => value + 1)}
+            onChanged={async () => {
+              setRefreshNonce((value) => value + 1);
+              await onProductRefresh?.();
+            }}
             builderProductId={builderProductId}
             totalGroups={groups.length}
             onEditBuilder={onEditBuilder}
