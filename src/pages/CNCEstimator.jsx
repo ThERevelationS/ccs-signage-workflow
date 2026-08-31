@@ -76,7 +76,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId, embe
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "cnc" },
-          sourceProject: savedProject,
+          sourceProject: {
+            ...savedProject,
+            items: calc.items,
+            builder_calculation: { totals: calc.totals },
+          },
           liveTotal: t.total_cost,
         });
       }
