@@ -577,33 +577,72 @@ function extractMetal(project) {
 }
 
 function extractBrick(project) {
-  if (!project.selected_material_id) return [];
-  const qty = num(project.calculated_bricks, 1);
-  return [makePart({
-    key: "brick:primary-material",
-    name: project.material_name || "Brick / stone material",
-    type: "material",
-    subtype: "brick_stone",
-    sourcePath: "selected_material_id",
-    entity: "BrickStoneInventory",
-    inventoryId: project.selected_material_id,
-    quantity: qty,
-    unit: "unit",
-    unitCost: qty ? num(project.material_cost) / qty : 0,
-    extendedCost: project.material_cost,
-    builderData: {
-      material_dimensions: project.material_dimensions,
-      bricks_along_length: project.bricks_along_length,
-      bricks_along_width: project.bricks_along_width,
-      courses_high: project.courses_high,
-      layers: project.layers,
-    },
-    calculation: {
-      calculated_bricks: project.calculated_bricks,
-      material_cost: project.material_cost,
-      mortar_cost: project.mortar_cost,
-    },
-  })];
+  const parts = [];
+  if (project.selected_material_id) {
+    const qty = num(project.calculated_bricks, 1);
+    parts.push(makePart({
+      key: "brick:primary-material",
+      name: project.material_name || "Brick / Stone Material",
+      type: "material",
+      subtype: "brick_stone",
+      sourcePath: "selected_material_id",
+      entity: "BrickStoneInventory",
+      inventoryId: project.selected_material_id,
+      quantity: qty,
+      unit: "unit",
+      unitCost: qty ? num(project.material_cost) / qty : 0,
+      extendedCost: project.material_cost,
+      builderData: {
+        material_dimensions: project.material_dimensions,
+        bricks_along_length: project.bricks_along_length,
+        bricks_along_width: project.bricks_along_width,
+        courses_high: project.courses_high,
+        layers: project.layers,
+      },
+      calculation: {
+        calculated_bricks: project.calculated_bricks,
+        material_cost: project.material_cost,
+      },
+    }));
+  }
+  if (num(project.mortar_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "brick:mortar",
+      name: "Mortar",
+      type: "consumable",
+      subtype: "mortar",
+      sourcePath: "mortar_cost",
+      cost: project.mortar_cost,
+      quantity: project.mortar_bags_needed || 1,
+      unit: project.mortar_bags_needed ? "bag" : "job",
+      calculation: { mortar_bags_needed: project.mortar_bags_needed, mortar_bag_cost: project.mortar_bag_cost },
+    }));
+  }
+  if (num(project.labor_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "brick:labor",
+      name: "Masonry Labor",
+      type: "labor",
+      subtype: "masonry_labor",
+      sourcePath: "labor_cost",
+      cost: project.labor_cost,
+      quantity: project.labor_hours || 1,
+      unit: project.labor_hours ? "hour" : "job",
+      calculation: { labor_hours: project.labor_hours, labor_rate_per_hour: project.labor_rate_per_hour },
+    }));
+  }
+  if (num(project.markup_amount) > 0.005) {
+    parts.push(manualCostPart({
+      key: "brick:markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_amount",
+      cost: project.markup_amount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+    }));
+  }
+  return parts;
 }
 
 function extractMaintenance(project) {
