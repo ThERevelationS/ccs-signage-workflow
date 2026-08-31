@@ -28,14 +28,15 @@ export default function Estimator() {
     if (!backfillStartedRef.current) {
       backfillStartedRef.current = true;
       runHistoricalBuilderBackfill({ seedEstimates: rows })
-        .then((result) => {
+        .then(async (result) => {
           if (result?.estimates?.length) setEstimates(result.estimates);
+          await runLegacyBomReconcile();
         })
         .catch((error) => {
-          // Historical conversion must never block normal estimating. A failed
-          // pass intentionally leaves the batch marker absent so the next admin
-          // visit resumes from completed per-estimate migration rows.
-          console.error("Historical Product/BOM backfill paused:", error);
+          // Historical conversion/reconciliation must never block normal estimating.
+          // Each migration writes its completion marker last, so the next admin
+          // visit can resume safely if either pass is interrupted.
+          console.error("Historical Product/BOM migration paused:", error);
         });
     }
   };
