@@ -4,9 +4,11 @@ export function computePricing(estimate) {
   const lines = estimate.line_items || [];
 
   const sections = lines.map((line) => {
-    const raw = Number(line.total_snapshot || 0);
+    const unitRaw = Number(line.total_snapshot || 0);
+    const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
+    const raw = unitRaw * quantity;
     const adj = Number(line.adjustment_percent || 0);
-    return { ...line, raw, adjusted: raw * (1 + adj / 100) };
+    return { ...line, unitRaw, quantity, raw, adjusted: raw * (1 + adj / 100) };
   });
 
   const rawTotal = sections.reduce((s, l) => s + l.raw, 0);
