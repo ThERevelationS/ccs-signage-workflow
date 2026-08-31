@@ -34,6 +34,10 @@
     "client_description": {
       "type": "string"
     },
+    "product_category": {
+      "type": "string",
+      "description": "User-defined Product Category used for estimate organization, filtering, quoting, Quick Products and clipboard metadata."
+    },
     "quantity": {
       "type": "number",
       "default": 1
