@@ -424,6 +424,19 @@ Deno.serve(async (req) => {
           });
         }
       }
+      for (const [sourceId, targetId] of legacyConcreteOverrides) {
+        const key = `FoundationInventory|${sourceId}`;
+        if (existingKeys.has(key)) continue;
+        records.push({
+          source_app_id: SOURCE_APP_ID,
+          source_entity: 'FoundationInventory',
+          source_id: sourceId,
+          target_entity: 'LaborServiceInventory',
+          target_id: targetId,
+          migration_batch: REF_BATCH,
+          notes: 'Historical concrete supplier row was already deleted in source; mapped to hidden CCS compatibility row using SignEstimate Pro fallback pricing.',
+        });
+      }
       mappingRecordsCreated = (await bulkCreateChecked(base44.asServiceRole.entities.LegacyMigrationMap, records)).length;
     }
 
