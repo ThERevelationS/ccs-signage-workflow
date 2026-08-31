@@ -15,9 +15,11 @@ import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 import {
   acceptBuilderPrice,
+  deleteBuilderProductCascade,
   ensureBuilderProductForLine,
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
+import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
 const STEP_TITLES = {
@@ -43,8 +45,14 @@ export default function EstimateDetail() {
     }
     base44.entities.AllInOneEstimate.get(id).then(async (res) => {
       const withBuilders = await ensureEstimateBuilderProducts(res);
-      const line_items = await refreshSectionSnapshots(withBuilders.line_items);
-      setEstimate({ ...withBuilders, line_items });
+      for (const line of withBuilders.line_items || []) {
+        if (line.module_key === "custom" && line.builder_product_id) {
+          await refreshManualProductPricing(line.builder_product_id);
+        }
+      }
+      const current = await base44.entities.AllInOneEstimate.get(id);
+      const line_items = await refreshSectionSnapshots(current.line_items);
+      setEstimate({ ...current, line_items });
       setLoading(false);
     });
   }, [id]);
@@ -66,8 +74,14 @@ export default function EstimateDetail() {
   const refreshProducts = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
     const withBuilders = await ensureEstimateBuilderProducts(current);
-    const line_items = await refreshSectionSnapshots(withBuilders.line_items);
-    setEstimate((prev) => ({ ...prev, ...withBuilders, line_items }));
+    for (const line of withBuilders.line_items || []) {
+      if (line.module_key === "custom" && line.builder_product_id) {
+        await refreshManualProductPricing(line.builder_product_id);
+      }
+    }
+    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const line_items = await refreshSectionSnapshots(refreshed.line_items);
+    setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
   };
 
   const removeLine = async (index) => {
