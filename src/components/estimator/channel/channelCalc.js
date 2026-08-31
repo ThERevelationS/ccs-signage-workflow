@@ -57,7 +57,7 @@ export function calcChannelProject(project, inventory, equipmentCatalog) {
       : 0;
     item.labor_cost = item.labor_hours * laborRate;
     item.materials_cost = includeInstall
-      ? (item.materials || []).reduce((s, m) => s + materialCost(invMap.get(m.inventory_id), item), 0)
+      ? (item.materials || []).reduce((s, m) => s + materialCost(invMap.get(m.inventory_id || m.inventory_item_id), item), 0)
       : 0;
     item.item_total_cost = item.labor_cost + item.materials_cost;
     return item;
