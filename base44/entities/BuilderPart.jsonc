@@ -101,6 +101,11 @@
       "description": "Last current inventory row seen during price/detach checking. Does not alter frozen pricing by itself.",
       "additionalProperties": true
     },
+    "detail_overrides": {
+      "type": "object",
+      "description": "Estimate-specific type/detail overrides layered over frozen_inventory_snapshot for this Part only. Never mutates the Master Inventory snapshot and is cleared when a detached Builder Part is reattached.",
+      "additionalProperties": true
+    },
     "builder_data": {
       "type": "object",
       "description": "Complete module-specific part/builder inputs.",
