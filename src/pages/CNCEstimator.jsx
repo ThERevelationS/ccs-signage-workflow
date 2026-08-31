@@ -217,34 +217,61 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const saveProject = async () => {
-    if (!project.project_name || !project.client_name) {
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
       return;
     }
-    
-    setIsSaving(true);
-    setIsDirty(false);
-    try {
-      const { totalMachine, totalLabor } = calculateTotals();
-      const finalProject = { ...project, total_machine_cost: totalMachine, total_labor_cost: totalLabor, status: 'calculated' }
 
-      let savedId = editId;
+    setIsSaving(true);
+    try {
+      const totals = calculateTotals();
+      const totalCost = totals.totalMachine + totals.totalLabor;
+      const finalProject = {
+        ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        total_machine_cost: totals.totalMachine,
+        total_labor_cost: totals.totalLabor,
+        total_cost: totalCost,
+        status: 'calculated',
+      };
+
+      let saved;
       if (isEditing && editId) {
-        await CNCProject.update(editId, finalProject);
+        saved = await CNCProject.update(editId, finalProject);
       } else {
-        const created = await CNCProject.create(finalProject);
-        savedId = created?.id;
+        saved = await CNCProject.create(finalProject);
+        setIsEditing(true);
       }
-      await upsertCustomerSummaryForEstimate({
-        module: "cnc",
-        client_name: project.client_name,
-        project_id: savedId,
-        project_name: project.project_name,
-        estimate_number: project.estimate_number,
-      });
-      // Inside the All-In-One estimator we stay put — the parent live-syncs the
-      // total and the user collapses the section themselves.
-      if (!embedded) navigate(createPageUrl("CNCProjects"));
+      const savedId = saved?.id || editId;
+
+      if (estimateId && savedId) {
+        const refreshed = await CNCProject.get(savedId).catch(() => ({ ...finalProject, id: savedId }));
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: savedId, module_key: "cnc" },
+          sourceProject: {
+            ...refreshed,
+            builder_calculation: {
+              totals: {
+                total_machine_cost: totals.totalMachine,
+                total_labor_cost: totals.totalLabor,
+                total_setup_hours: totals.totalSetupHours,
+                dynamic_labor_from_items: totals.dynamicLaborFromItems,
+                fixed_setup_cost: totals.fixedSetupCost,
+                min_labor_hours: totals.minLaborHours,
+                minimum_dynamic_labor_adjustment: totals.minimumDynamicLaborAdjustment,
+                total_cost: totalCost,
+              },
+            },
+          },
+          liveTotal: totalCost,
+        });
+      }
+
+      onSaved?.();
+      if (!embedded) navigate('/Estimator');
     } catch (error) {
       console.error('Error saving project:', error);
       alert('Error saving project. Please try again.');
