@@ -116,7 +116,15 @@ export default function EstimateDetail() {
   };
 
   const updateProductPrice = async (line) => {
-    await acceptBuilderPrice({ estimateId: estimate.id, line });
+    const result = await acceptBuilderPrice({ estimateId: estimate.id, line });
+    if (result?.blocked && result.reason === "detached_parts") {
+      const names = (result.detachedParts || [])
+        .map((part) => part.part_name || part.inventory_item_name)
+        .filter(Boolean);
+      window.alert(
+        `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
+      );
+    }
     await refreshProducts();
   };
 
