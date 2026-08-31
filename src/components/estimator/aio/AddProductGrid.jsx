@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
+import { listQuickProducts } from "@/components/estimator/products/quickProductService";
+import { money } from "@/components/estimator/aioPricing";
 
 const META = {
   channel_letters: {
@@ -93,12 +95,14 @@ const getMeta = (key) =>
     keywords: "",
   };
 
-export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, className = "" }) {
+export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, className = "" }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [addingKey, setAddingKey] = useState(null);
   const [customNameOpen, setCustomNameOpen] = useState(false);
   const [customName, setCustomName] = useState("Custom Product");
+  const [quickProducts, setQuickProducts] = useState([]);
+  const [quickLoading, setQuickLoading] = useState(false);
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -107,6 +111,11 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
       return;
     }
     const timer = setTimeout(() => searchRef.current?.focus(), 80);
+    setQuickLoading(true);
+    listQuickProducts()
+      .then((rows) => setQuickProducts(rows || []))
+      .catch(() => setQuickProducts([]))
+      .finally(() => setQuickLoading(false));
     return () => clearTimeout(timer);
   }, [open]);
 
@@ -116,6 +125,21 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
     const haystack = "blank custom product manual parts inventory build your own product";
     return q.split(/\s+/).every((term) => haystack.includes(term));
   }, [query]);
+
+  const quickResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return quickProducts.filter((product) => {
+      if (!q) return true;
+      const haystack = [
+        product.product_name,
+        product.source_builder_name,
+        product.source_module_key,
+        product.product_category,
+        ...(product.categories || []),
+      ].filter(Boolean).join(" ").toLowerCase();
+      return q.split(/\s+/).every((term) => haystack.includes(term));
+    });
+  }, [quickProducts, query]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -157,6 +181,17 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
     try {
       await onAddCustom?.(customName.trim() || "Custom Product");
       setCustomNameOpen(false);
+    } finally {
+      setAddingKey(null);
+    }
+  };
+
+  const handleAddQuick = async (quickProduct) => {
+    if (!quickProduct || addingKey) return;
+    setAddingKey(`quick:${quickProduct.id}`);
+    try {
+      await onAddQuickProduct?.(quickProduct);
+      setOpen(false);
     } finally {
       setAddingKey(null);
     }
