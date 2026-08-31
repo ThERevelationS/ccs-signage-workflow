@@ -59,10 +59,6 @@
       "type": "number",
       "default": 1
     },
-    "is_vended": {
-      "type": "boolean",
-      "default": false
-    },
     "is_active": {
       "type": "boolean",
       "default": true
