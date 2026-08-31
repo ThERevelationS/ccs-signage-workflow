@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
+import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -156,6 +157,8 @@ export async function loadBuilderCatalogs(moduleKey) {
     vinyl: [
       ["VinylInventory", "vinyl_name"],
       ["VinylMachine", "sort_order"],
+      ["LaborServiceInventory", "service_name"],
+      ["ChannelLetterInstallEquipment", "sort_order"],
     ],
     metal: [["Inventory", "material_type"]],
     brick_stone: [["BrickStoneInventory", "material_name"]],
@@ -171,7 +174,7 @@ export async function loadBuilderCatalogs(moduleKey) {
   );
   const catalogs = {};
   loaded.forEach(([entity, rows]) => {
-    const filtered = entity === "LaborServiceInventory"
+    const filtered = entity === "LaborServiceInventory" && moduleKey === "foundation"
       ? rows.filter((row) => row.service_category === "concrete_service")
       : rows;
     catalogs[entity] = {
