@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, Save } from "lucide-react";
 import LaserItemCard from "@/components/estimator/laser/LaserItemCard";
 import LaserTotals from "@/components/estimator/laser/LaserTotals";
 import { calcLaserProject } from "@/components/estimator/laser/laserCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const blankItem = () => ({
   description: "",
@@ -75,13 +76,13 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId, em
       });
 
       if (estimateId) {
-        const est = await base44.entities.AllInOneEstimate.get(estimateId);
-        const line_items = (est.line_items || []).map((l) =>
-          l.project_id === project.id
-            ? { ...l, total_snapshot: t.total_cost, updated_date_snapshot: new Date().toISOString() }
-            : l
-        );
-        await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
+        const savedProject = await base44.entities.LaserProject.get(project.id);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "laser" },
+          sourceProject: savedProject,
+          liveTotal: t.total_cost,
+        });
       }
       onSaved?.();
     } finally {
