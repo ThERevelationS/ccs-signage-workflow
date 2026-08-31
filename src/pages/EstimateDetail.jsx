@@ -90,6 +90,7 @@ export default function EstimateDetail() {
     setEstimate((prev) => ({ ...prev, line_items }));
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     await deleteOwnedSection(line);
+    if (line.builder_product_id) await deleteBuilderProductCascade(line.builder_product_id);
   };
 
   const addSection = async (mod) => {
@@ -127,6 +128,13 @@ export default function EstimateDetail() {
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     setEstimate((prev) => ({ ...prev, line_items }));
     setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
+  };
+
+  const addCustomSection = async (name = "Custom Product") => {
+    const result = await createCustomProduct({ estimate, name });
+    const line_items = [...(estimate.line_items || []), result.line];
+    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    setEstimate((prev) => ({ ...prev, line_items }));
   };
 
   const updateProductPrice = async (line) => {
@@ -267,7 +275,7 @@ export default function EstimateDetail() {
             ) : (
               <>
                 <div className="flex justify-end">
-                  <AddProductGrid counts={counts} onAdd={addSection} />
+                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} />
                 </div>
                 <EstimateProductsList
                   lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
@@ -279,7 +287,7 @@ export default function EstimateDetail() {
                   onProductRefresh={refreshProducts}
                 />
                 <div className="flex justify-end pt-1">
-                  <AddProductGrid counts={counts} onAdd={addSection} />
+                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} />
                 </div>
               </>
             )
