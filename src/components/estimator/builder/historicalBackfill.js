@@ -13,6 +13,13 @@ function fullyBackfilled(estimate) {
   return (estimate?.line_items || []).every((line) => !!line.line_id && !!line.builder_product_id);
 }
 
+async function verifyBuilderLinks(estimate) {
+  if (!fullyBackfilled(estimate)) return false;
+  const products = await base44.entities.BuilderProduct.filter({ estimate_id: estimate.id }).catch(() => []);
+  const productIds = new Set((products || []).map((product) => product.id));
+  return (estimate?.line_items || []).every((line) => productIds.has(line.builder_product_id));
+}
+
 function acquireLocalLock() {
   try {
     const raw = window.localStorage.getItem(LOCAL_LOCK_KEY);
@@ -120,7 +127,7 @@ export async function runHistoricalBuilderBackfill({ seedEstimates = [] } = {}) 
       for (const estimate of pending) {
         const fresh = await base44.entities.AllInOneEstimate.get(estimate.id);
         const converted = await ensureEstimateBuilderProducts(fresh);
-        if (!fullyBackfilled(converted)) {
+        if (!(await verifyBuilderLinks(converted))) {
           throw new Error(`Historical Product/BOM backfill did not fully materialize estimate ${estimate.id}.`);
         }
         await markEstimateComplete(converted);
