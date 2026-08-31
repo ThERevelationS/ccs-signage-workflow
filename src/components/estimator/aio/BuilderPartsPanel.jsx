@@ -11,7 +11,10 @@ import {
   Unlink,
 } from "lucide-react";
 import CreatePartGroupModal from "./CreatePartGroupModal";
+import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
+import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import { base44 } from "@/api/base44Client";
+import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
 import { money } from "@/components/estimator/aioPricing";
 
 const num = (value, fallback = 0) =>
@@ -35,8 +38,10 @@ const priceStateMeta = (part) => {
   return { label: "Price current", className: "bg-green-50 text-green-700 border-green-200", icon: Link2 };
 };
 
-function PartRow({ part, index, selectionMode = false, selected = false, onSelect }) {
+function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder }) {
   const [open, setOpen] = useState(false);
+  const [warningOpen, setWarningOpen] = useState(false);
+  const [overrideOpen, setOverrideOpen] = useState(false);
   const frozen = num(part.frozen_extended_cost);
   const current = num(part.current_extended_cost, frozen);
   const differs = Math.abs(current - frozen) > 0.005;
@@ -76,7 +81,20 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
       </div>
 
       {open && (
-        <div className="border-t border-gray-200 bg-gray-50 px-3 py-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="text-[10px] text-gray-500">
+              {part.builder_sync_state === "detached_override" ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
+            </div>
+            <button
+              type="button"
+              onClick={() => part.builder_sync_state === "detached_override" ? setOverrideOpen(true) : setWarningOpen(true)}
+              className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
+            >
+              {part.builder_sync_state === "detached_override" ? "Edit Override" : "Edit Part"}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <section className="rounded border border-gray-200 bg-white p-3">
             <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">PART INFORMATION</div>
             <dl className="space-y-1.5 text-[11px]">
@@ -106,13 +124,40 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
               <div className="flex justify-between gap-3"><dt className="text-gray-500">Current extended</dt><dd className={differs ? "font-semibold text-amber-700" : "font-semibold text-gray-800"}>{money(current)}</dd></div>
             </dl>
           </section>
+          </div>
         </div>
       )}
+
+      <BuilderPartEditWarningModal
+        open={warningOpen}
+        part={part}
+        onCancel={() => setWarningOpen(false)}
+        onEditBuilder={() => {
+          setWarningOpen(false);
+          onEditBuilder?.();
+        }}
+        onDetach={async () => {
+          await detachBuilderPartOverride(part.id);
+          setWarningOpen(false);
+          setOverrideOpen(true);
+          await onChanged?.();
+        }}
+      />
+      <DetachedPartOverrideModal
+        open={overrideOpen}
+        part={part}
+        onClose={() => setOverrideOpen(false)}
+        onSave={async (changes) => {
+          await updateDetachedPartOverride(part.id, changes);
+          setOverrideOpen(false);
+          await onChanged?.();
+        }}
+      />
     </div>
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
@@ -207,6 +252,8 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               selectionMode={selectionMode}
               selected={selectedIds.has(part.id)}
               onSelect={onSelect}
+              onChanged={onChanged}
+              onEditBuilder={onEditBuilder}
             />
           ))}
         </div>
@@ -215,7 +262,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -377,6 +424,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             onChanged={() => setRefreshNonce((value) => value + 1)}
             builderProductId={builderProductId}
             totalGroups={groups.length}
+            onEditBuilder={onEditBuilder}
           />
         );
         offset += groupParts.length;
@@ -390,6 +438,11 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           selectionMode={selectionMode}
           selected={selectedIds.has(part.id)}
           onSelect={togglePartSelection}
+          onChanged={async () => {
+            setRefreshNonce((value) => value + 1);
+            await onProductRefresh?.();
+          }}
+          onEditBuilder={onEditBuilder}
         />
       ))}
 
