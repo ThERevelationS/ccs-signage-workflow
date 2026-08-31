@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import EstimateCard from "@/components/estimator/EstimateCard";
 import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
+import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
 
 export default function Estimator() {
   const navigate = useNavigate();
