@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { AlertTriangle, CheckCircle2, LockKeyhole, Pencil, Percent, RefreshCw, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Layers3, LockKeyhole, Pencil, Percent, RefreshCw, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
+import BuilderPartsPanel from "./BuilderPartsPanel";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -68,6 +69,8 @@ export default function ProductRow({
   onUpdatePrice,
 }) {
   const [open, setOpen] = useState(false);
+  const [partsOpen, setPartsOpen] = useState(true);
+  const [partCount, setPartCount] = useState(0);
   const [updatingPrice, setUpdatingPrice] = useState(false);
   const set = (patch) => onChange(index, patch);
   const frozen = Number(line.total_snapshot || 0);
@@ -87,15 +90,23 @@ export default function ProductRow({
   };
 
   return (
-    <div className="border-b border-gray-100 last:border-b-0">
-      <div className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50">
+    <div className="border border-gray-300 rounded-sm overflow-hidden bg-white shadow-sm">
+      <div className="px-3 py-2.5 flex items-center gap-2.5 bg-white border-l-[4px] border-lime-300 hover:bg-gray-50">
+        <button
+          type="button"
+          onClick={() => setPartsOpen((value) => !value)}
+          className="w-[26px] h-[26px] rounded border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 flex-shrink-0"
+          title={partsOpen ? "Collapse Product Parts" : "Expand Product Parts"}
+        >
+          {partsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[13px] font-bold text-gray-900 truncate">
               {line.client_product_name || line.project_name || getModuleLabel(line.module_key)}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100">
-              Builder: {line.builder_name || getModuleLabel(line.module_key)}
+            <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#454545] text-white border border-gray-700 inline-flex items-center gap-1">
+              <Layers3 className="w-3 h-3 text-lime-300" /> BUILDER · {line.builder_name || getModuleLabel(line.module_key)}
             </span>
             {line.owned && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
@@ -109,6 +120,7 @@ export default function ProductRow({
           <div className="text-[10px] text-gray-400 mt-0.5">
             {line.project_name && line.project_name !== line.client_product_name ? `Source: ${line.project_name} · ` : ""}
             {line.section_status === "complete" ? "complete" : "in progress"}
+            {` · ${partCount} Part${partCount === 1 ? "" : "s"}`}
             {line.linked_date ? ` · added ${new Date(line.linked_date).toLocaleDateString()}` : ""}
           </div>
         </div>
@@ -174,7 +186,7 @@ export default function ProductRow({
       </div>
 
       {open && (
-        <div className="px-4 pb-3 pt-2 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="px-4 pb-3 pt-2 bg-gray-50 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Field
             label="CLIENT PRODUCT NAME"
             value={line.client_product_name || line.project_name || ""}
@@ -230,6 +242,14 @@ export default function ProductRow({
             />
           </div>
         </div>
+      )}
+
+      {partsOpen && (
+        <BuilderPartsPanel
+          builderProductId={line.builder_product_id}
+          refreshKey={`${line.last_price_check_at || ""}:${line.last_price_update_at || ""}:${line.price_state || ""}`}
+          onLoaded={setPartCount}
+        />
       )}
     </div>
   );
