@@ -343,6 +343,7 @@ export default function ProductRow({
             />
           </div>
         </div>
+        </div>
       )}
 
       <CreateQuickProductModal
