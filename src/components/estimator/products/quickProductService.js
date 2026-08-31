@@ -70,7 +70,10 @@ export async function saveProductAsQuickProduct({
     builder_snapshot: stripSystemFields(builderSnapshot),
     builder_snapshot_hash: builder.builder_snapshot_hash || snapshotHash(builderSnapshot),
     parts_snapshot: activeParts.map(stripSystemFields),
-    part_groups_snapshot: activeGroups.map(stripSystemFields),
+    part_groups_snapshot: activeGroups.map((group) => ({
+      ...stripSystemFields(group),
+      snapshot_source_group_id: group.id,
+    })),
     price_snapshot: {
       frozen_cost: frozenTotal,
       frozen_customer_price: num(builder.frozen_customer_price, frozenTotal),
@@ -163,7 +166,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const groupMap = new Map();
   const groups = (quickProduct.part_groups_snapshot || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   for (const group of groups) {
-    const originalId = group.id || group.group_key || makeStableId("source-group");
+    const originalId = group.snapshot_source_group_id || group.group_key || makeStableId("source-group");
     const created = await base44.entities.BuilderPartGroup.create({
       ...stripSystemFields(group),
       builder_product_id: newBuilder.id,
