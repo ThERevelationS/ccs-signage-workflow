@@ -1675,6 +1675,102 @@ export async function getDetachedBuilderParts(builderProductId) {
     }));
 }
 
+export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.") {
+  if (!partId) return null;
+  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
+  if (!part) throw new Error("The Part could not be loaded.");
+  if (part.builder_sync_state === "detached_override") return part;
+
+  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id).catch(() => null);
+  if (!builder) throw new Error("The Builder Product could not be loaded.");
+
+  const timestamp = nowIso();
+  const detachedSnapshot = {
+    part_name: part.part_name,
+    client_label: part.client_label,
+    quantity: part.quantity,
+    unit: part.unit,
+    inventory_entity: part.inventory_entity,
+    inventory_item_id: part.inventory_item_id,
+    inventory_item_name: part.inventory_item_name,
+    frozen_unit_cost: num(part.frozen_unit_cost),
+    frozen_extended_cost: num(part.frozen_extended_cost),
+    builder_data: part.builder_data || {},
+    calculation_snapshot: part.calculation_snapshot || {},
+    pricing_basis_snapshot: part.pricing_basis_snapshot || {},
+    source_path: part.source_path,
+  };
+
+  await base44.entities.BuilderPart.update(part.id, {
+    builder_sync_state: "detached_override",
+    builder_detached_at: timestamp,
+    builder_detached_reason: reason,
+    builder_detached_snapshot: detachedSnapshot,
+    reattach_candidate_id: part.inventory_item_id || part.original_inventory_item_id || "",
+    reattach_candidate_name: part.inventory_item_name || part.part_name || "",
+    price_state: "detached",
+    last_price_check_at: timestamp,
+    notes: `${part.notes ? `${part.notes}\n` : ""}Detached from Builder for independent override. Frozen pricing retained.`,
+  });
+
+  const detachedParts = await getDetachedBuilderParts(builder.id);
+  await base44.entities.BuilderProduct.update(builder.id, {
+    detached_part_count: detachedParts.length,
+    needs_reattach_review: true,
+    price_state: "detached_parts",
+    last_price_check_at: timestamp,
+    builder_version: num(builder.builder_version, 1) + 1,
+  });
+
+  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
+  await base44.entities.BuilderPriceRevision.create({
+    builder_product_id: builder.id,
+    estimate_id: builder.estimate_id || "",
+    revision_number: revisionNumber,
+    reason: "manual_adjustment",
+    previous_total_cost: num(builder.frozen_cost),
+    new_total_cost: num(builder.frozen_cost),
+    previous_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
+    new_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
+    changed_parts: [{
+      part_id: part.id,
+      part_key: part.part_key,
+      part_name: part.part_name,
+      action: "detach_override",
+      frozen_unit_cost: num(part.frozen_unit_cost),
+      frozen_extended_cost: num(part.frozen_extended_cost),
+      inventory_item_id: part.inventory_item_id || "",
+      source_path: part.source_path || "",
+    }],
+    builder_snapshot_before: builder.builder_snapshot || {},
+    builder_snapshot_after: builder.builder_snapshot || {},
+    price_snapshot_before: { total: num(builder.frozen_cost), pricing_accepted: false },
+    price_snapshot_after: { total: num(builder.frozen_cost), pricing_accepted: false },
+    notes: reason,
+  });
+
+  if (builder.estimate_id) {
+    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
+    if (estimate) {
+      const lineItems = (estimate.line_items || []).map((line) =>
+        line.builder_product_id === builder.id
+          ? {
+              ...line,
+              detached_part_count: detachedParts.length,
+              needs_reattach_review: true,
+              price_state: "detached_parts",
+              last_price_check_at: timestamp,
+            }
+          : line
+      );
+      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+    }
+  }
+
+  return base44.entities.BuilderPart.get(part.id).catch(() => ({ ...part, builder_sync_state: "detached_override" }));
+}
+
 function pathTokens(path) {
   return String(path || "")
     .replace(/\[(\d+)\]/g, ".$1")
