@@ -262,6 +262,7 @@ export default function EstimateDetail() {
                   onRemove={removeLine}
                   onEdit={(line) => setActiveProduct(line)}
                   onUpdatePrice={updateProductPrice}
+                  onProductRefresh={refreshProducts}
                 />
                 <div className="flex justify-end pt-1">
                   <AddProductGrid counts={counts} onAdd={addSection} />
