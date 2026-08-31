@@ -20,6 +20,7 @@ import {
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
+import { cloneProductInEstimate, saveProductNotes } from "@/components/estimator/products/productOperations";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
 const STEP_TITLES = {
@@ -135,6 +136,16 @@ export default function EstimateDetail() {
     const line_items = [...(estimate.line_items || []), result.line];
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     setEstimate((prev) => ({ ...prev, line_items }));
+  };
+
+  const cloneProduct = async (line) => {
+    await cloneProductInEstimate({ estimateId: estimate.id, line });
+    await refreshProducts();
+  };
+
+  const updateProductNotes = async (line, notes) => {
+    await saveProductNotes({ estimateId: estimate.id, line, notes });
+    await refreshProducts();
   };
 
   const updateProductPrice = async (line) => {
@@ -285,6 +296,8 @@ export default function EstimateDetail() {
                   onEdit={(line) => setActiveProduct(line)}
                   onUpdatePrice={updateProductPrice}
                   onProductRefresh={refreshProducts}
+                  onClone={cloneProduct}
+                  onSaveNotes={updateProductNotes}
                 />
                 <div className="flex justify-end pt-1">
                   <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} />
