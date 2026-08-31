@@ -433,6 +433,81 @@ function extractVinyl(project) {
       builderData: { machine_id: project[field] },
     }));
   });
+
+  (project.items || []).forEach((item, index) => {
+    if (num(item.print_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `vinyl:item:${index}:print`,
+        name: item.description ? `${item.description} — Printing / Ink` : "Printing / Ink",
+        type: "consumable",
+        subtype: "printing",
+        sourcePath: `items[${index}].print_cost`,
+        cost: item.print_cost,
+        quantity: item.print_sqft || 1,
+        unit: item.print_sqft ? "sqft" : "job",
+        builderData: item,
+        calculation: { print_sqft: item.print_sqft, print_cost: item.print_cost, rate: project.print_cost_per_sqft },
+      }));
+    }
+    if (num(item.labor_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `vinyl:item:${index}:labor`,
+        name: item.description ? `${item.description} — Production Labor` : "Vinyl Production Labor",
+        type: "labor",
+        subtype: "production_labor",
+        sourcePath: `items[${index}].labor_cost`,
+        cost: item.labor_cost,
+        quantity: item.labor_hours || 1,
+        unit: item.labor_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { labor_hours: item.labor_hours, labor_cost: item.labor_cost, rate: project.labor_rate_per_hour },
+      }));
+    }
+    if (num(item.extra_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `vinyl:item:${index}:extra`,
+        name: item.description ? `${item.description} — Additional Cost` : "Additional Vinyl Cost",
+        type: "service",
+        subtype: "extra_cost",
+        sourcePath: `items[${index}].extra_cost`,
+        cost: item.extra_cost,
+        builderData: item,
+      }));
+    }
+  });
+
+  if (num(project.total_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:supplies",
+      name: "Vinyl Production Supplies",
+      type: "consumable",
+      subtype: "production_supplies",
+      sourcePath: "total_supplies_cost",
+      cost: project.total_supplies_cost,
+      calculation: { supplies_percent: project.supplies_percent_of_materials },
+    }));
+  }
+  if (num(project.extra_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:extra-supplies",
+      name: "Additional Vinyl Supplies",
+      type: "consumable",
+      subtype: "extra_supplies",
+      sourcePath: "extra_supplies_cost",
+      cost: project.extra_supplies_cost,
+    }));
+  }
+  if (num(project.markup_amount) > 0.005) {
+    parts.push(manualCostPart({
+      key: "vinyl:markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_amount",
+      cost: project.markup_amount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+    }));
+  }
   return parts;
 }
 
