@@ -254,7 +254,7 @@ function extractChannel(project) {
       quantity: purchase.qty || 1,
       unit: "letter",
       unitCost: purchase.unit_cost,
-      extendedCost: purchase.total_cost ?? purchase.letters_total,
+      extendedCost: purchase.line_total ?? purchase.total_cost ?? purchase.letters_total,
       builderData: purchase,
       calculation: {
         letters_total: purchase.letters_total,
@@ -269,6 +269,110 @@ function extractChannel(project) {
       },
     }));
   });
+
+  (project.items || []).forEach((item, index) => {
+    if (num(item.labor_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `channel:item:${index}:labor`,
+        name: item.description ? `${item.description} — Installation Labor` : "Installation Labor",
+        type: "labor",
+        subtype: "installation_labor",
+        sourcePath: `items[${index}].labor_cost`,
+        cost: item.labor_cost,
+        quantity: item.labor_hours || 1,
+        unit: item.labor_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { labor_hours: item.labor_hours, labor_cost: item.labor_cost },
+      }));
+    }
+  });
+
+  const letterFees = [
+    ["delivery", "Letter Delivery / Freight", project.letters_delivery_fee],
+    ["design", "Letter Design", project.letters_design_fee],
+    ["install-supplies", "Letter Install Supplies", project.letters_install_supplies_fee],
+    ["permitting", "Letter Permitting", project.letters_permitting_fee],
+    ["other", "Other Letter Cost", project.letters_other_fee],
+  ];
+  letterFees.forEach(([key, name, cost]) => {
+    if (num(cost) <= 0.005) return;
+    parts.push(manualCostPart({
+      key: `channel:letter-fee:${key}`,
+      name,
+      type: key === "permitting" ? "permit" : "service",
+      subtype: `letter_${key}`,
+      sourcePath: `letters_${key.replaceAll("-", "_")}_fee`,
+      cost,
+    }));
+  });
+
+  const letterMarkup = Math.max(0, num(project.total_letters_cost) - num(project.letters_subtotal));
+  if (letterMarkup > 0.005) {
+    parts.push(manualCostPart({
+      key: "channel:letters-markup",
+      name: "Letter Purchase Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "letters_markup_percent",
+      cost: letterMarkup,
+      calculation: { markup_percent: project.letters_markup_percent, markup_amount: letterMarkup },
+    }));
+  }
+
+  if (num(project.total_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "channel:install-supplies",
+      name: "Installation Consumables / Supplies",
+      type: "consumable",
+      subtype: "installation_supplies",
+      sourcePath: "total_supplies_cost",
+      cost: project.total_supplies_cost,
+      calculation: { supplies_percent: project.supplies_percent_of_materials, extra_supplies_cost: project.extra_supplies_cost },
+    }));
+  }
+
+  (project.personnel || []).forEach((person, index) => {
+    const cost = num(person.total_cost, num(person.hourly_rate) * num(person.hours));
+    if (cost <= 0.005) return;
+    parts.push(manualCostPart({
+      key: `channel:personnel:${index}`,
+      name: person.role || person.name || `Installer ${index + 1}`,
+      type: "labor",
+      subtype: "personnel",
+      sourcePath: `personnel[${index}]`,
+      cost,
+      quantity: person.hours || 1,
+      unit: person.hours ? "hour" : "job",
+      builderData: person,
+      calculation: person,
+    }));
+  });
+
+  if (num(project.total_travel_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "channel:travel",
+      name: "Travel / Mileage",
+      type: "service",
+      subtype: "travel",
+      sourcePath: "total_travel_cost",
+      cost: project.total_travel_cost,
+      quantity: project.travel_miles_round_trip || 1,
+      unit: project.travel_miles_round_trip ? "mile" : "job",
+      calculation: { miles: project.travel_miles_round_trip, rate: project.travel_cost_per_mile },
+    }));
+  }
+
+  if (num(project.markup_amount) > 0.005) {
+    parts.push(manualCostPart({
+      key: "channel:project-markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_amount",
+      cost: project.markup_amount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+    }));
+  }
   return parts;
 }
 
