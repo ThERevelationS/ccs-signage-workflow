@@ -1384,8 +1384,8 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}) {
     case "metal": return extractMetal(project);
     case "brick_stone": return extractBrick(project);
     case "maintenance": return extractMaintenance(project, catalogs);
-    case "cnc": return extractManualItems(project, "cnc");
-    case "laser": return extractManualItems(project, "laser");
+    case "cnc": return extractCNC(project);
+    case "laser": return extractLaser(project);
     default: return extractManualItems(project, moduleKey || "legacy");
   }
 }
