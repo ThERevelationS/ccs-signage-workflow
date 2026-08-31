@@ -192,26 +192,28 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 
   const calculateTotals = () => {
     const totalMachineCost = project.items.reduce((sum, item) => sum + (item.machine_cost || 0), 0);
-    let totalLaborCost = project.items.reduce((sum, item) => sum + (item.labor_cost || 0), 0);
+    const dynamicLaborFromItems = project.items.reduce((sum, item) => sum + (item.labor_cost || 0), 0);
     const totalSetupHours = project.items.reduce((sum, item) => sum + (item.setup_time_hours || 0), 0);
-    
-    // Add fixed setup time to labor cost
-    totalLaborCost += (project.fixed_setup_hours || 0) * project.labor_rate;
-
+    const fixedSetupCost = (project.fixed_setup_hours || 0) * project.labor_rate;
     const minLaborHours = parseFloat(globalSettings.min_cnc_labor_hours) || 0;
-    
-    // If calculated item setup time is less than minimum, override with minimum.
-    // Note: fixed_setup_hours are added *before* this check, so they are part of the base labor cost.
-    // This minLaborHours check applies to the dynamic setup time calculated per item.
-    if (totalSetupHours > 0 && totalSetupHours < minLaborHours) {
-        // If the *item specific* calculated setup hours are less than the minimum,
-        // we replace the item-specific labor cost portion with the min labor hours cost.
-        // To be precise: subtract existing dynamic labor, then add min labor for dynamic portion.
-        const dynamicLaborFromItems = project.items.reduce((sum, item) => sum + (item.labor_cost || 0), 0);
-        totalLaborCost = (totalLaborCost - dynamicLaborFromItems) + (minLaborHours * project.labor_rate);
-    }
 
-    return { totalMachine: totalMachineCost, totalLabor: totalLaborCost };
+    // Source behavior: minimum applies only to the dynamic item setup portion,
+    // while fixed setup remains additive.
+    const effectiveDynamicLabor = totalSetupHours > 0 && totalSetupHours < minLaborHours
+      ? minLaborHours * project.labor_rate
+      : dynamicLaborFromItems;
+    const minimumDynamicLaborAdjustment = effectiveDynamicLabor - dynamicLaborFromItems;
+    const totalLaborCost = fixedSetupCost + effectiveDynamicLabor;
+
+    return {
+      totalMachine: totalMachineCost,
+      totalLabor: totalLaborCost,
+      totalSetupHours,
+      dynamicLaborFromItems,
+      fixedSetupCost,
+      minLaborHours,
+      minimumDynamicLaborAdjustment,
+    };
   };
 
   const saveProject = async () => {
