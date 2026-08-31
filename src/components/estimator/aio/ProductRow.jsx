@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Copy, Layers3, LockKeyhole, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
 import ProductNotesModal from "./ProductNotesModal";
+import CreateQuickProductModal from "./CreateQuickProductModal";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -71,6 +72,7 @@ export default function ProductRow({
   onProductRefresh,
   onClone,
   onSaveNotes,
+  onCreateQuickProduct,
 }) {
   const [open, setOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(true);
@@ -78,6 +80,7 @@ export default function ProductRow({
   const [updatingPrice, setUpdatingPrice] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [quickProductOpen, setQuickProductOpen] = useState(false);
   const set = (patch) => onChange(index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
@@ -203,6 +206,14 @@ export default function ProductRow({
         </button>
         <button
           type="button"
+          onClick={() => setQuickProductOpen(true)}
+          title="Create Quick Product"
+          className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100"
+        >
+          <PackagePlus className="w-3.5 h-3.5" /><span className="hidden 2xl:inline">Quick Product</span>
+        </button>
+        <button
+          type="button"
           onClick={handleClone}
           disabled={cloning}
           title="Clone Product"
@@ -292,6 +303,16 @@ export default function ProductRow({
           </div>
         </div>
       )}
+
+      <CreateQuickProductModal
+        open={quickProductOpen}
+        line={line}
+        partCount={partCount}
+        onClose={() => setQuickProductOpen(false)}
+        onSave={async (options) => {
+          await onCreateQuickProduct?.(line, options, index);
+        }}
+      />
 
       <ProductNotesModal
         open={notesOpen}
