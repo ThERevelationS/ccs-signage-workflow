@@ -97,6 +97,8 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [addingKey, setAddingKey] = useState(null);
+  const [customNameOpen, setCustomNameOpen] = useState(false);
+  const [customName, setCustomName] = useState("Custom Product");
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -142,12 +144,19 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
     }
   };
 
+  const beginCustom = () => {
+    if (addingKey) return;
+    setOpen(false);
+    setCustomName("Custom Product");
+    setCustomNameOpen(true);
+  };
+
   const handleAddCustom = async () => {
     if (addingKey) return;
     setAddingKey("custom");
     try {
-      await onAddCustom?.();
-      setOpen(false);
+      await onAddCustom?.(customName.trim() || "Custom Product");
+      setCustomNameOpen(false);
     } finally {
       setAddingKey(null);
     }
@@ -157,7 +166,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
     const totalMatches = results.length + (customMatches ? 1 : 0);
     if (event.key !== "Enter" || totalMatches !== 1 || addingKey) return;
     event.preventDefault();
-    if (customMatches) handleAddCustom();
+    if (customMatches) beginCustom();
     else handleAdd(results[0]);
   };
 
@@ -213,7 +222,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
                   <span className="text-[10px] text-gray-400">• types already used on this estimate are shown first</span>
                 )}
               </div>
-              <span className="text-[10px] text-gray-400 whitespace-nowrap">{ESTIMATOR_MODULES.length} product types</span>
+              <span className="text-[10px] text-gray-400 whitespace-nowrap">{ESTIMATOR_MODULES.length + 1} product types</span>
             </div>
 
             <div className="p-3 max-h-[520px] overflow-y-auto">
@@ -240,7 +249,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
                     <button
                       type="button"
                       disabled={!!addingKey}
-                      onClick={handleAddCustom}
+                      onClick={beginCustom}
                       className="w-full text-left border-2 border-lime-300 rounded-md p-4 bg-lime-50/70 hover:bg-lime-100/80 hover:border-lime-500 transition-all shadow-sm disabled:opacity-60 disabled:cursor-wait"
                     >
                       <div className="flex items-center gap-3">
@@ -312,6 +321,25 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, classN
               </button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={customNameOpen} onOpenChange={(next) => !addingKey && setCustomNameOpen(next)}>
+        <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-gray-300 shadow-xl">
+          <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><PackagePlus className="w-5 h-5 text-lime-300" /> Create Blank / Custom Product</DialogTitle>
+            <p className="text-[11px] text-gray-300 mt-1">Give the Product its client-facing name. You can add and group Master Inventory Parts immediately afterward.</p>
+          </DialogHeader>
+          <form onSubmit={(event) => { event.preventDefault(); handleAddCustom(); }} className="p-5 bg-white space-y-4">
+            <label className="text-[10px] font-bold tracking-wide text-gray-500 block">PRODUCT NAME
+              <input autoFocus value={customName} onChange={(event) => setCustomName(event.target.value)} className="mt-1 w-full h-[36px] px-3 border border-gray-300 rounded text-[13px]" placeholder="e.g. Worship Center Circle Sign" />
+            </label>
+            <div className="rounded border border-lime-200 bg-lime-50 px-3 py-2 text-[10px] text-gray-700">This Product has no dedicated Builder. Its price is the sum of its Parts, with frozen Master Inventory snapshots and explicit Update Price control.</div>
+            <div className="flex justify-end gap-2">
+              <button type="button" disabled={!!addingKey} onClick={() => setCustomNameOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
+              <button type="submit" disabled={!!addingKey || !customName.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{addingKey === "custom" ? "Creating…" : "Create Product"}</button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </>
