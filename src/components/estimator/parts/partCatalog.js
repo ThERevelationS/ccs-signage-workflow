@@ -107,6 +107,15 @@ export function inventoryUnitCost(entity, row = {}) {
   return num(row.cost_per_unit ?? row.default_rate ?? row.cost_flat ?? row.cost_per_sheet);
 }
 
+const NUMERIC_DETAIL_FIELDS = new Set([
+  "thickness_inches", "sheet_width_inches", "sheet_length_inches", "yield_factor",
+  "roll_width_inches", "roll_length_yards", "thickness_mil", "waste_factor_percent",
+  "voltage", "wattage", "max_load_watts", "modules_per_run",
+  "length_inches", "diameter_inches", "load_rating_lbs",
+  "minimum_charge", "typical_duration_hours", "units_per_box",
+  "max_height_feet", "horizontal_boom_reach_feet", "pole_stock_length_ft", "standard_length",
+]);
+
 export const TYPE_DETAIL_FIELDS = {
   DimensionalLetterMaterial: [
     ["material_type", "Type"], ["thickness_inches", "Thickness"], ["sheet_width_inches", "Sheet Width"], ["sheet_length_inches", "Sheet Length"], ["color", "Color"], ["yield_factor", "Yield"], ["supplier", "Supplier"],
@@ -208,8 +217,27 @@ export async function loadMasterPartCatalog() {
   return items.sort((a, b) => a.categoryLabel.localeCompare(b.categoryLabel) || a.name.localeCompare(b.name));
 }
 
-export function typeDetails(entity, row = {}) {
+export function typeDetails(entity, row = {}, overrides = {}) {
   return (TYPE_DETAIL_FIELDS[entity] || [])
-    .map(([field, label]) => ({ field, label, value: row[field] }))
+    .map(([field, label]) => {
+      const overridden = Object.prototype.hasOwnProperty.call(overrides || {}, field);
+      return { field, label, value: overridden ? overrides[field] : row[field], overridden };
+    })
     .filter((detail) => detail.value !== undefined && detail.value !== null && detail.value !== "" && !(Array.isArray(detail.value) && detail.value.length === 0));
+}
+
+export function typeEditFields(entity, row = {}, overrides = {}) {
+  return (TYPE_DETAIL_FIELDS[entity] || []).map(([field, label]) => {
+    const overridden = Object.prototype.hasOwnProperty.call(overrides || {}, field);
+    const inherited = row?.[field];
+    const value = overridden ? overrides[field] : (inherited ?? "");
+    const kind = Array.isArray(inherited) || Array.isArray(value)
+      ? "list"
+      : typeof inherited === "boolean" || typeof value === "boolean"
+        ? "boolean"
+        : NUMERIC_DETAIL_FIELDS.has(field) || typeof inherited === "number"
+          ? "number"
+          : "text";
+    return { field, label, value, inherited, overridden, kind };
+  });
 }
