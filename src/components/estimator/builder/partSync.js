@@ -1654,7 +1654,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
             last_price_check_at: nowIso(),
             is_active: true,
           };
-          detachedCount += 1;
+          // This is an independent add-on, not a broken Builder-produced Part.
+          // Keep the Part visibly detached and let Update Price block until the
+          // user uses Switch Part, but do not trigger the Builder reattach modal.
           await base44.entities.BuilderPart.update(old.id, patch);
           refreshed = { ...old, ...patch };
         }
