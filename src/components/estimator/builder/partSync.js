@@ -1630,3 +1630,173 @@ export async function acceptBuilderPartPrices(builderProductId) {
 
   return { changedParts, detachedCount: 0, detachedParts: [] };
 }
+
+export async function getDetachedBuilderParts(builderProductId) {
+  if (!builderProductId) return [];
+  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  return (parts || [])
+    .filter((part) => part.is_active !== false && ["detached", "reattach_available"].includes(part.inventory_link_state))
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+    .map((part) => ({
+      ...part,
+      can_reattach: !!part.reattach_candidate_id,
+    }));
+}
+
+function pathTokens(path) {
+  return String(path || "")
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function setAtPath(target, path, value) {
+  const tokens = pathTokens(path);
+  if (!tokens.length) return false;
+  let cursor = target;
+  for (let i = 0; i < tokens.length - 1; i += 1) {
+    const token = tokens[i];
+    if (cursor?.[token] === undefined || cursor?.[token] === null) return false;
+    cursor = cursor[token];
+  }
+  const last = tokens[tokens.length - 1];
+  if (!cursor || typeof cursor !== "object") return false;
+  cursor[last] = value;
+
+  // Channel Letter / Maintenance history contains both inventory_id and
+  // inventory_item_id generations. Keep an existing alias synchronized so the
+  // old and new calculator/editor paths continue to agree after reattachment.
+  if (last === "inventory_item_id" && Object.prototype.hasOwnProperty.call(cursor, "inventory_id")) {
+    cursor.inventory_id = value;
+  } else if (last === "inventory_id" && Object.prototype.hasOwnProperty.call(cursor, "inventory_item_id")) {
+    cursor.inventory_item_id = value;
+  }
+  return true;
+}
+
+function topLevelField(path) {
+  return pathTokens(path)[0] || "";
+}
+
+export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
+  if (!builderProductId || !partIds.length) {
+    return { reattached: [], remainingDetached: await getDetachedBuilderParts(builderProductId) };
+  }
+
+  const builder = await base44.entities.BuilderProduct.get(builderProductId).catch(() => null);
+  if (!builder?.source_entity || !builder?.source_project_id) {
+    throw new Error("This Builder no longer has an editable source project to reattach Parts to.");
+  }
+
+  const source = await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null);
+  if (!source) throw new Error("The Builder source project could not be loaded.");
+
+  const detached = await getDetachedBuilderParts(builderProductId);
+  const selectedIds = new Set(partIds);
+  const selected = detached.filter((part) => selectedIds.has(part.id) && part.reattach_candidate_id);
+  if (!selected.length) {
+    return { reattached: [], remainingDetached: detached };
+  }
+
+  const beforeSnapshot = builder.builder_snapshot || source;
+  const patchedSource = JSON.parse(JSON.stringify(source));
+  const changedRoots = new Set();
+  const reattached = [];
+
+  for (const part of selected) {
+    const changed = setAtPath(patchedSource, part.source_path, part.reattach_candidate_id);
+    if (!changed) continue;
+    const root = topLevelField(part.source_path);
+    if (root) changedRoots.add(root);
+    reattached.push({
+      part_id: part.id,
+      part_key: part.part_key,
+      part_name: part.part_name,
+      previous_inventory_item_id: part.inventory_item_id || part.original_inventory_item_id || "",
+      current_inventory_item_id: part.reattach_candidate_id,
+      previous_inventory_name: part.inventory_item_name || "",
+      current_inventory_name: part.reattach_candidate_name || "",
+      frozen_unit_cost: num(part.frozen_unit_cost),
+      frozen_extended_cost: num(part.frozen_extended_cost),
+      source_path: part.source_path,
+    });
+  }
+
+  if (!reattached.length) {
+    throw new Error("The selected Parts could not be mapped back into the Builder record.");
+  }
+
+  const sourcePatch = {};
+  changedRoots.forEach((root) => {
+    sourcePatch[root] = patchedSource[root];
+  });
+  await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
+
+  // Refresh Part linkage/current snapshots only. This intentionally does NOT
+  // accept the new pricing; frozen costs remain exactly as quoted.
+  const summary = await syncBuilderParts({
+    builderProduct: builder,
+    sourceProject: patchedSource,
+    acceptPrices: false,
+    legacyMode: false,
+  });
+
+  const remainingDetached = await getDetachedBuilderParts(builderProductId);
+  const timestamp = nowIso();
+  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
+
+  await base44.entities.BuilderPriceRevision.create({
+    builder_product_id: builderProductId,
+    estimate_id: builder.estimate_id || "",
+    revision_number: revisionNumber,
+    reason: "reattach",
+    previous_total_cost: num(builder.frozen_cost),
+    new_total_cost: num(builder.frozen_cost),
+    previous_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
+    new_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
+    changed_parts: reattached,
+    builder_snapshot_before: beforeSnapshot,
+    builder_snapshot_after: patchedSource,
+    price_snapshot_before: { total: num(builder.frozen_cost), pricing_accepted: false },
+    price_snapshot_after: { total: num(builder.frozen_cost), pricing_accepted: false },
+    notes: `Reattached ${reattached.length} Part${reattached.length === 1 ? "" : "s"}. Frozen pricing was preserved; a separate Update Price action is required to accept recalculated pricing.`,
+  });
+
+  await base44.entities.BuilderProduct.update(builderProductId, {
+    builder_snapshot: patchedSource,
+    builder_snapshot_at: timestamp,
+    builder_snapshot_source_updated_date: timestamp,
+    part_count: summary.partCount,
+    detached_part_count: remainingDetached.length,
+    needs_reattach_review: remainingDetached.length > 0,
+    price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
+    last_price_check_at: timestamp,
+    builder_version: num(builder.builder_version, 1) + 1,
+  });
+
+  if (builder.estimate_id) {
+    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
+    if (estimate) {
+      const lineItems = (estimate.line_items || []).map((line) =>
+        line.builder_product_id === builderProductId
+          ? {
+              ...line,
+              detached_part_count: remainingDetached.length,
+              needs_reattach_review: remainingDetached.length > 0,
+              price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
+              last_price_check_at: timestamp,
+            }
+          : line
+      );
+      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+    }
+  }
+
+  return {
+    reattached,
+    remainingDetached,
+    builderProject: patchedSource,
+  };
+}
