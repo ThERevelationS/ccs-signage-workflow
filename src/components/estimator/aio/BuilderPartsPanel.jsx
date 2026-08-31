@@ -562,6 +562,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             await onProductRefresh?.();
           }}
           onEditBuilder={onEditBuilder}
+          estimateId={estimateId}
         />
       ))}
 
