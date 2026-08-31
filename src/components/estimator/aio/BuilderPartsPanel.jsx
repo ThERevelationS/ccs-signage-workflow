@@ -195,6 +195,8 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
       {isManual && (
         <MasterPartPickerModal
           open={switchOpen}
+          mode="switch"
+          initialQuantity={part.quantity || 1}
           onClose={() => setSwitchOpen(false)}
           onAdd={async (item) => {
             await switchManualProductPart(part.id, item);
