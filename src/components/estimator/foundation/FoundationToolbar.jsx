@@ -43,16 +43,27 @@ export default function FoundationToolbar({
   onSaveAsTemplate,
   onTemplates,
   onHelp,
+  onBack,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-sm p-3 mb-3">
       <div className="flex items-center gap-3 mb-2">
-        <Link
-          to={backTo}
-          className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back
-        </Link>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </button>
+        ) : (
+          <Link
+            to={backTo}
+            className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </Link>
+        )}
         <div>
           <h1 className="text-[17px] font-bold text-gray-900 leading-tight">{title}</h1>
           <p className="text-[11px] text-gray-500">{subtitle}</p>
