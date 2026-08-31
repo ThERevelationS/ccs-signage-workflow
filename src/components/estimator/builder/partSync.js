@@ -1407,7 +1407,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
 
 export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false }) {
   if (!builderProduct?.id || !sourceProject) {
-    return { partCount: 0, detachedCount: 0, changedCount: 0, parts: [] };
+    return { partCount: 0, detachedCount: 0, changedCount: 0, manualAddonFrozenTotal: 0, manualAddonCurrentTotal: 0, parts: [] };
   }
 
   const catalogs = await loadBuilderCatalogs(builderProduct.module_key);
@@ -1583,6 +1583,12 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       synced.push(old);
       continue;
     }
+    if (old.builder_sync_state === "manual_addon") {
+      // Intentional independent add-ons are not produced by the Builder, but
+      // they remain part of the Product economics and survive every Builder save.
+      synced.push(old);
+      continue;
+    }
     await base44.entities.BuilderPart.update(old.id, {
       is_active: false,
       last_price_check_at: nowIso(),
@@ -1590,10 +1596,16 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     });
   }
 
+  const manualAddons = synced.filter((part) => part.builder_sync_state === "manual_addon" && part.is_active !== false);
+  const manualAddonFrozenTotal = manualAddons.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const manualAddonCurrentTotal = manualAddons.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
+
   return {
     partCount: synced.length,
     detachedCount,
     changedCount,
+    manualAddonFrozenTotal,
+    manualAddonCurrentTotal,
     parts: synced,
   };
 }
