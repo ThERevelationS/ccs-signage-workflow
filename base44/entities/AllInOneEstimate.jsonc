@@ -329,6 +329,10 @@
             "type": "string",
             "description": "Editable client-facing name for this product; kept distinct from builder_name/project_name."
           },
+          "product_category": {
+            "type": "string",
+            "description": "User-defined Product Category used for estimate organization and customer quote categorization."
+          },
           "project_id": {
             "type": "string"
           },
