@@ -208,7 +208,9 @@ function extractChannel(project) {
         name: mat.item_name || "Install material",
         type: "material",
         subtype: mat.pricing_mode || "install_material",
-        sourcePath: `items[${itemIndex}].materials[${matIndex}].inventory_item_id`,
+        sourcePath: mat.inventory_item_id
+          ? `items[${itemIndex}].materials[${matIndex}].inventory_item_id`
+          : `items[${itemIndex}].materials[${matIndex}].inventory_id`,
         entity: "ChannelLetterInstallInventory",
         inventoryId: id,
         quantity: mat.quantity,
@@ -722,7 +724,9 @@ function extractMaintenance(project, catalogs = {}) {
           name: row?.item_name || mat.item_name || action.action || "Maintenance Material",
           type: "material",
           subtype: action.action || row?.pricing_mode || mat.pricing_mode || "maintenance",
-          sourcePath: `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}].inventory_id`,
+          sourcePath: mat.inventory_item_id
+            ? `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}].inventory_item_id`
+            : `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}].inventory_id`,
           entity: "MaintenanceInventory",
           inventoryId: id,
           quantity: priced.quantity,
