@@ -77,6 +77,7 @@ export default function ProductRow({
   onSaveNotes,
   onCreateQuickProduct,
   onPersistSettings,
+  allLines = [],
 }) {
   const [open, setOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(true);
@@ -401,6 +402,7 @@ export default function ProductRow({
           onProductRefresh={onProductRefresh}
           allowAddParts={true}
           estimateId={line.estimate_id}
+          availableProducts={allLines}
         />
       )}
     </div>
