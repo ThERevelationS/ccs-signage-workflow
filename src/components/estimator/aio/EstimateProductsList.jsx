@@ -66,7 +66,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
           No products yet — add one above to start pricing this estimate.
         </div>
       ) : (
-        <div>
+        <div className="p-2 space-y-2 bg-gray-50">
           {visible.map(({ line, index }) => (
             <ProductRow
               key={line.project_id || index}
