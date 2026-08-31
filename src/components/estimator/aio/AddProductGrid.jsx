@@ -93,7 +93,7 @@ const getMeta = (key) =>
     keywords: "",
   };
 
-export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
+export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, className = "" }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [addingKey, setAddingKey] = useState(null);
@@ -107,6 +107,13 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
     const timer = setTimeout(() => searchRef.current?.focus(), 80);
     return () => clearTimeout(timer);
   }, [open]);
+
+  const customMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    const haystack = "blank custom product manual parts inventory build your own product";
+    return q.split(/\s+/).every((term) => haystack.includes(term));
+  }, [query]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -135,11 +142,23 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
     }
   };
 
-  const handleSearchKeyDown = (event) => {
-    if (event.key === "Enter" && results.length === 1 && !addingKey) {
-      event.preventDefault();
-      handleAdd(results[0]);
+  const handleAddCustom = async () => {
+    if (addingKey) return;
+    setAddingKey("custom");
+    try {
+      await onAddCustom?.();
+      setOpen(false);
+    } finally {
+      setAddingKey(null);
     }
+  };
+
+  const handleSearchKeyDown = (event) => {
+    const totalMatches = results.length + (customMatches ? 1 : 0);
+    if (event.key !== "Enter" || totalMatches !== 1 || addingKey) return;
+    event.preventDefault();
+    if (customMatches) handleAddCustom();
+    else handleAdd(results[0]);
   };
 
   const usedCount = ESTIMATOR_MODULES.filter((mod) => Number(counts[mod.key] || 0) > 0).length;
@@ -188,7 +207,7 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
               <div className="flex items-center gap-2 min-w-0">
                 <Sparkles className="w-3.5 h-3.5 text-lime-600 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-gray-700">
-                  {query ? `${results.length} matching product${results.length === 1 ? "" : "s"}` : "Available product estimators"}
+                  {query ? `${results.length + (customMatches ? 1 : 0)} matching product${results.length + (customMatches ? 1 : 0) === 1 ? "" : "s"}` : "Blank Products, Builders & reusable products"}
                 </span>
                 {!query && usedCount > 0 && (
                   <span className="text-[10px] text-gray-400">• types already used on this estimate are shown first</span>
@@ -198,7 +217,7 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
             </div>
 
             <div className="p-3 max-h-[520px] overflow-y-auto">
-              {results.length === 0 ? (
+              {!customMatches && results.length === 0 ? (
                 <div className="py-14 px-6 text-center">
                   <div className="mx-auto w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                     <Search className="w-5 h-5 text-gray-400" />
@@ -216,7 +235,27 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
+                  {customMatches && (
+                    <button
+                      type="button"
+                      disabled={!!addingKey}
+                      onClick={handleAddCustom}
+                      className="w-full text-left border-2 border-lime-300 rounded-md p-4 bg-lime-50/70 hover:bg-lime-100/80 hover:border-lime-500 transition-all shadow-sm disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-md bg-[#454545] text-lime-300 flex items-center justify-center"><PackagePlus className="w-5 h-5" /></div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2"><span className="text-[13px] font-extrabold text-gray-900">Blank / Custom Product</span><span className="text-[9px] px-2 py-0.5 rounded bg-lime-200 border border-lime-300 text-gray-700 font-bold">BUILD FROM PARTS</span></div>
+                          <p className="mt-1 text-[10px] text-gray-600">Name the Product yourself and add any Parts directly from the Master Inventory. No dedicated Builder is attached.</p>
+                          <div className="mt-2 text-[10px] font-bold text-gray-800 inline-flex items-center gap-1">{addingKey === "custom" ? "Creating product…" : "Create blank product"}{addingKey !== "custom" && <ArrowRight className="w-3 h-3" />}</div>
+                        </div>
+                      </div>
+                    </button>
+                  )}
+                  <div>
+                    <div className="text-[9px] font-extrabold tracking-widest text-gray-400 px-1 pb-1.5">BUILDERS</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {results.map((mod) => {
                     const meta = getMeta(mod.key);
                     const Icon = meta.icon;
@@ -255,6 +294,8 @@ export default function AddProductGrid({ counts = {}, onAdd, className = "" }) {
                       </button>
                     );
                   })}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
