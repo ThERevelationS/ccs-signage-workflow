@@ -128,6 +128,7 @@ export default function ProductRow({
           <div className="text-[10px] text-gray-400 mt-0.5">
             {line.project_name && line.project_name !== line.client_product_name ? `Source: ${line.project_name} · ` : ""}
             {line.section_status === "complete" ? "complete" : "in progress"}
+            {line.product_category ? ` · ${line.product_category}` : ""}
             {` · ${partCount} Part${partCount === 1 ? "" : "s"}`}
             {line.linked_date ? ` · added ${new Date(line.linked_date).toLocaleDateString()}` : ""}
           </div>
@@ -202,9 +203,15 @@ export default function ProductRow({
             className="col-span-2"
           />
           <Field
-            label="BUILDER TYPE"
-            value={line.builder_name || getModuleLabel(line.module_key)}
+            label={isCustom ? "PRODUCT TYPE" : "BUILDER TYPE"}
+            value={isCustom ? "Custom Product" : line.builder_name || getModuleLabel(line.module_key)}
             disabled
+          />
+          <Field
+            label="PRODUCT CATEGORY"
+            value={line.product_category || ""}
+            onChange={(e) => set({ product_category: e.target.value })}
+            placeholder="e.g. Interior Signage"
           />
           <Field
             label="FROZEN COST"
