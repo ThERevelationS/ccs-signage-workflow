@@ -38,6 +38,27 @@
       "type": "string",
       "description": "Path inside the detailed builder snapshot that produced this part, e.g. items[0].materials[2]."
     },
+    "builder_sync_state": {
+      "type": "string",
+      "enum": [
+        "linked",
+        "detached_override",
+        "manual"
+      ],
+      "default": "linked",
+      "description": "Whether this Part continues to synchronize from its Builder. detached_override freezes the Part independently until the user explicitly reattaches it."
+    },
+    "builder_detached_at": {
+      "type": "string"
+    },
+    "builder_detached_reason": {
+      "type": "string"
+    },
+    "builder_detached_snapshot": {
+      "type": "object",
+      "description": "Builder-produced Part state captured when an override was detached, used for audit and reattachment review.",
+      "additionalProperties": true
+    },
     "inventory_entity": {
       "type": "string",
       "description": "Master Inventory entity currently linked to this part."
