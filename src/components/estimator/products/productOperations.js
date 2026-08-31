@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
+import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -79,11 +80,12 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     clonedParts.push(created);
   }
 
+  const reattachCount = countBuilderReattachParts(clonedParts);
   await base44.entities.BuilderProduct.update(newBuilder.id, {
     part_count: clonedParts.length,
     group_count: activeGroups.length,
-    detached_part_count: clonedParts.filter((part) => part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state)).length,
-    needs_reattach_review: clonedParts.some((part) => part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state)),
+    detached_part_count: reattachCount,
+    needs_reattach_review: reattachCount > 0,
   });
 
   const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
@@ -122,8 +124,8 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     total_snapshot: frozenTotal,
     live_total_snapshot: num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal)),
     price_state: builder.price_state || line.price_state || "current",
-    detached_part_count: clonedParts.filter((part) => part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state)).length,
-    needs_reattach_review: clonedParts.some((part) => part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state)),
+    detached_part_count: reattachCount,
+    needs_reattach_review: reattachCount > 0,
     owned: true,
     linked_date: timestamp,
     updated_date_snapshot: sourceProject?.updated_date || timestamp,
