@@ -121,7 +121,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const catalog = useMemo(
     () => ({
-      concrete: inventory.filter((i) => ["concrete_service", "bagged_concrete"].includes(i.material_type)),
+      concrete: inventory.filter((i) =>
+        ["concrete_service", "bagged_concrete"].includes(i.material_type) &&
+        i.show_in_foundation !== false
+      ),
       poles: inventory.filter((i) => i.material_type === "pole"),
       walls: inventory.filter((i) => ["brick_stone", "wall_material"].includes(i.material_type)),
       fill: inventory.filter((i) => i.material_type === "fill_material"),
