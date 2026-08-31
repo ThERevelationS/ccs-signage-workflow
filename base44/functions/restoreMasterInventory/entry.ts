@@ -389,8 +389,8 @@ Deno.serve(async (req) => {
     const foundationProjects = await remapFoundationProjects(
       base44,
       foundationProjectIds,
-      maps.FoundationInventory.mapping,
-      targetCatalogs.FoundationInventory,
+      foundationReferenceMap,
+      foundationReferenceTargets,
       doWrite
     );
     const channelProjects = await remapChannelProjects(
