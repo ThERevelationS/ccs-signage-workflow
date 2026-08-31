@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { loadMasterPartCatalog, typeDetails } from "./partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 
-export default function MasterPartPickerModal({ open, onClose, onAdd }) {
+export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "add", initialQuantity = 1 }) {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
@@ -16,6 +16,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd }) {
   useEffect(() => {
     if (!open) return;
     let active = true;
+    setQuantity(initialQuantity);
     setLoading(true);
     loadMasterPartCatalog()
       .then((rows) => {
@@ -25,7 +26,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd }) {
       })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [open]);
+  }, [open, initialQuantity]);
 
   useEffect(() => {
     if (!open) {
@@ -59,7 +60,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd }) {
     if (!selected || adding) return;
     setAdding(true);
     try {
-      await onAdd?.(selected, Math.max(0, Number(quantity || 0)));
+      await onAdd?.(selected, mode === "switch" ? Math.max(0, Number(initialQuantity || 0)) : Math.max(0, Number(quantity || 0)));
       onClose?.();
     } finally {
       setAdding(false);
@@ -73,8 +74,8 @@ export default function MasterPartPickerModal({ open, onClose, onAdd }) {
           <div className="flex items-center gap-3 pr-8">
             <div className="w-10 h-10 rounded bg-lime-300 text-gray-900 flex items-center justify-center"><Boxes className="w-5 h-5" /></div>
             <div>
-              <DialogTitle className="text-white text-[17px]">Add Part from Master Inventory</DialogTitle>
-              <p className="text-[11px] text-gray-300 mt-1">Choose the exact inventory record. The complete Master Inventory row and current pricing are frozen into the estimate Part.</p>
+              <DialogTitle className="text-white text-[17px]">{mode === "switch" ? "Switch Part from Master Inventory" : "Add Part from Master Inventory"}</DialogTitle>
+              <p className="text-[11px] text-gray-300 mt-1">{mode === "switch" ? "Choose the replacement inventory record. The current Part quantity is preserved while the inventory link and frozen inventory/pricing snapshot are explicitly replaced." : "Choose the exact inventory record. The complete Master Inventory row and current pricing are frozen into the estimate Part."}</p>
             </div>
           </div>
         </DialogHeader>
@@ -139,11 +140,15 @@ export default function MasterPartPickerModal({ open, onClose, onAdd }) {
                 )}
 
                 <div className="mt-auto pt-4 space-y-3">
-                  <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUANTITY<input type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]" /></label>
-                  <div className="rounded border border-lime-300 bg-lime-50 px-3 py-2 flex justify-between"><span className="text-[10px] font-bold text-gray-600">FROZEN EXTENDED COST</span><strong className="text-[13px]">{money(Number(quantity || 0) * selected.unitCost)}</strong></div>
+                  {mode === "switch" ? (
+                    <div className="rounded border border-gray-200 bg-white px-3 py-2 flex justify-between"><span className="text-[10px] font-bold text-gray-500">PRESERVED QUANTITY</span><strong className="text-[12px]">{Number(initialQuantity || 0).toLocaleString()}</strong></div>
+                  ) : (
+                    <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUANTITY<input type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]" /></label>
+                  )}
+                  <div className="rounded border border-lime-300 bg-lime-50 px-3 py-2 flex justify-between"><span className="text-[10px] font-bold text-gray-600">FROZEN EXTENDED COST</span><strong className="text-[13px]">{money(Number(mode === "switch" ? initialQuantity : quantity || 0) * selected.unitCost)}</strong></div>
                   <div className="flex justify-end gap-2">
                     <button type="button" disabled={adding} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
-                    <button type="button" disabled={adding} onClick={add} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">{adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}{adding ? "Adding…" : "Add Part"}</button>
+                    <button type="button" disabled={adding} onClick={add} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">{adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}{adding ? (mode === "switch" ? "Switching…" : "Adding…") : (mode === "switch" ? "Switch Part" : "Add Part")}</button>
                   </div>
                 </div>
               </>
