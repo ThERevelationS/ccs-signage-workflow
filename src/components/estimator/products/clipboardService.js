@@ -25,7 +25,7 @@ function sourceMeta(estimate, line) {
   return {
     source_estimate_id: estimate?.id || "",
     source_estimate_number: estimate?.estimate_number || "",
-    source_order: estimate?.project_name || estimate?.estimate_number || "",
+    source_order: estimate?.po_number || estimate?.work_order_id || "",
     source_company: estimate?.client_name || "",
     source_product_id: line?.builder_product_id || "",
     source_product_name: line?.client_product_name || line?.project_name || "",
