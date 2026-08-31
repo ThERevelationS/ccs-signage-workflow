@@ -146,7 +146,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
 export async function updateManualProductPart(partId, changes = {}) {
   const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
   if (!part) throw new Error("Part not found.");
-  if (part.builder_sync_state !== "manual") throw new Error("Only manual/custom Parts can be edited directly here.");
+  if (!["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be edited directly here.");
   const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
   const previousExtended = num(part.frozen_extended_cost);
   const quantity = changes.quantity !== undefined ? Math.max(0, num(changes.quantity)) : num(part.quantity, 1);
@@ -211,7 +211,7 @@ export async function updateManualProductPart(partId, changes = {}) {
 export async function switchManualProductPart(partId, catalogItem) {
   if (!partId || !catalogItem?.inventoryId) throw new Error("Select a replacement Master Inventory Part.");
   const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
-  if (!part || part.builder_sync_state !== "manual") throw new Error("Only Custom Product Parts can be switched directly.");
+  if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be switched directly.");
   const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
   const quantity = num(part.quantity, 1);
   const previousExtended = num(part.frozen_extended_cost);
@@ -275,14 +275,14 @@ export async function switchManualProductPart(partId, catalogItem) {
     changed_parts: [{ part_id: part.id, action: "switch_part", previous_inventory_item_id: part.inventory_item_id, new_inventory_item_id: catalogItem.inventoryId, previous_inventory_name: part.inventory_item_name, new_inventory_name: catalogItem.name, previous_extended_cost: previousExtended, new_extended_cost: nextExtended, delta }],
     builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
-    notes: `Switched Custom Product Part to ${catalogItem.name}.`,
+    notes: `Switched independent Product Part to ${catalogItem.name}.`,
   });
   return base44.entities.BuilderPart.get(part.id);
 }
 
 export async function removeManualProductPart(partId) {
   const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
-  if (!part || part.builder_sync_state !== "manual") throw new Error("Only Custom Product Parts can be removed directly.");
+  if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be removed directly.");
   const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
   const previousExtended = num(part.frozen_extended_cost);
   const previousCurrent = num(part.current_extended_cost, previousExtended);
@@ -326,7 +326,7 @@ export async function removeManualProductPart(partId) {
     changed_parts: [{ part_id: part.id, part_name: part.part_name, action: "remove_part", previous_extended_cost: previousExtended }],
     builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
-    notes: `Removed Custom Product Part ${part.part_name}.`,
+    notes: `Removed independent Product Part ${part.part_name}.`,
   });
 }
 
