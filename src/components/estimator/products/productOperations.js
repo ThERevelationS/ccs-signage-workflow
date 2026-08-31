@@ -80,7 +80,10 @@ export async function cloneProductInEstimate({ estimateId, line }) {
       ...stripSystemFields(part),
       builder_product_id: newBuilder.id,
       part_group_id: part.part_group_id ? (groupMap.get(part.part_group_id) || "") : "",
-      part_key: makeStableId("part"),
+      // part_key is the stable reconciliation identity inside a Product. It is
+      // safe (and required) to preserve it across a Product clone because the
+      // new Product has its own builder_product_id namespace.
+      part_key: part.part_key || makeStableId("part"),
       last_price_check_at: timestamp,
     });
     clonedParts.push(created);
