@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileMinus } from "lucide-react";
+import { ClipboardPaste, FileMinus } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
@@ -11,6 +11,7 @@ import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
+import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerModal";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 import {
@@ -39,6 +40,7 @@ export default function EstimateDetail() {
   const [step, setStep] = useState(2);
   const [showCancel, setShowCancel] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
+  const [clipboardOpen, setClipboardOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -316,7 +318,15 @@ export default function EstimateDetail() {
                   onSaveNotes={updateProductNotes}
                   onCreateQuickProduct={createQuickProduct}
                 />
-                <div className="flex justify-end pt-1">
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setClipboardOpen(true)}
+                    className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100"
+                    title="Open 30-day estimator clipboard"
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" /> Clipboard
+                  </button>
                   <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
                 </div>
               </>
@@ -348,6 +358,14 @@ export default function EstimateDetail() {
           <StepNav />
         </div>
       </div>
+
+      <ClipboardManagerModal
+        open={clipboardOpen}
+        estimateId={estimate.id}
+        lines={lines}
+        onClose={() => setClipboardOpen(false)}
+        onPasted={refreshProducts}
+      />
 
       <CancelEstimateModal
         open={showCancel}
