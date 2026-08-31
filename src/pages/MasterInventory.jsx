@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Boxes, Lock, Upload, ShieldAlert } from "lucide-react";
+import { Plus, Search, Boxes, Lock, Upload, ShieldAlert, DatabaseBackup, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 import { INVENTORY_SOURCES, SOURCE_BY_KEY } from "@/components/masterInventory/inventorySources";
 import InventoryFormModal from "@/components/masterInventory/InventoryFormModal";
@@ -27,6 +28,7 @@ export default function MasterInventory() {
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
+  const [restoringOriginal, setRestoringOriginal] = useState(false);
 
   const activeSource = SOURCE_BY_KEY[activeKey];
   const isAdmin = user?.role === "admin";
@@ -106,6 +108,52 @@ export default function MasterInventory() {
     await loadActive();
   };
 
+  const handleRestoreOriginal = async () => {
+    if (!isAdmin || restoringOriginal) return;
+    setRestoringOriginal(true);
+    try {
+      const previewResponse = await base44.functions.invoke("restoreMasterInventory", { action: "preview" });
+      const preview = previewResponse?.data || previewResponse;
+      if (!preview?.success) throw new Error(preview?.error || "Could not inspect the original inventory.");
+
+      const pending = Number(preview?.totals?.pending || 0);
+      const source = Number(preview?.totals?.source || 0);
+      const existing = Number(preview?.totals?.target_before || 0);
+      const skipped = Number(preview?.totals?.skipped_existing || 0);
+
+      if (pending === 0) {
+        window.alert(`The original inventory has already been restored.\n\nOriginal records: ${source}\nCurrent records: ${existing}`);
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Restore the original SignEstimate Pro Master Inventory?\n\n` +
+        `${source} records exist in the original app.\n` +
+        `${pending} records are ready to import.\n` +
+        `${existing} inventory records already exist in this app.\n` +
+        `${skipped} matching existing records will be left untouched.\n\n` +
+        `This copies the original inventory data into CCS Signage Workflow without deleting current records.`
+      );
+      if (!confirmed) return;
+
+      const migrateResponse = await base44.functions.invoke("restoreMasterInventory", { action: "migrate" });
+      const result = migrateResponse?.data || migrateResponse;
+      if (!result?.success) throw new Error(result?.error || "Inventory restore failed.");
+
+      window.alert(
+        `Master Inventory restored successfully.\n\n` +
+        `Imported: ${result?.totals?.imported || 0}\n` +
+        `Existing items preserved: ${result?.totals?.skipped_existing || 0}`
+      );
+      window.location.reload();
+    } catch (err) {
+      console.error("Original inventory restore failed:", err);
+      window.alert(`Could not restore the original Master Inventory.\n\n${err?.message || err}`);
+    } finally {
+      setRestoringOriginal(false);
+    }
+  };
+
   // Admin-only gate — non-admins (and unauthenticated users) cannot view this page.
   if (!userLoaded) {
     return (
@@ -147,6 +195,19 @@ export default function MasterInventory() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={handleRestoreOriginal}
+              disabled={restoringOriginal}
+              variant="outline"
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+            >
+              {restoringOriginal ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <DatabaseBackup className="w-4 h-4 mr-2" />
+              )}
+              {restoringOriginal ? "Restoring..." : "Restore Original Inventory"}
+            </Button>
             <Button
               onClick={() => setShowImporter(true)}
               variant="outline"
