@@ -493,22 +493,28 @@ function extractFoundation(project, catalogs) {
     const concreteId = item.selected_concrete_id || project.selected_concrete_id || "";
     if (concreteId) {
       const entity = findEntity(catalogs, concreteId, "FoundationInventory");
-      parts.push(makePart({
-        key: `foundation:item:${index}:concrete`,
-        name: item.description ? `${item.description} — Concrete` : "Concrete",
-        type: "material",
-        subtype: "concrete",
-        sourcePath: `items[${index}].selected_concrete_id`,
-        entity,
-        inventoryId: concreteId,
-        quantity: item.concrete_volume_cy || item.quantity || 1,
-        unit: "cy",
-        unitCost: item.custom_concrete_cost_per_cy,
-        extendedCost: item.concrete_cost,
-        builderData: item,
-        calculation: { concrete_volume_cy: item.concrete_volume_cy, concrete_cost: item.concrete_cost },
-        pricingBasis: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures },
-      }));
+      const concreteRow = findRow(catalogs, entity, concreteId);
+      // Ready-mix concrete is charged at the project delivery/truck level below.
+      // Bagged concrete is charged directly on the foundation item.
+      if (concreteRow?.material_type === "bagged_concrete" || num(item.concrete_cost) > 0) {
+        const qty = item.concrete_bags || item.concrete_volume_cy || item.quantity || 1;
+        parts.push(makePart({
+          key: `foundation:item:${index}:concrete`,
+          name: item.description ? `${item.description} — Concrete` : "Concrete",
+          type: "material",
+          subtype: concreteRow?.material_type || "concrete",
+          sourcePath: `items[${index}].selected_concrete_id`,
+          entity,
+          inventoryId: concreteId,
+          quantity: qty,
+          unit: concreteRow?.material_type === "bagged_concrete" ? "bag" : "cy",
+          unitCost: item.concrete_rate ?? item.custom_concrete_cost_per_cy,
+          extendedCost: item.concrete_cost,
+          builderData: item,
+          calculation: { concrete_bags: item.concrete_bags, concrete_volume_cy: item.concrete_volume_cy, concrete_cost: item.concrete_cost },
+          pricingBasis: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures },
+        }));
+      }
     }
 
     if (item.include_rebar) {
@@ -516,6 +522,13 @@ function extractFoundation(project, catalogs) {
       const rebarRow = catalogs.FoundationInventory?.rows.find(
         (row) => row.material_type === "rebar" && row.rebar_size === size
       );
+      const rebarRate = num(item.rebar_rate, num(item.custom_rebar_cost_per_ft, genericUnitCost(rebarRow)));
+      const rebarFeet = num(item.rebar_feet);
+      const totalRebarCost = num(item.rebar_cost);
+      const rebarMaterialCost = rebarFeet > 0 && rebarRate > 0
+        ? Math.min(totalRebarCost, rebarFeet * rebarRate)
+        : totalRebarCost;
+      const rebarLaborCost = Math.max(0, totalRebarCost - rebarMaterialCost);
       parts.push(makePart({
         key: `foundation:item:${index}:rebar`,
         name: `${size} Rebar`,
@@ -524,33 +537,137 @@ function extractFoundation(project, catalogs) {
         sourcePath: `items[${index}].${item.foundation_type === "pillar" ? "pillar_rebar_size" : "rebar_size"}`,
         entity: "FoundationInventory",
         inventoryId: rebarRow?.id || "",
-        quantity: item.rebar_feet || 1,
+        quantity: rebarFeet || 1,
         unit: "ft",
-        unitCost: item.custom_rebar_cost_per_ft ?? genericUnitCost(rebarRow),
-        extendedCost: item.rebar_cost,
+        unitCost: rebarRate,
+        extendedCost: rebarMaterialCost,
         builderData: item,
-        calculation: { rebar_cost: item.rebar_cost, rebar_feet: item.rebar_feet },
+        calculation: { rebar_cost: totalRebarCost, rebar_material_cost: rebarMaterialCost, rebar_labor_cost: rebarLaborCost, rebar_feet: rebarFeet },
       }));
+      if (rebarLaborCost > 0.005) {
+        parts.push(manualCostPart({
+          key: `foundation:item:${index}:rebar-labor`,
+          name: item.description ? `${item.description} — Rebar Labor` : "Rebar Labor",
+          type: "labor",
+          subtype: "rebar_labor",
+          sourcePath: `items[${index}].rebar_cost`,
+          cost: rebarLaborCost,
+          builderData: item,
+          calculation: { total_rebar_cost: totalRebarCost, material_cost: rebarMaterialCost, labor_cost: rebarLaborCost },
+        }));
+      }
     }
 
-    if (item.include_forming && item.selected_forming_id) {
-      parts.push(makePart({
-        key: `foundation:item:${index}:forming`,
-        name: item.description ? `${item.description} — Forming` : "Forming material",
-        type: "material",
-        subtype: "forming",
-        sourcePath: `items[${index}].selected_forming_id`,
-        entity: "FoundationInventory",
-        inventoryId: item.selected_forming_id,
-        quantity: item.forming_qty || 1,
-        unit: "piece",
-        unitCost: item.custom_forming_rate,
-        extendedCost: item.forming_cost,
+    if (item.include_forming) {
+      const formingRow = item.selected_forming_id
+        ? catalogs.FoundationInventory?.byId.get(item.selected_forming_id)
+        : null;
+      const formingQty = num(item.forming_qty, 1);
+      const formingRate = num(item.forming_rate, num(item.custom_forming_rate, genericUnitCost(formingRow)));
+      const totalFormingCost = num(item.forming_cost);
+      const formingMaterialCost = item.selected_forming_id
+        ? Math.min(totalFormingCost, formingQty * formingRate)
+        : 0;
+      const formingLaborCost = Math.max(0, totalFormingCost - formingMaterialCost);
+      if (item.selected_forming_id) {
+        parts.push(makePart({
+          key: `foundation:item:${index}:forming`,
+          name: item.description ? `${item.description} — Forming Material` : "Forming Material",
+          type: "material",
+          subtype: "forming",
+          sourcePath: `items[${index}].selected_forming_id`,
+          entity: "FoundationInventory",
+          inventoryId: item.selected_forming_id,
+          quantity: formingQty,
+          unit: "piece",
+          unitCost: formingRate,
+          extendedCost: formingMaterialCost,
+          builderData: item,
+          calculation: { forming_cost: totalFormingCost, material_cost: formingMaterialCost, forming_qty: formingQty },
+        }));
+      }
+      if (formingLaborCost > 0.005) {
+        parts.push(manualCostPart({
+          key: `foundation:item:${index}:forming-labor`,
+          name: item.description ? `${item.description} — Forming Labor / Allowance` : "Forming Labor / Allowance",
+          type: "labor",
+          subtype: "forming_labor",
+          sourcePath: `items[${index}].forming_cost`,
+          cost: formingLaborCost,
+          builderData: item,
+          calculation: { total_forming_cost: totalFormingCost, material_cost: formingMaterialCost, labor_allowance_cost: formingLaborCost },
+        }));
+      }
+    }
+
+    if (num(item.excavation_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:item:${index}:excavation`,
+        name: item.description ? `${item.description} — Excavation` : "Excavation Labor",
+        type: "labor",
+        subtype: item.excavation_method || "excavation",
+        sourcePath: `items[${index}].excavation_cost`,
+        cost: item.excavation_cost,
+        quantity: item.excavation_hours || 1,
+        unit: item.excavation_hours ? "hour" : "job",
         builderData: item,
-        calculation: { forming_cost: item.forming_cost, forming_qty: item.forming_qty },
+        calculation: { hours: item.excavation_hours, rate: item.excavation_rate, cost: item.excavation_cost },
+      }));
+    }
+    if (num(item.pouring_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:item:${index}:pouring`,
+        name: item.description ? `${item.description} — Concrete Pour Labor` : "Concrete Pour Labor",
+        type: "labor",
+        subtype: "concrete_pouring",
+        sourcePath: `items[${index}].pouring_cost`,
+        cost: item.pouring_cost,
+        quantity: item.concrete_volume_cy || 1,
+        unit: "cy",
+        builderData: item,
+        calculation: { concrete_volume_cy: item.concrete_volume_cy, cost: item.pouring_cost },
+      }));
+    }
+    if (num(item.finishing_cost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:item:${index}:finishing`,
+        name: item.description ? `${item.description} — Concrete Finishing` : "Concrete Finishing Labor",
+        type: "labor",
+        subtype: "concrete_finishing",
+        sourcePath: `items[${index}].finishing_cost`,
+        cost: item.finishing_cost,
+        quantity: item.finishing_hours || 1,
+        unit: item.finishing_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { hours: item.finishing_hours, rate: item.finishing_rate, cost: item.finishing_cost },
       }));
     }
   });
+
+  const delivery = project.builder_calculation?.delivery || {};
+  const itemConcreteCost = (project.items || []).reduce((sum, item) => sum + num(item.concrete_cost), 0);
+  const fallbackDeliveryCost = Math.max(0, num(project.total_concrete_cost) - itemConcreteCost);
+  const deliveryCost = num(delivery.concreteTotal, fallbackDeliveryCost);
+  if (deliveryCost > 0.005) {
+    const concreteId = (project.items || []).map((item) => item.selected_concrete_id).find(Boolean) || project.selected_concrete_id || "";
+    const entity = findEntity(catalogs, concreteId, "LaborServiceInventory");
+    parts.push(makePart({
+      key: "foundation:concrete-delivery",
+      name: "Ready-Mix Concrete Delivery",
+      type: "material",
+      subtype: "ready_mix_concrete",
+      sourcePath: "builder_calculation.delivery",
+      entity,
+      inventoryId: concreteId,
+      quantity: delivery.roundedYards || 1,
+      unit: "cy",
+      unitCost: delivery.ratePerYard,
+      extendedCost: deliveryCost,
+      builderData: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
+      calculation: delivery,
+      pricingBasis: { mix: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
+    }));
+  }
 
   (project.walls || []).forEach((wall, index) => {
     if (wall.materialId) {
