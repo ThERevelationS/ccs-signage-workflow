@@ -711,22 +711,38 @@ function extractMaintenance(project, catalogs = {}) {
     (item.actions || []).forEach((action, actionIndex) => {
       (action.materials || []).forEach((mat, matIndex) => {
         const id = mat.inventory_item_id || mat.inventory_id || "";
+        const row = catalogs.MaintenanceInventory?.byId.get(id);
+        const priced = maintenanceMaterialLine(mat, item, row);
         parts.push(makePart({
           key: `maintenance:item:${itemIndex}:action:${actionIndex}:material:${matIndex}`,
-          name: mat.item_name || action.action || "Maintenance material",
+          name: row?.item_name || mat.item_name || action.action || "Maintenance Material",
           type: "material",
-          subtype: action.action || mat.pricing_mode || "maintenance",
+          subtype: action.action || row?.pricing_mode || mat.pricing_mode || "maintenance",
           sourcePath: `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}]`,
           entity: "MaintenanceInventory",
           inventoryId: id,
-          quantity: mat.quantity || 1,
-          unit: mat.pricing_mode || "",
-          unitCost: mat.unit_cost,
-          extendedCost: mat.total_cost,
+          quantity: priced.quantity,
+          unit: priced.unit,
+          unitCost: priced.unitCost,
+          extendedCost: priced.extendedCost,
           builderData: { sign: item.description, action: action.action, material: mat },
-          calculation: mat,
+          calculation: { ...mat, calculated_extended_cost: priced.extendedCost },
         }));
       });
+      if (num(action.labor_cost) > 0.005) {
+        parts.push(manualCostPart({
+          key: `maintenance:item:${itemIndex}:action:${actionIndex}:labor`,
+          name: `${action.action || "Maintenance"} Labor${item.description ? ` — ${item.description}` : ""}`,
+          type: "labor",
+          subtype: action.action || "maintenance_labor",
+          sourcePath: `items[${itemIndex}].actions[${actionIndex}].labor_cost`,
+          cost: action.labor_cost,
+          quantity: action.labor_hours || 1,
+          unit: action.labor_hours ? "hour" : "job",
+          builderData: { sign: item.description, action },
+          calculation: { labor_hours: action.labor_hours, labor_cost: action.labor_cost, rate_basis: action.rate_basis },
+        }));
+      }
     });
   });
 
@@ -734,7 +750,7 @@ function extractMaintenance(project, catalogs = {}) {
     const id = eq.equipment_id || eq.inventory_item_id || "";
     parts.push(makePart({
       key: `maintenance:equipment:${index}`,
-      name: eq.equipment_name || "Maintenance equipment",
+      name: eq.equipment_name || "Maintenance Equipment",
       type: "equipment",
       subtype: eq.equipment_type || "maintenance_equipment",
       sourcePath: `selected_equipment[${index}]`,
@@ -748,6 +764,41 @@ function extractMaintenance(project, catalogs = {}) {
       calculation: eq,
     }));
   });
+  if (num(project.total_supplies_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "maintenance:supplies",
+      name: "Maintenance Consumables / Supplies",
+      type: "consumable",
+      subtype: "maintenance_supplies",
+      sourcePath: "total_supplies_cost",
+      cost: project.total_supplies_cost,
+      calculation: { supplies_percent: project.supplies_percent_of_materials, extra_supplies_cost: project.extra_supplies_cost },
+    }));
+  }
+  if (num(project.total_travel_cost) > 0.005) {
+    parts.push(manualCostPart({
+      key: "maintenance:travel",
+      name: "Travel / Mileage",
+      type: "service",
+      subtype: "travel",
+      sourcePath: "total_travel_cost",
+      cost: project.total_travel_cost,
+      quantity: project.travel_miles_round_trip || 1,
+      unit: project.travel_miles_round_trip ? "mile" : "job",
+      calculation: { miles: project.travel_miles_round_trip, rate: project.travel_cost_per_mile },
+    }));
+  }
+  if (num(project.markup_amount) > 0.005) {
+    parts.push(manualCostPart({
+      key: "maintenance:markup",
+      name: "Builder Markup",
+      type: "pricing",
+      subtype: "markup",
+      sourcePath: "markup_amount",
+      cost: project.markup_amount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+    }));
+  }
   return parts;
 }
 
