@@ -1,19 +1,9 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId } from "@/components/estimator/builder/builderService";
+import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
-
-function stripSystemFields(value) {
-  if (Array.isArray(value)) return value.map(stripSystemFields);
-  if (!value || typeof value !== "object") return value;
-  const out = {};
-  Object.entries(value).forEach(([key, item]) => {
-    if (["id", "created_date", "updated_date", "created_by", "created_by_id", "is_sample"].includes(key)) return;
-    out[key] = stripSystemFields(item);
-  });
-  return out;
-}
 
 async function nextRevisionNumber(builderProductId) {
   const rows = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []);
@@ -48,7 +38,7 @@ export async function clonePartGroupInProduct({ builderProductId, groupId }) {
   const timestamp = nowIso();
   const isCustom = builder.module_key === "custom";
   const newGroup = await base44.entities.BuilderPartGroup.create({
-    ...stripSystemFields(group),
+    ...stripEntitySystemFields(group),
     builder_product_id: builder.id,
     group_key: makeStableId("group"),
     group_name: `${group.group_name || "Part Group"} Copy`,
@@ -62,7 +52,7 @@ export async function clonePartGroupInProduct({ builderProductId, groupId }) {
   for (let index = 0; index < sourceParts.length; index += 1) {
     const sourcePart = sourceParts[index];
     const cloned = await base44.entities.BuilderPart.create({
-      ...stripSystemFields(sourcePart),
+      ...stripEntitySystemFields(sourcePart),
       builder_product_id: builder.id,
       part_group_id: newGroup.id,
       part_key: makeStableId("part"),
