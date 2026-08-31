@@ -86,7 +86,8 @@
     },
     "frozen_customer_price": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Compatibility/audit snapshot of the accepted UNIT Product base price before estimate-line customer_quantity and adjustment_percent are applied. The live quote is calculated from AllInOneEstimate.line_items, not from this field."
     },
     "current_recalculated_cost": {
       "type": "number",
