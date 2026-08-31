@@ -1,23 +1,31 @@
 import { base44 } from "@/api/base44Client";
-import { getModule, MODULE_TOTAL_FIELD } from "./moduleRegistry";
+import { getModule } from "./moduleRegistry";
+import { sourceProjectTotal } from "./builder/builderService";
 
-// Re-reads every section's source sub-estimate and returns refreshed line items
-// (total + name), so an estimate always opens with current section pricing.
+// Re-reads source sub-estimates for comparison WITHOUT overwriting the accepted
+// estimate price. `total_snapshot` is the frozen/accepted cost; current source
+// math lives in `live_total_snapshot` until the user explicitly accepts Update Price.
 export async function refreshSectionSnapshots(lineItems) {
   const lines = lineItems || [];
   const refreshed = await Promise.all(
     lines.map(async (line) => {
       const mod = getModule(line.module_key);
-      const totalField = MODULE_TOTAL_FIELD[line.module_key];
-      if (!mod || !totalField || !line.project_id) return line;
+      if (!mod || !line.project_id) return line;
 
       const record = await base44.entities[mod.entity].get(line.project_id).catch(() => null);
       if (!record) return line;
 
+      const liveTotal = sourceProjectTotal(line, record);
+      const frozenTotal = Number(line.total_snapshot || 0);
+      const changed = Math.abs(liveTotal - frozenTotal) > 0.005;
+      const keepLegacyState = line.price_state === "legacy_frozen";
+
       return {
         ...line,
         project_name: record.project_name || line.project_name,
-        total_snapshot: Number(record[totalField] || 0),
+        live_total_snapshot: liveTotal,
+        price_state: keepLegacyState ? "legacy_frozen" : changed ? "changed" : "current",
+        last_price_check_at: new Date().toISOString(),
         updated_date_snapshot: record.updated_date,
       };
     })
