@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -1751,11 +1752,7 @@ export async function getDetachedBuilderParts(builderProductId) {
   if (!builderProductId) return [];
   const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
   return (parts || [])
-    .filter((part) =>
-      part.is_active !== false &&
-      (part.builder_sync_state === "detached_override" ||
-        (part.builder_sync_state !== "manual_addon" && ["detached", "reattach_available"].includes(part.inventory_link_state)))
-    )
+    .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
     .map((part) => ({
       ...part,
