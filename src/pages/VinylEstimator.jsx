@@ -86,8 +86,27 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
         if (p) {
           const migrated = migrateProject(p);
+          const firstWorkflow = migrated.workflows?.[0] || blankWorkflow(0);
+          const isBlankEmbeddedWorkflow =
+            (migrated.workflows || []).length === 1 &&
+            !(firstWorkflow.items || []).length &&
+            !firstWorkflow.vinyl_id && !firstWorkflow.printer_id && !firstWorkflow.cutter_id && !firstWorkflow.laminator_id;
+          const defaultPrinter   = mList.find(m => m.is_default_for_type && (m.machine_type === "printer" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "printer" || m.machine_type === "print_and_cut");
+          const defaultCutter    = mList.find(m => m.is_default_for_type && (m.machine_type === "cutter" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "cutter" || m.machine_type === "print_and_cut");
+          const defaultLaminator = mList.find(m => m.is_default_for_type && m.machine_type === "laminator") || mList.find(m => m.machine_type === "laminator");
+          const defaultVinyl     = vList.find(v => v.is_active !== false && !v.is_laminate && v.show_in_vinyl_estimator !== false);
+          const workflows = isBlankEmbeddedWorkflow ? [{
+            ...firstWorkflow,
+            vinyl_id: defaultVinyl?.id || "",
+            laminate_id: defaultVinyl?.default_laminate_id || "",
+            apply_laminate: !!defaultVinyl?.requires_lamination,
+            printer_id: defaultPrinter?.id || "",
+            cutter_id: defaultCutter?.id || "",
+            laminator_id: defaultLaminator?.id || "",
+          }] : migrated.workflows;
           setProject({
             ...migrated,
+            workflows,
             client_name: estimate?.client_name || migrated.client_name,
             customer_id: estimate?.customer_id || migrated.customer_id,
             estimate_number: estimate?.estimate_number || migrated.estimate_number,
