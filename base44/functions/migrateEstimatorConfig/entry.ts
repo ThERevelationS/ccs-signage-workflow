@@ -70,9 +70,6 @@ async function syncDataset(entity: any, sourceRows: any[], keyFn: (r: any) => st
 Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
-    if (body?.secret !== MIGRATION_SECRET) {
-      return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
-    }
     const action = body?.action === 'migrate' ? 'migrate' : 'preview';
     const dataset = String(body?.dataset || '');
     if (!['settings', 'maintenance_action_rates'].includes(dataset)) {
