@@ -7,6 +7,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel";
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
@@ -81,17 +82,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
       });
 
       if (estimateId) {
-        const est = await base44.entities.AllInOneEstimate.get(estimateId);
-        const line_items = (est.line_items || []).map((l) =>
-          l.project_id === project.id
-            ? {
-                ...l,
-                total_snapshot: totals.total_cost,
-                updated_date_snapshot: new Date().toISOString(),
-              }
-            : l
-        );
-        await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
+        const savedProject = await base44.entities.BrickStoneProject.get(project.id);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "brick_stone" },
+          sourceProject: savedProject,
+          liveTotal: totals.total_cost,
+        });
       }
       onSaved?.();
     } finally {
