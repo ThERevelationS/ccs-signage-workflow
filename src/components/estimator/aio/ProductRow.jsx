@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Layers3, LockKeyhole, Pencil, Percent, RefreshCw, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Copy, Layers3, LockKeyhole, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
+import ProductNotesModal from "./ProductNotesModal";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -68,11 +69,15 @@ export default function ProductRow({
   onEdit,
   onUpdatePrice,
   onProductRefresh,
+  onClone,
+  onSaveNotes,
 }) {
   const [open, setOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(true);
   const [partCount, setPartCount] = useState(0);
   const [updatingPrice, setUpdatingPrice] = useState(false);
+  const [cloning, setCloning] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const set = (patch) => onChange(index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
@@ -88,6 +93,18 @@ export default function ProductRow({
       await onUpdatePrice(line, index);
     } finally {
       setUpdatingPrice(false);
+    }
+  };
+
+  const handleClone = async () => {
+    if (!onClone || cloning) return;
+    const name = line.client_product_name || line.project_name || "Product";
+    if (!window.confirm(`Clone “${name}”?\n\nThe copy will preserve its Builder configuration, Parts, Part Groups, detached overrides and frozen pricing as a new independent Product.`)) return;
+    setCloning(true);
+    try {
+      await onClone(line, index);
+    } finally {
+      setCloning(false);
     }
   };
 
@@ -177,6 +194,23 @@ export default function ProductRow({
           <Pencil className="w-3 h-3" /> {isCustom ? "Product Settings" : "Edit Product"}
         </button>
         <button
+          type="button"
+          onClick={() => setNotesOpen(true)}
+          title="Manage Product Notes"
+          className={`w-[28px] h-[28px] border rounded flex items-center justify-center ${line.product_notes ? "border-lime-300 text-lime-700 bg-lime-50" : "border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+        >
+          <StickyNote className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={handleClone}
+          disabled={cloning}
+          title="Clone Product"
+          className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+        >
+          <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} />
+        </button>
+        <button
           onClick={() => setOpen(!open)}
           title="Adjust pricing"
           className={`w-[28px] h-[28px] border rounded flex items-center justify-center ${
@@ -258,6 +292,15 @@ export default function ProductRow({
           </div>
         </div>
       )}
+
+      <ProductNotesModal
+        open={notesOpen}
+        line={line}
+        onClose={() => setNotesOpen(false)}
+        onSave={async (notes) => {
+          await onSaveNotes?.(line, notes, index);
+        }}
+      />
 
       {partsOpen && (
         <BuilderPartsPanel
