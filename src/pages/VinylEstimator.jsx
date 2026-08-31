@@ -68,22 +68,31 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     const load = async () => {
       setLoading(true);
       try {
-        const [vList, mList, sList, eList, p] = await Promise.all([
+        const [vList, mList, sList, eList, p, estimate] = await Promise.all([
           VinylInventory.list("sort_order"),
           VinylMachine.list("sort_order"),
           Settings.list(),
           ChannelLetterInstallEquipment.list("sort_order"),
           projectId ? VinylProject.get(projectId) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
         ]);
-        setVinyls(vList);
-        setMachines(mList);
-        setEquipmentInventory(eList);
+        setVinyls(vList || []);
+        setMachines(mList || []);
+        setEquipmentInventory(eList || []);
+        setEstimateContext(estimate || null);
         const settingsObj = {};
         sList.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
         setSettings(settingsObj);
 
         if (p) {
-          setProject(migrateProject(p));
+          const migrated = migrateProject(p);
+          setProject({
+            ...migrated,
+            client_name: estimate?.client_name || migrated.client_name,
+            customer_id: estimate?.customer_id || migrated.customer_id,
+            estimate_number: estimate?.estimate_number || migrated.estimate_number,
+            site_address: migrated.site_address || estimate?.site_address || "",
+          });
         } else {
           // Seed first workflow with sensible defaults
           const defaultPrinter   = mList.find(m => m.is_default_for_type && (m.machine_type === "printer" || m.machine_type === "print_and_cut")) || mList.find(m => m.machine_type === "printer" || m.machine_type === "print_and_cut");
@@ -108,7 +117,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
       setLoading(false);
     };
     load();
-  }, [projectId]);
+  }, [projectId, estimateId]);
 
   const updateProject = useCallback((patch) => setProject(prev => ({ ...prev, ...patch })), []);
 
