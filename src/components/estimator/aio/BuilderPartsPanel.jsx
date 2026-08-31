@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCopy,
+  CopyPlus,
   Layers3,
   Link2,
   LockKeyhole,
@@ -24,6 +25,7 @@ import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPa
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
+import { clonePartGroupInProduct } from "@/components/estimator/parts/partGroupService";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -241,6 +243,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const [name, setName] = useState(group.group_name || "Part Group");
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [cloning, setCloning] = useState(false);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
 
   const toggleOpen = async () => {
@@ -323,6 +326,24 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 title="Copy Part Group to 30-day Clipboard"
               ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
             )}
+            <button
+              type="button"
+              disabled={cloning}
+              onClick={async () => {
+                if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
+                setCloning(true);
+                try {
+                  await clonePartGroupInProduct({ builderProductId, groupId: group.id });
+                  await onChanged?.();
+                } catch (error) {
+                  window.alert(error?.message || "Part Group could not be cloned.");
+                } finally {
+                  setCloning(false);
+                }
+              }}
+              className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              title="Clone Part Group in this Product"
+            ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
             <button
               type="button"
               onClick={() => setRenaming(true)}
