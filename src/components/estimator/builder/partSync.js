@@ -432,6 +432,61 @@ function extractMaintenance(project) {
   return parts;
 }
 
+function manualCostPart({ key, name, type = "labor", subtype = "", sourcePath = "", cost = 0, quantity = 1, unit = "job", builderData = {}, calculation = {} }) {
+  const extended = num(cost);
+  const qty = Math.max(num(quantity, 1), 0.000001);
+  return makePart({
+    key,
+    name,
+    type,
+    subtype,
+    sourcePath,
+    quantity: qty,
+    unit,
+    unitCost: extended / qty,
+    extendedCost: extended,
+    builderData,
+    calculation,
+  });
+}
+
+function foundationEquipmentBreakdown(entry, catalogs) {
+  const equipmentRow = catalogs.FoundationInventory?.byId.get(entry.equipment_id);
+  if (!equipmentRow) return { baseCost: num(entry.equipment_cost), attachmentCosts: [] };
+  const rentalPeriod = entry.rental_period || "day";
+  const duration = entry.custom_qty !== undefined && entry.custom_qty !== null
+    ? num(entry.custom_qty, 1)
+    : num(entry.rental_duration, 1);
+  const rateFor = (row, override = undefined) => {
+    if (override !== undefined && override !== null) return num(override) * duration;
+    if (rentalPeriod === "day") return num(row?.cost_per_day) * duration;
+    if (rentalPeriod === "week") return num(row?.cost_per_week) * duration;
+    if (rentalPeriod === "month") return num(row?.cost_per_month) * duration;
+    return 0;
+  };
+  const attachmentCosts = (entry.attachments || []).map((attachment) => {
+    const id = attachment.id || attachment.inventory_id || "";
+    const row = catalogs.FoundationInventory?.byId.get(id);
+    return {
+      id,
+      row,
+      quantity: num(attachment.qty, 1),
+      cost: rateFor(row) * num(attachment.qty, 1),
+      attachment,
+    };
+  });
+  const baseRental = rateFor(equipmentRow, entry.custom_rate);
+  const delivery = entry.include_delivery
+    ? (entry.custom_delivery_charge !== undefined && entry.custom_delivery_charge !== null
+        ? num(entry.custom_delivery_charge)
+        : num(equipmentRow.pickup_delivery_cost))
+    : 0;
+  return {
+    baseCost: baseRental + delivery,
+    attachmentCosts,
+  };
+}
+
 function extractFoundation(project, catalogs) {
   const parts = [];
   (project.items || []).forEach((item, index) => {
