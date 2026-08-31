@@ -333,6 +333,10 @@
             "type": "string",
             "description": "User-defined Product Category used for estimate organization and customer quote categorization."
           },
+          "product_notes": {
+            "type": "string",
+            "description": "Estimator-facing Product notes. Separate from customer_description."
+          },
           "project_id": {
             "type": "string"
           },
