@@ -470,8 +470,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   if (!parts.length) {
     return (
       <div className="px-4 py-5 text-center border-t border-gray-200 bg-gray-50">
-        <div className="text-[11px] font-semibold text-gray-600">{allowAddParts ? "This Custom Product is blank." : "No Parts have been materialized yet."}</div>
-        <div className="text-[10px] text-gray-400 mt-1">{allowAddParts ? "Add Parts directly from the Master Inventory to build this Product." : "Open and save this Builder once to generate its frozen BOM Parts."}</div>
+        <div className="text-[11px] font-semibold text-gray-600">This Product does not have any Parts yet.</div>
+        <div className="text-[10px] text-gray-400 mt-1">Add a Part from Master Inventory now. Builder-generated BOM Parts will also appear here after the Builder is saved; manually added Parts remain independent add-ons.</div>
         {allowAddParts && (
           <button type="button" onClick={() => setPartPickerOpen(true)} className="mt-3 h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
         )}
