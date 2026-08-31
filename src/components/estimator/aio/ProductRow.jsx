@@ -74,6 +74,7 @@ export default function ProductRow({
   onClone,
   onSaveNotes,
   onCreateQuickProduct,
+  onPersistSettings,
 }) {
   const [open, setOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(true);
@@ -85,6 +86,7 @@ export default function ProductRow({
   const [copyingClipboard, setCopyingClipboard] = useState(false);
   const [copiedClipboard, setCopiedClipboard] = useState(false);
   const set = (patch) => onChange(index, patch);
+  const commit = (patch) => onPersistSettings?.(line, index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
   const amount = frozen * (1 + Number(line.adjustment_percent || 0) / 100);
@@ -246,13 +248,14 @@ export default function ProductRow({
           <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} /><span className="hidden xl:inline">{cloning ? "Cloning…" : "Clone"}</span>
         </button>
         <button
+          type="button"
           onClick={() => setOpen(!open)}
-          title="Adjust pricing"
-          className={`w-[28px] h-[28px] border rounded flex items-center justify-center ${
-            open ? "border-red-300 text-red-600 bg-red-50" : "border-gray-200 text-gray-500 hover:bg-gray-100"
+          title="Product Settings & Pricing Options"
+          className={`h-[28px] px-2.5 border rounded flex items-center justify-center gap-1 text-[11px] font-semibold ${
+            open ? "border-red-300 text-red-600 bg-red-50" : "border-gray-200 text-gray-600 hover:bg-gray-100"
           }`}
         >
-          <Percent className="w-3 h-3" />
+          <Percent className="w-3 h-3" /> Pricing
         </button>
         <button
           onClick={() => onRemove(index)}
@@ -264,11 +267,17 @@ export default function ProductRow({
       </div>
 
       {open && (
-        <div className="px-4 pb-3 pt-2 bg-gray-50 border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="px-4 pb-3 pt-2 bg-gray-50 border-t border-gray-200">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-[9px] font-extrabold tracking-widest text-gray-500">PRODUCT SETTINGS & PRICING OPTIONS</div>
+            <div className="text-[9px] text-gray-400">Changes save when you leave each field. Pricing adjustments affect the customer quote, not the frozen Builder cost.</div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Field
             label="CLIENT PRODUCT NAME"
             value={line.client_product_name || line.project_name || ""}
             onChange={(e) => set({ client_product_name: e.target.value })}
+            onBlur={(e) => commit({ client_product_name: e.target.value })}
             className="col-span-2"
           />
           <Field
@@ -280,6 +289,7 @@ export default function ProductRow({
             label="PRODUCT CATEGORY"
             value={line.product_category || ""}
             onChange={(e) => set({ product_category: e.target.value })}
+            onBlur={(e) => commit({ product_category: e.target.value })}
             placeholder="e.g. Interior Signage"
           />
           <Field
@@ -299,18 +309,24 @@ export default function ProductRow({
             type="number"
             value={line.adjustment_percent ?? 0}
             onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
+            onBlur={(e) => commit({ adjustment_percent: parseFloat(e.target.value) || 0 })}
           />
           <Field
             label="QUANTITY"
             type="number"
             value={line.customer_quantity ?? 1}
             onChange={(e) => set({ customer_quantity: parseFloat(e.target.value) || 1 })}
+            onBlur={(e) => commit({ customer_quantity: parseFloat(e.target.value) || 1 })}
           />
           <label className="text-[10px] font-semibold tracking-wide text-gray-400 block">
             STATUS
             <select
               value={line.section_status || "in_progress"}
-              onChange={(e) => set({ section_status: e.target.value })}
+              onChange={(e) => {
+                const patch = { section_status: e.target.value };
+                set(patch);
+                commit(patch);
+              }}
               className="mt-0.5 w-full h-[28px] px-2 border border-gray-200 rounded text-[12px] text-gray-800 bg-white"
             >
               <option value="in_progress">In progress</option>
@@ -322,6 +338,7 @@ export default function ProductRow({
               label="CUSTOMER DESCRIPTION"
               value={line.customer_description || ""}
               onChange={(e) => set({ customer_description: e.target.value })}
+              onBlur={(e) => commit({ customer_description: e.target.value })}
               placeholder="Shown to the customer on the quote"
             />
           </div>
