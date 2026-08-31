@@ -84,6 +84,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               onSaveNotes={onSaveNotes}
               onCreateQuickProduct={onCreateQuickProduct}
               onPersistSettings={onPersistSettings}
+              allLines={lines}
             />
           ))}
         </div>
