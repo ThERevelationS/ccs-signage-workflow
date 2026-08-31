@@ -349,7 +349,7 @@
           "total_snapshot": {
             "type": "number",
             "default": 0,
-            "description": "Accepted/frozen product cost snapshot used by estimate pricing. Live inventory changes do not replace it until Update Price is accepted."
+            "description": "Accepted/frozen UNIT Product cost snapshot. Estimate pricing extends this unit amount by customer_quantity, then applies adjustment_percent. Live inventory changes do not replace it until Update Price is accepted."
           },
           "live_total_snapshot": {
             "type": "number",
@@ -407,7 +407,7 @@
           "customer_quantity": {
             "type": "number",
             "default": 1,
-            "description": "Display-only quantity shown on the quote when the quantity column is enabled."
+            "description": "Product quantity. Estimate pricing extends each Product as total_snapshot \u00d7 customer_quantity before adjustment_percent; this quantity can also be shown on the customer quote when the quantity column is enabled."
           },
           "include_in_customer": {
             "type": "boolean",
