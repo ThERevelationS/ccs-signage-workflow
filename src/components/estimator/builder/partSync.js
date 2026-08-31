@@ -1786,6 +1786,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     builder_data: part.builder_data || {},
     calculation_snapshot: part.calculation_snapshot || {},
     pricing_basis_snapshot: part.pricing_basis_snapshot || {},
+    detail_overrides: part.detail_overrides || {},
     source_path: part.source_path,
   };
 
@@ -1874,6 +1875,8 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
   const nextExtended = quantity * frozenUnitCost;
   const delta = nextExtended - previousExtended;
   const timestamp = nowIso();
+  const previousDetailOverrides = part.detail_overrides || {};
+  const nextDetailOverrides = changes.detail_overrides !== undefined ? { ...(changes.detail_overrides || {}) } : previousDetailOverrides;
 
   const patch = {
     part_name: changes.part_name !== undefined ? String(changes.part_name || "Part") : part.part_name,
@@ -1886,6 +1889,7 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
     current_extended_cost: nextExtended,
     manual_cost_override: true,
     manual_cost: nextExtended,
+    detail_overrides: nextDetailOverrides,
     price_state: "detached",
     price_delta: 0,
     price_delta_percent: 0,
@@ -1934,6 +1938,8 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
       previous_extended_cost: previousExtended,
       new_extended_cost: nextExtended,
       delta,
+      previous_detail_overrides: previousDetailOverrides,
+      new_detail_overrides: nextDetailOverrides,
     }],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
