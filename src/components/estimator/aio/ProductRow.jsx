@@ -67,6 +67,7 @@ export default function ProductRow({
   onRemove,
   onEdit,
   onUpdatePrice,
+  onProductRefresh,
 }) {
   const [open, setOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(true);
@@ -249,6 +250,8 @@ export default function ProductRow({
           builderProductId={line.builder_product_id}
           refreshKey={`${line.last_price_check_at || ""}:${line.last_price_update_at || ""}:${line.price_state || ""}`}
           onLoaded={setPartCount}
+          onEditBuilder={() => onEdit?.(line, index)}
+          onProductRefresh={onProductRefresh}
         />
       )}
     </div>
