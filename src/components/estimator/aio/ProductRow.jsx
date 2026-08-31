@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { Percent, Trash2, Pencil } from "lucide-react";
-import { getModule, getModuleLabel } from "@/components/estimator/moduleRegistry";
+import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 
 const Field = ({ label, ...props }) => (
@@ -14,10 +13,9 @@ const Field = ({ label, ...props }) => (
   </label>
 );
 
-export default function ProductRow({ line, index, percentOfTotal, onChange, onRemove }) {
+export default function ProductRow({ line, index, percentOfTotal, onChange, onRemove, onEdit }) {
   const [open, setOpen] = useState(false);
   const set = (patch) => onChange(index, patch);
-  const editorPage = getModule(line.module_key)?.page;
   const amount = Number(line.total_snapshot || 0) * (1 + Number(line.adjustment_percent || 0) / 100);
 
   return (
@@ -50,14 +48,13 @@ export default function ProductRow({ line, index, percentOfTotal, onChange, onRe
           )}
         </div>
 
-        {editorPage && (
-          <Link
-            to={`/${editorPage}?id=${line.project_id}&estimateId=${line.estimate_id || ""}`}
-            className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100"
-          >
-            <Pencil className="w-3 h-3" /> Edit Product
-          </Link>
-        )}
+        <button
+          type="button"
+          onClick={() => onEdit?.(line, index)}
+          className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100"
+        >
+          <Pencil className="w-3 h-3" /> Edit Product
+        </button>
         <button
           onClick={() => setOpen(!open)}
           title="Adjust pricing"
