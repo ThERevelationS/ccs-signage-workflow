@@ -88,7 +88,7 @@ export async function saveProductAsQuickProduct({
       price_override: num(part.frozen_extended_cost),
       notes: part.notes || "",
     })),
-    total_price: frozenTotal,
+    total_price: frozenTotal * num(line.customer_quantity, num(builder.quantity, 1)),
   });
 }
 
@@ -250,7 +250,12 @@ async function instantiateLegacyQuickProduct({ estimate, quickProduct }) {
   const legacyParts = quickProduct.parts || [];
   const calculatedPartsTotal = legacyParts.reduce((sum, part) => sum + legacyPartExtended(part), 0);
   const calculatedProduct = Math.max(0, calculatedPartsTotal + num(quickProduct.setup_fee) - num(quickProduct.discount));
-  const frozenTotal = num(quickProduct.price_override, num(quickProduct.total_price, calculatedProduct * num(quickProduct.product_quantity, 1)));
+  const legacyQuantity = Math.max(0, num(quickProduct.product_quantity, 1)) || 1;
+  const frozenTotal = quickProduct.price_override !== undefined && quickProduct.price_override !== null && quickProduct.price_override !== ""
+    ? num(quickProduct.price_override)
+    : quickProduct.total_price !== undefined && quickProduct.total_price !== null && quickProduct.total_price !== ""
+      ? num(quickProduct.total_price) / legacyQuantity
+      : calculatedProduct;
 
   const builder = await base44.entities.BuilderProduct.create({
     estimate_id: estimate.id,
