@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
 import ProductNotesModal from "./ProductNotesModal";
 import CreateQuickProductModal from "./CreateQuickProductModal";
+import { copyProductToClipboard } from "@/components/estimator/products/clipboardService";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -81,6 +82,8 @@ export default function ProductRow({
   const [cloning, setCloning] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [quickProductOpen, setQuickProductOpen] = useState(false);
+  const [copyingClipboard, setCopyingClipboard] = useState(false);
+  const [copiedClipboard, setCopiedClipboard] = useState(false);
   const set = (patch) => onChange(index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
@@ -214,6 +217,25 @@ export default function ProductRow({
         </button>
         <button
           type="button"
+          disabled={copyingClipboard || !line.estimate_id}
+          onClick={async () => {
+            if (!line.estimate_id) return;
+            setCopyingClipboard(true);
+            try {
+              await copyProductToClipboard({ estimateId: line.estimate_id, line });
+              setCopiedClipboard(true);
+              setTimeout(() => setCopiedClipboard(false), 1500);
+            } finally {
+              setCopyingClipboard(false);
+            }
+          }}
+          title="Copy Product to 30-day Clipboard"
+          className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+        >
+          <ClipboardCopy className="w-3.5 h-3.5" /><span className="hidden xl:inline">{copiedClipboard ? "Copied" : "Copy"}</span>
+        </button>
+        <button
+          type="button"
           onClick={handleClone}
           disabled={cloning}
           title="Clone Product"
@@ -331,6 +353,7 @@ export default function ProductRow({
           onEditBuilder={() => onEdit?.(line, index)}
           onProductRefresh={onProductRefresh}
           allowAddParts={isCustom}
+          estimateId={line.estimate_id}
         />
       )}
     </div>
