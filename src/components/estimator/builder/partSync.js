@@ -823,15 +823,32 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
 export async function acceptBuilderPartPrices(builderProductId) {
   const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  const activeParts = (parts || []).filter((row) => row.is_active !== false);
+  const detachedParts = activeParts.filter((part) =>
+    ["detached", "reattach_available"].includes(part.inventory_link_state)
+  );
+
+  // All-or-nothing guard: do not mutate even one Part while any linked Part is
+  // detached. The user must resolve/reattach those Parts first.
+  if (detachedParts.length > 0) {
+    return {
+      changedParts: [],
+      detachedCount: detachedParts.length,
+      detachedParts: detachedParts.map((part) => ({
+        part_id: part.id,
+        part_key: part.part_key,
+        part_name: part.part_name,
+        inventory_item_name: part.inventory_item_name,
+        reattach_candidate_id: part.reattach_candidate_id || "",
+        reattach_candidate_name: part.reattach_candidate_name || "",
+      })),
+    };
+  }
+
   const timestamp = nowIso();
   const changedParts = [];
-  let detachedCount = 0;
 
-  for (const part of (parts || []).filter((row) => row.is_active !== false)) {
-    if (["detached", "reattach_available"].includes(part.inventory_link_state)) {
-      detachedCount += 1;
-      continue;
-    }
+  for (const part of activeParts) {
     const wasChanged = part.price_state === "changed" ||
       Math.abs(num(part.current_extended_cost) - num(part.frozen_extended_cost)) > 0.005 ||
       !same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot));
@@ -846,6 +863,8 @@ export async function acceptBuilderPartPrices(builderProductId) {
         new_unit_cost: num(part.current_unit_cost),
         previous_extended_cost: num(part.frozen_extended_cost),
         new_extended_cost: num(part.current_extended_cost),
+        previous_inventory_snapshot: part.frozen_inventory_snapshot || {},
+        new_inventory_snapshot: part.current_inventory_snapshot || {},
       });
     }
     await base44.entities.BuilderPart.update(part.id, {
@@ -860,5 +879,5 @@ export async function acceptBuilderPartPrices(builderProductId) {
     });
   }
 
-  return { changedParts, detachedCount };
+  return { changedParts, detachedCount: 0, detachedParts: [] };
 }
