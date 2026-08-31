@@ -143,6 +143,32 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   return { line: newLine, builderProduct: newBuilder, parts: clonedParts, groups: activeGroups.length };
 }
 
+export async function saveProductSettings({ estimateId, line, patch = {} }) {
+  if (!estimateId || !line) return null;
+  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const matches = (item) =>
+    (line.line_id && item.line_id === line.line_id) ||
+    (line.builder_product_id && item.builder_product_id === line.builder_product_id) ||
+    (line.project_id && item.project_id === line.project_id);
+  const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...patch } : item);
+  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+
+  if (line.builder_product_id) {
+    const builderPatch = {};
+    if (patch.client_product_name !== undefined) builderPatch.client_product_name = patch.client_product_name;
+    if (patch.product_category !== undefined) builderPatch.product_category = patch.product_category;
+    if (patch.customer_description !== undefined) builderPatch.client_description = patch.customer_description;
+    if (patch.customer_quantity !== undefined) builderPatch.quantity = num(patch.customer_quantity, 1);
+    if (patch.section_status !== undefined) builderPatch.status = patch.section_status === "complete" ? "complete" : "in_progress";
+    if (patch.product_notes !== undefined) builderPatch.product_notes = patch.product_notes;
+    if (Object.keys(builderPatch).length) {
+      await base44.entities.BuilderProduct.update(line.builder_product_id, builderPatch);
+    }
+  }
+
+  return lineItems.find(matches) || { ...line, ...patch };
+}
+
 export async function saveProductNotes({ estimateId, line, notes }) {
   if (!estimateId || !line) return;
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
