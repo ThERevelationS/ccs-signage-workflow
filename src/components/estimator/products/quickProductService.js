@@ -1,19 +1,9 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
+import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
-
-function stripSystemFields(value) {
-  if (Array.isArray(value)) return value.map(stripSystemFields);
-  if (!value || typeof value !== "object") return value;
-  const out = {};
-  Object.entries(value).forEach(([key, item]) => {
-    if (["id", "created_date", "updated_date", "created_by", "created_by_id", "is_sample"].includes(key)) return;
-    out[key] = stripSystemFields(item);
-  });
-  return out;
-}
 
 async function nextRevisionNumber(builderProductId) {
   const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []);
@@ -64,14 +54,14 @@ export async function saveProductAsQuickProduct({
     product_notes: line.product_notes ?? builder.product_notes ?? "",
     client_description: line.customer_description ?? builder.client_description ?? "",
     product_snapshot: {
-      line: stripSystemFields(line),
-      builder_product: stripSystemFields(builder),
+      line: cloneSnapshot(line),
+      builder_product: cloneSnapshot(builder),
     },
-    builder_snapshot: stripSystemFields(builderSnapshot),
+    builder_snapshot: cloneSnapshot(builderSnapshot),
     builder_snapshot_hash: builder.builder_snapshot_hash || snapshotHash(builderSnapshot),
-    parts_snapshot: activeParts.map(stripSystemFields),
+    parts_snapshot: activeParts.map(cloneSnapshot),
     part_groups_snapshot: activeGroups.map((group) => ({
-      ...stripSystemFields(group),
+      ...cloneSnapshot(group),
       snapshot_source_group_id: group.id,
     })),
     price_snapshot: {
@@ -106,7 +96,7 @@ async function createSourceProjectFromQuickProduct(quickProduct, estimate, produ
   const sourceEntity = quickProduct.source_entity || quickProduct.product_snapshot?.builder_product?.source_entity || "";
   const sourceClass = quickProduct.source_product_class || "legacy";
   if (sourceClass !== "builder" || !sourceEntity) return { sourceEntity: "", sourceProject: null };
-  const snapshot = stripSystemFields(quickProduct.builder_snapshot || {});
+  const snapshot = stripEntitySystemFields(quickProduct.builder_snapshot || {});
   if (Object.prototype.hasOwnProperty.call(snapshot, "project_name")) snapshot.project_name = productName;
   if (Object.prototype.hasOwnProperty.call(snapshot, "client_name")) snapshot.client_name = estimate.client_name || snapshot.client_name;
   if (Object.prototype.hasOwnProperty.call(snapshot, "customer_id")) snapshot.customer_id = estimate.customer_id || snapshot.customer_id;
@@ -118,8 +108,8 @@ async function createSourceProjectFromQuickProduct(quickProduct, estimate, produ
 async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const timestamp = nowIso();
   const productName = quickProduct.product_name || "Quick Product";
-  const templateLine = stripSystemFields(quickProduct.product_snapshot?.line || {});
-  const templateBuilder = stripSystemFields(quickProduct.product_snapshot?.builder_product || {});
+  const templateLine = cloneSnapshot(quickProduct.product_snapshot?.line || {});
+  const templateBuilder = stripEntitySystemFields(quickProduct.product_snapshot?.builder_product || {});
   const { sourceEntity, sourceProject } = await createSourceProjectFromQuickProduct(quickProduct, estimate, productName);
   const lineId = makeStableId("line");
   const moduleKey = quickProduct.source_module_key || templateBuilder.module_key || templateLine.module_key || "custom";
@@ -127,7 +117,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const priceSnapshot = quickProduct.price_snapshot || {};
   const frozenTotal = num(priceSnapshot.frozen_cost, num(quickProduct.total_price));
   const currentTotal = num(priceSnapshot.current_recalculated_cost, frozenTotal);
-  const sourceSnapshot = stripSystemFields(quickProduct.builder_snapshot || templateBuilder.builder_snapshot || {});
+  const sourceSnapshot = cloneSnapshot(quickProduct.builder_snapshot || templateBuilder.builder_snapshot || {});
 
   const newBuilder = await base44.entities.BuilderProduct.create({
     ...templateBuilder,
@@ -143,10 +133,10 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     product_notes: quickProduct.product_notes ?? templateBuilder.product_notes ?? "",
     quantity: num(quickProduct.product_quantity, num(templateBuilder.quantity, 1)),
     builder_version: 1,
-    builder_snapshot: sourceProject ? stripSystemFields(sourceProject) : sourceSnapshot,
+    builder_snapshot: sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot,
     builder_snapshot_at: timestamp,
     builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
-    builder_snapshot_hash: snapshotHash(sourceProject ? stripSystemFields(sourceProject) : sourceSnapshot),
+    builder_snapshot_hash: snapshotHash(sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot),
     frozen_cost: frozenTotal,
     frozen_customer_price: num(priceSnapshot.frozen_customer_price, frozenTotal),
     current_recalculated_cost: currentTotal,
@@ -167,7 +157,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const groups = (quickProduct.part_groups_snapshot || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   for (const group of groups) {
     const originalId = group.snapshot_source_group_id || group.group_key || makeStableId("source-group");
-    const groupData = stripSystemFields(group);
+    const groupData = stripEntitySystemFields(group);
     delete groupData.snapshot_source_group_id;
     const created = await base44.entities.BuilderPartGroup.create({
       ...groupData,
@@ -184,7 +174,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   for (const part of parts) {
     const originalGroupRef = part.part_group_id || "";
     const created = await base44.entities.BuilderPart.create({
-      ...stripSystemFields(part),
+      ...stripEntitySystemFields(part),
       builder_product_id: newBuilder.id,
       part_group_id: originalGroupRef ? (groupMap.get(originalGroupRef) || "") : "",
       // Builder reconciliation keys must stay stable within the new Product.
@@ -215,7 +205,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     new_customer_price: num(priceSnapshot.frozen_customer_price, frozenTotal),
     changed_parts: createdParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name, action: "created_from_quick_product", frozen_extended_cost: num(part.frozen_extended_cost) })),
     builder_snapshot_before: {},
-    builder_snapshot_after: sourceProject ? stripSystemFields(sourceProject) : sourceSnapshot,
+    builder_snapshot_after: sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot,
     price_snapshot_before: { total: 0 },
     price_snapshot_after: { ...priceSnapshot, total: frozenTotal, source: "quick_product" },
     notes: `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
