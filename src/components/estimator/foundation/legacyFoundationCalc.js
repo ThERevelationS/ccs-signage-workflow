@@ -67,6 +67,7 @@ export const normalizeConcreteSupplier = (row) => ({
   small_load_fee_4_4_25: row.small_load_fee_4_4_25 || 0,
   small_load_fee_4_5_4_75: row.small_load_fee_4_5_4_75 || 0,
   fuel_surcharge: row.fuel_surcharge || 0,
+  show_in_foundation: row.show_in_foundation !== false,
   _source: "labor_services",
 });
 
