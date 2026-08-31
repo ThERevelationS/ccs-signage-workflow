@@ -30,7 +30,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
         </div>
         <div className="text-right">
           <div className="text-base font-bold text-gray-900">
-            {fmt(Number(line.total_snapshot || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
+            {fmt(Number(line.total_snapshot || 0) * Math.max(0, Number(line.customer_quantity ?? 1) || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
           </div>
           <button
             onClick={() => onRemove(index)}
