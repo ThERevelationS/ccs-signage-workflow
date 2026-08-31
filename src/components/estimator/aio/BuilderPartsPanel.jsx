@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   Box,
   ChevronDown,
   ChevronRight,
@@ -25,7 +26,8 @@ import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPa
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
-import { clonePartGroupInProduct } from "@/components/estimator/parts/partGroupService";
+import { clonePartGroupInProduct, moveIndependentPartGroup } from "@/components/estimator/parts/partGroupService";
+import MovePartGroupModal from "./MovePartGroupModal";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -237,14 +239,17 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, availableProducts = [] }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
   const [cloning, setCloning] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const canMove = parts.length > 0 && parts.every((part) => ["manual", "manual_addon"].includes(part.builder_sync_state));
+  const moveTargets = (availableProducts || []).filter((line) => line.builder_product_id && line.builder_product_id !== builderProductId);
 
   const toggleOpen = async () => {
     const next = !open;
@@ -346,6 +351,13 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
             ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
             <button
               type="button"
+              disabled={!canMove || moveTargets.length === 0}
+              onClick={() => setMoveOpen(true)}
+              className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              title={canMove ? "Move Part Group to another Product" : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
+            ><ArrowRightLeft className="w-3 h-3" /> Move</button>
+            <button
+              type="button"
               onClick={() => setRenaming(true)}
               className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
               title="Rename Part Group"
@@ -380,11 +392,23 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
           ))}
         </div>
       )}
+      <MovePartGroupModal
+        open={moveOpen}
+        group={group}
+        sourceBuilderProductId={builderProductId}
+        products={moveTargets}
+        onClose={() => setMoveOpen(false)}
+        onMove={async (targetBuilderProductId) => {
+          await moveIndependentPartGroup({ sourceBuilderProductId: builderProductId, targetBuilderProductId, groupId: group.id });
+          setMoveOpen(false);
+          await onChanged?.();
+        }}
+      />
     </div>
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId, availableProducts = [] }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -569,6 +593,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             totalGroups={groups.length}
             onEditBuilder={onEditBuilder}
             estimateId={estimateId}
+            availableProducts={availableProducts}
           />
         );
         offset += groupParts.length;
