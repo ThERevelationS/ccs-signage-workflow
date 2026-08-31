@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Fuel, RefreshCw, AlertCircle } from "lucide-react";
-import { calculateTravelMiles } from "@/functions/calculateTravelMiles";
+import { base44 } from "@/api/base44Client";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
@@ -97,7 +97,7 @@ export default function TravelCostCard({
     setError(null);
     setLoading(true);
     try {
-      const res = await calculateTravelMiles({ shop_address: shopAddress, site_address: siteAddress });
+      const res = await base44.functions.invoke("calculateTravelMiles", { shop_address: shopAddress, site_address: siteAddress });
       const rt = parseFloat(res?.data?.round_trip_miles);
       if (!isFinite(rt) || rt <= 0) {
         setError(res?.data?.error || "Could not estimate distance for those addresses.");
