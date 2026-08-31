@@ -511,17 +511,6 @@ function extractVinylLegacy(project) {
         calculation: { labor_hours: item.labor_hours, labor_cost: item.labor_cost, rate: project.labor_rate_per_hour },
       }));
     }
-    if (num(item.extra_cost) > 0.005) {
-      parts.push(manualCostPart({
-        key: `vinyl:item:${index}:extra`,
-        name: item.description ? `${item.description} — Additional Cost` : "Additional Vinyl Cost",
-        type: "service",
-        subtype: "extra_cost",
-        sourcePath: `items[${index}].extra_cost`,
-        cost: item.extra_cost,
-        builderData: item,
-      }));
-    }
   });
 
   if (num(project.total_supplies_cost) > 0.005) {
@@ -535,16 +524,8 @@ function extractVinylLegacy(project) {
       calculation: { supplies_percent: project.supplies_percent_of_materials },
     }));
   }
-  if (num(project.extra_supplies_cost) > 0.005) {
-    parts.push(manualCostPart({
-      key: "vinyl:extra-supplies",
-      name: "Additional Vinyl Supplies",
-      type: "consumable",
-      subtype: "extra_supplies",
-      sourcePath: "extra_supplies_cost",
-      cost: project.extra_supplies_cost,
-    }));
-  }
+  // Legacy simplified projects save total_supplies_cost inclusive of extra_supplies_cost,
+  // so do not materialize extra supplies a second time here.
   if (num(project.markup_amount) > 0.005) {
     parts.push(manualCostPart({
       key: "vinyl:markup",
@@ -1803,7 +1784,7 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}) {
   switch (moduleKey) {
     case "foundation": return extractFoundation(project, catalogs);
     case "channel_letters": return extractChannel(project);
-    case "vinyl": return extractVinyl(project);
+    case "vinyl": return extractVinyl(project, catalogs);
     case "metal": return extractMetal(project);
     case "brick_stone": return extractBrick(project);
     case "maintenance": return extractMaintenance(project, catalogs);
