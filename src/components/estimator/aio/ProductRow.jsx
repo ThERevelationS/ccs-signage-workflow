@@ -93,7 +93,8 @@ export default function ProductRow({
   const commit = (patch) => onPersistSettings?.(line, index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
-  const amount = frozen * (1 + Number(line.adjustment_percent || 0) / 100);
+  const productQuantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
+  const amount = frozen * productQuantity * (1 + Number(line.adjustment_percent || 0) / 100);
   const meta = priceMeta(line);
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
@@ -165,6 +166,7 @@ export default function ProductRow({
 
         <div className="text-right w-[122px] flex-shrink-0">
           <div className="text-[13px] font-bold text-gray-800">{money(amount)}</div>
+          {productQuantity !== 1 && <div className="text-[9px] text-gray-400">{productQuantity} × {money(frozen)} each</div>}
           {meta.differs && (
             <div className="text-[9px] text-amber-600">live {money(live)}</div>
           )}
