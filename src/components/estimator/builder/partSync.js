@@ -92,6 +92,44 @@ function genericUnitCost(row) {
   return 0;
 }
 
+function independentPartUnitCost(part, row) {
+  if (!row) return num(part?.current_unit_cost, num(part?.frozen_unit_cost));
+  const entity = part?.inventory_entity || "";
+  const mode = part?.pricing_basis_snapshot?.pricing_mode || row.pricing_mode || row.pole_pricing_mode || row.unit_type || "";
+  if (entity === "DimensionalLetterMaterial") return num(row.cost_per_sheet);
+  if (entity === "VinylInventory") {
+    if (mode === "per_sqft") return num(row.cost_per_sqft);
+    if (mode === "per_linear_foot") return num(row.cost_per_linear_foot);
+    return num(row.cost_per_roll);
+  }
+  if (entity === "LaborServiceInventory") return num(row.default_rate);
+  if (entity === "ChannelLetterInstallInventory") {
+    if (mode === "per_raceway_foot") return num(row.cost_per_foot);
+    if (mode === "per_project_flat") return num(row.cost_flat);
+    if (mode === "per_letter_by_size") return num(row.cost_medium || row.cost_per_letter);
+    return num(row.cost_per_letter);
+  }
+  if (entity === "ChannelLetterInstallEquipment") {
+    if (mode === "per_hour") return num(row.cost_per_hour);
+    if (mode === "per_week") return num(row.cost_per_week);
+    if (mode === "per_month") return num(row.cost_per_month);
+    if (["owned_flat", "per_project_flat"].includes(mode)) return num(row.cost_flat);
+    return num(row.cost_per_day);
+  }
+  if (entity === "FoundationInventory") {
+    if (row.material_type === "pole" && mode === "stock_price") return num(row.pole_stock_price);
+    if (row.material_type === "wall_cap") return num(row.cap_stock_price || row.cost_per_unit);
+    if (["excavation_equipment", "attachment", "sub_attachment"].includes(row.material_type)) {
+      if (mode === "per_week") return num(row.cost_per_week);
+      if (mode === "per_month") return num(row.cost_per_month);
+      if (mode === "per_hour") return num(row.cost_per_hour);
+      return num(row.cost_per_day || row.cost_per_unit);
+    }
+    return num(row.cost_per_unit);
+  }
+  return num(row.cost_per_unit ?? row.default_rate ?? row.cost_flat ?? row.cost_per_sheet, genericUnitCost(row));
+}
+
 async function loadCatalog(entity, sort = null) {
   try {
     const rows = sort
@@ -1585,8 +1623,43 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     }
     if (old.builder_sync_state === "manual_addon") {
       // Intentional independent add-ons are not produced by the Builder, but
-      // they remain part of the Product economics and survive every Builder save.
-      synced.push(old);
+      // they still track their own Master Inventory record for current-price
+      // comparison and remain part of the Product economics on every Builder save.
+      let refreshed = old;
+      if (old.inventory_entity && old.inventory_item_id && !old.manual_cost_override) {
+        const currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id).catch(() => null);
+        if (currentRow) {
+          const currentUnit = independentPartUnitCost(old, currentRow);
+          const currentExtended = currentUnit * num(old.quantity, 1);
+          const changed = Math.abs(currentExtended - num(old.frozen_extended_cost)) > 0.005 ||
+            !same(pricingSnapshot(currentRow), pricingSnapshot(old.frozen_inventory_snapshot));
+          const patch = {
+            current_inventory_snapshot: currentRow,
+            current_unit_cost: currentUnit,
+            current_extended_cost: currentExtended,
+            inventory_link_state: "attached",
+            price_state: changed ? "changed" : "current",
+            price_delta: currentExtended - num(old.frozen_extended_cost),
+            price_delta_percent: num(old.frozen_extended_cost) ? ((currentExtended - num(old.frozen_extended_cost)) / num(old.frozen_extended_cost)) * 100 : 0,
+            last_price_check_at: nowIso(),
+            is_active: true,
+          };
+          if (changed) changedCount += 1;
+          await base44.entities.BuilderPart.update(old.id, patch);
+          refreshed = { ...old, ...patch };
+        } else {
+          const patch = {
+            inventory_link_state: "detached",
+            price_state: "detached",
+            last_price_check_at: nowIso(),
+            is_active: true,
+          };
+          detachedCount += 1;
+          await base44.entities.BuilderPart.update(old.id, patch);
+          refreshed = { ...old, ...patch };
+        }
+      }
+      synced.push(refreshed);
       continue;
     }
     await base44.entities.BuilderPart.update(old.id, {
@@ -1678,7 +1751,8 @@ export async function getDetachedBuilderParts(builderProductId) {
   return (parts || [])
     .filter((part) =>
       part.is_active !== false &&
-      (part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state))
+      (part.builder_sync_state === "detached_override" ||
+        (part.builder_sync_state !== "manual_addon" && ["detached", "reattach_available"].includes(part.inventory_link_state)))
     )
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
     .map((part) => ({
