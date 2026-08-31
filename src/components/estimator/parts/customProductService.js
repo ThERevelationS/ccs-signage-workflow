@@ -83,6 +83,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     inventory_link_state: "attached",
     frozen_inventory_snapshot: catalogItem.row,
     current_inventory_snapshot: catalogItem.row,
+    detail_overrides: {},
     builder_data: { catalog_category: catalogItem.categoryKey, catalog_category_label: catalogItem.categoryLabel },
     calculation_snapshot: { quantity: qty, unit_cost: unitCost, extended_cost: extended },
     pricing_basis_snapshot: { pricing_mode: catalogItem.pricingMode, inventory_pricing: catalogItem.pricingSnapshot },
@@ -154,6 +155,8 @@ export async function updateManualProductPart(partId, changes = {}) {
   const extended = quantity * unitCost;
   const delta = extended - previousExtended;
   const timestamp = nowIso();
+  const previousDetailOverrides = part.detail_overrides || {};
+  const nextDetailOverrides = changes.detail_overrides !== undefined ? { ...(changes.detail_overrides || {}) } : previousDetailOverrides;
   const costWasManuallyChanged = changes.frozen_unit_cost !== undefined && Math.abs(unitCost - num(part.frozen_unit_cost)) > 0.000001;
   await base44.entities.BuilderPart.update(partId, {
     part_name: changes.part_name !== undefined ? String(changes.part_name || "Part") : part.part_name,
@@ -166,6 +169,7 @@ export async function updateManualProductPart(partId, changes = {}) {
     current_extended_cost: costWasManuallyChanged ? extended : num(part.current_unit_cost, unitCost) * quantity,
     manual_cost_override: part.manual_cost_override || costWasManuallyChanged,
     manual_cost: (part.manual_cost_override || costWasManuallyChanged) ? extended : undefined,
+    detail_overrides: nextDetailOverrides,
     price_state: costWasManuallyChanged ? "manual" : part.price_state,
     notes: changes.notes !== undefined ? String(changes.notes || "") : part.notes,
     last_price_update_at: timestamp,
@@ -198,7 +202,7 @@ export async function updateManualProductPart(partId, changes = {}) {
     new_total_cost: nextTotal,
     previous_customer_price: num(builder.frozen_customer_price, previousTotal),
     new_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
-    changed_parts: [{ part_id: part.id, part_name: changes.part_name || part.part_name, action: "edit_manual_part", previous_extended_cost: previousExtended, new_extended_cost: extended, delta }],
+    changed_parts: [{ part_id: part.id, part_name: changes.part_name || part.part_name, action: "edit_manual_part", previous_extended_cost: previousExtended, new_extended_cost: extended, delta, previous_detail_overrides: previousDetailOverrides, new_detail_overrides: nextDetailOverrides }],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal },
@@ -232,6 +236,7 @@ export async function switchManualProductPart(partId, catalogItem) {
     reattach_candidate_name: "",
     frozen_inventory_snapshot: catalogItem.row,
     current_inventory_snapshot: catalogItem.row,
+    detail_overrides: {},
     builder_data: { ...(part.builder_data || {}), catalog_category: catalogItem.categoryKey, catalog_category_label: catalogItem.categoryLabel },
     pricing_basis_snapshot: { pricing_mode: catalogItem.pricingMode, inventory_pricing: catalogItem.pricingSnapshot },
     unit: catalogItem.unit,
@@ -272,7 +277,7 @@ export async function switchManualProductPart(partId, catalogItem) {
     new_total_cost: nextTotal,
     previous_customer_price: num(builder.frozen_customer_price, previousTotal),
     new_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
-    changed_parts: [{ part_id: part.id, action: "switch_part", previous_inventory_item_id: part.inventory_item_id, new_inventory_item_id: catalogItem.inventoryId, previous_inventory_name: part.inventory_item_name, new_inventory_name: catalogItem.name, previous_extended_cost: previousExtended, new_extended_cost: nextExtended, delta }],
+    changed_parts: [{ part_id: part.id, action: "switch_part", previous_inventory_item_id: part.inventory_item_id, new_inventory_item_id: catalogItem.inventoryId, previous_inventory_name: part.inventory_item_name, new_inventory_name: catalogItem.name, previous_extended_cost: previousExtended, new_extended_cost: nextExtended, delta, cleared_detail_overrides: part.detail_overrides || {} }],
     builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
     notes: `Switched independent Product Part to ${catalogItem.name}.`,
