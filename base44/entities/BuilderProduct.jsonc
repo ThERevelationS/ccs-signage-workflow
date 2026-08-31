@@ -140,6 +140,18 @@
       "default": false,
       "description": "True when one or more linked inventory parts were detached and the user must be offered reattach choices on edit."
     },
+    "legacy_bom_reconciled": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only for historical legacy_frozen Products whose active frozen BOM has been reconciled to the authoritative saved legacy Builder cost categories. While the Product remains legacy_frozen, normal estimate-open refresh preserves this historical BOM instead of re-extracting modern Builder detail from partially populated legacy fields."
+    },
+    "legacy_bom_reconcile_version": {
+      "type": "string",
+      "description": "Version/batch identifier of the historical BOM reconciliation logic."
+    },
+    "legacy_bom_reconciled_at": {
+      "type": "string"
+    },
     "notes": {
       "type": "string"
     }
