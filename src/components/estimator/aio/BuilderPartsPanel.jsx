@@ -114,6 +114,8 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                       await copyPartToClipboard({ estimateId, builderProductId: part.builder_product_id, part });
                       setCopied(true);
                       setTimeout(() => setCopied(false), 1500);
+                    } catch (error) {
+                      window.alert(error?.message || "Part could not be copied to the estimator clipboard.");
                     } finally {
                       setCopying(false);
                     }
@@ -311,6 +313,8 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                     await copyPartGroupToClipboard({ estimateId, builderProductId, group, parts });
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1500);
+                  } catch (error) {
+                    window.alert(error?.message || "Part Group could not be copied to the estimator clipboard.");
                   } finally {
                     setCopying(false);
                   }
