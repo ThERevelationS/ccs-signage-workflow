@@ -1424,6 +1424,28 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     seen.add(descriptor.part_key);
     const old = byKey.get(descriptor.part_key);
     const resolvedEntity = findEntity(catalogs, descriptor.inventory_item_id, descriptor.inventory_entity);
+
+    // Intentional Builder overrides are independent frozen Parts. Preserve the
+    // override instead of allowing a Builder save to regenerate its values.
+    if (old?.builder_sync_state === "detached_override") {
+      const currentRow = findRow(catalogs, old.inventory_entity || resolvedEntity, old.inventory_item_id || descriptor.inventory_item_id);
+      const candidateId = descriptor.inventory_item_id || old.inventory_item_id || old.original_inventory_item_id || "";
+      const candidateEntity = findEntity(catalogs, candidateId, old.inventory_entity || resolvedEntity);
+      const candidateRow = findRow(catalogs, candidateEntity, candidateId);
+      const patch = {
+        inventory_link_state: currentRow ? "attached" : old.inventory_link_state,
+        current_inventory_snapshot: currentRow || old.current_inventory_snapshot || {},
+        reattach_candidate_id: candidateId,
+        reattach_candidate_name: rowName(candidateEntity, candidateRow) || old.inventory_item_name || descriptor.part_name,
+        price_state: "detached",
+        last_price_check_at: nowIso(),
+        is_active: true,
+      };
+      await base44.entities.BuilderPart.update(old.id, patch);
+      detachedCount += 1;
+      synced.push({ ...old, ...patch });
+      continue;
+    }
     const currentRow = findRow(catalogs, resolvedEntity, descriptor.inventory_item_id);
     const currentName = rowName(resolvedEntity, currentRow) || descriptor.part_name;
     const oldFrozenName = old?.inventory_item_name || rowName(old?.inventory_entity, old?.frozen_inventory_snapshot) || descriptor.part_name;
@@ -1461,6 +1483,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         part_subtype: descriptor.part_subtype,
         source_module_key: builderProduct.module_key,
         source_path: descriptor.source_path,
+        builder_sync_state: "linked",
         inventory_entity: resolvedEntity,
         inventory_item_id: descriptor.inventory_item_id,
         original_inventory_item_id: descriptor.inventory_item_id,
@@ -1555,6 +1578,11 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
   for (const old of existing || []) {
     if (seen.has(old.part_key) || old.is_active === false) continue;
+    if (old.builder_sync_state === "detached_override") {
+      detachedCount += 1;
+      synced.push(old);
+      continue;
+    }
     await base44.entities.BuilderPart.update(old.id, {
       is_active: false,
       last_price_check_at: nowIso(),
@@ -1574,6 +1602,7 @@ export async function acceptBuilderPartPrices(builderProductId) {
   const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
   const activeParts = (parts || []).filter((row) => row.is_active !== false);
   const detachedParts = activeParts.filter((part) =>
+    part.builder_sync_state === "detached_override" ||
     ["detached", "reattach_available"].includes(part.inventory_link_state)
   );
 
@@ -1635,11 +1664,14 @@ export async function getDetachedBuilderParts(builderProductId) {
   if (!builderProductId) return [];
   const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
   return (parts || [])
-    .filter((part) => part.is_active !== false && ["detached", "reattach_available"].includes(part.inventory_link_state))
+    .filter((part) =>
+      part.is_active !== false &&
+      (part.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part.inventory_link_state))
+    )
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
     .map((part) => ({
       ...part,
-      can_reattach: !!part.reattach_candidate_id,
+      can_reattach: part.builder_sync_state === "detached_override" || !!part.reattach_candidate_id,
     }));
 }
 
