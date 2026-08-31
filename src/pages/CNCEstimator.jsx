@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CNCProject, Settings } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,25 +10,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save, Router, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
-import ClientSearchInput from "@/components/ClientSearchInput";
-import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { Link, useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeCNCProject } from "@/components/markup/projectCategorizer";
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
 
-export default function NewCNCEstimate({ embeddedId = null, embedded = false }) {
+export default function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // Prop wins when embedded inside the All-In-One estimator.
-  const editId = embeddedId || searchParams.get("edit");
-  const { setIsDirty } = useUnsavedChanges();
+  // Embedded All-In-One context wins over standalone query parameters.
+  const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
+  const estimateId = embeddedEstimateId || searchParams.get("estimateId");
   const [isEditing, setIsEditing] = useState(false);
   const [project, setProject] = useState({
     project_name: "",
@@ -40,20 +38,15 @@ export default function NewCNCEstimate({ embeddedId = null, embedded = false }) 
     notes: ""
   });
   const [globalSettings, setGlobalSettings] = useState({});
+  const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
-  useEffect(() => {
-    if (!isLoading) setHasLoaded(true);
-  }, [isLoading]);
-  useEffect(() => {
-    if (hasLoaded) setIsDirty(true);
-  }, [project]);
 
   useEffect(() => {
     loadPrerequisites();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, estimateId]);
 
   const loadPrerequisites = async () => {
     try {
