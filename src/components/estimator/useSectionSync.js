@@ -19,12 +19,19 @@ export async function refreshSectionSnapshots(lineItems) {
       const frozenTotal = Number(line.total_snapshot || 0);
       const changed = Math.abs(liveTotal - frozenTotal) > 0.005;
       const keepLegacyState = line.price_state === "legacy_frozen";
+      const hasDetachedParts = Number(line.detached_part_count || 0) > 0 || line.needs_reattach_review;
 
       return {
         ...line,
         project_name: record.project_name || line.project_name,
         live_total_snapshot: liveTotal,
-        price_state: keepLegacyState ? "legacy_frozen" : changed ? "changed" : "current",
+        price_state: hasDetachedParts
+          ? "detached_parts"
+          : keepLegacyState
+            ? "legacy_frozen"
+            : changed
+              ? "changed"
+              : "current",
         last_price_check_at: new Date().toISOString(),
         updated_date_snapshot: record.updated_date,
       };
