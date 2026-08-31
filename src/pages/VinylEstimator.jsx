@@ -294,17 +294,23 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
           <div>
-            <Link to={createPageUrl("VinylProjects")} className="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" /> Vinyl Projects
-            </Link>
+            {embedded ? (
+              <button type="button" onClick={onClose} className="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" /> Back to products
+              </button>
+            ) : (
+              <Link to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"} className="text-sm text-slate-500 hover:text-slate-900 inline-flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" /> Back to estimator
+              </Link>
+            )}
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3 mt-1">
               <Droplets className="w-8 h-8 text-blue-600" />
               {projectId ? "Edit" : "New"} Vinyl Estimate
             </h1>
           </div>
           <div className="flex gap-2">
-            <Link to={createPageUrl("VinylSettings")}>
-              <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Settings</Button>
+            <Link to="/MasterInventory">
+              <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Vinyl Inventory</Button>
             </Link>
           </div>
         </div>
@@ -331,18 +337,14 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <Label>Client Name *</Label>
-                        <ClientSearchInput
-                          value={project.client_name}
-                          onChange={(val) => updateProject({ client_name: val })}
-                          onSelectProject={(data) => updateProject({
-                            client_name: data.client_name || project.client_name,
-                            project_name: data.project_name || project.project_name,
-                            estimate_number: data.estimate_number || project.estimate_number,
-                            hyperlink: data.hyperlink || project.hyperlink,
-                          })}
+                        <Input
+                          value={estimateContext?.client_name || project.client_name || ""}
+                          onChange={(e) => !embedded && updateProject({ client_name: e.target.value })}
+                          readOnly={embedded}
                           className="mt-1"
                           placeholder="Enter client name"
                         />
+                        {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
                       </div>
                       <div>
                         <Label>Project Name *</Label>
@@ -351,11 +353,11 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <Label>Estimate Number *</Label>
-                        <Input value={project.estimate_number} onChange={(e) => updateProject({ estimate_number: e.target.value })} placeholder="e.g., VIN-2024-001" className="mt-1" />
+                        <Label>Estimate Number</Label>
+                        <Input value={estimateContext?.estimate_number || project.estimate_number || ""} onChange={(e) => !embedded && updateProject({ estimate_number: e.target.value })} readOnly={embedded} placeholder="e.g., VIN-2024-001" className="mt-1" />
                       </div>
                       <div>
-                        <Label>Project Link *</Label>
+                        <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
                         <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://..." className="mt-1" />
                       </div>
                     </div>
@@ -497,8 +499,8 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   <Card className="bg-amber-50 border-amber-200">
                     <CardContent className="p-3 text-xs text-amber-900">
                       Your equipment inventory is empty.{" "}
-                      <Link to={createPageUrl("ChannelLetterInstallInventory")} className="underline font-medium">
-                        Add equipment in Inventory
+                      <Link to="/MasterInventory" className="underline font-medium">
+                        Add equipment in Master Inventory
                       </Link>{" "}
                       to enable selection.
                     </CardContent>
@@ -526,8 +528,8 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   <CardContent className="p-3 text-xs text-slate-600">
                     Travel rates (shop address, fuel prices, labor rate, overhead, minimum charge) are shared with the
                     Channel Letter Install module —{" "}
-                    <Link to={createPageUrl("ChannelLetterInstallationSettings")} className="underline font-medium">
-                      configure them in Install Settings
+                    <Link to="/MasterInventory" className="underline font-medium">
+                      review the shared installation inventory/settings
                     </Link>.
                   </CardContent>
                 </Card>
