@@ -225,7 +225,9 @@ export default function EstimateDetail() {
               />
             ) : (
               <>
-                <AddProductGrid counts={counts} onAdd={addSection} />
+                <div className="flex justify-end">
+                  <AddProductGrid counts={counts} onAdd={addSection} />
+                </div>
                 <EstimateProductsList
                   lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
                   rawTotal={pricing.rawTotal}
@@ -233,6 +235,9 @@ export default function EstimateDetail() {
                   onRemove={removeLine}
                   onEdit={(line) => setActiveProduct(line)}
                 />
+                <div className="flex justify-end pt-1">
+                  <AddProductGrid counts={counts} onAdd={addSection} />
+                </div>
               </>
             )
           )}
