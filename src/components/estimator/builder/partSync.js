@@ -1771,6 +1771,111 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
   return base44.entities.BuilderPart.get(part.id).catch(() => ({ ...part, builder_sync_state: "detached_override" }));
 }
 
+export async function updateDetachedPartOverride(partId, changes = {}) {
+  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
+  if (!part) throw new Error("The Part could not be loaded.");
+  if (part.builder_sync_state !== "detached_override") {
+    throw new Error("This Part must be detached from its Builder before it can be overridden independently.");
+  }
+  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id).catch(() => null);
+  if (!builder) throw new Error("The Builder Product could not be loaded.");
+
+  const previousExtended = num(part.frozen_extended_cost);
+  const quantity = changes.quantity !== undefined ? Math.max(0, num(changes.quantity)) : num(part.quantity, 1);
+  const frozenUnitCost = changes.frozen_unit_cost !== undefined ? num(changes.frozen_unit_cost) : num(part.frozen_unit_cost);
+  const nextExtended = quantity * frozenUnitCost;
+  const delta = nextExtended - previousExtended;
+  const timestamp = nowIso();
+
+  const patch = {
+    part_name: changes.part_name !== undefined ? String(changes.part_name || "Part") : part.part_name,
+    client_label: changes.client_label !== undefined ? String(changes.client_label || "") : part.client_label,
+    quantity,
+    unit: changes.unit !== undefined ? String(changes.unit || "") : part.unit,
+    frozen_unit_cost: frozenUnitCost,
+    frozen_extended_cost: nextExtended,
+    current_unit_cost: frozenUnitCost,
+    current_extended_cost: nextExtended,
+    manual_cost_override: true,
+    manual_cost: nextExtended,
+    price_state: "detached",
+    price_delta: 0,
+    price_delta_percent: 0,
+    notes: changes.notes !== undefined ? String(changes.notes || "") : part.notes,
+    last_price_update_at: timestamp,
+    last_price_check_at: timestamp,
+  };
+  await base44.entities.BuilderPart.update(part.id, patch);
+
+  const previousProductCost = num(builder.frozen_cost);
+  const nextProductCost = previousProductCost + delta;
+  const previousCustomerPrice = num(builder.frozen_customer_price, previousProductCost);
+  const nextCustomerPrice = previousCustomerPrice + delta;
+  await base44.entities.BuilderProduct.update(builder.id, {
+    frozen_cost: nextProductCost,
+    frozen_customer_price: nextCustomerPrice,
+    price_state: "detached_parts",
+    needs_reattach_review: true,
+    last_price_update_at: timestamp,
+    last_price_update_note: `Independent override updated for ${patch.part_name}.`,
+    builder_version: num(builder.builder_version, 1) + 1,
+  });
+
+  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
+  await base44.entities.BuilderPriceRevision.create({
+    builder_product_id: builder.id,
+    estimate_id: builder.estimate_id || "",
+    revision_number: revisionNumber,
+    reason: "manual_adjustment",
+    previous_total_cost: previousProductCost,
+    new_total_cost: nextProductCost,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
+    changed_parts: [{
+      part_id: part.id,
+      part_key: part.part_key,
+      part_name: patch.part_name,
+      action: "override_update",
+      previous_quantity: num(part.quantity, 1),
+      new_quantity: quantity,
+      previous_unit: part.unit || "",
+      new_unit: patch.unit || "",
+      previous_unit_cost: num(part.frozen_unit_cost),
+      new_unit_cost: frozenUnitCost,
+      previous_extended_cost: previousExtended,
+      new_extended_cost: nextExtended,
+      delta,
+    }],
+    builder_snapshot_before: builder.builder_snapshot || {},
+    builder_snapshot_after: builder.builder_snapshot || {},
+    price_snapshot_before: { total: previousProductCost, detached_override: true },
+    price_snapshot_after: { total: nextProductCost, detached_override: true },
+    notes: `Independent detached Part override updated. Builder synchronization remains disabled for this Part.`,
+  });
+
+  if (builder.estimate_id) {
+    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
+    if (estimate) {
+      const lineItems = (estimate.line_items || []).map((line) =>
+        line.builder_product_id === builder.id
+          ? {
+              ...line,
+              total_snapshot: num(line.total_snapshot, previousProductCost) + delta,
+              price_state: "detached_parts",
+              needs_reattach_review: true,
+              last_price_update_at: timestamp,
+              last_price_check_at: timestamp,
+            }
+          : line
+      );
+      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+    }
+  }
+
+  return base44.entities.BuilderPart.get(part.id).catch(() => ({ ...part, ...patch }));
+}
+
 function pathTokens(path) {
   return String(path || "")
     .replace(/\[(\d+)\]/g, ".$1")
