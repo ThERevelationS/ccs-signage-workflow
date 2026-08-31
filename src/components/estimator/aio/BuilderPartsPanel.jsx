@@ -9,6 +9,8 @@ import {
   LockKeyhole,
   Pencil,
   Plus,
+  RefreshCw,
+  Trash2,
   Unlink,
 } from "lucide-react";
 import CreatePartGroupModal from "./CreatePartGroupModal";
@@ -17,7 +19,7 @@ import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { base44 } from "@/api/base44Client";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
-import { addCatalogPartToProduct, updateManualProductPart } from "@/components/estimator/parts/customProductService";
+import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { money } from "@/components/estimator/aioPricing";
 
 const num = (value, fallback = 0) =>
@@ -45,6 +47,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   const [open, setOpen] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const frozen = num(part.frozen_extended_cost);
   const current = num(part.current_extended_cost, frozen);
   const differs = Math.abs(current - frozen) > 0.005;
@@ -92,13 +95,21 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
             <div className="text-[10px] text-gray-500">
               {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
             </div>
-            <button
-              type="button"
-              onClick={() => isIndependent ? setOverrideOpen(true) : setWarningOpen(true)}
-              className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
-            >
-              {isDetachedOverride ? "Edit Override" : "Edit Part"}
-            </button>
+            <div className="flex items-center gap-1.5">
+              {isManual && (
+                <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
+              )}
+              <button
+                type="button"
+                onClick={() => isIndependent ? setOverrideOpen(true) : setWarningOpen(true)}
+                className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                {isDetachedOverride ? "Edit Override" : "Edit Part"}
+              </button>
+              {isManual && (
+                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <section className="rounded border border-gray-200 bg-white p-3">
@@ -161,6 +172,17 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           await onChanged?.();
         }}
       />
+      {isManual && (
+        <MasterPartPickerModal
+          open={switchOpen}
+          onClose={() => setSwitchOpen(false)}
+          onAdd={async (item) => {
+            await switchManualProductPart(part.id, item);
+            setSwitchOpen(false);
+            await onChanged?.();
+          }}
+        />
+      )}
     </div>
   );
 }
