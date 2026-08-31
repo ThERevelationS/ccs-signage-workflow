@@ -7,6 +7,7 @@ import {
   Layers3,
   Link2,
   LockKeyhole,
+  Pencil,
   Unlink,
 } from "lucide-react";
 import CreatePartGroupModal from "./CreatePartGroupModal";
@@ -111,24 +112,91 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups }) {
   const [open, setOpen] = useState(!group.is_collapsed);
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState(group.group_name || "Part Group");
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+
+  const toggleOpen = async () => {
+    const next = !open;
+    setOpen(next);
+    await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
+  };
+
+  const saveName = async () => {
+    const nextName = name.trim() || "Part Group";
+    setName(nextName);
+    setRenaming(false);
+    await base44.entities.BuilderPartGroup.update(group.id, { group_name: nextName });
+    onChanged?.();
+  };
+
+  const dissolve = async () => {
+    if (!window.confirm(`Dissolve “${group.group_name || "Part Group"}”? The Parts will stay in this Product and keep all frozen pricing.`)) return;
+    await Promise.all(parts.map((part) => base44.entities.BuilderPart.update(part.id, { part_group_id: "" })));
+    await base44.entities.BuilderPartGroup.delete(group.id);
+    if (builderProductId) {
+      await base44.entities.BuilderProduct.update(builderProductId, {
+        group_count: Math.max(0, num(totalGroups) - 1),
+      });
+    }
+    onChanged?.();
+  };
 
   return (
     <div className="border border-gray-300 rounded-sm overflow-hidden bg-gray-50">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="w-full px-3 py-2 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-left"
-      >
+      <div className="w-full px-3 py-2 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-left">
+        <button type="button" onClick={toggleOpen} className="flex items-center gap-2 min-w-0 flex-1 text-left">
         {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
         <Layers3 className="w-4 h-4 text-gray-600" />
-        <span className="text-[9px] font-extrabold tracking-widest text-gray-500">PART GROUP</span>
-        <span className="text-[12px] font-bold text-gray-900 truncate flex-1">{group.group_name || "Part Group"}</span>
-        <span className="text-[10px] text-gray-500">{parts.length} parts</span>
-        <span className="text-[11px] font-bold text-gray-800 w-[92px] text-right">{money(frozen)}</span>
-      </button>
+          <span className="text-[9px] font-extrabold tracking-widest text-gray-500">PART GROUP</span>
+          {renaming ? (
+            <input
+              autoFocus
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  saveName();
+                }
+                if (event.key === "Escape") {
+                  setName(group.group_name || "Part Group");
+                  setRenaming(false);
+                }
+              }}
+              onBlur={saveName}
+              className="h-[25px] px-2 border border-gray-300 rounded bg-white text-[12px] font-bold text-gray-900 flex-1 min-w-[120px]"
+            />
+          ) : (
+            <span className="text-[12px] font-bold text-gray-900 truncate flex-1">{group.group_name || "Part Group"}</span>
+          )}
+          <span className="text-[10px] text-gray-500">{parts.length} parts</span>
+          <span className="text-[11px] font-bold text-gray-800 w-[92px] text-right">{money(frozen)}</span>
+        </button>
+        {!selectionMode && (
+          <div className="flex items-center gap-1 ml-1">
+            <button
+              type="button"
+              onClick={() => setRenaming(true)}
+              className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
+              title="Rename Part Group"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={dissolve}
+              className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50"
+              title="Dissolve Part Group"
+            >
+              <Unlink className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+      </div>
       {open && (
         <div className="p-2 space-y-2 border-t border-gray-200">
           {parts.map((part, index) => (
@@ -306,6 +374,9 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             selectionMode={selectionMode}
             selectedIds={selectedIds}
             onSelect={togglePartSelection}
+            onChanged={() => setRefreshNonce((value) => value + 1)}
+            builderProductId={builderProductId}
+            totalGroups={groups.length}
           />
         );
         offset += groupParts.length;
