@@ -80,7 +80,11 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId, em
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "laser" },
-          sourceProject: savedProject,
+          sourceProject: {
+            ...savedProject,
+            items: calc.items,
+            builder_calculation: { totals: calc.totals },
+          },
           liveTotal: t.total_cost,
         });
       }
