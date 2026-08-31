@@ -10,6 +10,12 @@ const CATALOGS = [
   'FoundationInventory',
   'ChannelLetterInstallInventory',
   'ChannelLetterInstallEquipment',
+  'LaborServiceInventory',
+];
+
+const LEGACY_REMOVED_CONCRETE_IDS = [
+  '692112e340fa9da37e5df3d9',
+  '69de9ae4ebc3313f013efd72',
 ];
 
 async function listAll(entity: any) {
@@ -53,6 +59,9 @@ function naturalKey(entityName: string, row: any) {
   }
   if (entityName === 'ChannelLetterInstallEquipment') {
     return `${normalizeString(row?.equipment_type)}|${normalizeString(row?.equipment_name)}`;
+  }
+  if (entityName === 'LaborServiceInventory') {
+    return `${normalizeString(row?.service_category)}|${normalizeString(row?.service_name)}`;
   }
   return '';
 }
