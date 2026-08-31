@@ -197,18 +197,18 @@ export default function ProductRow({
           type="button"
           onClick={() => setNotesOpen(true)}
           title="Manage Product Notes"
-          className={`w-[28px] h-[28px] border rounded flex items-center justify-center ${line.product_notes ? "border-lime-300 text-lime-700 bg-lime-50" : "border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+          className={`h-[28px] px-2.5 border rounded flex items-center justify-center gap-1 text-[11px] font-semibold ${line.product_notes ? "border-lime-300 text-lime-700 bg-lime-50" : "border-gray-200 text-gray-600 hover:bg-gray-100"}`}
         >
-          <StickyNote className="w-3.5 h-3.5" />
+          <StickyNote className="w-3.5 h-3.5" /><span className="hidden xl:inline">Notes</span>
         </button>
         <button
           type="button"
           onClick={handleClone}
           disabled={cloning}
           title="Clone Product"
-          className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+          className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
         >
-          <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} />
+          <Copy className={`w-3.5 h-3.5 ${cloning ? "animate-pulse" : ""}`} /><span className="hidden xl:inline">{cloning ? "Cloning…" : "Clone"}</span>
         </button>
         <button
           onClick={() => setOpen(!open)}
