@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import ProductRow from "./ProductRow";
 import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/moduleRegistry";
 
-export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct }) {
+export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings }) {
   const [query, setQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
 
@@ -19,6 +19,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         (line.project_name || "").toLowerCase().includes(q) ||
         (line.client_product_name || "").toLowerCase().includes(q) ||
         (line.builder_name || "").toLowerCase().includes(q) ||
+        (line.product_category || "").toLowerCase().includes(q) ||
         getModuleLabel(line.module_key).toLowerCase().includes(q)
       );
     });
@@ -82,6 +83,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               onClone={onClone}
               onSaveNotes={onSaveNotes}
               onCreateQuickProduct={onCreateQuickProduct}
+              onPersistSettings={onPersistSettings}
             />
           ))}
         </div>
