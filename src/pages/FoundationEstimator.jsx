@@ -64,10 +64,10 @@ const blankItem = (type) => ({
 const TAB_CLASS =
   "gap-1.5 text-[12px] data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-sm";
 
-export default function FoundationEstimator() {
+export default function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  const estimateId = params.get("estimateId");
+  const id = embeddedProjectId || params.get("id");
+  const estimateId = embeddedEstimateId || params.get("estimateId");
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
@@ -253,6 +253,7 @@ export default function FoundationEstimator() {
         await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
       }
       setDirty(false);
+      onSaved?.();
     } finally {
       setSaving(false);
     }
@@ -263,7 +264,8 @@ export default function FoundationEstimator() {
 
   const handleSaveAndExit = async () => {
     await handleSave();
-    navigate(backTo);
+    if (embedded) onClose?.();
+    else navigate(backTo);
   };
 
   const handleSaveAsCopy = async () => {
@@ -305,6 +307,7 @@ export default function FoundationEstimator() {
           onSaveAsTemplate={() => setTemplateMode("save")}
           onTemplates={() => setTemplateMode("load")}
           onHelp={() => setShowHelp((v) => !v)}
+          onBack={embedded ? onClose : undefined}
         />
 
         {showHelp && (
