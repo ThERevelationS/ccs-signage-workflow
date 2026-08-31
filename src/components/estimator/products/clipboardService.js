@@ -1,21 +1,11 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { instantiateQuickProduct } from "@/components/estimator/products/quickProductService";
+import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
 const expiryIso = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-function stripSystemFields(value) {
-  if (Array.isArray(value)) return value.map(stripSystemFields);
-  if (!value || typeof value !== "object") return value;
-  const out = {};
-  Object.entries(value).forEach(([key, item]) => {
-    if (["id", "created_date", "updated_date", "created_by", "created_by_id", "is_sample"].includes(key)) return;
-    out[key] = stripSystemFields(item);
-  });
-  return out;
-}
 
 async function getEstimateLine(estimate, builderProductId) {
   return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
@@ -58,11 +48,11 @@ async function captureProductPayload({ estimate, line }) {
     is_active: true,
     product_notes: line.product_notes ?? builder.product_notes ?? "",
     client_description: line.customer_description ?? builder.client_description ?? "",
-    product_snapshot: { line: stripSystemFields(line), builder_product: stripSystemFields(builder) },
-    builder_snapshot: stripSystemFields(builder.builder_snapshot || {}),
+    product_snapshot: { line: cloneSnapshot(line), builder_product: cloneSnapshot(builder) },
+    builder_snapshot: cloneSnapshot(builder.builder_snapshot || {}),
     builder_snapshot_hash: builder.builder_snapshot_hash || snapshotHash(builder.builder_snapshot || {}),
-    parts_snapshot: activeParts.map(stripSystemFields),
-    part_groups_snapshot: activeGroups.map((group) => ({ ...stripSystemFields(group), snapshot_source_group_id: group.id })),
+    parts_snapshot: activeParts.map(cloneSnapshot),
+    part_groups_snapshot: activeGroups.map((group) => ({ ...cloneSnapshot(group), snapshot_source_group_id: group.id })),
     price_snapshot: {
       frozen_cost: frozenTotal,
       frozen_customer_price: num(builder.frozen_customer_price, frozenTotal),
@@ -111,7 +101,7 @@ export async function copyPartToClipboard({ estimateId, builderProductId, part }
     item_name: part.client_label || part.part_name || "Part",
     ...sourceMeta(estimate, line),
     source_part_id: part.id || "",
-    payload: { part: stripSystemFields(part) },
+    payload: { part: cloneSnapshot(part) },
     notes: "Complete Part snapshot with Master Inventory links and frozen/current pricing.",
   });
 }
@@ -126,8 +116,8 @@ export async function copyPartGroupToClipboard({ estimateId, builderProductId, g
     ...sourceMeta(estimate, line),
     source_part_group_id: group.id || "",
     payload: {
-      group: { ...stripSystemFields(group), snapshot_source_group_id: group.id },
-      parts: (parts || []).filter((part) => part.is_active !== false).map(stripSystemFields),
+      group: { ...cloneSnapshot(group), snapshot_source_group_id: group.id },
+      parts: (parts || []).filter((part) => part.is_active !== false).map(cloneSnapshot),
     },
     notes: `Part Group snapshot with ${(parts || []).length} Parts.`,
   });
@@ -174,7 +164,7 @@ async function pasteIndependentParts({ estimateId, targetBuilderProductId, clipb
   let createdGroup = null;
   if (clipboardItem.item_type === "part_group") {
     const group = clipboardItem.payload?.group || {};
-    const groupData = stripSystemFields(group);
+    const groupData = stripEntitySystemFields(group);
     delete groupData.snapshot_source_group_id;
     createdGroup = await base44.entities.BuilderPartGroup.create({
       ...groupData,
@@ -189,7 +179,7 @@ async function pasteIndependentParts({ estimateId, targetBuilderProductId, clipb
   const createdParts = [];
   for (let index = 0; index < payloadParts.length; index += 1) {
     const sourcePart = payloadParts[index];
-    const partData = stripSystemFields(sourcePart);
+    const partData = stripEntitySystemFields(sourcePart);
     createdParts.push(await base44.entities.BuilderPart.create({
       ...partData,
       builder_product_id: builder.id,
