@@ -191,7 +191,9 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     manualAddonCurrentTotal: 0,
   };
   let effectiveLiveTotal = liveTotal;
-  if (source && builderProduct?.id) {
+  const preserveReconciledLegacyBom =
+    builderProduct?.price_state === "legacy_frozen" && builderProduct?.legacy_bom_reconciled === true;
+  if (source && builderProduct?.id && !preserveReconciledLegacyBom) {
     partSummary = await syncBuilderParts({
       builderProduct,
       sourceProject: source,
