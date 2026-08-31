@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, Plus, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
 import ProductNotesModal from "./ProductNotesModal";
 import CreateQuickProductModal from "./CreateQuickProductModal";
 import { copyProductToClipboard } from "@/components/estimator/products/clipboardService";
+import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
+import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -85,6 +87,7 @@ export default function ProductRow({
   const [quickProductOpen, setQuickProductOpen] = useState(false);
   const [copyingClipboard, setCopyingClipboard] = useState(false);
   const [copiedClipboard, setCopiedClipboard] = useState(false);
+  const [partPickerOpen, setPartPickerOpen] = useState(false);
   const set = (patch) => onChange(index, patch);
   const commit = (patch) => onPersistSettings?.(line, index, patch);
   const frozen = Number(line.total_snapshot || 0);
@@ -201,6 +204,16 @@ export default function ProductRow({
         >
           <Pencil className="w-3 h-3" /> {isCustom ? "Product Settings" : "Edit Product"}
         </button>
+        {line.builder_product_id && (
+          <button
+            type="button"
+            onClick={() => setPartPickerOpen(true)}
+            title={isCustom ? "Add Part from Master Inventory" : "Add independent Part from Master Inventory"}
+            className="h-[28px] px-2.5 border border-lime-300 bg-lime-50 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-700 hover:bg-lime-100"
+          >
+            <Plus className="w-3.5 h-3.5 text-lime-700" /><span className="hidden xl:inline">Add Part</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setNotesOpen(true)}
@@ -346,6 +359,20 @@ export default function ProductRow({
         </div>
       )}
 
+      <MasterPartPickerModal
+        open={partPickerOpen}
+        onClose={() => setPartPickerOpen(false)}
+        onAdd={async (item, quantity) => {
+          try {
+            await addCatalogPartToProduct({ builderProductId: line.builder_product_id, catalogItem: item, quantity });
+            setPartPickerOpen(false);
+            await onProductRefresh?.();
+          } catch (error) {
+            window.alert(error?.message || "Part could not be added to this Product.");
+          }
+        }}
+      />
+
       <CreateQuickProductModal
         open={quickProductOpen}
         line={line}
@@ -372,7 +399,7 @@ export default function ProductRow({
           onLoaded={setPartCount}
           onEditBuilder={() => onEdit?.(line, index)}
           onProductRefresh={onProductRefresh}
-          allowAddParts={isCustom}
+          allowAddParts={true}
           estimateId={line.estimate_id}
         />
       )}
