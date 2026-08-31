@@ -292,12 +292,15 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       frozen_cost: acceptedTotal,
       frozen_customer_price: isInitialFreeze ? acceptedTotal : num(builder.frozen_customer_price, acceptedTotal),
       current_recalculated_cost: nextLiveTotal,
-      price_state: priceState,
+      price_state: productState,
       price_delta: nextLiveTotal - acceptedTotal,
       price_delta_percent: acceptedTotal ? ((nextLiveTotal - acceptedTotal) / acceptedTotal) * 100 : 0,
       last_price_check_at: timestamp,
       last_price_update_at: isInitialFreeze ? timestamp : builder.last_price_update_at,
       builder_version: nextRevision,
+      part_count: partSummary.partCount,
+      detached_part_count: partSummary.detachedCount,
+      needs_reattach_review: partSummary.detachedCount > 0,
     });
 
     if (isInitialFreeze) {
