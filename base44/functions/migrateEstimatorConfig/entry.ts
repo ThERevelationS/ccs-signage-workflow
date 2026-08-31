@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 const SOURCE_APP_ID = '68a5a85045cf8570330146ef';
-const SOURCE_FUNCTION = 'configMigrationExport';
+const SOURCE_FUNCTION = 'exportMasterInventory';
 const MIGRATION_SECRET = 'rewhbP4aG6nyjgLpxFIuqv5NRZggfzkj6FeSn9s_pvI';
 
 async function listAll(entity: any) {
