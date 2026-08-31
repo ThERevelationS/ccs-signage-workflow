@@ -4,6 +4,7 @@ import {
   Box,
   ChevronDown,
   ChevronRight,
+  ClipboardCopy,
   Layers3,
   Link2,
   LockKeyhole,
@@ -22,6 +23,7 @@ import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/compone
 import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
+import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -44,19 +46,23 @@ const priceStateMeta = (part) => {
   return { label: "Price current", className: "bg-green-50 text-green-700 border-green-200", icon: Link2 };
 };
 
-function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder }) {
+function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder, estimateId }) {
   const [open, setOpen] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const frozen = num(part.frozen_extended_cost);
   const current = num(part.current_extended_cost, frozen);
   const differs = Math.abs(current - frozen) > 0.005;
   const meta = priceStateMeta(part);
   const StatusIcon = meta.icon;
   const isManual = part.builder_sync_state === "manual";
+  const isManualAddon = part.builder_sync_state === "manual_addon";
   const isDetachedOverride = part.builder_sync_state === "detached_override";
-  const isIndependent = isManual || isDetachedOverride;
+  const isDirectlyEditable = isManual || isManualAddon;
+  const isIndependent = isDirectlyEditable || isDetachedOverride;
   const inventoryDetails = typeDetails(part.inventory_entity, part.frozen_inventory_snapshot || {});
 
   return (
@@ -95,10 +101,28 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="text-[10px] text-gray-500">
-              {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
+              {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isManualAddon ? "Independent add-on Part — not controlled by this Builder and safe from Builder recalculation." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
             </div>
             <div className="flex items-center gap-1.5">
-              {isManual && (
+              {estimateId && (
+                <button
+                  type="button"
+                  disabled={copying}
+                  onClick={async () => {
+                    setCopying(true);
+                    try {
+                      await copyPartToClipboard({ estimateId, builderProductId: part.builder_product_id, part });
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    } finally {
+                      setCopying(false);
+                    }
+                  }}
+                  className="h-[28px] px-2.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1 disabled:opacity-50"
+                  title="Copy Part to 30-day Clipboard"
+                ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+              )}
+              {isDirectlyEditable && (
                 <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
               )}
               <button
@@ -108,7 +132,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
               >
                 {isDetachedOverride ? "Edit Override" : "Edit Part"}
               </button>
-              {isManual && (
+              {isDirectlyEditable && (
                 <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
               )}
             </div>
@@ -183,16 +207,16 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
       <DetachedPartOverrideModal
         open={overrideOpen}
         part={part}
-        mode={isManual ? "manual" : "detached"}
+        mode={isDirectlyEditable ? "manual" : "detached"}
         onClose={() => setOverrideOpen(false)}
         onSave={async (changes) => {
-          if (isManual) await updateManualProductPart(part.id, changes);
+          if (isDirectlyEditable) await updateManualProductPart(part.id, changes);
           else await updateDetachedPartOverride(part.id, changes);
           setOverrideOpen(false);
           await onChanged?.();
         }}
       />
-      {isManual && (
+      {isDirectlyEditable && (
         <MasterPartPickerModal
           open={switchOpen}
           mode="switch"
@@ -209,10 +233,12 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
 
   const toggleOpen = async () => {
@@ -275,6 +301,24 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
         </button>
         {!selectionMode && (
           <div className="flex items-center gap-1 ml-1">
+            {estimateId && (
+              <button
+                type="button"
+                disabled={copying}
+                onClick={async () => {
+                  setCopying(true);
+                  try {
+                    await copyPartGroupToClipboard({ estimateId, builderProductId, group, parts });
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  } finally {
+                    setCopying(false);
+                  }
+                }}
+                className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                title="Copy Part Group to 30-day Clipboard"
+              ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+            )}
             <button
               type="button"
               onClick={() => setRenaming(true)}
@@ -306,6 +350,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               onSelect={onSelect}
               onChanged={onChanged}
               onEditBuilder={onEditBuilder}
+              estimateId={estimateId}
             />
           ))}
         </div>
@@ -314,7 +359,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -498,6 +543,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             builderProductId={builderProductId}
             totalGroups={groups.length}
             onEditBuilder={onEditBuilder}
+            estimateId={estimateId}
           />
         );
         offset += groupParts.length;
