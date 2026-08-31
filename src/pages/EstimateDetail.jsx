@@ -6,6 +6,7 @@ import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
+import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
@@ -28,6 +29,7 @@ export default function EstimateDetail() {
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(2);
   const [showCancel, setShowCancel] = useState(false);
+  const [activeProduct, setActiveProduct] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -54,6 +56,12 @@ export default function EstimateDetail() {
       ...prev,
       line_items: prev.line_items.map((l, i) => (i === index ? { ...l, ...changes } : l)),
     }));
+
+  const refreshProducts = async () => {
+    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const line_items = await refreshSectionSnapshots(current.line_items);
+    setEstimate((prev) => ({ ...prev, ...current, line_items }));
+  };
 
   const removeLine = async (index) => {
     const line = estimate.line_items[index];
@@ -87,9 +95,10 @@ export default function EstimateDetail() {
         linked_date: new Date().toISOString(),
       },
     ];
-    // Persist immediately — the user navigates straight into the new section.
+    // Persist immediately, then open the new product in the inline editor.
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     setEstimate((prev) => ({ ...prev, line_items }));
+    setActiveProduct({ ...line_items[line_items.length - 1], estimate_id: estimate.id });
   };
 
   const handleSave = async () => {
@@ -204,15 +213,28 @@ export default function EstimateDetail() {
           {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} />}
 
           {step === 2 && (
-            <>
-              <AddProductGrid counts={counts} onAdd={addSection} />
-              <EstimateProductsList
-                lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
-                rawTotal={pricing.rawTotal}
-                onChange={patchLine}
-                onRemove={removeLine}
+            activeProduct ? (
+              <InlineProductEditor
+                line={activeProduct}
+                estimateId={estimate.id}
+                onClose={async () => {
+                  await refreshProducts();
+                  setActiveProduct(null);
+                }}
+                onSaved={refreshProducts}
               />
-            </>
+            ) : (
+              <>
+                <AddProductGrid counts={counts} onAdd={addSection} />
+                <EstimateProductsList
+                  lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
+                  rawTotal={pricing.rawTotal}
+                  onChange={patchLine}
+                  onRemove={removeLine}
+                  onEdit={(line) => setActiveProduct(line)}
+                />
+              </>
+            )
           )}
 
           {step === 3 && (
