@@ -1686,7 +1686,11 @@ function extractCNC(project) {
       }));
     }
   });
-  const fixedSetupCost = num(project.builder_calculation?.totals?.fixed_setup_cost);
+  const dynamicItemLabor = (project.items || []).reduce((sum, item) => sum + num(item.labor_cost), 0);
+  const fixedSetupCost = num(
+    project.builder_calculation?.totals?.fixed_setup_cost,
+    num(project.fixed_setup_hours) * num(project.labor_rate)
+  );
   if (fixedSetupCost > 0.005) {
     parts.push(manualCostPart({
       key: "cnc:fixed-setup",
@@ -1698,6 +1702,34 @@ function extractCNC(project) {
       quantity: project.fixed_setup_hours || 1,
       unit: project.fixed_setup_hours ? "hour" : "job",
       calculation: { fixed_setup_hours: project.fixed_setup_hours, labor_rate: project.labor_rate, cost: fixedSetupCost },
+    }));
+  }
+
+  // SignEstimate Pro applies min_cnc_labor_hours to the dynamic item setup labor.
+  // The saved total_labor_cost is authoritative, so materialize only the balance
+  // not already represented by item labor + fixed setup. This survives normal
+  // reopen/sync without needing transient builder_calculation data.
+  const authoritativeLaborTotal = num(
+    project.total_labor_cost,
+    num(project.builder_calculation?.totals?.total_labor_cost, dynamicItemLabor + fixedSetupCost)
+  );
+  const minimumLaborAdjustment = authoritativeLaborTotal - dynamicItemLabor - fixedSetupCost;
+  if (Math.abs(minimumLaborAdjustment) > 0.005) {
+    parts.push(manualCostPart({
+      key: "cnc:minimum-dynamic-labor-adjustment",
+      name: minimumLaborAdjustment > 0 ? "CNC Minimum Dynamic Labor" : "CNC Labor Adjustment",
+      type: "labor",
+      subtype: "minimum_dynamic_labor",
+      sourcePath: "total_labor_cost",
+      cost: minimumLaborAdjustment,
+      quantity: 1,
+      unit: "job",
+      calculation: {
+        total_labor_cost: authoritativeLaborTotal,
+        item_labor_cost: dynamicItemLabor,
+        fixed_setup_cost: fixedSetupCost,
+        minimum_dynamic_labor_adjustment: minimumLaborAdjustment,
+      },
     }));
   }
   return parts;
