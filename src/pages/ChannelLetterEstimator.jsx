@@ -9,6 +9,7 @@ import LetterPurchasesPanel from "@/components/estimator/channel/LetterPurchases
 import ChannelEquipmentPanel from "@/components/estimator/channel/ChannelEquipmentPanel";
 import ChannelTotals from "@/components/estimator/channel/ChannelTotals";
 import { calcChannelProject } from "@/components/estimator/channel/channelCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const blankItem = () => ({
   description: "",
@@ -113,13 +114,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       });
 
       if (estimateId) {
-        const est = await base44.entities.AllInOneEstimate.get(estimateId);
-        const line_items = (est.line_items || []).map((l) =>
-          l.project_id === project.id
-            ? { ...l, total_snapshot: t.total_cost, updated_date_snapshot: new Date().toISOString() }
-            : l
-        );
-        await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
+        const savedProject = await base44.entities.ChannelLetterInstallation.get(project.id);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "channel_letters" },
+          sourceProject: savedProject,
+          liveTotal: t.total_cost,
+        });
       }
       onSaved?.();
     } finally {
