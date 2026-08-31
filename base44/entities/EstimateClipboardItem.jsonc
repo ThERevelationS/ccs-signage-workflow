@@ -1,0 +1,111 @@
+{
+  "name": "EstimateClipboardItem",
+  "type": "object",
+  "description": "Database-backed 30-day estimator clipboard. Stores portable Product, Part Group or Part snapshots with source estimate/order/company metadata. Pasting creates new estimate/Product/Part snapshots and never mutates the source.",
+  "properties": {
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "product",
+        "part_group",
+        "part"
+      ]
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "source_estimate_id": {
+      "type": "string"
+    },
+    "source_estimate_number": {
+      "type": "string"
+    },
+    "source_order": {
+      "type": "string"
+    },
+    "source_company": {
+      "type": "string"
+    },
+    "source_product_id": {
+      "type": "string"
+    },
+    "source_product_name": {
+      "type": "string"
+    },
+    "source_part_group_id": {
+      "type": "string"
+    },
+    "source_part_id": {
+      "type": "string"
+    },
+    "source_module_key": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Portable lossless snapshot. Product payloads use the same v2 package as Quick Products; group/part payloads preserve complete BuilderPart snapshots.",
+      "additionalProperties": true
+    },
+    "copied_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "search_text": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_type",
+    "item_name",
+    "payload",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

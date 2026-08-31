@@ -43,10 +43,11 @@
       "enum": [
         "linked",
         "detached_override",
-        "manual"
+        "manual",
+        "manual_addon"
       ],
       "default": "linked",
-      "description": "Whether this Part continues to synchronize from its Builder. detached_override freezes the Part independently until the user explicitly reattaches it."
+      "description": "Whether this Part continues to synchronize from its Builder. detached_override freezes a Builder-produced Part until reattachment; manual is a Custom Product Part; manual_addon is an independent Part intentionally added to a Builder Product and remains outside Builder reconciliation."
     },
     "builder_detached_at": {
       "type": "string"
