@@ -318,7 +318,6 @@ async function bulkCreateChecked(entity: any, records: any[]) {
 Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
-    if (body?.secret !== MIGRATION_SECRET) return Response.json({ success: false, error: 'Forbidden' }, { status: 403 });
     const action = body?.action === 'migrate' ? 'migrate' : 'preview';
     const doWrite = action === 'migrate';
     const serverUrl = (req.headers.get('Base44-Api-Url') || 'https://base44.app').replace(/\/$/, '');
