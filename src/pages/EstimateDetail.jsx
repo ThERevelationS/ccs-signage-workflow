@@ -13,6 +13,11 @@ import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
+import {
+  acceptBuilderPrice,
+  ensureBuilderProductForLine,
+  ensureEstimateBuilderProducts,
+} from "@/components/estimator/builder/builderService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 
 const STEP_TITLES = {
@@ -37,8 +42,9 @@ export default function EstimateDetail() {
       return;
     }
     base44.entities.AllInOneEstimate.get(id).then(async (res) => {
-      const line_items = await refreshSectionSnapshots(res.line_items);
-      setEstimate({ ...res, line_items });
+      const withBuilders = await ensureEstimateBuilderProducts(res);
+      const line_items = await refreshSectionSnapshots(withBuilders.line_items);
+      setEstimate({ ...withBuilders, line_items });
       setLoading(false);
     });
   }, [id]);
@@ -59,8 +65,9 @@ export default function EstimateDetail() {
 
   const refreshProducts = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
-    const line_items = await refreshSectionSnapshots(current.line_items);
-    setEstimate((prev) => ({ ...prev, ...current, line_items }));
+    const withBuilders = await ensureEstimateBuilderProducts(current);
+    const line_items = await refreshSectionSnapshots(withBuilders.line_items);
+    setEstimate((prev) => ({ ...prev, ...withBuilders, line_items }));
   };
 
   const removeLine = async (index) => {
@@ -79,26 +86,38 @@ export default function EstimateDetail() {
       customer_id: estimate.customer_id,
       estimate_number: estimate.estimate_number,
     });
-    const line_items = [
-      ...(estimate.line_items || []),
-      {
-        module_key: mod.key,
-        project_id: created.id,
-        project_name: sectionName,
-        client_name: estimate.client_name,
-        total_snapshot: 0,
-        adjustment_percent: 0,
-        section_status: "in_progress",
-        customer_quantity: 1,
-        include_in_customer: true,
-        owned: true,
-        linked_date: new Date().toISOString(),
-      },
-    ];
+    const provisionalLine = {
+      module_key: mod.key,
+      project_id: created.id,
+      project_name: sectionName,
+      builder_name: mod.label,
+      client_product_name: sectionName,
+      client_name: estimate.client_name,
+      total_snapshot: 0,
+      live_total_snapshot: 0,
+      price_state: "unchecked",
+      adjustment_percent: 0,
+      section_status: "in_progress",
+      customer_quantity: 1,
+      include_in_customer: true,
+      owned: true,
+      linked_date: new Date().toISOString(),
+    };
+    const builderResult = await ensureBuilderProductForLine({
+      estimate,
+      line: provisionalLine,
+      isNew: true,
+    });
+    const line_items = [...(estimate.line_items || []), builderResult.line];
     // Persist immediately, then open the new product in the inline editor.
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     setEstimate((prev) => ({ ...prev, line_items }));
-    setActiveProduct({ ...line_items[line_items.length - 1], estimate_id: estimate.id });
+    setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
+  };
+
+  const updateProductPrice = async (line) => {
+    await acceptBuilderPrice({ estimateId: estimate.id, line });
+    await refreshProducts();
   };
 
   const handleSave = async () => {
