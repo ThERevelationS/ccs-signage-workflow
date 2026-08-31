@@ -78,6 +78,7 @@ export default function ProductRow({
   const live = Number(line.live_total_snapshot ?? frozen);
   const amount = frozen * (1 + Number(line.adjustment_percent || 0) / 100);
   const meta = priceMeta(line);
+  const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
   const handleUpdatePrice = async () => {
@@ -106,9 +107,15 @@ export default function ProductRow({
             <span className="text-[13px] font-bold text-gray-900 truncate">
               {line.client_product_name || line.project_name || getModuleLabel(line.module_key)}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#454545] text-white border border-gray-700 inline-flex items-center gap-1">
-              <Layers3 className="w-3 h-3 text-lime-300" /> BUILDER · {line.builder_name || getModuleLabel(line.module_key)}
-            </span>
+            {isCustom ? (
+              <span className="text-[10px] px-2 py-0.5 rounded-sm bg-lime-100 text-gray-800 border border-lime-300 inline-flex items-center gap-1">
+                <Layers3 className="w-3 h-3 text-lime-700" /> CUSTOM PRODUCT
+              </span>
+            ) : (
+              <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#454545] text-white border border-gray-700 inline-flex items-center gap-1">
+                <Layers3 className="w-3 h-3 text-lime-300" /> BUILDER · {line.builder_name || getModuleLabel(line.module_key)}
+              </span>
+            )}
             {line.owned && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
                 ⚡ Built here
@@ -163,10 +170,10 @@ export default function ProductRow({
 
         <button
           type="button"
-          onClick={() => onEdit?.(line, index)}
+          onClick={() => isCustom ? setOpen((value) => !value) : onEdit?.(line, index)}
           className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100"
         >
-          <Pencil className="w-3 h-3" /> Edit Product
+          <Pencil className="w-3 h-3" /> {isCustom ? "Product Settings" : "Edit Product"}
         </button>
         <button
           onClick={() => setOpen(!open)}
@@ -252,6 +259,7 @@ export default function ProductRow({
           onLoaded={setPartCount}
           onEditBuilder={() => onEdit?.(line, index)}
           onProductRefresh={onProductRefresh}
+          allowAddParts={isCustom}
         />
       )}
     </div>
