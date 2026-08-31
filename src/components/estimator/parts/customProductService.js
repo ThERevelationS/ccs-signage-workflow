@@ -206,6 +206,128 @@ export async function updateManualProductPart(partId, changes = {}) {
   return base44.entities.BuilderPart.get(partId);
 }
 
+export async function switchManualProductPart(partId, catalogItem) {
+  if (!partId || !catalogItem?.inventoryId) throw new Error("Select a replacement Master Inventory Part.");
+  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
+  if (!part || part.builder_sync_state !== "manual") throw new Error("Only Custom Product Parts can be switched directly.");
+  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
+  const quantity = num(part.quantity, 1);
+  const previousExtended = num(part.frozen_extended_cost);
+  const unitCost = num(catalogItem.unitCost);
+  const nextExtended = quantity * unitCost;
+  const delta = nextExtended - previousExtended;
+  const timestamp = nowIso();
+  await base44.entities.BuilderPart.update(part.id, {
+    part_name: catalogItem.name,
+    part_type: catalogItem.categoryKey,
+    part_subtype: catalogItem.subtype || catalogItem.categoryKey,
+    inventory_entity: catalogItem.entity,
+    inventory_item_id: catalogItem.inventoryId,
+    original_inventory_item_id: catalogItem.inventoryId,
+    inventory_item_name: catalogItem.name,
+    inventory_link_state: "attached",
+    reattach_candidate_id: "",
+    reattach_candidate_name: "",
+    frozen_inventory_snapshot: catalogItem.row,
+    current_inventory_snapshot: catalogItem.row,
+    builder_data: { ...(part.builder_data || {}), catalog_category: catalogItem.categoryKey, catalog_category_label: catalogItem.categoryLabel },
+    pricing_basis_snapshot: { pricing_mode: catalogItem.pricingMode, inventory_pricing: catalogItem.pricingSnapshot },
+    unit: catalogItem.unit,
+    frozen_unit_cost: unitCost,
+    frozen_extended_cost: nextExtended,
+    current_unit_cost: unitCost,
+    current_extended_cost: nextExtended,
+    manual_cost_override: false,
+    manual_cost: undefined,
+    price_state: "current",
+    price_delta: 0,
+    price_delta_percent: 0,
+    inventory_updated_date_snapshot: catalogItem.row?.updated_date || "",
+    last_price_check_at: timestamp,
+    last_price_update_at: timestamp,
+  });
+  const previousTotal = num(builder.frozen_cost);
+  const nextTotal = previousTotal + delta;
+  const currentTotal = num(builder.current_recalculated_cost, previousTotal) + delta;
+  await base44.entities.BuilderProduct.update(builder.id, {
+    frozen_cost: nextTotal,
+    frozen_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    current_recalculated_cost: currentTotal,
+    price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
+    price_delta: currentTotal - nextTotal,
+    price_delta_percent: nextTotal ? ((currentTotal - nextTotal) / nextTotal) * 100 : 0,
+    last_price_update_at: timestamp,
+    last_price_check_at: timestamp,
+    builder_version: num(builder.builder_version, 1) + 1,
+  });
+  await patchEstimateLine(builder, { total_snapshot: nextTotal, live_total_snapshot: currentTotal, price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current", last_price_update_at: timestamp, last_price_check_at: timestamp });
+  await base44.entities.BuilderPriceRevision.create({
+    builder_product_id: builder.id,
+    estimate_id: builder.estimate_id || "",
+    revision_number: await nextRevisionNumber(builder.id),
+    reason: "manual_adjustment",
+    previous_total_cost: previousTotal,
+    new_total_cost: nextTotal,
+    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
+    new_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    changed_parts: [{ part_id: part.id, action: "switch_part", previous_inventory_item_id: part.inventory_item_id, new_inventory_item_id: catalogItem.inventoryId, previous_inventory_name: part.inventory_item_name, new_inventory_name: catalogItem.name, previous_extended_cost: previousExtended, new_extended_cost: nextExtended, delta }],
+    builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
+    price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
+    notes: `Switched Custom Product Part to ${catalogItem.name}.`,
+  });
+  return base44.entities.BuilderPart.get(part.id);
+}
+
+export async function removeManualProductPart(partId) {
+  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
+  if (!part || part.builder_sync_state !== "manual") throw new Error("Only Custom Product Parts can be removed directly.");
+  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
+  const previousExtended = num(part.frozen_extended_cost);
+  const previousCurrent = num(part.current_extended_cost, previousExtended);
+  const previousTotal = num(builder.frozen_cost);
+  const nextTotal = Math.max(0, previousTotal - previousExtended);
+  const currentTotal = Math.max(0, num(builder.current_recalculated_cost, previousTotal) - previousCurrent);
+  const timestamp = nowIso();
+  await base44.entities.BuilderPart.delete(part.id);
+  let groupCount = num(builder.group_count);
+  if (part.part_group_id) {
+    const remaining = await base44.entities.BuilderPart.filter({ part_group_id: part.part_group_id }).catch(() => []);
+    if (!(remaining || []).some((row) => row.is_active !== false)) {
+      await base44.entities.BuilderPartGroup.delete(part.part_group_id).catch(() => null);
+      groupCount = Math.max(0, groupCount - 1);
+    }
+  }
+  const remainingParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const priceState = Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current";
+  await base44.entities.BuilderProduct.update(builder.id, {
+    frozen_cost: nextTotal,
+    frozen_customer_price: Math.max(0, num(builder.frozen_customer_price, previousTotal) - previousExtended),
+    current_recalculated_cost: currentTotal,
+    part_count: (remainingParts || []).filter((row) => row.is_active !== false).length,
+    group_count: groupCount,
+    price_state: priceState,
+    price_delta: currentTotal - nextTotal,
+    price_delta_percent: nextTotal ? ((currentTotal - nextTotal) / nextTotal) * 100 : 0,
+    last_price_update_at: timestamp,
+    builder_version: num(builder.builder_version, 1) + 1,
+  });
+  await patchEstimateLine(builder, { total_snapshot: nextTotal, live_total_snapshot: currentTotal, price_state: priceState, last_price_update_at: timestamp });
+  await base44.entities.BuilderPriceRevision.create({
+    builder_product_id: builder.id,
+    estimate_id: builder.estimate_id || "",
+    revision_number: await nextRevisionNumber(builder.id),
+    reason: "manual_adjustment",
+    previous_total_cost: previousTotal,
+    new_total_cost: nextTotal,
+    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
+    new_customer_price: Math.max(0, num(builder.frozen_customer_price, previousTotal) - previousExtended),
+    changed_parts: [{ part_id: part.id, part_name: part.part_name, action: "remove_part", previous_extended_cost: previousExtended }],
+    builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
+    price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
+    notes: `Removed Custom Product Part ${part.part_name}.`,
+  });
+}
+
 export async function refreshManualProductPricing(builderProductId) {
   if (!builderProductId) return null;
   const builder = await base44.entities.BuilderProduct.get(builderProductId).catch(() => null);
