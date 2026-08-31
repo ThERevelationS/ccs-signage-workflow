@@ -8,10 +8,10 @@ import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel"
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 
-export default function BrickStoneEstimator() {
+export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  const estimateId = params.get("estimateId");
+  const id = embeddedProjectId || params.get("id");
+  const estimateId = embeddedEstimateId || params.get("estimateId");
 
   const [project, setProject] = useState(null);
   const [materials, setMaterials] = useState([]);
@@ -93,6 +93,7 @@ export default function BrickStoneEstimator() {
         );
         await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
       }
+      onSaved?.();
     } finally {
       setSaving(false);
     }
@@ -102,12 +103,22 @@ export default function BrickStoneEstimator() {
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-4 mb-5">
-          <Link
-            to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"}
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to estimate
-          </Link>
+          {embedded ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to products
+            </button>
+          ) : (
+            <Link
+              to={estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator"}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to estimate
+            </Link>
+          )}
           <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
