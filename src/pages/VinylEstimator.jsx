@@ -196,8 +196,8 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const save = async () => {
-    if (!project.project_name || !project.client_name || !project.estimate_number || !project.hyperlink) {
-      alert("Please fill in Project Name, Client Name, Estimate Number, and Project Link.");
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+      alert("Please fill in Project Name and Client Name.");
       setActiveTab("project");
       return;
     }
@@ -212,6 +212,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
       const payload = {
         ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        site_address: project.site_address || estimateContext?.site_address || "",
         workflows: cleanWorkflows,
         items: flatItems,
         status: "calculated",
@@ -246,9 +250,21 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         saved = await VinylProject.update(projectId, payload);
       } else {
         saved = await VinylProject.create(payload);
-        if (!embedded) navigate(`${createPageUrl("NewVinylEstimate")}?id=${saved.id}`, { replace: true });
+        if (!embedded) navigate(`/VinylEstimator?id=${saved.id}`, { replace: true });
       }
+
+      if (estimateId && saved?.id) {
+        const refreshed = await VinylProject.get(saved.id).catch(() => saved);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: saved.id, module_key: "vinyl" },
+          sourceProject: refreshed,
+          liveTotal: rollup.totalCost,
+        });
+      }
+
       setProject(migrateProject(saved));
+      onSaved?.();
       if (!embedded) alert("Estimate saved.");
     } catch (e) {
       console.error(e); alert("Save failed: " + e.message);
