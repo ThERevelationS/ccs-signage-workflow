@@ -1115,7 +1115,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
               <Router className="w-6 h-6" />
-              New CNC Estimate
+              {isEditing ? "Edit" : "New"} CNC Estimate
             </h1>
             <p className="text-slate-600">Estimate costs for CNC routing and carving jobs</p>
           </div>
@@ -1284,7 +1284,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">
-                  <p className="text-xs text-slate-500 text-center">Using rates from <Link to={createPageUrl("CNCSettings")} className="text-blue-600 underline">CNC Settings</Link></p>
+                  <p className="text-xs text-slate-500 text-center">Using the migrated SignEstimate Pro CNC rates and calculation settings.</p>
                 </div>
               </CardContent>
             </Card>
