@@ -1,0 +1,158 @@
+{
+  "name": "BuilderProduct",
+  "type": "object",
+  "description": "Persistent estimator Builder Product. A Builder Product is the internal/physical product record behind an All-In-One estimate line. It preserves the entire estimator/source-project snapshot, frozen pricing state, client-facing naming, and links to BuilderPart / BuilderPartGroup records. Quick Products remain a separate reusable product type.",
+  "properties": {
+    "estimate_id": {
+      "type": "string",
+      "description": "Owning AllInOneEstimate id when this product belongs to an estimate."
+    },
+    "estimate_line_id": {
+      "type": "string",
+      "description": "Stable id stored on the owning AllInOneEstimate line item."
+    },
+    "module_key": {
+      "type": "string",
+      "description": "Current estimator module key, e.g. foundation, channel_letters, vinyl, cnc."
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "Entity that owns the detailed estimator record, e.g. FoundationProject."
+    },
+    "source_project_id": {
+      "type": "string",
+      "description": "Detailed estimator/source project id."
+    },
+    "builder_name": {
+      "type": "string",
+      "description": "Internal estimator-facing name/type. Visually distinct from client_product_name."
+    },
+    "client_product_name": {
+      "type": "string",
+      "description": "Editable client-facing product name shown on quotes."
+    },
+    "client_description": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "in_progress",
+        "complete",
+        "archived"
+      ],
+      "default": "in_progress"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "builder_version": {
+      "type": "number",
+      "default": 1
+    },
+    "builder_snapshot": {
+      "type": "object",
+      "description": "Complete lossless snapshot of the detailed estimator/source project used to build this product.",
+      "additionalProperties": true
+    },
+    "builder_snapshot_at": {
+      "type": "string"
+    },
+    "builder_snapshot_source_updated_date": {
+      "type": "string"
+    },
+    "builder_snapshot_hash": {
+      "type": "string",
+      "description": "Stable hash/fingerprint of builder_snapshot when available."
+    },
+    "frozen_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Cost frozen when the builder product was last intentionally priced/updated."
+    },
+    "frozen_customer_price": {
+      "type": "number",
+      "default": 0
+    },
+    "current_recalculated_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Most recently detected cost using current inventory. Does not replace frozen_cost until Update Price is accepted."
+    },
+    "price_state": {
+      "type": "string",
+      "enum": [
+        "unchecked",
+        "current",
+        "changed",
+        "detached_parts",
+        "legacy_frozen",
+        "manual"
+      ],
+      "default": "unchecked"
+    },
+    "price_delta": {
+      "type": "number",
+      "default": 0
+    },
+    "price_delta_percent": {
+      "type": "number",
+      "default": 0
+    },
+    "last_price_check_at": {
+      "type": "string"
+    },
+    "last_price_update_at": {
+      "type": "string"
+    },
+    "last_price_update_note": {
+      "type": "string"
+    },
+    "part_count": {
+      "type": "number",
+      "default": 0
+    },
+    "group_count": {
+      "type": "number",
+      "default": 0
+    },
+    "detached_part_count": {
+      "type": "number",
+      "default": 0
+    },
+    "needs_reattach_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when one or more linked inventory parts were detached and the user must be offered reattach choices on edit."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "builder_name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

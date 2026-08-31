@@ -309,9 +309,25 @@
       "items": {
         "type": "object",
         "properties": {
+          "line_id": {
+            "type": "string",
+            "description": "Stable id for this estimate product line. Used to link the persistent BuilderProduct record."
+          },
+          "builder_product_id": {
+            "type": "string",
+            "description": "Persistent BuilderProduct id for frozen pricing, parts, groups, and full builder snapshots."
+          },
           "module_key": {
             "type": "string",
             "description": "Key from the estimator registry (e.g. 'painting', 'foundation')."
+          },
+          "builder_name": {
+            "type": "string",
+            "description": "Internal/estimator-facing builder identity or product type."
+          },
+          "client_product_name": {
+            "type": "string",
+            "description": "Editable client-facing name for this product; kept distinct from builder_name/project_name."
           },
           "project_id": {
             "type": "string"
@@ -325,7 +341,38 @@
           "total_snapshot": {
             "type": "number",
             "default": 0,
-            "description": "Last-known total of the sub-estimate."
+            "description": "Accepted/frozen product cost snapshot used by estimate pricing. Live inventory changes do not replace it until Update Price is accepted."
+          },
+          "live_total_snapshot": {
+            "type": "number",
+            "default": 0,
+            "description": "Most recently detected/recalculated live cost used only for price-change comparison."
+          },
+          "price_state": {
+            "type": "string",
+            "enum": [
+              "unchecked",
+              "current",
+              "changed",
+              "detached_parts",
+              "legacy_frozen",
+              "manual"
+            ],
+            "default": "unchecked"
+          },
+          "detached_part_count": {
+            "type": "number",
+            "default": 0
+          },
+          "needs_reattach_review": {
+            "type": "boolean",
+            "default": false
+          },
+          "last_price_check_at": {
+            "type": "string"
+          },
+          "last_price_update_at": {
+            "type": "string"
           },
           "adjustment_percent": {
             "type": "number",
