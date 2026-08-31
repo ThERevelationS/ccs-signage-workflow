@@ -63,7 +63,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   const isDetachedOverride = part.builder_sync_state === "detached_override";
   const isDirectlyEditable = isManual || isManualAddon;
   const isIndependent = isDirectlyEditable || isDetachedOverride;
-  const inventoryDetails = typeDetails(part.inventory_entity, part.frozen_inventory_snapshot || {});
+  const inventoryDetails = typeDetails(part.inventory_entity, part.frozen_inventory_snapshot || {}, part.detail_overrides || {});
 
   return (
     <div className="border border-gray-200 rounded-sm bg-white overflow-hidden">
@@ -176,7 +176,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
               <dl className="space-y-1.5 text-[11px] max-h-[170px] overflow-y-auto pr-1">
                 {inventoryDetails.map((detail) => (
                   <div key={detail.field} className="flex justify-between gap-3 border-b border-gray-50 pb-1 last:border-b-0">
-                    <dt className="text-gray-500">{detail.label}</dt>
+                    <dt className="text-gray-500 flex items-center gap-1">{detail.label}{detail.overridden && <span className="text-[8px] px-1 rounded bg-amber-100 text-amber-700 border border-amber-200">OVERRIDE</span>}</dt>
                     <dd className="font-medium text-gray-800 text-right max-w-[190px] break-words">
                       {Array.isArray(detail.value) ? detail.value.join(", ") : String(detail.value).replaceAll("_", " ")}
                     </dd>
