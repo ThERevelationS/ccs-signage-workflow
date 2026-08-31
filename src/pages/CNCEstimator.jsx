@@ -50,27 +50,48 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 
   const loadPrerequisites = async () => {
     try {
-      const settingsData = await Settings.list();
+      const [settingsData, existing, estimate] = await Promise.all([
+        Settings.list(),
+        editId ? CNCProject.get(editId).catch(() => null) : Promise.resolve(null),
+        estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+      ]);
       const settingsObj = {};
-      settingsData.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
+      (settingsData || []).forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
       setGlobalSettings(settingsObj);
+      setEstimateContext(estimate || null);
 
-      if (editId) {
-        // Editing an existing CNC estimate (or an All-In-One section).
-        const existing = await CNCProject.get(editId);
-        if (existing) {
-          setProject(prev => ({ ...prev, ...existing, items: existing.items || [] }));
-          setIsEditing(true);
-        }
-      } else {
-        // Initialize project settings from global settings for a new estimate
+      const sourceDefaults = {
+        machine_rate_per_hour: parseFloat(settingsObj.cnc_machine_rate) || 75,
+        labor_rate: parseFloat(settingsObj.cnc_labor_rate) || 45,
+        setup_time_percentage: parseFloat(settingsObj.cnc_setup_time_percentage) || 20,
+        fixed_setup_hours: parseFloat(settingsObj.min_cnc_setup_hours) || 0,
+        notes: settingsObj.default_notes_template || "",
+      };
+
+      if (existing) {
+        // CCS creates the section record before the embedded editor opens. Missing
+        // CNC-specific values get the same Settings defaults as a source "new" estimate.
         setProject(prev => ({
           ...prev,
-          machine_rate_per_hour: parseFloat(settingsObj.cnc_machine_rate) || 75,
-          labor_rate: parseFloat(settingsObj.cnc_labor_rate) || 45,
-          setup_time_percentage: parseFloat(settingsObj.cnc_setup_time_percentage) || 20, // Initialize new field
-          fixed_setup_hours: parseFloat(settingsObj.min_cnc_setup_hours) || 0, // Initialize new field
-          notes: settingsObj.default_notes_template || ""
+          ...sourceDefaults,
+          ...existing,
+          client_name: estimate?.client_name || existing.client_name || prev.client_name,
+          customer_id: estimate?.customer_id || existing.customer_id,
+          estimate_number: estimate?.estimate_number || existing.estimate_number,
+          items: existing.items || [],
+          machine_rate_per_hour: existing.machine_rate_per_hour ?? sourceDefaults.machine_rate_per_hour,
+          labor_rate: existing.labor_rate ?? sourceDefaults.labor_rate,
+          setup_time_percentage: existing.setup_time_percentage ?? sourceDefaults.setup_time_percentage,
+          fixed_setup_hours: existing.fixed_setup_hours ?? sourceDefaults.fixed_setup_hours,
+        }));
+        setIsEditing(true);
+      } else {
+        setProject(prev => ({
+          ...prev,
+          ...sourceDefaults,
+          client_name: estimate?.client_name || prev.client_name,
+          customer_id: estimate?.customer_id,
+          estimate_number: estimate?.estimate_number,
         }));
       }
     } catch (error) {
