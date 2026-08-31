@@ -29,6 +29,7 @@ import EstimatorSettings from './pages/EstimatorSettings';
 import EstimatorTools from './pages/EstimatorTools';
 import EstimatorShell from './components/estimator/EstimatorShell';
 import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
+import MasterInventory from './pages/MasterInventory';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -50,6 +51,7 @@ const ESTIMATOR_PAGES = {
   EstimatorProducts,
   EstimatorSettings,
   EstimatorTools,
+  MasterInventory,
 };
 
 const { Pages, Layout, mainPage } = pagesConfig;
