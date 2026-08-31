@@ -198,11 +198,12 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
   };
 
   const handleSearchKeyDown = (event) => {
-    const totalMatches = results.length + (customMatches ? 1 : 0);
+    const totalMatches = results.length + quickResults.length + (customMatches ? 1 : 0);
     if (event.key !== "Enter" || totalMatches !== 1 || addingKey) return;
     event.preventDefault();
     if (customMatches) beginCustom();
-    else handleAdd(results[0]);
+    else if (results.length === 1) handleAdd(results[0]);
+    else handleAddQuick(quickResults[0]);
   };
 
   const usedCount = ESTIMATOR_MODULES.filter((mod) => Number(counts[mod.key] || 0) > 0).length;
@@ -251,17 +252,17 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
               <div className="flex items-center gap-2 min-w-0">
                 <Sparkles className="w-3.5 h-3.5 text-lime-600 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-gray-700">
-                  {query ? `${results.length + (customMatches ? 1 : 0)} matching product${results.length + (customMatches ? 1 : 0) === 1 ? "" : "s"}` : "Blank Products, Builders & reusable products"}
+                  {query ? `${results.length + quickResults.length + (customMatches ? 1 : 0)} matching product${results.length + quickResults.length + (customMatches ? 1 : 0) === 1 ? "" : "s"}` : "Blank Products, Builders & Quick Products"}
                 </span>
                 {!query && usedCount > 0 && (
                   <span className="text-[10px] text-gray-400">• types already used on this estimate are shown first</span>
                 )}
               </div>
-              <span className="text-[10px] text-gray-400 whitespace-nowrap">{ESTIMATOR_MODULES.length + 1} product types</span>
+              <span className="text-[10px] text-gray-400 whitespace-nowrap">{ESTIMATOR_MODULES.length} builders · {quickProducts.length} Quick Products</span>
             </div>
 
             <div className="p-3 max-h-[520px] overflow-y-auto">
-              {!customMatches && results.length === 0 ? (
+              {!customMatches && results.length === 0 && quickResults.length === 0 && !quickLoading ? (
                 <div className="py-14 px-6 text-center">
                   <div className="mx-auto w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                     <Search className="w-5 h-5 text-gray-400" />
@@ -297,6 +298,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                       </div>
                     </button>
                   )}
+                  {results.length > 0 && (
                   <div>
                     <div className="text-[9px] font-extrabold tracking-widest text-gray-400 px-1 pb-1.5">BUILDERS</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -340,6 +342,55 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                   })}
                     </div>
                   </div>
+                  )}
+
+                  {(quickLoading || quickResults.length > 0) && (
+                    <div>
+                      <div className="text-[9px] font-extrabold tracking-widest text-gray-400 px-1 pb-1.5 flex items-center justify-between">
+                        <span>QUICK PRODUCTS</span>
+                        <span className="font-medium normal-case tracking-normal">{quickLoading ? "Loading…" : `${quickResults.length} available`}</span>
+                      </div>
+                      {quickLoading ? (
+                        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-6 text-center text-[11px] text-gray-400">Loading Quick Products…</div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {quickResults.map((product) => {
+                            const adding = addingKey === `quick:${product.id}`;
+                            const builderLabel = product.source_product_class === "builder"
+                              ? (product.source_builder_name || "Builder Product")
+                              : product.source_product_class === "legacy"
+                                ? "Legacy Quick Product"
+                                : "Custom Product";
+                            return (
+                              <button
+                                type="button"
+                                key={product.id}
+                                disabled={!!addingKey}
+                                onClick={() => handleAddQuick(product)}
+                                className="group min-h-[86px] text-left border border-cyan-200 rounded-md p-3 bg-cyan-50/40 hover:border-cyan-400 hover:bg-cyan-50 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-wait"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="w-9 h-9 rounded-md bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" /></div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[12px] font-bold text-gray-900 truncate">{product.product_name}</span>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-200 bg-white text-cyan-700 font-semibold">{product.product_group === "global" ? "GLOBAL" : "MY"}</span>
+                                    </div>
+                                    <div className="mt-1 text-[10px] text-gray-500 truncate">{builderLabel}{product.product_category ? ` · ${product.product_category}` : ""}</div>
+                                    <div className="mt-1 flex items-center justify-between gap-2">
+                                      <span className="text-[9px] text-gray-400 truncate">{(product.categories || []).join(" · ") || "Uncategorized"}</span>
+                                      <span className="text-[11px] font-bold text-gray-800 flex-shrink-0">{money(product.price_snapshot?.frozen_cost ?? product.total_price ?? 0)}</span>
+                                    </div>
+                                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding Quick Product…" : "Add Quick Product"}{!adding && <ArrowRight className="w-3 h-3" />}</div>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
