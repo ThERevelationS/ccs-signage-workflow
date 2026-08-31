@@ -1115,7 +1115,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
               <Router className="w-6 h-6" />
-              {isEditing ? "Edit" : "New"} CNC Estimate
+              New CNC Estimate
             </h1>
             <p className="text-slate-600">Estimate costs for CNC routing and carving jobs</p>
           </div>
@@ -1138,15 +1138,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div>
-                  <div>
-                    <Label>Client Name *</Label>
-                    <Input
-                      value={estimateContext?.client_name || project.client_name || ""}
-                      readOnly={embedded}
-                      onChange={(e) => !embedded && setProject(p => ({ ...p, client_name: e.target.value }))}
-                    />
-                    {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
-                  </div>
+                  <div><Label>Client Name *</Label><ClientSearchInput value={project.client_name} onChange={(val) => setProject(p => ({ ...p, client_name: val }))} onSelectProject={(data) => { setProject(prev => ({...prev, client_name: data.client_name || prev.client_name, project_name: data.project_name || prev.project_name, estimate_number: data.estimate_number || prev.estimate_number, hyperlink: data.hyperlink || prev.hyperlink })); }} /></div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -1284,7 +1276,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t">
-                  <p className="text-xs text-slate-500 text-center">Using the migrated SignEstimate Pro CNC rates and calculation settings.</p>
+                  <p className="text-xs text-slate-500 text-center">Using rates from <Link to={createPageUrl("CNCSettings")} className="text-blue-600 underline">CNC Settings</Link></p>
                 </div>
               </CardContent>
             </Card>
