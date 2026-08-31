@@ -1,52 +1,140 @@
 import React, { useState } from "react";
-import { Percent, Trash2, Pencil } from "lucide-react";
+import { AlertTriangle, CheckCircle2, LockKeyhole, Pencil, Percent, RefreshCw, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 
-const Field = ({ label, ...props }) => (
-  <label className="text-[10px] font-semibold tracking-wide text-gray-400 block">
+const Field = ({ label, className = "", ...props }) => (
+  <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
     {label}
     <input
       {...props}
-      className="mt-0.5 w-full h-[28px] px-2 border border-gray-200 rounded text-[12px] text-gray-800 bg-white"
+      className="mt-0.5 w-full h-[28px] px-2 border border-gray-200 rounded text-[12px] text-gray-800 bg-white disabled:bg-gray-100 disabled:text-gray-500"
     />
   </label>
 );
 
-export default function ProductRow({ line, index, percentOfTotal, onChange, onRemove, onEdit }) {
+const priceMeta = (line) => {
+  const frozen = Number(line.total_snapshot || 0);
+  const live = Number(line.live_total_snapshot ?? frozen);
+  const differs = Math.abs(live - frozen) > 0.005;
+
+  if (line.needs_reattach_review || line.price_state === "detached_parts") {
+    return {
+      label: "Parts need reattach",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: AlertTriangle,
+      differs,
+    };
+  }
+  if (line.price_state === "legacy_frozen") {
+    return {
+      label: differs ? "Legacy price frozen · update available" : "Legacy price frozen",
+      className: "bg-slate-100 text-slate-600 border-slate-200",
+      icon: LockKeyhole,
+      differs,
+    };
+  }
+  if (line.price_state === "changed" || differs) {
+    return {
+      label: "Price changed",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: AlertTriangle,
+      differs: true,
+    };
+  }
+  if (line.price_state === "unchecked") {
+    return {
+      label: "Not priced yet",
+      className: "bg-gray-50 text-gray-500 border-gray-200",
+      icon: LockKeyhole,
+      differs: false,
+    };
+  }
+  return {
+    label: "Price current",
+    className: "bg-green-50 text-green-700 border-green-200",
+    icon: CheckCircle2,
+    differs: false,
+  };
+};
+
+export default function ProductRow({
+  line,
+  index,
+  percentOfTotal,
+  onChange,
+  onRemove,
+  onEdit,
+  onUpdatePrice,
+}) {
   const [open, setOpen] = useState(false);
+  const [updatingPrice, setUpdatingPrice] = useState(false);
   const set = (patch) => onChange(index, patch);
-  const amount = Number(line.total_snapshot || 0) * (1 + Number(line.adjustment_percent || 0) / 100);
+  const frozen = Number(line.total_snapshot || 0);
+  const live = Number(line.live_total_snapshot ?? frozen);
+  const amount = frozen * (1 + Number(line.adjustment_percent || 0) / 100);
+  const meta = priceMeta(line);
+  const StatusIcon = meta.icon;
+
+  const handleUpdatePrice = async () => {
+    if (!onUpdatePrice || updatingPrice) return;
+    setUpdatingPrice(true);
+    try {
+      await onUpdatePrice(line, index);
+    } finally {
+      setUpdatingPrice(false);
+    }
+  };
 
   return (
     <div className="border-b border-gray-100 last:border-b-0">
       <div className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[13px] font-bold text-red-600 truncate">
-              {line.project_name || getModuleLabel(line.module_key)}
+            <span className="text-[13px] font-bold text-gray-900 truncate">
+              {line.client_product_name || line.project_name || getModuleLabel(line.module_key)}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">
-              {getModuleLabel(line.module_key)}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100">
+              Builder: {line.builder_name || getModuleLabel(line.module_key)}
             </span>
             {line.owned && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
                 ⚡ Built here
               </span>
             )}
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${meta.className}`}>
+              <StatusIcon className="w-3 h-3" /> {meta.label}
+            </span>
           </div>
-          <div className="text-[10px] text-gray-400">
+          <div className="text-[10px] text-gray-400 mt-0.5">
+            {line.project_name && line.project_name !== line.client_product_name ? `Source: ${line.project_name} · ` : ""}
             {line.section_status === "complete" ? "complete" : "in progress"}
             {line.linked_date ? ` · added ${new Date(line.linked_date).toLocaleDateString()}` : ""}
           </div>
         </div>
 
-        <div className="text-right w-[110px] flex-shrink-0">
+        <div className="text-right w-[122px] flex-shrink-0">
           <div className="text-[13px] font-bold text-gray-800">{money(amount)}</div>
+          {meta.differs && (
+            <div className="text-[9px] text-amber-600">live {money(live)}</div>
+          )}
           {percentOfTotal != null && (
             <div className="text-[9px] text-gray-400">{percentOfTotal.toFixed(0)}% of total</div>
           )}
         </div>
+
+        {meta.differs && line.builder_product_id && (
+          <button
+            type="button"
+            onClick={handleUpdatePrice}
+            disabled={updatingPrice}
+            className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
+            title={`Accept current builder price ${money(live)}`}
+          >
+            <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
+            {updatingPrice ? "Updating…" : "Update Price"}
+          </button>
+        )}
 
         <button
           type="button"
@@ -74,12 +162,29 @@ export default function ProductRow({ line, index, percentOfTotal, onChange, onRe
       </div>
 
       {open && (
-        <div className="px-4 pb-3 pt-1 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="px-4 pb-3 pt-2 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Field
-            label="SECTION COST"
+            label="CLIENT PRODUCT NAME"
+            value={line.client_product_name || line.project_name || ""}
+            onChange={(e) => set({ client_product_name: e.target.value })}
+            className="col-span-2"
+          />
+          <Field
+            label="BUILDER TYPE"
+            value={line.builder_name || getModuleLabel(line.module_key)}
+            disabled
+          />
+          <Field
+            label="FROZEN COST"
             type="number"
-            value={line.total_snapshot ?? 0}
-            onChange={(e) => set({ total_snapshot: parseFloat(e.target.value) || 0 })}
+            value={frozen}
+            disabled
+          />
+          <Field
+            label="LIVE CALCULATION"
+            type="number"
+            value={live}
+            disabled
           />
           <Field
             label="ADJUSTMENT %"
