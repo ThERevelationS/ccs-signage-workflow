@@ -1138,7 +1138,15 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div>
-                  <div><Label>Client Name *</Label><ClientSearchInput value={project.client_name} onChange={(val) => setProject(p => ({ ...p, client_name: val }))} onSelectProject={(data) => { setProject(prev => ({...prev, client_name: data.client_name || prev.client_name, project_name: data.project_name || prev.project_name, estimate_number: data.estimate_number || prev.estimate_number, hyperlink: data.hyperlink || prev.hyperlink })); }} /></div>
+                  <div>
+                    <Label>Client Name *</Label>
+                    <Input
+                      value={estimateContext?.client_name || project.client_name || ""}
+                      readOnly={embedded}
+                      onChange={(e) => !embedded && setProject(p => ({ ...p, client_name: e.target.value }))}
+                    />
+                    {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
