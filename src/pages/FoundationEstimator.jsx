@@ -35,6 +35,7 @@ import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPric
 import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const blankItem = (type) => ({
   foundation_type: type,
@@ -245,15 +246,14 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     try {
       await base44.entities.FoundationProject.update(project.id, payload());
 
-      // Push the new total back to the parent estimate's section line.
       if (estimateId) {
-        const est = await base44.entities.AllInOneEstimate.get(estimateId);
-        const line_items = (est.line_items || []).map((l) =>
-          l.project_id === project.id
-            ? { ...l, total_snapshot: sectionTotal, updated_date_snapshot: new Date().toISOString() }
-            : l
-        );
-        await base44.entities.AllInOneEstimate.update(estimateId, { line_items });
+        const savedProject = await base44.entities.FoundationProject.get(project.id);
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: project.id, module_key: "foundation" },
+          sourceProject: savedProject,
+          liveTotal: sectionTotal,
+        });
       }
       setDirty(false);
       onSaved?.();
