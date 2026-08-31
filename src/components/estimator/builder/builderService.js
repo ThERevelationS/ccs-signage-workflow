@@ -269,7 +269,20 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       ? "changed"
       : "current";
 
+  let partSummary = {
+    partCount: num(builder?.part_count),
+    detachedCount: num(builder?.detached_part_count),
+    changedCount: 0,
+  };
+
   if (builder) {
+    partSummary = await syncBuilderParts({
+      builderProduct: builder,
+      sourceProject: sourceProject || {},
+      acceptPrices: isInitialFreeze,
+      legacyMode: builder.price_state === "legacy_frozen",
+    });
+    const productState = partSummary.detachedCount > 0 ? "detached_parts" : priceState;
     const nextRevision = num(builder.builder_version, 1) + (isInitialFreeze ? 1 : 0);
     await base44.entities.BuilderProduct.update(builder.id, {
       builder_snapshot: sourceProject || {},
