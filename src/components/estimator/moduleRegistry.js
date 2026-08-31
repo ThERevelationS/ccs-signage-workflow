@@ -24,6 +24,10 @@ export const MODULE_TOTAL_FIELD = {
   maintenance: "total_cost",
 };
 
-export const getModule = (key) => ESTIMATOR_MODULES.find((m) => m.key === key);
+const LEGACY_MODULES = {
+  painting: { key: "painting", label: "Painting (Legacy)", entity: "Project", legacy: true },
+};
+
+export const getModule = (key) => ESTIMATOR_MODULES.find((m) => m.key === key) || LEGACY_MODULES[key];
 
 export const getModuleLabel = (key) => getModule(key)?.label || key;
