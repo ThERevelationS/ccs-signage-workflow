@@ -93,7 +93,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId, em
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "metal" },
-          sourceProject: savedProject,
+          sourceProject: {
+            ...savedProject,
+            items: calc.items,
+            builder_calculation: { totals: calc.totals },
+          },
           liveTotal: t.total_cost,
         });
       }
