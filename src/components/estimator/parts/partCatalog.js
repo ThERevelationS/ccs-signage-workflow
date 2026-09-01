@@ -160,7 +160,7 @@ const SOURCES = [
   { key: "substrates", label: "Substrates", entities: [{ entity: "DimensionalLetterMaterial", filter: (r) => r.is_active !== false }] },
   { key: "supplies", label: "Installation & Maintenance Supplies", entities: [
     { entity: "ChannelLetterInstallInventory" },
-    { entity: "FoundationInventory", filter: (r) => ["bagged_concrete", "rebar", "forming_material"].includes(r.material_type) },
+    { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "forming_material", "pole", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
   ]},
   { key: "vinyl", label: "Vinyl", entities: [{ entity: "VinylInventory", filter: (r) => r.is_active !== false }] },
   { key: "sign_lighting", label: "Sign Lighting", entities: [{ entity: "SignLightingInventory", filter: (r) => r.is_active !== false }] },
