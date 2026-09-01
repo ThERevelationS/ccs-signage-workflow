@@ -1195,99 +1195,254 @@ function maintenanceMaterialLine(mat, item, row) {
 
 function extractMaintenance(project, catalogs = {}) {
   const parts = [];
+  const represented = { labor: 0, materials: 0, equipment: 0, personnel: 0, supplies: 0, travel: 0, markup: 0 };
+
   (project.items || []).forEach((item, itemIndex) => {
-    (item.actions || []).forEach((action, actionIndex) => {
-      (action.materials || []).forEach((mat, matIndex) => {
-        const id = mat.inventory_item_id || mat.inventory_id || "";
-        const row = catalogs.MaintenanceInventory?.byId.get(id);
-        const priced = maintenanceMaterialLine(mat, item, row);
-        parts.push(makePart({
-          key: `maintenance:item:${itemIndex}:action:${actionIndex}:material:${matIndex}`,
-          name: row?.item_name || mat.item_name || action.action || "Maintenance Material",
-          type: "material",
-          subtype: action.action || row?.pricing_mode || mat.pricing_mode || "maintenance",
-          sourcePath: mat.inventory_item_id
-            ? `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}].inventory_item_id`
-            : `items[${itemIndex}].actions[${actionIndex}].materials[${matIndex}].inventory_id`,
-          entity: "MaintenanceInventory",
-          inventoryId: id,
-          quantity: priced.quantity,
-          unit: priced.unit,
-          unitCost: priced.unitCost,
-          extendedCost: priced.extendedCost,
-          builderData: { sign: item.description, action: action.action, material: mat },
-          calculation: { ...mat, calculated_extended_cost: priced.extendedCost },
-        }));
-      });
-      if (num(action.labor_cost) > 0.005) {
-        parts.push(manualCostPart({
-          key: `maintenance:item:${itemIndex}:action:${actionIndex}:labor`,
-          name: `${action.action || "Maintenance"} Labor${item.description ? ` — ${item.description}` : ""}`,
-          type: "labor",
-          subtype: action.action || "maintenance_labor",
-          sourcePath: `items[${itemIndex}].actions[${actionIndex}].labor_cost`,
-          cost: action.labor_cost,
-          quantity: action.labor_hours || 1,
-          unit: action.labor_hours ? "hour" : "job",
-          builderData: { sign: item.description, action },
-          calculation: { labor_hours: action.labor_hours, labor_cost: action.labor_cost, rate_basis: action.rate_basis },
-        }));
-      }
+    let itemMaterialParts = 0;
+    (item.materials || []).forEach((mat, matIndex) => {
+      const id = mat.inventory_item_id || mat.inventory_id || "";
+      const row = catalogs.MaintenanceInventory?.byId.get(id);
+      const quantity = num(mat.quantity, 0);
+      const unitCost = num(mat.unit_cost);
+      const extendedCost = mat.total_cost == null ? quantity * unitCost : num(mat.total_cost);
+      itemMaterialParts += extendedCost;
+      represented.materials += extendedCost;
+      if (Math.abs(extendedCost) <= 0.005 && !id) return;
+      parts.push(makePart({
+        key: `maintenance:item:${itemIndex}:material:${matIndex}`,
+        name: mat.item_name || row?.item_name || "Maintenance Material",
+        type: "material",
+        subtype: mat.pricing_mode || row?.pricing_mode || "maintenance_material",
+        sourcePath: mat.inventory_item_id
+          ? `items[${itemIndex}].materials[${matIndex}].inventory_item_id`
+          : mat.inventory_id
+            ? `items[${itemIndex}].materials[${matIndex}].inventory_id`
+            : `items[${itemIndex}].materials[${matIndex}]`,
+        entity: id ? "MaintenanceInventory" : "",
+        inventoryId: id,
+        quantity: quantity || 1,
+        unit: row?.unit || mat.unit || mat.pricing_mode || row?.pricing_mode || "unit",
+        unitCost,
+        extendedCost,
+        builderData: { sign: item.description, sign_type: item.sign_type, size: item.size, actions: item.actions || [], material: mat },
+        calculation: { ...mat, saved_total_cost: extendedCost },
+        pricingBasis: { pricing_mode: mat.pricing_mode || row?.pricing_mode || "", size: item.size, sign_type: item.sign_type, actions: item.actions || [] },
+      }));
     });
+
+    const authoritativeItemMaterials = item.materials_cost == null ? itemMaterialParts : num(item.materials_cost);
+    const itemMaterialAdjustment = authoritativeItemMaterials - itemMaterialParts;
+    if (Math.abs(itemMaterialAdjustment) > 0.005) {
+      const isRepaint = !!item.repaint_calc;
+      parts.push(manualCostPart({
+        key: `maintenance:item:${itemIndex}:material-adjustment`,
+        name: isRepaint ? `${item.description || "Monument"} — Repaint Paint Material` : `${item.description || `Service Item ${itemIndex + 1}`} — Material Adjustment`,
+        type: "material",
+        subtype: isRepaint ? "monument_repaint_paint" : "material_adjustment",
+        sourcePath: `items[${itemIndex}].materials_cost`,
+        cost: itemMaterialAdjustment,
+        builderData: item,
+        calculation: { authoritative_item_materials: authoritativeItemMaterials, inventory_materials: itemMaterialParts, repaint_calc: item.repaint_calc, adjustment: itemMaterialAdjustment },
+      }));
+      represented.materials += itemMaterialAdjustment;
+    }
+
+    const laborCost = num(item.labor_cost);
+    represented.labor += laborCost;
+    if (Math.abs(laborCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `maintenance:item:${itemIndex}:labor`,
+        name: `${item.description || `Service Item ${itemIndex + 1}`} — Maintenance Labor`,
+        type: "labor",
+        subtype: "maintenance_labor",
+        sourcePath: `items[${itemIndex}].labor_cost`,
+        cost: laborCost,
+        quantity: item.labor_hours || 1,
+        unit: item.labor_hours ? "hour" : "job",
+        builderData: { sign_type: item.sign_type, size: item.size, qty: item.qty, actions: item.actions || [], repaint_calc: item.repaint_calc },
+        calculation: { labor_hours: item.labor_hours, labor_cost: laborCost, actions: item.actions || [] },
+      }));
+    }
   });
 
   (project.selected_equipment || []).forEach((eq, index) => {
     const id = eq.equipment_id || eq.inventory_item_id || "";
-    parts.push(makePart({
-      key: `maintenance:equipment:${index}`,
-      name: eq.equipment_name || "Maintenance Equipment",
-      type: "equipment",
-      subtype: eq.equipment_type || "maintenance_equipment",
-      sourcePath: `selected_equipment[${index}].equipment_id`,
-      entity: "MaintenanceEquipment",
-      inventoryId: id,
-      quantity: eq.duration || 1,
-      unit: eq.pricing_mode || "",
-      unitCost: eq.unit_cost || eq.equipment_cost,
-      extendedCost: eq.total_cost || eq.equipment_cost,
-      builderData: eq,
-      calculation: eq,
+    const duration = num(eq.duration, 1);
+    const baseCost = num(eq.unit_cost) * duration;
+    const deliveryCost = eq.include_delivery ? num(eq.delivery_pickup_cost) : 0;
+    const idleCost = eq.idle_cost == null ? num(eq.idle_running_cost_per_hour) * num(eq.idle_hours) : num(eq.idle_cost);
+    const reconstructed = baseCost + deliveryCost + idleCost;
+    const authoritativeEquipment = eq.total_cost == null ? reconstructed : num(eq.total_cost);
+
+    if (Math.abs(baseCost) > 0.005 || id) {
+      parts.push(makePart({
+        key: `maintenance:equipment:${index}:base`,
+        name: eq.equipment_name || "Maintenance Equipment",
+        type: "equipment",
+        subtype: eq.equipment_type || "maintenance_equipment",
+        sourcePath: `selected_equipment[${index}].equipment_id`,
+        entity: id ? "MaintenanceEquipment" : "",
+        inventoryId: id,
+        quantity: duration || 1,
+        unit: eq.pricing_mode || "unit",
+        unitCost: eq.unit_cost,
+        extendedCost: baseCost,
+        builderData: eq,
+        calculation: { duration, unit_cost: eq.unit_cost, base_cost: baseCost },
+        pricingBasis: { pricing_mode: eq.pricing_mode || "" },
+      }));
+    }
+    if (Math.abs(deliveryCost) > 0.005) {
+      parts.push(makePart({
+        key: `maintenance:equipment:${index}:delivery`,
+        name: `${eq.equipment_name || "Equipment"} — Delivery / Pickup`,
+        type: "service",
+        subtype: "equipment_delivery",
+        sourcePath: `selected_equipment[${index}].delivery_pickup_cost`,
+        entity: id ? "MaintenanceEquipment" : "",
+        inventoryId: id,
+        quantity: 1,
+        unit: "delivery",
+        unitCost: deliveryCost,
+        extendedCost: deliveryCost,
+        builderData: eq,
+        calculation: { include_delivery: eq.include_delivery, delivery_pickup_cost: deliveryCost },
+        pricingBasis: { pricing_mode: "delivery_pickup" },
+      }));
+    }
+    if (Math.abs(idleCost) > 0.005) {
+      const idleHours = num(eq.idle_hours, 1);
+      parts.push(makePart({
+        key: `maintenance:equipment:${index}:idle`,
+        name: `${eq.equipment_name || "Equipment"} — Idle Running`,
+        type: "equipment",
+        subtype: "idle_running",
+        sourcePath: `selected_equipment[${index}].idle_running_cost_per_hour`,
+        entity: id ? "MaintenanceEquipment" : "",
+        inventoryId: id,
+        quantity: idleHours || 1,
+        unit: "hour",
+        unitCost: idleHours ? idleCost / idleHours : idleCost,
+        extendedCost: idleCost,
+        builderData: eq,
+        calculation: { idle_hours: eq.idle_hours, idle_running_cost_per_hour: eq.idle_running_cost_per_hour, idle_cost: idleCost },
+        pricingBasis: { pricing_mode: "idle_running" },
+      }));
+    }
+    const equipmentAdjustment = authoritativeEquipment - reconstructed;
+    if (Math.abs(equipmentAdjustment) > 0.005) {
+      parts.push(manualCostPart({
+        key: `maintenance:equipment:${index}:adjustment`,
+        name: `${eq.equipment_name || "Equipment"} — Saved Cost Adjustment`,
+        type: "equipment",
+        subtype: "equipment_adjustment",
+        sourcePath: `selected_equipment[${index}].total_cost`,
+        cost: equipmentAdjustment,
+        builderData: eq,
+        calculation: { authoritative_total: authoritativeEquipment, reconstructed_total: reconstructed, adjustment: equipmentAdjustment },
+      }));
+    }
+    represented.equipment += authoritativeEquipment;
+  });
+
+  (project.personnel || []).forEach((person, index) => {
+    const cost = person.total_cost == null ? num(person.hourly_rate) * num(person.hours) : num(person.total_cost);
+    represented.personnel += cost;
+    if (Math.abs(cost) <= 0.005) return;
+    parts.push(manualCostPart({
+      key: `maintenance:personnel:${index}`,
+      name: `${person.name || person.role || `Crew Member ${index + 1}`} — Personnel`,
+      type: "labor",
+      subtype: (person.role || "personnel").toLowerCase().replace(/\s+/g, "_"),
+      sourcePath: `personnel[${index}].total_cost`,
+      cost,
+      quantity: person.hours || 1,
+      unit: person.hours ? "hour" : "job",
+      builderData: person,
+      calculation: { hourly_rate: person.hourly_rate, hours: person.hours, total_cost: cost },
     }));
   });
-  if (num(project.total_supplies_cost) > 0.005) {
+
+  const totalSupplies = num(project.total_supplies_cost);
+  represented.supplies = totalSupplies;
+  if (Math.abs(totalSupplies) > 0.005) {
     parts.push(manualCostPart({
       key: "maintenance:supplies",
       name: "Maintenance Consumables / Supplies",
       type: "consumable",
       subtype: "maintenance_supplies",
       sourcePath: "total_supplies_cost",
-      cost: project.total_supplies_cost,
-      calculation: { supplies_percent: project.supplies_percent_of_materials, extra_supplies_cost: project.extra_supplies_cost },
+      cost: totalSupplies,
+      calculation: { supplies_percent_of_materials: project.supplies_percent_of_materials, extra_supplies_cost: project.extra_supplies_cost, total_materials_cost: project.total_materials_cost, total_supplies_cost: totalSupplies },
     }));
   }
-  if (num(project.total_travel_cost) > 0.005) {
+
+  const totalTravel = num(project.total_travel_cost);
+  represented.travel = totalTravel;
+  if (Math.abs(totalTravel) > 0.005) {
     parts.push(manualCostPart({
       key: "maintenance:travel",
       name: "Travel / Mileage",
       type: "service",
       subtype: "travel",
       sourcePath: "total_travel_cost",
-      cost: project.total_travel_cost,
+      cost: totalTravel,
       quantity: project.travel_miles_round_trip || 1,
       unit: project.travel_miles_round_trip ? "mile" : "job",
-      calculation: { miles: project.travel_miles_round_trip, rate: project.travel_cost_per_mile },
+      calculation: { miles: project.travel_miles_round_trip, total_travel_cost: totalTravel, site_address: project.site_address },
     }));
   }
-  if (num(project.markup_amount) > 0.005) {
+
+  const totalMarkup = num(project.markup_amount);
+  represented.markup = totalMarkup;
+  if (Math.abs(totalMarkup) > 0.005) {
     parts.push(manualCostPart({
       key: "maintenance:markup",
       name: "Builder Markup",
       type: "pricing",
       subtype: "markup",
       sourcePath: "markup_amount",
-      cost: project.markup_amount,
-      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+      cost: totalMarkup,
+      calculation: { markup_percent: project.markup_percent, subtotal: project.subtotal, markup_amount: totalMarkup },
     }));
+  }
+
+  const authoritativeCategories = {
+    labor: project.labor_cost == null ? represented.labor : num(project.labor_cost),
+    materials: project.total_materials_cost == null ? represented.materials : num(project.total_materials_cost),
+    equipment: project.total_equipment_cost == null ? represented.equipment : num(project.total_equipment_cost),
+    personnel: project.total_personnel_cost == null ? represented.personnel : num(project.total_personnel_cost),
+  };
+  const categoryMeta = { labor: ["Labor", "labor"], materials: ["Materials", "material"], equipment: ["Equipment", "equipment"], personnel: ["Personnel", "labor"] };
+  Object.keys(authoritativeCategories).forEach((key) => {
+    const adjustment = authoritativeCategories[key] - represented[key];
+    if (Math.abs(adjustment) <= 0.005) return;
+    parts.push(manualCostPart({
+      key: `maintenance:${key}-adjustment`,
+      name: `Maintenance ${categoryMeta[key][0]} Adjustment`,
+      type: categoryMeta[key][1],
+      subtype: `${key}_adjustment`,
+      sourcePath: key === "labor" ? "labor_cost" : `total_${key}_cost`,
+      cost: adjustment,
+      calculation: { authoritative_total: authoritativeCategories[key], represented_total: represented[key], adjustment },
+    }));
+    represented[key] = authoritativeCategories[key];
+  });
+
+  const reconstructedTotal = Object.values(represented).reduce((sum, value) => sum + num(value), 0);
+  if (project.total_cost != null) {
+    const finalAdjustment = num(project.total_cost) - reconstructedTotal;
+    if (Math.abs(finalAdjustment) > 0.005) {
+      parts.push(manualCostPart({
+        key: "maintenance:project-total-adjustment",
+        name: "Maintenance Saved Total Adjustment",
+        type: "pricing",
+        subtype: "project_total_adjustment",
+        sourcePath: "total_cost",
+        cost: finalAdjustment,
+        calculation: { authoritative_total: project.total_cost, reconstructed_total: reconstructedTotal, adjustment: finalAdjustment },
+      }));
+    }
   }
   return parts;
 }
