@@ -368,6 +368,15 @@
             ],
             "default": "unchecked"
           },
+          "price_recalc_required": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when Master Inventory changed after this Builder was last calculated and Update Price must wait until the Builder is reopened/saved."
+          },
+          "price_recalc_reason": {
+            "type": "string",
+            "description": "Human-readable reason this Product requires Builder recalculation before Update Price."
+          },
           "detached_part_count": {
             "type": "number",
             "default": 0
