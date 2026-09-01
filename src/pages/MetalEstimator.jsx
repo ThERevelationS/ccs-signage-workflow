@@ -14,6 +14,7 @@ import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
@@ -74,7 +75,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             client_name: estimate?.client_name || existing.client_name || prev.client_name,
             customer_id: estimate?.customer_id || existing.customer_id,
             estimate_number: estimate?.estimate_number || existing.estimate_number,
-            items: existing.items || [],
+            items: seedBuilderItemIds(existing.items || []),
           }));
           setIsEditing(true);
         } else {
@@ -101,6 +102,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     setProject(prev => ({
       ...prev,
       items: [...prev.items, {
+        builder_item_id: newBuilderItemId("metal-item"),
         item_type: "fabricated_letters",
         description: "",
         inventory_item_id: null,
