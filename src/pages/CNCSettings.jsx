@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calculator, Clock, Cpu, DollarSign, Gauge, Save, Wrench } from "lucide-react";
+import { ArrowLeft, Calculator, Cpu, DollarSign, Gauge, Save, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -45,7 +45,6 @@ export default function CNCSettings() {
     load();
   }, []);
 
-  const rowByName = useMemo(() => Object.fromEntries(rows.map((row) => [row.setting_name, row])), [rows]);
   const patch = (key, value) => setValues((prev) => ({ ...prev, [key]: String(value) }));
   const dirtyCount = rows.filter((row) => String(values[row.setting_name] ?? "") !== String(original[row.setting_name] ?? "")).length;
 
