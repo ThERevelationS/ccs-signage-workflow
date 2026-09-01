@@ -71,6 +71,7 @@ export const ESTIMATOR_RIGHT_TABS = [
       { label: "Estimator Settings", to: "/EstimatorSettings" },
       { label: "Foundation Catalog", to: "/FoundationCatalog" },
       { label: "Painting Settings", to: "/PaintingSettings" },
+      { label: "CNC Settings", to: "/CNCSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
       { label: "My Info", to: "/UserSettings" },
     ],
