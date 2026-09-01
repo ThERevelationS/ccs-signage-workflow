@@ -1727,26 +1727,36 @@ function extractFoundation(project, catalogs) {
 
   (project.poles || []).forEach((pole, index) => {
     if (!pole.pole_id) return;
-    const poleQtyFt = (num(pole.height_inches) + num(pole.y_offset_inches)) / 12 || 1;
+    const row = catalogs.FoundationInventory?.byId.get(pole.pole_id);
+    const totalPoleInches = num(pole.height_inches) + num(pole.y_offset_inches);
+    const poleQtyFt = totalPoleInches / 12 || 1;
+    const isStock = row?.pole_pricing_mode === "stock_price";
+    const stockLengthFt = num(row?.pole_stock_length_ft, 20);
+    const stockPieces = isStock ? Math.max(1, Math.ceil(totalPoleInches / Math.max(stockLengthFt * 12, 1))) : null;
+    const partQty = isStock ? stockPieces : poleQtyFt;
+    const partUnitCost = isStock
+      ? num(pole.custom_cost_per_unit, num(row?.pole_stock_price))
+      : num(pole.custom_cost_per_unit, num(row?.cost_per_unit));
     parts.push(makePart({
       key: `foundation:pole:${index}`,
-      name: pole.pole_name || "Sign Pole",
+      name: pole.pole_name || row?.material_name || "Sign Pole",
       type: "material",
       subtype: "pole",
       sourcePath: `poles[${index}].pole_id`,
       entity: "FoundationInventory",
       inventoryId: pole.pole_id,
-      quantity: poleQtyFt,
-      unit: "ft",
-      unitCost: num(pole.pole_cost) / poleQtyFt,
+      quantity: partQty,
+      unit: isStock ? "stock_piece" : "ft",
+      unitCost: partUnitCost,
       extendedCost: pole.pole_cost,
       builderData: pole,
-      calculation: pole,
+      calculation: { ...pole, stock_pieces: stockPieces, total_pole_inches: totalPoleInches },
+      pricingBasis: { pricing_mode: isStock ? "stock_price" : "per_foot", stock_length_ft: stockLengthFt },
     }));
     if (num(pole.pole_painting_cost) > 0.005) {
       parts.push(manualCostPart({
         key: `foundation:pole:${index}:painting`,
-        name: `${pole.pole_name || "Sign Pole"} — Painting`,
+        name: `${pole.pole_name || row?.material_name || "Sign Pole"} — Painting`,
         type: "labor",
         subtype: "pole_painting",
         sourcePath: `poles[${index}].pole_painting_cost`,
