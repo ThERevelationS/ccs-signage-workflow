@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
 import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
+import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance/maintenanceCalculator";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -193,6 +194,8 @@ export async function loadBuilderCatalogs(moduleKey) {
     maintenance: [
       ["MaintenanceInventory", "sort_order"],
       ["MaintenanceEquipment", "sort_order"],
+      ["MaintenanceActionRate", null],
+      ["Settings", null],
     ],
   };
 
@@ -1541,7 +1544,52 @@ function extractBrick(project, catalogs = {}, options = {}) {
   return parts;
 }
 
-function extractMaintenance(project, catalogs = {}) {
+function recalcMaintenanceEquipmentRow(entry, catalogs) {
+  const id = entry.equipment_id || entry.inventory_item_id || "";
+  const row = id ? catalogs.MaintenanceEquipment?.byId.get(id) : null;
+  if (!row) return entry;
+  const pricingMode = entry.pricing_mode || row.pricing_mode || "per_day";
+  const duration = Math.max(num(entry.duration, 1), 0);
+  const unitCost = independentPartUnitCost({
+    inventory_entity: "MaintenanceEquipment",
+    pricing_basis_snapshot: { pricing_mode: pricingMode },
+  }, row);
+  const owned = row.ownership === "owned" || ["owned_flat", "per_project_flat"].includes(pricingMode);
+  const delivery = !owned && entry.include_delivery ? num(row.delivery_pickup_cost) : 0;
+  const idleRate = num(row.idle_running_cost_per_hour);
+  const idleHours = num(entry.idle_hours);
+  const idleCost = idleRate * idleHours;
+  return {
+    ...entry,
+    equipment_name: row.equipment_name || entry.equipment_name,
+    equipment_type: row.equipment_type || entry.equipment_type,
+    pricing_mode: pricingMode,
+    ownership: row.ownership || entry.ownership,
+    unit_cost: unitCost,
+    delivery_pickup_cost: num(row.delivery_pickup_cost),
+    idle_running_cost_per_hour: idleRate,
+    idle_cost: idleCost,
+    total_cost: unitCost * duration + delivery + idleCost,
+  };
+}
+
+function liveMaintenanceProject(project, catalogs) {
+  const settings = {};
+  (catalogs.Settings?.rows || []).forEach((row) => {
+    if (row.setting_name) settings[row.setting_name] = row.setting_value;
+  });
+  const rates = catalogs.MaintenanceActionRate?.rows || [];
+  const inventory = catalogs.MaintenanceInventory?.rows || [];
+  const items = (project.items || []).map((item) => calcServiceItem(item, settings, rates, inventory));
+  const selectedEquipment = (project.selected_equipment || []).map((entry) => recalcMaintenanceEquipmentRow(entry, catalogs));
+  const current = { ...project, items, selected_equipment: selectedEquipment };
+  return { ...current, ...calcProjectTotals(current) };
+}
+
+function extractMaintenance(project, catalogs = {}, options = {}) {
+  if (!options.legacyMode && (catalogs.Settings?.rows || []).length) {
+    project = liveMaintenanceProject(project, catalogs);
+  }
   const parts = [];
   const represented = { labor: 0, materials: 0, equipment: 0, personnel: 0, supplies: 0, travel: 0, markup: 0 };
 
