@@ -1737,7 +1737,11 @@ function extractCNC(project) {
 
 function extractLaser(project) {
   const parts = [];
+  let itemMachineTotal = 0;
+  let itemLaborTotal = 0;
   (project.items || []).forEach((item, index) => {
+    itemMachineTotal += num(item.machine_cost);
+    itemLaborTotal += num(item.labor_cost);
     if (num(item.machine_cost) > 0.005) {
       parts.push(manualCostPart({
         key: `laser:item:${index}:machine`,
@@ -1767,7 +1771,10 @@ function extractLaser(project) {
       }));
     }
   });
-  const fixedSetupCost = num(project.builder_calculation?.totals?.fixed_setup_cost);
+  const fixedSetupCost = num(
+    project.builder_calculation?.totals?.fixed_setup_cost,
+    num(project.fixed_setup_hours) * num(project.labor_rate)
+  );
   if (fixedSetupCost > 0.005) {
     parts.push(manualCostPart({
       key: "laser:fixed-setup",
@@ -1781,15 +1788,54 @@ function extractLaser(project) {
       calculation: { fixed_setup_hours: project.fixed_setup_hours, labor_rate: project.labor_rate, cost: fixedSetupCost },
     }));
   }
-  const fixedMaterialSetup = num(project.fixed_material_setup_cost, project.builder_calculation?.totals?.total_supplies_cost);
-  if (fixedMaterialSetup > 0.005) {
+
+  const authoritativeMachineTotal = num(
+    project.total_machine_cost,
+    num(project.builder_calculation?.totals?.total_machine_cost, itemMachineTotal)
+  );
+  const machineAdjustment = authoritativeMachineTotal - itemMachineTotal;
+  if (Math.abs(machineAdjustment) > 0.005) {
+    parts.push(manualCostPart({
+      key: "laser:machine-adjustment",
+      name: "Laser Machine Cost Adjustment",
+      type: "equipment",
+      subtype: "machine_adjustment",
+      sourcePath: "total_machine_cost",
+      cost: machineAdjustment,
+      calculation: { total_machine_cost: authoritativeMachineTotal, item_machine_cost: itemMachineTotal, adjustment: machineAdjustment },
+    }));
+  }
+
+  const authoritativeLaborTotal = num(
+    project.total_labor_cost,
+    num(project.builder_calculation?.totals?.total_labor_cost, itemLaborTotal + fixedSetupCost)
+  );
+  const laborAdjustment = authoritativeLaborTotal - itemLaborTotal - fixedSetupCost;
+  if (Math.abs(laborAdjustment) > 0.005) {
+    parts.push(manualCostPart({
+      key: "laser:labor-adjustment",
+      name: "Laser Labor Adjustment",
+      type: "labor",
+      subtype: "labor_adjustment",
+      sourcePath: "total_labor_cost",
+      cost: laborAdjustment,
+      calculation: { total_labor_cost: authoritativeLaborTotal, item_labor_cost: itemLaborTotal, fixed_setup_cost: fixedSetupCost, adjustment: laborAdjustment },
+    }));
+  }
+
+  const authoritativeSupplies = num(
+    project.total_supplies_cost,
+    num(project.fixed_material_setup_cost, project.builder_calculation?.totals?.total_supplies_cost)
+  );
+  if (Math.abs(authoritativeSupplies) > 0.005) {
     parts.push(manualCostPart({
       key: "laser:fixed-material-setup",
       name: "Laser Material Setup / Consumables",
       type: "consumable",
       subtype: "material_setup",
-      sourcePath: "fixed_material_setup_cost",
-      cost: fixedMaterialSetup,
+      sourcePath: "total_supplies_cost",
+      cost: authoritativeSupplies,
+      calculation: { fixed_material_setup_cost: project.fixed_material_setup_cost, total_supplies_cost: authoritativeSupplies },
     }));
   }
   return parts;
