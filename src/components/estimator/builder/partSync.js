@@ -2511,6 +2511,105 @@ function extractFoundation(project, catalogs) {
   return parts;
 }
 
+function extractPainting(project) {
+  const parts = [];
+  let itemMaskTotal = 0;
+  let itemPaintTotal = 0;
+  let itemLaborTotal = 0;
+
+  (project.items || []).forEach((item, index) => {
+    const label = item.description || (item.item_type === "lettering" ? "Painted Lettering" : item.item_type === "complex_shapes" ? "Painted Complex Shape" : "Painted Panel");
+    const quantity = item.item_type === "lettering" ? 1 : (item.quantity || 1);
+    const maskCost = num(item.supplies_cost);
+    const paintCost = num(item.paint_cost);
+    const laborCost = num(item.labor_cost);
+    itemMaskTotal += maskCost;
+    itemPaintTotal += paintCost;
+    itemLaborTotal += laborCost;
+
+    if (Math.abs(maskCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `painting:item:${index}:mask`,
+        name: `${label} — Paint Mask`,
+        type: "consumable",
+        subtype: "paint_mask",
+        sourcePath: `items[${index}].supplies_cost`,
+        cost: maskCost,
+        quantity,
+        unit: quantity > 1 ? "each" : "job",
+        builderData: item,
+        calculation: { paint_mask_sqft: item.paint_mask_sqft, paint_colors: item.paint_colors, supplies_cost: maskCost },
+      }));
+    }
+    if (Math.abs(paintCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `painting:item:${index}:paint`,
+        name: `${label} — Paint & Supplies`,
+        type: "material",
+        subtype: "liquid_paint_supplies",
+        sourcePath: `items[${index}].paint_cost`,
+        cost: paintCost,
+        quantity,
+        unit: quantity > 1 ? "each" : "job",
+        builderData: item,
+        calculation: { paintable_sqft: item.paintable_sqft, paint_gallons: item.paint_gallons, paint_colors: item.paint_colors, paint_cost: paintCost },
+      }));
+    }
+    if (Math.abs(laborCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `painting:item:${index}:labor`,
+        name: `${label} — Painting Labor`,
+        type: "labor",
+        subtype: "painting_labor",
+        sourcePath: `items[${index}].labor_cost`,
+        cost: laborCost,
+        quantity: item.labor_hours || 1,
+        unit: item.labor_hours ? "hour" : "job",
+        builderData: item,
+        calculation: { labor_hours: item.labor_hours, labor_cost: laborCost },
+      }));
+    }
+  });
+
+  const authoritativeMaterialTotal = num(project.total_paint_mask_cost) + num(project.total_liquid_paint_and_supplies_cost);
+  const materialAdjustment = authoritativeMaterialTotal - itemMaskTotal - itemPaintTotal;
+  if (Math.abs(materialAdjustment) > 0.005) {
+    parts.push(manualCostPart({
+      key: "painting:material-adjustment",
+      name: materialAdjustment > 0 ? "Painting Minimum / Fixed Materials" : "Painting Materials Adjustment",
+      type: "material",
+      subtype: "paint_material_adjustment",
+      sourcePath: "total_liquid_paint_and_supplies_cost",
+      cost: materialAdjustment,
+      calculation: {
+        authoritative_material_total: authoritativeMaterialTotal,
+        item_mask_total: itemMaskTotal,
+        item_paint_total: itemPaintTotal,
+        adjustment: materialAdjustment,
+      },
+    }));
+  }
+
+  const authoritativeLaborTotal = num(project.total_labor_cost);
+  const laborAdjustment = authoritativeLaborTotal - itemLaborTotal;
+  if (Math.abs(laborAdjustment) > 0.005) {
+    parts.push(manualCostPart({
+      key: "painting:fixed-labor-adjustment",
+      name: laborAdjustment > 0 ? "Painting Setup / Mixing / Minimum Labor" : "Painting Labor Adjustment",
+      type: "labor",
+      subtype: "painting_fixed_labor",
+      sourcePath: "total_labor_cost",
+      cost: laborAdjustment,
+      calculation: {
+        authoritative_labor_total: authoritativeLaborTotal,
+        item_labor_total: itemLaborTotal,
+        adjustment: laborAdjustment,
+      },
+    }));
+  }
+  return parts;
+}
+
 function extractCNC(project) {
   const parts = [];
   (project.items || []).forEach((item, index) => {
@@ -2723,6 +2822,7 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}, options =
     case "metal": return extractMetal(project);
     case "brick_stone": return extractBrick(project, catalogs, options);
     case "maintenance": return extractMaintenance(project, catalogs, options);
+    case "painting": return extractPainting(project);
     case "cnc": return extractCNC(project);
     case "laser": return extractLaser(project);
     default: return extractManualItems(project, moduleKey || "legacy");
