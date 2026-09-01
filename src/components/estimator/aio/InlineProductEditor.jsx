@@ -7,6 +7,7 @@ import LaserEstimator from "@/pages/LaserEstimator";
 import MetalEstimator from "@/pages/MetalEstimator";
 import BrickStoneEstimator from "@/pages/BrickStoneEstimator";
 import MaintenanceEstimator from "@/pages/MaintenanceEstimator";
+import PaintingEstimator from "@/pages/PaintingEstimator";
 import ReattachPartsModal from "@/components/estimator/builder/ReattachPartsModal";
 import { getDetachedBuilderParts, reattachBuilderParts } from "@/components/estimator/builder/partSync";
 
@@ -19,6 +20,7 @@ const EDITORS = {
   metal: MetalEstimator,
   brick_stone: BrickStoneEstimator,
   maintenance: MaintenanceEstimator,
+  painting: PaintingEstimator,
 };
 
 export default function InlineProductEditor({ line, estimateId, onClose, onSaved }) {
@@ -74,13 +76,10 @@ export default function InlineProductEditor({ line, estimateId, onClose, onSaved
   };
 
   if (!Editor || !line?.project_id) {
-    const isLegacyPainting = line?.module_key === "painting";
     return (
       <div className="bg-white border border-gray-200 rounded-md p-6 text-center text-[12px] text-gray-500 space-y-3">
         <div>
-          {isLegacyPainting
-            ? "This is a legacy Painting product. Its saved price and details are preserved, but the old Painting editor is not part of the current estimator yet."
-            : "This legacy product no longer has a source project record, so only its saved estimate snapshot is available."}
+          This legacy product no longer has a source project record, so only its saved estimate snapshot is available.
         </div>
         <button
           type="button"
