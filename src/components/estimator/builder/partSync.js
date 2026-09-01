@@ -1780,9 +1780,9 @@ function extractFoundation(project, catalogs) {
 
   (project.selected_equipment || []).forEach((eq, index) => {
     const breakdown = foundationEquipmentBreakdown(eq, catalogs);
+    const equipmentRow = eq.equipment_id ? catalogs.FoundationInventory?.byId.get(eq.equipment_id) : null;
+    const qty = eq.custom_qty ?? eq.rental_duration ?? 1;
     if (eq.equipment_id) {
-      const equipmentRow = catalogs.FoundationInventory?.byId.get(eq.equipment_id);
-      const qty = eq.custom_qty ?? eq.rental_duration ?? 1;
       parts.push(makePart({
         key: `foundation:equipment:${index}`,
         name: equipmentRow?.material_name || "Foundation Equipment",
@@ -1793,30 +1793,82 @@ function extractFoundation(project, catalogs) {
         inventoryId: eq.equipment_id,
         quantity: qty,
         unit: eq.rental_period || "day",
-        unitCost: num(breakdown.baseCost) / Math.max(num(qty, 1), 1),
-        extendedCost: breakdown.baseCost,
+        unitCost: num(breakdown.baseRental) / Math.max(num(qty, 1), 1),
+        extendedCost: breakdown.baseRental,
         builderData: eq,
-        calculation: { ...eq, equipment_total_with_attachments: eq.equipment_cost, base_equipment_cost: breakdown.baseCost },
+        calculation: { ...eq, equipment_total_with_attachments: eq.equipment_cost, base_equipment_cost: breakdown.baseRental },
+        pricingBasis: { pricing_mode: `per_${eq.rental_period || "day"}` },
+      }));
+    }
+    if (eq.equipment_id && Math.abs(num(breakdown.delivery)) > 0.005) {
+      parts.push(makePart({
+        key: `foundation:equipment:${index}:delivery`,
+        name: `${equipmentRow?.material_name || "Foundation Equipment"} — Delivery / Pickup`,
+        type: "service",
+        subtype: "equipment_delivery",
+        sourcePath: `selected_equipment[${index}].include_delivery`,
+        entity: "FoundationInventory",
+        inventoryId: eq.equipment_id,
+        quantity: 1,
+        unit: "delivery",
+        unitCost: breakdown.delivery,
+        extendedCost: breakdown.delivery,
+        builderData: eq,
+        calculation: { include_delivery: eq.include_delivery, delivery_cost: breakdown.delivery },
+        pricingBasis: { pricing_mode: "pickup_delivery" },
       }));
     }
     breakdown.attachmentCosts.forEach((entry, attachmentIndex) => {
       if (!entry.id) return;
       parts.push(makePart({
-        key: `foundation:equipment:${index}:attachment:${attachmentIndex}`,
-        name: entry.row?.material_name || entry.attachment.name || "Equipment Attachment",
+        key: `foundation:equipment:${index}:attachment:${entry.id}`,
+        name: entry.row?.material_name || "Equipment Attachment",
         type: "equipment",
         subtype: entry.row?.material_type || "attachment",
-        sourcePath: `selected_equipment[${index}].attachments[${attachmentIndex}].id`,
+        sourcePath: `selected_equipment[${index}].attachment_counts.${entry.id}`,
         entity: "FoundationInventory",
         inventoryId: entry.id,
-        quantity: entry.quantity,
+        quantity: entry.quantity * Math.max(num(qty, 1), 1),
         unit: eq.rental_period || "day",
-        unitCost: entry.quantity ? entry.cost / entry.quantity : entry.cost,
+        unitCost: (entry.quantity * Math.max(num(qty, 1), 1)) ? entry.cost / (entry.quantity * Math.max(num(qty, 1), 1)) : entry.cost,
         extendedCost: entry.cost,
         builderData: entry.attachment,
-        calculation: { rental_period: eq.rental_period, rental_duration: eq.rental_duration, total_cost: entry.cost },
+        calculation: { rental_period: eq.rental_period, rental_duration: eq.rental_duration, attachment_quantity: entry.quantity, total_cost: entry.cost },
+        pricingBasis: { pricing_mode: `per_${eq.rental_period || "day"}` },
       }));
     });
+    breakdown.subAttachmentCosts.forEach((entry) => {
+      if (!entry.id) return;
+      parts.push(makePart({
+        key: `foundation:equipment:${index}:sub-attachment:${entry.id}`,
+        name: entry.row?.material_name || "Equipment Sub-Attachment",
+        type: "equipment",
+        subtype: entry.row?.material_type || "sub_attachment",
+        sourcePath: `selected_equipment[${index}].sub_attachment_counts.${entry.id}`,
+        entity: "FoundationInventory",
+        inventoryId: entry.id,
+        quantity: entry.quantity * Math.max(num(qty, 1), 1),
+        unit: eq.rental_period || "day",
+        unitCost: (entry.quantity * Math.max(num(qty, 1), 1)) ? entry.cost / (entry.quantity * Math.max(num(qty, 1), 1)) : entry.cost,
+        extendedCost: entry.cost,
+        builderData: entry.attachment,
+        calculation: { rental_period: eq.rental_period, rental_duration: eq.rental_duration, attachment_quantity: entry.quantity, total_cost: entry.cost },
+        pricingBasis: { pricing_mode: `per_${eq.rental_period || "day"}` },
+      }));
+    });
+    const representedEquipment = num(breakdown.total);
+    if (eq.equipment_cost != null && Math.abs(num(eq.equipment_cost) - representedEquipment) > 0.005) {
+      parts.push(manualCostPart({
+        key: `foundation:equipment:${index}:saved-adjustment`,
+        name: `${equipmentRow?.material_name || "Foundation Equipment"} — Saved Cost Adjustment`,
+        type: "equipment",
+        subtype: "equipment_adjustment",
+        sourcePath: `selected_equipment[${index}].equipment_cost`,
+        cost: num(eq.equipment_cost) - representedEquipment,
+        builderData: eq,
+        calculation: { authoritative_total: eq.equipment_cost, reconstructed_total: representedEquipment },
+      }));
+    }
   });
 
   (project.signage_cabinets || []).forEach((cabinet, index) => {
