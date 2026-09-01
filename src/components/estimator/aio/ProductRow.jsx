@@ -356,7 +356,7 @@ export default function ProductRow({
             disabled
           />
           <Field
-            label="ADJUSTMENT %"}]}
+            label="ADJUSTMENT %"
             type="number"
             value={line.adjustment_percent ?? 0}
             onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
