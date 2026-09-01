@@ -2817,6 +2817,21 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const currentExtended = num(descriptor.extended_cost);
     const timestamp = nowIso();
 
+    const inventoryUpdatedAt = dateMs(currentRow?.updated_date);
+    const builderCalculatedAt = dateMs(builderProduct.builder_snapshot_at);
+    if (
+      pricingChanged &&
+      !legacyMode &&
+      builderProduct.price_state !== "unchecked" &&
+      !directLiveReprice &&
+      inventoryUpdatedAt !== null &&
+      builderCalculatedAt !== null &&
+      inventoryUpdatedAt > builderCalculatedAt
+    ) {
+      recalcRequired = true;
+      recalcPartNames.push(currentName || descriptor.part_name);
+    }
+
     let linkState = "manual";
     if (hasInventoryLink) {
       if (currentRow) linkState = "attached";
@@ -2828,6 +2843,13 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     if (changed) changedCount += 1;
 
     if (!old) {
+      const establishBaseline = legacyMode || builderProduct.price_state === "unchecked" || acceptPrices;
+      const initialFrozenUnit = establishBaseline ? (descriptor.unit_cost || currentUnitCost) : 0;
+      const initialFrozenExtended = establishBaseline ? num(descriptor.extended_cost) : 0;
+      if (!establishBaseline) {
+        changedCount += 1;
+        newPartCount += 1;
+      }
       const created = await base44.entities.BuilderPart.create({
         builder_product_id: builderProduct.id,
         part_key: descriptor.part_key,
@@ -2845,7 +2867,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         inventory_link_state: linkState,
         reattach_candidate_id: candidate?.id || "",
         reattach_candidate_name: candidate ? rowName(old?.inventory_entity || resolvedEntity, candidate) : "",
-        frozen_inventory_snapshot: currentRow || {},
+        frozen_inventory_snapshot: establishBaseline ? (currentRow || {}) : {},
         current_inventory_snapshot: currentRow || {},
         builder_data: descriptor.builder_data,
         calculation_snapshot: descriptor.calculation_snapshot,
@@ -2855,14 +2877,20 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         },
         quantity: descriptor.quantity,
         unit: descriptor.unit,
-        frozen_unit_cost: descriptor.unit_cost || currentUnitCost,
-        frozen_extended_cost: descriptor.extended_cost,
+        frozen_unit_cost: initialFrozenUnit,
+        frozen_extended_cost: initialFrozenExtended,
         current_unit_cost: currentUnitCost,
         current_extended_cost: currentExtended,
-        price_state: legacyMode ? "legacy_frozen" : detached ? "detached" : "current",
-        price_delta: 0,
-        price_delta_percent: 0,
-        inventory_updated_date_snapshot: currentRow?.updated_date || "",
+        price_state: legacyMode
+          ? "legacy_frozen"
+          : detached
+            ? "detached"
+            : establishBaseline
+              ? "current"
+              : "changed",
+        price_delta: currentExtended - initialFrozenExtended,
+        price_delta_percent: initialFrozenExtended ? ((currentExtended - initialFrozenExtended) / initialFrozenExtended) * 100 : 0,
+        inventory_updated_date_snapshot: establishBaseline ? (currentRow?.updated_date || "") : "",
         last_price_check_at: timestamp,
         last_price_update_at: acceptPrices ? timestamp : "",
         manual_cost_override: !hasInventoryLink,
@@ -2870,7 +2898,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         is_active: true,
         notes: legacyMode
           ? "Backfilled from an existing Builder Product. Saved estimator costs remain authoritative; catalog snapshot is compatibility context."
-          : "",
+          : establishBaseline
+            ? ""
+            : "New Builder Part added after the Product price was frozen. Frozen cost remains $0 until Update Price is explicitly accepted.",
       });
       synced.push(created);
       continue;
