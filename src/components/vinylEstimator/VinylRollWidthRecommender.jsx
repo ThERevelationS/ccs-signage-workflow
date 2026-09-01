@@ -47,7 +47,7 @@ export default function VinylRollWidthRecommender({
       applyCut: !!workflow.apply_cut,
       applyLaminate: !!workflow.apply_laminate,
       applyTransferTape: !!workflow.apply_transfer_tape,
-      printQuality: workflow.print_quality || "high_quality",
+      printQuality: workflow.print_quality || printer?.default_print_quality || "high_quality",
       weedingDifficulty: workflow.weeding_difficulty || "moderate",
       installMinutesPerPart: workflow.install_minutes_per_part,
       personnel: workflow.personnel || [],
