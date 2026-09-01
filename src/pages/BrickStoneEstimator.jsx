@@ -21,12 +21,38 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
 
   useEffect(() => {
     const load = async () => {
-      const [p, mats] = await Promise.all([
+      const [p, legacyMats, foundationMats] = await Promise.all([
         id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
-        base44.entities.BrickStoneInventory.list("material_name", 500),
+        base44.entities.BrickStoneInventory.list("material_name", 500).catch(() => []),
+        base44.entities.FoundationInventory.list("material_name", 500).catch(() => []),
       ]);
+
+      // The committed SignEstimate Pro repo defined BrickStoneInventory but never
+      // shipped a Brick estimator implementation or any BrickStoneInventory data.
+      // Modern Master Inventory stores masonry units in FoundationInventory. Use
+      // those rows as the primary catalog while keeping the legacy entity readable
+      // for compatibility if an older record is ever encountered.
+      const modernMats = (foundationMats || [])
+        .filter((row) =>
+          row.show_in_foundation !== false && (
+            row.material_type === "brick_stone" ||
+            (row.material_type === "wall_material" && ["brick", "stone", "cinderblock"].includes(row.wall_material_subtype))
+          )
+        )
+        .map((row) => ({
+          ...row,
+          length: row.material_type === "brick_stone" ? row.brick_length_inches : row.wall_unit_length_inches,
+          width: row.material_type === "brick_stone" ? row.brick_width_inches : row.wall_unit_width_inches,
+          height: row.material_type === "brick_stone" ? row.brick_height_inches : row.wall_unit_height_inches,
+          _inventory_entity: "FoundationInventory",
+        }));
+      const legacyNormalized = (legacyMats || []).map((row) => ({
+        ...row,
+        _inventory_entity: "BrickStoneInventory",
+      }));
+
       setProject(p);
-      setMaterials(mats || []);
+      setMaterials([...modernMats, ...legacyNormalized]);
       setLoading(false);
     };
     load();
