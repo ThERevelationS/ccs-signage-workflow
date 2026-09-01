@@ -16,6 +16,13 @@ export function liveCustomerUnitPrice(line) {
   return num(line?.live_total_snapshot, num(line?.total_snapshot));
 }
 
+export function acceptedInternalEstimateCost(lineItems = []) {
+  return (lineItems || []).reduce((sum, line) => {
+    const quantity = Math.max(0, num(line?.customer_quantity, 1));
+    return sum + num(line?.total_snapshot) * quantity;
+  }, 0);
+}
+
 // A Builder's source record may contain both shop/internal cost and an existing
 // customer-facing sell-price calculation. Keep those concepts separate without
 // changing the Builder's own established formulas.
