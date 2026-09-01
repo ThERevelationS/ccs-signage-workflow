@@ -553,8 +553,8 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   <CardContent className="p-3 text-xs text-slate-600">
                     Travel rates (shop address, fuel prices, labor rate, overhead, minimum charge) are shared with the
                     Channel Letter Install module —{" "}
-                    <Link to="/MasterInventory" className="underline font-medium">
-                      review the shared installation inventory/settings
+                    <Link to="/EstimatorSettings" className="underline font-medium">
+                      review the shared estimator settings
                     </Link>.
                   </CardContent>
                 </Card>
