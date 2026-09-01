@@ -19,13 +19,11 @@ const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sig
 // materialTypes is not directly used in the current structure for display, but could be for filtering
 // const materialTypes = ["Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel"];
 
-export default function NewMetalEstimate({ embeddedId = null, embedded = false }) {
-  const navigate = useNavigate();
+export default function MetalEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
-  // Prop wins when embedded inside the All-In-One estimator.
-  const editId = embeddedId || searchParams.get('edit');
+  const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
+  const estimateId = embeddedEstimateId || searchParams.get('estimateId');
   const [isEditing, setIsEditing] = useState(false);
-  const { setIsDirty } = useUnsavedChanges();
 
   const [project, setProject] = useState({
     project_name: "",
@@ -38,67 +36,66 @@ export default function NewMetalEstimate({ embeddedId = null, embedded = false }
   });
   const [globalSettings, setGlobalSettings] = useState({});
   const [inventory, setInventory] = useState([]);
+  const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
-  useEffect(() => {
-    if (!isLoading) setHasLoaded(true);
-  }, [isLoading]);
-  useEffect(() => {
-    if (hasLoaded) setIsDirty(true);
-  }, [project]);
 
-  const loadPrerequisites = useCallback(async () => {
-    try {
-      const [settingsData, inventoryData] = await Promise.all([
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const [settingsData, inventoryData, existing, estimate] = await Promise.all([
           Settings.list(),
-          InventoryEntity.list()
-      ]);
-      const settingsObj = {};
-      settingsData.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
-      setGlobalSettings(settingsObj);
-      setInventory(inventoryData);
-      
-      if (!editId) {
-        setProject(prev => ({
-          ...prev,
+          InventoryEntity.list(),
+          editId ? MetalProject.get(editId).catch(() => null) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+        ]);
+        if (cancelled) return;
+
+        const settingsObj = {};
+        (settingsData || []).forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
+        setGlobalSettings(settingsObj);
+        setInventory(inventoryData || []);
+        setEstimateContext(estimate || null);
+
+        const sourceDefaults = {
           fabrication_rate: parseFloat(settingsObj.fabrication_rate) || 65,
           welding_rate: parseFloat(settingsObj.welding_rate) || 75,
           finishing_rate: parseFloat(settingsObj.finishing_rate) || 55,
-          notes: settingsObj.default_notes_template || ""
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading prerequisites:', error);
-    }
-  }, [editId]);
+          notes: settingsObj.default_notes_template || "",
+        };
 
-  const loadProjectForEdit = useCallback(async (projectId) => {
-    try {
-      const projectToEdit = await MetalProject.get(projectId);
-      if (projectToEdit) {
-        setProject(projectToEdit);
-        setIsEditing(true);
-      } else {
-        navigate(createPageUrl("MetalProjects"));
-      }
-    } catch (error) {
-      console.error('Error loading project for edit:', error);
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    const loadAll = async () => {
-        setIsLoading(true);
-        await loadPrerequisites();
-        if (editId) {
-            await loadProjectForEdit(editId);
+        if (existing) {
+          setProject(prev => ({
+            ...prev,
+            ...existing,
+            client_name: estimate?.client_name || existing.client_name || prev.client_name,
+            customer_id: estimate?.customer_id || existing.customer_id,
+            estimate_number: estimate?.estimate_number || existing.estimate_number,
+            items: existing.items || [],
+          }));
+          setIsEditing(true);
+        } else {
+          setProject(prev => ({
+            ...prev,
+            ...sourceDefaults,
+            client_name: estimate?.client_name || prev.client_name,
+            customer_id: estimate?.customer_id,
+            estimate_number: estimate?.estimate_number || prev.estimate_number,
+          }));
+          setIsEditing(false);
         }
-        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading metal estimator:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     };
-    loadAll();
-  }, [editId, loadPrerequisites, loadProjectForEdit]);
+    load();
+    return () => { cancelled = true; };
+  }, [editId, estimateId]);
 
   const addItem = () => {
     setProject(prev => ({
