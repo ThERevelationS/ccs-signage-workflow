@@ -1640,33 +1640,38 @@ function extractMaintenance(project, catalogs = {}, options = {}) {
   (project.items || []).forEach((item, itemIndex) => {
     let itemMaterialParts = 0;
     (item.materials || []).forEach((mat, matIndex) => {
-      const id = mat.inventory_item_id || mat.inventory_id || "";
-      const row = catalogs.MaintenanceInventory?.byId.get(id);
+      const ruleId = mat.maintenance_rule_id || (!mat.inventory_entity ? (mat.inventory_item_id || mat.inventory_id || "") : "");
+      const rule = ruleId ? catalogs.MaintenanceInventory?.byId.get(ruleId) : null;
+      const linkedEntity = mat.inventory_entity || rule?.inventory_entity || "";
+      const linkedId = linkedEntity ? (mat.inventory_item_id || rule?.inventory_item_id || "") : "";
+      const inventoryEntity = linkedEntity || (ruleId ? "MaintenanceInventory" : "");
+      const inventoryId = linkedEntity ? linkedId : ruleId;
+      const row = linkedEntity ? catalogs[linkedEntity]?.byId?.get(linkedId) : rule;
       const quantity = num(mat.quantity, 0);
       const unitCost = num(mat.unit_cost);
       const extendedCost = mat.total_cost == null ? quantity * unitCost : num(mat.total_cost);
       itemMaterialParts += extendedCost;
       represented.materials += extendedCost;
-      if (Math.abs(extendedCost) <= 0.005 && !id) return;
+      if (Math.abs(extendedCost) <= 0.005 && !inventoryId) return;
       parts.push(makePart({
         key: `maintenance:item:${itemIndex}:material:${matIndex}`,
-        name: mat.item_name || row?.item_name || "Maintenance Material",
+        name: mat.item_name || (linkedEntity && row ? rowName(linkedEntity, row) : rule?.item_name) || "Maintenance Material",
         type: "material",
-        subtype: mat.pricing_mode || row?.pricing_mode || "maintenance_material",
-        sourcePath: mat.inventory_item_id
+        subtype: mat.pricing_mode || row?.pricing_mode || rule?.pricing_mode || "maintenance_material",
+        sourcePath: linkedEntity
           ? `items[${itemIndex}].materials[${matIndex}].inventory_item_id`
-          : mat.inventory_id
-            ? `items[${itemIndex}].materials[${matIndex}].inventory_id`
+          : ruleId
+            ? `items[${itemIndex}].materials[${matIndex}].maintenance_rule_id`
             : `items[${itemIndex}].materials[${matIndex}]`,
-        entity: id ? "MaintenanceInventory" : "",
-        inventoryId: id,
+        entity: inventoryId ? inventoryEntity : "",
+        inventoryId,
         quantity: quantity || 1,
-        unit: row?.unit || mat.unit || mat.pricing_mode || row?.pricing_mode || "unit",
+        unit: mat.unit || row?.unit || rule?.unit || mat.pricing_mode || row?.pricing_mode || rule?.pricing_mode || "unit",
         unitCost,
         extendedCost,
-        builderData: { sign: item.description, sign_type: item.sign_type, size: item.size, actions: item.actions || [], material: mat },
-        calculation: { ...mat, saved_total_cost: extendedCost },
-        pricingBasis: { pricing_mode: mat.pricing_mode || row?.pricing_mode || "", size: item.size, sign_type: item.sign_type, actions: item.actions || [] },
+        builderData: { sign: item.description, sign_type: item.sign_type, size: item.size, actions: item.actions || [], maintenance_rule_id: ruleId, maintenance_rule: rule || null, material: mat },
+        calculation: { ...mat, maintenance_rule_id: ruleId, saved_total_cost: extendedCost },
+        pricingBasis: { pricing_mode: mat.pricing_mode || row?.pricing_mode || row?.pole_pricing_mode || row?.unit_type || rule?.pricing_mode || "", size: item.size, sign_type: item.sign_type, actions: item.actions || [], usage_basis: mat.usage_basis || rule?.usage_basis || "", usage_multiplier: mat.usage_multiplier ?? rule?.usage_multiplier },
       }));
     });
 
