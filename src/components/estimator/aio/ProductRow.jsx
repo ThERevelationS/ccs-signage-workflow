@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, Plus, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
 import ProductNotesModal from "./ProductNotesModal";
 import CreateQuickProductModal from "./CreateQuickProductModal";
@@ -22,7 +23,9 @@ const Field = ({ label, className = "", ...props }) => (
 const priceMeta = (line) => {
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
-  const differs = Math.abs(live - frozen) > 0.005;
+  const customer = acceptedCustomerUnitPrice(line);
+  const liveCustomer = liveCustomerUnitPrice(line);
+  const differs = Math.abs(live - frozen) > 0.005 || Math.abs(liveCustomer - customer) > 0.005;
 
   if (line.needs_reattach_review || line.price_state === "detached_parts") {
     return {
@@ -101,8 +104,10 @@ export default function ProductRow({
   const commit = (patch) => onPersistSettings?.(line, index, patch);
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
+  const customerPrice = acceptedCustomerUnitPrice(line);
+  const liveCustomerPrice = liveCustomerUnitPrice(line);
   const productQuantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
-  const amount = frozen * productQuantity * (1 + Number(line.adjustment_percent || 0) / 100);
+  const amount = customerPrice * productQuantity * (1 + Number(line.adjustment_percent || 0) / 100);
   const meta = priceMeta(line);
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
@@ -174,9 +179,9 @@ export default function ProductRow({
 
         <div className="text-right w-[122px] flex-shrink-0">
           <div className="text-[13px] font-bold text-gray-800">{money(amount)}</div>
-          {productQuantity !== 1 && <div className="text-[9px] text-gray-400">{productQuantity} × {money(frozen)} each</div>}
+          {productQuantity !== 1 && <div className="text-[9px] text-gray-400">{productQuantity} × {money(customerPrice)} each</div>}
           {meta.differs && (
-            <div className="text-[9px] text-amber-600">live {money(live)}</div>
+            <div className="text-[9px] text-amber-600">live price {money(liveCustomerPrice)}</div>
           )}
           {percentOfTotal != null && (
             <div className="text-[9px] text-gray-400">{percentOfTotal.toFixed(0)}% of total</div>
@@ -210,7 +215,7 @@ export default function ProductRow({
               onClick={handleUpdatePrice}
               disabled={updatingPrice}
               className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
-              title={`Accept current builder price ${money(live)}`}
+              title={`Accept current customer price ${money(liveCustomerPrice)} (internal cost ${money(live)})`}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
               {updatingPrice ? "Updating…" : "Update Price"}
@@ -333,13 +338,25 @@ export default function ProductRow({
             disabled
           />
           <Field
-            label="LIVE CALCULATION"
+            label="LIVE INTERNAL COST"
             type="number"
             value={live}
             disabled
           />
           <Field
-            label="ADJUSTMENT %"
+            label="CUSTOMER BASE PRICE"
+            type="number"
+            value={customerPrice}
+            disabled
+          />
+          <Field
+            label="LIVE CUSTOMER PRICE"
+            type="number"
+            value={liveCustomerPrice}
+            disabled
+          />
+          <Field
+            label="ADJUSTMENT %"}]}
             type="number"
             value={line.adjustment_percent ?? 0}
             onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
