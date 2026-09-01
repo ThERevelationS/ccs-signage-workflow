@@ -181,26 +181,32 @@ async function list(entity) {
 export async function loadMasterPartCatalog() {
   const entityNames = [...new Set(SOURCES.flatMap((source) => source.entities.map((spec) => spec.entity)))];
   const loaded = Object.fromEntries(await Promise.all(entityNames.map(async (entity) => [entity, await list(entity)])));
-  const seen = new Set();
-  const items = [];
+  const itemByInventoryKey = new Map();
   for (const source of SOURCES) {
     for (const spec of source.entities) {
       for (const row of loaded[spec.entity] || []) {
         if (spec.filter && !spec.filter(row)) continue;
-        const dedupe = `${source.key}:${spec.entity}:${row.id}`;
-        if (seen.has(dedupe)) continue;
-        seen.add(dedupe);
+        const inventoryKey = `${spec.entity}:${row.id}`;
+        const existing = itemByInventoryKey.get(inventoryKey);
+        if (existing) {
+          if (!existing.categories.some((category) => category.key === source.key)) {
+            existing.categories.push({ key: source.key, label: source.label });
+            existing.searchText = `${existing.searchText} ${source.label.toLowerCase()}`.trim();
+          }
+          continue;
+        }
         const name = inventoryRowName(spec.entity, row);
         const subtype = inventorySubtype(spec.entity, row);
         const pricingMode = inventoryPricingMode(spec.entity, row);
         const unit = inventoryUnit(spec.entity, row);
         const unitCost = inventoryUnitCost(spec.entity, row);
-        items.push({
-          id: `${spec.entity}:${row.id}`,
+        itemByInventoryKey.set(inventoryKey, {
+          id: inventoryKey,
           entity: spec.entity,
           inventoryId: row.id,
           categoryKey: source.key,
           categoryLabel: source.label,
+          categories: [{ key: source.key, label: source.label }],
           name,
           subtype,
           supplier: inventorySupplier(spec.entity, row),
@@ -214,7 +220,7 @@ export async function loadMasterPartCatalog() {
       }
     }
   }
-  return items.sort((a, b) => a.categoryLabel.localeCompare(b.categoryLabel) || a.name.localeCompare(b.name));
+  return [...itemByInventoryKey.values()].sort((a, b) => a.categoryLabel.localeCompare(b.categoryLabel) || a.name.localeCompare(b.name));
 }
 
 export function typeDetails(entity, row = {}, overrides = {}) {
