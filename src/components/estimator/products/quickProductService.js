@@ -395,6 +395,17 @@ export async function instantiateQuickProduct({ estimateId, quickProduct }) {
 }
 
 export async function listQuickProducts() {
-  const rows = await base44.entities.QuickProduct.list().catch(() => []);
-  return (rows || []).filter((row) => row.is_active !== false).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
+  const [rows, me] = await Promise.all([
+    base44.entities.QuickProduct.list().catch(() => []),
+    base44.auth.me().catch(() => null),
+  ]);
+  return (rows || [])
+    .filter((row) => {
+      if (row.is_active === false) return false;
+      if (row.product_group === "global") return true;
+      // Built-in created_by_id is the ownership boundary for "My Quick Products".
+      // Keep unowned rows visible for compatibility with any future imported legacy data.
+      return !row.created_by_id || (!!me?.id && row.created_by_id === me.id);
+    })
+    .sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
 }
