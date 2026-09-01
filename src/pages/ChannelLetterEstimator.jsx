@@ -794,7 +794,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                       />
                       <p className="mt-1 text-xs text-slate-500">
                         Travel cost will be calculated from your shop (
-                        <Link to={createPageUrl("EstimatorSettings")} className="underline hover:text-purple-700">
+                        <Link to={createPageUrl("InstallationSettings")} className="underline hover:text-purple-700">
                           Travel settings
                         </Link>
                         ) to this address.
