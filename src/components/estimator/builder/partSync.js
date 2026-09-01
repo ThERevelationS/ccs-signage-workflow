@@ -1618,24 +1618,162 @@ function extractFoundation(project, catalogs) {
   const fallbackDeliveryCost = Math.max(0, num(project.total_concrete_cost) - itemConcreteCost);
   const deliveryCost = num(delivery.concreteTotal, fallbackDeliveryCost);
   if (deliveryCost > 0.005) {
-    const concreteId = (project.items || []).map((item) => item.selected_concrete_id).find(Boolean) || project.selected_concrete_id || "";
+    const concreteServiceItem = (project.items || []).find((item) => {
+      const id = item.selected_concrete_id || project.selected_concrete_id || "";
+      const row = findRow(catalogs, findEntity(catalogs, id, "LaborServiceInventory"), id);
+      return row?.material_type === "concrete_service" || row?.service_category === "concrete_service";
+    });
+    const concreteId = concreteServiceItem?.selected_concrete_id || project.selected_concrete_id || "";
     const entity = findEntity(catalogs, concreteId, "LaborServiceInventory");
-    parts.push(makePart({
-      key: "foundation:concrete-delivery",
-      name: "Ready-Mix Concrete Delivery",
-      type: "material",
-      subtype: "ready_mix_concrete",
-      sourcePath: "builder_calculation.delivery",
-      entity,
-      inventoryId: concreteId,
-      quantity: delivery.roundedYards || 1,
-      unit: "cy",
-      unitCost: delivery.ratePerYard,
-      extendedCost: deliveryCost,
-      builderData: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
-      calculation: delivery,
-      pricingBasis: { mix: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
-    }));
+    const hasDetailedDelivery = Array.isArray(delivery.trucksList) && delivery.trucksList.length > 0;
+
+    if (hasDetailedDelivery) {
+      const roundedYards = num(delivery.roundedYards, 0);
+      const selectedMix = (delivery.availableMixes || []).find((mix) => mix.id === project.project_concrete_type)
+        || (delivery.availableMixes || []).find((mix) => mix.id === "4000_ae");
+      const mixPrice = num(selectedMix?.price, num(delivery.ratePerYard));
+      const mixCost = roundedYards * mixPrice;
+      let representedDelivery = 0;
+
+      if (mixCost > 0.005) {
+        parts.push(makePart({
+          key: "foundation:concrete-delivery:mix",
+          name: `Ready-Mix Concrete — ${selectedMix?.name || project.project_concrete_type || "Mix"}`,
+          type: "material",
+          subtype: "ready_mix_concrete",
+          sourcePath: "builder_calculation.delivery.availableMixes",
+          entity,
+          inventoryId: concreteId,
+          quantity: roundedYards,
+          unit: "cy",
+          unitCost: mixPrice,
+          extendedCost: mixCost,
+          builderData: { project_concrete_type: project.project_concrete_type },
+          calculation: { rounded_yards: roundedYards, mix_price: mixPrice, mix_cost: mixCost },
+          pricingBasis: { pricing_mode: "concrete_mix", mix: project.project_concrete_type },
+        }));
+        representedDelivery += mixCost;
+      }
+
+      (project.project_concrete_admixtures || []).forEach((admixId) => {
+        const admix = (delivery.availableAdmixes || []).find((candidate) => candidate.id === admixId);
+        const rate = num(admix?.price);
+        const cost = roundedYards * rate;
+        if (cost <= 0.005) return;
+        parts.push(makePart({
+          key: `foundation:concrete-delivery:admix:${admixId}`,
+          name: `Concrete Admixture — ${admix?.name || admixId}`,
+          type: "material",
+          subtype: "concrete_admixture",
+          sourcePath: "project_concrete_admixtures",
+          entity,
+          inventoryId: concreteId,
+          quantity: roundedYards,
+          unit: "cy",
+          unitCost: rate,
+          extendedCost: cost,
+          builderData: { admixture_id: admixId },
+          calculation: { rounded_yards: roundedYards, rate, cost },
+          pricingBasis: { pricing_mode: "concrete_admixture", admixture: admixId },
+        }));
+        representedDelivery += cost;
+      });
+
+      (delivery.trucksList || []).forEach((truck, truckIndex) => {
+        const smallLoadFee = num(truck.smallOrderFee);
+        if (smallLoadFee > 0.005) {
+          parts.push(makePart({
+            key: `foundation:concrete-delivery:truck:${truckIndex}:small-load`,
+            name: `Concrete Truck ${truckIndex + 1} — Small Load Fee`,
+            type: "service",
+            subtype: "concrete_small_load_fee",
+            sourcePath: `builder_calculation.delivery.trucksList[${truckIndex}].smallOrderFee`,
+            entity,
+            inventoryId: concreteId,
+            quantity: 1,
+            unit: "truck",
+            unitCost: smallLoadFee,
+            extendedCost: smallLoadFee,
+            builderData: truck,
+            calculation: truck,
+            pricingBasis: { pricing_mode: "small_load_fee", rounded_yards: truck.roundedYards },
+          }));
+          representedDelivery += smallLoadFee;
+        }
+
+        const fuelFee = num(truck.fuelFee);
+        if (fuelFee > 0.005) {
+          parts.push(makePart({
+            key: `foundation:concrete-delivery:truck:${truckIndex}:fuel`,
+            name: `Concrete Truck ${truckIndex + 1} — Fuel Surcharge`,
+            type: "service",
+            subtype: "concrete_fuel_surcharge",
+            sourcePath: `builder_calculation.delivery.trucksList[${truckIndex}].fuelFee`,
+            entity,
+            inventoryId: concreteId,
+            quantity: 1,
+            unit: "truck",
+            unitCost: fuelFee,
+            extendedCost: fuelFee,
+            builderData: truck,
+            calculation: truck,
+            pricingBasis: { pricing_mode: "fuel_surcharge" },
+          }));
+          representedDelivery += fuelFee;
+        }
+      });
+
+      const additionalStopsCost = num(delivery.additionalStopsCost);
+      if (additionalStopsCost > 0.005) {
+        const stopCount = Math.max(1, Math.round(additionalStopsCost / 100));
+        parts.push(manualCostPart({
+          key: "foundation:concrete-delivery:additional-stops",
+          name: "Additional Sign Locations / Concrete Stops",
+          type: "service",
+          subtype: "additional_concrete_stop",
+          sourcePath: "builder_calculation.delivery.additionalStopsCost",
+          cost: additionalStopsCost,
+          quantity: stopCount,
+          unit: "stop",
+          builderData: { stop_count: stopCount },
+          calculation: { additional_stops_cost: additionalStopsCost, stop_count: stopCount },
+        }));
+        representedDelivery += additionalStopsCost;
+      }
+
+      const deliveryResidual = deliveryCost - representedDelivery;
+      if (Math.abs(deliveryResidual) > 0.005) {
+        parts.push(manualCostPart({
+          key: "foundation:concrete-delivery:reconciliation",
+          name: "Ready-Mix Delivery Reconciliation",
+          type: "service",
+          subtype: "delivery_reconciliation",
+          sourcePath: "builder_calculation.delivery.concreteTotal",
+          cost: deliveryResidual,
+          builderData: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
+          calculation: { authoritative_total: deliveryCost, represented_total: representedDelivery },
+        }));
+      }
+    } else {
+      // Older saved projects may only have the authoritative aggregate concrete
+      // total. Preserve that frozen number instead of fabricating truck detail.
+      parts.push(makePart({
+        key: "foundation:concrete-delivery",
+        name: "Ready-Mix Concrete Delivery",
+        type: "material",
+        subtype: "ready_mix_concrete",
+        sourcePath: "total_concrete_cost",
+        entity,
+        inventoryId: concreteId,
+        quantity: delivery.roundedYards || 1,
+        unit: "cy",
+        unitCost: delivery.ratePerYard,
+        extendedCost: deliveryCost,
+        builderData: { project_concrete_type: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
+        calculation: delivery,
+        pricingBasis: { pricing_mode: "legacy_delivery_aggregate", mix: project.project_concrete_type, admixtures: project.project_concrete_admixtures || [] },
+      }));
+    }
   }
 
   (project.walls || []).forEach((wall, index) => {
