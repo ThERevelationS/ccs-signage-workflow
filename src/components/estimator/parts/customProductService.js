@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { inventoryRowName, inventorySubtype, inventoryUnit, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
+import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -16,9 +17,11 @@ async function patchEstimateLine(builder, patch) {
   if (!builder?.estimate_id) return;
   const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
   if (!estimate) return;
-  const lineItems = (estimate.line_items || []).map((line) =>
-    line.builder_product_id === builder.id ? { ...line, ...patch } : line
-  );
+  const lineItems = (estimate.line_items || []).map((line) => {
+    if (line.builder_product_id !== builder.id) return line;
+    const resolvedPatch = typeof patch === "function" ? patch(line) : patch;
+    return { ...line, ...resolvedPatch };
+  });
   await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
 }
 
@@ -34,6 +37,8 @@ export async function createCustomProduct({ estimate, name = "Custom Product" })
     client_name: estimate.client_name,
     total_snapshot: 0,
     live_total_snapshot: 0,
+    customer_price_snapshot: 0,
+    live_customer_price_snapshot: 0,
     price_state: "current",
     adjustment_percent: 0,
     section_status: "in_progress",
