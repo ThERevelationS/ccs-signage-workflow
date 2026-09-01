@@ -260,6 +260,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const [copied, setCopied] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  const [saveLibraryOpen, setSaveLibraryOpen] = useState(false);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const canMove = parts.length > 0 && parts.every((part) => ["manual", "manual_addon"].includes(part.builder_sync_state));
   const moveTargets = (availableProducts || []).filter((line) => line.builder_product_id && line.builder_product_id !== builderProductId);
@@ -346,6 +347,12 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
             )}
             <button
               type="button"
+              onClick={() => setSaveLibraryOpen(true)}
+              className="h-[26px] px-2 rounded border border-violet-200 bg-white flex items-center gap-1 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
+              title="Save Part Group permanently to Part Library"
+            ><BookmarkPlus className="w-3 h-3" /> Save</button>
+            <button
+              type="button"
               disabled={cloning}
               onClick={async () => {
                 if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
@@ -417,6 +424,15 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
           await onChanged?.();
         }}
       />
+      <SavePartTemplateModal
+        open={saveLibraryOpen}
+        itemType="part_group"
+        group={group}
+        parts={parts}
+        estimateId={estimateId}
+        builderProductId={builderProductId}
+        onClose={() => setSaveLibraryOpen(false)}
+      />
     </div>
   );
 }
@@ -429,6 +445,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [partPickerOpen, setPartPickerOpen] = useState(false);
+  const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
@@ -531,13 +548,26 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         <div className="text-[11px] font-semibold text-gray-600">This Product does not have any Parts yet.</div>
         <div className="text-[10px] text-gray-400 mt-1">Add a Part from Master Inventory now. Builder-generated BOM Parts will also appear here after the Builder is saved; manually added Parts remain independent add-ons.</div>
         {allowAddParts && (
-          <button type="button" onClick={() => setPartPickerOpen(true)} className="mt-3 h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+            <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+          </div>
         )}
         <MasterPartPickerModal
           open={partPickerOpen}
           onClose={() => setPartPickerOpen(false)}
           onAdd={async (item, quantity) => {
             await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+            setRefreshNonce((value) => value + 1);
+            await onProductRefresh?.();
+          }}
+        />
+        <PartLibraryPickerModal
+          open={partLibraryOpen}
+          estimateId={estimateId}
+          builderProductId={builderProductId}
+          onClose={() => setPartLibraryOpen(false)}
+          onAdded={async () => {
             setRefreshNonce((value) => value + 1);
             await onProductRefresh?.();
           }}
@@ -573,7 +603,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         ) : (
           <div className="flex items-center gap-2">
             {allowAddParts && (
-              <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+              <>
+                <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
+                <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+              </>
             )}
             <button
               type="button"
@@ -640,6 +673,16 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         onClose={() => setPartPickerOpen(false)}
         onAdd={async (item, quantity) => {
           await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+          setRefreshNonce((value) => value + 1);
+          await onProductRefresh?.();
+        }}
+      />
+      <PartLibraryPickerModal
+        open={partLibraryOpen}
+        estimateId={estimateId}
+        builderProductId={builderProductId}
+        onClose={() => setPartLibraryOpen(false)}
+        onAdded={async () => {
           setRefreshNonce((value) => value + 1);
           await onProductRefresh?.();
         }}
