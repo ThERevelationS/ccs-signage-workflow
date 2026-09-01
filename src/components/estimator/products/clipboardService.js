@@ -24,7 +24,7 @@ function sourceMeta(estimate, line) {
   };
 }
 
-async function captureProductPayload({ estimate, line }) {
+async function captureProductPayload({ line }) {
   const [builder, parts, groups] = await Promise.all([
     base44.entities.BuilderProduct.get(line.builder_product_id),
     base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
@@ -85,7 +85,7 @@ async function createClipboardRecord(data) {
 export async function copyProductToClipboard({ estimateId, line }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("Product is not ready to copy.");
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
-  const payload = await captureProductPayload({ estimate, line });
+  const payload = await captureProductPayload({ line });
   return createClipboardRecord({
     item_type: "product",
     item_name: payload.product_name,
