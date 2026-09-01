@@ -140,8 +140,9 @@ export function calculatePaintingItem(rawItem, settings = {}, liquidRate = 0, pr
 
   const paintMaskMaterialRate = num(settings.paint_mask_rate_per_sqft, 0.75) || 0.75;
   const paintMaskMachineRate = num(settings.paint_mask_machine_cutting_rate_per_sqft, 0.10) || 0.10;
-  const colors = (item.paint_colors || []).filter((color) => String(color || "").trim());
-  const numColors = colors.length;
+  // Preserve SignEstimate Pro behavior exactly: item cost math uses the stored
+  // color-array length. Blank entries are only removed when the project is saved.
+  const numColors = (item.paint_colors || []).length;
   let paintMaskCost = 0;
   if (numColors > 1 && num(item.paint_mask_sqft) > 0) {
     paintMaskCost = num(item.paint_mask_sqft) * (paintMaskMaterialRate + paintMaskMachineRate) * (numColors - 1);
