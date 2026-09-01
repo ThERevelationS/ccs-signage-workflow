@@ -111,10 +111,12 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
   });
 
   const previousTotal = num(builder.frozen_cost);
+  const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = previousTotal + extended;
+  const nextCustomerPrice = previousCustomerPrice + extended;
   await base44.entities.BuilderProduct.update(builderProductId, {
     frozen_cost: nextTotal,
-    frozen_customer_price: num(builder.frozen_customer_price, previousTotal) + extended,
+    frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: num(builder.current_recalculated_cost, previousTotal) + extended,
     part_count: activeParts.length + 1,
     price_state: "current",
@@ -124,13 +126,15 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-  await patchEstimateLine(builder, {
+  await patchEstimateLine(builder, (line) => ({
     total_snapshot: nextTotal,
     live_total_snapshot: nextTotal,
+    customer_price_snapshot: nextCustomerPrice,
+    live_customer_price_snapshot: liveCustomerUnitPrice(line) + extended,
     price_state: "current",
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
-  });
+  }));
 
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builderProductId,
@@ -139,8 +143,8 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     reason: previousTotal === 0 && activeParts.length === 0 ? "initial_freeze" : "manual_adjustment",
     previous_total_cost: previousTotal,
     new_total_cost: nextTotal,
-    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
-    new_customer_price: num(builder.frozen_customer_price, previousTotal) + extended,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
     changed_parts: [{ part_id: created.id, part_name: created.part_name, action: "add_part", unit_cost: unitCost, quantity: qty, extended_cost: extended, inventory_entity: catalogItem.entity, inventory_item_id: catalogItem.inventoryId }],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
