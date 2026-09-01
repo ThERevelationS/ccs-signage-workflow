@@ -333,9 +333,12 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               {projectId ? "Edit" : "New"} Vinyl Estimate
             </h1>
           </div>
-          <div className="flex gap-2">
-            <Link to="/MasterInventory">
+          <div className="flex gap-2 flex-wrap">
+            <Link to="/VinylInventory">
               <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Vinyl Inventory</Button>
+            </Link>
+            <Link to="/VinylSettings">
+              <Button variant="outline"><SettingsIcon className="w-4 h-4 mr-1" /> Machine Settings</Button>
             </Link>
           </div>
         </div>
