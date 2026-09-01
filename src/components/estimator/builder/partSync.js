@@ -140,6 +140,7 @@ function independentPartUnitCost(part, row) {
     if (row.material_type === "pole" && mode === "stock_price") return num(row.pole_stock_price);
     if (row.material_type === "wall_cap") return num(row.cap_stock_price || row.cost_per_unit);
     if (["excavation_equipment", "attachment", "sub_attachment"].includes(row.material_type)) {
+      if (mode === "pickup_delivery") return num(row.pickup_delivery_cost);
       if (mode === "per_week") return num(row.cost_per_week);
       if (mode === "per_month") return num(row.cost_per_month);
       if (mode === "per_hour") return num(row.cost_per_hour);
@@ -1407,7 +1408,7 @@ function manualCostPart({ key, name, type = "labor", subtype = "", sourcePath = 
 
 function foundationEquipmentBreakdown(entry, catalogs) {
   const equipmentRow = catalogs.FoundationInventory?.byId.get(entry.equipment_id);
-  if (!equipmentRow) return { baseCost: num(entry.equipment_cost), attachmentCosts: [] };
+  if (!equipmentRow) return { baseRental: num(entry.equipment_cost), delivery: 0, attachmentCosts: [], subAttachmentCosts: [], total: num(entry.equipment_cost) };
   const rentalPeriod = entry.rental_period || "day";
   const duration = entry.custom_qty !== undefined && entry.custom_qty !== null
     ? num(entry.custom_qty, 1)
@@ -1419,27 +1420,40 @@ function foundationEquipmentBreakdown(entry, catalogs) {
     if (rentalPeriod === "month") return num(row?.cost_per_month) * duration;
     return 0;
   };
-  const attachmentCosts = (entry.attachments || []).map((attachment) => {
-    const id = attachment.id || attachment.inventory_id || "";
+
+  const attachmentQty = new Map();
+  if (entry.attachments?.length) {
+    entry.attachments.forEach((attachment) => {
+      const id = attachment.id || attachment.inventory_id || "";
+      if (id) attachmentQty.set(id, num(attachment.qty, 1));
+    });
+  } else if (entry.attachment_counts) {
+    Object.entries(entry.attachment_counts).forEach(([id, qty]) => attachmentQty.set(id, num(qty, 0)));
+  } else if (entry.attachment_ids?.length) {
+    entry.attachment_ids.forEach((id) => attachmentQty.set(id, 1));
+  }
+
+  const attachmentCosts = [...attachmentQty.entries()].map(([id, quantity]) => {
     const row = catalogs.FoundationInventory?.byId.get(id);
-    return {
-      id,
-      row,
-      quantity: num(attachment.qty, 1),
-      cost: rateFor(row) * num(attachment.qty, 1),
-      attachment,
-    };
-  });
+    return { id, row, quantity, cost: rateFor(row) * quantity, attachment: { id, qty: quantity } };
+  }).filter((entry) => entry.quantity > 0);
+
+  const subAttachmentCosts = Object.entries(entry.sub_attachment_counts || {}).map(([id, qty]) => {
+    const quantity = num(qty, 0);
+    const row = catalogs.FoundationInventory?.byId.get(id);
+    return { id, row, quantity, cost: rateFor(row) * quantity, attachment: { id, qty: quantity } };
+  }).filter((entry) => entry.quantity > 0);
+
   const baseRental = rateFor(equipmentRow, entry.custom_rate);
   const delivery = entry.include_delivery
     ? (entry.custom_delivery_charge !== undefined && entry.custom_delivery_charge !== null
         ? num(entry.custom_delivery_charge)
         : num(equipmentRow.pickup_delivery_cost))
     : 0;
-  return {
-    baseCost: baseRental + delivery,
-    attachmentCosts,
-  };
+  const total = baseRental + delivery +
+    attachmentCosts.reduce((sum, item) => sum + item.cost, 0) +
+    subAttachmentCosts.reduce((sum, item) => sum + item.cost, 0);
+  return { baseRental, delivery, attachmentCosts, subAttachmentCosts, total };
 }
 
 function extractFoundation(project, catalogs) {
