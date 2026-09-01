@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, Users, AlertCircle } from "lucide-react";
+import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, Users, AlertCircle, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const WorkOrder = base44.entities.WorkOrder;
+const GeneralTask = base44.entities.GeneralTask;
 
 const stageColors = {
   estimating: { bg: "#FEF3C7", text: "#92400E" },
@@ -86,17 +87,20 @@ export default function MyWorkflow() {
   const loadMyWorkOrders = async () => {
     setIsLoading(true);
     try {
-      const allOrders = await WorkOrder.filter({ completed: false, deleted: { $ne: true } });
-      
+      const [allOrders, allGeneralTasks] = await Promise.all([
+        WorkOrder.filter({ completed: false, deleted: { $ne: true } }),
+        GeneralTask.filter({ completed: false })
+      ]);
+
       const userName = currentUser?.full_name || currentUser?.email;
       
+      const isAssignedTo = (assignedTo) => {
+        const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
+        return arr.includes(userName);
+      };
+
       // Find work orders where user has tasks assigned to them (in notes array OR sip_checklist)
       const myOrders = allOrders.filter(wo => {
-        const isAssignedTo = (assignedTo) => {
-          const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
-          return arr.includes(userName);
-        };
-        
         // Check notes array (traditional tasks)
         const hasAssignedTask = (wo.notes || []).some(task => isAssignedTo(task.assigned_to) && !task.completed);
         if (hasAssignedTask) return true;
@@ -124,11 +128,57 @@ export default function MyWorkflow() {
         return false;
       });
 
-      setWorkOrders(myOrders);
+      // Map general office tasks (no work order) into pseudo work-order rows so the
+      // existing task rendering/editing code can display them alongside client jobs.
+      const myGeneralTasks = allGeneralTasks
+        .filter(gt => {
+          if (isAssignedTo(gt.assigned_to) && !gt.completed) return true;
+          const hasAssignedSubTask = (gt.sub_tasks || []).some(st => isAssignedTo(st.assigned_to) && !st.completed);
+          if (hasAssignedSubTask) return true;
+          const hasAssignedDetail = (gt.sub_tasks || []).some(st =>
+            (st.details || []).some(d => isAssignedTo(d.assigned_to) && !d.completed)
+          );
+          return hasAssignedDetail;
+        })
+        .map(gt => ({
+          id: gt.id,
+          _isGeneral: true,
+          client_name: "General Office Task",
+          current_stage: null,
+          due_date: gt.due_date,
+          notes: [{
+            id: gt.id,
+            text: gt.text,
+            assigned_to: gt.assigned_to || [],
+            sub_tasks: gt.sub_tasks || [],
+            completed: !!gt.completed,
+            timestamp: gt.created_date
+          }],
+          sip_checklist: []
+        }));
+
+      setWorkOrders([...myOrders, ...myGeneralTasks]);
     } catch (error) {
       console.error("Error loading work orders:", error);
     }
     setIsLoading(false);
+  };
+
+  // Persist task changes back to the right entity: GeneralTask for general office
+  // tasks (stored as a single task per record), WorkOrder for client-based notes.
+  const persistNotes = async (workOrderId, updatedNotes) => {
+    const wo = workOrders.find(w => w.id === workOrderId);
+    if (wo?._isGeneral) {
+      const t = updatedNotes[0] || {};
+      await GeneralTask.update(workOrderId, {
+        text: t.text,
+        assigned_to: t.assigned_to || [],
+        sub_tasks: t.sub_tasks || [],
+        completed: !!t.completed
+      });
+    } else {
+      await WorkOrder.update(workOrderId, { notes: updatedNotes });
+    }
   };
 
   const toggleTaskComplete = async (workOrderId, taskIndex) => {
@@ -145,7 +195,7 @@ export default function MyWorkflow() {
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
     
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const toggleSubTaskComplete = async (workOrderId, taskIndex, subTaskIndex) => {
@@ -169,7 +219,7 @@ export default function MyWorkflow() {
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
     
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const toggleDetailComplete = async (workOrderId, taskIndex, subTaskIndex, detailIndex) => {
@@ -199,7 +249,7 @@ export default function MyWorkflow() {
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
     
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleAddSubTask = async (workOrderId, taskIndex) => {
@@ -228,7 +278,7 @@ export default function MyWorkflow() {
     setNewSubTaskText("");
     setNewSubTaskAssignedTo([]);
     setAddingSubTaskFor(null);
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleDeleteSubTask = async (workOrderId, taskIndex, subTaskIndex) => {
@@ -248,7 +298,7 @@ export default function MyWorkflow() {
     setWorkOrders(prev => prev.map(w =>
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleAddDetail = async (workOrderId, taskIndex, subTaskIndex) => {
@@ -282,7 +332,7 @@ export default function MyWorkflow() {
     setNewDetailText("");
     setNewDetailAssignedTo([]);
     setAddingDetailFor(null);
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleDeleteDetail = async (workOrderId, taskIndex, subTaskIndex, detailIndex) => {
@@ -308,7 +358,7 @@ export default function MyWorkflow() {
     setWorkOrders(prev => prev.map(w =>
       w.id === workOrderId ? { ...w, notes: updatedTasks } : w
     ));
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleEditTask = async (workOrderId, taskIndex, newText) => {
@@ -328,7 +378,7 @@ export default function MyWorkflow() {
     ));
     setEditingTask(null);
     setEditTaskText("");
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
@@ -354,7 +404,7 @@ export default function MyWorkflow() {
     ));
     setEditingTask(null);
     setEditTaskText("");
-    await WorkOrder.update(workOrderId, { notes: updatedTasks });
+    await persistNotes(workOrderId, updatedTasks);
   };
 
   const toggleSipTaskComplete = async (workOrderId, itemId) => {
@@ -505,13 +555,20 @@ export default function MyWorkflow() {
 
                     {/* Customer */}
                     <td className="px-2 py-1 border-r">
-                      <button
-                        onClick={() => setSelectedWorkOrder(wo)}
-                        className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium"
-                      >
-                        <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
-                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
-                      </button>
+                      {wo._isGeneral ? (
+                        <span className="text-xs text-left flex items-center gap-1 font-medium text-purple-700">
+                          <ClipboardList className="w-3 h-3 flex-shrink-0 text-purple-500" />
+                          <span className="truncate">General Office Task</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedWorkOrder(wo)}
+                          className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium"
+                        >
+                          <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
+                          <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                        </button>
+                      )}
                       {wo.asap && <Badge className="bg-red-600 text-white text-[10px] px-1 py-0">ASAP</Badge>}
                     </td>
 
@@ -519,12 +576,12 @@ export default function MyWorkflow() {
                     <td className="px-2 py-1 border-r">
                       <Badge 
                         style={{ 
-                          backgroundColor: stageColors[wo.current_stage]?.bg || '#E5E7EB', 
-                          color: stageColors[wo.current_stage]?.text || '#374151' 
+                          backgroundColor: wo._isGeneral ? '#EDE9FE' : (stageColors[wo.current_stage]?.bg || '#E5E7EB'), 
+                          color: wo._isGeneral ? '#5B21B6' : (stageColors[wo.current_stage]?.text || '#374151') 
                         }} 
                         className="text-[10px] font-semibold px-1.5 py-0.5"
                       >
-                        {stageDisplayNames[wo.current_stage]}
+                        {wo._isGeneral ? 'General' : stageDisplayNames[wo.current_stage]}
                       </Badge>
                     </td>
 

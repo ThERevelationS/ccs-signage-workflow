@@ -1,0 +1,79 @@
+{
+  "name": "GeneralTask",
+  "type": "object",
+  "description": "General office task not tied to a client or work order. Mirrors the task object shape used inside WorkOrder.notes so it can be assigned and tracked the same way.",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Task description"
+    },
+    "assigned_to": {
+      "type": "array",
+      "description": "Users assigned to this task (full_name or email, matching WorkOrder task assignment convention).",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "sub_tasks": {
+      "type": "array",
+      "description": "Sub-tasks under this task, same structure as WorkOrder note sub_tasks.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "assigned_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "assigned_to": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Display name of the user who created the task"
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

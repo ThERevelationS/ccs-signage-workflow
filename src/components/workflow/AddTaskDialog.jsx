@@ -6,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const WorkOrder = base44.entities.WorkOrder;
+const GeneralTask = base44.entities.GeneralTask;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function AddTaskDialog({ isOpen, onClose }) {
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +26,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   const [taskText, setTaskText] = useState("");
   const [assignedTo, setAssignedTo] = useState([]);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState("");
+  const [isGeneralTask, setIsGeneralTask] = useState(false);
   const [subTasks, setSubTasks] = useState([]);
   const [expandedSubTasks, setExpandedSubTasks] = useState({});
 
@@ -52,6 +56,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
     setTaskText("");
     setAssignedTo([]);
     setSelectedWorkOrder("");
+    setIsGeneralTask(false);
     setSubTasks([]);
     setExpandedSubTasks({});
     setSaveSuccess(false);
@@ -112,17 +117,18 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   };
 
   const handleSave = async () => {
-    if (!taskText.trim() || !selectedWorkOrder) {
-      alert("Please enter a task and select a work order.");
+    if (!taskText.trim()) {
+      alert("Please enter a task.");
+      return;
+    }
+    if (!isGeneralTask && !selectedWorkOrder) {
+      alert("Please select a work order, or check \"General office task\".");
       return;
     }
 
     setIsSaving(true);
     try {
-      const wo = workOrders.find(w => w.id === selectedWorkOrder);
-      if (!wo) return;
-
-      // Build the new task structure
+      // Build the new task structure (shared shape for both work-order and general tasks)
       const newTask = {
         id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         text: taskText.trim(),
@@ -145,9 +151,21 @@ export default function AddTaskDialog({ isOpen, onClose }) {
           }))
       };
 
-      // Add to work order's notes array
-      const updatedNotes = [...(wo.notes || []), newTask];
-      await WorkOrder.update(selectedWorkOrder, { notes: updatedNotes });
+      if (isGeneralTask) {
+        // Save as a standalone general office task (no work order)
+        await GeneralTask.create({
+          text: newTask.text,
+          assigned_to: newTask.assigned_to,
+          sub_tasks: newTask.sub_tasks,
+          completed: false,
+          created_by_name: currentUser?.full_name || currentUser?.email || ""
+        });
+      } else {
+        const wo = workOrders.find(w => w.id === selectedWorkOrder);
+        if (!wo) return;
+        const updatedNotes = [...(wo.notes || []), newTask];
+        await WorkOrder.update(selectedWorkOrder, { notes: updatedNotes });
+      }
 
       setSaveSuccess(true);
       setTimeout(() => {
@@ -191,26 +209,46 @@ export default function AddTaskDialog({ isOpen, onClose }) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {/* Work Order Selection */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
-                <Briefcase className="w-4 h-4" />
-                Select Work Order *
+            {/* General office task toggle */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="generalTaskToggle"
+                checked={isGeneralTask}
+                onChange={(e) => {
+                  setIsGeneralTask(e.target.checked);
+                  if (e.target.checked) setSelectedWorkOrder("");
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Label htmlFor="generalTaskToggle" className="text-sm font-medium flex items-center gap-1 cursor-pointer">
+                <ClipboardList className="w-4 h-4 text-purple-600" />
+                General office task (no work order)
               </Label>
-              <Select value={selectedWorkOrder} onValueChange={setSelectedWorkOrder}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Choose a work order..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {workOrders.map(wo => (
-                    <SelectItem key={wo.id} value={wo.id}>
-                      <span className="font-medium">{wo.client_name}</span>
-                      {wo.title && <span className="text-gray-500 ml-2">- {wo.title}</span>}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
+
+            {/* Work Order Selection */}
+            {!isGeneralTask && (
+              <div>
+                <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                  <Briefcase className="w-4 h-4" />
+                  Select Work Order *
+                </Label>
+                <Select value={selectedWorkOrder} onValueChange={setSelectedWorkOrder}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Choose a work order..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {workOrders.map(wo => (
+                      <SelectItem key={wo.id} value={wo.id}>
+                        <span className="font-medium">{wo.client_name}</span>
+                        {wo.title && <span className="text-gray-500 ml-2">- {wo.title}</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Main Task */}
             <div className="clay-card p-4 bg-blue-50/50">
@@ -365,7 +403,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
           {!saveSuccess && (
             <Button
               onClick={handleSave}
-              disabled={isSaving || !taskText.trim() || !selectedWorkOrder}
+              disabled={isSaving || !taskText.trim() || (!isGeneralTask && !selectedWorkOrder)}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? (
