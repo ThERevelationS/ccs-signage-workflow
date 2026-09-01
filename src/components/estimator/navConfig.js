@@ -56,10 +56,15 @@ export const ESTIMATOR_TABS = [
   {
     label: "Products",
     to: "/EstimatorProducts",
-    items: ESTIMATOR_MODULES.map((m) => ({
-      label: m.label,
-      to: `/EstimatorProducts?module=${m.key}`,
-    })),
+    items: [
+      { label: "Product Library", to: "/EstimatorProducts" },
+      { label: "Quick Products", to: "/EstimatorProducts?view=quick" },
+      { label: "PRODUCT BUILDERS", header: true },
+      ...ESTIMATOR_MODULES.map((m) => ({
+        label: m.label,
+        to: `/EstimatorProducts?module=${m.key}`,
+      })),
+    ],
   },
 ];
 
