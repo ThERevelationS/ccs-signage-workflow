@@ -14,6 +14,7 @@ import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
 import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerModal";
 import { computePricing } from "@/components/estimator/aioPricing";
+import { acceptedInternalEstimateCost } from "@/components/estimator/customerPricing";
 import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
 import {
   acceptBuilderPrice,
@@ -195,15 +196,16 @@ export default function EstimateDetail() {
     setSaving(true);
     try {
       const { id: _id, created_date, updated_date, created_by_id, created_by, ...data } = estimate;
+      const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const saved = {
         ...data,
         id: estimate.id,
-        total_cost: pricing.rawTotal,
+        total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
       await base44.entities.AllInOneEstimate.update(estimate.id, {
         ...data,
-        total_cost: pricing.rawTotal,
+        total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       });
       // Keep the shared customer record and the Sales Pipeline lead in step
