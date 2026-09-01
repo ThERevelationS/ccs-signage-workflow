@@ -33,6 +33,7 @@ import {
 // True if this Inventory row is a real extrusion (not legacy junk and not
 // sheet/plate). Sheet/Plate belong in Substrates.
 const isValidExtrusion = (row) =>
+  row.legacy_compatibility !== true &&
   VALID_MATERIAL_TYPES.has(row.material_type) &&
   VALID_EXTRUSION_PRODUCT_TYPES.has(row.product_type);
 
