@@ -108,10 +108,15 @@ function independentPartUnitCost(part, row) {
   if (entity === "ChannelLetterInstallInventory") {
     if (mode === "per_raceway_foot") return num(row.cost_per_foot);
     if (mode === "per_project_flat") return num(row.cost_flat);
-    if (mode === "per_letter_by_size") return num(row.cost_medium || row.cost_per_letter);
+    if (mode === "per_letter_by_size") {
+      const size = part?.pricing_basis_snapshot?.letter_size || "medium";
+      return num(row[`cost_${size}`], num(row.cost_medium || row.cost_per_letter));
+    }
     return num(row.cost_per_letter);
   }
   if (entity === "ChannelLetterInstallEquipment") {
+    if (mode === "delivery_pickup") return num(row.delivery_pickup_cost);
+    if (mode === "idle_running") return num(row.idle_running_cost_per_hour);
     if (mode === "per_hour") return num(row.cost_per_hour);
     if (mode === "per_week") return num(row.cost_per_week);
     if (mode === "per_month") return num(row.cost_per_month);
