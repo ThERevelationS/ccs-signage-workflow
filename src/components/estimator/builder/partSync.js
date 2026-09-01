@@ -872,7 +872,7 @@ function extractVinylLegacy(project) {
   return parts;
 }
 
-function extractVinyl(project, catalogs = {}) {
+function extractVinyl(project, catalogs = {}, options = {}) {
   const workflows = Array.isArray(project.workflows) ? project.workflows : [];
   if (!workflows.length) return extractVinylLegacy(project);
 
@@ -927,29 +927,35 @@ function extractVinyl(project, catalogs = {}) {
     const transferTape = findRow(catalogs, "VinylInventory", workflow.transfer_tape_id);
     const operatorRate = printer?.operator_hourly_rate ?? cutter?.operator_hourly_rate ?? laminator?.operator_hourly_rate ?? 45;
 
-    const calc = calculateVinylProject({
-      items: workflow.items || [],
-      printer,
-      cutter,
-      laminator,
-      vinyl,
-      laminate,
-      transferTape,
-      operatorHourlyRate: operatorRate,
-      applyPrint: !!workflow.apply_print,
-      applyCut: !!workflow.apply_cut,
-      applyLaminate: !!workflow.apply_laminate,
-      applyTransferTape: !!workflow.apply_transfer_tape,
-      overrideGutterH: workflow.gutter_h_override === "" || workflow.gutter_h_override == null ? undefined : num(workflow.gutter_h_override),
-      overrideGutterV: workflow.gutter_v_override === "" || workflow.gutter_v_override == null ? undefined : num(workflow.gutter_v_override),
-      printQuality: workflow.print_quality || printer?.default_print_quality || "high_quality",
-      weedingDifficulty: workflow.weeding_difficulty || "moderate",
-      weedingMinutesPerPartOverride: workflow.weeding_minutes_per_part_override,
-      installMinutesPerPart: workflow.install_minutes_per_part,
-      personnel: workflow.personnel || [],
-      spoilageBufferPercent: num(workflow.spoilage_buffer_percent),
-      setupFeeFloor: num(workflow.setup_fee_floor),
-    });
+    // The UI keeps the exact source calculation in workflow._calc while editing,
+    // but SignEstimate Pro intentionally strips it from the VinylProject entity.
+    // Prefer that frozen calculation when it is present in a Builder save snapshot;
+    // otherwise re-run the authoritative Git calculator from the saved workflow.
+    const calc = workflow._calc && Number.isFinite(Number(workflow._calc.totalCost))
+      ? workflow._calc
+      : calculateVinylProject({
+          items: workflow.items || [],
+          printer,
+          cutter,
+          laminator,
+          vinyl,
+          laminate,
+          transferTape,
+          operatorHourlyRate: operatorRate,
+          applyPrint: !!workflow.apply_print,
+          applyCut: !!workflow.apply_cut,
+          applyLaminate: !!workflow.apply_laminate,
+          applyTransferTape: !!workflow.apply_transfer_tape,
+          overrideGutterH: workflow.gutter_h_override === "" || workflow.gutter_h_override == null ? undefined : num(workflow.gutter_h_override),
+          overrideGutterV: workflow.gutter_v_override === "" || workflow.gutter_v_override == null ? undefined : num(workflow.gutter_v_override),
+          printQuality: workflow.print_quality || printer?.default_print_quality || "high_quality",
+          weedingDifficulty: workflow.weeding_difficulty || "moderate",
+          weedingMinutesPerPartOverride: workflow.weeding_minutes_per_part_override,
+          installMinutesPerPart: workflow.install_minutes_per_part,
+          personnel: workflow.personnel || [],
+          spoilageBufferPercent: num(workflow.spoilage_buffer_percent),
+          setupFeeFloor: num(workflow.setup_fee_floor),
+        });
 
     workflowMaterialTotal += num(calc.materialCost);
     workflowMachineTotal += num(calc.machineCost);
@@ -1240,6 +1246,28 @@ function extractVinyl(project, catalogs = {}) {
       cost: markup,
       calculation: { markup_percent: project.markup_percent, subtotal, markup_amount: markup },
     }));
+  }
+
+  // Existing migrated Vinyl products are legacy-frozen. Their saved project
+  // total remains authoritative even when old workflow payloads are too sparse
+  // to recreate every historical cost line. Add only the unexplained balance;
+  // normal/current Builder checks still recalculate from live inventory so price
+  // changes remain detectable.
+  if (options.legacyMode && project.total_cost !== null && project.total_cost !== undefined) {
+    const authoritativeTotal = num(project.total_cost);
+    const representedTotal = parts.reduce((sum, part) => sum + num(part.extended_cost), 0);
+    const residual = authoritativeTotal - representedTotal;
+    if (Math.abs(residual) > 0.005) {
+      parts.push(manualCostPart({
+        key: "vinyl:saved-total-reconciliation",
+        name: "Vinyl — Saved Total Adjustment",
+        type: "pricing",
+        subtype: "saved_total_adjustment",
+        sourcePath: "total_cost",
+        cost: residual,
+        calculation: { authoritative_total: authoritativeTotal, represented_total: representedTotal },
+      }));
+    }
   }
 
   return parts;
@@ -2565,12 +2593,12 @@ function extractManualItems(project, moduleKey) {
   }));
 }
 
-export function extractBuilderParts(moduleKey, project, catalogs = {}) {
+export function extractBuilderParts(moduleKey, project, catalogs = {}, options = {}) {
   if (!project) return [];
   switch (moduleKey) {
     case "foundation": return extractFoundation(project, catalogs);
     case "channel_letters": return extractChannel(project, catalogs);
-    case "vinyl": return extractVinyl(project, catalogs);
+    case "vinyl": return extractVinyl(project, catalogs, options);
     case "metal": return extractMetal(project);
     case "brick_stone": return extractBrick(project);
     case "maintenance": return extractMaintenance(project, catalogs);
@@ -2593,7 +2621,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   }
 
   const catalogs = await loadBuilderCatalogs(builderProduct.module_key);
-  const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs);
+  const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
   const existing = await base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
   const seen = new Set();
