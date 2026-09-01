@@ -1012,11 +1012,11 @@ function extractMetal(project) {
   // item-level snapshots. CCS-only supplies percentages/markup are intentionally
   // excluded from source-faithful Metal pricing.
   const authoritative = {
-    material: num(project.total_material_cost, represented.material),
-    supplies: num(project.total_supplies_cost, represented.supplies),
-    fabrication: num(project.total_fabrication_cost, represented.fabrication),
-    welding: num(project.total_welding_cost, represented.welding),
-    finishing: num(project.total_finishing_cost, represented.finishing),
+    material: project.total_material_cost == null ? represented.material : num(project.total_material_cost),
+    supplies: project.total_supplies_cost == null ? represented.supplies : num(project.total_supplies_cost),
+    fabrication: project.total_fabrication_cost == null ? represented.fabrication : num(project.total_fabrication_cost),
+    welding: project.total_welding_cost == null ? represented.welding : num(project.total_welding_cost),
+    finishing: project.total_finishing_cost == null ? represented.finishing : num(project.total_finishing_cost),
   };
   const labels = {
     material: ["Metal Material Adjustment", "material"],
