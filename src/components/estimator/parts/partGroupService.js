@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
+import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -14,9 +15,11 @@ async function patchEstimateLine(builder, patch) {
   if (!builder?.estimate_id) return;
   const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
   if (!estimate) return;
-  const lineItems = (estimate.line_items || []).map((line) =>
-    line.builder_product_id === builder.id ? { ...line, ...patch } : line
-  );
+  const lineItems = (estimate.line_items || []).map((line) => {
+    if (line.builder_product_id !== builder.id) return line;
+    const resolvedPatch = typeof patch === "function" ? patch(line) : patch;
+    return { ...line, ...resolvedPatch };
+  });
   await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
 }
 
@@ -95,13 +98,16 @@ export async function clonePartGroupInProduct({ builderProductId, groupId }) {
     builder_version: num(builder.builder_version, 1) + 1,
   });
 
-  await patchEstimateLine(builder, {
+  const nextCustomer = previousCustomer + addedFrozen;
+  await patchEstimateLine(builder, (line) => ({
     total_snapshot: nextFrozen,
     live_total_snapshot: nextCurrent,
+    customer_price_snapshot: nextCustomer,
+    live_customer_price_snapshot: liveCustomerUnitPrice(line) + addedCurrent,
     price_state: nextState,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
-  });
+  }));
 
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
@@ -241,20 +247,24 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
   ]);
 
   await Promise.all([
-    patchEstimateLine(sourceBuilder, {
+    patchEstimateLine(sourceBuilder, (line) => ({
       total_snapshot: sourceNextFrozen,
       live_total_snapshot: sourceNextCurrent,
+      customer_price_snapshot: Math.max(0, sourcePreviousCustomer - movedFrozen),
+      live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(line) - movedCurrent),
       price_state: sourceState,
       last_price_check_at: timestamp,
       last_price_update_at: timestamp,
-    }),
-    patchEstimateLine(targetBuilder, {
+    })),
+    patchEstimateLine(targetBuilder, (line) => ({
       total_snapshot: targetNextFrozen,
       live_total_snapshot: targetNextCurrent,
+      customer_price_snapshot: targetPreviousCustomer + movedFrozen,
+      live_customer_price_snapshot: liveCustomerUnitPrice(line) + movedCurrent,
       price_state: targetState,
       last_price_check_at: timestamp,
       last_price_update_at: timestamp,
-    }),
+    })),
   ]);
 
   const sourceRevision = await nextRevisionNumber(sourceBuilder.id);
