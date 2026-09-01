@@ -211,13 +211,15 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       acceptPrices: false,
       legacyMode: builderProduct.price_state === "legacy_frozen",
     });
-    effectiveLiveTotal = liveTotal + num(partSummary.manualAddonCurrentTotal);
+    effectiveLiveTotal = partSummary.usesDirectLiveReprice
+      ? num(partSummary.currentPartsTotal, liveTotal + num(partSummary.manualAddonCurrentTotal))
+      : liveTotal + num(partSummary.manualAddonCurrentTotal);
     const frozenAfterSync = num(builderProduct.frozen_cost, acceptedTotal);
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
       : builderProduct.price_state === "legacy_frozen"
         ? "legacy_frozen"
-        : Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005
+        : partSummary.changedCount > 0 || Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005
           ? "changed"
           : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
@@ -228,6 +230,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_state: productPriceState,
       price_delta: effectiveLiveTotal - frozenAfterSync,
       price_delta_percent: frozenAfterSync ? ((effectiveLiveTotal - frozenAfterSync) / frozenAfterSync) * 100 : 0,
+      price_recalc_required: !!partSummary.recalcRequired,
+      price_recalc_reason: partSummary.recalcReason || "",
     });
     builderProduct = {
       ...builderProduct,
@@ -238,6 +242,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_state: productPriceState,
       price_delta: effectiveLiveTotal - frozenAfterSync,
       price_delta_percent: frozenAfterSync ? ((effectiveLiveTotal - frozenAfterSync) / frozenAfterSync) * 100 : 0,
+      price_recalc_required: !!partSummary.recalcRequired,
+      price_recalc_reason: partSummary.recalcReason || "",
     };
   }
 
@@ -253,6 +259,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     total_snapshot: frozenCost,
     live_total_snapshot: effectiveLiveTotal,
     price_state: builderProduct.price_state || (isNew ? "unchecked" : "legacy_frozen"),
+    price_recalc_required: !!builderProduct.price_recalc_required,
+    price_recalc_reason: builderProduct.price_recalc_reason || "",
     detached_part_count: num(builderProduct.detached_part_count),
     needs_reattach_review: !!builderProduct.needs_reattach_review,
     last_price_check_at: timestamp,
