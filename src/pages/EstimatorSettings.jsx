@@ -5,6 +5,7 @@ import { Settings, ArrowRight } from "lucide-react";
 const LINKS = [
   { label: "Master Inventory", desc: "Unified inventory for substrates, vinyl, equipment, labor, lighting, hardware, supplies, metals and concrete", to: "/MasterInventory" },
   { label: "Foundation / Masonry Catalog", desc: "Concrete, brick, poles and fill materials", to: "/FoundationCatalog" },
+  { label: "Foundation Settings", desc: "Labor, timing, masonry and pole-paint calculation defaults", to: "/FoundationSettings" },
   { label: "Painting Settings", desc: "Paint mix, coverage, mask, consumables, labor and quantity tiers", to: "/PaintingSettings" },
   { label: "CNC Settings", desc: "Machine rate calculator, labor, setup, material multipliers and cut speeds", to: "/CNCSettings" },
   { label: "Laser Settings", desc: "Parameter and engraving laser rates, calculators, material multipliers and speeds", to: "/LaserSettings" },
