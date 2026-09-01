@@ -6,11 +6,6 @@ import { countBuilderReattachParts } from "@/components/estimator/parts/partStat
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
 
-async function nextRevisionNumber(builderProductId) {
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []);
-  return Math.max(0, ...(revisions || []).map((row) => num(row.revision_number))) + 1;
-}
-
 function legacyPartExtended(part) {
   if (part?.price_override !== undefined && part?.price_override !== null && part?.price_override !== "") return num(part.price_override);
   return (num(part?.part_price) + num(part?.modifier_price)) * num(part?.part_qty, 1);
