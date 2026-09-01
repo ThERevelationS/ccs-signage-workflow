@@ -200,6 +200,9 @@ export async function loadBuilderCatalogs(moduleKey) {
     ],
     maintenance: [
       ["MaintenanceInventory", "sort_order"],
+      ["ChannelLetterInstallEquipment", "sort_order"],
+      // Legacy compatibility only. New Maintenance selections use the shared
+      // Master Inventory equipment catalog above.
       ["MaintenanceEquipment", "sort_order"],
       ["MaintenanceActionRate", null],
       ["Settings", null],
@@ -1551,14 +1554,29 @@ function extractBrick(project, catalogs = {}, options = {}) {
   return parts;
 }
 
+function maintenanceEquipmentSource(entry, catalogs) {
+  const id = entry?.equipment_id || entry?.inventory_item_id || "";
+  if (!id) return { entity: "", row: null };
+  const requested = entry?.inventory_entity || "";
+  if (requested && catalogs[requested]?.byId?.has(id)) {
+    return { entity: requested, row: catalogs[requested].byId.get(id) };
+  }
+  // New/current Maintenance equipment comes from the shared Master Inventory.
+  const shared = catalogs.ChannelLetterInstallEquipment?.byId?.get(id);
+  if (shared) return { entity: "ChannelLetterInstallEquipment", row: shared };
+  // Historical compatibility for any old project that referenced the legacy table.
+  const legacy = catalogs.MaintenanceEquipment?.byId?.get(id);
+  if (legacy) return { entity: "MaintenanceEquipment", row: legacy };
+  return { entity: requested, row: null };
+}
+
 function recalcMaintenanceEquipmentRow(entry, catalogs) {
-  const id = entry.equipment_id || entry.inventory_item_id || "";
-  const row = id ? catalogs.MaintenanceEquipment?.byId.get(id) : null;
+  const { entity, row } = maintenanceEquipmentSource(entry, catalogs);
   if (!row) return entry;
   const pricingMode = entry.pricing_mode || row.pricing_mode || "per_day";
   const duration = Math.max(num(entry.duration, 1), 0);
   const unitCost = independentPartUnitCost({
-    inventory_entity: "MaintenanceEquipment",
+    inventory_entity: entity,
     pricing_basis_snapshot: { pricing_mode: pricingMode },
   }, row);
   const owned = row.ownership === "owned" || ["owned_flat", "per_project_flat"].includes(pricingMode);
@@ -1568,6 +1586,7 @@ function recalcMaintenanceEquipmentRow(entry, catalogs) {
   const idleCost = idleRate * idleHours;
   return {
     ...entry,
+    inventory_entity: entity,
     equipment_name: row.equipment_name || entry.equipment_name,
     equipment_type: row.equipment_type || entry.equipment_type,
     pricing_mode: pricingMode,
