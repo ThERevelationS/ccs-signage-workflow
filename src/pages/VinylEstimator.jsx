@@ -274,10 +274,16 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
       if (estimateId && saved?.id) {
         const refreshed = await VinylProject.get(saved.id).catch(() => saved);
+        // SignEstimate Pro intentionally strips transient workflow `_calc` data
+        // from VinylProject records. The Builder snapshot keeps the exact calc
+        // used for this save so the initial frozen BOM never has to infer today’s
+        // accepted price from a later inventory state. The persisted VinylProject
+        // remains source-faithful and clean.
+        const builderWorkflows = (project.workflows || []).map(({ _hasIssues, ...workflow }) => workflow);
         await recordBuilderSave({
           estimateId,
           line: { project_id: saved.id, module_key: "vinyl" },
-          sourceProject: refreshed,
+          sourceProject: { ...refreshed, workflows: builderWorkflows },
           liveTotal: rollup.totalCost,
         });
       }
