@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -31,6 +32,8 @@ export async function saveProductAsQuickProduct({
   const builderSnapshot = builder.builder_snapshot || {};
   const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
   const currentTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal));
+  const frozenCustomerPrice = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(line));
+  const currentCustomerPrice = liveCustomerUnitPrice(line);
   const quickName = String(name || line.client_product_name || builder.client_product_name || "Quick Product").trim() || "Quick Product";
 
   return base44.entities.QuickProduct.create({
@@ -62,8 +65,9 @@ export async function saveProductAsQuickProduct({
     })),
     price_snapshot: {
       frozen_cost: frozenTotal,
-      frozen_customer_price: num(builder.frozen_customer_price, frozenTotal),
+      frozen_customer_price: frozenCustomerPrice,
       current_recalculated_cost: currentTotal,
+      current_recalculated_customer_price: currentCustomerPrice,
       price_state: builder.price_state || line.price_state || "current",
       price_delta: num(builder.price_delta, currentTotal - frozenTotal),
       price_delta_percent: num(builder.price_delta_percent),
@@ -86,7 +90,7 @@ export async function saveProductAsQuickProduct({
       price_override: num(part.frozen_extended_cost),
       notes: part.notes || "",
     })),
-    total_price: frozenTotal * num(line.customer_quantity, num(builder.quantity, 1)),
+    total_price: frozenCustomerPrice * num(line.customer_quantity, num(builder.quantity, 1)),
   });
 }
 
@@ -115,6 +119,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const priceSnapshot = quickProduct.price_snapshot || {};
   const frozenTotal = num(priceSnapshot.frozen_cost, num(quickProduct.total_price));
   const currentTotal = num(priceSnapshot.current_recalculated_cost, frozenTotal);
+  const frozenCustomerPrice = num(priceSnapshot.frozen_customer_price, frozenTotal);
+  const currentCustomerPrice = num(priceSnapshot.current_recalculated_customer_price, frozenCustomerPrice);
   const recalcRequired = !!(priceSnapshot.price_recalc_required ?? templateBuilder.price_recalc_required ?? templateLine.price_recalc_required);
   const recalcReason = priceSnapshot.price_recalc_reason || templateBuilder.price_recalc_reason || templateLine.price_recalc_reason || "";
   const sourceSnapshot = cloneSnapshot(quickProduct.builder_snapshot || templateBuilder.builder_snapshot || {});
@@ -138,7 +144,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
     builder_snapshot_hash: snapshotHash(sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot),
     frozen_cost: frozenTotal,
-    frozen_customer_price: num(priceSnapshot.frozen_customer_price, frozenTotal),
+    frozen_customer_price: frozenCustomerPrice,
     current_recalculated_cost: currentTotal,
     price_state: priceSnapshot.price_state || "current",
     price_delta: num(priceSnapshot.price_delta, currentTotal - frozenTotal),
@@ -206,7 +212,7 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     previous_total_cost: 0,
     new_total_cost: frozenTotal,
     previous_customer_price: 0,
-    new_customer_price: num(priceSnapshot.frozen_customer_price, frozenTotal),
+    new_customer_price: frozenCustomerPrice,
     changed_parts: createdParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name, action: "created_from_quick_product", frozen_extended_cost: num(part.frozen_extended_cost) })),
     builder_snapshot_before: {},
     builder_snapshot_after: sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot,
@@ -230,6 +236,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     client_name: estimate.client_name || templateLine.client_name || "",
     total_snapshot: frozenTotal,
     live_total_snapshot: currentTotal,
+    customer_price_snapshot: frozenCustomerPrice,
+    live_customer_price_snapshot: currentCustomerPrice,
     price_state: detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current"),
     price_recalc_required: recalcRequired,
     price_recalc_reason: recalcReason,
@@ -349,6 +357,8 @@ async function instantiateLegacyQuickProduct({ estimate, quickProduct }) {
     client_name: estimate.client_name || "",
     total_snapshot: frozenTotal,
     live_total_snapshot: frozenTotal,
+    customer_price_snapshot: frozenTotal,
+    live_customer_price_snapshot: frozenTotal,
     price_state: "current",
     adjustment_percent: 0,
     section_status: "in_progress",
