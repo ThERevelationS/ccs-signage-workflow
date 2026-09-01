@@ -163,7 +163,7 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
   };
 
   const isLaser = fab.cutting_method === "laser";
-  const cutSettingsPage = isLaser ? "LaserSettings" : "CNCSettings";
+  const cutSettingsPage = "EstimatorSettings";
   const cutIcon = isLaser ? Zap : Router;
   const cutColor = isLaser ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700";
 
@@ -203,7 +203,7 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
                   <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 text-xs text-amber-800">
                     <p className="font-medium mb-1">No sheet materials in your library yet.</p>
-                    <Link to={createPageUrl("ChannelLetterInstallInventory")} className="inline-flex items-center gap-1 underline">
+                    <Link to={createPageUrl("MasterInventory")} className="inline-flex items-center gap-1 underline">
                       <LinkIcon className="w-3 h-3" /> Open Inventory → Dimensional Sheets tab
                     </Link>
                   </div>
@@ -376,7 +376,7 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
               )}
               <p className="text-[11px] text-slate-500">
                 Labor: ${paintR.labor_rate.toFixed(0)}/hr · Supplies: ${paintR.supplies_per_sqft.toFixed(2)}/sqft · Liquid paint: ${paintR.liquid_paint_per_sqft.toFixed(2)}/sqft
-                {" "}<Link to={createPageUrl("PaintSettings")} className="underline ml-1">Edit Paint settings</Link>
+                {" "}<Link to={createPageUrl("EstimatorSettings")} className="underline ml-1">Edit Paint settings</Link>
               </p>
             </Section>
 
