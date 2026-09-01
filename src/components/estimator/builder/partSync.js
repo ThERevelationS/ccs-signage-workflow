@@ -3026,6 +3026,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       continue;
     }
 
+    const alreadyPendingRemoval = !!old.builder_data?.[PENDING_REMOVAL_KEY];
+    const removalNote = "Part no longer exists in the current Builder. Frozen cost is retained until Update Price accepts its removal.";
     const pendingRemoval = {
       current_unit_cost: 0,
       current_extended_cost: 0,
@@ -3035,7 +3037,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       builder_data: { ...(old.builder_data || {}), [PENDING_REMOVAL_KEY]: true },
       is_active: true,
       last_price_check_at: nowIso(),
-      notes: `${old.notes ? `${old.notes}\n` : ""}Part no longer exists in the current Builder. Frozen cost is retained until Update Price accepts its removal.`,
+      notes: alreadyPendingRemoval
+        ? (old.notes || removalNote)
+        : `${old.notes ? `${old.notes}\n` : ""}${removalNote}`,
     };
     await base44.entities.BuilderPart.update(old.id, pendingRemoval);
     changedCount += 1;
