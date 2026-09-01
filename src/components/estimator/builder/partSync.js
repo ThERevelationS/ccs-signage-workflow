@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
 import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
+import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -185,7 +186,10 @@ export async function loadBuilderCatalogs(moduleKey) {
       ["ChannelLetterInstallEquipment", "sort_order"],
     ],
     metal: [["Inventory", "material_type"]],
-    brick_stone: [["BrickStoneInventory", "material_name"]],
+    brick_stone: [
+      ["FoundationInventory", "material_name"],
+      ["BrickStoneInventory", "material_name"],
+    ],
     maintenance: [
       ["MaintenanceInventory", "sort_order"],
       ["MaintenanceEquipment", "sort_order"],
@@ -1409,22 +1413,63 @@ function extractMetal(project) {
   return parts;
 }
 
-function extractBrick(project) {
+function brickMaterialForCalc(row) {
+  if (!row) return null;
+  if (row.material_type === "wall_material") {
+    return {
+      ...row,
+      length: row.wall_unit_length_inches,
+      width: row.wall_unit_width_inches,
+      height: row.wall_unit_height_inches,
+    };
+  }
+  if (row.material_type === "brick_stone") {
+    return {
+      ...row,
+      length: row.brick_length_inches,
+      width: row.brick_width_inches,
+      height: row.brick_height_inches,
+    };
+  }
+  return row;
+}
+
+function extractBrick(project, catalogs = {}, options = {}) {
   const parts = [];
-  if (project.selected_material_id) {
-    const qty = num(project.calculated_bricks, 1);
+  const selectedId = project.selected_material_id || "";
+  const foundationRow = selectedId ? catalogs.FoundationInventory?.byId.get(selectedId) : null;
+  const legacyRow = selectedId ? catalogs.BrickStoneInventory?.byId.get(selectedId) : null;
+  const liveRow = foundationRow || legacyRow || null;
+  const entity = foundationRow ? "FoundationInventory" : legacyRow ? "BrickStoneInventory" : "FoundationInventory";
+
+  // Current Builder checks recalculate from the current Master Inventory row so
+  // material price/geometry changes are visible without mutating the frozen cost.
+  // Legacy-frozen rows remain based on their saved project breakdown.
+  const liveCalc = !options.legacyMode && liveRow
+    ? calcBrickStoneProject(project, brickMaterialForCalc(liveRow))
+    : null;
+  const calculatedBricks = liveCalc ? liveCalc.calculated_bricks : num(project.calculated_bricks);
+  const materialCost = liveCalc ? liveCalc.material_cost : num(project.material_cost);
+  const mortarBags = liveCalc ? liveCalc.mortar_bags_needed : num(project.mortar_bags_needed);
+  const mortarCost = liveCalc ? liveCalc.mortar_cost : num(project.mortar_cost);
+  const laborHours = liveCalc ? liveCalc.labor_hours : num(project.labor_hours);
+  const laborCost = liveCalc ? liveCalc.labor_cost : num(project.labor_cost);
+  const markupAmount = liveCalc ? liveCalc.markup_amount : num(project.markup_amount);
+
+  if (selectedId) {
+    const qty = Math.max(calculatedBricks, 1);
     parts.push(makePart({
       key: "brick:primary-material",
-      name: project.material_name || "Brick / Stone Material",
+      name: project.material_name || liveRow?.material_name || "Brick / Stone Material",
       type: "material",
-      subtype: "brick_stone",
+      subtype: liveRow?.wall_material_subtype || liveRow?.material_type || "brick_stone",
       sourcePath: "selected_material_id",
-      entity: "BrickStoneInventory",
-      inventoryId: project.selected_material_id,
+      entity,
+      inventoryId: selectedId,
       quantity: qty,
       unit: "unit",
-      unitCost: qty ? num(project.material_cost) / qty : 0,
-      extendedCost: project.material_cost,
+      unitCost: qty ? materialCost / qty : 0,
+      extendedCost: materialCost,
       builderData: {
         material_dimensions: project.material_dimensions,
         bricks_along_length: project.bricks_along_length,
@@ -1433,47 +1478,65 @@ function extractBrick(project) {
         layers: project.layers,
       },
       calculation: {
-        calculated_bricks: project.calculated_bricks,
-        material_cost: project.material_cost,
+        calculated_bricks: calculatedBricks,
+        material_cost: materialCost,
+        material_inventory_entity: entity,
       },
+      pricingBasis: { pricing_mode: "per_unit" },
     }));
   }
-  if (num(project.mortar_cost) > 0.005) {
+  if (Math.abs(mortarCost) > 0.005) {
     parts.push(manualCostPart({
       key: "brick:mortar",
       name: "Mortar",
       type: "consumable",
       subtype: "mortar",
       sourcePath: "mortar_cost",
-      cost: project.mortar_cost,
-      quantity: project.mortar_bags_needed || 1,
-      unit: project.mortar_bags_needed ? "bag" : "job",
-      calculation: { mortar_bags_needed: project.mortar_bags_needed, mortar_bag_cost: project.mortar_bag_cost },
+      cost: mortarCost,
+      quantity: mortarBags || 1,
+      unit: mortarBags ? "bag" : "job",
+      calculation: { mortar_bags_needed: mortarBags, mortar_bag_cost: project.mortar_bag_cost },
     }));
   }
-  if (num(project.labor_cost) > 0.005) {
+  if (Math.abs(laborCost) > 0.005) {
     parts.push(manualCostPart({
       key: "brick:labor",
       name: "Masonry Labor",
       type: "labor",
       subtype: "masonry_labor",
       sourcePath: "labor_cost",
-      cost: project.labor_cost,
-      quantity: project.labor_hours || 1,
-      unit: project.labor_hours ? "hour" : "job",
-      calculation: { labor_hours: project.labor_hours, labor_rate_per_hour: project.labor_rate_per_hour },
+      cost: laborCost,
+      quantity: laborHours || 1,
+      unit: laborHours ? "hour" : "job",
+      calculation: { labor_hours: laborHours, labor_rate_per_hour: project.labor_rate_per_hour },
     }));
   }
-  if (num(project.markup_amount) > 0.005) {
+  if (Math.abs(markupAmount) > 0.005) {
     parts.push(manualCostPart({
       key: "brick:markup",
       name: "Builder Markup",
       type: "pricing",
       subtype: "markup",
       sourcePath: "markup_amount",
-      cost: project.markup_amount,
-      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
+      cost: markupAmount,
+      calculation: { markup_percent: project.markup_percent, markup_amount: markupAmount },
     }));
+  }
+
+  if (options.legacyMode && project.total_cost !== null && project.total_cost !== undefined) {
+    const represented = parts.reduce((sum, part) => sum + num(part.extended_cost), 0);
+    const residual = num(project.total_cost) - represented;
+    if (Math.abs(residual) > 0.005) {
+      parts.push(manualCostPart({
+        key: "brick:saved-total-reconciliation",
+        name: "Brick & Stone — Saved Total Adjustment",
+        type: "pricing",
+        subtype: "saved_total_adjustment",
+        sourcePath: "total_cost",
+        cost: residual,
+        calculation: { authoritative_total: project.total_cost, represented_total: represented, adjustment: residual },
+      }));
+    }
   }
   return parts;
 }
