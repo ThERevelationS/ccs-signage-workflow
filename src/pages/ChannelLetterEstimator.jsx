@@ -131,7 +131,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
           setProject({ ...blankProject(), ...existing, items: existing.items || [] });
           setIsEditing(true);
         } else {
-          navigate(createPageUrl("ChannelLetterInstallationProjects"));
+          navigate(createPageUrl("Estimator"));
         }
       } else {
         setProject(prev => ({
@@ -464,7 +464,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       }
 
       onSaved?.();
-      if (!embedded) navigate(createPageUrl("ChannelLetterInstallationProjects"));
+      if (!embedded) navigate(createPageUrl("Estimator"));
     } catch (e) {
       console.error(e);
       alert("Save failed: " + e.message);
@@ -580,12 +580,12 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
             >
               <Camera className="w-4 h-4 mr-2" /> Photo → Estimate
             </Button>
-            <Link to={createPageUrl("ChannelLetterInstallInventory")}>
+            <Link to={createPageUrl("MasterInventory")}>
               <Button variant="outline" className="bg-white">
                 <Package className="w-4 h-4 mr-2" /> Inventory
               </Button>
             </Link>
-            <Button variant="outline" onClick={() => embedded ? onClose?.() : navigate(createPageUrl("ChannelLetterInstallationProjects"))}>
+            <Button variant="outline" onClick={() => embedded ? onClose?.() : navigate(createPageUrl("Estimator"))}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
           </div>
@@ -794,7 +794,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                       />
                       <p className="mt-1 text-xs text-slate-500">
                         Travel cost will be calculated from your shop (
-                        <Link to={createPageUrl("ChannelLetterInstallationSettings")} className="underline hover:text-purple-700">
+                        <Link to={createPageUrl("EstimatorSettings")} className="underline hover:text-purple-700">
                           Travel settings
                         </Link>
                         ) to this address.
@@ -935,7 +935,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                   <Card className="bg-amber-50 border-amber-200">
                     <CardContent className="p-3 text-xs text-amber-900">
                       Your equipment inventory is empty.{" "}
-                      <Link to={createPageUrl("ChannelLetterInstallInventory")} className="underline font-medium">
+                      <Link to={createPageUrl("MasterInventory")} className="underline font-medium">
                         Add equipment in Inventory
                       </Link>{" "}
                       to enable selection.
