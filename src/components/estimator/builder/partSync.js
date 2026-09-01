@@ -259,8 +259,13 @@ function makePart({
   };
 }
 
-function extractChannel(project) {
+function extractChannel(project, catalogs = {}) {
   const parts = [];
+  const hasNumber = (value) => value !== null && value !== undefined && Number.isFinite(Number(value));
+  const itemLabel = (item, fallback) => item?.description?.trim() || fallback;
+
+  // Installation materials are already persisted at their exact used quantity,
+  // unit cost, and total by SignEstimate Pro's installCalculator.
   (project.items || []).forEach((item, itemIndex) => {
     (item.materials || []).forEach((mat, matIndex) => {
       const id = mat.inventory_item_id || mat.inventory_id || "";
@@ -278,91 +283,393 @@ function extractChannel(project) {
         unit: mat.pricing_mode || "",
         unitCost: mat.unit_cost,
         extendedCost: mat.total_cost,
-        builderData: { parent_item: item.description, letter_size: item.letter_size, qty_letters: item.qty_letters },
+        builderData: { parent_item: item.description, installation_type: item.installation_type, letter_size: item.letter_size, qty_letters: item.qty_letters },
         calculation: mat,
-        pricingBasis: { pricing_mode: mat.pricing_mode, letter_size: item.letter_size },
+        pricingBasis: { pricing_mode: mat.pricing_mode, letter_size: item.letter_size, installation_type: item.installation_type },
       }));
     });
   });
 
-  (project.selected_equipment || []).forEach((eq, index) => {
-    parts.push(makePart({
-      key: `channel:equipment:${index}`,
-      name: eq.equipment_name || "Install equipment",
-      type: "equipment",
-      subtype: eq.equipment_type || eq.pricing_mode || "",
-      sourcePath: `selected_equipment[${index}].equipment_id`,
-      entity: "ChannelLetterInstallEquipment",
-      inventoryId: eq.equipment_id,
-      quantity: eq.duration || 1,
-      unit: eq.pricing_mode || "",
-      unitCost: eq.unit_cost,
-      extendedCost: eq.total_cost,
-      builderData: eq,
-      calculation: { idle_cost: eq.idle_cost, total_cost: eq.total_cost },
-      pricingBasis: { pricing_mode: eq.pricing_mode, duration: eq.duration, include_delivery: eq.include_delivery },
-    }));
-  });
+  // Git rule: personnel pricing REPLACES flat install labor when a crew is
+  // assigned. Never emit both as billable Parts.
+  const personnelRowsTotal = (project.personnel || []).reduce(
+    (sum, person) => sum + num(person.total_cost, num(person.hourly_rate) * num(person.hours)),
+    0
+  );
+  const personnelTotal = hasNumber(project.total_personnel_cost)
+    ? num(project.total_personnel_cost)
+    : personnelRowsTotal;
+  const installLaborInSubtotal = hasNumber(project.labor_cost_in_subtotal)
+    ? num(project.labor_cost_in_subtotal)
+    : personnelTotal > 0.005
+      ? 0
+      : num(project.labor_cost, (project.items || []).reduce((sum, item) => sum + num(item.labor_cost), 0));
 
-  (project.letter_purchases || []).forEach((purchase, index) => {
-    const materialId = purchase.fab_config?.material_id || purchase.backer_material_id || "";
-    parts.push(makePart({
-      key: `channel:letters:${purchase.id || index}`,
-      name: purchase.description || purchase.letter_type || "Letter purchase / fabrication",
-      type: purchase.letter_type === "dimensional_letters" ? "fabrication" : "material",
-      subtype: purchase.letter_type || "letters",
-      sourcePath: purchase.fab_config?.material_id
-        ? `letter_purchases[${index}].fab_config.material_id`
-        : purchase.backer_material_id
-          ? `letter_purchases[${index}].backer_material_id`
-          : `letter_purchases[${index}]`,
-      entity: materialId ? "DimensionalLetterMaterial" : "",
-      inventoryId: materialId,
-      quantity: purchase.qty || 1,
-      unit: "letter",
-      unitCost: purchase.unit_cost,
-      extendedCost: purchase.line_total ?? purchase.total_cost ?? purchase.letters_total,
-      builderData: purchase,
-      calculation: {
-        letters_total: purchase.letters_total,
-        raceway_total: purchase.raceway_total,
-        backer_total: purchase.backer_total,
-        total_cost: purchase.total_cost,
-      },
-      pricingBasis: {
-        unit_cost_override: purchase.unit_cost_override,
-        letters_total_override: purchase.letters_total_override,
-        fab_config: purchase.fab_config,
-      },
-    }));
-  });
-
-  (project.items || []).forEach((item, index) => {
-    if (num(item.labor_cost) > 0.005) {
+  if (Math.abs(installLaborInSubtotal) > 0.005) {
+    let representedLabor = 0;
+    (project.items || []).forEach((item, index) => {
+      const cost = num(item.labor_cost);
+      if (Math.abs(cost) <= 0.005) return;
+      representedLabor += cost;
       parts.push(manualCostPart({
         key: `channel:item:${index}:labor`,
-        name: item.description ? `${item.description} — Installation Labor` : "Installation Labor",
+        name: `${itemLabel(item, `Install Item ${index + 1}`)} — Installation Labor`,
         type: "labor",
         subtype: "installation_labor",
         sourcePath: `items[${index}].labor_cost`,
-        cost: item.labor_cost,
+        cost,
         quantity: item.labor_hours || 1,
         unit: item.labor_hours ? "hour" : "job",
         builderData: item,
-        calculation: { labor_hours: item.labor_hours, labor_cost: item.labor_cost },
+        calculation: { labor_hours: item.labor_hours, labor_cost: item.labor_cost, installation_type: item.installation_type },
+      }));
+    });
+    const laborResidual = installLaborInSubtotal - representedLabor;
+    if (Math.abs(laborResidual) > 0.005) {
+      parts.push(manualCostPart({
+        key: "channel:install-labor:reconciliation",
+        name: "Installation Labor — Saved Cost Adjustment",
+        type: "labor",
+        subtype: "installation_labor_adjustment",
+        sourcePath: "labor_cost_in_subtotal",
+        cost: laborResidual,
+        calculation: { authoritative_total: installLaborInSubtotal, represented_total: representedLabor },
+      }));
+    }
+  }
+
+  // Equipment is persisted with all source pricing inputs. Split rental/use,
+  // delivery/pickup, and idle running so every economic line is auditable.
+  (project.selected_equipment || []).forEach((eq, index) => {
+    const duration = Math.max(num(eq.duration, 1), 0);
+    const baseCost = num(eq.unit_cost) * duration;
+    const owned = eq.ownership === "owned" || eq.pricing_mode === "owned_flat";
+    const deliveryCost = !owned && eq.include_delivery ? num(eq.delivery_pickup_cost) : 0;
+    const idleCost = hasNumber(eq.idle_cost)
+      ? num(eq.idle_cost)
+      : num(eq.idle_hours) * num(eq.idle_running_cost_per_hour);
+    const total = num(eq.total_cost, baseCost + deliveryCost + idleCost);
+    let represented = 0;
+
+    if (Math.abs(baseCost) > 0.005 || eq.equipment_id) {
+      parts.push(makePart({
+        key: `channel:equipment:${index}:base`,
+        name: eq.equipment_name || "Install equipment",
+        type: "equipment",
+        subtype: eq.equipment_type || eq.pricing_mode || "equipment",
+        sourcePath: `selected_equipment[${index}].equipment_id`,
+        entity: "ChannelLetterInstallEquipment",
+        inventoryId: eq.equipment_id,
+        quantity: duration || 1,
+        unit: eq.pricing_mode || "unit",
+        unitCost: eq.unit_cost,
+        extendedCost: baseCost,
+        builderData: eq,
+        calculation: { duration, unit_cost: eq.unit_cost, base_cost: baseCost },
+        pricingBasis: { pricing_mode: eq.pricing_mode },
+      }));
+      represented += baseCost;
+    }
+
+    if (Math.abs(deliveryCost) > 0.005) {
+      parts.push(makePart({
+        key: `channel:equipment:${index}:delivery`,
+        name: `${eq.equipment_name || "Install Equipment"} — Delivery / Pickup`,
+        type: "service",
+        subtype: "equipment_delivery",
+        sourcePath: `selected_equipment[${index}].include_delivery`,
+        entity: "ChannelLetterInstallEquipment",
+        inventoryId: eq.equipment_id,
+        quantity: 1,
+        unit: "delivery",
+        unitCost: deliveryCost,
+        extendedCost: deliveryCost,
+        builderData: eq,
+        calculation: { include_delivery: eq.include_delivery, delivery_pickup_cost: deliveryCost },
+        pricingBasis: { pricing_mode: "delivery_pickup" },
+      }));
+      represented += deliveryCost;
+    }
+
+    if (Math.abs(idleCost) > 0.005) {
+      parts.push(makePart({
+        key: `channel:equipment:${index}:idle`,
+        name: `${eq.equipment_name || "Install Equipment"} — Idle Running`,
+        type: "equipment",
+        subtype: "idle_running",
+        sourcePath: `selected_equipment[${index}].idle_hours`,
+        entity: "ChannelLetterInstallEquipment",
+        inventoryId: eq.equipment_id,
+        quantity: eq.idle_hours || 1,
+        unit: "hour",
+        unitCost: eq.idle_running_cost_per_hour,
+        extendedCost: idleCost,
+        builderData: eq,
+        calculation: { idle_hours: eq.idle_hours, idle_running_cost_per_hour: eq.idle_running_cost_per_hour, idle_cost: idleCost },
+        pricingBasis: { pricing_mode: "idle_running" },
+      }));
+      represented += idleCost;
+    }
+
+    const residual = total - represented;
+    if (Math.abs(residual) > 0.005) {
+      parts.push(manualCostPart({
+        key: `channel:equipment:${index}:saved-adjustment`,
+        name: `${eq.equipment_name || "Install Equipment"} — Saved Cost Adjustment`,
+        type: "equipment",
+        subtype: "equipment_adjustment",
+        sourcePath: `selected_equipment[${index}].total_cost`,
+        cost: residual,
+        builderData: eq,
+        calculation: { authoritative_total: total, represented_total: represented },
       }));
     }
   });
 
+  if (personnelTotal > 0.005 || (project.personnel || []).some((person) => num(person.total_cost) > 0.005)) {
+    let representedPersonnel = 0;
+    (project.personnel || []).forEach((person, index) => {
+      const cost = num(person.total_cost, num(person.hourly_rate) * num(person.hours));
+      if (Math.abs(cost) <= 0.005) return;
+      representedPersonnel += cost;
+      parts.push(manualCostPart({
+        key: `channel:personnel:${index}`,
+        name: person.name?.trim() || person.role || `Installer ${index + 1}`,
+        type: "labor",
+        subtype: person.role || "personnel",
+        sourcePath: `personnel[${index}]`,
+        cost,
+        quantity: person.hours || 1,
+        unit: person.hours ? "hour" : "job",
+        builderData: person,
+        calculation: person,
+      }));
+    });
+    const residual = personnelTotal - representedPersonnel;
+    if (Math.abs(residual) > 0.005) {
+      parts.push(manualCostPart({
+        key: "channel:personnel:reconciliation",
+        name: "Crew Labor — Saved Cost Adjustment",
+        type: "labor",
+        subtype: "personnel_adjustment",
+        sourcePath: "total_personnel_cost",
+        cost: residual,
+        calculation: { authoritative_total: personnelTotal, represented_total: representedPersonnel },
+      }));
+    }
+  }
+
+  const pushFabBreakdown = ({ purchase, index, fab, total, prefix, label, materialSourcePath }) => {
+    if (!fab) return 0;
+    const qty = Math.max(num(purchase.qty, 1), 0);
+    const materialCost = num(fab.unit_material_cost) * qty;
+    const cutCost = num(fab.unit_cut_cost) * qty;
+    const paintCost = num(fab.unit_paint_cost) * qty;
+    let represented = 0;
+
+    if (Math.abs(materialCost) > 0.005 || fab.material_id) {
+      const materialRate = num(fab.material_cost_per_sqin);
+      const materialSqinPerUnit = materialRate > 0
+        ? num(fab.unit_material_cost) / materialRate
+        : num(purchase.size_value) * 144;
+      const materialQty = materialSqinPerUnit > 0 ? materialSqinPerUnit * qty : qty || 1;
+      parts.push(makePart({
+        key: `${prefix}:material`,
+        name: `${label} — ${fab.material_name || "Material"}`,
+        type: "material",
+        subtype: "dimensional_material",
+        sourcePath: materialSourcePath,
+        entity: "DimensionalLetterMaterial",
+        inventoryId: fab.material_id || "",
+        quantity: materialQty,
+        unit: materialSqinPerUnit > 0 ? "sqin" : "unit",
+        unitCost: materialSqinPerUnit > 0 ? materialRate : num(fab.unit_material_cost),
+        extendedCost: materialCost,
+        builderData: purchase,
+        calculation: fab,
+        pricingBasis: {
+          pricing_mode: "sheet_yield",
+          material_cost_per_sqin: fab.material_cost_per_sqin,
+          sheet_yield_factor: fab.sheet_yield_factor,
+          material_thickness_inches: fab.material_thickness_inches,
+        },
+      }));
+      represented += materialCost;
+    }
+
+    if (Math.abs(cutCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:cutting`,
+        name: `${label} — ${fab.cutting_method === "laser" ? "Laser" : "CNC"} Cutting`,
+        type: "fabrication",
+        subtype: fab.cutting_method === "laser" ? "laser_cutting" : "cnc_cutting",
+        sourcePath: `${prefix.includes("backer") ? `letter_purchases[${index}].backer_fab_config` : `letter_purchases[${index}].fab_config`}.unit_cut_cost`,
+        cost: cutCost,
+        quantity: qty || 1,
+        unit: "unit",
+        builderData: purchase,
+        calculation: fab,
+      }));
+      represented += cutCost;
+    }
+
+    if (Math.abs(paintCost) > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:paint`,
+        name: `${label} — Paint`,
+        type: "finishing",
+        subtype: "paint",
+        sourcePath: `${prefix.includes("backer") ? `letter_purchases[${index}].backer_fab_config` : `letter_purchases[${index}].fab_config`}.unit_paint_cost`,
+        cost: paintCost,
+        quantity: qty || 1,
+        unit: "unit",
+        builderData: purchase,
+        calculation: fab,
+      }));
+      represented += paintCost;
+    }
+
+    const residual = num(total) - represented;
+    if (Math.abs(residual) > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:adjustment`,
+        name: `${label} — Price Override / Saved Adjustment`,
+        type: "pricing",
+        subtype: "fab_price_adjustment",
+        sourcePath: prefix.includes("backer")
+          ? `letter_purchases[${index}].backer_total`
+          : `letter_purchases[${index}].letters_total`,
+        cost: residual,
+        builderData: purchase,
+        calculation: { authoritative_total: total, represented_total: represented, unit_cost_override: purchase.unit_cost_override },
+      }));
+      represented += residual;
+    }
+    return represented;
+  };
+
+  (project.letter_purchases || []).forEach((purchase, index) => {
+    const qty = Math.max(num(purchase.qty, 1), 0);
+    const purchaseTotal = hasNumber(purchase.total_cost)
+      ? num(purchase.total_cost)
+      : num(purchase.line_total);
+    const racewayTotal = num(purchase.raceway_total);
+    const backerTotal = num(purchase.backer_total);
+    const lettersTotal = hasNumber(purchase.letters_total)
+      ? num(purchase.letters_total)
+      : purchaseTotal - racewayTotal - backerTotal;
+    const prefix = `channel:letters:${purchase.id || index}`;
+    const label = purchase.description?.trim() || purchase.letter_type || `Letter Purchase ${index + 1}`;
+    let representedPurchase = 0;
+
+    if (purchase.letter_type === "dimensional_letters" && purchase.fab_config) {
+      representedPurchase += pushFabBreakdown({
+        purchase,
+        index,
+        fab: purchase.fab_config,
+        total: lettersTotal,
+        prefix: `${prefix}:fab`,
+        label,
+        materialSourcePath: `letter_purchases[${index}].fab_config.material_id`,
+      });
+    } else if (Math.abs(lettersTotal) > 0.005) {
+      const size = Math.max(num(purchase.size_value), 0);
+      const effectiveQty = size > 0 ? size * Math.max(qty, 1) : Math.max(qty, 1);
+      const unit = purchase.letter_type === "raceway"
+        ? "ft"
+        : purchase.letter_type === "capsule_logo_pillbox"
+          ? "sqft"
+          : purchase.letter_type?.startsWith("channel_")
+            ? "letter-inch"
+            : "unit";
+      parts.push(manualCostPart({
+        key: `${prefix}:letters`,
+        name: label,
+        type: "material",
+        subtype: purchase.letter_type || "letter_purchase",
+        sourcePath: `letter_purchases[${index}].letters_total`,
+        cost: lettersTotal,
+        quantity: effectiveQty,
+        unit,
+        builderData: purchase,
+        calculation: { unit_cost: purchase.unit_cost, size_value: purchase.size_value, qty: purchase.qty, letters_total: lettersTotal },
+      }));
+      representedPurchase += lettersTotal;
+    }
+
+    if (Math.abs(racewayTotal) > 0.005) {
+      const racewayQty = Math.max(num(purchase.raceway_qty, 1), 1);
+      const racewayLength = Math.max(num(purchase.raceway_length_feet), 0);
+      const effectiveQty = racewayLength > 0 ? racewayLength * racewayQty : racewayQty;
+      parts.push(manualCostPart({
+        key: `${prefix}:raceway`,
+        name: `${label} — Raceway`,
+        type: "material",
+        subtype: "raceway_purchase",
+        sourcePath: `letter_purchases[${index}].raceway_total`,
+        cost: racewayTotal,
+        quantity: effectiveQty,
+        unit: racewayLength > 0 ? "ft" : "unit",
+        builderData: purchase,
+        calculation: { raceway_length_feet: purchase.raceway_length_feet, raceway_qty: purchase.raceway_qty, raceway_unit_cost: purchase.raceway_unit_cost, raceway_total: racewayTotal },
+      }));
+      representedPurchase += racewayTotal;
+    }
+
+    if (Math.abs(backerTotal) > 0.005) {
+      if (purchase.backer_fab_config) {
+        representedPurchase += pushFabBreakdown({
+          purchase,
+          index,
+          fab: purchase.backer_fab_config,
+          total: backerTotal,
+          prefix: `${prefix}:backer`,
+          label: `${label} — Backer`,
+          materialSourcePath: `letter_purchases[${index}].backer_fab_config.material_id`,
+        });
+      } else {
+        parts.push(manualCostPart({
+          key: `${prefix}:backer`,
+          name: `${label} — Backer`,
+          type: "fabrication",
+          subtype: "backer",
+          sourcePath: `letter_purchases[${index}].backer_total`,
+          cost: backerTotal,
+          quantity: qty || 1,
+          unit: "unit",
+          builderData: purchase,
+          calculation: { backer_total: backerTotal },
+        }));
+        representedPurchase += backerTotal;
+      }
+    }
+
+    const purchaseResidual = purchaseTotal - representedPurchase;
+    if (Math.abs(purchaseResidual) > 0.005) {
+      parts.push(manualCostPart({
+        key: `${prefix}:reconciliation`,
+        name: `${label} — Saved Cost Adjustment`,
+        type: "pricing",
+        subtype: "letter_purchase_adjustment",
+        sourcePath: `letter_purchases[${index}].total_cost`,
+        cost: purchaseResidual,
+        builderData: purchase,
+        calculation: { authoritative_total: purchaseTotal, represented_total: representedPurchase },
+      }));
+    }
+  });
+
+  const purchases = project.letter_purchases || [];
+  const onlyDimensional = purchases.length > 0 && purchases.every((purchase) => purchase.letter_type === "dimensional_letters");
   const letterFees = [
-    ["delivery", "Letter Delivery / Freight", project.letters_delivery_fee],
+    ["delivery", "Letter Delivery / Freight", onlyDimensional ? 0 : project.letters_delivery_fee],
     ["design", "Letter Design", project.letters_design_fee],
     ["install-supplies", "Letter Install Supplies", project.letters_install_supplies_fee],
     ["permitting", "Letter Permitting", project.letters_permitting_fee],
     ["other", "Other Letter Cost", project.letters_other_fee],
   ];
   letterFees.forEach(([key, name, cost]) => {
-    if (num(cost) <= 0.005) return;
+    if (Math.abs(num(cost)) <= 0.005) return;
     parts.push(manualCostPart({
       key: `channel:letter-fee:${key}`,
       name,
@@ -373,8 +680,8 @@ function extractChannel(project) {
     }));
   });
 
-  const letterMarkup = Math.max(0, num(project.total_letters_cost) - num(project.letters_subtotal));
-  if (letterMarkup > 0.005) {
+  const letterMarkup = num(project.total_letters_cost) - num(project.letters_subtotal);
+  if (Math.abs(letterMarkup) > 0.005) {
     parts.push(manualCostPart({
       key: "channel:letters-markup",
       name: "Letter Purchase Markup",
@@ -386,7 +693,7 @@ function extractChannel(project) {
     }));
   }
 
-  if (num(project.total_supplies_cost) > 0.005) {
+  if (Math.abs(num(project.total_supplies_cost)) > 0.005) {
     parts.push(manualCostPart({
       key: "channel:install-supplies",
       name: "Installation Consumables / Supplies",
@@ -398,38 +705,21 @@ function extractChannel(project) {
     }));
   }
 
-  (project.personnel || []).forEach((person, index) => {
-    const cost = num(person.total_cost, num(person.hourly_rate) * num(person.hours));
-    if (cost <= 0.005) return;
-    parts.push(manualCostPart({
-      key: `channel:personnel:${index}`,
-      name: person.role || person.name || `Installer ${index + 1}`,
-      type: "labor",
-      subtype: "personnel",
-      sourcePath: `personnel[${index}]`,
-      cost,
-      quantity: person.hours || 1,
-      unit: person.hours ? "hour" : "job",
-      builderData: person,
-      calculation: person,
-    }));
-  });
-
-  if (num(project.total_travel_cost) > 0.005) {
+  if (Math.abs(num(project.total_travel_cost)) > 0.005) {
     parts.push(manualCostPart({
       key: "channel:travel",
-      name: "Travel / Mileage",
+      name: "Travel / Fuel / Travel Labor",
       type: "service",
       subtype: "travel",
       sourcePath: "total_travel_cost",
       cost: project.total_travel_cost,
       quantity: project.travel_miles_round_trip || 1,
-      unit: project.travel_miles_round_trip ? "mile" : "job",
-      calculation: { miles: project.travel_miles_round_trip, rate: project.travel_cost_per_mile },
+      unit: project.travel_miles_round_trip ? "round_trip_mile" : "job",
+      calculation: { miles: project.travel_miles_round_trip, accepted_total: project.total_travel_cost },
     }));
   }
 
-  if (num(project.markup_amount) > 0.005) {
+  if (Math.abs(num(project.markup_amount)) > 0.005) {
     parts.push(manualCostPart({
       key: "channel:project-markup",
       name: "Builder Markup",
@@ -440,9 +730,27 @@ function extractChannel(project) {
       calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
     }));
   }
+
+  // Final source-total reconciliation is intentionally narrow. It only appears
+  // for older/special saved rows whose authoritative total contains a line that
+  // the current detailed payload cannot identify.
+  const authoritativeTotal = num(project.total_cost);
+  const representedTotal = parts.reduce((sum, part) => sum + num(part.extended_cost), 0);
+  const finalResidual = authoritativeTotal - representedTotal;
+  if (Math.abs(finalResidual) > 0.005) {
+    parts.push(manualCostPart({
+      key: "channel:saved-total-reconciliation",
+      name: "Channel / Dimensional — Saved Total Adjustment",
+      type: "pricing",
+      subtype: "saved_total_adjustment",
+      sourcePath: "total_cost",
+      cost: finalResidual,
+      calculation: { authoritative_total: authoritativeTotal, represented_total: representedTotal },
+    }));
+  }
+
   return parts;
 }
-
 function extractVinylLegacy(project) {
   const parts = [];
   (project.items || []).forEach((item, index) => {
@@ -2256,7 +2564,7 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}) {
   if (!project) return [];
   switch (moduleKey) {
     case "foundation": return extractFoundation(project, catalogs);
-    case "channel_letters": return extractChannel(project);
+    case "channel_letters": return extractChannel(project, catalogs);
     case "vinyl": return extractVinyl(project, catalogs);
     case "metal": return extractMetal(project);
     case "brick_stone": return extractBrick(project);
