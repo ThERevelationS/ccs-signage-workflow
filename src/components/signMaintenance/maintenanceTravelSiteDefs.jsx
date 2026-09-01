@@ -7,7 +7,7 @@
 export const maintenanceTravelDefs = [
   { name: "maintenance_shop_address", type: "text", category: "maintenance_shop_travel", label: "Shop Address", description: "Starting point for all maintenance travel calculations", default: "417 Northland Blvd, Cincinnati, OH 45246" },
   { name: "maintenance_gasoline_price_per_gallon", type: "number", category: "maintenance_shop_travel", label: "Gasoline Price", suffix: "$/gal", description: "Fuel price used for owned gasoline vehicles on Maintenance travel calculations.", default: "3.50" },
-  { name: "maintenance_diesel_price_per_gallon", type: "number", category: "maintenance_shop_travel", label: "Diesel Price", suffix: "$/gal", description: "Fuel price used for owned diesel vehicles on Maintenance travel calculations.", default: "4.00" }
+  { name: "maintenance_diesel_price_per_gallon", type: "number", category: "maintenance_shop_travel", label: "Diesel Price", suffix: "$/gal", description: "Fuel price used for owned diesel vehicles on Maintenance travel calculations.", default: "4.00" },
   { name: "maintenance_travel_labor_rate", type: "number", category: "maintenance_shop_travel", label: "Travel Labor Rate", suffix: "$/hr", description: "Hourly rate billed for crew travel time (separate from on-site labor)", default: "45" },
   { name: "maintenance_travel_avg_speed_mph", type: "number", category: "maintenance_shop_travel", label: "Average Travel Speed", suffix: "mph", description: "Used to estimate travel time from miles (round-trip)", default: "45" },
   { name: "maintenance_default_truck_mpg", type: "number", category: "maintenance_shop_travel", label: "Default Truck MPG", suffix: "mpg", description: "Fallback MPG if no owned truck is selected on the line item", default: "14" },
