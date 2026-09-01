@@ -1150,7 +1150,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Link to={createPageUrl("MetalProjects")}><Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button></Link>
+          <Button variant="outline" size="icon" onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}><ArrowLeft className="w-4 h-4" /></Button>
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
               {isEditing ? <Edit className="w-6 h-6"/> : <Wrench className="w-6 h-6" />}
@@ -1172,7 +1172,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               </div>
 
               <TabsContent value="project" className="mt-4 space-y-6">
-            <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Project Information</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid md:grid-cols-2 gap-4"><div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div><div><Label>Client Name *</Label><ClientSearchInput value={project.client_name} onChange={(val) => setProject(p => ({ ...p, client_name: val }))} onSelectProject={(data) => { setProject(prev => ({...prev, client_name: data.client_name || prev.client_name, project_name: data.project_name || prev.project_name, estimate_number: data.estimate_number || prev.estimate_number, hyperlink: data.hyperlink || prev.hyperlink })); }} /></div></div><div><Label>Notes</Label><Textarea value={project.notes} onChange={(e) => setProject(p => ({ ...p, notes: e.target.value }))} /></div></CardContent></Card>
+            <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Project Information</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid md:grid-cols-2 gap-4"><div><Label>Project Name *</Label><Input value={project.project_name} onChange={(e) => setProject(p => ({ ...p, project_name: e.target.value }))} /></div><div><Label>Client Name *</Label><Input value={estimateContext?.client_name || project.client_name || ''} readOnly={embedded} onChange={(e) => !embedded && setProject(p => ({ ...p, client_name: e.target.value }))} />{embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}</div></div><div><Label>Notes</Label><Textarea value={project.notes} onChange={(e) => setProject(p => ({ ...p, notes: e.target.value }))} /></div></CardContent></Card>
               </TabsContent>
 
               <TabsContent value="items" className="mt-4 space-y-6">
