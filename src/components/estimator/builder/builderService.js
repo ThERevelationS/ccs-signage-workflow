@@ -489,6 +489,36 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     };
   }
 
+  if (partAcceptance.recalcRequired) {
+    const timestamp = nowIso();
+    const reason = partAcceptance.recalcReason || "Master Inventory changed after this Builder was last calculated. Reopen and save the Builder before accepting Update Price.";
+    await base44.entities.BuilderProduct.update(builder.id, {
+      price_state: "changed",
+      price_recalc_required: true,
+      price_recalc_reason: reason,
+      last_price_check_at: timestamp,
+    });
+    const blockedLines = (estimate.line_items || []).map((item) =>
+      item.builder_product_id === builder.id
+        ? {
+            ...item,
+            price_state: "changed",
+            price_recalc_required: true,
+            price_recalc_reason: reason,
+            last_price_check_at: timestamp,
+          }
+        : item
+    );
+    await base44.entities.AllInOneEstimate.update(estimateId, { line_items: blockedLines });
+    return {
+      blocked: true,
+      reason: "recalc_required",
+      recalcReason: reason,
+      recalcParts: partAcceptance.recalcParts || [],
+      line: blockedLines.find((item) => item.builder_product_id === builder.id) || line,
+    };
+  }
+
   const timestamp = nowIso();
   const previousTotal = num(builder.frozen_cost, num(line.total_snapshot));
   const nextTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, previousTotal));
@@ -518,8 +548,11 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     price_state: "current",
     price_delta: 0,
     price_delta_percent: 0,
+    price_recalc_required: false,
+    price_recalc_reason: "",
     detached_part_count: 0,
     needs_reattach_review: false,
+    part_count: partAcceptance.activePartCount ?? builder.part_count,
     last_price_update_at: timestamp,
     last_price_update_note: note,
     last_price_check_at: timestamp,
@@ -533,6 +566,8 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
           total_snapshot: nextTotal,
           live_total_snapshot: nextTotal,
           price_state: "current",
+          price_recalc_required: false,
+          price_recalc_reason: "",
           detached_part_count: 0,
           needs_reattach_review: false,
           last_price_update_at: timestamp,
