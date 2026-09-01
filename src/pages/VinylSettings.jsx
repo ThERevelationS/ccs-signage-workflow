@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { VinylMachine, User } from "@/entities/all";
 import { ArrowLeft, Layers, Lock, Plus, Printer, Save, Scissors, Settings2 } from "lucide-react";
@@ -58,7 +58,8 @@ const INK_FIELDS = [
 ];
 
 const stripMeta = (row) => {
-  const { id, created_date, updated_date, created_by_id, created_by, is_sample, ...payload } = row;
+  const payload = { ...row };
+  ["id", "created_date", "updated_date", "created_by_id", "created_by", "is_sample"].forEach((key) => delete payload[key]);
   return payload;
 };
 
