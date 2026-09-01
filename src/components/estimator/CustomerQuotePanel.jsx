@@ -1,5 +1,6 @@
 import { Printer, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { buildCustomerQuoteRows } from "./customerQuote";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -44,11 +45,7 @@ const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefi
 
 export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
   const round = estimate.round_prices_to_dollar === true;
-  const sections = pricing.sections || [];
-  const listed = sections.filter((section) => section.include_in_customer !== false);
-  const bundled = sections.filter((section) => section.include_in_customer === false);
-  const bundledAmount = bundled.reduce((sum, section) => sum + Number(section.adjusted || 0), 0);
-  const hideSectionPrices = estimate.hide_section_prices === true;
+  const quoteRows = buildCustomerQuoteRows(estimate, pricing);
 
   const printQuote = () => {
     window.print();
@@ -158,14 +155,7 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {hideSectionPrices ? (
-                    <QuoteRow estimate={estimate} name="Project scope" category="" quantity="" description={estimate.project_name || ""} amount={pricing.subtotal} round={round} />
-                  ) : (
-                    <>
-                      {listed.map((section, index) => <QuoteRow key={section.line_id || `${section.project_id}-${index}`} estimate={estimate} name={section.client_product_name || section.project_name || section.builder_name || `Product ${index + 1}`} category={section.product_category || ""} quantity={section.quantity} description={section.customer_description || ""} amount={section.adjusted} round={round} />)}
-                      {bundledAmount > 0.005 && <QuoteRow estimate={estimate} name="Additional project scope" category="" quantity="" description="Bundled scope included in project pricing." amount={bundledAmount} round={round} />}
-                    </>
-                  )}
+                  {quoteRows.map((row) => <QuoteRow key={row.key} estimate={estimate} name={row.name} category={row.category} quantity={row.quantity} description={row.description} amount={row.amount} round={round} />)}
                 </tbody>
               </table>
             </div>
