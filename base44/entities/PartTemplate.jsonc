@@ -1,0 +1,154 @@
+{
+  "name": "PartTemplate",
+  "type": "object",
+  "description": "Permanent reusable estimator Part Library. Stores either one complete BuilderPart snapshot or a Part Group plus all child BuilderPart snapshots. Templates are distinct from Master Inventory: inventory remains the central raw resource/cost library, while PartTemplate preserves reusable estimate/component configuration and frozen pricing context. Instantiating a template always creates new independent Product Parts so future Builder recalculation cannot overwrite the saved component.",
+  "properties": {
+    "template_name": {
+      "type": "string"
+    },
+    "template_version": {
+      "type": "number",
+      "default": 1
+    },
+    "template_type": {
+      "type": "string",
+      "enum": [
+        "part",
+        "part_group"
+      ],
+      "default": "part"
+    },
+    "product_group": {
+      "type": "string",
+      "enum": [
+        "my",
+        "global"
+      ],
+      "default": "my",
+      "description": "'my' = creator-owned reusable Part; 'global' = shared company reusable Part."
+    },
+    "category": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_module_key": {
+      "type": "string"
+    },
+    "source_part_type": {
+      "type": "string"
+    },
+    "source_part_subtype": {
+      "type": "string"
+    },
+    "created_from_estimate_id": {
+      "type": "string"
+    },
+    "created_from_product_id": {
+      "type": "string"
+    },
+    "created_from_part_group_id": {
+      "type": "string"
+    },
+    "created_from_part_id": {
+      "type": "string"
+    },
+    "part_snapshot": {
+      "type": "object",
+      "description": "Lossless BuilderPart snapshot for a single-Part template, including inventory links, frozen/current inventory snapshots, detail overrides, calculation/pricing snapshots and frozen pricing.",
+      "additionalProperties": true
+    },
+    "group_snapshot": {
+      "type": "object",
+      "description": "Lossless BuilderPartGroup snapshot when template_type is part_group.",
+      "additionalProperties": true
+    },
+    "parts_snapshot": {
+      "type": "array",
+      "description": "Lossless ordered BuilderPart snapshots for a Part Group template.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "part_count": {
+      "type": "number",
+      "default": 1
+    },
+    "frozen_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "current_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "contains_detached_parts": {
+      "type": "boolean",
+      "default": false
+    },
+    "description": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "search_text": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "template_name",
+    "template_type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.product_group": "global"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
