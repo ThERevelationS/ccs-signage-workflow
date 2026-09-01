@@ -115,6 +115,8 @@ export default function EstimateDetail() {
       client_name: estimate.client_name,
       total_snapshot: 0,
       live_total_snapshot: 0,
+      customer_price_snapshot: 0,
+      live_customer_price_snapshot: 0,
       price_state: "unchecked",
       adjustment_percent: 0,
       section_status: "in_progress",
