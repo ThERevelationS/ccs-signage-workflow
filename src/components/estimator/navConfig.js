@@ -76,6 +76,7 @@ export const ESTIMATOR_RIGHT_TABS = [
       { label: "Laser Settings", to: "/LaserSettings" },
       { label: "Metal Settings", to: "/MetalSettings" },
       { label: "Maintenance Settings", to: "/MaintenanceSettings" },
+      { label: "Installation Settings", to: "/InstallationSettings" },
       { label: "Vinyl Inventory", to: "/VinylInventory" },
       { label: "Vinyl Settings", to: "/VinylSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
