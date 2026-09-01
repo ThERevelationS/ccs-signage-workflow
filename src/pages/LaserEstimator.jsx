@@ -1348,9 +1348,12 @@ Best regards`;
             <p className="text-slate-600">Create detailed laser cutting and engraving estimates</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => { window.location.href = createPageUrl("LaserProjects"); }}> {/* Changed navigate to window.location.href */}
+            <Button
+              variant="outline"
+              onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Projects
+              {embedded ? 'Back to Products' : 'Back to Estimator'}
             </Button>
             {/* Removed save button from header, moved to sidebar */}
           </div>
@@ -1377,21 +1380,14 @@ Best regards`;
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="client_name">Client Name *</Label>
-                    <ClientSearchInput
-                      value={project.client_name}
-                      onChange={(val) => setProject((prev) => ({ ...prev, client_name: val }))}
-                      onSelectProject={(data) => {
-                        setProject((prev) => ({
-                          ...prev,
-                          client_name: data.client_name || prev.client_name,
-                          project_name: data.project_name || prev.project_name,
-                          estimate_number: data.estimate_number || prev.estimate_number,
-                          hyperlink: data.hyperlink || prev.hyperlink
-                        }));
-                      }}
+                    <Input
+                      value={estimateContext?.client_name || project.client_name || ''}
+                      onChange={(e) => !embedded && setProject((prev) => ({ ...prev, client_name: e.target.value }))}
+                      readOnly={embedded}
                       className="mt-1"
                       placeholder="Enter client name"
                     />
+                    {embedded && <p className="text-[10px] text-slate-400 mt-1">Inherited from the All-In-One estimate.</p>}
                   </div>
                   <div>
                     <Label htmlFor="project_name">Project Name *</Label>
@@ -1406,17 +1402,18 @@ Best regards`;
                 </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="estimate_number">Estimate Number *</Label>
+                    <Label htmlFor="estimate_number">Estimate Number</Label>
                     <Input
                       id="estimate_number"
-                      value={project.estimate_number}
-                      onChange={(e) => setProject((prev) => ({ ...prev, estimate_number: e.target.value }))}
+                      value={estimateContext?.estimate_number || project.estimate_number || ''}
+                      onChange={(e) => !embedded && setProject((prev) => ({ ...prev, estimate_number: e.target.value }))}
+                      readOnly={embedded}
                       placeholder="e.g., LASER-2024-001"
                       className="mt-1" />
 
                   </div>
                   <div>
-                    <Label htmlFor="hyperlink">Project Link *</Label>
+                    <Label htmlFor="hyperlink">Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
                     <Input
                       id="hyperlink"
                       value={project.hyperlink}
