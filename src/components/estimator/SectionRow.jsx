@@ -4,6 +4,7 @@ import { Trash2, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getModule, getModuleLabel } from "./moduleRegistry";
 import { money as fmt } from "./aioPricing";
+import { acceptedCustomerUnitPrice } from "./customerPricing";
 
 export default function SectionRow({ line, index, estimateId, onChange, onRemove }) {
   const set = (patch) => onChange(index, patch);
@@ -30,7 +31,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
         </div>
         <div className="text-right">
           <div className="text-base font-bold text-gray-900">
-            {fmt(Number(line.total_snapshot || 0) * Math.max(0, Number(line.customer_quantity ?? 1) || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
+            {fmt(acceptedCustomerUnitPrice(line) * Math.max(0, Number(line.customer_quantity ?? 1) || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
           </div>
           <button
             onClick={() => onRemove(index)}
@@ -44,11 +45,11 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <label className="text-xs text-gray-500">
-          Section cost
+          Customer base price
           <Input
             type="number"
-            value={line.total_snapshot ?? 0}
-            onChange={(e) => set({ total_snapshot: parseFloat(e.target.value) || 0 })}
+            value={acceptedCustomerUnitPrice(line)}
+            onChange={(e) => set({ customer_price_snapshot: parseFloat(e.target.value) || 0 })}
           />
         </label>
         <label className="text-xs text-gray-500">
