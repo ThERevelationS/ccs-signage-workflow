@@ -1,10 +1,15 @@
+import { acceptedCustomerUnitPrice } from "./customerPricing";
+
 // Customer pricing waterfall for an All-In-One estimate:
-// per-section adjustments -> discount -> contingency -> fees -> tax -> deposit.
+// accepted customer unit price -> quantity -> per-section adjustments ->
+// discount -> contingency -> fees -> tax -> deposit.
+// Historical lines without a dedicated customer snapshot fall back to the old
+// total_snapshot value so existing quotes remain unchanged.
 export function computePricing(estimate) {
   const lines = estimate.line_items || [];
 
   const sections = lines.map((line) => {
-    const unitRaw = Number(line.total_snapshot || 0);
+    const unitRaw = acceptedCustomerUnitPrice(line);
     const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
     const raw = unitRaw * quantity;
     const adj = Number(line.adjustment_percent || 0);
