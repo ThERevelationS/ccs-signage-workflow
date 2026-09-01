@@ -42,13 +42,11 @@ const parseImperialFraction = (fractionString) => {
   return totalValue;
 };
 
-export default function NewLaserEstimate({ embeddedId = null, embedded = false }) {
-  // (embedded prop powers All-In-One inline embedding)
+export default function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
-  // Prop wins when embedded inside the All-In-One estimator.
-  const editId = embeddedId || searchParams.get('edit');
+  const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
+  const estimateId = embeddedEstimateId || searchParams.get('estimateId');
   const [isEditing, setIsEditing] = useState(false);
-  const { setIsDirty } = useUnsavedChanges();
 
   const [project, setProject] = useState({
     project_name: "",
@@ -69,43 +67,30 @@ export default function NewLaserEstimate({ embeddedId = null, embedded = false }
   });
 
   const [globalSettings, setGlobalSettings] = useState({});
+  const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
-  const [hasLoaded, setHasLoaded] = useState(false);
+
   useEffect(() => {
-    if (!isLoading) setHasLoaded(true);
-  }, [isLoading]);
-  useEffect(() => {
-    if (hasLoaded) setIsDirty(true);
-  }, [project]);
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const [settingsData, existing, estimate] = await Promise.all([
+          Settings.list(),
+          editId ? LaserProject.get(editId).catch(() => null) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+        ]);
+        if (cancelled) return;
 
-  const loadProjectForEdit = useCallback(async (projectId) => {
-    try {
-      const projectToEdit = await LaserProject.get(projectId);
-      if (projectToEdit) {
-        setProject(projectToEdit);
-        setIsEditing(true);
-      } else {
-        console.warn(`Project with ID ${projectId} not found.`);
-        window.location.href = createPageUrl("LaserProjects"); // Changed navigate to window.location.href
-      }
-    } catch (error) {
-      console.error('Error loading project for edit:', error);
-      alert('Error loading project for edit. Please try again.');
-    }
-  }, []); // Removed navigate from dependency array
+        const settingsObj = {};
+        (settingsData || []).forEach((setting) => {
+          settingsObj[setting.setting_name] = setting.setting_value;
+        });
+        setGlobalSettings(settingsObj);
+        setEstimateContext(estimate || null);
 
-  const loadPrerequisites = useCallback(async () => {
-    try {
-      const settingsData = await Settings.list();
-      const settingsObj = {};
-      settingsData.forEach((setting) => {
-        settingsObj[setting.setting_name] = setting.setting_value;
-      });
-      setGlobalSettings(settingsObj);
-
-      if (!editId) {
         const newDefaults = {
           machine_rate_per_hour: parseFloat(settingsObj.parameter_laser_machine_rate) || 100,
           labor_rate: parseFloat(settingsObj.parameter_laser_labor_rate) || 75,
@@ -116,22 +101,38 @@ export default function NewLaserEstimate({ embeddedId = null, embedded = false }
           fixed_setup_hours: parseFloat(settingsObj.min_parameter_laser_setup_hours) || 0.5,
           fixed_material_setup_cost: parseFloat(settingsObj.parameter_laser_fixed_material_setup_cost) || 0,
           notes: settingsObj.default_notes_template || "",
-          total_supplies_cost: 0
+          total_supplies_cost: 0,
         };
-        setProject((prev) => ({ ...prev, ...newDefaults }));
-      }
-    } catch (error) {
-      console.error('Error loading prerequisites:', error);
-    }
-    setIsLoading(false);
-  }, [editId]);
 
-  useEffect(() => {
-    loadPrerequisites();
-    if (editId) {
-      loadProjectForEdit(editId);
-    }
-  }, [editId, loadPrerequisites, loadProjectForEdit]);
+        if (existing) {
+          setProject((prev) => ({
+            ...prev,
+            ...existing,
+            client_name: estimate?.client_name || existing.client_name || prev.client_name,
+            customer_id: estimate?.customer_id || existing.customer_id,
+            estimate_number: estimate?.estimate_number || existing.estimate_number,
+            items: existing.items || [],
+          }));
+          setIsEditing(true);
+        } else {
+          setProject((prev) => ({
+            ...prev,
+            ...newDefaults,
+            client_name: estimate?.client_name || prev.client_name,
+            customer_id: estimate?.customer_id,
+            estimate_number: estimate?.estimate_number || prev.estimate_number,
+          }));
+          setIsEditing(false);
+        }
+      } catch (error) {
+        console.error('Error loading laser estimator:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [editId, estimateId]);
 
   const addItem = () => {
     const newItem = {
