@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MaintenanceActionRate, Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Clock, DollarSign, Info, MapPin, Save, Wrench } from "lucide-react";
@@ -106,7 +106,6 @@ export default function MaintenanceSettings() {
       // Existing global Maintenance settings are updated in place. No duplicate
       // settings store and no bulk default seeding are performed here.
       for (const row of changedSettingRows) {
-        // eslint-disable-next-line no-await-in-loop
         await SettingsEntity.update(row.id, { setting_value: String(globalSettings[row.setting_name] ?? "") });
       }
 
@@ -117,12 +116,10 @@ export default function MaintenanceSettings() {
           ...comparableRate(row),
         };
         if (row.id) {
-          // eslint-disable-next-line no-await-in-loop
           await MaintenanceActionRate.update(row.id, payload);
         } else {
           // This path is intentionally edit-driven only; opening the page never
           // creates missing MaintenanceActionRate rows.
-          // eslint-disable-next-line no-await-in-loop
           await MaintenanceActionRate.create(payload);
         }
       }
