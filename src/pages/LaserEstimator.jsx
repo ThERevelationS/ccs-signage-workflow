@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { LaserProject, Settings, User } from "@/entities/all";
-import { useSearchParams } from "react-router-dom"; // Removed useNavigate
-import { createPageUrl } from "@/utils";
+import { LaserProject, Settings } from "@/entities/all";
+import { useSearchParams } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Plus, Trash2, ArrowLeft, Zap, FileText, ListChecks, Calculator, Settings as SettingsIcon } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
-import ClientSearchInput from "@/components/ClientSearchInput";
-import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { TrendingUp } from "lucide-react";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
