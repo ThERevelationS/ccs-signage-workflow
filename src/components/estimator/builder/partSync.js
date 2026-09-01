@@ -2893,6 +2893,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       usesDirectLiveReprice: false,
       currentPartsTotal: 0,
       frozenPartsTotal: 0,
+      currentMarkupTotal: 0,
+      frozenMarkupTotal: 0,
       manualAddonFrozenTotal: 0,
       manualAddonCurrentTotal: 0,
       parts: [],
@@ -3202,6 +3204,12 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     (sum, part) => sum + num(part.frozen_extended_cost),
     0
   );
+  const markupParts = activeEconomicParts.filter((part) => part.part_subtype === "markup");
+  const currentMarkupTotal = markupParts.reduce(
+    (sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)),
+    0
+  );
+  const frozenMarkupTotal = markupParts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const manualAddons = activeEconomicParts.filter((part) => part.builder_sync_state === "manual_addon");
   const manualAddonFrozenTotal = manualAddons.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const manualAddonCurrentTotal = manualAddons.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
@@ -3220,6 +3228,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     usesDirectLiveReprice: directLiveReprice && !legacyMode,
     currentPartsTotal,
     frozenPartsTotal,
+    currentMarkupTotal,
+    frozenMarkupTotal,
     manualAddonFrozenTotal,
     manualAddonCurrentTotal,
     parts: synced,
