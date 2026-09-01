@@ -135,9 +135,9 @@ export default function EstimatorProducts() {
     const q = query.trim().toLowerCase();
     return quickProducts.filter((product) => {
       const group = product.product_group === "global" ? "global" : "my";
-      // "My" templates are personal by definition. Admins can still audit all records;
-      // unowned rows remain visible for compatibility with any future imported legacy data.
-      if (group === "my" && user?.role !== "admin" && product.created_by_id && user?.id && product.created_by_id !== user.id) return false;
+      // "My" templates are personal by definition. Built-in created_by_id is the
+      // ownership boundary; unowned rows remain visible for imported legacy compatibility.
+      if (group === "my" && product.created_by_id && product.created_by_id !== user?.id) return false;
       if (scope !== "all" && group !== scope) return false;
       if (status === "active" && product.is_active === false) return false;
       if (status === "inactive" && product.is_active !== false) return false;
@@ -150,7 +150,7 @@ export default function EstimatorProducts() {
 
   const activeCount = quickProducts.filter((product) => product.is_active !== false).length;
   const globalCount = quickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
-  const myCount = quickProducts.filter((product) => product.is_active !== false && product.product_group !== "global" && (user?.role === "admin" || !product.created_by_id || !user?.id || product.created_by_id === user.id)).length;
+  const myCount = quickProducts.filter((product) => product.is_active !== false && product.product_group !== "global" && (!product.created_by_id || product.created_by_id === user?.id)).length;
 
   const setView = (nextView) => {
     const next = new URLSearchParams(searchParams);
