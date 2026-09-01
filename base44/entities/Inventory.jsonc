@@ -74,6 +74,15 @@
       "type": "boolean",
       "default": false,
       "description": "When true, this extruded-metal row is also available to the Concrete | Masonry | Poles estimator as a sign pole. Geometry is auto-derived from product_type + size, $/ft from cost_per_unit, and paint rate from the global Foundation Settings."
+    },
+    "legacy_source_id": {
+      "type": "string",
+      "description": "Original SignEstimate Pro legacy Inventory record ID for compatibility rows."
+    },
+    "legacy_compatibility": {
+      "type": "boolean",
+      "default": false,
+      "description": "Internal compatibility row retained for Git-era Metal estimator behavior; hidden from the modern Master Inventory catalog."
     }
   },
   "required": [
