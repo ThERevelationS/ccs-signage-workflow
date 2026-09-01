@@ -169,6 +169,7 @@ export function selectedEquipmentFromInventory(inv, projectLaborHours = 0, crewS
 
   return {
     equipment_id: inv.id,
+    inventory_entity: inv._inventory_entity || inv.inventory_entity || "",
     equipment_name: inv.equipment_name,
     equipment_type: inv.equipment_type,
     pricing_mode: inv.pricing_mode,
