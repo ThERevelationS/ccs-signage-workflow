@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import ProductRow from "./ProductRow";
 import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/moduleRegistry";
+import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings }) {
   const [query, setQuery] = useState("");
@@ -74,7 +75,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               key={line.line_id || line.builder_product_id || line.project_id || index}
               line={line}
               index={index}
-              percentOfTotal={rawTotal > 0 ? ((Number(line.total_snapshot || 0) * Math.max(0, Number(line.customer_quantity ?? 1) || 0)) / rawTotal) * 100 : null}
+              percentOfTotal={rawTotal > 0 ? ((acceptedCustomerUnitPrice(line) * Math.max(0, Number(line.customer_quantity ?? 1) || 0)) / rawTotal) * 100 : null}
               onChange={onChange}
               onRemove={onRemove}
               onEdit={onEdit}
