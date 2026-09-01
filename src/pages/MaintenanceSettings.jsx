@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MaintenanceActionRate, Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Clock, DollarSign, Info, MapPin, Save, Wrench } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, Save, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import RatesBySignTypeTab from "@/components/signMaintenance/RatesBySignTypeTab"
 import TravelTab from "@/components/signMaintenance/TravelTab";
 import MinimumsTab from "@/components/signMaintenance/MinimumsTab";
 import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
+import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -163,8 +164,9 @@ export default function MaintenanceSettings() {
         {error && <div className="px-3 py-2 rounded border border-red-200 bg-red-50 text-[11px] text-red-700">{error}</div>}
 
         <Tabs defaultValue="rates" className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto bg-white border border-gray-200 p-1">
+          <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto bg-white border border-gray-200 p-1">
             <TabsTrigger value="rates" className="text-[11px] py-2"><Clock className="w-3.5 h-3.5 mr-1.5" /> Action Rates</TabsTrigger>
+            <TabsTrigger value="materials" className="text-[11px] py-2"><Package className="w-3.5 h-3.5 mr-1.5" /> Material Rules</TabsTrigger>
             <TabsTrigger value="labor" className="text-[11px] py-2"><DollarSign className="w-3.5 h-3.5 mr-1.5" /> Labor</TabsTrigger>
             <TabsTrigger value="travel" className="text-[11px] py-2"><MapPin className="w-3.5 h-3.5 mr-1.5" /> Travel</TabsTrigger>
             <TabsTrigger value="minimums" className="text-[11px] py-2">Minimums</TabsTrigger>
@@ -179,6 +181,10 @@ export default function MaintenanceSettings() {
               globalSettings={globalSettings}
               setGlobalSettings={setGlobalSettings}
             />
+          </TabsContent>
+
+          <TabsContent value="materials" className="mt-0">
+            <MaintenanceMaterialRulesTab />
           </TabsContent>
 
           <TabsContent value="labor" className="mt-0">
