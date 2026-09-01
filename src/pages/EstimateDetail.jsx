@@ -180,6 +180,10 @@ export default function EstimateDetail() {
       window.alert(
         `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
       );
+    } else if (result?.blocked && result.reason === "recalc_required") {
+      window.alert(
+        `${result.recalcReason || "This Builder must be recalculated with current Master Inventory before its price can be updated."}\n\nOpen the Builder, review the current pricing, and save it. The frozen Product price has not changed.`
+      );
     }
     await refreshProducts();
   };
