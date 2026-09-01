@@ -170,12 +170,15 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     });
   } else {
     const frozen = num(builderProduct.frozen_cost, acceptedTotal);
+    const frozenCustomer = hasNumericValue(builderProduct.frozen_customer_price)
+      ? num(builderProduct.frozen_customer_price)
+      : acceptedCustomerPrice;
     const awaitingInitialFreeze = builderProduct.price_state === "unchecked" && frozen === 0;
     const nextState = builderProduct.price_state === "legacy_frozen"
       ? "legacy_frozen"
       : awaitingInitialFreeze
         ? "unchecked"
-        : Math.abs(liveTotal - frozen) > 0.005
+        : Math.abs(liveTotal - frozen) > 0.005 || Math.abs(liveCustomerPrice - frozenCustomer) > 0.005
           ? "changed"
           : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
@@ -242,11 +245,16 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
         : economics.customerPrice + num(partSummary.manualAddonCurrentTotal);
     }
     const frozenAfterSync = num(builderProduct.frozen_cost, acceptedTotal);
+    const frozenCustomerAfterSync = hasNumericValue(builderProduct.frozen_customer_price)
+      ? num(builderProduct.frozen_customer_price)
+      : acceptedCustomerPrice;
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
       : builderProduct.price_state === "legacy_frozen"
         ? "legacy_frozen"
-        : partSummary.changedCount > 0 || Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005
+        : partSummary.changedCount > 0 ||
+            Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005 ||
+            Math.abs(effectiveLiveCustomerPrice - frozenCustomerAfterSync) > 0.005
           ? "changed"
           : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
@@ -382,7 +390,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   const acceptedTotal = canInitialFreeze ? effectiveLiveTotal : previousFrozenTotal;
   const calculatedState = canInitialFreeze
     ? "current"
-    : partSummary.changedCount > 0 || Math.abs(effectiveLiveTotal - acceptedTotal) > 0.005
+    : partSummary.changedCount > 0 ||
+        Math.abs(effectiveLiveTotal - acceptedTotal) > 0.005 ||
+        Math.abs(effectiveLiveCustomerPrice - previousFrozenCustomerPrice) > 0.005
       ? "changed"
       : "current";
   const productState = partSummary.detachedCount > 0
