@@ -382,12 +382,20 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   items={recalculated.items}
                 />
                 <TravelCostCard
-                  shopAddress={settings.install_shop_address || ""}
+                  shopAddress={settings.maintenance_shop_address || settings.install_shop_address || ""}
                   siteAddress={project.site_address || ""}
                   selectedEquipment={recalculated.selected_equipment || []}
                   equipmentInventory={equipmentInventory}
                   personnel={recalculated.personnel || []}
-                  settings={{ ...settings, install_travel_labor_rate: settings.maintenance_travel_labor_rate || settings.install_travel_labor_rate }}
+                  settings={{
+                    ...settings,
+                    install_gasoline_price_per_gallon: settings.maintenance_gasoline_price_per_gallon ?? settings.install_gasoline_price_per_gallon,
+                    install_diesel_price_per_gallon: settings.maintenance_diesel_price_per_gallon ?? settings.install_diesel_price_per_gallon,
+                    install_travel_labor_rate: settings.maintenance_travel_labor_rate ?? settings.install_travel_labor_rate,
+                    install_travel_avg_speed_mph: settings.maintenance_travel_avg_speed_mph ?? settings.install_travel_avg_speed_mph,
+                    install_travel_overhead_per_mile: settings.maintenance_travel_overhead_per_mile ?? settings.install_travel_overhead_per_mile,
+                    install_min_travel_charge: settings.maintenance_min_travel_charge ?? settings.install_min_travel_charge,
+                  }}
                   travelMiles={project.travel_miles_round_trip || 0}
                   onMilesChange={(m) => updateProject({ travel_miles_round_trip: m })}
                   onTotalChange={(t) => {
