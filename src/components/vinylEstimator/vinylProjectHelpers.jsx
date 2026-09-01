@@ -14,7 +14,10 @@ export const blankWorkflow = (index = 0) => ({
   apply_cut: true,
   apply_laminate: false,
   apply_transfer_tape: false,
-  print_quality: "high_quality",      // #2 — default high quality
+  // Leave blank so the selected printer's VinylMachine.default_print_quality
+  // controls new workflows. The calculator still falls back to high_quality
+  // when a machine has no explicit default.
+  print_quality: "",
   weeding_difficulty: "moderate",     // #5 — "Normal" default
   weeding_minutes_per_part_override: "",
   install_minutes_per_part: "",       // #6
