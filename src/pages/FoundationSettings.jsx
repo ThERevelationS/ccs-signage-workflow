@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Bricks, Clock, PaintBucket, Save, Shovel } from "lucide-react";
+import { ArrowLeft, BrickWall, Clock, PaintBucket, Save, Shovel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -30,7 +30,7 @@ const GROUPS = [
   },
   {
     title: "Masonry Walls",
-    icon: Bricks,
+    icon: BrickWall,
     fields: [
       ["wall_labor_rate", "Wall masonry labor", "$/sq ft"],
       ["wall_minimum_charge", "Wall minimum labor charge", "$"],
