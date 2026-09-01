@@ -118,6 +118,24 @@ function independentPartUnitCost(part, row) {
     if (["owned_flat", "per_project_flat"].includes(mode)) return num(row.cost_flat);
     return num(row.cost_per_day);
   }
+  if (entity === "MaintenanceInventory") {
+    const size = part?.pricing_basis_snapshot?.size || "medium";
+    if (mode === "per_letter_flat") return num(row.cost_per_letter);
+    if (mode === "per_letter_by_size" || mode === "per_cabinet_by_size") return num(row[`cost_${size}`]);
+    if (mode === "per_cabinet_flat") return num(row.cost_per_cabinet);
+    if (mode === "per_linear_foot") return num(row.cost_per_foot);
+    if (mode === "per_sqft") return num(row.cost_per_sqft);
+    return num(row.cost_flat);
+  }
+  if (entity === "MaintenanceEquipment") {
+    if (mode === "delivery_pickup") return num(row.delivery_pickup_cost);
+    if (mode === "idle_running") return num(row.idle_running_cost_per_hour);
+    if (mode === "per_hour") return num(row.cost_per_hour);
+    if (mode === "per_week") return num(row.cost_per_week);
+    if (mode === "per_month") return num(row.cost_per_month);
+    if (["owned_flat", "per_project_flat"].includes(mode)) return num(row.cost_flat);
+    return num(row.cost_per_day);
+  }
   if (entity === "FoundationInventory") {
     if (row.material_type === "pole" && mode === "stock_price") return num(row.pole_stock_price);
     if (row.material_type === "wall_cap") return num(row.cap_stock_price || row.cost_per_unit);
