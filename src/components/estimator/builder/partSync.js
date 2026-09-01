@@ -2818,17 +2818,17 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const currentExtended = num(descriptor.extended_cost);
     const timestamp = nowIso();
 
-    const inventoryUpdatedAt = dateMs(currentRow?.updated_date);
-    const builderCalculatedAt = dateMs(builderProduct.builder_snapshot_at);
     if (
       pricingChanged &&
       !legacyMode &&
       builderProduct.price_state !== "unchecked" &&
-      !directLiveReprice &&
-      inventoryUpdatedAt !== null &&
-      builderCalculatedAt !== null &&
-      inventoryUpdatedAt > builderCalculatedAt
+      !directLiveReprice
     ) {
+      // A frozen inventory snapshot that differs from the current catalog is
+      // sufficient evidence that pricing changed. Do not depend on updated_date
+      // ordering here: imported/copied rows can have missing or non-monotonic
+      // timestamps, and accepting a stale Builder total would be worse than
+      // conservatively requiring a Builder recalculation.
       recalcRequired = true;
       recalcPartNames.push(currentName || descriptor.part_name);
     }
@@ -3108,14 +3108,15 @@ export async function acceptBuilderPartPrices(builderProductId) {
     };
   }
 
-  const builderCalculatedAt = dateMs(builder?.builder_snapshot_at);
   const staleCatalogParts = !builder || DIRECT_LIVE_REPRICE_MODULES.has(builder.module_key) || builder.price_state === "unchecked"
     ? []
     : activeParts.filter((part) => {
         if (["manual", "manual_addon", "detached_override"].includes(part.builder_sync_state)) return false;
-        if (same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot))) return false;
-        const inventoryUpdatedAt = dateMs(part.current_inventory_snapshot?.updated_date);
-        return inventoryUpdatedAt !== null && builderCalculatedAt !== null && inventoryUpdatedAt > builderCalculatedAt;
+        // Any pricing mismatch on a Builder-produced Part means the saved
+        // non-live Builder total is stale. Timestamp ordering is intentionally
+        // ignored because imported/copied inventory rows are not guaranteed to
+        // have monotonic updated_date values.
+        return !same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot));
       });
 
   if (builder?.price_recalc_required || staleCatalogParts.length > 0) {
