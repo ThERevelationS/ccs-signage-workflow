@@ -322,8 +322,8 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   }, [calculateTotals, isLoading, project.items.length]); // Added project.items.length to dependency array to trigger recalculation when items are added/removed
 
   const saveProject = async () => {
-    if (!project.project_name || !project.client_name || !project.estimate_number || !project.hyperlink) {
-      alert('Please fill in all required project information fields');
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+      alert('Please fill in project name and client name');
       return;
     }
 
@@ -333,40 +333,62 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     }
 
     setIsSaving(true);
-    setIsDirty(false);
     try {
       const calculated = calculateTotals();
+      const totalCost = calculated.total_machine_cost + calculated.total_supplies_cost + calculated.total_labor_cost;
       const dataToSave = {
         ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
         items: calculated.items,
         total_machine_cost: calculated.total_machine_cost,
         total_supplies_cost: calculated.total_supplies_cost,
         total_labor_cost: calculated.total_labor_cost,
+        total_cost: totalCost,
         status: 'calculated'
       };
 
-      let savedId = editId;
+      let saved;
       if (isEditing && editId) {
-        await LaserProject.update(editId, dataToSave);
-        alert('Project updated successfully!');
+        saved = await LaserProject.update(editId, dataToSave);
       } else {
-        const created = await LaserProject.create(dataToSave);
-        savedId = created?.id;
-        alert('Project saved successfully!');
+        saved = await LaserProject.create(dataToSave);
+        setIsEditing(true);
       }
-      await upsertCustomerSummaryForEstimate({
-        module: "laser",
-        client_name: project.client_name,
-        project_id: savedId,
-        project_name: project.project_name,
-        estimate_number: project.estimate_number,
-      });
-      window.location.href = createPageUrl("LaserProjects"); // Changed navigate to window.location.href
+      const savedId = saved?.id || editId;
+
+      if (estimateId && savedId) {
+        const refreshed = await LaserProject.get(savedId).catch(() => ({ ...dataToSave, id: savedId }));
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: savedId, module_key: "laser" },
+          sourceProject: {
+            ...refreshed,
+            items: calculated.items,
+            builder_calculation: {
+              totals: {
+                total_machine_cost: calculated.total_machine_cost,
+                total_labor_cost: calculated.total_labor_cost,
+                total_supplies_cost: calculated.total_supplies_cost,
+                fixed_setup_cost: (project.fixed_setup_hours || 0) * (project.labor_rate || 0),
+                total_cost: totalCost,
+              },
+            },
+          },
+          liveTotal: totalCost,
+        });
+      }
+
+      setProject((prev) => ({ ...prev, ...dataToSave, id: savedId || prev.id }));
+      onSaved?.();
+      if (!embedded) alert(isEditing ? 'Project updated successfully!' : 'Project saved successfully!');
     } catch (error) {
       console.error('Error saving project:', error);
       alert('Error saving project. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const downloadEstimate = () => {
