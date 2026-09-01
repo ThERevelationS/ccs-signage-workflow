@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import FoundationItemCard from "@/components/estimator/foundation/FoundationItemCard";
 import FoundationRatesPanel from "@/components/estimator/foundation/FoundationRatesPanel";
-import FoundationEquipmentPanel from "@/components/estimator/foundation/FoundationEquipmentPanel";
+import FoundationEquipmentTab from "@/components/estimator/foundation/FoundationEquipmentTab";
 import FoundationTotals from "@/components/estimator/foundation/FoundationTotals";
 import ConcreteDeliveryPanel from "@/components/estimator/foundation/ConcreteDeliveryPanel";
 import FoundationBOM from "@/components/estimator/foundation/FoundationBOM";
@@ -38,25 +38,37 @@ import { normalizeConcreteSupplier } from "@/components/estimator/foundation/leg
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const blankItem = (type) => ({
-  foundation_type: type,
+  // Defaults mirror SignEstimate Pro `newItem()` exactly. CCS still lets the
+  // user choose Spread Foot or Pillar at add-time; only the type is overridden.
+  foundation_type: type || "spread_foot",
   description: "",
   quantity: 1,
-  length_inches: type === "spread_foot" ? 36 : 0,
-  width_inches: type === "spread_foot" ? 36 : 0,
-  diameter: type === "pillar" ? 24 : 0,
-  depth_inches: 42,
+  length_inches: 48,
+  width_inches: 48,
+  diameter: 24,
+  depth_inches: 36,
   grade_offset_inches: 0,
-  include_rebar: true,
-  include_forming: true,
-  include_finishing: true,
+  include_rebar: false,
+  include_forming: false,
+  include_finishing: false,
   rebar_size: "#4",
   rebar_spacing_length: 12,
   rebar_spacing_width: 12,
   rebar_layers: 1,
+  rebar_layer_separation_inches: 12,
   pillar_rebar_size: "#4",
+  pillar_rebar_hoop_diameter: 20,
+  pillar_rebar_layer_separation_inches: 12,
   pillar_rebar_layers: 1,
   pillar_vertical_rebar_count: 4,
+  selected_pole_id: "",
+  pole_offset_from_bottom_inches: 0,
+  pole_total_height_inches: 0,
+  include_pole_painting: false,
+  custom_concrete_cost_per_cy: null,
+  custom_rebar_cost_per_ft: null,
   excavation_method: "hand_dig",
+  selected_concrete_id: "",
   is_new_sign_location: false,
   mortar_gap_inches: 0.375,
   wall_width_inches: 8,
@@ -201,8 +213,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     items: calc.items,
     selected_equipment: calc.equipment,
     walls: calc.walls,
-    wall_caps: project.wall_caps || [],
-    poles: project.poles || [],
+    // Persist the calculated snapshots too. SignEstimate Pro stored raw pole/cap
+    // placement; CCS keeps those original fields plus their calculated values so
+    // a later Builder/BOM sync can preserve the exact accepted cost without
+    // requiring a live catalog recalc.
+    wall_caps: calc.wallCaps,
+    poles: calc.poles,
     signage_cabinets: project.signage_cabinets || [],
     landscape: project.landscape || { cell_size_inches: 12, cells: {} },
     total_signage_cabinet_cost: cabinetCost,
@@ -440,10 +456,12 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
               </TabsContent>
 
               <TabsContent value="equipment">
-                <FoundationEquipmentPanel
-                  equipment={calc.equipment}
-                  options={catalog.equipment}
-                  onChange={(rows) => patch({ selected_equipment: rows })}
+                <FoundationEquipmentTab
+                  foundationItems={project.items || []}
+                  inventory={inventory}
+                  selectedEquipmentList={project.selected_equipment || []}
+                  onUpdate={(rows) => patch({ selected_equipment: rows })}
+                  markDirty={() => setDirty(true)}
                 />
               </TabsContent>
 
