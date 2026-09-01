@@ -14,6 +14,7 @@ import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { TrendingUp } from "lucide-react";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
@@ -111,7 +112,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             client_name: estimate?.client_name || existing.client_name || prev.client_name,
             customer_id: estimate?.customer_id || existing.customer_id,
             estimate_number: estimate?.estimate_number || existing.estimate_number,
-            items: existing.items || [],
+            items: seedBuilderItemIds(existing.items || []),
             // Historical Laser rows predate several of these fields. Resolve
             // missing values to the exact fallbacks used by SignEstimate Pro's
             // calculator instead of inheriting today's Settings. In particular,
@@ -148,6 +149,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
 
   const addItem = () => {
     const newItem = {
+      builder_item_id: newBuilderItemId("laser-item"),
       item_type: "panel",
       description: "",
       material_type: "Acrylic",
