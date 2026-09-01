@@ -212,6 +212,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     usesDirectLiveReprice: false,
     currentPartsTotal: 0,
     frozenPartsTotal: 0,
+    currentMarkupTotal: 0,
+    frozenMarkupTotal: 0,
     manualAddonFrozenTotal: 0,
     manualAddonCurrentTotal: 0,
   };
@@ -226,12 +228,19 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       acceptPrices: false,
       legacyMode: builderProduct.price_state === "legacy_frozen",
     });
-    effectiveLiveTotal = partSummary.usesDirectLiveReprice
-      ? num(partSummary.currentPartsTotal, liveTotal + num(partSummary.manualAddonCurrentTotal))
-      : liveTotal + num(partSummary.manualAddonCurrentTotal);
-    effectiveLiveCustomerPrice = preserveLegacyEconomics
-      ? liveCustomerPrice
-      : economics.customerPrice + num(partSummary.manualAddonCurrentTotal);
+    if (partSummary.usesDirectLiveReprice) {
+      const manualAddonCurrent = num(partSummary.manualAddonCurrentTotal);
+      const liveInternalFromParts = num(partSummary.currentPartsTotal) - num(partSummary.currentMarkupTotal);
+      const liveBuilderCoreCost = liveInternalFromParts - manualAddonCurrent;
+      const markupPercent = num(source?.markup_percent);
+      effectiveLiveTotal = liveInternalFromParts;
+      effectiveLiveCustomerPrice = liveBuilderCoreCost * (1 + markupPercent / 100) + manualAddonCurrent;
+    } else {
+      effectiveLiveTotal = liveTotal + num(partSummary.manualAddonCurrentTotal);
+      effectiveLiveCustomerPrice = preserveLegacyEconomics
+        ? liveCustomerPrice
+        : economics.customerPrice + num(partSummary.manualAddonCurrentTotal);
+    }
     const frozenAfterSync = num(builderProduct.frozen_cost, acceptedTotal);
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
@@ -346,6 +355,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     usesDirectLiveReprice: false,
     currentPartsTotal: 0,
     frozenPartsTotal: 0,
+    currentMarkupTotal: 0,
+    frozenMarkupTotal: 0,
     manualAddonFrozenTotal: 0,
     manualAddonCurrentTotal: 0,
   };
