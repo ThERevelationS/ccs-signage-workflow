@@ -880,7 +880,6 @@ function extractVinyl(project, catalogs = {}, options = {}) {
   let workflowMaterialTotal = 0;
   let workflowMachineTotal = 0;
   let workflowLaborTotal = 0;
-  let workflowSetupTotal = 0;
 
   const addLinkedCost = ({
     key, name, type = "material", subtype = "", sourcePath = "", entity = "", inventoryId = "",
@@ -960,7 +959,6 @@ function extractVinyl(project, catalogs = {}, options = {}) {
     workflowMaterialTotal += num(calc.materialCost);
     workflowMachineTotal += num(calc.machineCost);
     workflowLaborTotal += num(calc.laborCost);
-    workflowSetupTotal += num(calc.setupFeeApplied);
 
     if (workflow.vinyl_id) {
       addLinkedCost({
