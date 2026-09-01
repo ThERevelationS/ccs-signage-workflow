@@ -66,6 +66,13 @@ export const ESTIMATOR_TABS = [
       })),
     ],
   },
+  {
+    label: "Parts",
+    to: "/EstimatorParts",
+    items: [
+      { label: "Part Library", to: "/EstimatorParts" },
+    ],
+  },
 ];
 
 export const ESTIMATOR_RIGHT_TABS = [
