@@ -2,14 +2,15 @@
 // Layout: [Sign Type tabs] → [Action tabs within that sign type] → rate card
 // + (optional) action-specific settings panel (e.g. Repaint settings).
 //
-// Every action is available on every sign type — the user toggles each one
-// on/off per sign type using the Switch on each card.
+// Show only the action combinations supported by the current Maintenance data model.
+// The persisted MaintenanceActionRate matrix contains exactly these applicable
+// combinations, so do not manufacture unsupported sign-type/action rows in the UI.
 
 import React from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Ruler, Sparkles, Lightbulb, Zap, Wrench, CheckCircle2, MinusCircle } from "lucide-react";
-import { SIGN_TYPES, ACTIONS } from "./constants";
+import { SIGN_TYPES, ACTIONS, ACTIONS_FOR_SIGN_TYPE } from "./constants";
 import SectionCard from "./SectionCard";
 import ActionRateCard from "./ActionRateCard";
 import RepaintSettingsTab from "./RepaintSettingsTab";
@@ -67,12 +68,12 @@ function ActionPane({ signType, action, rate, isLocked, onChange, globalSettings
 }
 
 function SignTypePane({ signType, rateMap, isLocked, onChangeRate, globalSettings, setGlobalSettings }) {
-  // Every action is now available for every sign type. Default first tab to
-  // the first enabled action so the user sees live content immediately.
-  const firstEnabled = ACTIONS.find(a => {
+  const applicableIds = ACTIONS_FOR_SIGN_TYPE[signType.id] || [];
+  const applicableActions = ACTIONS.filter((action) => applicableIds.includes(action.id));
+  const firstEnabled = applicableActions.find(a => {
     const r = rateMap.get(`${signType.id}|${a.id}`);
     return !r || r.is_enabled !== false;
-  }) || ACTIONS[0];
+  }) || applicableActions[0];
 
   return (
     <div className="space-y-4">
@@ -87,7 +88,7 @@ function SignTypePane({ signType, rateMap, isLocked, onChangeRate, globalSetting
 
       <Tabs defaultValue={firstEnabled.id} className="w-full">
         <TabsList className="flex flex-wrap h-auto p-1.5 bg-slate-100/70 border border-slate-200 rounded-xl gap-1 justify-start">
-          {ACTIONS.map(a => {
+          {applicableActions.map(a => {
             const r = rateMap.get(`${signType.id}|${a.id}`);
             const enabled = !r || r.is_enabled !== false;
             const GroupIcon = GROUP_ICON[a.group] || Wrench;
@@ -107,7 +108,7 @@ function SignTypePane({ signType, rateMap, isLocked, onChangeRate, globalSetting
           })}
         </TabsList>
 
-        {ACTIONS.map(a => (
+        {applicableActions.map(a => (
           <TabsContent key={a.id} value={a.id} className="mt-4">
             <ActionPane
               signType={signType}
@@ -131,7 +132,7 @@ export default function RatesBySignTypeTab({ rateMap, isLocked, onChangeRate, gl
       icon={Ruler}
       theme="cyan"
       title="Service Items & Action Rates"
-      description="Every maintenance action is available on every sign type. Toggle the ones you offer per sign type, set their minutes-per-letter (or per-cabinet), and configure action-specific settings inline."
+      description="Configure the maintenance actions supported for each sign type, including minutes-per-letter or per-cabinet and action-specific settings."
     >
       <Tabs defaultValue={SIGN_TYPES[0].id} className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-5 h-auto p-1.5 gap-1 bg-cyan-50/40 border border-cyan-100 rounded-xl">
