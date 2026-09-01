@@ -25,6 +25,7 @@ import EstimatorQueues from './pages/EstimatorQueues';
 import EstimatorCustomers from './pages/EstimatorCustomers';
 import QuickPrice from './pages/QuickPrice';
 import EstimatorProducts from './pages/EstimatorProducts';
+import EstimatorParts from './pages/EstimatorParts';
 import EstimatorSettings from './pages/EstimatorSettings';
 import EstimatorTools from './pages/EstimatorTools';
 import EstimatorShell from './components/estimator/EstimatorShell';
@@ -49,6 +50,7 @@ const ESTIMATOR_PAGES = {
   EstimatorCustomers,
   QuickPrice,
   EstimatorProducts,
+  EstimatorParts,
   EstimatorSettings,
   EstimatorTools,
   MasterInventory,
