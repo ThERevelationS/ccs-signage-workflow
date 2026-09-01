@@ -6,8 +6,6 @@ const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(val
 export function isMaintenanceMaterialCatalogItem(item) {
   if (!item?.entity || !item?.row) return false;
   const row = item.row;
-  if (["equipment", "labor_services", "extruded_metals_poles", "concrete_stone"].includes(item.categoryKey)) return false;
-
   if (item.entity === "DimensionalLetterMaterial") {
     return row.is_active !== false && (
       row.show_in_vinyl_replacement === true ||
