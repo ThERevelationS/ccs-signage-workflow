@@ -10,6 +10,7 @@ const LINKS = [
   { label: "CNC Settings", desc: "Machine rate calculator, labor, setup, material multipliers and cut speeds", to: "/CNCSettings" },
   { label: "Laser Settings", desc: "Parameter and engraving laser rates, calculators, material multipliers and speeds", to: "/LaserSettings" },
   { label: "Metal Settings", desc: "Fabrication, welding and finishing labor defaults", to: "/MetalSettings" },
+  { label: "Maintenance Settings", desc: "Service action rates, labor, repaint and Maintenance travel", to: "/MaintenanceSettings" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
