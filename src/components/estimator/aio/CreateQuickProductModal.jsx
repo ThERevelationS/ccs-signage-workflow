@@ -3,6 +3,7 @@ import { PackagePlus, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
+import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 export default function CreateQuickProductModal({ open, line, partCount = 0, onClose, onSave }) {
   const [name, setName] = useState("");
@@ -57,7 +58,8 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     }
   };
 
-  const frozen = Number(line?.total_snapshot || 0);
+  const frozenCost = Number(line?.total_snapshot || 0);
+  const frozenCustomerPrice = acceptedCustomerUnitPrice(line);
   const isBuilder = line?.module_key !== "custom";
 
   return (
@@ -99,7 +101,8 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
                 <div><span className="text-gray-500 block">Class</span><strong>{isBuilder ? "Builder Product" : "Custom Product"}</strong></div>
                 <div><span className="text-gray-500 block">Builder</span><strong>{line?.builder_name || (isBuilder ? "Builder" : "None")}</strong></div>
                 <div><span className="text-gray-500 block">Parts</span><strong>{partCount}</strong></div>
-                <div><span className="text-gray-500 block">Frozen Price</span><strong>{money(frozen)}</strong></div>
+                <div><span className="text-gray-500 block">Internal Cost</span><strong>{money(frozenCost)}</strong></div>
+                <div><span className="text-gray-500 block">Customer Price</span><strong>{money(frozenCustomerPrice)}</strong></div>
               </div>
               {line?.needs_reattach_review && <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[9px] text-amber-700">Detached/override Part state will be preserved exactly in the Quick Product.</div>}
             </div>
