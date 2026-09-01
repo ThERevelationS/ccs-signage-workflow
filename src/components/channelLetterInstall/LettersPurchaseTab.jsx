@@ -202,7 +202,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
               >
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI Scope Writer
               </Button>
-              <Link to={createPageUrl("ChannelLetterInstallationSettings")}>
+              <Link to={createPageUrl("EstimatorSettings")}>
                 <Button variant="outline" size="sm" className="bg-white">
                   <Settings className="w-3.5 h-3.5 mr-1.5" /> Letter Pricing
                 </Button>
@@ -345,7 +345,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
               <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-blue-900">
                 These fees are prefilled based on the defaults configured by your admin in the
-                {" "}<Link to={createPageUrl("ChannelLetterInstallationSettings")} className="font-semibold underline">Settings page</Link>.
+                {" "}<Link to={createPageUrl("EstimatorSettings")} className="font-semibold underline">Settings page</Link>.
                 Override them here for this estimate only.
               </p>
             </div>
