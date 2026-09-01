@@ -16,11 +16,6 @@ const norm = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g,
 const DIRECT_LIVE_REPRICE_MODULES = new Set(["brick_stone", "maintenance"]);
 const PENDING_REMOVAL_KEY = "__builder_pending_removal";
 
-const dateMs = (value) => {
-  const parsed = value ? Date.parse(value) : NaN;
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
 const CATALOG_NAME_FIELDS = {
   FoundationInventory: ["material_name"],
   LaborServiceInventory: ["service_name", "vendor_name"],
