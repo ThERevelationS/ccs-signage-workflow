@@ -186,11 +186,13 @@ export async function updateManualProductPart(partId, changes = {}) {
     last_price_update_at: timestamp,
   });
   const previousTotal = num(builder.frozen_cost);
+  const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = previousTotal + delta;
+  const nextCustomerPrice = previousCustomerPrice + delta;
   const currentTotal = num(builder.current_recalculated_cost, previousTotal) + delta;
   await base44.entities.BuilderProduct.update(builder.id, {
     frozen_cost: nextTotal,
-    frozen_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: currentTotal,
     price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
     price_delta: currentTotal - nextTotal,
@@ -198,12 +200,14 @@ export async function updateManualProductPart(partId, changes = {}) {
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-  await patchEstimateLine(builder, {
+  await patchEstimateLine(builder, (line) => ({
     total_snapshot: nextTotal,
     live_total_snapshot: currentTotal,
+    customer_price_snapshot: nextCustomerPrice,
+    live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta,
     price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
     last_price_update_at: timestamp,
-  });
+  }));
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
@@ -211,8 +215,8 @@ export async function updateManualProductPart(partId, changes = {}) {
     reason: "manual_adjustment",
     previous_total_cost: previousTotal,
     new_total_cost: nextTotal,
-    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
-    new_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
     changed_parts: [{ part_id: part.id, part_name: changes.part_name || part.part_name, action: "edit_manual_part", previous_extended_cost: previousExtended, new_extended_cost: extended, delta, previous_detail_overrides: previousDetailOverrides, new_detail_overrides: nextDetailOverrides }],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
@@ -265,11 +269,13 @@ export async function switchManualProductPart(partId, catalogItem) {
     last_price_update_at: timestamp,
   });
   const previousTotal = num(builder.frozen_cost);
+  const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = previousTotal + delta;
+  const nextCustomerPrice = previousCustomerPrice + delta;
   const currentTotal = num(builder.current_recalculated_cost, previousTotal) + delta;
   await base44.entities.BuilderProduct.update(builder.id, {
     frozen_cost: nextTotal,
-    frozen_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: currentTotal,
     price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
     price_delta: currentTotal - nextTotal,
@@ -278,7 +284,7 @@ export async function switchManualProductPart(partId, catalogItem) {
     last_price_check_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-  await patchEstimateLine(builder, { total_snapshot: nextTotal, live_total_snapshot: currentTotal, price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current", last_price_update_at: timestamp, last_price_check_at: timestamp });
+  await patchEstimateLine(builder, (line) => ({ total_snapshot: nextTotal, live_total_snapshot: currentTotal, customer_price_snapshot: nextCustomerPrice, live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta, price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current", last_price_update_at: timestamp, last_price_check_at: timestamp }));
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
@@ -286,8 +292,8 @@ export async function switchManualProductPart(partId, catalogItem) {
     reason: "manual_adjustment",
     previous_total_cost: previousTotal,
     new_total_cost: nextTotal,
-    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
-    new_customer_price: num(builder.frozen_customer_price, previousTotal) + delta,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
     changed_parts: [{ part_id: part.id, action: "switch_part", previous_inventory_item_id: part.inventory_item_id, new_inventory_item_id: catalogItem.inventoryId, previous_inventory_name: part.inventory_item_name, new_inventory_name: catalogItem.name, previous_extended_cost: previousExtended, new_extended_cost: nextExtended, delta, cleared_detail_overrides: part.detail_overrides || {} }],
     builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
@@ -303,7 +309,9 @@ export async function removeManualProductPart(partId) {
   const previousExtended = num(part.frozen_extended_cost);
   const previousCurrent = num(part.current_extended_cost, previousExtended);
   const previousTotal = num(builder.frozen_cost);
+  const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = Math.max(0, previousTotal - previousExtended);
+  const nextCustomerPrice = Math.max(0, previousCustomerPrice - previousExtended);
   const currentTotal = Math.max(0, num(builder.current_recalculated_cost, previousTotal) - previousCurrent);
   const timestamp = nowIso();
   await base44.entities.BuilderPart.delete(part.id);
@@ -319,7 +327,7 @@ export async function removeManualProductPart(partId) {
   const priceState = Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current";
   await base44.entities.BuilderProduct.update(builder.id, {
     frozen_cost: nextTotal,
-    frozen_customer_price: Math.max(0, num(builder.frozen_customer_price, previousTotal) - previousExtended),
+    frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: currentTotal,
     part_count: (remainingParts || []).filter((row) => row.is_active !== false).length,
     group_count: groupCount,
@@ -329,7 +337,7 @@ export async function removeManualProductPart(partId) {
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-  await patchEstimateLine(builder, { total_snapshot: nextTotal, live_total_snapshot: currentTotal, price_state: priceState, last_price_update_at: timestamp });
+  await patchEstimateLine(builder, (line) => ({ total_snapshot: nextTotal, live_total_snapshot: currentTotal, customer_price_snapshot: nextCustomerPrice, live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(line) - previousCurrent), price_state: priceState, last_price_update_at: timestamp }));
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
@@ -337,8 +345,8 @@ export async function removeManualProductPart(partId) {
     reason: "manual_adjustment",
     previous_total_cost: previousTotal,
     new_total_cost: nextTotal,
-    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
-    new_customer_price: Math.max(0, num(builder.frozen_customer_price, previousTotal) - previousExtended),
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
     changed_parts: [{ part_id: part.id, part_name: part.part_name, action: "remove_part", previous_extended_cost: previousExtended }],
     builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
@@ -410,9 +418,12 @@ export async function refreshManualProductPricing(builderProductId) {
     price_delta_percent: frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0,
     last_price_check_at: timestamp,
   });
+  const frozenCustomerPrice = num(builder.frozen_customer_price, frozenTotal);
   await patchEstimateLine(builder, {
     total_snapshot: frozenTotal,
     live_total_snapshot: currentTotal,
+    customer_price_snapshot: frozenCustomerPrice,
+    live_customer_price_snapshot: frozenCustomerPrice + (currentTotal - frozenTotal),
     detached_part_count: detachedCount,
     needs_reattach_review: detachedCount > 0,
     price_state: priceState,
