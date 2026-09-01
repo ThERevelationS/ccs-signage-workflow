@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
+import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -134,6 +135,8 @@ export async function addPartPackageToProduct({
     ...line,
     total_snapshot: nextFrozen,
     live_total_snapshot: nextCurrent,
+    customer_price_snapshot: nextCustomer,
+    live_customer_price_snapshot: liveCustomerUnitPrice(line) + addedCurrent,
     price_state: nextState,
     detached_part_count: nextDetachedCount,
     needs_reattach_review: nextNeedsReattachReview,
