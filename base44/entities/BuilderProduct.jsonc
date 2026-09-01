@@ -114,6 +114,15 @@
       "type": "number",
       "default": 0
     },
+    "price_recalc_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when current Master Inventory pricing changed after the Builder was last calculated and this module cannot safely recompute the full Product total without reopening/saving the Builder. Update Price is blocked until recalculation."
+    },
+    "price_recalc_reason": {
+      "type": "string",
+      "description": "Human-readable reason Update Price is blocked pending Builder recalculation."
+    },
     "last_price_check_at": {
       "type": "string"
     },
