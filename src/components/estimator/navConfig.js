@@ -73,6 +73,7 @@ export const ESTIMATOR_RIGHT_TABS = [
       { label: "Painting Settings", to: "/PaintingSettings" },
       { label: "CNC Settings", to: "/CNCSettings" },
       { label: "Laser Settings", to: "/LaserSettings" },
+      { label: "Metal Settings", to: "/MetalSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
       { label: "My Info", to: "/UserSettings" },
     ],
