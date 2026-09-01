@@ -72,9 +72,9 @@ export const calcServiceItem = (item, settings, rates, inventory) => {
 
   // Recompute materials based on current item state.
   const materials = (item.materials || []).map(m => {
-    const inv = (inventory || []).find(i => i.id === m.inventory_item_id);
+    const inv = (inventory || []).find(i => i.id === (m.maintenance_rule_id || m.inventory_item_id));
     if (!inv) return { ...m, total_cost: (parseFloat(m.unit_cost) || 0) * (parseFloat(m.quantity) || 0) };
-    return materialFromInventory(inv, item);
+    return materialFromInventory(inv, item, m);
   });
   const materialsCost = materials.reduce((s, m) => s + (parseFloat(m.total_cost) || 0), 0) + repaintPaintCost;
 
@@ -89,11 +89,53 @@ export const calcServiceItem = (item, settings, rates, inventory) => {
   };
 };
 
-export const materialFromInventory = (inv, item) => {
+const usageBasisQuantity = (item, basis) => {
+  if (basis === "per_letter") return parseFloat(item.qty) || 0;
+  if (basis === "per_cabinet") return Math.max(parseFloat(item.qty) || 0, 1);
+  if (basis === "per_linear_foot") return parseFloat(item.linear_feet) || 0;
+  if (basis === "per_sqft") return parseFloat(item.face_sqft) || 0;
+  return 1;
+};
+
+export const materialFromInventory = (inv, item, existing = null) => {
+  const linked = !!(inv.inventory_entity && inv.inventory_item_id);
+  if (linked) {
+    const basis = inv.usage_basis || "per_service_item";
+    const multiplier = Math.max(0, parseFloat(inv.usage_multiplier) || 0);
+    const rawQuantity = usageBasisQuantity(item, basis) * multiplier;
+    const autoQuantity = inv.usage_rounding === "ceil_whole" ? Math.ceil(rawQuantity) : rawQuantity;
+    const quantity = existing?.quantity_override ? Math.max(0, parseFloat(existing.quantity) || 0) : autoQuantity;
+    const unitCost = Number.isFinite(Number(inv._master_unit_cost))
+      ? Number(inv._master_unit_cost)
+      : parseFloat(existing?.unit_cost) || 0;
+    return {
+      ...(existing || {}),
+      maintenance_rule_id: inv.id,
+      inventory_entity: inv.inventory_entity,
+      inventory_item_id: inv.inventory_item_id,
+      inventory_item_name: inv.inventory_item_name || inv._display_name || inv.item_name,
+      item_name: inv._display_name || inv.inventory_item_name || inv.item_name,
+      pricing_mode: inv._master_pricing_mode || inv.pricing_mode,
+      usage_basis: basis,
+      usage_multiplier: multiplier,
+      usage_rounding: inv.usage_rounding || "none",
+      unit: inv._master_unit || inv.unit || "unit",
+      unit_cost: unitCost,
+      auto_quantity: autoQuantity,
+      quantity,
+      quantity_override: !!existing?.quantity_override,
+      link_missing: !!inv._master_missing,
+      total_cost: unitCost * quantity,
+    };
+  }
+
   const m = {
+    ...(existing || {}),
+    maintenance_rule_id: inv.id,
     inventory_item_id: inv.id,
     item_name: inv.item_name,
     pricing_mode: inv.pricing_mode,
+    unit: inv.unit || inv.pricing_mode || "unit",
     unit_cost: 0, quantity: 0, total_cost: 0,
   };
   const sizeKey = `cost_${item.size}`;
@@ -116,6 +158,9 @@ export const materialFromInventory = (inv, item) => {
     m.unit_cost = parseFloat(inv.cost_flat) || 0;
     m.quantity = 1;
   }
+  if (existing?.quantity_override) m.quantity = Math.max(0, parseFloat(existing.quantity) || 0);
+  m.quantity_override = !!existing?.quantity_override;
+  m.auto_quantity = m.quantity;
   m.total_cost = m.unit_cost * m.quantity;
   return m;
 };
@@ -124,7 +169,7 @@ export const materialFromInventory = (inv, item) => {
 export const defaultMaterialsForItem = (item, inventory) => {
   return (inventory || [])
     .filter(inv => {
-      if (!inv.is_default) return false;
+      if (inv.is_active === false || !inv.is_default || inv._master_missing) return false;
       const types = inv.applies_to_item_types || [];
       const sizes = inv.applies_to_sizes || [];
       const actions = inv.applies_to_actions || [];
