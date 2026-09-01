@@ -41,14 +41,14 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
 
   const categories = useMemo(() => {
     const map = new Map();
-    items.forEach((item) => map.set(item.categoryKey, item.categoryLabel));
+    items.forEach((item) => (item.categories || [{ key: item.categoryKey, label: item.categoryLabel }]).forEach((entry) => map.set(entry.key, entry.label)));
     return [...map.entries()].map(([key, label]) => ({ key, label }));
   }, [items]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter((item) => {
-      if (category !== "all" && item.categoryKey !== category) return false;
+      if (category !== "all" && !(item.categories || [{ key: item.categoryKey }]).some((entry) => entry.key === category)) return false;
       if (!q) return true;
       return q.split(/\s+/).every((term) => item.searchText.includes(term));
     });
