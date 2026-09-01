@@ -112,6 +112,18 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
             customer_id: estimate?.customer_id || existing.customer_id,
             estimate_number: estimate?.estimate_number || existing.estimate_number,
             items: existing.items || [],
+            // Historical Laser rows predate several of these fields. Resolve
+            // missing values to the exact fallbacks used by SignEstimate Pro's
+            // calculator instead of inheriting today's Settings. In particular,
+            // an absent fixed_setup_hours must mean 0 or the old row can become NaN.
+            machine_rate_per_hour: existing.machine_rate_per_hour ?? 100,
+            labor_rate: existing.labor_rate ?? 75,
+            engraving_machine_rate_per_hour: existing.engraving_machine_rate_per_hour ?? 80,
+            engraving_labor_rate: existing.engraving_labor_rate ?? 40,
+            parameter_handling_time_percentage: existing.parameter_handling_time_percentage ?? 15,
+            engraving_handling_time_percentage: existing.engraving_handling_time_percentage ?? 20,
+            fixed_setup_hours: existing.fixed_setup_hours ?? 0,
+            fixed_material_setup_cost: existing.fixed_material_setup_cost ?? 0,
           }));
           setIsEditing(true);
         } else {
