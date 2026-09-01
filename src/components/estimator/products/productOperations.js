@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -89,7 +90,8 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   });
 
   const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
-  const frozenCustomer = num(builder.frozen_customer_price, frozenTotal);
+  const frozenCustomer = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(line));
+  const liveCustomer = liveCustomerUnitPrice(line);
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: newBuilder.id,
     estimate_id: estimateId,
@@ -123,6 +125,8 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     client_product_name: copyName,
     total_snapshot: frozenTotal,
     live_total_snapshot: num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal)),
+    customer_price_snapshot: frozenCustomer,
+    live_customer_price_snapshot: liveCustomer,
     price_state: builder.price_state || line.price_state || "current",
     detached_part_count: reattachCount,
     needs_reattach_review: reattachCount > 0,
