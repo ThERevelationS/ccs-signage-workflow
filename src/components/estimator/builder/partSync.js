@@ -1137,15 +1137,18 @@ function extractVinyl(project, catalogs = {}, options = {}) {
     }
 
     if (num(calc.setupFeeApplied) > 0.005) {
+      // Git calculates this workflow floor but rollupVinylProject does not add it
+      // to the project subtotal. Preserve the metric as a non-billable BOM line
+      // instead of changing the authoritative source price.
       parts.push(manualCostPart({
         key: `${prefix}:setup-floor`,
-        name: `${workflowName} — Setup Fee Floor`,
+        name: `${workflowName} — Setup Fee Floor (Not Billed by Source)`,
         type: "service",
-        subtype: "setup_fee_floor",
+        subtype: "setup_fee_floor_source_metric",
         sourcePath: `workflows[${workflowIndex}].setup_fee_floor`,
-        cost: calc.setupFeeApplied,
+        cost: 0,
         builderData: workflow,
-        calculation: { setup_fee_floor: workflow.setup_fee_floor, pre_floor_total: calc.preFloorTotal, setup_fee_applied: calc.setupFeeApplied },
+        calculation: { setup_fee_floor: workflow.setup_fee_floor, pre_floor_total: calc.preFloorTotal, setup_fee_applied: calc.setupFeeApplied, source_rollup_billed: false },
       }));
     }
   });
@@ -1234,7 +1237,9 @@ function extractVinyl(project, catalogs = {}, options = {}) {
   }
 
   const suppliesTotal = baseSupplies + num(project.extra_supplies_cost);
-  const subtotal = workflowMaterialTotal + workflowMachineTotal + workflowLaborTotal + workflowSetupTotal + equipmentTotal + projectPersonnelTotal + travelTotal + suppliesTotal;
+  // Match SignEstimate Pro exactly: setupFeeApplied is a workflow metric, but
+  // rollupVinylProject does not add it to the project subtotal.
+  const subtotal = workflowMaterialTotal + workflowMachineTotal + workflowLaborTotal + equipmentTotal + projectPersonnelTotal + travelTotal + suppliesTotal;
   const markup = subtotal * (num(project.markup_percent) / 100);
   if (markup > 0.005) {
     parts.push(manualCostPart({
