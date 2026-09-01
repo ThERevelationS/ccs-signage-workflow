@@ -8,6 +8,7 @@ const LINKS = [
   { label: "Painting Settings", desc: "Paint mix, coverage, mask, consumables, labor and quantity tiers", to: "/PaintingSettings" },
   { label: "CNC Settings", desc: "Machine rate calculator, labor, setup, material multipliers and cut speeds", to: "/CNCSettings" },
   { label: "Laser Settings", desc: "Parameter and engraving laser rates, calculators, material multipliers and speeds", to: "/LaserSettings" },
+  { label: "Metal Settings", desc: "Fabrication, welding and finishing labor defaults", to: "/MetalSettings" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
