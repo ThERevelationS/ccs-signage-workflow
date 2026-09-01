@@ -77,10 +77,34 @@ export function calcEquipment(selected, inventory) {
         : num(eq.pickup_delivery_cost);
     if (entry.include_delivery) entryTotal += deliveryCharge;
 
-    (entry.attachments || []).forEach((att) => {
-      const a = inventory.find((i) => i.id === att.id);
-      if (a) entryTotal += getRentalCost(a) * (att.qty || 1);
-    });
+    // Current CCS rows may use normalized `attachments[]`; SignEstimate Pro
+    // also persisted attachment_counts / attachment_ids / sub_attachment_counts.
+    // Honor every source storage shape so reopening an older configuration does
+    // not silently drop equipment costs.
+    if (entry.attachments?.length) {
+      entry.attachments.forEach((att) => {
+        const id = att.id || att.inventory_id;
+        const a = inventory.find((i) => i.id === id);
+        if (a) entryTotal += getRentalCost(a) * (att.qty || 1);
+      });
+    } else if (entry.attachment_counts) {
+      Object.entries(entry.attachment_counts).forEach(([id, qty]) => {
+        const a = inventory.find((i) => i.id === id && i.material_type === "attachment");
+        if (a) entryTotal += getRentalCost(a) * num(qty, 0);
+      });
+    } else if (entry.attachment_ids?.length) {
+      entry.attachment_ids.forEach((id) => {
+        const a = inventory.find((i) => i.id === id && i.material_type === "attachment");
+        if (a) entryTotal += getRentalCost(a);
+      });
+    }
+
+    if (entry.sub_attachment_counts) {
+      Object.entries(entry.sub_attachment_counts).forEach(([id, qty]) => {
+        const sub = inventory.find((i) => i.id === id && i.material_type === "sub_attachment");
+        if (sub) entryTotal += getRentalCost(sub) * num(qty, 0);
+      });
+    }
 
     return { ...entry, equipment_cost: entryTotal };
   });
