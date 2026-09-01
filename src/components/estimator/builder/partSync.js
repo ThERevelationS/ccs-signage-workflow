@@ -915,66 +915,134 @@ function extractVinyl(project, catalogs = {}) {
 
 function extractMetal(project) {
   const parts = [];
+  const represented = {
+    material: 0,
+    supplies: 0,
+    fabrication: 0,
+    welding: 0,
+    finishing: 0,
+  };
+
   (project.items || []).forEach((item, index) => {
-    parts.push(makePart({
-      key: `metal:item:${index}:material`,
-      name: item.description || item.item_type || "Metal Material",
-      type: "material",
-      subtype: item.item_type || "metal",
-      sourcePath: `items[${index}].inventory_item_id`,
-      entity: "Inventory",
-      inventoryId: item.inventory_item_id,
-      quantity: item.material_length_ft || item.quantity || 1,
-      unit: item.material_length_ft ? "ft" : "item",
-      unitCost: item.material_length_ft
-        ? num(item.material_cost) / Math.max(num(item.material_length_ft) * num(item.quantity, 1), 0.000001)
-        : num(item.material_cost) / Math.max(num(item.quantity, 1), 1),
-      extendedCost: item.material_cost,
-      builderData: item,
-      calculation: { material_cost: item.material_cost },
-    }));
+    const itemQty = Math.max(num(item.quantity, 1), 0.000001);
+    const lengthPerUnit = num(item.material_length_ft);
+    const materialExtended = num(item.material_cost) * itemQty;
+    represented.material += materialExtended;
+
+    if (Math.abs(materialExtended) > 0.005 || item.inventory_item_id) {
+      const linkedUsageQty = lengthPerUnit > 0 ? lengthPerUnit * itemQty : itemQty;
+      const frozenMaterialUnitCost = lengthPerUnit > 0
+        ? num(item.material_cost) / Math.max(lengthPerUnit, 0.000001)
+        : num(item.material_cost);
+      parts.push(makePart({
+        key: `metal:item:${index}:material`,
+        name: item.description ? `${item.description} — Metal Material` : (item.item_type || "Metal Material"),
+        type: "material",
+        subtype: item.item_type || "metal",
+        sourcePath: `items[${index}].inventory_item_id`,
+        entity: item.inventory_item_id ? "Inventory" : "",
+        inventoryId: item.inventory_item_id || "",
+        quantity: linkedUsageQty,
+        unit: lengthPerUnit > 0 ? "source_unit" : "item",
+        unitCost: frozenMaterialUnitCost,
+        extendedCost: materialExtended,
+        builderData: item,
+        calculation: {
+          item_quantity: itemQty,
+          material_length_per_unit: lengthPerUnit,
+          material_cost_per_item: item.material_cost,
+          total_material_cost: materialExtended,
+        },
+        pricingBasis: {
+          pricing_mode: "legacy_cost_per_unit",
+          material_length_ft_per_item: lengthPerUnit,
+          item_quantity: itemQty,
+        },
+      }));
+    }
+
+    const suppliesExtended = num(item.supplies_cost) * itemQty;
+    represented.supplies += suppliesExtended;
+    if (Math.abs(suppliesExtended) > 0.005) {
+      parts.push(manualCostPart({
+        key: `metal:item:${index}:supplies`,
+        name: item.description ? `${item.description} — Fabrication Consumables` : "Fabrication Consumables",
+        type: "consumable",
+        subtype: "supplies",
+        sourcePath: `items[${index}].supplies_cost`,
+        cost: suppliesExtended,
+        quantity: itemQty,
+        unit: "item",
+        builderData: item,
+        calculation: { item_quantity: itemQty, supplies_cost_per_item: item.supplies_cost, total_supplies_cost: suppliesExtended },
+      }));
+    }
+
     [
-      ["supplies", "Fabrication Consumables", "consumable", item.supplies_cost, 1, "job"],
-      ["fabrication", "Fabrication Labor", "labor", item.fabrication_cost, num(item.fabrication_hours) * num(item.quantity, 1), "hour"],
-      ["welding", "Welding Labor", "labor", item.welding_cost, num(item.welding_hours) * num(item.quantity, 1), "hour"],
-      ["finishing", "Finishing Labor", "labor", item.finishing_cost, num(item.finishing_hours) * num(item.quantity, 1), "hour"],
-    ].forEach(([key, label, type, cost, qty, unit]) => {
-      if (num(cost) <= 0.005) return;
+      ["fabrication", "Fabrication Labor", item.fabrication_cost, item.fabrication_hours],
+      ["welding", "Welding Labor", item.welding_cost, item.welding_hours],
+      ["finishing", "Finishing Labor", item.finishing_cost, item.finishing_hours],
+    ].forEach(([key, label, perItemCost, hoursPerItem]) => {
+      const extended = num(perItemCost) * itemQty;
+      represented[key] += extended;
+      if (Math.abs(extended) <= 0.005) return;
+      const totalHours = num(hoursPerItem) * itemQty;
       parts.push(manualCostPart({
         key: `metal:item:${index}:${key}`,
         name: item.description ? `${item.description} — ${label}` : label,
-        type,
+        type: "labor",
         subtype: key,
-        sourcePath: `items[${index}].${key === "supplies" ? "supplies_cost" : `${key}_cost`}`,
-        cost,
-        quantity: qty || 1,
-        unit: qty ? unit : "job",
+        sourcePath: `items[${index}].${key}_cost`,
+        cost: extended,
+        quantity: totalHours || itemQty,
+        unit: totalHours ? "hour" : "item",
         builderData: item,
-        calculation: item,
+        calculation: {
+          item_quantity: itemQty,
+          hours_per_item: hoursPerItem,
+          cost_per_item: perItemCost,
+          total_cost: extended,
+        },
       }));
     });
   });
-  if (num(project.extra_supplies_cost) > 0.005) {
+
+  // Saved Git-era category totals are authoritative. Materialize only a balance
+  // when a historical/imported record cannot be fully reconstructed from its
+  // item-level snapshots. CCS-only supplies percentages/markup are intentionally
+  // excluded from source-faithful Metal pricing.
+  const authoritative = {
+    material: num(project.total_material_cost, represented.material),
+    supplies: num(project.total_supplies_cost, represented.supplies),
+    fabrication: num(project.total_fabrication_cost, represented.fabrication),
+    welding: num(project.total_welding_cost, represented.welding),
+    finishing: num(project.total_finishing_cost, represented.finishing),
+  };
+  const labels = {
+    material: ["Metal Material Adjustment", "material"],
+    supplies: ["Metal Supplies Adjustment", "consumable"],
+    fabrication: ["Fabrication Labor Adjustment", "labor"],
+    welding: ["Welding Labor Adjustment", "labor"],
+    finishing: ["Finishing Labor Adjustment", "labor"],
+  };
+  Object.keys(authoritative).forEach((key) => {
+    const adjustment = authoritative[key] - represented[key];
+    if (Math.abs(adjustment) <= 0.005) return;
     parts.push(manualCostPart({
-      key: "metal:extra-supplies",
-      name: "Additional Fabrication Supplies",
-      type: "consumable",
-      subtype: "extra_supplies",
-      sourcePath: "extra_supplies_cost",
-      cost: project.extra_supplies_cost,
+      key: `metal:${key}-adjustment`,
+      name: labels[key][0],
+      type: labels[key][1],
+      subtype: `${key}_adjustment`,
+      sourcePath: `total_${key}_cost`,
+      cost: adjustment,
+      calculation: {
+        authoritative_total: authoritative[key],
+        represented_total: represented[key],
+        adjustment,
+      },
     }));
-  }
-  if (num(project.markup_amount) > 0.005) {
-    parts.push(manualCostPart({
-      key: "metal:markup",
-      name: "Builder Markup",
-      type: "pricing",
-      subtype: "markup",
-      sourcePath: "markup_amount",
-      cost: project.markup_amount,
-      calculation: { markup_percent: project.markup_percent, markup_amount: project.markup_amount },
-    }));
-  }
+  });
+
   return parts;
 }
 
