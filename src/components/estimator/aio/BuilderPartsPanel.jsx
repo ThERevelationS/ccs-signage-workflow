@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   Box,
+  BookmarkPlus,
   ChevronDown,
   ChevronRight,
   ClipboardCopy,
@@ -28,6 +29,8 @@ import { money } from "@/components/estimator/aioPricing";
 import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
 import { clonePartGroupInProduct, moveIndependentPartGroup } from "@/components/estimator/parts/partGroupService";
 import MovePartGroupModal from "./MovePartGroupModal";
+import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
+import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
