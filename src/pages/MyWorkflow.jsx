@@ -62,6 +62,7 @@ export default function MyWorkflow() {
   const [editTaskText, setEditTaskText] = useState("");
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
+  const [stageFilter, setStageFilter] = useState("all");
 
   useEffect(() => {
     document.title = "My Workflow - Workflow Manager";
@@ -145,6 +146,7 @@ export default function MyWorkflow() {
           _isGeneral: true,
           client_name: "General Office Task",
           current_stage: null,
+          _stage: gt.stage || "",
           due_date: gt.due_date,
           notes: [{
             id: gt.id,
@@ -511,6 +513,12 @@ export default function MyWorkflow() {
 
   const userName = currentUser?.full_name || currentUser?.email || "User";
 
+  const visibleWorkOrders = stageFilter === "all" ? workOrders : workOrders.filter(wo => {
+    if (stageFilter === "general") return wo._isGeneral && !wo._stage;
+    if (wo._isGeneral) return (wo._stage || "") === stageFilter;
+    return wo.current_stage === stageFilter || (wo.notes || []).some(t => t.stage === stageFilter);
+  });
+
   return (
     <div className="min-h-screen p-6">
       <div className="w-full">
@@ -522,7 +530,26 @@ export default function MyWorkflow() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">My Workflow</h1>
-              <p className="text-gray-500 text-xs">{userName} - {workOrders.length} items</p>
+              <p className="text-gray-500 text-xs">{userName} - {visibleWorkOrders.length} items</p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Label className="text-xs text-gray-500">Stage:</Label>
+              <Select value={stageFilter} onValueChange={setStageFilter}>
+                <SelectTrigger className="h-8 w-40 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All stages</SelectItem>
+                  <SelectItem value="general">General (no stage)</SelectItem>
+                  <SelectItem value="estimating">Estimating</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="permitting">Permitting</SelectItem>
+                  <SelectItem value="design">Design</SelectItem>
+                  <SelectItem value="production">Production</SelectItem>
+                  <SelectItem value="fabrication">Fabrication</SelectItem>
+                  <SelectItem value="installation">Installation</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -540,7 +567,7 @@ export default function MyWorkflow() {
               </tr>
             </thead>
             <tbody>
-              {workOrders.map((wo, index) => {
+              {visibleWorkOrders.map((wo, index) => {
                 const myTasks = getMyTasksForWorkOrder(wo);
                 
                 return (
@@ -576,12 +603,12 @@ export default function MyWorkflow() {
                     <td className="px-2 py-1 border-r">
                       <Badge 
                         style={{ 
-                          backgroundColor: wo._isGeneral ? '#EDE9FE' : (stageColors[wo.current_stage]?.bg || '#E5E7EB'), 
-                          color: wo._isGeneral ? '#5B21B6' : (stageColors[wo.current_stage]?.text || '#374151') 
+                          backgroundColor: wo._isGeneral ? (wo._stage ? (stageColors[wo._stage]?.bg || '#EDE9FE') : '#EDE9FE') : (stageColors[wo.current_stage]?.bg || '#E5E7EB'), 
+                          color: wo._isGeneral ? (wo._stage ? (stageColors[wo._stage]?.text || '#5B21B6') : '#5B21B6') : (stageColors[wo.current_stage]?.text || '#374151') 
                         }} 
                         className="text-[10px] font-semibold px-1.5 py-0.5"
                       >
-                        {wo._isGeneral ? 'General' : stageDisplayNames[wo.current_stage]}
+                        {wo._isGeneral ? (wo._stage ? stageDisplayNames[wo._stage] : 'General') : stageDisplayNames[wo.current_stage]}
                       </Badge>
                     </td>
 
@@ -666,9 +693,16 @@ export default function MyWorkflow() {
                                           <Button size="sm" variant="ghost" onClick={() => { setEditingTask(null); setEditTaskText(""); }} className="h-5 px-1"><X className="w-2.5 h-2.5" /></Button>
                                         </div>
                                       ) : (
-                                        <p className={`text-xs ${item.task.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
-                                          {item.task.text}
-                                        </p>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          <p className={`text-xs ${item.task.completed ? 'line-through text-gray-500' : 'font-medium'}`}>
+                                            {item.task.text}
+                                          </p>
+                                          {item.task.stage && item.task.stage !== wo.current_stage && (
+                                            <Badge style={{ backgroundColor: stageColors[item.task.stage]?.bg || '#E5E7EB', color: stageColors[item.task.stage]?.text || '#374151' }} className="text-[9px] font-semibold px-1 py-0">
+                                              {stageDisplayNames[item.task.stage]}
+                                            </Badge>
+                                          )}
+                                        </div>
                                       )}
                                     </div>
                                     {!isEditingThisTask && (

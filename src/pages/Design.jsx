@@ -3,6 +3,7 @@ import { WorkOrder } from "@/entities/WorkOrder";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import DragDropList from "../components/workflow/DragDropList";
+import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -217,6 +218,7 @@ export default function Design() {
         </div>
       )}
       <div className="w-full max-w-[95vw] mx-auto">
+        <StageTasksPanel stage="design" />
 
         <div className="clay-card">
           {isLoading ?

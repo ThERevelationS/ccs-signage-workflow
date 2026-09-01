@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import DragDropList from "@/components/workflow/DragDropList";
+import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,7 @@ export default function Estimating() {
         </div>
       )}
 
+      {!isFullscreen && <StageTasksPanel stage="estimating" />}
       <div className={isFullscreen ? "h-full" : "max-w-7xl mx-auto"}>
         {isLoading ? (
           <div className="flex items-center justify-center h-64">

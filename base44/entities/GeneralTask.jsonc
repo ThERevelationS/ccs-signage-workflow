@@ -1,11 +1,24 @@
 {
   "name": "GeneralTask",
   "type": "object",
-  "description": "General office task not tied to a client or work order. Mirrors the task object shape used inside WorkOrder.notes so it can be assigned and tracked the same way.",
+  "description": "General office task not tied to a client or work order. Mirrors the task object shape used inside WorkOrder.notes so it can be assigned and tracked the same way. When `stage` is set, the task also appears on the matching workflow stage page (Estimating, Design, etc.).",
   "properties": {
     "text": {
       "type": "string",
       "description": "Task description"
+    },
+    "stage": {
+      "type": "string",
+      "description": "Workflow stage this task is assigned to, so it surfaces on that workflow page. Empty means a general office task not tied to a stage page.",
+      "enum": [
+        "estimating",
+        "sales",
+        "permitting",
+        "design",
+        "production",
+        "fabrication",
+        "installation"
+      ]
     },
     "assigned_to": {
       "type": "array",

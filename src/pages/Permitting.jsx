@@ -8,6 +8,7 @@ import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -487,6 +488,8 @@ export default function Permitting() {
             </div>
           </div>
         </div>
+
+        <StageTasksPanel stage="permitting" />
 
         {/* Active */}
         {renderSection(activeGroups, "Active", '🟢', '#16a34a')}

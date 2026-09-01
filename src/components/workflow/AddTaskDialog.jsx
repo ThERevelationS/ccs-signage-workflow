@@ -14,6 +14,17 @@ const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
+const STAGE_OPTIONS = [
+  { value: "", label: "General / No stage" },
+  { value: "estimating", label: "Estimating" },
+  { value: "sales", label: "Sales" },
+  { value: "permitting", label: "Permitting" },
+  { value: "design", label: "Design" },
+  { value: "production", label: "Production" },
+  { value: "fabrication", label: "Fabrication" },
+  { value: "installation", label: "Installation" },
+];
+
 export default function AddTaskDialog({ isOpen, onClose }) {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
@@ -27,6 +38,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   const [assignedTo, setAssignedTo] = useState([]);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState("");
   const [isGeneralTask, setIsGeneralTask] = useState(false);
+  const [stage, setStage] = useState("");
   const [subTasks, setSubTasks] = useState([]);
   const [expandedSubTasks, setExpandedSubTasks] = useState({});
 
@@ -57,6 +69,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
     setAssignedTo([]);
     setSelectedWorkOrder("");
     setIsGeneralTask(false);
+    setStage("");
     setSubTasks([]);
     setExpandedSubTasks({});
     setSaveSuccess(false);
@@ -135,6 +148,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
         timestamp: new Date().toISOString(),
         completed: false,
         assigned_to: assignedTo || [],
+        stage: stage || undefined,
         sub_tasks: subTasks
           .filter(st => st.text.trim())
           .map(st => ({
@@ -155,6 +169,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
         // Save as a standalone general office task (no work order)
         await GeneralTask.create({
           text: newTask.text,
+          stage: newTask.stage,
           assigned_to: newTask.assigned_to,
           sub_tasks: newTask.sub_tasks,
           completed: false,
@@ -234,7 +249,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
                   <Briefcase className="w-4 h-4" />
                   Select Work Order *
                 </Label>
-                <Select value={selectedWorkOrder} onValueChange={setSelectedWorkOrder}>
+                <Select value={selectedWorkOrder} onValueChange={(v) => { setSelectedWorkOrder(v); if (!stage) { const wo = workOrders.find(w => w.id === v); if (wo?.current_stage) setStage(wo.current_stage); } }}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Choose a work order..." />
                   </SelectTrigger>
@@ -249,6 +264,24 @@ export default function AddTaskDialog({ isOpen, onClose }) {
                 </Select>
               </div>
             )}
+
+            {/* Workflow Stage / Page */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                <ClipboardList className="w-4 h-4" />
+                Workflow Stage / Page
+              </Label>
+              <Select value={stage || "none"} onValueChange={(v) => setStage(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Assign to a workflow page…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAGE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value || "none"} value={opt.value || "none"}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Main Task */}
             <div className="clay-card p-4 bg-blue-50/50">
