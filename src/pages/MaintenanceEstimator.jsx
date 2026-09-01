@@ -210,11 +210,11 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
             <p className="text-slate-600">Cleaning, repaints, LED retrofits, electrical, and more.</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Link to={createPageUrl("MaintenanceInventory")}>
-              <Button variant="outline" className="bg-white"><Package className="w-4 h-4 mr-2" /> Inventory</Button>
+            <Link to="/MasterInventory">
+              <Button variant="outline" className="bg-white"><Package className="w-4 h-4 mr-2" /> Master Inventory</Button>
             </Link>
-            <Button variant="outline" onClick={() => navigate(createPageUrl("SignMaintenanceProjects"))}>
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
+            <Button variant="outline" onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}>
+              <ArrowLeft className="w-4 h-4 mr-2" /> {embedded ? 'Back to Products' : 'Back to Estimator'}
             </Button>
           </div>
         </div>
@@ -244,15 +244,9 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <Label>Client Name *</Label>
-                            <ClientSearchInput
-                              value={project.client_name}
-                              onChange={(v) => updateProject({ client_name: v })}
-                              onSelectProject={(d) => updateProject({
-                                client_name: d.client_name || project.client_name,
-                                project_name: d.project_name || project.project_name,
-                                estimate_number: d.estimate_number || project.estimate_number,
-                                hyperlink: d.hyperlink || project.hyperlink,
-                              })}
+                            <Input
+                              value={project.client_name || ''}
+                              onChange={(e) => updateProject({ client_name: e.target.value })}
                               className="mt-1"
                               placeholder="Enter client name"
                             />
@@ -268,7 +262,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                             <Input value={project.estimate_number} onChange={(e) => updateProject({ estimate_number: e.target.value })} placeholder="e.g. SVC-2026-001" className="mt-1" />
                           </div>
                           <div>
-                            <Label>Project Link *</Label>
+                            <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
                             <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://…" className="mt-1" />
                           </div>
                         </div>
