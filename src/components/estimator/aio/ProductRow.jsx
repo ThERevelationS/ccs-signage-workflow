@@ -32,6 +32,14 @@ const priceMeta = (line) => {
       differs,
     };
   }
+  if (line.price_recalc_required) {
+    return {
+      label: "Price changed · recalculate Builder",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: AlertTriangle,
+      differs: true,
+    };
+  }
   if (line.price_state === "legacy_frozen") {
     return {
       label: differs ? "Legacy price frozen · update available" : "Legacy price frozen",
@@ -185,6 +193,16 @@ export default function ProductRow({
             >
               <AlertTriangle className="w-3 h-3" />
               Resolve Parts First
+            </button>
+          ) : line.price_recalc_required ? (
+            <button
+              type="button"
+              onClick={() => onEdit?.(line, index)}
+              className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-800 hover:bg-amber-100"
+              title={line.price_recalc_reason || "Open this Builder, recalculate with current Master Inventory, then save it before accepting Update Price."}
+            >
+              <RefreshCw className="w-3 h-3" />
+              Recalculate Builder
             </button>
           ) : (
             <button
