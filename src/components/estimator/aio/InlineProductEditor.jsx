@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import FoundationEstimator from "@/pages/FoundationEstimator";
 import ChannelLetterEstimator from "@/pages/ChannelLetterEstimator";
 import VinylEstimator from "@/pages/VinylEstimator";
