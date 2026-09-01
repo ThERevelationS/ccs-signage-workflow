@@ -3,7 +3,7 @@
 // Each workflow has its own vinyl + machines + parts + roll layout, so different
 // materials never get nested onto the same physical roll.
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
