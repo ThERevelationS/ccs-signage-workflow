@@ -2736,7 +2736,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
   return genericUnitCost(row);
 }
 
-export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false }) {
+export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false }) {
   if (!builderProduct?.id || !sourceProject) {
     return {
       partCount: 0,
@@ -2813,17 +2813,20 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const currentExtended = num(descriptor.extended_cost);
     const timestamp = nowIso();
 
+    const lastBuilderCalculatedPricing = old?.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {};
+    const builderAlreadyCalculatedCurrentPricing = !!old && same(currentPricing, lastBuilderCalculatedPricing);
     if (
       pricingChanged &&
       !legacyMode &&
       builderProduct.price_state !== "unchecked" &&
-      !directLiveReprice
+      !directLiveReprice &&
+      !builderRecalculated &&
+      !builderAlreadyCalculatedCurrentPricing
     ) {
-      // A frozen inventory snapshot that differs from the current catalog is
-      // sufficient evidence that pricing changed. Do not depend on updated_date
-      // ordering here: imported/copied rows can have missing or non-monotonic
-      // timestamps, and accepting a stale Builder total would be worse than
-      // conservatively requiring a Builder recalculation.
+      // A frozen inventory snapshot that differs from the current catalog means
+      // the accepted price is stale. Non-live Builders must run their calculator
+      // before Update Price unless we have explicit proof that this exact catalog
+      // pricing was already used by the last Builder calculation.
       recalcRequired = true;
       recalcPartNames.push(currentName || descriptor.part_name);
     }
@@ -2870,6 +2873,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         pricing_basis_snapshot: {
           ...descriptor.pricing_basis_snapshot,
           inventory_pricing: currentPricing,
+          ...(builderRecalculated ? { builder_calculated_inventory_pricing: currentPricing } : {}),
         },
         quantity: descriptor.quantity,
         unit: descriptor.unit,
@@ -2932,6 +2936,9 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       pricing_basis_snapshot: {
         ...descriptor.pricing_basis_snapshot,
         inventory_pricing: currentPricing,
+        builder_calculated_inventory_pricing: builderRecalculated
+          ? currentPricing
+          : old.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {},
       },
       quantity: descriptor.quantity,
       unit: descriptor.unit,
@@ -3107,11 +3114,15 @@ export async function acceptBuilderPartPrices(builderProductId) {
     ? []
     : activeParts.filter((part) => {
         if (["manual", "manual_addon", "detached_override"].includes(part.builder_sync_state)) return false;
-        // Any pricing mismatch on a Builder-produced Part means the saved
-        // non-live Builder total is stale. Timestamp ordering is intentionally
-        // ignored because imported/copied inventory rows are not guaranteed to
-        // have monotonic updated_date values.
-        return !same(pricingSnapshot(part.current_inventory_snapshot), pricingSnapshot(part.frozen_inventory_snapshot));
+        const currentPricing = pricingSnapshot(part.current_inventory_snapshot);
+        const frozenPricing = pricingSnapshot(part.frozen_inventory_snapshot);
+        if (same(currentPricing, frozenPricing)) return false;
+        const builderCalculatedPricing = part.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {};
+        // Frozen pricing may intentionally differ after the Builder has been
+        // recalculated. That is exactly the state Update Price is meant to accept.
+        // Block only when the current catalog differs from BOTH the frozen price
+        // and the pricing explicitly used by the last Builder calculation.
+        return !same(currentPricing, builderCalculatedPricing);
       });
 
   if (builder?.price_recalc_required || staleCatalogParts.length > 0) {
