@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { MaintenanceProject, MaintenanceInventory, MaintenanceEquipment, MaintenanceActionRate, Settings } from "@/entities/all";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { useSearchParams, Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,8 @@ import LadderSelector from "@/components/channelLetterInstall/LadderSelector";
 import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
 import TravelCostCard from "@/components/channelLetterInstall/TravelCostCard";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
-import ClientSearchInput from "@/components/ClientSearchInput";
-import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
