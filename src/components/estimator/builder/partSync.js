@@ -2751,6 +2751,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       removedPartCount: 0,
       recalcRequired: false,
       recalcReason: "",
+      usesDirectLiveReprice: false,
       currentPartsTotal: 0,
       frozenPartsTotal: 0,
       manualAddonFrozenTotal: 0,
@@ -3066,6 +3067,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     recalcReason: recalcRequired
       ? `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
       : "",
+    usesDirectLiveReprice: directLiveReprice && !legacyMode,
     currentPartsTotal,
     frozenPartsTotal,
     manualAddonFrozenTotal,
