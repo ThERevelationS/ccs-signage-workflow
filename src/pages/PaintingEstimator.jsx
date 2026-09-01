@@ -50,7 +50,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         const settingsMap = {};
         (settingsRows || []).forEach((row) => { settingsMap[row.setting_name] = row.setting_value; });
         setSettings(settingsMap);
-        const suppliesDefault = Number(settingsMap.default_paint_supplies_per_sqft || 1.25);
+        const suppliesDefault = Number(settingsMap.default_paint_supplies_per_sqft) || 1.25;
         if (existing) {
           setProject({
             ...existing,
