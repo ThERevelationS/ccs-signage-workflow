@@ -2666,7 +2666,7 @@ export function extractBuilderParts(moduleKey, project, catalogs = {}, options =
     case "channel_letters": return extractChannel(project, catalogs);
     case "vinyl": return extractVinyl(project, catalogs, options);
     case "metal": return extractMetal(project);
-    case "brick_stone": return extractBrick(project);
+    case "brick_stone": return extractBrick(project, catalogs, options);
     case "maintenance": return extractMaintenance(project, catalogs);
     case "cnc": return extractCNC(project);
     case "laser": return extractLaser(project);
