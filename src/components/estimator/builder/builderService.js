@@ -329,6 +329,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       sourceProject: sourceProject || {},
       acceptPrices: false,
       legacyMode: builder.price_state === "legacy_frozen",
+      // This path runs only after the authoritative Builder calculator has
+      // produced and saved sourceProject/liveTotal. Mark the current inventory
+      // pricing used by that calculation so Update Price can safely accept it.
+      builderRecalculated: true,
     });
   }
 
