@@ -8,12 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
 import ClientSearchInput from "@/components/ClientSearchInput";
-import InstallLineItem from "@/components/channelLetterInstall/InstallLineItem";
 import InstallSummaryCard from "@/components/channelLetterInstall/InstallSummaryCard";
 import ItemsList from "@/components/channelLetterInstall/ItemsList";
 import CrewEquipmentHint from "@/components/channelLetterInstall/CrewEquipmentHint";
@@ -209,7 +208,6 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   useEffect(() => {
     if (activeTab === "letters" && !showLettersTab) setActiveTab("project");
     if ((activeTab === "items" || activeTab === "crew") && scope === "letters_only") setActiveTab("project");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope]);
 
   // Aggregate materials across items for the Materials tab
@@ -321,7 +319,6 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       }
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasLoaded, hasEquipment, project.site_address, settings.install_shop_address, scope]);
 
   // Auto-suggest equipment when max install height changes (only if user hasn't picked any yet)
@@ -339,7 +336,6 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const crewSize = (project.personnel || []).length || suggestCrewSize(project.items);
     const rows = suggested.map((inv) => selectedEquipmentFromInventory(inv, projectLaborHours, crewSize));
     setProject((prev) => ({ ...prev, selected_equipment: rows }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxInstallHeight, equipmentInventory, hasLoaded]);
 
   // Auto-fill personnel when the user enters the Crew & Equipment tab and the crew is empty.
@@ -362,7 +358,6 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     const newCrew = suggestPersonnelForProject(project.items, projectLaborHours, rateForRole);
     if (newCrew.length === 0) return;
     setProject((prev) => ({ ...prev, personnel: newCrew }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, hasLoaded]);
 
   // Apply AI-generated installation items
@@ -417,7 +412,6 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, recalculated]);
 
   // Save / Export
