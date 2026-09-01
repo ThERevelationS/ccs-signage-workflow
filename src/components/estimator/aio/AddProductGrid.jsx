@@ -7,6 +7,7 @@ import {
   Cpu,
   Hammer,
   Sticker,
+  Paintbrush,
   Plus,
   Search,
   ArrowRight,
@@ -82,6 +83,14 @@ const META = {
     accent: "border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/60",
     blurb: "Cut vinyl, printed graphics, laminate, application and production labor.",
     keywords: "vinyl graphics graphic print printed printing laminate decal decals wrap film application",
+  },
+  painting: {
+    icon: Paintbrush,
+    color: "text-sky-700",
+    iconBg: "bg-sky-100",
+    accent: "border-sky-200 hover:border-sky-400 hover:bg-sky-50/60",
+    blurb: "Paint panels, dimensional lettering and complex shapes with paint, mask, supplies and labor.",
+    keywords: "paint painting finish finishing spray color pms panel lettering letters dimensional mask primer",
   },
 };
 
