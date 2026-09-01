@@ -3,6 +3,7 @@ import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { instantiateQuickProduct } from "@/components/estimator/products/quickProductService";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -35,6 +36,8 @@ async function captureProductPayload({ line }) {
   const activeGroups = (groups || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
   const currentTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal));
+  const frozenCustomerPrice = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(line));
+  const currentCustomerPrice = liveCustomerUnitPrice(line);
   return {
     product_name: line.client_product_name || builder.client_product_name || line.project_name || "Product",
     template_version: 2,
@@ -56,8 +59,9 @@ async function captureProductPayload({ line }) {
     part_groups_snapshot: activeGroups.map((group) => ({ ...cloneSnapshot(group), snapshot_source_group_id: group.id })),
     price_snapshot: {
       frozen_cost: frozenTotal,
-      frozen_customer_price: num(builder.frozen_customer_price, frozenTotal),
+      frozen_customer_price: frozenCustomerPrice,
       current_recalculated_cost: currentTotal,
+      current_recalculated_customer_price: currentCustomerPrice,
       price_state: builder.price_state || line.price_state || "current",
       price_delta: num(builder.price_delta, currentTotal - frozenTotal),
       price_delta_percent: num(builder.price_delta_percent),
@@ -67,7 +71,7 @@ async function captureProductPayload({ line }) {
     },
     detached_part_count: num(builder.detached_part_count),
     needs_reattach_review: !!builder.needs_reattach_review,
-    total_price: frozenTotal,
+    total_price: frozenCustomerPrice,
   };
 }
 
