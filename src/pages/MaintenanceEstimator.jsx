@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { MaintenanceProject, MaintenanceInventory, MaintenanceEquipment, MaintenanceActionRate, Settings } from "@/entities/all";
+import { MaintenanceProject, MaintenanceInventory, MaintenanceActionRate, Settings } from "@/entities/all";
 import { useSearchParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         Settings.list(),
         MaintenanceInventory.list("sort_order"),
-        MaintenanceEquipment.list("sort_order"),
+        base44.entities.ChannelLetterInstallEquipment.list("sort_order", 500),
         MaintenanceActionRate.list(),
         editId ? MaintenanceProject.get(editId).catch(() => null) : Promise.resolve(null),
         estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
@@ -69,7 +69,10 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       (s || []).forEach(x => { sObj[x.setting_name] = x.setting_value; });
       setSettings(sObj);
       setInventory(inv || []);
-      setEquipmentInventory(equipInv || []);
+      setEquipmentInventory((equipInv || [])
+        .filter((row) => row.is_active !== false && row.show_in_sign_maintenance !== false)
+        .map((row) => ({ ...row, _inventory_entity: "ChannelLetterInstallEquipment" })));
+
       setRates(r || []);
       setEstimateContext(estimate || null);
 
