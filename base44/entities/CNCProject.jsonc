@@ -33,6 +33,10 @@
       "items": {
         "type": "object",
         "properties": {
+          "builder_item_id": {
+            "type": "string",
+            "description": "Stable hidden estimator row identity used only for Product/Part reconciliation. Existing rows are seeded from their legacy array index; new rows use generated IDs."
+          },
           "item_type": {
             "type": "string",
             "enum": [
