@@ -14,23 +14,30 @@ const fmt = (value, round = false) => {
 const lines = (value) => String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 
 const TOGGLES = [
-  ["hide_section_prices", "Bundle Product pricing"],
-  ["show_category_column", "Show category"],
-  ["show_section_descriptions", "Show Product descriptions"],
-  ["show_quantity_column", "Show quantity"],
-  ["show_scope_lists", "Show inclusions / exclusions"],
-  ["show_subtotal_line", "Show subtotal"],
-  ["show_discount_line", "Show discount"],
-  ["show_fees_line", "Show fees"],
-  ["show_tax_line", "Show tax"],
-  ["show_deposit_lines", "Show deposit / balance"],
-  ["show_notes_on_quote", "Show estimate notes"],
-  ["show_terms_block", "Show terms & conditions"],
-  ["show_warranty_block", "Show warranty"],
-  ["show_lead_time_block", "Show lead time"],
-  ["show_signature_block", "Show signature block"],
-  ["show_validity_footer", "Show validity footer"],
-  ["round_prices_to_dollar", "Round displayed prices"],
+  ["hide_section_prices", "Bundle Product pricing", false],
+  ["show_company_block", "Show company block", true],
+  ["show_logo", "Show logo", false],
+  ["show_contact_block", "Show customer contact", true],
+  ["show_estimate_number", "Show estimate number", true],
+  ["show_po_number", "Show PO number", true],
+  ["show_site_address", "Show site address", true],
+  ["show_dates", "Show quote date", true],
+  ["show_category_column", "Show category", true],
+  ["show_section_descriptions", "Show Product descriptions", true],
+  ["show_quantity_column", "Show quantity", false],
+  ["show_scope_lists", "Show inclusions / exclusions", true],
+  ["show_subtotal_line", "Show subtotal", true],
+  ["show_discount_line", "Show discount", true],
+  ["show_fees_line", "Show fees", true],
+  ["show_tax_line", "Show tax", true],
+  ["show_deposit_lines", "Show deposit / balance", true],
+  ["show_notes_on_quote", "Show estimate notes", true],
+  ["show_terms_block", "Show terms & conditions", true],
+  ["show_warranty_block", "Show warranty", true],
+  ["show_lead_time_block", "Show lead time", true],
+  ["show_signature_block", "Show signature block", true],
+  ["show_validity_footer", "Show validity footer", true],
+  ["round_prices_to_dollar", "Round displayed prices", false],
 ];
 
 const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefined || estimate[key] === null ? fallback : estimate[key] !== false;
@@ -81,6 +88,7 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
             <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">COMPANY BLOCK</div>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Company" value={estimate.company_name || ""} onChange={(value) => set("company_name", value)} className="col-span-2" />
+              <Field label="Logo URL" value={estimate.company_logo_url || ""} onChange={(value) => set("company_logo_url", value)} className="col-span-2" />
               <Field label="Phone" value={estimate.company_phone || ""} onChange={(value) => set("company_phone", value)} />
               <Field label="Email" value={estimate.company_email || ""} onChange={(value) => set("company_email", value)} />
               <Field label="Website" value={estimate.company_website || ""} onChange={(value) => set("company_website", value)} className="col-span-2" />
@@ -92,10 +100,10 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
           <div>
             <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">DISPLAY</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1.5">
-              {TOGGLES.map(([key, label]) => (
+              {TOGGLES.map(([key, label, fallback]) => (
                 <label key={key} className="flex items-center justify-between gap-3 rounded border border-gray-200 bg-gray-50 px-2.5 py-2 text-[10px] text-gray-700 cursor-pointer">
                   <span>{label}</span>
-                  <input type="checkbox" checked={key === "hide_section_prices" || key === "round_prices_to_dollar" ? estimate[key] === true : defaultBool(estimate, key)} onChange={(event) => set(key, event.target.checked)} className="w-3.5 h-3.5 accent-red-600" />
+                  <input type="checkbox" checked={defaultBool(estimate, key, fallback)} onChange={(event) => set(key, event.target.checked)} className="w-3.5 h-3.5 accent-red-600" />
                 </label>
               ))}
             </div>
@@ -108,6 +116,7 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
               <div className="min-w-0">
                 {defaultBool(estimate, "show_company_block") && (
                   <>
+                    {defaultBool(estimate, "show_logo", false) && estimate.company_logo_url && <img src={estimate.company_logo_url} alt="Company logo" className="max-h-12 max-w-[190px] object-contain object-left mb-2" />}
                     <div className="text-[21px] font-extrabold tracking-tight">{estimate.company_name || "Company Name"}</div>
                     {estimate.company_address && <div className="mt-1 text-[10px] whitespace-pre-line text-gray-600">{estimate.company_address}</div>}
                     <div className="mt-1 text-[10px] text-gray-600">{[estimate.company_phone, estimate.company_email, estimate.company_website].filter(Boolean).join(" · ")}</div>
