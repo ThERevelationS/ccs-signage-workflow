@@ -60,6 +60,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   const [switchOpen, setSwitchOpen] = useState(false);
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saveLibraryOpen, setSaveLibraryOpen] = useState(false);
   const frozen = num(part.frozen_extended_cost);
   const current = num(part.current_extended_cost, frozen);
   const differs = Math.abs(current - frozen) > 0.005;
@@ -131,6 +132,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                   title="Copy Part to 30-day Clipboard"
                 ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
               )}
+              <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library"><BookmarkPlus className="w-3 h-3" /> Save</button>
               {isDirectlyEditable && (
                 <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
               )}
@@ -224,6 +226,14 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           setOverrideOpen(false);
           await onChanged?.();
         }}
+      />
+      <SavePartTemplateModal
+        open={saveLibraryOpen}
+        itemType="part"
+        part={part}
+        estimateId={estimateId}
+        builderProductId={part.builder_product_id}
+        onClose={() => setSaveLibraryOpen(false)}
       />
       {isDirectlyEditable && (
         <MasterPartPickerModal
