@@ -16,6 +16,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeCNCProject } from "@/components/markup/projectCategorizer";
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -78,7 +79,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
           client_name: estimate?.client_name || existing.client_name || prev.client_name,
           customer_id: estimate?.customer_id || existing.customer_id,
           estimate_number: estimate?.estimate_number || existing.estimate_number,
-          items: existing.items || [],
+          items: seedBuilderItemIds(existing.items || []),
           machine_rate_per_hour: existing.machine_rate_per_hour ?? sourceDefaults.machine_rate_per_hour,
           labor_rate: existing.labor_rate ?? sourceDefaults.labor_rate,
           setup_time_percentage: existing.setup_time_percentage ?? sourceDefaults.setup_time_percentage,
@@ -104,6 +105,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     setProject(prev => ({
       ...prev,
       items: [...prev.items, {
+        builder_item_id: newBuilderItemId("cnc-item"),
         item_type: "panel",
         description: "",
         material_type: "Wood",
