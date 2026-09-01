@@ -310,6 +310,13 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     partCount: num(builder?.part_count),
     detachedCount: num(builder?.detached_part_count),
     changedCount: 0,
+    newPartCount: 0,
+    removedPartCount: 0,
+    recalcRequired: false,
+    recalcReason: "",
+    usesDirectLiveReprice: false,
+    currentPartsTotal: 0,
+    frozenPartsTotal: 0,
     manualAddonFrozenTotal: 0,
     manualAddonCurrentTotal: 0,
   };
@@ -330,7 +337,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   const acceptedTotal = canInitialFreeze ? effectiveLiveTotal : previousFrozenTotal;
   const calculatedState = canInitialFreeze
     ? "current"
-    : Math.abs(effectiveLiveTotal - acceptedTotal) > 0.005
+    : partSummary.changedCount > 0 || Math.abs(effectiveLiveTotal - acceptedTotal) > 0.005
       ? "changed"
       : "current";
   const productState = partSummary.detachedCount > 0
@@ -374,6 +381,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       price_state: finalProductState,
       price_delta: effectiveLiveTotal - finalAcceptedTotal,
       price_delta_percent: finalAcceptedTotal ? ((effectiveLiveTotal - finalAcceptedTotal) / finalAcceptedTotal) * 100 : 0,
+      // The authoritative Builder calculator just ran, so any earlier stale-catalog
+      // block is now resolved even if the user has not accepted the new price yet.
+      price_recalc_required: false,
+      price_recalc_reason: "",
       last_price_check_at: timestamp,
       last_price_update_at: initialFreezeCompleted ? timestamp : builder.last_price_update_at,
       builder_version: nextRevision,
@@ -413,6 +424,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       total_snapshot: finalAcceptedTotal,
       live_total_snapshot: effectiveLiveTotal,
       price_state: finalProductState,
+      price_recalc_required: false,
+      price_recalc_reason: "",
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
       last_price_check_at: timestamp,
