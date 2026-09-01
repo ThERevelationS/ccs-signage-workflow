@@ -1,7 +1,8 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
+import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { instantiateQuickProduct } from "@/components/estimator/products/quickProductService";
-import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
+import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
+import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -142,129 +143,18 @@ export async function removeClipboardItem(id) {
   await base44.entities.EstimateClipboardItem.delete(id);
 }
 
-async function nextRevisionNumber(builderProductId) {
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []);
-  return Math.max(0, ...(revisions || []).map((row) => num(row.revision_number))) + 1;
-}
-
-async function pasteIndependentParts({ estimateId, targetBuilderProductId, clipboardItem }) {
-  if (!targetBuilderProductId) throw new Error("Choose a target Product for this clipboard item.");
-  const [estimate, builder] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimateId),
-    base44.entities.BuilderProduct.get(targetBuilderProductId),
-  ]);
-  if (!estimate || !builder) throw new Error("Target Product could not be loaded.");
-  const targetLine = await getEstimateLine(estimate, targetBuilderProductId);
-  if (!targetLine) throw new Error("Target Product is not part of this estimate.");
-  const isCustom = targetLine.module_key === "custom";
-  const payloadParts = clipboardItem.item_type === "part_group"
-    ? (clipboardItem.payload?.parts || [])
-    : [clipboardItem.payload?.part].filter(Boolean);
-  if (!payloadParts.length) throw new Error("Clipboard item does not contain any Parts.");
-  const timestamp = nowIso();
-
-  let createdGroup = null;
-  if (clipboardItem.item_type === "part_group") {
-    const group = clipboardItem.payload?.group || {};
-    const groupData = stripEntitySystemFields(group);
-    delete groupData.snapshot_source_group_id;
-    createdGroup = await base44.entities.BuilderPartGroup.create({
-      ...groupData,
-      builder_product_id: builder.id,
-      group_key: makeStableId("group"),
-      group_name: group.group_name || clipboardItem.item_name || "Part Group",
-      sort_order: num(builder.group_count),
-      is_active: true,
-    });
-  }
-
-  const createdParts = [];
-  for (let index = 0; index < payloadParts.length; index += 1) {
-    const sourcePart = payloadParts[index];
-    const partData = stripEntitySystemFields(sourcePart);
-    createdParts.push(await base44.entities.BuilderPart.create({
-      ...partData,
-      builder_product_id: builder.id,
-      part_group_id: createdGroup?.id || "",
-      part_key: makeStableId("part"),
-      sort_order: num(builder.part_count) + index,
-      source_module_key: isCustom ? "custom" : targetLine.module_key,
-      source_path: "",
-      builder_sync_state: isCustom ? "manual" : "manual_addon",
-      builder_detached_at: "",
-      builder_detached_reason: isCustom ? "" : "Independent Part pasted from estimator clipboard.",
-      builder_detached_snapshot: {},
-      reattach_candidate_id: "",
-      reattach_candidate_name: "",
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-      is_active: true,
-    }));
-  }
-
-  const addedFrozen = createdParts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
-  const addedCurrent = createdParts.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
-  const previousFrozen = num(builder.frozen_cost, num(targetLine.total_snapshot));
-  const previousCurrent = num(builder.current_recalculated_cost, num(targetLine.live_total_snapshot, previousFrozen));
-  const nextFrozen = previousFrozen + addedFrozen;
-  const nextCurrent = previousCurrent + addedCurrent;
-  const nextState = Math.abs(nextCurrent - nextFrozen) > 0.005 ? "changed" : "current";
-  const previousCustomer = num(builder.frozen_customer_price, previousFrozen);
-
-  await base44.entities.BuilderProduct.update(builder.id, {
-    frozen_cost: nextFrozen,
-    frozen_customer_price: previousCustomer + addedFrozen,
-    current_recalculated_cost: nextCurrent,
-    price_state: nextState,
-    price_delta: nextCurrent - nextFrozen,
-    price_delta_percent: nextFrozen ? ((nextCurrent - nextFrozen) / nextFrozen) * 100 : 0,
-    part_count: num(builder.part_count) + createdParts.length,
-    group_count: num(builder.group_count) + (createdGroup ? 1 : 0),
-    last_price_check_at: timestamp,
-    last_price_update_at: timestamp,
-    builder_version: num(builder.builder_version, 1) + 1,
-  });
-
-  const lineItems = (estimate.line_items || []).map((line) => line.builder_product_id === builder.id ? {
-    ...line,
-    total_snapshot: nextFrozen,
-    live_total_snapshot: nextCurrent,
-    price_state: nextState,
-    last_price_check_at: timestamp,
-    last_price_update_at: timestamp,
-  } : line);
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builder.id,
-    estimate_id: estimateId,
-    revision_number: await nextRevisionNumber(builder.id),
-    reason: "manual_adjustment",
-    previous_total_cost: previousFrozen,
-    new_total_cost: nextFrozen,
-    previous_customer_price: previousCustomer,
-    new_customer_price: previousCustomer + addedFrozen,
-    changed_parts: createdParts.map((part) => ({
-      part_id: part.id,
-      part_name: part.part_name,
-      action: clipboardItem.item_type === "part_group" ? "paste_part_group" : "paste_part",
-      frozen_extended_cost: num(part.frozen_extended_cost),
-      source_clipboard_id: clipboardItem.id,
-    })),
-    builder_snapshot_before: builder.builder_snapshot || {},
-    builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousFrozen },
-    price_snapshot_after: { total: nextFrozen },
-    notes: `Pasted ${clipboardItem.item_type.replace("_", " ")} “${clipboardItem.item_name}” from the 30-day estimator clipboard.`,
-  });
-
-  return { parts: createdParts, group: createdGroup, line: lineItems.find((line) => line.builder_product_id === builder.id) };
-}
-
 export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "" }) {
   if (!estimateId || !clipboardItem) throw new Error("Clipboard item is required.");
   if (clipboardItem.item_type === "product") {
     return instantiateQuickProduct({ estimateId, quickProduct: clipboardItem.payload });
   }
-  return pasteIndependentParts({ estimateId, targetBuilderProductId, clipboardItem });
+  return addPartPackageToProduct({
+    estimateId,
+    targetBuilderProductId,
+    itemType: clipboardItem.item_type,
+    itemName: clipboardItem.item_name,
+    payload: clipboardItem.payload,
+    sourceType: "clipboard",
+    sourceId: clipboardItem.id,
+  });
 }
