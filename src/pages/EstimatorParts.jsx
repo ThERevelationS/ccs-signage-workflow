@@ -38,6 +38,9 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
     setError("");
     try {
       const tags = [...new Set(draft.tags_text.split(",").map((value) => value.trim()).filter(Boolean))];
+      const snapshotParts = template.template_type === "part_group"
+        ? (template.parts_snapshot || [])
+        : [template.part_snapshot || {}];
       const payload = {
         template_name: draft.template_name.trim(),
         product_group: draft.product_group === "global" ? "global" : "my",
@@ -46,7 +49,17 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
         description: draft.description,
         notes: draft.notes,
         is_active: draft.is_active,
-        search_text: [draft.template_name, draft.category, tags, draft.description, template.source_module_key, template.source_part_type, template.source_part_subtype].flat().filter(Boolean).join(" ").toLowerCase(),
+        search_text: [
+          draft.template_name,
+          draft.category,
+          tags,
+          draft.description,
+          draft.notes,
+          template.source_module_key,
+          template.source_part_type,
+          template.source_part_subtype,
+          snapshotParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name]),
+        ].flat(3).filter(Boolean).join(" ").toLowerCase(),
       };
       const updated = await base44.entities.PartTemplate.update(template.id, payload);
       onSaved?.({ ...template, ...payload, ...(updated || {}) });
