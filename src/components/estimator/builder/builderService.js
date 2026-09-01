@@ -142,6 +142,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_state: isNew ? "unchecked" : "legacy_frozen",
       price_delta: isNew ? liveTotal : liveTotal - acceptedTotal,
       price_delta_percent: !isNew && acceptedTotal ? ((liveTotal - acceptedTotal) / acceptedTotal) * 100 : 0,
+      price_recalc_required: false,
+      price_recalc_reason: "",
       last_price_check_at: timestamp,
       part_count: 0,
       group_count: 0,
@@ -178,6 +180,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_state: nextState,
       price_delta: liveTotal - frozen,
       price_delta_percent: frozen ? ((liveTotal - frozen) / frozen) * 100 : 0,
+      price_recalc_required: builderProduct.price_recalc_required || false,
+      price_recalc_reason: builderProduct.price_recalc_reason || "",
       last_price_check_at: timestamp,
     });
     builderProduct = { ...builderProduct, current_recalculated_cost: liveTotal, price_state: nextState };
@@ -187,6 +191,13 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     partCount: num(builderProduct.part_count),
     detachedCount: num(builderProduct.detached_part_count),
     changedCount: 0,
+    newPartCount: 0,
+    removedPartCount: 0,
+    recalcRequired: !!builderProduct.price_recalc_required,
+    recalcReason: builderProduct.price_recalc_reason || "",
+    usesDirectLiveReprice: false,
+    currentPartsTotal: 0,
+    frozenPartsTotal: 0,
     manualAddonFrozenTotal: 0,
     manualAddonCurrentTotal: 0,
   };
