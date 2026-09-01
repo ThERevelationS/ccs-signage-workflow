@@ -3,15 +3,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Trash2, Copy } from "lucide-react";
+import { AlertTriangle, Copy, PackagePlus, RotateCcw, Trash2 } from "lucide-react";
 import SignTypePicker from "./SignTypePicker";
 import ActionPicker from "./ActionPicker";
 import RepaintMonumentPanel from "./RepaintMonumentPanel";
 import { defaultMonumentRepaintConfig } from "./repaintCalculator";
 import { SIGN_TYPES_BY_ID, LETTER_SIZES, CABINET_SIZES, sizeAxisFor, ACTIONS } from "./constants";
+import { materialFromInventory } from "./maintenanceCalculator";
 
-export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDuplicate, settings = {}, rates = [] }) {
+export default function ServiceItemRow({ item, index, onUpdate, onRemove, onDuplicate, settings = {}, rates = [], materialRules = [] }) {
   const update = (patch) => onUpdate(index, { ...item, ...patch });
+
+  const applicableMaterialRules = React.useMemo(() => (materialRules || []).filter((rule) => {
+    if (rule.is_active === false || rule._master_missing) return false;
+    const types = rule.applies_to_item_types || [];
+    const sizes = rule.applies_to_sizes || [];
+    const actions = rule.applies_to_actions || [];
+    if (types.length && !types.includes(item.sign_type)) return false;
+    if (sizes.length && !sizes.includes(item.size)) return false;
+    if (actions.length && !actions.some((action) => (item.actions || []).includes(action))) return false;
+    return true;
+  }), [materialRules, item.sign_type, item.size, item.actions]);
+
+  const selectedRuleIds = new Set((item.materials || []).map((material) => material.maintenance_rule_id || "").filter(Boolean));
+  const addableMaterialRules = applicableMaterialRules.filter((rule) => !selectedRuleIds.has(rule.id));
+  const needsSqft = (item.materials || []).some((material) => material.usage_basis === "per_sqft");
+  const needsLinearFeet = (item.materials || []).some((material) => material.usage_basis === "per_linear_foot");
+
+  const updateMaterial = (materialIndex, patch) => update({
+    materials: (item.materials || []).map((material, idx) => idx === materialIndex ? { ...material, ...patch } : material),
+  });
+
+  const addMaterial = (ruleId) => {
+    const rule = (materialRules || []).find((candidate) => candidate.id === ruleId);
+    if (!rule) return;
+    update({ materials: [...(item.materials || []), materialFromInventory(rule, item)] });
+  };
 
   // Actions enabled for the current sign type, driven by the user's Settings
   // toggles (MaintenanceActionRate.is_enabled). If no rate row exists yet for
