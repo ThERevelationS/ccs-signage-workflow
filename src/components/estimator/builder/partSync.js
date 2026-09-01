@@ -1689,6 +1689,8 @@ function extractMaintenance(project, catalogs = {}, options = {}) {
 
   (project.selected_equipment || []).forEach((eq, index) => {
     const id = eq.equipment_id || eq.inventory_item_id || "";
+    const equipmentSource = maintenanceEquipmentSource(eq, catalogs);
+    const equipmentEntity = equipmentSource.entity || eq.inventory_entity || (id ? "MaintenanceEquipment" : "");
     const duration = num(eq.duration, 1);
     const baseCost = num(eq.unit_cost) * duration;
     const deliveryCost = eq.include_delivery ? num(eq.delivery_pickup_cost) : 0;
@@ -1703,7 +1705,7 @@ function extractMaintenance(project, catalogs = {}, options = {}) {
         type: "equipment",
         subtype: eq.equipment_type || "maintenance_equipment",
         sourcePath: `selected_equipment[${index}].equipment_id`,
-        entity: id ? "MaintenanceEquipment" : "",
+        entity: id ? equipmentEntity : "",
         inventoryId: id,
         quantity: duration || 1,
         unit: eq.pricing_mode || "unit",
@@ -1721,7 +1723,7 @@ function extractMaintenance(project, catalogs = {}, options = {}) {
         type: "service",
         subtype: "equipment_delivery",
         sourcePath: `selected_equipment[${index}].delivery_pickup_cost`,
-        entity: id ? "MaintenanceEquipment" : "",
+        entity: id ? equipmentEntity : "",
         inventoryId: id,
         quantity: 1,
         unit: "delivery",
@@ -1740,7 +1742,7 @@ function extractMaintenance(project, catalogs = {}, options = {}) {
         type: "equipment",
         subtype: "idle_running",
         sourcePath: `selected_equipment[${index}].idle_running_cost_per_hour`,
-        entity: id ? "MaintenanceEquipment" : "",
+        entity: id ? equipmentEntity : "",
         inventoryId: id,
         quantity: idleHours || 1,
         unit: "hour",
