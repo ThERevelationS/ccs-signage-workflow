@@ -12,7 +12,7 @@ export default function TravelTab({ globalSettings, setGlobalSettings, isLocked,
       icon={Building2}
       theme="blue"
       title="Travel"
-      description="Shop starting location and travel cost parameters. Fuel price auto-updates daily."
+      description="Shop starting location and Maintenance-specific travel cost parameters."
       rightSlot={
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
           {maintenanceTravelDefs.length} settings
