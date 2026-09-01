@@ -9,6 +9,7 @@ export const ESTIMATOR_MODULES = [
   { key: "metal", label: "Metal Fabrication", entity: "MetalProject", page: "MetalEstimator" },
   { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject", page: "BrickStoneEstimator" },
   { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
+  { key: "painting", label: "Painting", entity: "Project", page: "PaintingEstimator" },
 ];
 
 // Field on the sub-estimate record holding its grand total. Foundation projects
@@ -24,9 +25,7 @@ export const MODULE_TOTAL_FIELD = {
   maintenance: "total_cost",
 };
 
-const LEGACY_MODULES = {
-  painting: { key: "painting", label: "Painting (Legacy)", entity: "Project", legacy: true },
-};
+const LEGACY_MODULES = {};
 
 export const getModule = (key) => ESTIMATOR_MODULES.find((m) => m.key === key) || LEGACY_MODULES[key];
 
