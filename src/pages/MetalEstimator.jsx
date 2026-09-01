@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { MetalProject, Settings, Inventory as InventoryEntity } from "@/entities/all";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,14 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save, Wrench, Edit, Download, Printer, FileText, ListChecks, Calculator, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
-import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
-import ClientSearchInput from "@/components/ClientSearchInput";
-import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { useSearchParams } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
+import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
