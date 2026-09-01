@@ -9,6 +9,18 @@ const num = (value, fallback = 0) =>
 const nowIso = () => new Date().toISOString();
 const norm = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 
+// These Builders can recompute their complete current Product economics directly
+// from the saved Builder configuration + current catalogs during estimate refresh.
+// Other catalog-backed Builders must be reopened/saved before Update Price when a
+// Master Inventory price changes after the last Builder calculation.
+const DIRECT_LIVE_REPRICE_MODULES = new Set(["brick_stone", "maintenance"]);
+const PENDING_REMOVAL_KEY = "__builder_pending_removal";
+
+const dateMs = (value) => {
+  const parsed = value ? Date.parse(value) : NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const CATALOG_NAME_FIELDS = {
   FoundationInventory: ["material_name"],
   LaborServiceInventory: ["service_name", "vendor_name"],
@@ -2731,7 +2743,20 @@ function effectiveCurrentUnitCost(descriptor, row) {
 
 export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false }) {
   if (!builderProduct?.id || !sourceProject) {
-    return { partCount: 0, detachedCount: 0, changedCount: 0, manualAddonFrozenTotal: 0, manualAddonCurrentTotal: 0, parts: [] };
+    return {
+      partCount: 0,
+      detachedCount: 0,
+      changedCount: 0,
+      newPartCount: 0,
+      removedPartCount: 0,
+      recalcRequired: false,
+      recalcReason: "",
+      currentPartsTotal: 0,
+      frozenPartsTotal: 0,
+      manualAddonFrozenTotal: 0,
+      manualAddonCurrentTotal: 0,
+      parts: [],
+    };
   }
 
   const catalogs = await loadBuilderCatalogs(builderProduct.module_key);
@@ -2742,6 +2767,11 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   const synced = [];
   let detachedCount = 0;
   let changedCount = 0;
+  let newPartCount = 0;
+  let removedPartCount = 0;
+  let recalcRequired = false;
+  const recalcPartNames = [];
+  const directLiveReprice = DIRECT_LIVE_REPRICE_MODULES.has(builderProduct.module_key);
 
   for (let index = 0; index < descriptors.length; index += 1) {
     const descriptor = descriptors[index];
