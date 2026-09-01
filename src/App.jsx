@@ -20,6 +20,16 @@ import CNCEstimator from './pages/CNCEstimator';
 import LaserEstimator from './pages/LaserEstimator';
 import MetalEstimator from './pages/MetalEstimator';
 import BrickStoneEstimator from './pages/BrickStoneEstimator';
+import PaintingEstimator from './pages/PaintingEstimator';
+import FoundationSettings from './pages/FoundationSettings';
+import PaintingSettings from './pages/PaintingSettings';
+import CNCSettings from './pages/CNCSettings';
+import LaserSettings from './pages/LaserSettings';
+import MetalSettings from './pages/MetalSettings';
+import MaintenanceSettings from './pages/MaintenanceSettings';
+import InstallationSettings from './pages/InstallationSettings';
+import VinylSettings from './pages/VinylSettings';
+import VinylInventory from './pages/VinylInventory';
 import SalesHome from './pages/SalesHome';
 import EstimatorQueues from './pages/EstimatorQueues';
 import EstimatorCustomers from './pages/EstimatorCustomers';
@@ -45,6 +55,16 @@ const ESTIMATOR_PAGES = {
   LaserEstimator,
   MetalEstimator,
   BrickStoneEstimator,
+  PaintingEstimator,
+  FoundationSettings,
+  PaintingSettings,
+  CNCSettings,
+  LaserSettings,
+  MetalSettings,
+  MaintenanceSettings,
+  InstallationSettings,
+  VinylSettings,
+  VinylInventory,
   SalesHome,
   EstimatorQueues,
   EstimatorCustomers,
