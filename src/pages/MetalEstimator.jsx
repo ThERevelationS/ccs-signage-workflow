@@ -222,51 +222,83 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
 
 
   const saveProject = async () => {
-    if (!project.project_name || !project.client_name) {
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
       return;
     }
-    
-    setIsSaving(true);
-    setIsDirty(false);
-    try {
-      const { 
-          totalMaterialsCost, totalSuppliesCost, 
-          totalFabricationCost, totalWeldingCost, totalFinishingCost,
-          totalLaborCost, enrichedItems // Use enriched items if you want to store computed fields, but usually only raw input is stored
-      } = getProjectCalculations();
 
-      const finalProject = { 
-          ...project, 
-          total_material_cost: totalMaterialsCost,
-          total_supplies_cost: totalSuppliesCost,
-          total_fabrication_cost: totalFabricationCost,
-          total_welding_cost: totalWeldingCost,
-          total_finishing_cost: totalFinishingCost,
-          total_labor_cost: totalLaborCost, // Store this aggregate for easier retrieval
-          status: 'calculated' 
+    setIsSaving(true);
+    try {
+      const {
+        totalMaterialsCost,
+        totalSuppliesCost,
+        totalFabricationCost,
+        totalWeldingCost,
+        totalFinishingCost,
+        totalLaborCost,
+      } = getProjectCalculations();
+      const totalCost = totalMaterialsCost + totalSuppliesCost + totalLaborCost;
+
+      const finalProject = {
+        ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        total_material_cost: totalMaterialsCost,
+        total_supplies_cost: totalSuppliesCost,
+        total_fabrication_cost: totalFabricationCost,
+        total_welding_cost: totalWeldingCost,
+        total_finishing_cost: totalFinishingCost,
+        total_cost: totalCost,
+        // CCS-only simplified pricing fields remain in the schema for compatibility,
+        // but Git-authoritative Metal pricing does not use them.
+        subtotal: totalCost,
+        markup_amount: 0,
+        markup_percent: 0,
+        status: 'calculated',
       };
-      
-      let savedId = editId;
-      if (isEditing) {
-        await MetalProject.update(editId, finalProject);
+
+      let saved;
+      if (isEditing && editId) {
+        saved = await MetalProject.update(editId, finalProject);
       } else {
-        const created = await MetalProject.create(finalProject);
-        savedId = created?.id;
+        saved = await MetalProject.create(finalProject);
+        setIsEditing(true);
       }
-      await upsertCustomerSummaryForEstimate({
-        module: "metal_fabrication",
-        client_name: project.client_name,
-        project_id: savedId,
-        project_name: project.project_name,
-        estimate_number: project.estimate_number,
-      });
-      if (!embedded) navigate(createPageUrl("MetalProjects"));
+      const savedId = saved?.id || editId;
+
+      if (estimateId && savedId) {
+        const refreshed = await MetalProject.get(savedId).catch(() => ({ ...finalProject, id: savedId }));
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: savedId, module_key: "metal" },
+          sourceProject: {
+            ...refreshed,
+            builder_calculation: {
+              totals: {
+                total_material_cost: totalMaterialsCost,
+                total_supplies_cost: totalSuppliesCost,
+                total_fabrication_cost: totalFabricationCost,
+                total_welding_cost: totalWeldingCost,
+                total_finishing_cost: totalFinishingCost,
+                total_labor_cost: totalLaborCost,
+                total_cost: totalCost,
+              },
+            },
+          },
+          liveTotal: totalCost,
+        });
+      }
+
+      setProject((prev) => ({ ...prev, ...finalProject, id: savedId || prev.id }));
+      onSaved?.();
+      if (!embedded) alert(isEditing ? 'Project updated successfully!' : 'Project saved successfully!');
     } catch (error) {
       console.error('Error saving project:', error);
       alert('Error saving project. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const downloadEstimate = () => {
