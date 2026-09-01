@@ -9,6 +9,7 @@ import EstimateProductsList from "@/components/estimator/aio/EstimateProductsLis
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
 import PricingSummary from "@/components/estimator/PricingSummary";
+import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
 import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal";
 import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerModal";
@@ -362,6 +363,7 @@ export default function EstimateDetail() {
                   onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
                 />
               </div>
+              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} />
             </>
           )}
 
