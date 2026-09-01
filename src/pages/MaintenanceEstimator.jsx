@@ -145,26 +145,49 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   };
 
   const saveProject = async () => {
-    if (!embedded && (!project.project_name || !project.client_name || !project.estimate_number || !project.hyperlink)) {
-      alert("Please fill in Project Name, Client Name, Estimate Number, and Project Link.");
+    if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
+      alert("Please fill in Project Name and Client Name.");
       setActiveTab("project");
       return;
     }
     setSaving(true);
-    setIsDirty(false);
     try {
-      const dataToSave = { ...recalculated, status: "calculated" };
+      const dataToSave = {
+        ...recalculated,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        site_address: project.site_address || estimateContext?.site_address || "",
+        status: "calculated",
+      };
+      let saved;
       if (isEditing && editId) {
-        await MaintenanceProject.update(editId, dataToSave);
+        saved = await MaintenanceProject.update(editId, dataToSave);
       } else {
-        await MaintenanceProject.create(dataToSave);
+        saved = await MaintenanceProject.create(dataToSave);
+        setIsEditing(true);
       }
-      if (!embedded) navigate(createPageUrl("SignMaintenanceProjects"));
+      const savedId = saved?.id || editId;
+
+      if (estimateId && savedId) {
+        const refreshed = await MaintenanceProject.get(savedId).catch(() => ({ ...dataToSave, id: savedId }));
+        await recordBuilderSave({
+          estimateId,
+          line: { project_id: savedId, module_key: "maintenance" },
+          sourceProject: refreshed,
+          liveTotal: recalculated.total_cost || 0,
+        });
+      }
+
+      setProject((prev) => ({ ...prev, ...dataToSave, id: savedId || prev.id }));
+      onSaved?.();
+      if (!embedded) alert(isEditing ? "Estimate updated." : "Estimate saved.");
     } catch (e) {
       console.error(e);
       alert("Save failed: " + e.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (loading) {
