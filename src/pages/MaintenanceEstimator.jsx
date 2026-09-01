@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { MaintenanceProject, MaintenanceInventory, MaintenanceActionRate, Settings } from "@/entities/all";
+import { MaintenanceProject, MaintenanceActionRate, Settings } from "@/entities/all";
 import { useSearchParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelect
 import TravelCostCard from "@/components/channelLetterInstall/TravelCostCard";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
+import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
@@ -59,7 +60,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     try {
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         Settings.list(),
-        MaintenanceInventory.list("sort_order"),
+        loadMaintenanceMaterialRules().then((data) => data.rules),
         base44.entities.ChannelLetterInstallEquipment.list("sort_order", 500),
         MaintenanceActionRate.list(),
         editId ? MaintenanceProject.get(editId).catch(() => null) : Promise.resolve(null),
@@ -348,6 +349,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                         index={idx}
                         settings={settings}
                         rates={rates}
+                        materialRules={inventory}
                         onUpdate={updateItem}
                         onRemove={removeItem}
                         onDuplicate={duplicateItem}
