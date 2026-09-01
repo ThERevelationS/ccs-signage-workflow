@@ -3,6 +3,7 @@ import { requiresBuilderReattach } from "@/components/estimator/parts/partState"
 import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance/maintenanceCalculator";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -3557,6 +3558,8 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
           ? {
               ...line,
               total_snapshot: num(line.total_snapshot, previousProductCost) + delta,
+              customer_price_snapshot: acceptedCustomerUnitPrice(line) + delta,
+              live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta,
               price_state: "detached_parts",
               needs_reattach_review: true,
               last_price_update_at: timestamp,
