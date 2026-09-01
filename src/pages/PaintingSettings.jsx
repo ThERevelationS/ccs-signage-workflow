@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from "lucide-react";
