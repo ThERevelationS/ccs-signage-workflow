@@ -6,6 +6,7 @@ const LINKS = [
   { label: "Master Inventory", desc: "Unified inventory for substrates, vinyl, equipment, labor, lighting, hardware, supplies, metals and concrete", to: "/MasterInventory" },
   { label: "Foundation / Masonry Catalog", desc: "Concrete, brick, poles and fill materials", to: "/FoundationCatalog" },
   { label: "Painting Settings", desc: "Paint mix, coverage, mask, consumables, labor and quantity tiers", to: "/PaintingSettings" },
+  { label: "CNC Settings", desc: "Machine rate calculator, labor, setup, material multipliers and cut speeds", to: "/CNCSettings" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
