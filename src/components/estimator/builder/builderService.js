@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
 import { acceptBuilderPartPrices, syncBuilderParts } from "./partSync";
+import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, sourceProjectEconomics } from "../customerPricing";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -116,12 +117,19 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
 
   const lineId = line.line_id || makeStableId("line");
   const source = await getSourceProject(line);
-  const liveTotal = sourceProjectTotal(line, source);
+  const sourceTotal = sourceProjectTotal(line, source);
   const acceptedTotal = num(line.total_snapshot);
+  const acceptedCustomerPrice = acceptedCustomerUnitPrice(line);
   const { builderName, clientName } = productIdentity(line);
   const sourceEntity = getModule(line.module_key)?.entity || "";
   const timestamp = nowIso();
   let builderProduct = await findBuilderProduct(line, estimateId);
+  const preserveLegacyEconomics = !isNew && (!builderProduct || builderProduct.price_state === "legacy_frozen");
+  const economics = preserveLegacyEconomics
+    ? { internalCost: sourceTotal, customerPrice: liveCustomerUnitPrice(line) }
+    : sourceProjectEconomics(line.module_key, source, sourceTotal);
+  const liveTotal = economics.internalCost;
+  const liveCustomerPrice = economics.customerPrice;
 
   if (!builderProduct) {
     builderProduct = await base44.entities.BuilderProduct.create({
@@ -143,7 +151,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       builder_snapshot_source_updated_date: source?.updated_date || line.updated_date_snapshot || "",
       builder_snapshot_hash: snapshotHash(source || {}),
       frozen_cost: isNew ? 0 : acceptedTotal,
-      frozen_customer_price: isNew ? 0 : acceptedTotal,
+      frozen_customer_price: isNew ? 0 : acceptedCustomerPrice,
       current_recalculated_cost: liveTotal,
       price_state: isNew ? "unchecked" : "legacy_frozen",
       price_delta: isNew ? liveTotal : liveTotal - acceptedTotal,
@@ -208,6 +216,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     manualAddonCurrentTotal: 0,
   };
   let effectiveLiveTotal = liveTotal;
+  let effectiveLiveCustomerPrice = preserveLegacyEconomics ? liveCustomerPrice : economics.customerPrice;
   const preserveReconciledLegacyBom =
     builderProduct?.price_state === "legacy_frozen" && builderProduct?.legacy_bom_reconciled === true;
   if (source && builderProduct?.id && !preserveReconciledLegacyBom) {
@@ -220,6 +229,9 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     effectiveLiveTotal = partSummary.usesDirectLiveReprice
       ? num(partSummary.currentPartsTotal, liveTotal + num(partSummary.manualAddonCurrentTotal))
       : liveTotal + num(partSummary.manualAddonCurrentTotal);
+    effectiveLiveCustomerPrice = preserveLegacyEconomics
+      ? liveCustomerPrice
+      : economics.customerPrice + num(partSummary.manualAddonCurrentTotal);
     const frozenAfterSync = num(builderProduct.frozen_cost, acceptedTotal);
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
@@ -254,6 +266,9 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   }
 
   const frozenCost = isNew ? num(builderProduct.frozen_cost) : acceptedTotal;
+  const frozenCustomerPrice = hasNumericValue(builderProduct.frozen_customer_price)
+    ? num(builderProduct.frozen_customer_price)
+    : acceptedCustomerPrice;
   const nextLine = {
     ...line,
     line_id: lineId,
@@ -264,6 +279,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     product_notes: line.product_notes ?? builderProduct.product_notes ?? "",
     total_snapshot: frozenCost,
     live_total_snapshot: effectiveLiveTotal,
+    customer_price_snapshot: frozenCustomerPrice,
+    live_customer_price_snapshot: effectiveLiveCustomerPrice,
     price_state: builderProduct.price_state || (isNew ? "unchecked" : "legacy_frozen"),
     price_recalc_required: !!builderProduct.price_recalc_required,
     price_recalc_reason: builderProduct.price_recalc_reason || "",
@@ -298,7 +315,7 @@ export async function ensureEstimateBuilderProducts(estimate) {
   return { ...estimate, line_items: lineItems };
 }
 
-export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal }) {
+export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice }) {
   if (!estimateId || !line) return line;
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   const currentLine = (estimate.line_items || []).find(
@@ -308,8 +325,14 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   const ensured = await ensureBuilderProductForLine({ estimate, line: currentLine, isNew: !currentLine.builder_product_id });
   const builder = ensured.builderProduct;
   const timestamp = nowIso();
-  const nextLiveTotal = num(liveTotal, sourceProjectTotal(currentLine, sourceProject));
+  const sourceTotal = num(liveTotal, sourceProjectTotal(currentLine, sourceProject));
+  const economics = sourceProjectEconomics(currentLine.module_key, sourceProject, sourceTotal);
+  const nextLiveTotal = hasNumericValue(internalCost) ? num(internalCost) : economics.internalCost;
+  const nextLiveCustomerPrice = hasNumericValue(customerPrice) ? num(customerPrice) : economics.customerPrice;
   const previousFrozenTotal = num(builder?.frozen_cost, num(currentLine.total_snapshot));
+  const previousFrozenCustomerPrice = hasNumericValue(builder?.frozen_customer_price)
+    ? num(builder.frozen_customer_price)
+    : acceptedCustomerUnitPrice(currentLine);
   const wantsInitialFreeze = builder?.price_state === "unchecked" && previousFrozenTotal === 0;
 
   let partSummary = {
@@ -343,6 +366,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   }
 
   const effectiveLiveTotal = nextLiveTotal + num(partSummary.manualAddonCurrentTotal);
+  const effectiveLiveCustomerPrice = nextLiveCustomerPrice + num(partSummary.manualAddonCurrentTotal);
   const canInitialFreeze = wantsInitialFreeze && partSummary.detachedCount === 0;
   const acceptedTotal = canInitialFreeze ? effectiveLiveTotal : previousFrozenTotal;
   const calculatedState = canInitialFreeze
@@ -370,6 +394,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 
   const initialFreezeCompleted = canInitialFreeze && partSummary.detachedCount === 0;
   const finalAcceptedTotal = initialFreezeCompleted ? effectiveLiveTotal : previousFrozenTotal;
+  const finalAcceptedCustomerPrice = initialFreezeCompleted ? effectiveLiveCustomerPrice : previousFrozenCustomerPrice;
   const finalProductState = partSummary.detachedCount > 0
     ? "detached_parts"
     : initialFreezeCompleted
@@ -384,9 +409,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
       builder_snapshot_hash: snapshotHash(sourceProject || {}),
       frozen_cost: finalAcceptedTotal,
-      frozen_customer_price: initialFreezeCompleted
-        ? finalAcceptedTotal
-        : num(builder.frozen_customer_price, finalAcceptedTotal),
+      frozen_customer_price: finalAcceptedCustomerPrice,
       current_recalculated_cost: effectiveLiveTotal,
       price_state: finalProductState,
       price_delta: effectiveLiveTotal - finalAcceptedTotal,
@@ -412,12 +435,12 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         previous_total_cost: 0,
         new_total_cost: finalAcceptedTotal,
         previous_customer_price: 0,
-        new_customer_price: finalAcceptedTotal,
+        new_customer_price: finalAcceptedCustomerPrice,
         changed_parts: initialPartChanges,
         builder_snapshot_before: builder.builder_snapshot || {},
         builder_snapshot_after: sourceProject || {},
         price_snapshot_before: { total: 0 },
-        price_snapshot_after: { total: finalAcceptedTotal },
+        price_snapshot_after: { total: finalAcceptedTotal, customer_price: finalAcceptedCustomerPrice },
         notes: "Initial accepted/frozen product price.",
       });
     }
@@ -433,6 +456,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       client_product_name: item.client_product_name || ensured.line.client_product_name,
       total_snapshot: finalAcceptedTotal,
       live_total_snapshot: effectiveLiveTotal,
+      customer_price_snapshot: finalAcceptedCustomerPrice,
+      live_customer_price_snapshot: effectiveLiveCustomerPrice,
       price_state: finalProductState,
       price_recalc_required: false,
       price_recalc_reason: "",
@@ -530,8 +555,13 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   }
 
   const timestamp = nowIso();
-  const previousTotal = num(builder.frozen_cost, num(line.total_snapshot));
-  const nextTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, previousTotal));
+  const currentEstimateLine = (estimate.line_items || []).find((item) => item.builder_product_id === builder.id) || line;
+  const previousTotal = num(builder.frozen_cost, num(currentEstimateLine.total_snapshot));
+  const nextTotal = num(builder.current_recalculated_cost, num(currentEstimateLine.live_total_snapshot, previousTotal));
+  const previousCustomerPrice = hasNumericValue(builder.frozen_customer_price)
+    ? num(builder.frozen_customer_price)
+    : acceptedCustomerUnitPrice(currentEstimateLine);
+  const nextCustomerPrice = liveCustomerUnitPrice(currentEstimateLine);
   const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
   const revisionNumber = Math.max(0, ...(revisions || []).map((r) => num(r.revision_number))) + 1;
 
@@ -542,19 +572,19 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     reason: "update_price",
     previous_total_cost: previousTotal,
     new_total_cost: nextTotal,
-    previous_customer_price: num(builder.frozen_customer_price, previousTotal),
-    new_customer_price: nextTotal,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
     changed_parts: partAcceptance.changedParts || [],
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousTotal },
-    price_snapshot_after: { total: nextTotal },
+    price_snapshot_before: { total: previousTotal, customer_price: previousCustomerPrice },
+    price_snapshot_after: { total: nextTotal, customer_price: nextCustomerPrice },
     notes: note,
   });
 
   await base44.entities.BuilderProduct.update(builder.id, {
     frozen_cost: nextTotal,
-    frozen_customer_price: nextTotal,
+    frozen_customer_price: nextCustomerPrice,
     price_state: "current",
     price_delta: 0,
     price_delta_percent: 0,
@@ -575,6 +605,8 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
           ...item,
           total_snapshot: nextTotal,
           live_total_snapshot: nextTotal,
+          customer_price_snapshot: nextCustomerPrice,
+          live_customer_price_snapshot: nextCustomerPrice,
           price_state: "current",
           price_recalc_required: false,
           price_recalc_reason: "",
