@@ -353,6 +353,21 @@ export default function ProductRow({
             onBlur={(e) => commit({ customer_quantity: parseFloat(e.target.value) || 1 })}
           />
           <label className="text-[10px] font-semibold tracking-wide text-gray-400 block">
+            QUOTE DISPLAY
+            <select
+              value={line.include_in_customer === false ? "bundled" : "listed"}
+              onChange={(e) => {
+                const patch = { include_in_customer: e.target.value !== "bundled" };
+                set(patch);
+                commit(patch);
+              }}
+              className="mt-0.5 w-full h-[28px] px-2 border border-gray-200 rounded text-[12px] text-gray-800 bg-white"
+            >
+              <option value="listed">List Product on quote</option>
+              <option value="bundled">Bundle into additional scope</option>
+            </select>
+          </label>
+          <label className="text-[10px] font-semibold tracking-wide text-gray-400 block">
             STATUS
             <select
               value={line.section_status || "in_progress"}
