@@ -70,6 +70,7 @@ export const ESTIMATOR_RIGHT_TABS = [
     items: [
       { label: "Estimator Settings", to: "/EstimatorSettings" },
       { label: "Foundation Catalog", to: "/FoundationCatalog" },
+      { label: "Painting Settings", to: "/PaintingSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
       { label: "My Info", to: "/UserSettings" },
     ],
