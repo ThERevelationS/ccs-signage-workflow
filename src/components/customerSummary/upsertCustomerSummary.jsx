@@ -2,10 +2,9 @@
 // estimator module appends/updates an entry in `linked_projects` so the
 // summary always reflects the latest set of estimates for that client.
 //
-// Also fires a best-effort push to the external CCS database via the
-// `syncCustomerSummaryExternal` backend function, so the other system can
-// read/update the client. Failures here are swallowed — we don't block the
-// in-app save if the external sync hiccups.
+// In SignEstimate Pro this helper also pushed the summary into the separate CCS
+// app. This code now runs inside CCS itself, so the local CustomerSummary row is
+// already the authoritative destination and no cross-app sync is necessary.
 
 import { base44 } from "@/api/base44Client";
 
@@ -63,16 +62,6 @@ export async function upsertCustomerSummaryForEstimate({
         linked_projects: [newLink],
       });
     }
-
-    // Best-effort push to the external CCS database
-    base44.functions
-      .invoke("syncCustomerSummaryExternal", {
-        client_name: name,
-        summary_id: match.id,
-        linked_project: newLink,
-        estimate_number: estimate_number || "",
-      })
-      .catch((e) => console.warn("External CCS sync skipped:", e?.message || e));
 
     return match;
   } catch (e) {
