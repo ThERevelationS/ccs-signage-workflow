@@ -21,8 +21,12 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setExtraCategories("");
     setSaving(false);
     setError("");
-    base44.entities.QuickProductCategory.list()
-      .then((rows) => setAvailableCategories((rows || []).sort((a, b) => String(a.category_name || "").localeCompare(String(b.category_name || "")))))
+    Promise.all([
+      base44.entities.QuickProductCategory.list().catch(() => []),
+      base44.auth.me().catch(() => null),
+    ]).then(([rows, me]) => setAvailableCategories((rows || [])
+      .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
+      .sort((a, b) => String(a.category_name || "").localeCompare(String(b.category_name || "")))))
       .catch(() => setAvailableCategories([]));
   }, [open, line?.line_id, line?.builder_product_id]);
 
