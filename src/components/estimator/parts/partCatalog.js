@@ -3,6 +3,9 @@ import { pricingSnapshot } from "@/components/estimator/builder/partSync";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const human = (value) => String(value || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const VALID_EXTRUSION_MATERIAL_TYPES = new Set(["Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel", "Brass", "Copper", "Plastic", "Other"]);
+const VALID_EXTRUSION_PRODUCT_TYPES = new Set(["Angle", "Channel", "Tube_Square", "Tube_Round", "Flat_Bar", "Round_Bar", "I_Beam", "H_Beam", "Pipe"]);
+const isVisibleExtrusion = (row = {}) => row.legacy_compatibility !== true && VALID_EXTRUSION_MATERIAL_TYPES.has(row.material_type) && VALID_EXTRUSION_PRODUCT_TYPES.has(row.product_type);
 
 const UNIT_BY_MODE = {
   per_roll: "roll",
@@ -152,7 +155,7 @@ export const TYPE_DETAIL_FIELDS = {
 const SOURCES = [
   { key: "equipment", label: "Equipment", entities: [
     { entity: "FoundationInventory", filter: (r) => ["excavation_equipment", "attachment", "sub_attachment"].includes(r.material_type) },
-    { entity: "ChannelLetterInstallEquipment" },
+    { entity: "ChannelLetterInstallEquipment", filter: (r) => r.is_active !== false },
   ]},
   { key: "substrates", label: "Substrates", entities: [{ entity: "DimensionalLetterMaterial", filter: (r) => r.is_active !== false }] },
   { key: "supplies", label: "Installation & Maintenance Supplies", entities: [
@@ -165,7 +168,7 @@ const SOURCES = [
   { key: "labor_services", label: "Labor & Services", entities: [{ entity: "LaborServiceInventory", filter: (r) => r.is_active !== false }] },
   { key: "sign_parts_supplies", label: "Sign Parts | Supplies", entities: [{ entity: "SignPartsSuppliesInventory", filter: (r) => r.is_active !== false }] },
   { key: "extruded_metals_poles", label: "Extruded Metals & Poles", entities: [
-    { entity: "Inventory" },
+    { entity: "Inventory", filter: isVisibleExtrusion },
     { entity: "FoundationInventory", filter: (r) => r.material_type === "pole" },
   ]},
   { key: "concrete_stone", label: "Concrete & Stone", entities: [
