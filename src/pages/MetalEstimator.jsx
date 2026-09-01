@@ -62,9 +62,12 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
         setEstimateContext(estimate || null);
 
         const sourceDefaults = {
-          fabrication_rate: parseFloat(settingsObj.fabrication_rate) || 65,
-          welding_rate: parseFloat(settingsObj.welding_rate) || 75,
-          finishing_rate: parseFloat(settingsObj.finishing_rate) || 55,
+          // Migrated SignEstimate Pro Settings use the metal_* names. Keep the
+          // older generic aliases as a fallback only so historical environments
+          // are not broken if they still contain them.
+          fabrication_rate: parseFloat(settingsObj.metal_fabrication_rate ?? settingsObj.fabrication_rate) || 65,
+          welding_rate: parseFloat(settingsObj.metal_welding_rate ?? settingsObj.welding_rate) || 75,
+          finishing_rate: parseFloat(settingsObj.metal_finishing_rate ?? settingsObj.finishing_rate) || 55,
           notes: settingsObj.default_notes_template || "",
         };
 
