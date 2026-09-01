@@ -424,8 +424,8 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const saveProject = async () => {
     // In embedded (All-In-One) mode these fields are inherited from the parent
     // estimate and shown read-only, so don't block the save on them.
-    if (!embedded && (!project.project_name || !project.client_name || !project.estimate_number || !project.hyperlink)) {
-      alert("Please fill in Project Name, Client Name, Estimate Number, and Project Link.");
+    if (!embedded && (!project.project_name || !project.client_name)) {
+      alert("Please fill in Project Name and Client Name.");
       setActiveTab("project");
       return;
     }
@@ -692,7 +692,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div id="clp-estimate-number">
-                            <Label htmlFor="estimate_number">Estimate Number *</Label>
+                            <Label htmlFor="estimate_number">Estimate Number <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
                             <Input
                               id="estimate_number"
                               value={project.estimate_number}
@@ -702,7 +702,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                             />
                           </div>
                           <div id="clp-hyperlink">
-                            <Label htmlFor="hyperlink">Project Link *</Label>
+                            <Label htmlFor="hyperlink">Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
                             <Input
                               id="hyperlink"
                               value={project.hyperlink}
