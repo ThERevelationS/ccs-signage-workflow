@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1"];
+const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"];
 const MATERIALS = ["Acrylic", "Wood", "Leather"];
 const SHARED_KEYS = ["electricity_cost_per_kwh", "operator_cost_per_hour", "facility_overhead_per_hour"];
 
