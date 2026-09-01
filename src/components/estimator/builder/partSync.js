@@ -3010,21 +3010,64 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       synced.push(refreshed);
       continue;
     }
-    await base44.entities.BuilderPart.update(old.id, {
-      is_active: false,
+    const frozenRemovedCost = num(old.frozen_extended_cost);
+    if (Math.abs(frozenRemovedCost) <= 0.005) {
+      await base44.entities.BuilderPart.update(old.id, {
+        is_active: false,
+        current_unit_cost: 0,
+        current_extended_cost: 0,
+        price_state: "current",
+        price_delta: 0,
+        price_delta_percent: 0,
+        last_price_check_at: nowIso(),
+        notes: `${old.notes ? `${old.notes}\n` : ""}Part removed from Builder before it carried a frozen cost; historical row retained inactive.`,
+      });
+      continue;
+    }
+
+    const pendingRemoval = {
+      current_unit_cost: 0,
+      current_extended_cost: 0,
+      price_state: "changed",
+      price_delta: -frozenRemovedCost,
+      price_delta_percent: -100,
+      builder_data: { ...(old.builder_data || {}), [PENDING_REMOVAL_KEY]: true },
+      is_active: true,
       last_price_check_at: nowIso(),
-      notes: `${old.notes ? `${old.notes}\n` : ""}Part no longer exists in the current builder snapshot; frozen history retained.`,
-    });
+      notes: `${old.notes ? `${old.notes}\n` : ""}Part no longer exists in the current Builder. Frozen cost is retained until Update Price accepts its removal.`,
+    };
+    await base44.entities.BuilderPart.update(old.id, pendingRemoval);
+    changedCount += 1;
+    removedPartCount += 1;
+    synced.push({ ...old, ...pendingRemoval });
   }
 
-  const manualAddons = synced.filter((part) => part.builder_sync_state === "manual_addon" && part.is_active !== false);
+  const activeEconomicParts = synced.filter((part) => part.is_active !== false);
+  const currentPartsTotal = activeEconomicParts.reduce(
+    (sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)),
+    0
+  );
+  const frozenPartsTotal = activeEconomicParts.reduce(
+    (sum, part) => sum + num(part.frozen_extended_cost),
+    0
+  );
+  const manualAddons = activeEconomicParts.filter((part) => part.builder_sync_state === "manual_addon");
   const manualAddonFrozenTotal = manualAddons.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const manualAddonCurrentTotal = manualAddons.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
+  const uniqueRecalcNames = [...new Set(recalcPartNames.filter(Boolean))];
 
   return {
-    partCount: synced.length,
+    partCount: activeEconomicParts.length,
     detachedCount,
     changedCount,
+    newPartCount,
+    removedPartCount,
+    recalcRequired,
+    recalcReason: recalcRequired
+      ? `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
+      : "",
+    currentPartsTotal,
+    frozenPartsTotal,
     manualAddonFrozenTotal,
     manualAddonCurrentTotal,
     parts: synced,
