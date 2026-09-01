@@ -72,6 +72,8 @@ export async function saveProductAsQuickProduct({
       price_state: builder.price_state || line.price_state || "current",
       price_delta: num(builder.price_delta, currentTotal - frozenTotal),
       price_delta_percent: num(builder.price_delta_percent),
+      price_recalc_required: !!(builder.price_recalc_required || line.price_recalc_required),
+      price_recalc_reason: builder.price_recalc_reason || line.price_recalc_reason || "",
       captured_at: nowIso(),
     },
     detached_part_count: num(builder.detached_part_count),
@@ -118,6 +120,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
   const priceSnapshot = quickProduct.price_snapshot || {};
   const frozenTotal = num(priceSnapshot.frozen_cost, num(quickProduct.total_price));
   const currentTotal = num(priceSnapshot.current_recalculated_cost, frozenTotal);
+  const recalcRequired = !!(priceSnapshot.price_recalc_required ?? templateBuilder.price_recalc_required ?? templateLine.price_recalc_required);
+  const recalcReason = priceSnapshot.price_recalc_reason || templateBuilder.price_recalc_reason || templateLine.price_recalc_reason || "";
   const sourceSnapshot = cloneSnapshot(quickProduct.builder_snapshot || templateBuilder.builder_snapshot || {});
 
   const newBuilder = await base44.entities.BuilderProduct.create({
@@ -144,6 +148,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     price_state: priceSnapshot.price_state || "current",
     price_delta: num(priceSnapshot.price_delta, currentTotal - frozenTotal),
     price_delta_percent: num(priceSnapshot.price_delta_percent, frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0),
+    price_recalc_required: recalcRequired,
+    price_recalc_reason: recalcReason,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     part_count: 0,
@@ -193,6 +199,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     detached_part_count: detachedCount,
     needs_reattach_review: detachedCount > 0,
     price_state: detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current"),
+    price_recalc_required: recalcRequired,
+    price_recalc_reason: recalcReason,
   });
 
   await base44.entities.BuilderPriceRevision.create({
@@ -228,6 +236,8 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     total_snapshot: frozenTotal,
     live_total_snapshot: currentTotal,
     price_state: detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current"),
+    price_recalc_required: recalcRequired,
+    price_recalc_reason: recalcReason,
     detached_part_count: detachedCount,
     needs_reattach_review: detachedCount > 0,
     customer_quantity: num(quickProduct.product_quantity, num(templateLine.customer_quantity, 1)),
