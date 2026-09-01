@@ -38,56 +38,68 @@ const blankProject = () => ({
   notes: "",
 });
 
-export default function NewSignMaintenance({ embeddedId = null, embedded = false }) {
-  const navigate = useNavigate();
+export default function MaintenanceEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
-  // Prop wins when embedded inside the All-In-One estimator.
-  const editId = embeddedId || searchParams.get("edit");
+  const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
+  const estimateId = embeddedEstimateId || searchParams.get("estimateId");
   const [isEditing, setIsEditing] = useState(false);
-  const { setIsDirty } = useUnsavedChanges();
 
   const [project, setProject] = useState(blankProject());
   const [settings, setSettings] = useState({});
   const [inventory, setInventory] = useState([]);
   const [equipmentInventory, setEquipmentInventory] = useState([]);
   const [rates, setRates] = useState([]);
+  const [estimateContext, setEstimateContext] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
 
-  useEffect(() => { if (!loading) setHasLoaded(true); }, [loading]);
-  useEffect(() => { if (hasLoaded) setIsDirty(true); }, [project, hasLoaded, setIsDirty]);
-
   const loadAll = useCallback(async () => {
+    setLoading(true);
     try {
-      const [s, inv, equipInv, r] = await Promise.all([
+      const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         Settings.list(),
         MaintenanceInventory.list("sort_order"),
         MaintenanceEquipment.list("sort_order"),
         MaintenanceActionRate.list(),
+        editId ? MaintenanceProject.get(editId).catch(() => null) : Promise.resolve(null),
+        estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
       ]);
       const sObj = {};
-      s.forEach(x => { sObj[x.setting_name] = x.setting_value; });
+      (s || []).forEach(x => { sObj[x.setting_name] = x.setting_value; });
       setSettings(sObj);
-      setInventory(inv);
-      setEquipmentInventory(equipInv);
-      setRates(r);
+      setInventory(inv || []);
+      setEquipmentInventory(equipInv || []);
+      setRates(r || []);
+      setEstimateContext(estimate || null);
 
-      if (editId) {
-        const existing = await MaintenanceProject.get(editId);
-        if (existing) {
-          setProject({ ...blankProject(), ...existing, items: existing.items || [] });
-          setIsEditing(true);
-        } else {
-          navigate(createPageUrl("SignMaintenanceProjects"));
-        }
+      if (existing) {
+        setProject({
+          ...blankProject(),
+          ...existing,
+          client_name: estimate?.client_name || existing.client_name,
+          customer_id: estimate?.customer_id || existing.customer_id,
+          estimate_number: estimate?.estimate_number || existing.estimate_number,
+          site_address: existing.site_address || estimate?.site_address || "",
+          items: existing.items || [],
+        });
+        setIsEditing(true);
+      } else {
+        setProject(prev => ({
+          ...prev,
+          client_name: estimate?.client_name || prev.client_name,
+          customer_id: estimate?.customer_id,
+          estimate_number: estimate?.estimate_number || prev.estimate_number,
+          site_address: estimate?.site_address || prev.site_address,
+        }));
+        setIsEditing(false);
       }
     } catch (e) {
       console.error("Load error:", e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [editId, navigate]);
+  }, [editId, estimateId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
