@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Hammer, Save } from "lucide-react";
