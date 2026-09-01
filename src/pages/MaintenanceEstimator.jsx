@@ -60,7 +60,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     try {
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         Settings.list(),
-        loadMaintenanceMaterialRules().then((data) => data.rules),
+        loadMaintenanceMaterialRules({ includeInactive: true }).then((data) => data.rules),
         base44.entities.ChannelLetterInstallEquipment.list("sort_order", 500),
         MaintenanceActionRate.list(),
         editId ? MaintenanceProject.get(editId).catch(() => null) : Promise.resolve(null),
