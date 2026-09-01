@@ -148,9 +148,10 @@ export default function EstimatorProducts() {
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
   }, [quickProducts, query, scope, status, moduleFilter, user?.id, user?.role]);
 
-  const activeCount = quickProducts.filter((product) => product.is_active !== false).length;
-  const globalCount = quickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
-  const myCount = quickProducts.filter((product) => product.is_active !== false && product.product_group !== "global" && (!product.created_by_id || product.created_by_id === user?.id)).length;
+  const accessibleQuickProducts = quickProducts.filter((product) => product.product_group === "global" || !product.created_by_id || product.created_by_id === user?.id);
+  const activeCount = accessibleQuickProducts.filter((product) => product.is_active !== false).length;
+  const globalCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
+  const myCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group !== "global").length;
 
   const setView = (nextView) => {
     const next = new URLSearchParams(searchParams);
