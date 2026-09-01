@@ -162,7 +162,7 @@ const SOURCES = [
     { entity: "ChannelLetterInstallInventory" },
     { entity: "FoundationInventory", filter: (r) => ["concrete_service", "bagged_concrete", "rebar", "forming_material", "pole", "brick_stone", "fill_material", "wall_material", "wall_cap"].includes(r.material_type) },
   ]},
-  { key: "vinyl", label: "Vinyl", entities: [{ entity: "VinylInventory", filter: (r) => r.is_active !== false }] },
+  { key: "vinyl", label: "Vinyl", entities: [{ entity: "VinylInventory", filter: (r) => r.is_active !== false && r.show_in_master_only !== true }] },
   { key: "sign_lighting", label: "Sign Lighting", entities: [{ entity: "SignLightingInventory", filter: (r) => r.is_active !== false }] },
   { key: "sign_hardware", label: "Hardware", entities: [{ entity: "SignHardwareInventory", filter: (r) => r.is_active !== false }] },
   { key: "labor_services", label: "Labor & Services", entities: [{ entity: "LaborServiceInventory", filter: (r) => r.is_active !== false }] },
