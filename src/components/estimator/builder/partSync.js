@@ -200,6 +200,13 @@ export async function loadBuilderCatalogs(moduleKey) {
     ],
     maintenance: [
       ["MaintenanceInventory", "sort_order"],
+      ["SignLightingInventory", "sort_order"],
+      ["SignHardwareInventory", "sort_order"],
+      ["SignPartsSuppliesInventory", "sort_order"],
+      ["DimensionalLetterMaterial", "sort_order"],
+      ["VinylInventory", "sort_order"],
+      ["ChannelLetterInstallInventory", "sort_order"],
+      ["FoundationInventory", "material_name"],
       ["ChannelLetterInstallEquipment", "sort_order"],
       // Legacy compatibility only. New Maintenance selections use the shared
       // Master Inventory equipment catalog above.
@@ -1605,7 +1612,18 @@ function liveMaintenanceProject(project, catalogs) {
     if (row.setting_name) settings[row.setting_name] = row.setting_value;
   });
   const rates = catalogs.MaintenanceActionRate?.rows || [];
-  const inventory = catalogs.MaintenanceInventory?.rows || [];
+  const inventory = (catalogs.MaintenanceInventory?.rows || []).map((rule) => {
+    if (!rule.inventory_entity || !rule.inventory_item_id) return rule;
+    const masterRow = catalogs[rule.inventory_entity]?.byId?.get(rule.inventory_item_id) || null;
+    const pricingMode = masterRow?.pricing_mode || masterRow?.pole_pricing_mode || masterRow?.unit_type || (rule.inventory_entity === "DimensionalLetterMaterial" ? "per_sheet" : "per_unit");
+    return {
+      ...rule,
+      _master_missing: !masterRow,
+      _master_unit_cost: masterRow ? independentPartUnitCost({ inventory_entity: rule.inventory_entity, pricing_basis_snapshot: { pricing_mode: pricingMode } }, masterRow) : undefined,
+      _master_pricing_mode: pricingMode,
+      _display_name: masterRow ? rowName(rule.inventory_entity, masterRow) : (rule.inventory_item_name || rule.item_name),
+    };
+  });
   const items = (project.items || []).map((item) => calcServiceItem(item, settings, rates, inventory));
   const selectedEquipment = (project.selected_equipment || []).map((entry) => recalcMaintenanceEquipmentRow(entry, catalogs));
   const current = { ...project, items, selected_equipment: selectedEquipment };
