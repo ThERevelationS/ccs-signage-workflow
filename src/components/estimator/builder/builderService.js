@@ -50,6 +50,12 @@ export function sourceProjectTotal(line, record) {
   const totalField = MODULE_TOTAL_FIELD[line?.module_key];
   if (totalField) return num(record[totalField]);
 
+  if (line?.module_key === "painting") {
+    return num(record.total_paint_mask_cost)
+      + num(record.total_liquid_paint_and_supplies_cost)
+      + num(record.total_labor_cost);
+  }
+
   if (line?.module_key === "foundation") {
     const direct = num(record.grand_total, NaN);
     if (Number.isFinite(direct)) return direct;
