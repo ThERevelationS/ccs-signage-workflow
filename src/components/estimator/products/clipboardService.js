@@ -60,6 +60,8 @@ async function captureProductPayload({ estimate, line }) {
       price_state: builder.price_state || line.price_state || "current",
       price_delta: num(builder.price_delta, currentTotal - frozenTotal),
       price_delta_percent: num(builder.price_delta_percent),
+      price_recalc_required: !!(builder.price_recalc_required || line.price_recalc_required),
+      price_recalc_reason: builder.price_recalc_reason || line.price_recalc_reason || "",
       captured_at: nowIso(),
     },
     detached_part_count: num(builder.detached_part_count),
