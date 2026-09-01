@@ -67,6 +67,14 @@ export async function addPartPackageToProduct({
     const partData = stripEntitySystemFields(sourcePart);
     const targetSyncState = isCustom ? "manual" : "manual_addon";
     const sourceLabel = sourceType === "clipboard" ? "estimator clipboard" : "Part Library";
+    const missingInventory = ["detached", "reattach_available"].includes(sourcePart.inventory_link_state);
+    const frozenExtended = num(sourcePart.frozen_extended_cost);
+    const currentExtended = num(sourcePart.current_extended_cost, frozenExtended);
+    const normalizedPriceState = missingInventory
+      ? "detached"
+      : sourcePart.manual_cost_override || sourcePart.price_state === "manual"
+        ? "manual"
+        : Math.abs(currentExtended - frozenExtended) > 0.005 ? "changed" : "current";
     createdParts.push(await base44.entities.BuilderPart.create({
       ...partData,
       builder_product_id: builder.id,
@@ -79,8 +87,12 @@ export async function addPartPackageToProduct({
       builder_detached_at: "",
       builder_detached_reason: targetSyncState === "manual_addon" ? `Independent Part added from ${sourceLabel}.` : "",
       builder_detached_snapshot: {},
+      inventory_link_state: sourcePart.inventory_link_state === "reattach_available" ? "detached" : (sourcePart.inventory_link_state || "manual"),
       reattach_candidate_id: "",
       reattach_candidate_name: "",
+      price_state: normalizedPriceState,
+      price_delta: currentExtended - frozenExtended,
+      price_delta_percent: frozenExtended ? ((currentExtended - frozenExtended) / frozenExtended) * 100 : 0,
       last_price_check_at: timestamp,
       last_price_update_at: timestamp,
       is_active: true,
@@ -95,7 +107,10 @@ export async function addPartPackageToProduct({
   const nextFrozen = previousFrozen + addedFrozen;
   const nextCurrent = previousCurrent + addedCurrent;
   const nextCustomer = previousCustomer + addedFrozen;
-  const nextState = builder.needs_reattach_review
+  const insertedDetachedCount = createdParts.filter((part) => ["detached", "reattach_available"].includes(part.inventory_link_state) || part.price_state === "detached").length;
+  const nextDetachedCount = num(builder.detached_part_count) + insertedDetachedCount;
+  const nextNeedsReattachReview = !!builder.needs_reattach_review || insertedDetachedCount > 0;
+  const nextState = nextNeedsReattachReview
     ? "detached_parts"
     : Math.abs(nextCurrent - nextFrozen) > 0.005 ? "changed" : "current";
 
@@ -108,6 +123,8 @@ export async function addPartPackageToProduct({
     price_delta_percent: nextFrozen ? ((nextCurrent - nextFrozen) / nextFrozen) * 100 : 0,
     part_count: targetPartCount + createdParts.length,
     group_count: targetGroupCount + (createdGroup ? 1 : 0),
+    detached_part_count: nextDetachedCount,
+    needs_reattach_review: nextNeedsReattachReview,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
@@ -118,6 +135,8 @@ export async function addPartPackageToProduct({
     total_snapshot: nextFrozen,
     live_total_snapshot: nextCurrent,
     price_state: nextState,
+    detached_part_count: nextDetachedCount,
+    needs_reattach_review: nextNeedsReattachReview,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
   } : line);
