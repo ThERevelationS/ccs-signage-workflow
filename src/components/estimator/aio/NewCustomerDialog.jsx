@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -18,11 +18,20 @@ const FIELDS = [
 ];
 
 const EMPTY = FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: "" }), {});
+const newCustomerState = () => ({ ...EMPTY, pricing_tier: 1 });
 
 export default function NewCustomerDialog({ open, onClose, onCreated }) {
-  const [data, setData] = useState(EMPTY);
+  const [data, setData] = useState(newCustomerState);
+  const [tiers, setTiers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    base44.entities.MarkupTier.list("sort_order")
+      .then((rows) => setTiers(rows || []))
+      .catch(() => setTiers([]));
+  }, [open]);
 
   const handleSave = async () => {
     setError("");
@@ -39,7 +48,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         is_active: true,
       });
       onCreated(created);
-      setData(EMPTY);
+      setData(newCustomerState());
       onClose();
     } catch (e) {
       setError(e.message || "Could not create the customer.");
@@ -72,6 +81,22 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
               />
             </label>
           ))}
+          <label className="text-[11px] text-gray-500 col-span-2">
+            Default pricing tier
+            <select
+              value={String(Number(data.pricing_tier) || 1)}
+              onChange={(event) => setData((current) => ({ ...current, pricing_tier: Number(event.target.value) || 1 }))}
+              className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] bg-white focus:outline-none focus:border-red-400"
+            >
+              {tiers.length === 0 && <option value="1">Tier 1 — General Public</option>}
+              {tiers.map((tier) => (
+                <option key={tier.id} value={String(tier.tier_number)}>
+                  Tier {tier.tier_number} — {tier.tier_name}
+                </option>
+              ))}
+            </select>
+            <span className="block mt-1 text-[9px] text-gray-400">Used as the default Markup Tier when new estimator Products are priced for this customer.</span>
+          </label>
         </div>
 
         <div className="flex justify-end gap-2 pt-1">
