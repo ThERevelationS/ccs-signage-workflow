@@ -11,6 +11,12 @@ export function localDateStamp(value = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+export function quoteIssueKey(estimateId, quoteVersion) {
+  const id = String(estimateId || "").trim();
+  const version = Math.max(0, whole(quoteVersion));
+  return id && version > 0 ? `estimate:${id}:quote:v${version}` : "";
+}
+
 /**
  * Customer-facing quote issuance metadata.
  *
