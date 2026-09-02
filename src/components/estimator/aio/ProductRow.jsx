@@ -54,7 +54,7 @@ const priceMeta = (line) => {
   if (line.price_state === "manual") {
     return {
       label: differs ? "Manual sell price · Builder price differs" : "Manual sell price",
-      className: differs ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-blue-50 text-blue-700 border-blue-200",
+      className: "bg-blue-50 text-blue-700 border-blue-200",
       icon: Percent,
       differs,
     };
