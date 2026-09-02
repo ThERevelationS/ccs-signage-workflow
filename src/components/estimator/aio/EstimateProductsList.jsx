@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import ProductRow from "./ProductRow";
 import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
 export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings }) {
   const [query, setQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
+  const [productionProductTypes, setProductionProductTypes] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    loadProductionProductTypes().then((items) => active && setProductionProductTypes(items));
+    return () => { active = false; };
+  }, []);
 
   const complete = lines.filter((l) => l.section_status === "complete").length;
 
@@ -21,6 +29,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         (line.client_product_name || "").toLowerCase().includes(q) ||
         (line.builder_name || "").toLowerCase().includes(q) ||
         (line.product_category || "").toLowerCase().includes(q) ||
+        (line.production_product_type || "").toLowerCase().includes(q) ||
         getModuleLabel(line.module_key).toLowerCase().includes(q)
       );
     });
@@ -85,6 +94,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               onSaveNotes={onSaveNotes}
               onCreateQuickProduct={onCreateQuickProduct}
               onPersistSettings={onPersistSettings}
+              productionProductTypes={productionProductTypes}
               allLines={lines}
             />
           ))}
