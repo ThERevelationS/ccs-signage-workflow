@@ -26,6 +26,19 @@ export default function PricingSummary({ estimate, pricing, onChange }) {
 
   return (
     <div className="bg-white rounded-md border border-gray-200 p-4">
+      <div className="mb-4 rounded border border-gray-200 bg-gray-50 p-3">
+        <div className="text-[10px] font-bold tracking-wider text-gray-500 mb-2">INTERNAL PROFITABILITY</div>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+          <Metric label="Internal product cost" value={money(profitability.internalCost)} />
+          <Metric label="Customer revenue" value={money(profitability.customerRevenueBeforeFeesTax)} />
+          <Metric label="Gross profit" value={money(profitability.grossProfit)} emphasis={profitability.grossProfit < 0 ? "negative" : "positive"} />
+          <Metric label="Gross margin" value={`${profitability.grossMarginPercent.toFixed(1)}%`} emphasis={profitability.grossProfit < 0 ? "negative" : "positive"} />
+        </div>
+        <div className="mt-2 text-[9px] leading-4 text-gray-400">
+          Uses accepted frozen Product cost. Customer revenue includes Product adjustments, estimate discount and contingency; shipping, permit/admin fees and tax are excluded because their internal costs are not tracked here.
+        </div>
+      </div>
+
       <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">CUSTOMER PRICING</div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
