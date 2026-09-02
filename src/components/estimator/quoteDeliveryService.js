@@ -81,6 +81,7 @@ export async function deliverEstimateQuote({
   }
 
   const messageId = payload.messageId || "";
+  const sentAt = new Date().toISOString();
   const normalizedQuoteVersion = Math.max(0, Math.floor(Number(quoteVersion || 0)));
   let deliveryLogWarning = "";
   let delivery = null;
@@ -98,7 +99,7 @@ export async function deliverEstimateQuote({
       subject,
       delivery_method: "email",
       delivery_status: "sent",
-      sent_at: new Date().toISOString(),
+      sent_at: sentAt,
       gmail_message_id: messageId,
       attachment_filename: attachment.filename,
       attachment_file_url: archive.fileUrl,
@@ -111,5 +112,5 @@ export async function deliverEstimateQuote({
     deliveryLogWarning = `Email sent, but the delivery audit record could not be saved: ${error?.message || "unknown error"}`;
   }
 
-  return { messageId, deliveryId: delivery?.id || "", delivery, archive, deliveryLogWarning };
+  return { messageId, sentAt, deliveryId: delivery?.id || "", delivery, archive, deliveryLogWarning };
 }
