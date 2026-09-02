@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MailCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { formatQuoteIssueDate } from "./quoteLifecycle";
+import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 
 export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 }) {
@@ -53,6 +53,8 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
             {rows.slice(0, 8).map((row) => {
               const issuanceRevision = issuanceRevisionFor(row);
               const trackingIncomplete = Number(row.quote_version || 0) > 0 && !issuanceRevision;
+              const expirationDate = row.quote_expiration_date || quoteExpirationDate(row.quote_issue_date, row.quote_valid_days ?? issuanceRevision?.estimate_snapshot_after?.quote_valid_days ?? 30);
+              const expired = isQuoteExpired(row.quote_issue_date, row.quote_valid_days ?? issuanceRevision?.estimate_snapshot_after?.quote_valid_days ?? 30);
               return (
               <div key={row.id} className="px-3 py-2.5 border-b border-gray-100 last:border-b-0 bg-white">
                 <div className="flex items-center justify-between gap-3">
@@ -62,6 +64,7 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
                     <span className={`text-[8px] px-1.5 py-0.5 rounded border ${row.delivery_status === "sent" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-gray-200 bg-gray-50 text-gray-600"}`}>{row.delivery_status || "sent"}</span>
                     {issuanceRevision && <span className="text-[8px] px-1.5 py-0.5 rounded border border-violet-200 bg-violet-50 text-violet-700">Issued in Revision #{issuanceRevision.revision_number}</span>}
                     {trackingIncomplete && <span className="text-[8px] px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">Issuance tracking incomplete</span>}
+                    {expired && <span className="text-[8px] px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">Expired</span>}
                   </div>
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.sent_at ? new Date(row.sent_at).toLocaleString() : ""}</div>
                 </div>
@@ -69,6 +72,7 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
                 {row.subject && <div className="mt-0.5 text-[9px] text-gray-500 truncate">{row.subject}</div>}
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400">
                   <span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span>
+                  {expirationDate && <span>Valid through {formatQuoteIssueDate(expirationDate)}</span>}
                   <span>Quote ${Number(row.quote_total || 0).toFixed(2)}</span>
                   {row.attachment_filename && <span>{row.attachment_filename}</span>}
                   {row.gmail_message_id && <span>Gmail ID {row.gmail_message_id}</span>}

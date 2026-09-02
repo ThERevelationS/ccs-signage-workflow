@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, FileCheck2, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatQuoteIssueDate } from "./quoteLifecycle";
+import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 
 const METHOD_LABELS = {
@@ -54,6 +54,8 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const quoteVersion = Math.max(0, Math.floor(Number(estimate?.quote_version || 0)));
   const currentAcceptance = rows.find((row) => Number(row.quote_version || 0) === quoteVersion) || null;
   const currentVersionDeliveries = deliveryRows.filter((row) => Number(row.quote_version || 0) === quoteVersion);
+  const currentExpirationDate = quoteExpirationDate(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
+  const currentQuoteExpired = quoteVersion > 0 && isQuoteExpired(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
   const acceptanceLifecycleKey = currentAcceptance?.id ? `customer_acceptance:${currentAcceptance.id}` : "";
   const approvalRevisionRecorded = !!acceptanceLifecycleKey && revisionRows.some((row) =>
     row.revision_status === "completed" &&
@@ -139,7 +141,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.accepted_at ? new Date(row.accepted_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.accepted_by_name}{row.accepted_by_email ? ` · ${row.accepted_by_email}` : ""} · {METHOD_LABELS[row.acceptance_method] || row.acceptance_method}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span><span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.delivery_id && <span>{(() => { const delivery = deliveryRows.find((item) => item.id === row.delivery_id); return delivery ? `Delivery: ${delivery.recipient_email || "email"} · ${delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : ""}` : "Specific delivery linked"; })()}</span>}{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span>{row.quote_expiration_date && <span>Valid through {formatQuoteIssueDate(row.quote_expiration_date)}</span>}<span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.delivery_id && <span>{(() => { const delivery = deliveryRows.find((item) => item.id === row.delivery_id); return delivery ? `Delivery: ${delivery.recipient_email || "email"} · ${delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : ""}` : "Specific delivery linked"; })()}</span>}{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
                 {row.notes && <div className="mt-1 text-[9px] text-gray-500">{row.notes}</div>}
               </div>
             ))}
@@ -154,6 +156,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             <p className="mt-1 text-[10px] text-gray-300">{repairingApprovedAcceptance ? `Quote Version ${quoteVersion} is already accepted and the estimate is Approved, but its downstream approval tracking is incomplete. Repairing will reuse the immutable acceptance, re-sync the Sales Pipeline, and ensure exactly one acceptance lifecycle revision.` : recoveringRecordedAcceptance ? `Acceptance of Quote Version ${quoteVersion} is already recorded. Finalizing will reuse that immutable record and retry the Sent → Approved lifecycle tracking.` : `This records acceptance of Quote Version ${quoteVersion}. Saving will move the estimate to Approved and preserve the lifecycle transition in Estimate Revision History.`}</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
+            {currentQuoteExpired && !recoveringRecordedAcceptance && <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800"><strong>Quote Version {quoteVersion} expired{currentExpirationDate ? ` on ${formatQuoteIssueDate(currentExpirationDate)}` : ""}.</strong> You can still record acceptance if the shop has chosen to honor the quote; this warning does not change pricing or block approval.</div>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">ACCEPTED BY<input autoFocus={!recoveringRecordedAcceptance} disabled={recoveringRecordedAcceptance} value={acceptedByName} onChange={(event) => setAcceptedByName(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">CUSTOMER EMAIL<input type="email" disabled={recoveringRecordedAcceptance} value={acceptedByEmail} onChange={(event) => setAcceptedByEmail(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
