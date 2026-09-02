@@ -29,6 +29,7 @@ import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
+import { resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -245,8 +246,15 @@ export default function EstimateDetail() {
       const before = persistedEstimate || await base44.entities.AllInOneEstimate.get(estimate.id);
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+      const quoteIssueMetadata = resolveQuoteIssueMetadata({
+        previousStatus: before.status || "",
+        nextStatus: estimate.status || "",
+        currentVersion: before.quote_version || 0,
+        today: new Date().toISOString().slice(0, 10),
+      });
       const persistedData = {
         ...data,
+        ...quoteIssueMetadata,
         edit_reason: "",
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
