@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, Plus, RefreshCw, StickyNote, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ClipboardCopy, Copy, History, Layers3, LockKeyhole, PackagePlus, Pencil, Percent, Plus, RefreshCw, StickyNote, Trash2 } from "lucide-react";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import BuilderPartsPanel from "./BuilderPartsPanel";
 import ProductNotesModal from "./ProductNotesModal";
+import ProductPriceHistoryModal from "./ProductPriceHistoryModal";
 import CreateQuickProductModal from "./CreateQuickProductModal";
 import { copyProductToClipboard } from "@/components/estimator/products/clipboardService";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
@@ -104,6 +105,7 @@ export default function ProductRow({
   const [updatingPrice, setUpdatingPrice] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
   const [quickProductOpen, setQuickProductOpen] = useState(false);
   const [copyingClipboard, setCopyingClipboard] = useState(false);
   const [copiedClipboard, setCopiedClipboard] = useState(false);
@@ -256,6 +258,16 @@ export default function ProductRow({
         >
           <StickyNote className="w-3.5 h-3.5" /><span className="hidden xl:inline">Notes</span>
         </button>
+        {line.builder_product_id && (
+          <button
+            type="button"
+            onClick={() => setPriceHistoryOpen(true)}
+            title="View Product Price History"
+            className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100"
+          >
+            <History className="w-3.5 h-3.5" /><span className="hidden 2xl:inline">History</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setQuickProductOpen(true)}
@@ -455,6 +467,12 @@ export default function ProductRow({
         onSave={async (notes) => {
           await onSaveNotes?.(line, notes, index);
         }}
+      />
+
+      <ProductPriceHistoryModal
+        open={priceHistoryOpen}
+        line={line}
+        onClose={() => setPriceHistoryOpen(false)}
       />
 
       {partsOpen && (
