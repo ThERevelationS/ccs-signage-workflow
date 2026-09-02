@@ -122,13 +122,13 @@
     "quote_issue_date": {
       "type": "string",
       "format": "date",
-      "description": "Customer-facing quote issue version. Starts at 1 on the first transition into sent and increments on each later transition into sent or completed revision that remains sent. Separate from EstimateRevision.revision_number."
+      "description": "Customer-facing issue date of the currently issued quote version. Updated when the estimate transitions into sent or when an intentional revision is completed while remaining sent; historical sent estimates are not automatically backfilled."
     },
     "quote_version": {
       "type": "number",
       "default": 0,
       "minimum": 0,
-      "description": "Customer-facing quote issue version. Starts at 1 on the first transition into sent and increments on each later transition into sent. Separate from EstimateRevision.revision_number."
+      "description": "Customer-facing quote issue version. Starts at 1 on the first transition into sent and increments on each later transition into sent or completed revision that remains sent. Separate from EstimateRevision.revision_number."
     },
     "payment_terms": {
       "type": "string",
