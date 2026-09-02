@@ -20,6 +20,7 @@ export default function AioStepRail({
   onSaveProgress,
   saving,
   dirty,
+  readOnly = false,
 }) {
   const money = (n) => `$${Number(n || 0).toFixed(2)}`;
   const s = summary || {};
@@ -110,10 +111,10 @@ export default function AioStepRail({
 
       <button
         onClick={onSaveProgress}
-        disabled={saving}
+        disabled={saving || readOnly}
         className="w-full bg-lime-200 hover:bg-lime-300 disabled:opacity-60 border border-lime-500 text-slate-900 font-semibold py-2 rounded-sm text-sm transition-colors"
       >
-        {saving ? "Saving…" : `Save Estimate Progress${dirty ? " *" : ""}`}
+        {readOnly ? "Protected · Revise to Edit" : saving ? "Saving…" : `Save Estimate Progress${dirty ? " *" : ""}`}
       </button>
     </div>
   );
