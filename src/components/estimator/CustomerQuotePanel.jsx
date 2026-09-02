@@ -1,7 +1,11 @@
-import { Printer, Settings2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Mail, Printer, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
-import { formatQuoteIssueDate } from "./quoteLifecycle";
+import { formatQuoteIssueDate, localDateStamp, resolveQuoteIssueMetadata } from "./quoteLifecycle";
+import { generateCustomerQuotePdf } from "./quotePdf";
+import { defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -44,17 +48,106 @@ const TOGGLES = [
 
 const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefined || estimate[key] === null ? fallback : estimate[key] !== false;
 
-export default function CustomerQuotePanel({ estimate, pricing, onChange, readOnly = false, revisionInProgress = false }) {
+export default function CustomerQuotePanel({
+  estimate,
+  pricing,
+  onChange,
+  readOnly = false,
+  revisionInProgress = false,
+  persistedStatus = "draft",
+  onQuoteDelivered,
+}) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
   const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
   const quoteVersion = Math.max(0, Math.floor(Number(estimate.quote_version || 0)));
+  const issuingNewQuote = ["draft", "calculated"].includes(String(persistedStatus || "draft"));
+  const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
 
   const printQuote = () => {
     window.print();
   };
 
   const set = (key, value) => onChange?.({ [key]: value });
+
+  const openSendDialog = () => {
+    if (!canEmailQuote) return;
+    setRecipientEmail(estimate.contact_email || "");
+    setEmailSubject(defaultQuoteEmailSubject(estimate));
+    setEmailMessage(defaultQuoteEmailMessage(estimate));
+    setSendError("");
+    setSendOpen(true);
+  };
+
+  const sendQuote = async () => {
+    const recipient = String(recipientEmail || "").trim();
+    const subject = String(emailSubject || "").trim();
+    const message = String(emailMessage || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+      setSendError("Enter a valid customer email address.");
+      return;
+    }
+    if (!subject || !message) {
+      setSendError("Subject and message are required.");
+      return;
+    }
+
+    setSending(true);
+    setSendError("");
+    let emailWasSent = false;
+    try {
+      const issueMetadata = issuingNewQuote
+        ? resolveQuoteIssueMetadata({
+            previousStatus: persistedStatus,
+            nextStatus: "sent",
+            currentVersion: estimate.quote_version || 0,
+            today: localDateStamp(),
+          })
+        : {};
+      const deliveryVersion = Math.max(0, Math.floor(Number(issueMetadata.quote_version ?? estimate.quote_version ?? 0)));
+      const deliveryIssueDate = issueMetadata.quote_issue_date || estimate.quote_issue_date || localDateStamp();
+      const attachment = await generateCustomerQuotePdf({
+        estimateNumber: estimate.estimate_number,
+        projectName: estimate.project_name,
+        quoteIssueDate: deliveryIssueDate,
+        quoteVersion: deliveryVersion,
+      });
+      const deliveryResult = await deliverEstimateQuote({
+        estimate,
+        recipientEmail: recipient,
+        subject,
+        message,
+        attachment,
+        quoteVersion: deliveryVersion,
+        quoteIssueDate: deliveryIssueDate,
+        quoteTotal: pricing.quoteTotal,
+        sourceStatus: persistedStatus,
+        isResend: !issuingNewQuote,
+      });
+      emailWasSent = true;
+      const trackingResult = await onQuoteDelivered?.({
+        recipientEmail: recipient,
+        issueMetadata,
+        quoteVersion: deliveryVersion,
+        quoteIssueDate: deliveryIssueDate,
+        gmailMessageId: deliveryResult.messageId,
+      });
+      setSendOpen(false);
+      const warnings = [deliveryResult.deliveryLogWarning, trackingResult?.warning].filter(Boolean);
+      window.alert(warnings.length ? `Quote emailed successfully.\n\n${warnings.join("\n")}` : "Quote emailed successfully.");
+    } catch (error) {
+      const detail = error?.message || "Quote could not be emailed.";
+      setSendError(emailWasSent ? `The email was sent, but estimate tracking could not be finalized: ${detail}` : detail);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
