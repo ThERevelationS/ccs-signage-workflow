@@ -146,6 +146,11 @@
       "type": "number",
       "description": "Total labor cost"
     },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Painting internal cost remains unchanged until a tier is explicitly applied.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string",
       "description": "Project notes"
