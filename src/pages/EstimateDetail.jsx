@@ -373,39 +373,44 @@ export default function EstimateDetail() {
       estimate_id: estimate.id,
       quote_version: currentVersion,
     }).catch(() => []);
-    if ((existingAcceptances || []).length > 0) {
-      throw new Error(`Quote Version ${currentVersion} already has a recorded customer acceptance.`);
+    const existingAcceptance = (existingAcceptances || [])
+      .slice()
+      .sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0))[0] || null;
+
+    let acceptance = existingAcceptance;
+    if (!acceptance) {
+      const deliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []);
+      const matchingDelivery = (deliveries || [])
+        .filter((row) => Number(row.quote_version || 0) === currentVersion)
+        .sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0))[0] || null;
+
+      acceptance = await base44.entities.EstimateAcceptance.create({
+        estimate_id: estimate.id,
+        work_order_id: before.work_order_id || "",
+        delivery_id: matchingDelivery?.id || "",
+        quote_version: currentVersion,
+        quote_issue_date: before.quote_issue_date || "",
+        quote_total: Number(before.quote_total || 0),
+        accepted_at: acceptedAt,
+        accepted_by_name: acceptedByName,
+        accepted_by_email: acceptedByEmail || "",
+        acceptance_method: acceptanceMethod,
+        evidence_reference: evidenceReference || "",
+        notes: notes || "",
+      });
     }
 
-    const deliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []);
-    const matchingDelivery = (deliveries || [])
-      .filter((row) => Number(row.quote_version || 0) === currentVersion)
-      .sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0))[0] || null;
-
-    await base44.entities.EstimateAcceptance.create({
-      estimate_id: estimate.id,
-      work_order_id: before.work_order_id || "",
-      delivery_id: matchingDelivery?.id || "",
-      quote_version: currentVersion,
-      quote_issue_date: before.quote_issue_date || "",
-      quote_total: Number(before.quote_total || 0),
-      accepted_at: acceptedAt,
-      accepted_by_name: acceptedByName,
-      accepted_by_email: acceptedByEmail || "",
-      acceptance_method: acceptanceMethod,
-      evidence_reference: evidenceReference || "",
-      notes: notes || "",
-    });
-
     const after = { ...before, status: "approved", edit_reason: "" };
-    const methodLabel = String(acceptanceMethod || "other").replace(/_/g, " ");
+    const acceptedName = acceptance?.accepted_by_name || acceptedByName;
+    const acceptedMethod = acceptance?.acceptance_method || acceptanceMethod;
+    const methodLabel = String(acceptedMethod || "other").replace(/_/g, " ");
     try {
       await base44.entities.AllInOneEstimate.update(estimate.id, { status: "approved", edit_reason: "" });
       await syncEstimateEverywhere(after, { previousEstimateStatus: "sent" });
       await recordEstimateLifecycleRevision({
         estimateBefore: before,
         estimateAfter: after,
-        reason: `${acceptedByName} accepted Quote Version ${currentVersion} via ${methodLabel}`,
+        reason: `${acceptedName} accepted Quote Version ${currentVersion} via ${methodLabel}`,
         revisionType: "status_transition",
         quoteTotalBefore: before.quote_total,
         quoteTotalAfter: before.quote_total,
