@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
+import { quoteIssueKey } from "./quoteLifecycle";
 
 const escapeHtml = (value) => String(value || "")
   .replace(/&/g, "&amp;")
@@ -49,12 +50,15 @@ export async function deliverEstimateQuote({
   }
 
   const messageId = payload.messageId || "";
+  const normalizedQuoteVersion = Math.max(0, Math.floor(Number(quoteVersion || 0)));
   let deliveryLogWarning = "";
+  let delivery = null;
   try {
-    await base44.entities.EstimateQuoteDelivery.create({
+    delivery = await base44.entities.EstimateQuoteDelivery.create({
       estimate_id: estimate.id,
       work_order_id: estimate.work_order_id || "",
-      quote_version: Math.max(0, Math.floor(Number(quoteVersion || 0))),
+      quote_issue_key: quoteIssueKey(estimate.id, normalizedQuoteVersion),
+      quote_version: normalizedQuoteVersion,
       quote_issue_date: quoteIssueDate || "",
       quote_total: Number(quoteTotal || 0),
       recipient_email: recipientEmail,
@@ -71,5 +75,5 @@ export async function deliverEstimateQuote({
     deliveryLogWarning = `Email sent, but the delivery audit record could not be saved: ${error?.message || "unknown error"}`;
   }
 
-  return { messageId, deliveryLogWarning };
+  return { messageId, deliveryId: delivery?.id || "", delivery, deliveryLogWarning };
 }
