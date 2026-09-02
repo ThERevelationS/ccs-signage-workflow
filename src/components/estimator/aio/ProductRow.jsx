@@ -461,7 +461,6 @@ export default function ProductRow({
           </div>
           </fieldset>
         </div>
-        </div>
       )}
 
       <MasterPartPickerModal
