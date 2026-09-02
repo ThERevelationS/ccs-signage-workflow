@@ -45,6 +45,22 @@ export function resolveQuoteIssueMetadata({
   };
 }
 
+
+export function quoteExpirationDate(issueDate, validDays = 30, fallbackDate = new Date()) {
+  const baseText = String(issueDate || localDateStamp(fallbackDate)).trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(baseText);
+  if (!match) return "";
+  const [, year, month, day] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  date.setDate(date.getDate() + Math.max(0, whole(validDays, 30)));
+  return localDateStamp(date);
+}
+
+export function isQuoteExpired(issueDate, validDays = 30, today = localDateStamp()) {
+  const expiration = quoteExpirationDate(issueDate, validDays);
+  return !!expiration && String(today || localDateStamp()) > expiration;
+}
+
 export function formatQuoteIssueDate(value, fallbackDate = new Date()) {
   const text = String(value || "").trim();
   if (!text) return fallbackDate.toLocaleDateString();
