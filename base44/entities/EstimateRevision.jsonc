@@ -86,6 +86,11 @@
     "work_order_id": {
       "type": "string"
     },
+    "delivery_evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Fallback evidence for the first delivery of this issued quote version (delivery id when available, Gmail id, recipient, archive URL/fingerprint, and sent timestamp). Preserves traceability if the dedicated delivery audit row cannot be saved."
+    },
     "notes": {
       "type": "string"
     }
