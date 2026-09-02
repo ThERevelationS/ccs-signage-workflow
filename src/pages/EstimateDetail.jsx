@@ -454,10 +454,12 @@ export default function EstimateDetail() {
               {estimate.status !== "cancelled" && (
                 <button
                   onClick={() => setShowCancel(true)}
-                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors text-left"
+                  disabled={!!openRevision}
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={openRevision ? "Save the open revision before cancelling this estimate." : "Cancel Estimate"}
                 >
                   <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
-                  <span className="text-sm font-medium text-gray-800">Cancel Estimate</span>
+                  <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
                 </button>
               )}
               <EstimateRevisionPanel
