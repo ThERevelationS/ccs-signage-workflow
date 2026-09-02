@@ -77,3 +77,17 @@ export default function PricingSummary({ estimate, pricing, onChange }) {
     </div>
   );
 }
+
+function Metric({ label, value, emphasis }) {
+  const valueClass = emphasis === "negative"
+    ? "text-red-700"
+    : emphasis === "positive"
+      ? "text-emerald-700"
+      : "text-gray-900";
+  return (
+    <div className="rounded border border-gray-200 bg-white px-2.5 py-2">
+      <div className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">{label}</div>
+      <div className={`mt-0.5 text-[14px] font-bold tabular-nums ${valueClass}`}>{value}</div>
+    </div>
+  );
+}
