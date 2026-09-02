@@ -17,8 +17,9 @@ const fmt = (n) => "$" + (Number(n) || 0).toLocaleString("en-US", { minimumFract
  *   categorize   — function(project) => [{ module, label, cost, category_key }]
  *   accentColor  — tailwind color name (purple, red, green, blue, orange) for the header
  *   onTierChange — optional callback. When provided, selected tier becomes the Builder's saved tier on next save.
+ *   onApplyTier  — optional explicit-apply callback for Builders that already have a working manual pricing mode.
  */
-export default function CustomerPricingTab({ project, categorize, accentColor = "slate", onTierChange }) {
+export default function CustomerPricingTab({ project, categorize, accentColor = "slate", onTierChange, onApplyTier }) {
   const [tiers, setTiers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState([]);
@@ -170,6 +171,15 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
                 <p className="text-xs opacity-75">Selected Tier</p>
                 <p className="font-semibold text-sm">{selectedTier?.tier_name || `Tier ${tierNumber}`}</p>
               </div>
+              {onApplyTier && (
+                <button
+                  type="button"
+                  onClick={() => onApplyTier(tierNumber)}
+                  className="ml-auto h-8 px-3 rounded border border-current/25 bg-white/80 text-xs font-semibold hover:bg-white"
+                >
+                  Use Tier {tierNumber}
+                </button>
+              )}
             </div>
           </div>
           {selectedTier?.description && (
@@ -264,6 +274,8 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
             Markups and volume discount brackets are configured in <strong>Admin → Markups</strong>.
             {onTierChange ? (
               <> Tier {tierNumber} will be saved with this Builder the next time you save it. Customer default: Tier {customerDefaultTier}.</>
+            ) : onApplyTier ? (
+              <> Preview tiers freely, then choose <strong>Use Tier {tierNumber}</strong> to replace this Builder's manual sell-price mode. Customer default: Tier {customerDefaultTier}.</>
             ) : (
               <> This view is currently preview-only.</>
             )}
