@@ -29,7 +29,7 @@ import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
-import { completeEstimateRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
+import { completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
@@ -375,7 +375,9 @@ export default function EstimateDetail() {
   }) => {
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
     const currentVersion = Math.max(0, Math.floor(Number(before.quote_version || 0)));
-    if (before.status !== "sent") throw new Error("Only a currently Sent estimate can record customer acceptance.");
+    if (!["sent", "approved"].includes(before.status)) {
+      throw new Error("Customer acceptance can only be finalized from a Sent estimate or repaired on an already Approved estimate.");
+    }
     if (!currentVersion || currentVersion !== Number(quoteVersion || 0)) {
       throw new Error("The issued quote version changed. Reload the estimate before recording acceptance.");
     }
@@ -389,6 +391,9 @@ export default function EstimateDetail() {
       .sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0))[0] || null;
 
     let acceptance = existingAcceptance;
+    if (!acceptance && before.status === "approved") {
+      throw new Error("This estimate is already Approved, but no immutable acceptance record exists for the current quote version. Approval tracking cannot be reconstructed automatically.");
+    }
     if (!acceptance) {
       const deliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []);
       const matchingDelivery = (deliveries || [])
@@ -411,32 +416,40 @@ export default function EstimateDetail() {
       });
     }
 
+    const transitionBefore = before.status === "approved" ? { ...before, status: "sent" } : before;
     const after = { ...before, status: "approved", edit_reason: "" };
     const acceptedName = acceptance?.accepted_by_name || acceptedByName;
     const acceptedMethod = acceptance?.acceptance_method || acceptanceMethod;
     const methodLabel = String(acceptedMethod || "other").replace(/_/g, " ");
     try {
-      await base44.entities.AllInOneEstimate.update(estimate.id, { status: "approved", edit_reason: "" });
+      if (before.status === "sent") {
+        await base44.entities.AllInOneEstimate.update(estimate.id, { status: "approved", edit_reason: "" });
+      }
+      // Both operations below are intentionally retry-safe. Pipeline sync is an
+      // upsert, while the lifecycle row is keyed to the immutable acceptance id.
       await syncEstimateEverywhere(after, { previousEstimateStatus: "sent" });
-      await recordEstimateLifecycleRevision({
-        estimateBefore: before,
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: `customer_acceptance:${acceptance.id}`,
+        estimateBefore: transitionBefore,
         estimateAfter: after,
         reason: `${acceptedName} accepted Quote Version ${currentVersion} via ${methodLabel}`,
         revisionType: "status_transition",
-        quoteTotalBefore: before.quote_total,
-        quoteTotalAfter: before.quote_total,
-        internalCostBefore: before.total_cost,
-        internalCostAfter: before.total_cost,
-        workOrderId: before.work_order_id || "",
+        quoteTotalBefore: transitionBefore.quote_total,
+        quoteTotalAfter: after.quote_total,
+        internalCostBefore: transitionBefore.total_cost,
+        internalCostAfter: after.total_cost,
+        workOrderId: after.work_order_id || "",
       });
     } catch (error) {
-      throw new Error(`Customer acceptance was recorded, but the estimate could not be fully transitioned to Approved: ${error?.message || "unknown error"}`);
+      throw new Error(`Customer acceptance is recorded, but approval tracking could not be fully synchronized: ${error?.message || "unknown error"}`);
     }
 
-    setEstimate(after);
-    setPersistedEstimate(after);
+    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+    const savedAfter = { ...after, ...(refreshed || {}), status: "approved", edit_reason: "" };
+    setEstimate(savedAfter);
+    setPersistedEstimate(savedAfter);
     setRevisionRefreshKey((value) => value + 1);
-    return after;
+    return savedAfter;
   };
 
   const handleCancel = async (reason) => {
