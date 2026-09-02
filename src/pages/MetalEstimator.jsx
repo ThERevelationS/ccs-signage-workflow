@@ -13,6 +13,7 @@ import { useSearchParams } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 
@@ -244,7 +245,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       } = getProjectCalculations();
       const totalCost = totalMaterialsCost + totalSuppliesCost + totalLaborCost;
 
-      const finalProject = {
+      const pricingProject = {
         ...project,
         client_name: estimateContext?.client_name || project.client_name,
         customer_id: estimateContext?.customer_id || project.customer_id,
@@ -254,6 +255,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
         total_fabrication_cost: totalFabricationCost,
         total_welding_cost: totalWeldingCost,
         total_finishing_cost: totalFinishingCost,
+      };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: pricingProject,
+        categorize: categorizeMetalProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+      const finalProject = {
+        ...pricingProject,
+        customer_pricing: customerPricing || project.customer_pricing,
         total_cost: totalCost,
         // CCS-only simplified pricing fields remain in the schema for compatibility,
         // but Git-authoritative Metal pricing does not use them.
@@ -1270,6 +1280,10 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
                   }}
                   categorize={categorizeMetalProject}
                   accentColor="orange"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
                 />
               </TabsContent>
             </Tabs>
