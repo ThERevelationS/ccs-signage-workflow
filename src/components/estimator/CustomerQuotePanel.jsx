@@ -44,7 +44,7 @@ const TOGGLES = [
 
 const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefined || estimate[key] === null ? fallback : estimate[key] !== false;
 
-export default function CustomerQuotePanel({ estimate, pricing, onChange, readOnly = false }) {
+export default function CustomerQuotePanel({ estimate, pricing, onChange, readOnly = false, revisionInProgress = false }) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
   const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
@@ -63,7 +63,7 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange, readOn
           <div className="text-[13px] font-bold text-gray-900 flex items-center gap-2"><Settings2 className="w-4 h-4 text-red-600" /> Customer Quote</div>
           <div className="text-[10px] text-gray-500 mt-0.5">Live preview uses the same frozen Product pricing waterfall as the estimate. Quote settings are stored on this estimate.</div>
         </div>
-        <Button type="button" variant="outline" onClick={printQuote} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> Print Quote</Button>
+        <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[390px_minmax(0,1fr)]">
