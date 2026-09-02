@@ -3,6 +3,7 @@ import { acceptedCustomerUnitPrice } from "./customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const norm = (value) => String(value || "").trim().toLowerCase();
+const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
 
 export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
   const pricedByLine = new Map(
@@ -72,4 +73,30 @@ export function convertedWorkOrderStage(existingStage) {
   // Do not move a WorkOrder backward if operations has already advanced it.
   if (existingStage && !["estimating", "sales"].includes(existingStage)) return existingStage;
   return "sales";
+}
+
+export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "" } = {}) {
+  return {
+    title: firstNonBlank(estimate.project_name, existing?.title),
+    client_name: firstNonBlank(estimate.client_name, existing?.client_name),
+    customer_id: firstNonBlank(estimate.customer_id, existing?.customer_id),
+    estimate_id: estimate.id || existing?.estimate_id || "",
+    // Preserve richer sales/production notes already entered on the pipeline lead.
+    description: firstNonBlank(existing?.description, generatedDescription),
+    current_stage: convertedWorkOrderStage(existing?.current_stage),
+    sales_status: "won",
+    install_location: firstNonBlank(estimate.site_address, existing?.install_location),
+    contact_name: firstNonBlank(estimate.contact_name, estimate.order_contact, existing?.contact_name),
+    contact_email: firstNonBlank(estimate.contact_email, existing?.contact_email),
+    contact_phone: firstNonBlank(estimate.contact_phone, estimate.office_phone, existing?.contact_phone),
+    representative: firstNonBlank(estimate.order_contact, existing?.representative),
+    sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
+    estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
+    estimate_amount: num(pricing.quoteTotal),
+    quoted_amount: num(pricing.quoteTotal),
+    corbridge_invoice_number: firstNonBlank(estimate.estimate_number, existing?.corbridge_invoice_number),
+    project_install_date: firstNonBlank(estimate.target_install_date, existing?.project_install_date),
+    in_pipeline: true,
+    products,
+  };
 }
