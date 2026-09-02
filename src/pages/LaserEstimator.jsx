@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LaserProject, Settings } from "@/entities/all";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
