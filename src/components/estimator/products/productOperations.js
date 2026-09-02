@@ -156,6 +156,7 @@ export async function saveProductSettings({ estimateId, line, patch = {} }) {
     if (builder) {
       if (patch.client_product_name !== undefined) builderPatch.client_product_name = patch.client_product_name;
       if (patch.product_category !== undefined) builderPatch.product_category = patch.product_category;
+      if (patch.production_product_type !== undefined) builderPatch.production_product_type = patch.production_product_type;
       if (patch.customer_description !== undefined) builderPatch.client_description = patch.customer_description;
       if (patch.customer_quantity !== undefined) builderPatch.quantity = num(patch.customer_quantity, 1);
       if (patch.section_status !== undefined) builderPatch.status = patch.section_status === "complete" ? "complete" : "in_progress";
