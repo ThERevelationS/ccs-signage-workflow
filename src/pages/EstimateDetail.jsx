@@ -157,7 +157,8 @@ export default function EstimateDetail() {
 
   const persistProductSettings = async (line, index, patch) => {
     patchLine(index, patch);
-    await saveProductSettings({ estimateId: estimate.id, line, patch });
+    const savedLine = await saveProductSettings({ estimateId: estimate.id, line, patch });
+    if (savedLine) patchLine(index, savedLine);
   };
 
   const createQuickProduct = async (line, options) => {
