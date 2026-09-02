@@ -460,15 +460,29 @@ export default function EstimateDetail() {
                   <span className="text-sm font-medium text-gray-800">Cancel Estimate</span>
                 </button>
               )}
+              <EstimateRevisionPanel
+                estimate={estimate}
+                persistedEstimate={persistedEstimate}
+                openRevision={openRevision}
+                onStartRevision={handleStartRevision}
+                onChange={patch}
+                refreshKey={revisionRefreshKey}
+              />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} />
+                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
                 <ConvertToWorkOrder
                   estimate={estimate}
                   pricing={pricing}
-                  onConverted={(woId) => patch({ work_order_id: woId, status: "approved" })}
+                  onConverted={(woId) => {
+                    const converted = { ...estimate, work_order_id: woId, status: "approved", edit_reason: "" };
+                    setEstimate(converted);
+                    setPersistedEstimate(converted);
+                    setRevisionRefreshKey((value) => value + 1);
+                  }}
+                  disabled={!!openRevision}
                 />
               </div>
-              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} />
+              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
             </>
           )}
 
