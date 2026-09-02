@@ -357,6 +357,7 @@ export default function EstimateDetail() {
         quoteTotal={pricing.quoteTotal}
         onSave={handleSave}
         saving={saving}
+        readOnly={readOnly}
       />
 
       <div className="flex gap-3 px-3 pb-6">
@@ -387,12 +388,20 @@ export default function EstimateDetail() {
           }}
           onSaveProgress={handleSave}
           saving={saving}
+          readOnly={readOnly}
         />
 
         <div className="flex-1 min-w-0 space-y-3">
           <StepNav />
 
-          {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} />}
+          {readOnly && (
+            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" /><span><strong>Protected {persistedStatus} estimate.</strong> Viewing is available, but editing requires a recorded revision.</span></div>
+              <button type="button" onClick={() => setStep(3)} className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100">Open Finalize / Revise</button>
+            </div>
+          )}
+
+          {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} readOnly={readOnly} />}
 
           {step === 2 && (
             activeProduct ? (
