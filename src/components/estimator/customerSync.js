@@ -1,16 +1,8 @@
 import { base44 } from "@/api/base44Client";
+import { resolvePipelineSalesStatus } from "./pipelineStatus";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
-
-export const resolvePipelineSalesStatus = (estimateStatus, existingStatus = "") => {
-  if (estimateStatus === "approved") return "won";
-  if (estimateStatus === "archived") return "lost";
-  if (estimateStatus === "sent") {
-    return ["won", "lost", "on_hold"].includes(existingStatus) ? existingStatus : "quoted";
-  }
-  return existingStatus || "lead";
-};
 
 /** Find a Customer by company name (or legacy workflow client name). */
 export const findCustomerByName = (customers, name) => {
