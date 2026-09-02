@@ -27,6 +27,7 @@ import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@
 import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
+import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
@@ -352,6 +353,76 @@ export default function EstimateDetail() {
     return {};
   };
 
+  const handleRecordAcceptance = async ({
+    quoteVersion,
+    acceptedByName,
+    acceptedByEmail,
+    acceptanceMethod,
+    acceptedAt,
+    evidenceReference,
+    notes,
+  }) => {
+    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const currentVersion = Math.max(0, Math.floor(Number(before.quote_version || 0)));
+    if (before.status !== "sent") throw new Error("Only a currently Sent estimate can record customer acceptance.");
+    if (!currentVersion || currentVersion !== Number(quoteVersion || 0)) {
+      throw new Error("The issued quote version changed. Reload the estimate before recording acceptance.");
+    }
+
+    const existingAcceptances = await base44.entities.EstimateAcceptance.filter({
+      estimate_id: estimate.id,
+      quote_version: currentVersion,
+    }).catch(() => []);
+    if ((existingAcceptances || []).length > 0) {
+      throw new Error(`Quote Version ${currentVersion} already has a recorded customer acceptance.`);
+    }
+
+    const deliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []);
+    const matchingDelivery = (deliveries || [])
+      .filter((row) => Number(row.quote_version || 0) === currentVersion)
+      .sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0))[0] || null;
+
+    await base44.entities.EstimateAcceptance.create({
+      estimate_id: estimate.id,
+      work_order_id: before.work_order_id || "",
+      delivery_id: matchingDelivery?.id || "",
+      quote_version: currentVersion,
+      quote_issue_date: before.quote_issue_date || "",
+      quote_total: Number(before.quote_total || 0),
+      accepted_at: acceptedAt,
+      accepted_by_name: acceptedByName,
+      accepted_by_email: acceptedByEmail || "",
+      acceptance_method: acceptanceMethod,
+      evidence_reference: evidenceReference || "",
+      notes: notes || "",
+    });
+
+    const after = { ...before, status: "approved", edit_reason: "" };
+    const methodLabel = String(acceptanceMethod || "other").replace(/_/g, " ");
+    try {
+      await base44.entities.AllInOneEstimate.update(estimate.id, { status: "approved", edit_reason: "" });
+      await syncEstimateEverywhere(after, { previousEstimateStatus: "sent" });
+      await recordEstimateLifecycleRevision({
+        estimateBefore: before,
+        estimateAfter: after,
+        reason: `${acceptedByName} accepted Quote Version ${currentVersion} via ${methodLabel}`,
+        revisionType: "status_transition",
+        quoteTotalBefore: before.quote_total,
+        quoteTotalAfter: before.quote_total,
+        internalCostBefore: before.total_cost,
+        internalCostAfter: before.total_cost,
+        workOrderId: before.work_order_id || "",
+      });
+    } catch (error) {
+      throw new Error(`Customer acceptance was recorded, but the estimate could not be fully transitioned to Approved: ${error?.message || "unknown error"}`);
+    }
+
+    setEstimate(after);
+    setPersistedEstimate(after);
+    setRevisionRefreshKey((value) => value + 1);
+    return after;
+  };
+
   const handleCancel = async (reason) => {
     if (openRevision) {
       window.alert("Save the open estimate revision before cancelling the estimate.");
@@ -532,6 +603,12 @@ export default function EstimateDetail() {
                 openRevision={openRevision}
                 onStartRevision={handleStartRevision}
                 onChange={patch}
+                refreshKey={revisionRefreshKey}
+              />
+              <EstimateAcceptancePanel
+                estimate={estimate}
+                persistedEstimate={persistedEstimate}
+                onRecordAcceptance={handleRecordAcceptance}
                 refreshKey={revisionRefreshKey}
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
