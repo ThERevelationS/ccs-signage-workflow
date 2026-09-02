@@ -213,33 +213,102 @@ export default function EstimateDetail() {
     await refreshProducts();
   };
 
+  const handleStartRevision = async (reason) => {
+    const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+    const revision = await startEstimateRevision({
+      estimate: persistedEstimate || estimate,
+      reason,
+      quoteTotal: pricing.quoteTotal,
+      internalCost,
+    });
+    setOpenRevision(revision);
+    setRevisionRefreshKey((value) => value + 1);
+  };
+
   const handleSave = async () => {
+    if (readOnly) {
+      setStep(3);
+      window.alert("This estimate is protected. Open Finalize Estimate and start a revision before making changes.");
+      return;
+    }
+
+    const lifecycleReasonRequired = !openRevision && requiresEstimateLifecycleReason(persistedStatus, estimate.status);
+    const lifecycleReason = String(estimate.edit_reason || "").trim();
+    if (lifecycleReasonRequired && !lifecycleReason) {
+      setStep(3);
+      window.alert("A reason is required before saving this estimate status change. Enter it in Estimate Revision History on Finalize Estimate.");
+      return;
+    }
+
     setSaving(true);
     try {
+      const before = persistedEstimate || await base44.entities.AllInOneEstimate.get(estimate.id);
       const { id: _id, created_date, updated_date, created_by_id, created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
-      const saved = {
+      const persistedData = {
         ...data,
-        id: estimate.id,
+        edit_reason: "",
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
-      await base44.entities.AllInOneEstimate.update(estimate.id, {
-        ...data,
-        total_cost: internalCost,
-        quote_total: pricing.quoteTotal,
-      });
-      // Keep the shared customer record and the Sales Pipeline lead in step
+      await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
+      const saved = { ...estimate, ...persistedData, id: estimate.id };
+      // Keep the shared customer record and the Sales Pipeline lead in step.
       await syncEstimateEverywhere(saved);
+
+      if (openRevision) {
+        await completeEstimateRevision({
+          revision: openRevision,
+          estimate: saved,
+          quoteTotal: pricing.quoteTotal,
+          internalCost,
+          workOrderId: saved.work_order_id || "",
+        });
+        setOpenRevision(null);
+        setRevisionRefreshKey((value) => value + 1);
+      } else if (lifecycleReasonRequired) {
+        await recordEstimateLifecycleRevision({
+          estimateBefore: before,
+          estimateAfter: saved,
+          reason: lifecycleReason,
+          revisionType: "status_transition",
+          quoteTotalBefore: before.quote_total,
+          quoteTotalAfter: pricing.quoteTotal,
+          internalCostBefore: before.total_cost,
+          internalCostAfter: internalCost,
+          workOrderId: saved.work_order_id || "",
+        });
+        setRevisionRefreshKey((value) => value + 1);
+      }
+
+      setEstimate(saved);
+      setPersistedEstimate(saved);
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = async (reason) => {
+    if (openRevision) {
+      window.alert("Save the open estimate revision before cancelling the estimate.");
+      return;
+    }
+    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const after = { ...before, status: "cancelled", cancel_reason: reason };
     await base44.entities.AllInOneEstimate.update(estimate.id, {
       status: "cancelled",
       cancel_reason: reason,
+    });
+    await recordEstimateLifecycleRevision({
+      estimateBefore: before,
+      estimateAfter: after,
+      reason,
+      revisionType: "cancel",
+      quoteTotalBefore: before.quote_total,
+      quoteTotalAfter: before.quote_total,
+      internalCostBefore: before.total_cost,
+      internalCostAfter: before.total_cost,
+      workOrderId: before.work_order_id || "",
     });
     setShowCancel(false);
     navigate("/Estimator");
