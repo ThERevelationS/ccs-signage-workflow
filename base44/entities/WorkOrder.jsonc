@@ -622,6 +622,42 @@
           },
           "product_type": {
             "type": "string"
+          },
+          "estimate_line_id": {
+            "type": "string",
+            "description": "Source All-In-One estimate Product line id when this product was carried from the estimator."
+          },
+          "builder_product_id": {
+            "type": "string",
+            "description": "Linked BuilderProduct id. BuilderProduct/BuilderPart remain the authoritative production BOM/configuration."
+          },
+          "source_project_id": {
+            "type": "string",
+            "description": "Source Builder project/entity record id."
+          },
+          "module_key": {
+            "type": "string",
+            "description": "Estimator Builder module key."
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "quoted_unit_price": {
+            "type": "number",
+            "description": "Accepted customer unit price at WorkOrder conversion; never internal Product cost."
+          },
+          "quoted_total": {
+            "type": "number",
+            "description": "Customer Product total after quantity and Product adjustment at WorkOrder conversion."
+          },
+          "category": {
+            "type": "string"
+          },
+          "customer_description": {
+            "type": "string"
+          },
+          "estimator_notes": {
+            "type": "string"
           }
         }
       }
