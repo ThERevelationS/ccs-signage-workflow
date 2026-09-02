@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { pricingSnapshot } from "@/components/estimator/builder/partSync";
-import { inventoryRowName, inventorySubtype, inventoryUnit, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
+import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
