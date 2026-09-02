@@ -51,6 +51,14 @@ const priceMeta = (line) => {
       differs,
     };
   }
+  if (line.price_state === "manual") {
+    return {
+      label: differs ? "Manual sell price · Builder price differs" : "Manual sell price",
+      className: differs ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-blue-50 text-blue-700 border-blue-200",
+      icon: Percent,
+      differs,
+    };
+  }
   if (line.price_state === "changed" || differs) {
     return {
       label: "Price changed",
@@ -346,8 +354,12 @@ export default function ProductRow({
           <Field
             label="CUSTOMER BASE PRICE"
             type="number"
+            min="0"
+            step="0.01"
             value={customerPrice}
-            disabled
+            onChange={(e) => set({ customer_price_snapshot: e.target.value })}
+            onBlur={(e) => commit({ customer_price_snapshot: Math.max(0, parseFloat(e.target.value) || 0) })}
+            title="Accepted unit selling price. Manual changes are revisioned and do not change internal cost."
           />
           <Field
             label="LIVE CUSTOMER PRICE"
