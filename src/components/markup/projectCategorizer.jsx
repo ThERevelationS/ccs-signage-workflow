@@ -108,7 +108,7 @@ export function categorizeChannelLetterProject(p) {
 export function categorizeFoundationProject(p) {
   if (!p) return [];
   const lines = [];
-  const concrete = num(p.total_concrete_cost) + num(p.total_rebar_cost) + num(p.total_forming_materials_cost) + num(p.total_fill_cost);
+  const concrete = num(p.total_concrete_cost) + num(p.total_rebar_cost) + num(p.total_forming_materials_cost);
   if (concrete > 0) lines.push({ module: 'foundation', label: 'Concrete / Rebar / Forming Materials', cost: concrete, category_key: 'outsourced_fab' });
   const fLabor = num(p.total_labor_cost) + num(p.total_excavation_cost);
   if (fLabor > 0) lines.push({ module: 'foundation', label: 'Foundation Labor', cost: fLabor, category_key: 'inhouse_labor' });
@@ -116,8 +116,23 @@ export function categorizeFoundationProject(p) {
   if (poles > 0) lines.push({ module: 'foundation', label: 'Poles & Pole Painting', cost: poles, category_key: 'outsourced_fab' });
   const eq = num(p.total_equipment_cost);
   if (eq > 0) lines.push({ module: 'foundation', label: 'Foundation Equipment Rental', cost: eq, category_key: 'outsourced_services' });
-  const brick = num(p.total_brick_cost) + num(p.total_wall_cost);
-  if (brick > 0) lines.push({ module: 'foundation', label: 'Brick / Wall Materials', cost: brick, category_key: 'outsourced_fab' });
+
+  // Foundation wall totals already contain their material, mortar and labor. Use
+  // the calculated wall rows directly so tier pricing neither double-counts the
+  // aggregate brick/fill fields nor treats masonry labor as purchased material.
+  const wallMaterial = (p.walls || []).reduce((sum, wall) => {
+    const costs = wall?.calculatedCosts || {};
+    return sum + num(costs.materialCost) + num(costs.mortarCost) + num(costs.internalMaterialCost) + num(costs.internalMortarCost);
+  }, 0);
+  const wallLabor = (p.walls || []).reduce((sum, wall) => {
+    const costs = wall?.calculatedCosts || {};
+    return sum + num(costs.laborCost) + num(costs.internalLaborCost);
+  }, 0);
+  if (wallMaterial > 0) lines.push({ module: 'foundation', label: 'Brick / Wall / Mortar Materials', cost: wallMaterial, category_key: 'outsourced_fab' });
+  if (wallLabor > 0) lines.push({ module: 'foundation', label: 'Masonry Labor', cost: wallLabor, category_key: 'outsourced_services' });
+
+  const wallCaps = num(p.total_wall_cap_cost);
+  if (wallCaps > 0) lines.push({ module: 'foundation', label: 'Wall Cap Materials', cost: wallCaps, category_key: 'outsourced_fab' });
   const cabinets = num(p.total_signage_cabinet_cost);
   if (cabinets > 0) lines.push({ module: 'foundation', label: 'Purchased Signage Cabinets', cost: cabinets, category_key: 'outsourced_fab' });
   const landscape = num(p.total_landscape_cost);
