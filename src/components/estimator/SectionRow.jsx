@@ -1,4 +1,3 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
