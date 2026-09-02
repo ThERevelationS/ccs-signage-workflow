@@ -43,7 +43,7 @@ const TOGGLES = [
 
 const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefined || estimate[key] === null ? fallback : estimate[key] !== false;
 
-export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
+export default function CustomerQuotePanel({ estimate, pricing, onChange, readOnly = false }) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
 
@@ -64,7 +64,7 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange }) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[390px_minmax(0,1fr)]">
-        <div className="no-print border-r border-gray-200 p-4 space-y-4 bg-white">
+        <div className={`no-print border-r border-gray-200 p-4 space-y-4 bg-white ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
           <div>
             <div className="text-[9px] font-bold tracking-widest text-gray-400 mb-2">QUOTE CONTENT</div>
             <div className="space-y-2">
