@@ -263,7 +263,7 @@ export default function EstimatorProducts() {
         )}
       </div>
 
-      <QuickProductEditDialog product={editing} open={!!editing} onClose={() => setEditing(null)} onSaved={updateLocal} />
+      <QuickProductEditDialog product={editing} open={!!editing} onClose={() => setEditing(null)} onSaved={updateLocal} productionProductTypes={productionProductTypes} />
     </div>
   );
 }
