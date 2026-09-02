@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { TrendingUp } from "lucide-react";
@@ -350,7 +351,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     try {
       const calculated = calculateTotals();
       const totalCost = calculated.total_machine_cost + calculated.total_supplies_cost + calculated.total_labor_cost;
-      const dataToSave = {
+      const pricingProject = {
         ...project,
         client_name: estimateContext?.client_name || project.client_name,
         customer_id: estimateContext?.customer_id || project.customer_id,
@@ -359,6 +360,15 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         total_machine_cost: calculated.total_machine_cost,
         total_supplies_cost: calculated.total_supplies_cost,
         total_labor_cost: calculated.total_labor_cost,
+      };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: pricingProject,
+        categorize: categorizeLaserProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+      const dataToSave = {
+        ...pricingProject,
+        customer_pricing: customerPricing || project.customer_pricing,
         total_cost: totalCost,
         status: 'calculated'
       };
@@ -1728,6 +1738,10 @@ Best regards`;
                   project={project}
                   categorize={categorizeLaserProject}
                   accentColor="red"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
                 />
               </TabsContent>
             </Tabs>
