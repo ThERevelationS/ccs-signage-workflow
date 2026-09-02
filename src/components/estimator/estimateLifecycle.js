@@ -30,6 +30,9 @@ export function summarizeEstimateChanges(before = {}, after = {}) {
   if (String(before.status || "") !== String(after.status || "")) {
     changes.push(`Status: ${before.status || "draft"} → ${after.status || "draft"}`);
   }
+  if (num(before.quote_version) !== num(after.quote_version)) {
+    changes.push(`Customer quote issued: Version ${num(after.quote_version)} · ${after.quote_issue_date || "date not recorded"}`);
+  }
   if (Math.abs(num(before.quote_total) - num(after.quote_total)) > 0.005) {
     changes.push(`Customer quote total: ${num(before.quote_total).toFixed(2)} → ${num(after.quote_total).toFixed(2)}`);
   }
