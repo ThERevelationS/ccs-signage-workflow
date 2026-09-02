@@ -261,8 +261,9 @@ export default function EstimateDetail() {
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
-      await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
-      const saved = { ...estimate, ...persistedData, id: estimate.id };
+      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+      const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
       // Keep the shared customer record and the Sales Pipeline lead in step.
       await syncEstimateEverywhere(saved, { previousEstimateStatus: before.status || "" });
 
@@ -304,7 +305,16 @@ export default function EstimateDetail() {
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
     const sourceStatus = before.status || "draft";
     const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
-    if (!issuingNewQuote) return {};
+    if (!issuingNewQuote) {
+      throw new Error("The quote email was sent, but this estimate changed lifecycle status during delivery. The delivery was logged, but the estimate was not auto-finalized.");
+    }
+    if (
+      persistedEstimate?.updated_date &&
+      before.updated_date &&
+      persistedEstimate.updated_date !== before.updated_date
+    ) {
+      throw new Error("The quote email was sent, but this estimate was edited by another session during delivery. The delivery was logged, but the estimate was not overwritten or auto-finalized.");
+    }
     if (openRevision || isEstimateProtected(sourceStatus)) {
       throw new Error("The quote email was sent, but this estimate is no longer eligible for an automatic Sent transition. Review the estimate status and delivery history before changing it manually.");
     }
@@ -332,8 +342,9 @@ export default function EstimateDetail() {
       total_cost: internalCost,
       quote_total: pricing.quoteTotal,
     };
-    await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
-    const saved = { ...estimate, ...persistedData, id: estimate.id };
+    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
+    const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+    const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
     await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
     await recordEstimateLifecycleRevision({
       estimateBefore: before,
