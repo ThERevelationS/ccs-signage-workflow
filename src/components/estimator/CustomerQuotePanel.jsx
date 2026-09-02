@@ -335,7 +335,7 @@ export default function CustomerQuotePanel({
 
             <footer className="mt-8 pt-4 border-t border-gray-200 text-[9px] text-gray-500 text-center">
               {estimate.quote_footer_text && <div className="mb-2 whitespace-pre-line">{estimate.quote_footer_text}</div>}
-              {defaultBool(estimate, "show_validity_footer") && <div>{quoteExpirationLabel ? `This estimate is valid through ${quoteExpirationLabel} (${Number(estimate.quote_valid_days ?? 30)} days) unless otherwise stated.` : `This estimate is valid for ${Number(estimate.quote_valid_days ?? 30)} days unless otherwise stated.`}</div>}
+              {defaultBool(estimate, "show_validity_footer") && <div data-quote-validity-footer>{quoteExpirationLabel ? `This estimate is valid through ${quoteExpirationLabel} (${Number(estimate.quote_valid_days ?? 30)} days) unless otherwise stated.` : `This estimate is valid for ${Number(estimate.quote_valid_days ?? 30)} days unless otherwise stated.`}</div>}
             </footer>
           </article>
         </div>

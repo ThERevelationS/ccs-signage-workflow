@@ -44,6 +44,9 @@ export async function generateCustomerQuotePdf({
   const expirationDate = quoteExpirationDate(quoteIssueDate, quoteValidDays);
   if (expirationNode && expirationDate) expirationNode.textContent = `Valid through ${formatQuoteIssueDate(expirationDate)}`;
 
+  const validityFooter = clone.querySelector("[data-quote-validity-footer]");
+  if (validityFooter && expirationDate) validityFooter.textContent = `This estimate is valid through ${formatQuoteIssueDate(expirationDate)} (${Math.max(0, Math.floor(Number(quoteValidDays || 0)))} days) unless otherwise stated.`;
+
   const versionNode = clone.querySelector("[data-quote-version]");
   const version = Math.max(0, Math.floor(Number(quoteVersion || 0)));
   if (versionNode && version > 0) {
