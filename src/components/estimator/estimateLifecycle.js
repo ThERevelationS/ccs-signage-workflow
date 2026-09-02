@@ -1,4 +1,4 @@
-const PROTECTED_STATUSES = new Set(["sent", "approved", "archived"]);
+const PROTECTED_STATUSES = new Set(["sent", "approved", "archived", "cancelled"]);
 const SYSTEM_FIELDS = new Set(["id", "created_date", "updated_date", "created_by_id", "created_by", "edit_reason"]);
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
