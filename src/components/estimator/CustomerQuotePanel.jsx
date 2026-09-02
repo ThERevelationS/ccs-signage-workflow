@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
-import { formatQuoteIssueDate, localDateStamp, resolveQuoteIssueMetadata } from "./quoteLifecycle";
+import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
 import { generateCustomerQuotePdf } from "./quotePdf";
 import { defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 
@@ -63,6 +63,8 @@ export default function CustomerQuotePanel({
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
   const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
   const quoteVersion = Math.max(0, Math.floor(Number(estimate.quote_version || 0)));
+  const quoteExpiration = quoteExpirationDate(estimate.quote_issue_date || localDateStamp(), estimate.quote_valid_days ?? 30);
+  const quoteExpirationLabel = quoteExpiration ? formatQuoteIssueDate(quoteExpiration) : "";
   const issuingNewQuote = ["draft", "calculated"].includes(String(persistedStatus || "draft"));
   const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
   const [sendOpen, setSendOpen] = useState(false);
@@ -264,7 +266,7 @@ export default function CustomerQuotePanel({
                 <div className="text-[22px] font-bold">{estimate.quote_title || "Project Estimate"}</div>
                 {defaultBool(estimate, "show_estimate_number") && estimate.estimate_number && <div className="mt-1 text-[10px] text-gray-600">Estimate #{estimate.estimate_number}</div>}
                 {defaultBool(estimate, "show_po_number") && estimate.po_number && <div className="text-[10px] text-gray-600">PO #{estimate.po_number}</div>}
-                {defaultBool(estimate, "show_dates") && <div data-quote-issue-date className="text-[10px] text-gray-600">{quoteDate}</div>}
+                {defaultBool(estimate, "show_dates") && <><div data-quote-issue-date className="text-[10px] text-gray-600">Issued {quoteDate}</div>{quoteExpirationLabel && <div data-quote-expiration-date className="text-[9px] text-gray-500">Valid through {quoteExpirationLabel}</div>}</>}
                 <div data-quote-version className={`text-[9px] text-gray-500 ${quoteVersion > 0 ? "" : "hidden"}`}>Quote Version {quoteVersion}</div>
               </div>
             </header>
@@ -331,7 +333,7 @@ export default function CustomerQuotePanel({
 
             <footer className="mt-8 pt-4 border-t border-gray-200 text-[9px] text-gray-500 text-center">
               {estimate.quote_footer_text && <div className="mb-2 whitespace-pre-line">{estimate.quote_footer_text}</div>}
-              {defaultBool(estimate, "show_validity_footer") && <div>This estimate is valid for {Number(estimate.quote_valid_days ?? 30)} days unless otherwise stated.</div>}
+              {defaultBool(estimate, "show_validity_footer") && <div>{quoteExpirationLabel ? `This estimate is valid through ${quoteExpirationLabel} (${Number(estimate.quote_valid_days ?? 30)} days) unless otherwise stated.` : `This estimate is valid for ${Number(estimate.quote_valid_days ?? 30)} days unless otherwise stated.`}</div>}
             </footer>
           </article>
         </div>
