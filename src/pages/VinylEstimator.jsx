@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Droplets, Loader2, FileText, Layers, HardHat, Calculator, Plus, MapPin, Settings as SettingsIcon, ChevronsUpDown, ChevronsDownUp, BookmarkPlus, ClipboardPaste, UploadCloud, AlertTriangle, TrendingUp } from "lucide-react";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
@@ -229,6 +230,28 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         (wf.items || []).map(it => ({ ...it, workflow_id: wf.id, workflow_name: wf.name }))
       );
 
+      const pricingProject = {
+        ...project,
+        client_name: estimateContext?.client_name || project.client_name,
+        customer_id: estimateContext?.customer_id || project.customer_id,
+        estimate_number: estimateContext?.estimate_number || project.estimate_number,
+        total_vinyl_cost: rollup.vinylCost,
+        total_laminate_cost: rollup.laminateCost,
+        total_ink_cost: rollup.inkCost,
+        total_blade_cost: rollup.bladeCost,
+        total_machine_cost: rollup.machineCost,
+        total_supplies_cost: rollup.supplies,
+        labor_cost: rollup.laborCost,
+        total_personnel_cost: rollup.personnelCost,
+        total_equipment_cost: rollup.equipmentCost,
+        total_travel_cost: rollup.travelCost,
+      };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: pricingProject,
+        categorize: categorizeVinylProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+
       const payload = {
         ...project,
         client_name: estimateContext?.client_name || project.client_name,
@@ -237,6 +260,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         site_address: project.site_address || estimateContext?.site_address || "",
         workflows: cleanWorkflows,
         items: flatItems,
+        customer_pricing: customerPricing || project.customer_pricing,
         status: "calculated",
         // Snapshot first workflow's vinyl/machines into the top-level fields for backward compat
         default_vinyl_id:    cleanWorkflows[0]?.vinyl_id   || "",
@@ -594,6 +618,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   }}
                   categorize={categorizeVinylProject}
                   accentColor="blue"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
                 />
               </TabsContent>
             </Tabs>
