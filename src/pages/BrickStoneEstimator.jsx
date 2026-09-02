@@ -8,6 +8,9 @@ import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel"
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 
 export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
@@ -75,6 +78,20 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const handleSave = async () => {
     setSaving(true);
     try {
+      const pricingProject = {
+        ...project,
+        material_cost: totals.material_cost,
+        mortar_cost: totals.mortar_cost,
+        labor_cost: totals.labor_cost,
+        subtotal: totals.subtotal,
+      };
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: pricingProject,
+            categorize: categorizeBrickStoneProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
       await base44.entities.BrickStoneProject.update(project.id, {
         project_name: project.project_name,
         notes: project.notes,
@@ -105,6 +122,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         subtotal: totals.subtotal,
         markup_amount: totals.markup_amount,
         total_cost: totals.total_cost,
+        customer_pricing: customerPricing,
       });
 
       if (estimateId) {
@@ -173,7 +191,16 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           </div>
 
           <div>
-            <BrickTotals project={project} totals={totals} onChange={patch} />
+            <BrickTotals
+              project={project}
+              totals={totals}
+              onChange={(changes) => patch({
+                ...changes,
+                ...(Object.prototype.hasOwnProperty.call(changes, "markup_percent")
+                  ? { customer_pricing: { ...(project.customer_pricing || {}), applied: false } }
+                  : {}),
+              })}
+            />
           </div>
         </div>
       </div>
