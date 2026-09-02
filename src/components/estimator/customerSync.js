@@ -1,6 +1,16 @@
 import { base44 } from "@/api/base44Client";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
+const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
+
+export const resolvePipelineSalesStatus = (estimateStatus, existingStatus = "") => {
+  if (estimateStatus === "approved") return "won";
+  if (estimateStatus === "archived") return "lost";
+  if (estimateStatus === "sent") {
+    return ["won", "lost", "on_hold"].includes(existingStatus) ? existingStatus : "quoted";
+  }
+  return existingStatus || "lead";
+};
 
 /** Find a Customer by company name (or legacy workflow client name). */
 export const findCustomerByName = (customers, name) => {
@@ -58,29 +68,29 @@ export const upsertCustomerFromEstimate = async (form, customers = []) => {
  * carrying over every piece of contact/project info we have.
  */
 export const syncEstimateToPipeline = async (estimate, customer) => {
-  const salesStatusByEstimate = { sent: "quoted", approved: "won", archived: "lost" };
+  const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
+  const existing = existingRows?.[0] || null;
   const fields = {
-    title: estimate.project_name,
-    client_name: estimate.client_name,
-    customer_id: customer?.id,
+    title: firstNonBlank(estimate.project_name, existing?.title),
+    client_name: firstNonBlank(estimate.client_name, existing?.client_name),
+    customer_id: firstNonBlank(customer?.id, estimate.customer_id, existing?.customer_id),
     estimate_id: estimate.id,
     in_pipeline: true,
-    sales_status: salesStatusByEstimate[estimate.status] || "lead",
-    contact_name: estimate.order_contact,
-    contact_email: estimate.contact_email,
-    contact_phone: estimate.office_phone,
-    representative: estimate.order_contact,
-    sales_rep: estimate.salesperson,
-    estimator: estimate.salesperson,
+    sales_status: resolvePipelineSalesStatus(estimate.status, existing?.sales_status),
+    contact_name: firstNonBlank(estimate.order_contact, estimate.contact_name, existing?.contact_name),
+    contact_email: firstNonBlank(estimate.contact_email, existing?.contact_email),
+    contact_phone: firstNonBlank(estimate.office_phone, estimate.contact_phone, existing?.contact_phone),
+    representative: firstNonBlank(estimate.order_contact, existing?.representative),
+    sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
+    estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
     quoted_amount: estimate.quote_total || 0,
-    install_location: estimate.site_address,
+    install_location: firstNonBlank(estimate.site_address, existing?.install_location),
   };
 
-  const existing = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-  if (existing && existing.length) {
-    await base44.entities.WorkOrder.update(existing[0].id, fields);
-    return { ...existing[0], ...fields };
+  if (existing) {
+    await base44.entities.WorkOrder.update(existing.id, fields);
+    return { ...existing, ...fields };
   }
 
   return base44.entities.WorkOrder.create({
