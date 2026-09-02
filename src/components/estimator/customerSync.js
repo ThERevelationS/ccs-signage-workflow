@@ -83,6 +83,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
     quoted_amount: estimate.quote_total || 0,
+    quote_date: firstNonBlank(estimate.quote_issue_date, existing?.quote_date),
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
     ...lifecycleDates,
   };
