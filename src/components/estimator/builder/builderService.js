@@ -111,6 +111,65 @@ function productIdentity(line) {
   return { builderName, clientName };
 }
 
+const sameText = (a, b) => String(a ?? "") === String(b ?? "");
+const sameNumber = (a, b) => Math.abs(num(a) - num(b)) <= 0.005;
+
+/**
+ * Fully reconciled legacy Products are immutable at their frozen pricing layer.
+ * Re-opening an estimate should not rewrite BuilderProduct/BuilderPart/Estimate
+ * records merely to refresh timestamps. Reuse the existing linked state when the
+ * source record has not changed and the persisted line already mirrors the
+ * BuilderProduct. A real source update still falls through to normal recalculation.
+ */
+export function canReuseReconciledLegacyBuilder({
+  line,
+  builderProduct,
+  source,
+  lineId,
+  sourceEntity,
+  builderName,
+  clientName,
+}) {
+  if (
+    !line?.builder_product_id ||
+    !builderProduct?.id ||
+    line.builder_product_id !== builderProduct.id ||
+    builderProduct.price_state !== "legacy_frozen" ||
+    builderProduct.legacy_bom_reconciled !== true
+  ) return false;
+
+  const sourceStamp = String(source?.updated_date || "").trim();
+  const recordedSourceStamp = String(
+    line.updated_date_snapshot || builderProduct.builder_snapshot_source_updated_date || ""
+  ).trim();
+  if (sourceStamp && sourceStamp !== recordedSourceStamp) return false;
+
+  const expectedCategory = line.product_category || builderProduct.product_category || "";
+  const expectedProductionType = line.production_product_type ?? builderProduct.production_product_type ?? "";
+  const expectedNotes = line.product_notes ?? builderProduct.product_notes ?? "";
+  const expectedStatus = line.section_status === "complete" ? "complete" : "in_progress";
+
+  return (
+    sameText(builderProduct.estimate_line_id, lineId) &&
+    sameText(builderProduct.module_key, line.module_key) &&
+    sameText(builderProduct.source_entity, sourceEntity) &&
+    sameText(builderProduct.source_project_id, line.project_id) &&
+    sameText(builderProduct.builder_name, builderName) &&
+    sameText(builderProduct.client_product_name, clientName) &&
+    sameText(builderProduct.client_description, line.customer_description) &&
+    sameText(builderProduct.product_category, expectedCategory) &&
+    sameText(builderProduct.production_product_type, expectedProductionType) &&
+    sameText(builderProduct.product_notes, expectedNotes) &&
+    sameNumber(builderProduct.quantity, line.customer_quantity ?? 1) &&
+    sameText(builderProduct.status, expectedStatus) &&
+    sameNumber(line.total_snapshot, builderProduct.frozen_cost) &&
+    sameNumber(line.live_total_snapshot, builderProduct.current_recalculated_cost) &&
+    sameText(line.price_state, builderProduct.price_state) &&
+    sameNumber(line.detached_part_count, builderProduct.detached_part_count) &&
+    !!line.needs_reattach_review === !!builderProduct.needs_reattach_review
+  );
+}
+
 export async function ensureBuilderProductForLine({ estimate, line, isNew = false }) {
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
@@ -124,6 +183,17 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   const sourceEntity = getModule(line.module_key)?.entity || "";
   const timestamp = nowIso();
   let builderProduct = await findBuilderProduct(line, estimateId);
+  if (!isNew && canReuseReconciledLegacyBuilder({
+    line,
+    builderProduct,
+    source,
+    lineId,
+    sourceEntity,
+    builderName,
+    clientName,
+  })) {
+    return { line, builderProduct, changed: false };
+  }
   const preserveLegacyEconomics = !isNew && (!builderProduct || builderProduct.price_state === "legacy_frozen");
   const economics = preserveLegacyEconomics
     ? { internalCost: sourceTotal, customerPrice: liveCustomerUnitPrice(line) }
