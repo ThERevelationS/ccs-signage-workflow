@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
@@ -16,13 +16,19 @@ export default function EstimatorCustomers() {
   const location = useLocation();
   const status = new URLSearchParams(location.search).get("status") || "";
   const [customers, setCustomers] = useState([]);
+  const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [savingTierId, setSavingTierId] = useState(null);
 
   useEffect(() => {
     const load = async () => {
-      const res = await base44.entities.Customer.list("company_name", 1000);
+      const [res, tierRows] = await Promise.all([
+        base44.entities.Customer.list("company_name", 1000),
+        base44.entities.MarkupTier.list("sort_order").catch(() => []),
+      ]);
       setCustomers(res || []);
+      setTiers(tierRows || []);
       setLoading(false);
       // Pull in any client that only exists in the Sales Pipeline / workflow
       const merged = await backfillCustomersFromWorkOrders(res || []);
@@ -36,6 +42,25 @@ export default function EstimatorCustomers() {
     };
     load();
   }, []);
+
+  const updatePricingTier = async (customerId, tierNumber) => {
+    const nextTier = Number(tierNumber) || 1;
+    setSavingTierId(customerId);
+    setCustomers((current) => current.map((customer) =>
+      customer.id === customerId ? { ...customer, pricing_tier: nextTier } : customer
+    ));
+    try {
+      await base44.entities.Customer.update(customerId, { pricing_tier: nextTier });
+    } catch (error) {
+      const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
+      if (refreshed) {
+        setCustomers((current) => current.map((customer) => customer.id === customerId ? refreshed : customer));
+      }
+      window.alert(error?.message || "Customer pricing tier could not be saved.");
+    } finally {
+      setSavingTierId(null);
+    }
+  };
 
   const term = search.trim().toLowerCase();
   const rows = customers
@@ -112,6 +137,21 @@ export default function EstimatorCustomers() {
                       )}
                     </div>
                   </div>
+                  <label className="flex-shrink-0 text-[10px] font-semibold text-gray-400">
+                    PRICING TIER
+                    <select
+                      value={String(Number(c.pricing_tier) || 1)}
+                      disabled={savingTierId === c.id || tiers.length === 0}
+                      onChange={(event) => updatePricingTier(c.id, event.target.value)}
+                      className="mt-0.5 block h-8 min-w-[240px] max-w-[320px] rounded border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700 disabled:bg-gray-100"
+                    >
+                      {tiers.map((tier) => (
+                        <option key={tier.id} value={String(tier.tier_number)}>
+                          Tier {tier.tier_number} — {tier.tier_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <span className="text-xs font-medium text-gray-500 capitalize flex-shrink-0">
                     {c.customer_status || "prospect"}
                   </span>
