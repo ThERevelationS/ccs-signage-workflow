@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardPaste, FileMinus } from "lucide-react";
+import { ClipboardPaste, FileMinus, LockKeyhole } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
@@ -26,6 +26,9 @@ import { createCustomProduct, refreshManualProductPricing } from "@/components/e
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
+import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
+import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
+import { completeEstimateRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -37,6 +40,9 @@ export default function EstimateDetail() {
   const navigate = useNavigate();
   const id = new URLSearchParams(window.location.search).get("id");
   const [estimate, setEstimate] = useState(null);
+  const [persistedEstimate, setPersistedEstimate] = useState(null);
+  const [openRevision, setOpenRevision] = useState(null);
+  const [revisionRefreshKey, setRevisionRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(2);
@@ -58,7 +64,11 @@ export default function EstimateDetail() {
       }
       const current = await base44.entities.AllInOneEstimate.get(id);
       const line_items = await refreshSectionSnapshots(current.line_items);
-      setEstimate({ ...current, line_items });
+      const loaded = { ...current, line_items };
+      const revision = await getOpenEstimateRevision(id);
+      setEstimate(loaded);
+      setPersistedEstimate(loaded);
+      setOpenRevision(revision);
       setLoading(false);
     });
   }, [id]);
