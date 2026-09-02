@@ -72,6 +72,19 @@
     "attachment_filename": {
       "type": "string"
     },
+    "attachment_file_url": {
+      "type": "string",
+      "description": "Base44 file-storage URL for the exact PDF bytes attached to this delivery."
+    },
+    "attachment_sha256": {
+      "type": "string",
+      "description": "SHA-256 fingerprint of the exact archived/emailed PDF bytes."
+    },
+    "attachment_size_bytes": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Exact PDF attachment size in bytes."
+    },
     "is_resend": {
       "type": "boolean",
       "default": false,
