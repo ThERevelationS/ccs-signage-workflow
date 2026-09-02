@@ -53,7 +53,7 @@ const priceStateMeta = (part) => {
   return { label: "Price current", className: "bg-green-50 text-green-700 border-green-200", icon: Link2 };
 };
 
-function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder, estimateId }) {
+function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder, estimateId, readOnly = false }) {
   const [open, setOpen] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -133,17 +133,19 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                 ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
               )}
               <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library"><BookmarkPlus className="w-3 h-3" /> Save</button>
-              {isDirectlyEditable && (
+              {!readOnly && isDirectlyEditable && (
                 <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
               )}
-              <button
-                type="button"
-                onClick={() => isIndependent ? setOverrideOpen(true) : setWarningOpen(true)}
-                className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
-              >
-                {isDetachedOverride ? "Edit Override" : "Edit Part"}
-              </button>
-              {isDirectlyEditable && (
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => isIndependent ? setOverrideOpen(true) : setWarningOpen(true)}
+                  className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
+                >
+                  {isDetachedOverride ? "Edit Override" : "Edit Part"}
+                </button>
+              )}
+              {!readOnly && isDirectlyEditable && (
                 <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
               )}
             </div>
