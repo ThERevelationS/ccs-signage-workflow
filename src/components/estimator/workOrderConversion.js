@@ -23,7 +23,10 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
     return {
       id: line.builder_product_id || line.line_id || line.project_id || `estimate-product-${index + 1}`,
       description: productName,
-      product_type: line.builder_name || getModuleLabel(line.module_key) || "Estimator Product",
+      // SIP/production Product Type is an explicit classification selected on
+      // the estimator Product. Builder/module names are not interchangeable
+      // with the production taxonomy, so never guess a fallback here.
+      product_type: line.production_product_type || "",
       estimate_line_id: line.line_id || "",
       builder_product_id: line.builder_product_id || "",
       source_project_id: line.project_id || "",
