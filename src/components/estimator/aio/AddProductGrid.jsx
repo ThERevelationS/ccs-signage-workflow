@@ -144,6 +144,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
         product.source_builder_name,
         product.source_module_key,
         product.product_category,
+        product.production_product_type,
         ...(product.categories || []),
       ].filter(Boolean).join(" ").toLowerCase();
       return q.split(/\s+/).every((term) => haystack.includes(term));
@@ -390,7 +391,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                                       <span className="text-[12px] font-bold text-gray-900 truncate">{product.product_name}</span>
                                       <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-200 bg-white text-cyan-700 font-semibold">{product.product_group === "global" ? "GLOBAL" : "MY"}</span>
                                     </div>
-                                    <div className="mt-1 text-[10px] text-gray-500 truncate">{builderLabel}{product.product_category ? ` · ${product.product_category}` : ""}</div>
+                                    <div className="mt-1 text-[10px] text-gray-500 truncate">{builderLabel}{product.product_category ? ` · ${product.product_category}` : ""}{product.production_product_type ? ` · Production: ${product.production_product_type}` : ""}</div>
                                     <div className="mt-1 flex items-center justify-between gap-2">
                                       <span className="text-[9px] text-gray-400 truncate">{(product.categories || []).join(" · ") || "Uncategorized"}</span>
                                       <div className="text-right flex-shrink-0">
