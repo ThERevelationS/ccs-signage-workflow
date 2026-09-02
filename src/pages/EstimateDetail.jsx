@@ -298,7 +298,9 @@ export default function EstimateDetail() {
   };
 
   const handleQuoteDelivered = async ({ recipientEmail, issueMetadata }) => {
-    const before = persistedEstimate || await base44.entities.AllInOneEstimate.get(estimate.id);
+    // Re-read after Gmail accepts the message so a concurrent lifecycle change
+    // cannot silently be overwritten by the delivery finalization.
+    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
     const sourceStatus = before.status || "draft";
     const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
     if (!issuingNewQuote) return {};
