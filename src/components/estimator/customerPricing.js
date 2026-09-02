@@ -23,19 +23,10 @@ export function acceptedInternalEstimateCost(lineItems = []) {
   }, 0);
 }
 
-export function manualCustomerPriceState({
-  frozenCost,
-  currentCost,
-  acceptedCustomerPrice,
-  liveCustomerPrice,
-  detached = false,
-  recalcRequired = false,
-} = {}) {
+export function manualCustomerPriceState({ detached = false, recalcRequired = false } = {}) {
   if (detached) return "detached_parts";
   if (recalcRequired) return "changed";
-  const internalChanged = Math.abs(num(currentCost) - num(frozenCost)) > 0.005;
-  const customerChanged = Math.abs(num(liveCustomerPrice) - num(acceptedCustomerPrice)) > 0.005;
-  return internalChanged || customerChanged ? "changed" : "manual";
+  return "manual";
 }
 
 // A Builder's source record may contain both shop/internal cost and an existing
