@@ -155,6 +155,11 @@
       "type": "number",
       "description": "Grand total"
     },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Existing Brick & Stone markup_percent remains the fallback until a tier is explicitly applied.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string"
     }
