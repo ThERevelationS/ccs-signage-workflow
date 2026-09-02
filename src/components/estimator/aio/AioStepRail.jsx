@@ -1,4 +1,3 @@
-import React from "react";
 
 const STEPS = [
   { n: 1, key: "details", label: "Estimate Details" },
