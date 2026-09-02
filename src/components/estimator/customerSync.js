@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
+import { localDateStamp } from "./quoteLifecycle";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -66,7 +67,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     estimateStatus: estimate.status,
     previousEstimateStatus,
     existingDateEstimateSent: existing?.date_estimate_sent,
-    today: new Date().toISOString().slice(0, 10),
+    today: localDateStamp(),
   });
   const fields = {
     title: firstNonBlank(estimate.project_name, existing?.title),
