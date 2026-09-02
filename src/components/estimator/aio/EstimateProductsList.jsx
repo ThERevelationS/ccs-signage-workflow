@@ -5,7 +5,7 @@ import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/module
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
-export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings }) {
+export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, readOnly = false }) {
   const [query, setQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [productionProductTypes, setProductionProductTypes] = useState([]);
@@ -95,6 +95,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               onCreateQuickProduct={onCreateQuickProduct}
               onPersistSettings={onPersistSettings}
               productionProductTypes={productionProductTypes}
+              readOnly={readOnly}
               allLines={lines}
             />
           ))}
