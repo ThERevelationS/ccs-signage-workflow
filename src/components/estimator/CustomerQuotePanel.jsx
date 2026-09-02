@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Mail, Printer, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
 import { formatQuoteIssueDate, localDateStamp, resolveQuoteIssueMetadata } from "./quoteLifecycle";
@@ -70,6 +71,24 @@ export default function CustomerQuotePanel({
   const [recipientEmail, setRecipientEmail] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [currentVersionDelivered, setCurrentVersionDelivered] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!estimate?.id || quoteVersion <= 0 || issuingNewQuote) {
+      setCurrentVersionDelivered(false);
+      return () => { active = false; };
+    }
+    base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id })
+      .then((rows) => {
+        if (!active) return;
+        setCurrentVersionDelivered((rows || []).some((row) => Number(row.quote_version || 0) === quoteVersion));
+      })
+      .catch(() => { if (active) setCurrentVersionDelivered(false); });
+    return () => { active = false; };
+  }, [estimate?.id, quoteVersion, issuingNewQuote]);
+
+  const emailActionLabel = issuingNewQuote || !currentVersionDelivered ? "Send Quote" : "Resend Quote";
 
   const printQuote = () => {
     window.print();
@@ -113,6 +132,13 @@ export default function CustomerQuotePanel({
         : {};
       const deliveryVersion = Math.max(0, Math.floor(Number(issueMetadata.quote_version ?? estimate.quote_version ?? 0)));
       const deliveryIssueDate = issueMetadata.quote_issue_date || estimate.quote_issue_date || localDateStamp();
+      let isResend = false;
+      if (!issuingNewQuote && deliveryVersion > 0) {
+        // Audit semantics must be version-specific. Fail before Gmail sends if
+        // we cannot determine whether this exact quote version was delivered.
+        const previousDeliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id });
+        isResend = (previousDeliveries || []).some((row) => Number(row.quote_version || 0) === deliveryVersion);
+      }
       const attachment = await generateCustomerQuotePdf({
         estimateNumber: estimate.estimate_number,
         projectName: estimate.project_name,
@@ -129,9 +155,10 @@ export default function CustomerQuotePanel({
         quoteIssueDate: deliveryIssueDate,
         quoteTotal: pricing.quoteTotal,
         sourceStatus: persistedStatus,
-        isResend: !issuingNewQuote,
+        isResend,
       });
       emailWasSent = true;
+      if (!deliveryResult.deliveryLogWarning) setCurrentVersionDelivered(true);
       onDeliveryLogged?.(deliveryResult);
       const trackingResult = issuingNewQuote
         ? await onQuoteDelivered?.({
@@ -165,11 +192,11 @@ export default function CustomerQuotePanel({
             type="button"
             onClick={openSendDialog}
             disabled={!canEmailQuote || sending}
-            title={revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to resend." : issuingNewQuote ? "Email this quote as the next issued customer version." : "Email the currently issued quote version again."}
+            title={revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to send." : issuingNewQuote ? "Email this quote as the next issued customer version." : currentVersionDelivered ? "Email the currently issued quote version again." : "Email the currently issued quote version for the first time."}
             className="h-[31px] text-[11px] bg-gray-800 hover:bg-gray-900 text-white"
           >
             <Mail className="w-3.5 h-3.5 mr-1.5" />
-            {revisionInProgress ? "Save Revision Before Sending" : issuingNewQuote ? "Send Quote" : "Resend Quote"}
+            {revisionInProgress ? "Save Revision Before Sending" : emailActionLabel}
           </Button>
           <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
         </div>
@@ -313,8 +340,8 @@ export default function CustomerQuotePanel({
       <Dialog open={sendOpen} onOpenChange={(next) => !sending && setSendOpen(next)}>
         <DialogContent className="sm:max-w-[620px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Mail className="w-5 h-5 text-lime-300" /> {issuingNewQuote ? "Send Customer Quote" : "Resend Customer Quote"}</DialogTitle>
-            <p className="mt-1 text-[10px] text-gray-300">{issuingNewQuote ? "The PDF is generated from the current customer quote preview. The estimate is marked Sent only after Gmail accepts the message." : `This resends Quote Version ${quoteVersion} without creating a new quote version.`}</p>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Mail className="w-5 h-5 text-lime-300" /> {currentVersionDelivered && !issuingNewQuote ? "Resend Customer Quote" : "Send Customer Quote"}</DialogTitle>
+            <p className="mt-1 text-[10px] text-gray-300">{issuingNewQuote ? "The PDF is generated from the current customer quote preview. The estimate is marked Sent only after Gmail accepts the message." : currentVersionDelivered ? `This resends Quote Version ${quoteVersion} without creating a new quote version.` : `This sends the already-issued Quote Version ${quoteVersion} for the first recorded time.`}</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">TO<input autoFocus type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" placeholder="customer@example.com" /></label>
@@ -327,7 +354,7 @@ export default function CustomerQuotePanel({
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={sending} onClick={() => setSendOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
               <button type="button" disabled={sending || !recipientEmail.trim() || !emailSubject.trim() || !emailMessage.trim()} onClick={sendQuote} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">
-                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sending…" : issuingNewQuote ? "Send Quote" : "Resend Quote"}
+                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sending…" : emailActionLabel}
               </button>
             </div>
           </div>
