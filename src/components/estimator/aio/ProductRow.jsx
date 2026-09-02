@@ -97,6 +97,7 @@ export default function ProductRow({
   onSaveNotes,
   onCreateQuickProduct,
   onPersistSettings,
+  productionProductTypes = [],
   allLines = [],
 }) {
   const [open, setOpen] = useState(false);
@@ -182,6 +183,7 @@ export default function ProductRow({
             {line.project_name && line.project_name !== line.client_product_name ? `Source: ${line.project_name} · ` : ""}
             {line.section_status === "complete" ? "complete" : "in progress"}
             {line.product_category ? ` · ${line.product_category}` : ""}
+            {line.production_product_type ? ` · Production: ${line.production_product_type}` : ""}
             {` · ${partCount} Part${partCount === 1 ? "" : "s"}`}
             {line.linked_date ? ` · added ${new Date(line.linked_date).toLocaleDateString()}` : ""}
           </div>
@@ -351,6 +353,25 @@ export default function ProductRow({
             onBlur={(e) => commit({ product_category: e.target.value })}
             placeholder="e.g. Interior Signage"
           />
+          <label className="text-[10px] font-semibold tracking-wide text-gray-400 block">
+            PRODUCTION PRODUCT TYPE
+            <select
+              value={line.production_product_type || ""}
+              onChange={(e) => {
+                const patch = { production_product_type: e.target.value };
+                set(patch);
+                commit(patch);
+              }}
+              className="mt-0.5 w-full h-[28px] px-2 border border-gray-200 rounded text-[12px] text-gray-800 bg-white"
+              title="Used by Work Orders and SIP/production checklists. Leave blank when the Product does not match a configured production type."
+            >
+              <option value="">Unclassified</option>
+              {line.production_product_type && !productionProductTypes.includes(line.production_product_type) && (
+                <option value={line.production_product_type}>{line.production_product_type} (not in current SIP list)</option>
+              )}
+              {productionProductTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
+          </label>
           <Field
             label="FROZEN COST"
             type="number"
