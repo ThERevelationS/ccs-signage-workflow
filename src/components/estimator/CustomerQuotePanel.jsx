@@ -156,6 +156,7 @@ export default function CustomerQuotePanel({
         attachment,
         quoteVersion: deliveryVersion,
         quoteIssueDate: deliveryIssueDate,
+        quoteValidDays: estimate.quote_valid_days ?? 30,
         quoteTotal: pricing.quoteTotal,
         sourceStatus: persistedStatus,
         isResend,

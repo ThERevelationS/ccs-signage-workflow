@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
-import { quoteIssueKey } from "./quoteLifecycle";
+import { quoteExpirationDate, quoteIssueKey } from "./quoteLifecycle";
 
 const escapeHtml = (value) => String(value || "")
   .replace(/&/g, "&amp;")
@@ -34,6 +34,7 @@ export async function deliverEstimateQuote({
   attachment,
   quoteVersion,
   quoteIssueDate,
+  quoteValidDays = 30,
   quoteTotal,
   sourceStatus,
   isResend,
@@ -60,6 +61,8 @@ export async function deliverEstimateQuote({
       quote_issue_key: quoteIssueKey(estimate.id, normalizedQuoteVersion),
       quote_version: normalizedQuoteVersion,
       quote_issue_date: quoteIssueDate || "",
+      quote_valid_days: Math.max(0, Math.floor(Number(quoteValidDays || 0))),
+      quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
       quote_total: Number(quoteTotal || 0),
       recipient_email: recipientEmail,
       subject,

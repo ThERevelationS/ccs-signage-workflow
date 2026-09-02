@@ -31,7 +31,7 @@ import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePa
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -419,6 +419,7 @@ export default function EstimateDetail() {
         quote_issue_key: quoteIssueKey(estimate.id, currentVersion),
         quote_version: currentVersion,
         quote_issue_date: before.quote_issue_date || "",
+        quote_expiration_date: quoteExpirationDate(before.quote_issue_date, before.quote_valid_days ?? 30),
         quote_total: Number(before.quote_total || 0),
         accepted_at: acceptedAt,
         accepted_by_name: acceptedByName,
