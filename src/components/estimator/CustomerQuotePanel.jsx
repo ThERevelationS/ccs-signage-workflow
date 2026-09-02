@@ -1,6 +1,7 @@
 import { Printer, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildCustomerQuoteRows } from "./customerQuote";
+import { formatQuoteIssueDate } from "./quoteLifecycle";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -46,6 +47,8 @@ const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefi
 export default function CustomerQuotePanel({ estimate, pricing, onChange, readOnly = false }) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
+  const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
+  const quoteVersion = Math.max(0, Math.floor(Number(estimate.quote_version || 0)));
 
   const printQuote = () => {
     window.print();
@@ -125,7 +128,8 @@ export default function CustomerQuotePanel({ estimate, pricing, onChange, readOn
                 <div className="text-[22px] font-bold">{estimate.quote_title || "Project Estimate"}</div>
                 {defaultBool(estimate, "show_estimate_number") && estimate.estimate_number && <div className="mt-1 text-[10px] text-gray-600">Estimate #{estimate.estimate_number}</div>}
                 {defaultBool(estimate, "show_po_number") && estimate.po_number && <div className="text-[10px] text-gray-600">PO #{estimate.po_number}</div>}
-                {defaultBool(estimate, "show_dates") && <div className="text-[10px] text-gray-600">{new Date().toLocaleDateString()}</div>}
+                {defaultBool(estimate, "show_dates") && <div className="text-[10px] text-gray-600">{quoteDate}</div>}
+                {quoteVersion > 0 && <div className="text-[9px] text-gray-500">Quote Version {quoteVersion}</div>}
               </div>
             </header>
 
