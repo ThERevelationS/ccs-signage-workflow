@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { CNCProject, Settings } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
