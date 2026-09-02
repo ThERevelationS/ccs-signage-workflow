@@ -8,8 +8,9 @@ const whole = (value, fallback = 0) => {
  *
  * Quote versions are deliberately separate from EstimateRevision.revision_number:
  * lifecycle audit events (approval, cancellation, conversion, etc.) do not mean a
- * new customer quote was issued. A quote version advances only on a persisted
- * transition INTO `sent`.
+ * new customer quote was issued. A quote version advances on a persisted
+ * transition INTO `sent`, or when an intentional open revision is completed
+ * while the estimate remains `sent`.
  *
  * Existing/historical sent estimates are not backfilled merely by being saved.
  */
@@ -18,9 +19,11 @@ export function resolveQuoteIssueMetadata({
   nextStatus = "",
   currentVersion = 0,
   today,
+  completingSentRevision = false,
 }) {
   const enteringSent = nextStatus === "sent" && previousStatus && previousStatus !== "sent";
-  if (!enteringSent) return {};
+  const reissuingSentRevision = nextStatus === "sent" && previousStatus === "sent" && completingSentRevision;
+  if (!enteringSent && !reissuingSentRevision) return {};
 
   return {
     quote_version: Math.max(0, whole(currentVersion)) + 1,
