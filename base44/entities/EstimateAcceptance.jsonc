@@ -11,7 +11,11 @@
     },
     "delivery_id": {
       "type": "string",
-      "description": "Optional EstimateQuoteDelivery record tied to the accepted quote version."
+      "description": "Optional exact EstimateQuoteDelivery record the customer accepted; blank when acceptance is not tied to a specific delivery."
+    },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity shared with the issued quote version, its deliveries, and related EstimateRevision records."
     },
     "quote_version": {
       "type": "number",

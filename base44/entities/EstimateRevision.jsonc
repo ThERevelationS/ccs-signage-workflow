@@ -9,6 +9,15 @@
     "revision_number": {
       "type": "number"
     },
+    "quote_version": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Customer quote version associated with this lifecycle revision, when one has been issued."
+    },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity linking this lifecycle revision to the corresponding issued customer quote version and delivery/acceptance audit records."
+    },
     "revision_type": {
       "type": "string",
       "enum": [

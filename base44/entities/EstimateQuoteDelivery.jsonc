@@ -11,6 +11,10 @@
       "type": "string",
       "description": "Optional linked WorkOrder id at the time of delivery."
     },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity shared by all deliveries, lifecycle revisions, and acceptance records for one issued customer quote version."
+    },
     "quote_version": {
       "type": "number",
       "minimum": 0,
