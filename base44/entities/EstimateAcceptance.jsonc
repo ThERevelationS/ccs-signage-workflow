@@ -1,0 +1,78 @@
+{
+  "name": "EstimateAcceptance",
+  "type": "object",
+  "description": "Immutable audit record that a customer accepted a specific issued customer quote version. This records the acceptance evidence/method; EstimateRevision continues to record the resulting whole-estimate lifecycle transition to approved.",
+  "properties": {
+    "estimate_id": {
+      "type": "string"
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "delivery_id": {
+      "type": "string",
+      "description": "Optional EstimateQuoteDelivery record tied to the accepted quote version."
+    },
+    "quote_version": {
+      "type": "number",
+      "minimum": 1
+    },
+    "quote_issue_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer quote total accepted; never internal cost."
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_by_name": {
+      "type": "string"
+    },
+    "accepted_by_email": {
+      "type": "string"
+    },
+    "acceptance_method": {
+      "type": "string",
+      "enum": [
+        "signed_quote",
+        "email",
+        "verbal",
+        "in_person",
+        "other"
+      ]
+    },
+    "evidence_reference": {
+      "type": "string",
+      "description": "Short reference to the evidence, such as signed quote received, customer email, PO, or conversation reference."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "accepted_at",
+    "accepted_by_name",
+    "acceptance_method"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
