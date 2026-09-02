@@ -83,6 +83,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
       await loadRows();
       setDialogOpen(false);
     } catch (err) {
+      if (String(err?.message || "").startsWith("Customer acceptance was recorded")) await loadRows();
       setError(err?.message || "Customer acceptance could not be recorded.");
     } finally {
       setSaving(false);
@@ -115,7 +116,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.accepted_at ? new Date(row.accepted_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.accepted_by_name}{row.accepted_by_email ? ` · ${row.accepted_by_email}` : ""} · {METHOD_LABELS[row.acceptance_method] || row.acceptance_method}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {formatQuoteIssueDate(row.quote_issue_date, new Date(0))}</span><span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span><span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
                 {row.notes && <div className="mt-1 text-[9px] text-gray-500">{row.notes}</div>}
               </div>
             ))}
