@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { resolvePipelineSalesStatus } from "./pipelineStatus";
+import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -59,9 +59,15 @@ export const upsertCustomerFromEstimate = async (form, customers = []) => {
  * Put the estimate's client into the Sales Pipeline as a lead work order,
  * carrying over every piece of contact/project info we have.
  */
-export const syncEstimateToPipeline = async (estimate, customer) => {
+export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "" } = {}) => {
   const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
   const existing = existingRows?.[0] || null;
+  const lifecycleDates = resolvePipelineLifecycleDates({
+    estimateStatus: estimate.status,
+    previousEstimateStatus,
+    existingDateEstimateSent: existing?.date_estimate_sent,
+    today: new Date().toISOString().slice(0, 10),
+  });
   const fields = {
     title: firstNonBlank(estimate.project_name, existing?.title),
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
@@ -78,6 +84,7 @@ export const syncEstimateToPipeline = async (estimate, customer) => {
     estimate_amount: estimate.quote_total || 0,
     quoted_amount: estimate.quote_total || 0,
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
+    ...lifecycleDates,
   };
 
   if (existing) {
@@ -96,10 +103,10 @@ export const syncEstimateToPipeline = async (estimate, customer) => {
  * One call used when an estimate is saved: keep the shared Customer record and the
  * Sales Pipeline lead in step with the estimate.
  */
-export const syncEstimateEverywhere = async (estimate) => {
+export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "" } = {}) => {
   const customers = await base44.entities.Customer.list("company_name", 1000);
   const customer = await upsertCustomerFromEstimate(estimate, customers || []);
-  await syncEstimateToPipeline(estimate, customer);
+  await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus });
   return customer;
 };
 
