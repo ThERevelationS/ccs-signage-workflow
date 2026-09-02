@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, ArrowLeft, Wrench, FileText, ListChecks, HardHat, Calculator, MapPin, Package, ClipboardCheck } from "lucide-react";
+import { Plus, ArrowLeft, Wrench, FileText, ListChecks, HardHat, Calculator, MapPin, Package, ClipboardCheck, TrendingUp } from "lucide-react";
 import ServiceItemRow from "@/components/signMaintenance/ServiceItemRow";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
 import LadderSelector from "@/components/channelLetterInstall/LadderSelector";
@@ -18,6 +18,9 @@ import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutoco
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
 import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizeMaintenanceProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
@@ -156,12 +159,23 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     }
     setSaving(true);
     try {
-      const dataToSave = {
+      const pricingProject = {
         ...recalculated,
         client_name: estimateContext?.client_name || project.client_name,
         customer_id: estimateContext?.customer_id || project.customer_id,
         estimate_number: estimateContext?.estimate_number || project.estimate_number,
         site_address: project.site_address || estimateContext?.site_address || "",
+      };
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: pricingProject,
+            categorize: categorizeMaintenanceProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
+      const dataToSave = {
+        ...pricingProject,
+        customer_pricing: customerPricing,
         status: "calculated",
       };
       let saved;
@@ -227,7 +241,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="sticky top-[64px] z-30 -mx-2 px-2 py-2 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
-                <TabsList className="grid w-full grid-cols-4 bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
+                <TabsList className="grid w-full grid-cols-5 bg-white shadow-md border border-slate-200 h-auto p-1 gap-1">
                   <TabsTrigger value="project" className="py-2 text-xs"><FileText className="w-3.5 h-3.5 mr-1" />{embedded ? "Options" : "Project"}</TabsTrigger>
                   <TabsTrigger value="items" className="py-2 text-xs">
                     <ListChecks className="w-3.5 h-3.5 mr-1" />Service Items
@@ -235,6 +249,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   </TabsTrigger>
                   <TabsTrigger value="labor" className="py-2 text-xs"><HardHat className="w-3.5 h-3.5 mr-1" />Labor</TabsTrigger>
                   <TabsTrigger value="summary" className="py-2 text-xs"><Calculator className="w-3.5 h-3.5 mr-1" />Summary</TabsTrigger>
+                  <TabsTrigger value="pricing" className="py-2 text-xs"><TrendingUp className="w-3.5 h-3.5 mr-1" />Pricing</TabsTrigger>
                 </TabsList>
               </div>
 
@@ -433,6 +448,18 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* CUSTOMER PRICING TAB */}
+              <TabsContent value="pricing" className="mt-4 space-y-3">
+                <CustomerPricingTab
+                  project={recalculated}
+                  categorize={categorizeMaintenanceProject}
+                  accentColor="cyan"
+                  onApplyTier={(tier) => updateProject({
+                    customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+                  })}
+                />
+              </TabsContent>
             </Tabs>
           </div>
 
@@ -449,7 +476,16 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <Row label="Travel" value={recalculated.total_travel_cost} />
                 <div className="border-t pt-2 mt-2">
                   <Label className="text-xs">Markup %</Label>
-                  <Input type="number" step="1" value={project.markup_percent || 0} onChange={(e) => updateProject({ markup_percent: parseFloat(e.target.value) || 0 })} className="h-8 text-sm tabular-nums" />
+                  <Input
+                    type="number"
+                    step="1"
+                    value={project.markup_percent || 0}
+                    onChange={(e) => updateProject({
+                      markup_percent: parseFloat(e.target.value) || 0,
+                      customer_pricing: { ...(project.customer_pricing || {}), applied: false },
+                    })}
+                    className="h-8 text-sm tabular-nums"
+                  />
                 </div>
                 <div className="border-t-2 border-cyan-200 pt-2 mt-2 flex justify-between text-lg font-bold text-cyan-700">
                   <span>Total</span><span className="tabular-nums">{fmt(recalculated.total_cost)}</span>
