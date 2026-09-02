@@ -516,6 +516,11 @@
       "type": "number",
       "description": "Manual customer price for this section; overrides the markup calculation when set."
     },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Optional saved customer sell-price snapshot from the shared Markup Tier engine. Manual Foundation markup/override remains the fallback until a tier is explicitly applied.",
+      "additionalProperties": true
+    },
     "selected_equipment": {
       "type": "array",
       "items": {
