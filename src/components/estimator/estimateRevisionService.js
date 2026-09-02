@@ -76,6 +76,7 @@ export async function recordEstimateLifecycleRevision({
   internalCostBefore,
   internalCostAfter,
   workOrderId = "",
+  notes = "",
 }) {
   if (!estimateBefore?.id && !estimateAfter?.id) throw new Error("Estimate is required for revision history.");
   const estimateId = estimateAfter?.id || estimateBefore.id;
@@ -102,5 +103,32 @@ export async function recordEstimateLifecycleRevision({
     started_at: timestamp,
     completed_at: timestamp,
     work_order_id: workOrderId || "",
+    notes: String(notes || "").trim(),
+  });
+}
+
+/**
+ * Idempotent wrapper for lifecycle events that can be retried after a partial
+ * multi-record failure. The caller supplies a stable marker (for example an
+ * immutable acceptance-record id); if that marker is already present on a
+ * completed lifecycle revision, the existing audit row is reused.
+ */
+export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...payload }) {
+  const cleanKey = String(idempotencyKey || "").trim();
+  const estimateId = payload.estimateAfter?.id || payload.estimateBefore?.id || "";
+  if (!estimateId) throw new Error("Estimate is required for revision history.");
+
+  if (cleanKey) {
+    const rows = await base44.entities.EstimateRevision.filter({
+      estimate_id: estimateId,
+      notes: cleanKey,
+    }).catch(() => []);
+    const existing = (rows || []).find((row) => row.revision_status === "completed");
+    if (existing) return existing;
+  }
+
+  return recordEstimateLifecycleRevision({
+    ...payload,
+    notes: cleanKey,
   });
 }
