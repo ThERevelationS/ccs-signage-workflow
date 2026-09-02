@@ -173,6 +173,11 @@
     "total_cost": {
       "type": "number"
     },
+    "customer_pricing": {
+      "type": "object",
+      "description": "Saved customer sell-price snapshot from the shared Markup Tier engine. Preserves selected tier, category breakdown, volume discount and final customer price without changing internal Builder cost.",
+      "additionalProperties": true
+    },
     "notes": {
       "type": "string"
     }
