@@ -9,6 +9,7 @@ export default function AioEstimateHeader({
   title = "New All-In-One Estimate",
   subtitle = "One page, one set of project info, every estimator.",
   metaRight,
+  readOnly = false,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
@@ -44,10 +45,10 @@ export default function AioEstimateHeader({
         </button>
         <button
           onClick={onSave}
-          disabled={saving}
+          disabled={saving || readOnly}
           className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
         >
-          <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save"}
+          <Save className="w-4 h-4" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
         </button>
       </div>
     </div>
