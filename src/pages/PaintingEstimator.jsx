@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizePaintProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import {
   PAINT_THICKNESSES,
@@ -137,6 +140,19 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         ...item,
         paint_colors: (item.paint_colors || []).filter((color) => String(color || "").trim()),
       }));
+      const pricingProject = {
+        ...project,
+        total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
+        total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
+        total_labor_cost: Number(totals.total_labor_cost || 0),
+      };
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: pricingProject,
+            categorize: categorizePaintProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
       const payload = {
         project_name: project.project_name,
         client_name: project.client_name,
@@ -149,6 +165,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
         total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
         total_labor_cost: Number(totals.total_labor_cost || 0),
+        customer_pricing: customerPricing,
         notes: project.notes || "",
       };
 
@@ -350,6 +367,22 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
               </div>
             </section>
           </aside>
+        </div>
+
+        <div className="mt-4">
+          <CustomerPricingTab
+            project={{
+              ...project,
+              total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
+              total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
+              total_labor_cost: Number(totals.total_labor_cost || 0),
+            }}
+            categorize={categorizePaintProject}
+            accentColor="blue"
+            onApplyTier={(tier) => patchProject({
+              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+            })}
+          />
         </div>
       </div>
     </div>
