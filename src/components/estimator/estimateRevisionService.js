@@ -4,13 +4,13 @@ import { estimateAuditSnapshot, summarizeEstimateChanges } from "./estimateLifec
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 async function nextRevisionNumber(estimateId) {
-  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId }).catch(() => []);
+  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId });
   return Math.max(0, ...(rows || []).map((row) => num(row.revision_number))) + 1;
 }
 
 export async function getOpenEstimateRevision(estimateId) {
   if (!estimateId) return null;
-  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId, revision_status: "open" }).catch(() => []);
+  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId, revision_status: "open" });
   return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number))[0] || null;
 }
 
@@ -122,7 +122,7 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...
     const rows = await base44.entities.EstimateRevision.filter({
       estimate_id: estimateId,
       notes: cleanKey,
-    }).catch(() => []);
+    });
     const existing = (rows || []).find((row) => row.revision_status === "completed");
     if (existing) return existing;
   }
