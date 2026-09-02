@@ -1,0 +1,92 @@
+{
+  "name": "EstimateQuoteDelivery",
+  "type": "object",
+  "description": "Immutable delivery audit for customer quote versions. One record is created after a quote email is successfully accepted by Gmail. Delivery history is separate from EstimateRevision lifecycle history and BuilderPriceRevision pricing history.",
+  "properties": {
+    "estimate_id": {
+      "type": "string",
+      "description": "AllInOneEstimate id whose customer quote was delivered."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Optional linked WorkOrder id at the time of delivery."
+    },
+    "quote_version": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Customer-facing quote version actually attached to this delivery."
+    },
+    "quote_issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Issue date printed on the attached customer quote."
+    },
+    "quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer quote total delivered; never internal cost."
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "email"
+      ],
+      "default": "email"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "sent"
+      ],
+      "default": "sent"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gmail_message_id": {
+      "type": "string",
+      "description": "Gmail API message id returned after successful delivery submission."
+    },
+    "attachment_filename": {
+      "type": "string"
+    },
+    "is_resend": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when an already-issued quote version is delivered again without creating a new customer quote version."
+    },
+    "source_status": {
+      "type": "string",
+      "description": "Persisted estimate status immediately before this delivery."
+    }
+  },
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "recipient_email",
+    "delivery_method",
+    "delivery_status",
+    "sent_at"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
