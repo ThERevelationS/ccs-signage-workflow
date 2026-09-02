@@ -254,7 +254,7 @@ export default function EstimateDetail() {
       await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
       const saved = { ...estimate, ...persistedData, id: estimate.id };
       // Keep the shared customer record and the Sales Pipeline lead in step.
-      await syncEstimateEverywhere(saved);
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: before.status || "" });
 
       if (openRevision) {
         await completeEstimateRevision({
