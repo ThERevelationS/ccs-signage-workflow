@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Info } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { applyMarkups, parseVolumeDiscountBrackets, parseVolumeDiscountCategories } from "./markupEngine";
+import { loadCustomerPricingConfig } from "./savedCustomerPricing";
 import TierBadge, { getTierTheme } from "./TierBadge";
 
 const fmt = (n) => "$" + (Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -17,31 +17,41 @@ const fmt = (n) => "$" + (Number(n) || 0).toLocaleString("en-US", { minimumFract
  *   project      — the in-memory project object with totals
  *   categorize   — function(project) => [{ module, label, cost, category_key }]
  *   accentColor  — tailwind color name (purple, red, green, blue, orange) for the header
+ *   onTierChange — optional callback. When provided, selected tier becomes the Builder's saved tier on next save.
  */
-export default function CustomerPricingTab({ project, categorize, accentColor = "slate" }) {
+export default function CustomerPricingTab({ project, categorize, accentColor = "slate", onTierChange }) {
   const [tiers, setTiers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState([]);
   const [tierNumber, setTierNumber] = useState(1);
+  const [customerDefaultTier, setCustomerDefaultTier] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     (async () => {
       try {
-        const [t, c, s] = await Promise.all([
-          base44.entities.MarkupTier.list("sort_order"),
-          base44.entities.MarkupCategory.list("sort_order"),
-          base44.entities.Settings.filter({ category: "pricing" }),
-        ]);
-        setTiers(t || []);
-        setCategories(c || []);
-        setSettings(s || []);
+        const config = await loadCustomerPricingConfig(project);
+        if (!active) return;
+        setTiers(config.tiers || []);
+        setCategories(config.categories || []);
+        setSettings(config.settings || []);
+        setCustomerDefaultTier(Number(config.customer?.pricing_tier) || 1);
+        setTierNumber(Number(config.defaultTierNumber) || 1);
       } catch (e) {
         console.error("CustomerPricingTab load error:", e);
       }
-      setLoading(false);
+      if (active) setLoading(false);
     })();
-  }, []);
+    return () => { active = false; };
+  }, [project?.customer_id]);
+
+  useEffect(() => {
+    const savedTier = Number(project?.customer_pricing?.tier_number || project?.customer_pricing_tier);
+    if (savedTier > 0 && tiers.some((tier) => Number(tier.tier_number) === savedTier)) {
+      setTierNumber(savedTier);
+    }
+  }, [project?.customer_pricing?.tier_number, project?.customer_pricing_tier, tiers]);
 
   const selectedTier = useMemo(
     () => tiers.find((t) => t.tier_number === Number(tierNumber)) || tiers[0],
@@ -135,7 +145,14 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
           <div className="flex flex-wrap items-end gap-4">
             <div className="min-w-[260px] flex-1">
               <Label className="text-xs mb-1.5 block">Pricing Tier</Label>
-              <Select value={String(tierNumber)} onValueChange={(v) => setTierNumber(Number(v))}>
+              <Select
+                value={String(tierNumber)}
+                onValueChange={(v) => {
+                  const nextTier = Number(v);
+                  setTierNumber(nextTier);
+                  onTierChange?.(nextTier);
+                }}
+              >
                 <SelectTrigger className="h-10">
                   <SelectValue />
                 </SelectTrigger>
@@ -246,7 +263,11 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
           <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>
             Markups and volume discount brackets are configured in <strong>Admin → Markups</strong>.
-            Switching tiers above only previews pricing for this estimate — it doesn't change the saved project.
+            {onTierChange ? (
+              <> Tier {tierNumber} will be saved with this Builder the next time you save it. Customer default: Tier {customerDefaultTier}.</>
+            ) : (
+              <> This view is currently preview-only.</>
+            )}
           </span>
         </CardContent>
       </Card>
