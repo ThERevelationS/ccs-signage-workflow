@@ -122,7 +122,7 @@
     "quote_issue_date": {
       "type": "string",
       "format": "date",
-      "description": "Customer-facing issue date of the currently issued quote version. Set only when the estimate transitions into sent; historical sent estimates are not automatically backfilled."
+      "description": "Customer-facing quote issue version. Starts at 1 on the first transition into sent and increments on each later transition into sent or completed revision that remains sent. Separate from EstimateRevision.revision_number."
     },
     "quote_version": {
       "type": "number",
