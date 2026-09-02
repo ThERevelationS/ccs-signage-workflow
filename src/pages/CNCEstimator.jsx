@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeCNCProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
@@ -228,13 +229,22 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     try {
       const totals = calculateTotals();
       const totalCost = totals.totalMachine + totals.totalLabor;
-      const finalProject = {
+      const pricingProject = {
         ...project,
         client_name: estimateContext?.client_name || project.client_name,
         customer_id: estimateContext?.customer_id || project.customer_id,
         estimate_number: estimateContext?.estimate_number || project.estimate_number,
         total_machine_cost: totals.totalMachine,
         total_labor_cost: totals.totalLabor,
+      };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: pricingProject,
+        categorize: categorizeCNCProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+      const finalProject = {
+        ...pricingProject,
+        customer_pricing: customerPricing || project.customer_pricing,
         total_cost: totalCost,
         status: 'calculated',
       };
@@ -1265,6 +1275,10 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                   project={{ ...project, total_machine_cost: totalMachine, total_labor_cost: totalLabor }}
                   categorize={categorizeCNCProject}
                   accentColor="green"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
                 />
               </TabsContent>
             </Tabs>
