@@ -412,6 +412,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               onChanged={onChanged}
               onEditBuilder={onEditBuilder}
               estimateId={estimateId}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -441,7 +442,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId, availableProducts = [] }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId, availableProducts = [], readOnly = false }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -551,7 +552,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       <div className="px-4 py-5 text-center border-t border-gray-200 bg-gray-50">
         <div className="text-[11px] font-semibold text-gray-600">This Product does not have any Parts yet.</div>
         <div className="text-[10px] text-gray-400 mt-1">Add a Part from Master Inventory now. Builder-generated BOM Parts will also appear here after the Builder is saved; manually added Parts remain independent add-ons.</div>
-        {allowAddParts && (
+        {allowAddParts && !readOnly && (
           <div className="mt-3 flex items-center justify-center gap-2">
             <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
             <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
@@ -606,19 +607,19 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            {allowAddParts && (
+            {allowAddParts && !readOnly && (
               <>
                 <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
                 <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
               </>
             )}
-            <button
+            {!readOnly && <button
               type="button"
               onClick={() => setSelectionMode(true)}
               className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
             >
               <Layers3 className="w-3.5 h-3.5" /> Group Parts
-            </button>
+            </button>}
           </div>
         )}
       </div>
@@ -644,6 +645,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             onEditBuilder={onEditBuilder}
             estimateId={estimateId}
             availableProducts={availableProducts}
+            readOnly={readOnly}
           />
         );
         offset += groupParts.length;
@@ -663,6 +665,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           }}
           onEditBuilder={onEditBuilder}
           estimateId={estimateId}
+          readOnly={readOnly}
         />
       ))}
 
