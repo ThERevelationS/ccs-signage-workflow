@@ -32,6 +32,9 @@ import FoundationLayoutCanvas from "@/components/estimator/foundation/Foundation
 import SignageCabinetsPanel from "@/components/estimator/foundation/SignageCabinetsPanel";
 import LandscapeDesigner from "@/components/estimator/foundation/LandscapeDesigner";
 import CustomerPricingPanel from "@/components/estimator/foundation/CustomerPricingPanel";
+import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
+import { categorizeFoundationProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { landscapeSummary } from "@/components/estimator/foundation/landscapeMaterials";
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
@@ -225,6 +228,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     total_landscape_cost: landscapeCost,
     customer_markup_percent: project.customer_markup_percent || 0,
     customer_price_override: project.customer_price_override,
+    customer_pricing: project.customer_pricing,
     excavation_method: project.excavation_method,
     selected_concrete_id: project.selected_concrete_id,
     project_concrete_type: project.project_concrete_type,
@@ -260,7 +264,16 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.entities.FoundationProject.update(project.id, payload());
+      const basePayload = payload();
+      const customerPricing = project.customer_pricing?.applied === true
+        ? await calculateSavedCustomerPricing({
+            project: { ...project, ...basePayload },
+            categorize: categorizeFoundationProject,
+            tierNumber: project.customer_pricing?.tier_number,
+          })
+        : project.customer_pricing;
+      const dataToSave = { ...basePayload, customer_pricing: customerPricing };
+      await base44.entities.FoundationProject.update(project.id, dataToSave);
 
       if (estimateId) {
         const savedProject = await base44.entities.FoundationProject.get(project.id);
@@ -510,8 +523,23 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                 />
               </TabsContent>
 
-              <TabsContent value="pricing">
-                <CustomerPricingPanel cost={sectionTotal} project={project} onChange={patch} />
+              <TabsContent value="pricing" className="space-y-4">
+                <CustomerPricingPanel
+                  cost={sectionTotal}
+                  project={project}
+                  onChange={(changes) => patch({
+                    ...changes,
+                    customer_pricing: { ...(project.customer_pricing || {}), applied: false },
+                  })}
+                />
+                <CustomerPricingTab
+                  project={{ ...project, ...payload() }}
+                  categorize={categorizeFoundationProject}
+                  accentColor="red"
+                  onApplyTier={(tier) => patch({
+                    customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+                  })}
+                />
               </TabsContent>
             </Tabs>
           </div>
