@@ -46,6 +46,7 @@ async function captureProductPayload({ line }) {
     source_entity: builder.source_entity || "",
     source_builder_name: builder.builder_name || line.builder_name || "Custom Product",
     product_category: line.product_category || builder.product_category || "",
+    production_product_type: line.production_product_type ?? builder.production_product_type ?? "",
     product_group: "my",
     categories: line.product_category ? [line.product_category] : [],
     product_quantity: num(line.customer_quantity, num(builder.quantity, 1)),
