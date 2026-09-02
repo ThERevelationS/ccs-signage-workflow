@@ -50,7 +50,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       }
 
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
-      const { id: _id, created_date, updated_date, created_by_id, created_by, ...estimateData } = estimate;
+      const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...estimateData } = estimate;
       const estimateAfter = {
         ...estimateBefore,
         ...estimateData,
