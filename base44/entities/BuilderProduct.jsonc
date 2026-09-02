@@ -38,6 +38,10 @@
       "type": "string",
       "description": "User-defined Product Category used for estimate organization, filtering, quoting, Quick Products and clipboard metadata."
     },
+    "production_product_type": {
+      "type": "string",
+      "description": "Optional production/SIP Product Type selected from GlobalSettings.productTypes. Blank means intentionally unclassified."
+    },
     "product_notes": {
       "type": "string",
       "description": "Estimator-facing Product notes preserved by cloning, Quick Products and clipboard operations. Separate from the customer-facing description."
