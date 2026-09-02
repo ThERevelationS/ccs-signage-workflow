@@ -29,7 +29,7 @@ import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -250,7 +250,7 @@ export default function EstimateDetail() {
         previousStatus: before.status || "",
         nextStatus: estimate.status || "",
         currentVersion: before.quote_version || 0,
-        today: new Date().toISOString().slice(0, 10),
+        today: localDateStamp(),
         completingSentRevision: !!openRevision,
       });
       const persistedData = {
@@ -295,6 +295,59 @@ export default function EstimateDetail() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleQuoteDelivered = async ({ recipientEmail, issueMetadata }) => {
+    const before = persistedEstimate || await base44.entities.AllInOneEstimate.get(estimate.id);
+    const sourceStatus = before.status || "draft";
+    const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
+    if (!issuingNewQuote) return {};
+    if (openRevision || isEstimateProtected(sourceStatus)) {
+      throw new Error("The quote email was sent, but this estimate is no longer eligible for an automatic Sent transition. Review the estimate status and delivery history before changing it manually.");
+    }
+
+    const expectedMetadata = resolveQuoteIssueMetadata({
+      previousStatus: sourceStatus,
+      nextStatus: "sent",
+      currentVersion: before.quote_version || 0,
+      today: issueMetadata?.quote_issue_date || localDateStamp(),
+    });
+    if (
+      Number(expectedMetadata.quote_version || 0) !== Number(issueMetadata?.quote_version || 0) ||
+      expectedMetadata.quote_issue_date !== issueMetadata?.quote_issue_date
+    ) {
+      throw new Error("The estimate changed while the quote was being sent. The email was delivered, but the estimate was not auto-finalized to avoid recording the wrong quote version.");
+    }
+
+    const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
+    const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+    const persistedData = {
+      ...data,
+      status: "sent",
+      ...expectedMetadata,
+      edit_reason: "",
+      total_cost: internalCost,
+      quote_total: pricing.quoteTotal,
+    };
+    await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
+    const saved = { ...estimate, ...persistedData, id: estimate.id };
+    await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
+    await recordEstimateLifecycleRevision({
+      estimateBefore: before,
+      estimateAfter: saved,
+      reason: `Quote emailed to ${recipientEmail}`,
+      revisionType: "status_transition",
+      quoteTotalBefore: before.quote_total,
+      quoteTotalAfter: pricing.quoteTotal,
+      internalCostBefore: before.total_cost,
+      internalCostAfter: internalCost,
+      workOrderId: saved.work_order_id || "",
+    });
+
+    setEstimate(saved);
+    setPersistedEstimate(saved);
+    setRevisionRefreshKey((value) => value + 1);
+    return {};
   };
 
   const handleCancel = async (reason) => {
@@ -493,7 +546,15 @@ export default function EstimateDetail() {
                   disabled={!!openRevision}
                 />
               </div>
-              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} revisionInProgress={!!openRevision} />
+              <CustomerQuotePanel
+                estimate={estimate}
+                pricing={pricing}
+                onChange={patch}
+                readOnly={readOnly}
+                revisionInProgress={!!openRevision}
+                persistedStatus={persistedStatus}
+                onQuoteDelivered={handleQuoteDelivered}
+              />
             </>
           )}
 
