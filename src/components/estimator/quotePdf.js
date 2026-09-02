@@ -1,6 +1,6 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import { formatQuoteIssueDate } from "./quoteLifecycle";
+import { formatQuoteIssueDate, quoteExpirationDate } from "./quoteLifecycle";
 
 const safeFilePart = (value, fallback) => {
   const cleaned = String(value || "")
@@ -19,6 +19,7 @@ export async function generateCustomerQuotePdf({
   projectName,
   quoteIssueDate,
   quoteVersion = 0,
+  quoteValidDays = 30,
 }) {
   const source = document.getElementById(elementId);
   if (!source) throw new Error("Customer quote preview is not available.");
@@ -38,6 +39,10 @@ export async function generateCustomerQuotePdf({
 
   const dateNode = clone.querySelector("[data-quote-issue-date]");
   if (dateNode && quoteIssueDate) dateNode.textContent = formatQuoteIssueDate(quoteIssueDate);
+
+  const expirationNode = clone.querySelector("[data-quote-expiration-date]");
+  const expirationDate = quoteExpirationDate(quoteIssueDate, quoteValidDays);
+  if (expirationNode && expirationDate) expirationNode.textContent = `Valid through ${formatQuoteIssueDate(expirationDate)}`;
 
   const versionNode = clone.querySelector("[data-quote-version]");
   const version = Math.max(0, Math.floor(Number(quoteVersion || 0)));

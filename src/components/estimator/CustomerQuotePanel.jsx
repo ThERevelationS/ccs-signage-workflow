@@ -146,6 +146,7 @@ export default function CustomerQuotePanel({
         projectName: estimate.project_name,
         quoteIssueDate: deliveryIssueDate,
         quoteVersion: deliveryVersion,
+        quoteValidDays: estimate.quote_valid_days ?? 30,
       });
       const deliveryResult = await deliverEstimateQuote({
         estimate,
