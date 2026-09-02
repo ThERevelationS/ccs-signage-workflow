@@ -131,13 +131,15 @@ export default function CustomerQuotePanel({
         isResend: !issuingNewQuote,
       });
       emailWasSent = true;
-      const trackingResult = await onQuoteDelivered?.({
-        recipientEmail: recipient,
-        issueMetadata,
-        quoteVersion: deliveryVersion,
-        quoteIssueDate: deliveryIssueDate,
-        gmailMessageId: deliveryResult.messageId,
-      });
+      const trackingResult = issuingNewQuote
+        ? await onQuoteDelivered?.({
+            recipientEmail: recipient,
+            issueMetadata,
+            quoteVersion: deliveryVersion,
+            quoteIssueDate: deliveryIssueDate,
+            gmailMessageId: deliveryResult.messageId,
+          })
+        : {};
       setSendOpen(false);
       const warnings = [deliveryResult.deliveryLogWarning, trackingResult?.warning].filter(Boolean);
       window.alert(warnings.length ? `Quote emailed successfully.\n\n${warnings.join("\n")}` : "Quote emailed successfully.");
