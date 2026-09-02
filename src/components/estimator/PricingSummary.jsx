@@ -14,7 +14,7 @@ const FEE_FIELDS = [
   { key: "permit_fee", label: "Permit / admin" },
 ];
 
-export default function PricingSummary({ estimate, pricing, onChange }) {
+export default function PricingSummary({ estimate, pricing, onChange, readOnly = false }) {
   const profitability = computeEstimateProfitability(estimate, pricing);
   const rows = [
     ["Sections subtotal", pricing.subtotal],
@@ -49,6 +49,8 @@ export default function PricingSummary({ estimate, pricing, onChange }) {
               type="number"
               value={estimate[f.key] ?? 0}
               onChange={(e) => onChange({ [f.key]: parseFloat(e.target.value) || 0 })}
+              readOnly={readOnly}
+              className={readOnly ? "bg-gray-50 text-gray-500" : ""}
             />
           </label>
         ))}
