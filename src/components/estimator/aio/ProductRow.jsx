@@ -98,6 +98,7 @@ export default function ProductRow({
   onCreateQuickProduct,
   onPersistSettings,
   productionProductTypes = [],
+  readOnly = false,
   allLines = [],
 }) {
   const [open, setOpen] = useState(false);
@@ -124,7 +125,7 @@ export default function ProductRow({
   const StatusIcon = meta.icon;
 
   const handleUpdatePrice = async () => {
-    if (!onUpdatePrice || updatingPrice) return;
+    if (readOnly || !onUpdatePrice || updatingPrice) return;
     setUpdatingPrice(true);
     try {
       await onUpdatePrice(line, index);
@@ -134,7 +135,7 @@ export default function ProductRow({
   };
 
   const handleClone = async () => {
-    if (!onClone || cloning) return;
+    if (readOnly || !onClone || cloning) return;
     const name = line.client_product_name || line.project_name || "Product";
     if (!window.confirm(`Clone “${name}”?\n\nThe copy will preserve its Builder configuration, Parts, Part Groups, detached overrides and frozen pricing as a new independent Product.`)) return;
     setCloning(true);
@@ -215,7 +216,8 @@ export default function ProductRow({
             <button
               type="button"
               onClick={() => onEdit?.(line, index)}
-              className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-800 hover:bg-amber-100"
+              disabled={readOnly}
+              className="h-[28px] px-3 border border-amber-300 bg-amber-50 rounded flex items-center gap-1 text-[12px] font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
               title={line.price_recalc_reason || "Open this Builder, recalculate with current Master Inventory, then save it before accepting Update Price."}
             >
               <RefreshCw className="w-3 h-3" />
@@ -225,7 +227,7 @@ export default function ProductRow({
             <button
               type="button"
               onClick={handleUpdatePrice}
-              disabled={updatingPrice}
+              disabled={updatingPrice || readOnly}
               className="h-[28px] px-3 border border-lime-400 bg-lime-200 rounded flex items-center gap-1 text-[12px] font-semibold text-gray-800 hover:bg-lime-300 disabled:opacity-50"
               title={`Accept current customer price ${money(liveCustomerPrice)} (internal cost ${money(live)})`}
             >
@@ -238,7 +240,8 @@ export default function ProductRow({
         <button
           type="button"
           onClick={() => isCustom ? setOpen((value) => !value) : onEdit?.(line, index)}
-          className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100"
+          disabled={readOnly && !isCustom}
+          className="h-[28px] px-3 border border-gray-200 rounded flex items-center gap-1 text-[12px] text-gray-700 hover:bg-gray-100 disabled:opacity-50"
         >
           <Pencil className="w-3 h-3" /> {isCustom ? "Product Settings" : "Edit Product"}
         </button>
@@ -246,6 +249,7 @@ export default function ProductRow({
           <button
             type="button"
             onClick={() => setPartPickerOpen(true)}
+            disabled={readOnly}
             title={isCustom ? "Add Part from Master Inventory" : "Add independent Part from Master Inventory"}
             className="h-[28px] px-2.5 border border-lime-300 bg-lime-50 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-700 hover:bg-lime-100"
           >
@@ -255,6 +259,7 @@ export default function ProductRow({
         <button
           type="button"
           onClick={() => setNotesOpen(true)}
+          disabled={readOnly}
           title="Manage Product Notes"
           className={`h-[28px] px-2.5 border rounded flex items-center justify-center gap-1 text-[11px] font-semibold ${line.product_notes ? "border-lime-300 text-lime-700 bg-lime-50" : "border-gray-200 text-gray-600 hover:bg-gray-100"}`}
         >
@@ -302,7 +307,7 @@ export default function ProductRow({
         <button
           type="button"
           onClick={handleClone}
-          disabled={cloning}
+          disabled={cloning || readOnly}
           title="Clone Product"
           className="h-[28px] px-2.5 border border-gray-200 rounded flex items-center justify-center gap-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
         >
@@ -320,6 +325,7 @@ export default function ProductRow({
         </button>
         <button
           onClick={() => onRemove(index)}
+          disabled={readOnly}
           title="Remove product"
           className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50"
         >
@@ -333,7 +339,7 @@ export default function ProductRow({
             <div className="text-[9px] font-extrabold tracking-widest text-gray-500">PRODUCT SETTINGS & PRICING OPTIONS</div>
             <div className="text-[9px] text-gray-400">Changes save when you leave each field. Pricing adjustments affect the customer quote, not the frozen Builder cost.</div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <fieldset disabled={readOnly} className="grid grid-cols-2 sm:grid-cols-4 gap-3 disabled:opacity-60">
           <Field
             label="CLIENT PRODUCT NAME"
             value={line.client_product_name || line.project_name || ""}
@@ -453,6 +459,7 @@ export default function ProductRow({
               placeholder="Shown to the customer on the quote"
             />
           </div>
+          </fieldset>
         </div>
         </div>
       )}
@@ -506,6 +513,7 @@ export default function ProductRow({
           allowAddParts={true}
           estimateId={line.estimate_id}
           availableProducts={allLines}
+          readOnly={readOnly}
         />
       )}
     </div>
