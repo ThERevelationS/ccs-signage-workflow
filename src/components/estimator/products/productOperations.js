@@ -2,7 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
-import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -146,23 +146,84 @@ export async function saveProductSettings({ estimateId, line, patch = {} }) {
     (line.line_id && item.line_id === line.line_id) ||
     (line.builder_product_id && item.builder_product_id === line.builder_product_id) ||
     (line.project_id && item.project_id === line.project_id);
-  const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...patch } : item);
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const currentLine = (estimate.line_items || []).find(matches) || line;
+  const nextPatch = { ...patch };
+  const timestamp = nowIso();
+  let builderPatch = {};
 
   if (line.builder_product_id) {
-    const builderPatch = {};
-    if (patch.client_product_name !== undefined) builderPatch.client_product_name = patch.client_product_name;
-    if (patch.product_category !== undefined) builderPatch.product_category = patch.product_category;
-    if (patch.customer_description !== undefined) builderPatch.client_description = patch.customer_description;
-    if (patch.customer_quantity !== undefined) builderPatch.quantity = num(patch.customer_quantity, 1);
-    if (patch.section_status !== undefined) builderPatch.status = patch.section_status === "complete" ? "complete" : "in_progress";
-    if (patch.product_notes !== undefined) builderPatch.product_notes = patch.product_notes;
-    if (Object.keys(builderPatch).length) {
-      await base44.entities.BuilderProduct.update(line.builder_product_id, builderPatch);
+    const builder = await base44.entities.BuilderProduct.get(line.builder_product_id).catch(() => null);
+    if (builder) {
+      if (patch.client_product_name !== undefined) builderPatch.client_product_name = patch.client_product_name;
+      if (patch.product_category !== undefined) builderPatch.product_category = patch.product_category;
+      if (patch.customer_description !== undefined) builderPatch.client_description = patch.customer_description;
+      if (patch.customer_quantity !== undefined) builderPatch.quantity = num(patch.customer_quantity, 1);
+      if (patch.section_status !== undefined) builderPatch.status = patch.section_status === "complete" ? "complete" : "in_progress";
+      if (patch.product_notes !== undefined) builderPatch.product_notes = patch.product_notes;
+
+      if (patch.customer_price_snapshot !== undefined) {
+        const previousCustomerPrice = acceptedCustomerUnitPrice(currentLine);
+        const nextCustomerPrice = Math.max(0, num(patch.customer_price_snapshot, previousCustomerPrice));
+        nextPatch.customer_price_snapshot = nextCustomerPrice;
+
+        if (Math.abs(nextCustomerPrice - previousCustomerPrice) > 0.005) {
+          const frozenCost = num(builder.frozen_cost, num(currentLine.total_snapshot));
+          const currentCost = num(builder.current_recalculated_cost, num(currentLine.live_total_snapshot, frozenCost));
+          const liveCustomerPrice = liveCustomerUnitPrice(currentLine);
+          const nextState = manualCustomerPriceState({
+            frozenCost,
+            currentCost,
+            acceptedCustomerPrice: nextCustomerPrice,
+            liveCustomerPrice,
+            detached: !!builder.needs_reattach_review || currentLine.price_state === "detached_parts",
+            recalcRequired: !!builder.price_recalc_required || !!currentLine.price_recalc_required,
+          });
+          const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+          const revisionNumber = Math.max(0, ...(revisions || []).map((row) => num(row.revision_number))) + 1;
+
+          await base44.entities.BuilderPriceRevision.create({
+            builder_product_id: builder.id,
+            estimate_id: estimateId,
+            revision_number: revisionNumber,
+            reason: "manual_adjustment",
+            previous_total_cost: frozenCost,
+            new_total_cost: frozenCost,
+            previous_customer_price: previousCustomerPrice,
+            new_customer_price: nextCustomerPrice,
+            changed_parts: [],
+            builder_snapshot_before: builder.builder_snapshot || {},
+            builder_snapshot_after: builder.builder_snapshot || {},
+            price_snapshot_before: { total: frozenCost, customer_price: previousCustomerPrice },
+            price_snapshot_after: { total: frozenCost, customer_price: nextCustomerPrice },
+            notes: "Customer base price manually adjusted from the estimate Product. Internal frozen cost was not changed.",
+          });
+
+          builderPatch = {
+            ...builderPatch,
+            frozen_customer_price: nextCustomerPrice,
+            price_state: nextState,
+            price_delta: currentCost - frozenCost,
+            price_delta_percent: frozenCost ? ((currentCost - frozenCost) / frozenCost) * 100 : 0,
+            last_price_update_at: timestamp,
+            last_price_update_note: "Customer base price manually adjusted. Internal frozen cost unchanged.",
+            last_price_check_at: timestamp,
+            builder_version: num(builder.builder_version, 1) + 1,
+          };
+          nextPatch.price_state = nextState;
+          nextPatch.last_price_update_at = timestamp;
+          nextPatch.last_price_check_at = timestamp;
+        }
+      }
+
+      if (Object.keys(builderPatch).length) {
+        await base44.entities.BuilderProduct.update(builder.id, builderPatch);
+      }
     }
   }
 
-  return lineItems.find(matches) || { ...line, ...patch };
+  const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...nextPatch } : item);
+  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  return lineItems.find(matches) || { ...line, ...nextPatch };
 }
 
 export async function saveProductNotes({ estimateId, line, notes }) {
