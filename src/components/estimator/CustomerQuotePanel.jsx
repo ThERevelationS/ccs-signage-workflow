@@ -56,6 +56,7 @@ export default function CustomerQuotePanel({
   revisionInProgress = false,
   persistedStatus = "draft",
   onQuoteDelivered,
+  onDeliveryLogged,
 }) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
@@ -131,6 +132,7 @@ export default function CustomerQuotePanel({
         isResend: !issuingNewQuote,
       });
       emailWasSent = true;
+      onDeliveryLogged?.(deliveryResult);
       const trackingResult = issuingNewQuote
         ? await onQuoteDelivered?.({
             recipientEmail: recipient,
