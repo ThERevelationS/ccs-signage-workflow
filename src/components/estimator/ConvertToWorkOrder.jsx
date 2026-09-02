@@ -6,6 +6,7 @@ import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
 import { acceptedInternalEstimateCost } from "./customerPricing";
 import { recordEstimateLifecycleRevision } from "./estimateRevisionService";
+import { localDateStamp } from "./quoteLifecycle";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -39,6 +40,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         existing,
         products,
         generatedDescription,
+        conversionDate: localDateStamp(),
       });
 
       let workOrder;
