@@ -26,6 +26,33 @@ export function quoteEmailBodyHtml(message) {
   return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;white-space:pre-line;">${escapeHtml(message)}</div>`;
 }
 
+
+export function base64AttachmentBytes(base64) {
+  const binary = atob(String(base64 || ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+export async function sha256Hex(bytes) {
+  if (!globalThis.crypto?.subtle) throw new Error("This browser cannot verify the quote PDF fingerprint.");
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+export async function archiveQuoteAttachment(attachment) {
+  if (!attachment?.base64 || !attachment?.filename) throw new Error("Quote PDF attachment is incomplete.");
+  const bytes = base64AttachmentBytes(attachment.base64);
+  const file = new File([bytes], attachment.filename, { type: attachment.mimeType || "application/pdf" });
+  const [sha256, upload] = await Promise.all([
+    sha256Hex(bytes),
+    base44.integrations.Core.UploadFile({ file }),
+  ]);
+  const fileUrl = upload?.file_url || upload?.url || "";
+  if (!fileUrl) throw new Error("Quote PDF archive upload did not return a file URL.");
+  return { fileUrl, sha256, sizeBytes: bytes.byteLength };
+}
+
 export async function deliverEstimateQuote({
   estimate,
   recipientEmail,
@@ -39,6 +66,9 @@ export async function deliverEstimateQuote({
   sourceStatus,
   isResend,
 }) {
+  // Archive the exact bytes before sending so every successful email has a
+  // retrievable source artifact. If archival fails, Gmail is not called.
+  const archive = await archiveQuoteAttachment(attachment);
   const response = await sendGmail({
     to: recipientEmail,
     subject,
@@ -71,6 +101,9 @@ export async function deliverEstimateQuote({
       sent_at: new Date().toISOString(),
       gmail_message_id: messageId,
       attachment_filename: attachment.filename,
+      attachment_file_url: archive.fileUrl,
+      attachment_sha256: archive.sha256,
+      attachment_size_bytes: archive.sizeBytes,
       is_resend: !!isResend,
       source_status: sourceStatus || estimate.status || "",
     });
@@ -78,5 +111,5 @@ export async function deliverEstimateQuote({
     deliveryLogWarning = `Email sent, but the delivery audit record could not be saved: ${error?.message || "unknown error"}`;
   }
 
-  return { messageId, deliveryId: delivery?.id || "", delivery, deliveryLogWarning };
+  return { messageId, deliveryId: delivery?.id || "", delivery, archive, deliveryLogWarning };
 }
