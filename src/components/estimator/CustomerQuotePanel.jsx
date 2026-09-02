@@ -156,7 +156,19 @@ export default function CustomerQuotePanel({
           <div className="text-[13px] font-bold text-gray-900 flex items-center gap-2"><Settings2 className="w-4 h-4 text-red-600" /> Customer Quote</div>
           <div className="text-[10px] text-gray-500 mt-0.5">Live preview uses the same frozen Product pricing waterfall as the estimate. Quote settings are stored on this estimate.</div>
         </div>
-        <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={openSendDialog}
+            disabled={!canEmailQuote || sending}
+            title={revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to resend." : issuingNewQuote ? "Email this quote as the next issued customer version." : "Email the currently issued quote version again."}
+            className="h-[31px] text-[11px] bg-gray-800 hover:bg-gray-900 text-white"
+          >
+            <Mail className="w-3.5 h-3.5 mr-1.5" />
+            {revisionInProgress ? "Save Revision Before Sending" : issuingNewQuote ? "Send Quote" : "Resend Quote"}
+          </Button>
+          <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[390px_minmax(0,1fr)]">
@@ -221,8 +233,8 @@ export default function CustomerQuotePanel({
                 <div className="text-[22px] font-bold">{estimate.quote_title || "Project Estimate"}</div>
                 {defaultBool(estimate, "show_estimate_number") && estimate.estimate_number && <div className="mt-1 text-[10px] text-gray-600">Estimate #{estimate.estimate_number}</div>}
                 {defaultBool(estimate, "show_po_number") && estimate.po_number && <div className="text-[10px] text-gray-600">PO #{estimate.po_number}</div>}
-                {defaultBool(estimate, "show_dates") && <div className="text-[10px] text-gray-600">{quoteDate}</div>}
-                {quoteVersion > 0 && <div className="text-[9px] text-gray-500">Quote Version {quoteVersion}</div>}
+                {defaultBool(estimate, "show_dates") && <div data-quote-issue-date className="text-[10px] text-gray-600">{quoteDate}</div>}
+                <div data-quote-version className={`text-[9px] text-gray-500 ${quoteVersion > 0 ? "" : "hidden"}`}>Quote Version {quoteVersion}</div>
               </div>
             </header>
 
@@ -293,6 +305,30 @@ export default function CustomerQuotePanel({
           </article>
         </div>
       </div>
+
+      <Dialog open={sendOpen} onOpenChange={(next) => !sending && setSendOpen(next)}>
+        <DialogContent className="sm:max-w-[620px] p-0 overflow-hidden border-gray-300 shadow-xl">
+          <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Mail className="w-5 h-5 text-lime-300" /> {issuingNewQuote ? "Send Customer Quote" : "Resend Customer Quote"}</DialogTitle>
+            <p className="mt-1 text-[10px] text-gray-300">{issuingNewQuote ? "The PDF is generated from the current customer quote preview. The estimate is marked Sent only after Gmail accepts the message." : `This resends Quote Version ${quoteVersion} without creating a new quote version.`}</p>
+          </DialogHeader>
+          <div className="p-5 space-y-3 bg-white">
+            <label className="block text-[10px] font-bold tracking-wide text-gray-500">TO<input autoFocus type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" placeholder="customer@example.com" /></label>
+            <label className="block text-[10px] font-bold tracking-wide text-gray-500">SUBJECT<input value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" /></label>
+            <label className="block text-[10px] font-bold tracking-wide text-gray-500">MESSAGE<textarea value={emailMessage} onChange={(event) => setEmailMessage(event.target.value)} rows={7} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
+            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
+              <strong>Attachment:</strong> Customer quote PDF · {issuingNewQuote ? `next version ${Math.max(1, quoteVersion + 1)}` : `Version ${quoteVersion}`}
+            </div>
+            {sendError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{sendError}</div>}
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" disabled={sending} onClick={() => setSendOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={sending || !recipientEmail.trim() || !emailSubject.trim() || !emailMessage.trim()} onClick={sendQuote} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">
+                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sending…" : issuingNewQuote ? "Send Quote" : "Resend Quote"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
