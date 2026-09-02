@@ -4,6 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
+import { acceptedInternalEstimateCost } from "./customerPricing";
+import { recordEstimateLifecycleRevision } from "./estimateRevisionService";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -13,17 +15,19 @@ import {
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
-export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
+export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false }) {
   const [busy, setBusy] = useState(false);
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
 
   const handleConvert = async () => {
+    if (disabled) return;
     setBusy(true);
     try {
       const sections = (estimate.line_items || [])
         .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)
         .join("\n");
 
+      const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
       const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
       const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
@@ -45,9 +49,26 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
         workOrder = await base44.entities.WorkOrder.create(workOrderFields);
       }
 
+      const estimateAfter = {
+        ...estimateBefore,
+        work_order_id: workOrder.id,
+        status: "approved",
+      };
       await base44.entities.AllInOneEstimate.update(estimate.id, {
         work_order_id: workOrder.id,
         status: "approved",
+      });
+      const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+      await recordEstimateLifecycleRevision({
+        estimateBefore,
+        estimateAfter,
+        reason: "Converted estimate to Work Order",
+        revisionType: "conversion",
+        quoteTotalBefore: estimateBefore.quote_total,
+        quoteTotalAfter: pricing.quoteTotal,
+        internalCostBefore: estimateBefore.total_cost,
+        internalCostAfter: internalCost,
+        workOrderId: workOrder.id,
       });
 
       setWorkOrderId(workOrder.id);
@@ -84,10 +105,10 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
       </p>
       <Button
         onClick={handleConvert}
-        disabled={busy || !(estimate.line_items || []).length}
+        disabled={disabled || busy || !(estimate.line_items || []).length}
         className="w-full rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold"
       >
-        <Briefcase className="w-4 h-4" /> {busy ? "Creating job…" : "Create Work Order"}
+        <Briefcase className="w-4 h-4" /> {disabled ? "Save Revision First" : busy ? "Creating job…" : "Create Work Order"}
       </Button>
     </div>
   );
