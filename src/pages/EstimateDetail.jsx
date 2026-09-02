@@ -28,6 +28,7 @@ import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components
 import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
+import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
@@ -45,6 +46,7 @@ export default function EstimateDetail() {
   const [persistedEstimate, setPersistedEstimate] = useState(null);
   const [openRevision, setOpenRevision] = useState(null);
   const [revisionRefreshKey, setRevisionRefreshKey] = useState(0);
+  const [deliveryRefreshKey, setDeliveryRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(2);
@@ -649,6 +651,7 @@ export default function EstimateDetail() {
                 onChange={patch}
                 refreshKey={revisionRefreshKey}
               />
+              <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey} />
               <EstimateAcceptancePanel
                 estimate={estimate}
                 persistedEstimate={persistedEstimate}
@@ -677,6 +680,7 @@ export default function EstimateDetail() {
                 revisionInProgress={!!openRevision}
                 persistedStatus={persistedStatus}
                 onQuoteDelivered={handleQuoteDelivered}
+                onDeliveryLogged={() => setDeliveryRefreshKey((value) => value + 1)}
               />
             </>
           )}
