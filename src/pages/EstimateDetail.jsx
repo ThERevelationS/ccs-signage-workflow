@@ -78,6 +78,8 @@ export default function EstimateDetail() {
 
   const pricing = computePricing(estimate);
   const lines = estimate.line_items || [];
+  const persistedStatus = persistedEstimate?.status || estimate.status || "draft";
+  const readOnly = isEstimateProtected(persistedStatus) && !openRevision;
 
   const patch = (changes) => setEstimate((prev) => ({ ...prev, ...changes }));
 
@@ -101,6 +103,7 @@ export default function EstimateDetail() {
   };
 
   const removeLine = async (index) => {
+    if (readOnly) return;
     const line = estimate.line_items[index];
     const line_items = estimate.line_items.filter((_, i) => i !== index);
     setEstimate((prev) => ({ ...prev, line_items }));
@@ -110,6 +113,7 @@ export default function EstimateDetail() {
   };
 
   const addSection = async (mod) => {
+    if (readOnly) return;
     const sectionName = `${estimate.project_name} — ${mod.label}`;
     const created = await base44.entities[mod.entity].create({
       project_name: sectionName,
@@ -149,6 +153,7 @@ export default function EstimateDetail() {
   };
 
   const addCustomSection = async (name = "Custom Product") => {
+    if (readOnly) return;
     const result = await createCustomProduct({ estimate, name });
     const line_items = [...(estimate.line_items || []), result.line];
     await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
@@ -156,16 +161,19 @@ export default function EstimateDetail() {
   };
 
   const cloneProduct = async (line) => {
+    if (readOnly) return;
     await cloneProductInEstimate({ estimateId: estimate.id, line });
     await refreshProducts();
   };
 
   const updateProductNotes = async (line, notes) => {
+    if (readOnly) return;
     await saveProductNotes({ estimateId: estimate.id, line, notes });
     await refreshProducts();
   };
 
   const persistProductSettings = async (line, index, patch) => {
+    if (readOnly) return;
     patchLine(index, patch);
     const savedLine = await saveProductSettings({ estimateId: estimate.id, line, patch });
     if (savedLine) patchLine(index, savedLine);
@@ -182,11 +190,13 @@ export default function EstimateDetail() {
   };
 
   const addQuickProduct = async (quickProduct) => {
+    if (readOnly) return;
     await instantiateQuickProduct({ estimateId: estimate.id, quickProduct });
     await refreshProducts();
   };
 
   const updateProductPrice = async (line) => {
+    if (readOnly) return;
     const result = await acceptBuilderPrice({ estimateId: estimate.id, line });
     if (result?.blocked && result.reason === "detached_parts") {
       const names = (result.detachedParts || [])
