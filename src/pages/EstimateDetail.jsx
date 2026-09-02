@@ -460,11 +460,15 @@ export default function EstimateDetail() {
       return;
     }
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (before.work_order_id) {
+      throw new Error("This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of cancelling the source estimate.");
+    }
     const after = { ...before, status: "cancelled", cancel_reason: reason };
     await base44.entities.AllInOneEstimate.update(estimate.id, {
       status: "cancelled",
       cancel_reason: reason,
     });
+    await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "" });
     await recordEstimateLifecycleRevision({
       estimateBefore: before,
       estimateAfter: after,
@@ -474,7 +478,7 @@ export default function EstimateDetail() {
       quoteTotalAfter: before.quote_total,
       internalCostBefore: before.total_cost,
       internalCostAfter: before.total_cost,
-      workOrderId: before.work_order_id || "",
+      workOrderId: "",
     });
     setShowCancel(false);
     navigate("/Estimator");
@@ -617,7 +621,7 @@ export default function EstimateDetail() {
 
           {step === 3 && (
             <>
-              {estimate.status !== "cancelled" && (
+              {estimate.status !== "cancelled" && !estimate.work_order_id && (
                 <button
                   onClick={() => setShowCancel(true)}
                   disabled={!!openRevision}
@@ -627,6 +631,15 @@ export default function EstimateDetail() {
                   <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
                   <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
                 </button>
+              )}
+              {estimate.status !== "cancelled" && estimate.work_order_id && (
+                <div className="w-full flex items-start gap-2 px-3 py-2 mb-3 bg-gray-50 border border-gray-200 rounded-sm text-left">
+                  <LockKeyhole className="w-4 h-4 mt-0.5 text-gray-500 flex-shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">Cancellation managed from the Work Order</div>
+                    <div className="mt-0.5 text-[10px] text-gray-500">This estimate has already been converted. Cancel or close the linked job in the workflow so the production record is not left active while its source estimate is cancelled.</div>
+                  </div>
+                </div>
               )}
               <EstimateRevisionPanel
                 estimate={estimate}
