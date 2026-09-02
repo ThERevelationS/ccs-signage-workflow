@@ -26,6 +26,8 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
 
   const persistedStatus = persistedEstimate?.status || estimate?.status || "draft";
   const protectedEstimate = isEstimateProtected(persistedStatus);
+  const cancelledEstimate = persistedStatus === "cancelled";
+  const canStartRevision = protectedEstimate && !cancelledEstimate && !openRevision;
   const pendingTransitionReason = !openRevision && requiresEstimateLifecycleReason(persistedStatus, estimate?.status);
 
   const start = async () => {
@@ -50,7 +52,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
           <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2"><History className="w-4 h-4 text-red-600" /> Estimate Revision History</div>
           <div className="mt-0.5 text-[10px] text-gray-500">Whole-estimate lifecycle history. Product price revisions remain in each Product's Price History.</div>
         </div>
-        {protectedEstimate && !openRevision && (
+        {canStartRevision && (
           <button type="button" onClick={() => { setDialogOpen(true); setError(""); }} className="h-[31px] px-3 rounded border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-800 hover:bg-amber-100 inline-flex items-center gap-1.5">
             <PencilLine className="w-3.5 h-3.5" /> Revise Estimate
           </button>
@@ -61,7 +63,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         {protectedEstimate && !openRevision && (
           <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
             <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" />
-            <div><div className="text-[11px] font-bold text-amber-900">Protected estimate</div><div className="text-[10px] text-amber-800 mt-0.5">This {persistedStatus} estimate is read-only. Start a revision with a reason before changing Products, pricing, customer details, or quote settings.</div></div>
+            <div><div className="text-[11px] font-bold text-amber-900">{cancelledEstimate ? "Cancelled estimate · permanently locked" : "Protected estimate"}</div><div className="text-[10px] text-amber-800 mt-0.5">{cancelledEstimate ? "This cancelled estimate remains available for history and reference, but cannot be reopened for editing." : `This ${persistedStatus} estimate is read-only. Start a revision with a reason before changing Products, pricing, customer details, or quote settings.`}</div></div>
           </div>
         )}
 
