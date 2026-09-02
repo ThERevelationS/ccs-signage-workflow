@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MetalProject, Settings, Inventory as InventoryEntity } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
