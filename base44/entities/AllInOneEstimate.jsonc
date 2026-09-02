@@ -457,7 +457,7 @@
     },
     "edit_reason": {
       "type": "string",
-      "description": "Required reason captured on Step 3 (Finalize Estimate) before saving. Must be filled to save the estimate."
+      "description": "Pending lifecycle reason used when a draft/calculated estimate is moved into or out of a protected status. The reason is written to EstimateRevision history and this temporary field is cleared after save."
     }
   },
   "required": [
