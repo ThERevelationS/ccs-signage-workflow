@@ -26,6 +26,7 @@ import SummaryDetailsCard from "@/components/channelLetterInstall/SummaryDetails
 import TabBadgeTrigger from "@/components/channelLetterInstall/TabBadgeTrigger";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeChannelLetterProject } from "@/components/markup/projectCategorizer";
+import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import PhotoEstimateModal from "@/components/channelLetterInstall/PhotoEstimateModal";
 import AIInstallScopeModal from "@/components/channelLetterInstall/AIInstallScopeModal";
 import ConfirmModal from "@/components/channelLetterInstall/ConfirmModal";
@@ -431,7 +432,16 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     setIsSaving(true);
     setIsDirty(false);
     try {
-      const dataToSave = { ...recalculated, status: "calculated" };
+      const customerPricing = await calculateSavedCustomerPricing({
+        project: recalculated,
+        categorize: categorizeChannelLetterProject,
+        tierNumber: project.customer_pricing?.tier_number,
+      });
+      const dataToSave = {
+        ...recalculated,
+        customer_pricing: customerPricing || project.customer_pricing,
+        status: "calculated",
+      };
       let savedId = editId;
       if (isEditing && editId) {
         await ChannelLetterInstallation.update(editId, dataToSave);
@@ -1023,6 +1033,10 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
                   project={recalculated}
                   categorize={categorizeChannelLetterProject}
                   accentColor="purple"
+                  onTierChange={(tier) => setProject((prev) => ({
+                    ...prev,
+                    customer_pricing: { ...(prev.customer_pricing || {}), tier_number: tier },
+                  }))}
                 />
               </TabsContent>
             </Tabs>
