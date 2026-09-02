@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
+import {
+  buildEstimateWorkOrderProducts,
+  convertedWorkOrderStage,
+  mergeWorkOrderProducts,
+  selectExistingEstimateWorkOrder,
+} from "./workOrderConversion";
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
@@ -18,15 +24,24 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
         .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)
         .join("\n");
 
-      const wo = await base44.entities.WorkOrder.create({
+      const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
+      const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
+      const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
+      const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
+      const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
+      const workOrderFields = {
         title: estimate.project_name,
         client_name: estimate.client_name,
         customer_id: estimate.customer_id,
         estimate_id: estimate.id,
-        description: [estimate.notes, sections].filter(Boolean).join("\n\n"),
-        current_stage: "sales",
-        sales_status: "quoted",
-        site_survey_date: undefined,
+        // A salesperson/production user may already have expanded the lead's
+        // description before conversion. Never overwrite that work here.
+        description: existing?.description || generatedDescription,
+        current_stage: convertedWorkOrderStage(existing?.current_stage),
+        // Conversion approves the estimate, so this is a won job rather than a
+        // merely quoted lead. This also matches syncEstimateToPipeline's
+        // approved -> won mapping.
+        sales_status: "won",
         install_location: estimate.site_address,
         contact_name: estimate.contact_name,
         contact_email: estimate.contact_email,
@@ -38,15 +53,24 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
         corbridge_invoice_number: estimate.estimate_number,
         project_install_date: estimate.target_install_date,
         in_pipeline: true,
-      });
+        products,
+      };
+
+      let workOrder;
+      if (existing?.id) {
+        await base44.entities.WorkOrder.update(existing.id, workOrderFields);
+        workOrder = { ...existing, ...workOrderFields };
+      } else {
+        workOrder = await base44.entities.WorkOrder.create(workOrderFields);
+      }
 
       await base44.entities.AllInOneEstimate.update(estimate.id, {
-        work_order_id: wo.id,
+        work_order_id: workOrder.id,
         status: "approved",
       });
 
-      setWorkOrderId(wo.id);
-      onConverted?.(wo.id);
+      setWorkOrderId(workOrder.id);
+      onConverted?.(workOrder.id);
     } finally {
       setBusy(false);
     }
