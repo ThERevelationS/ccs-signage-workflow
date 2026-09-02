@@ -251,6 +251,7 @@ export default function EstimateDetail() {
         nextStatus: estimate.status || "",
         currentVersion: before.quote_version || 0,
         today: new Date().toISOString().slice(0, 10),
+        completingSentRevision: !!openRevision,
       });
       const persistedData = {
         ...data,
@@ -492,7 +493,7 @@ export default function EstimateDetail() {
                   disabled={!!openRevision}
                 />
               </div>
-              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
+              <CustomerQuotePanel estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} revisionInProgress={!!openRevision} />
             </>
           )}
 
