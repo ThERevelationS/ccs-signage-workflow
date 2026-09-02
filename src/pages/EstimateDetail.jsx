@@ -382,10 +382,12 @@ export default function EstimateDetail() {
       throw new Error("The issued quote version changed. Reload the estimate before recording acceptance.");
     }
 
+    // This is a duplicate-prevention read. Fail closed if it cannot be verified;
+    // treating a read error as "no acceptance" could create a second immutable row.
     const existingAcceptances = await base44.entities.EstimateAcceptance.filter({
       estimate_id: estimate.id,
       quote_version: currentVersion,
-    }).catch(() => []);
+    });
     const existingAcceptance = (existingAcceptances || [])
       .slice()
       .sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0))[0] || null;
