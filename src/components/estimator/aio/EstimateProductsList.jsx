@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
 import ProductRow from "./ProductRow";
 import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/moduleRegistry";
