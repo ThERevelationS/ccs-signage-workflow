@@ -119,6 +119,17 @@
       "default": 30,
       "description": "How many days the customer quote stays valid."
     },
+    "quote_issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Customer-facing issue date of the currently issued quote version. Set only when the estimate transitions into sent; historical sent estimates are not automatically backfilled."
+    },
+    "quote_version": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "description": "Customer-facing quote issue version. Starts at 1 on the first transition into sent and increments on each later transition into sent. Separate from EstimateRevision.revision_number."
+    },
     "payment_terms": {
       "type": "string",
       "description": "Payment terms text shown on the customer quote."
