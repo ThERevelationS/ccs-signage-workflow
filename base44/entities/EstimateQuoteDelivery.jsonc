@@ -25,6 +25,17 @@
       "format": "date",
       "description": "Issue date printed on the attached customer quote."
     },
+    "quote_valid_days": {
+      "type": "number",
+      "minimum": 0,
+      "default": 30,
+      "description": "Validity period printed on this delivered quote version."
+    },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact valid-through date printed on this delivered quote version."
+    },
     "quote_total": {
       "type": "number",
       "default": 0,

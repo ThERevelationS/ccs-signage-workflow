@@ -25,6 +25,11 @@
       "type": "string",
       "format": "date"
     },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Valid-through date of the customer quote version that was accepted."
+    },
     "quote_total": {
       "type": "number",
       "default": 0,
