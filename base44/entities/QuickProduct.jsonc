@@ -33,6 +33,10 @@
     "product_category": {
       "type": "string"
     },
+    "production_product_type": {
+      "type": "string",
+      "description": "Optional production/SIP Product Type preserved when this reusable Product is inserted into an estimate."
+    },
     "created_from_product_id": {
       "type": "string"
     },
