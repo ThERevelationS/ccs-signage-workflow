@@ -254,7 +254,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, availableProducts = [] }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, availableProducts = [], readOnly = false }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
@@ -270,7 +270,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const toggleOpen = async () => {
     const next = !open;
     setOpen(next);
-    await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
+    if (!readOnly) await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
   };
 
   const saveName = async () => {
@@ -353,47 +353,49 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               className="h-[26px] px-2 rounded border border-violet-200 bg-white flex items-center gap-1 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
               title="Save Part Group permanently to Part Library"
             ><BookmarkPlus className="w-3 h-3" /> Save</button>
-            <button
-              type="button"
-              disabled={cloning}
-              onClick={async () => {
-                if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
-                setCloning(true);
-                try {
-                  await clonePartGroupInProduct({ builderProductId, groupId: group.id });
-                  await onChanged?.();
-                } catch (error) {
-                  window.alert(error?.message || "Part Group could not be cloned.");
-                } finally {
-                  setCloning(false);
-                }
-              }}
-              className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              title="Clone Part Group in this Product"
-            ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
-            <button
-              type="button"
-              disabled={!canMove || moveTargets.length === 0}
-              onClick={() => setMoveOpen(true)}
-              className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
-              title={canMove ? "Move Part Group to another Product" : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
-            ><ArrowRightLeft className="w-3 h-3" /> Move</button>
-            <button
-              type="button"
-              onClick={() => setRenaming(true)}
-              className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
-              title="Rename Part Group"
-            >
-              <Pencil className="w-3 h-3" />
-            </button>
-            <button
-              type="button"
-              onClick={dissolve}
-              className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50"
-              title="Dissolve Part Group"
-            >
-              <Unlink className="w-3 h-3" />
-            </button>
+            {!readOnly && <>
+              <button
+                type="button"
+                disabled={cloning}
+                onClick={async () => {
+                  if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
+                  setCloning(true);
+                  try {
+                    await clonePartGroupInProduct({ builderProductId, groupId: group.id });
+                    await onChanged?.();
+                  } catch (error) {
+                    window.alert(error?.message || "Part Group could not be cloned.");
+                  } finally {
+                    setCloning(false);
+                  }
+                }}
+                className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                title="Clone Part Group in this Product"
+              ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
+              <button
+                type="button"
+                disabled={!canMove || moveTargets.length === 0}
+                onClick={() => setMoveOpen(true)}
+                className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                title={canMove ? "Move Part Group to another Product" : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
+              ><ArrowRightLeft className="w-3 h-3" /> Move</button>
+              <button
+                type="button"
+                onClick={() => setRenaming(true)}
+                className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                title="Rename Part Group"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={dissolve}
+                className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50"
+                title="Dissolve Part Group"
+              >
+                <Unlink className="w-3 h-3" />
+              </button>
+            </>}
           </div>
         )}
       </div>
