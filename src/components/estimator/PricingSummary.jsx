@@ -1,6 +1,6 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { money } from "./aioPricing";
+import { computeEstimateProfitability } from "./profitability";
 
 const PERCENT_FIELDS = [
   { key: "discount_percent", label: "Discount %" },
@@ -15,6 +15,7 @@ const FEE_FIELDS = [
 ];
 
 export default function PricingSummary({ estimate, pricing, onChange }) {
+  const profitability = computeEstimateProfitability(estimate, pricing);
   const rows = [
     ["Sections subtotal", pricing.subtotal],
     ["Discount", -pricing.discount],
