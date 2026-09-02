@@ -37,22 +37,28 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0) {
   if (!record) return { internalCost: fallback, customerPrice: fallback };
 
   const total = num(record.total_cost, fallback);
+  const savedTierCustomerPrice = record?.customer_pricing?.applied === true && hasNumericValue(record?.customer_pricing?.total)
+    ? num(record.customer_pricing.total)
+    : null;
+  const withSavedTier = (economics) => savedTierCustomerPrice === null
+    ? economics
+    : { ...economics, customerPrice: savedTierCustomerPrice };
 
   if (moduleKey === "foundation") {
     const cost = fallback;
     const markupPercent = num(record.customer_markup_percent);
     const override = num(record.customer_price_override);
-    return {
+    return withSavedTier({
       internalCost: cost,
       customerPrice: override > 0 ? override : cost * (1 + markupPercent / 100),
-    };
+    });
   }
 
   if (["vinyl", "brick_stone", "maintenance"].includes(moduleKey)) {
     const internalCost = hasNumericValue(record.subtotal)
       ? num(record.subtotal)
       : total - num(record.markup_amount);
-    return { internalCost, customerPrice: total };
+    return withSavedTier({ internalCost, customerPrice: total });
   }
 
   if (moduleKey === "channel_letters") {
@@ -60,11 +66,11 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0) {
     const projectSubtotal = hasNumericValue(record.subtotal)
       ? num(record.subtotal)
       : total - num(record.markup_amount);
-    return {
+    return withSavedTier({
       internalCost: projectSubtotal - letterMarkup,
       customerPrice: total,
-    };
+    });
   }
 
-  return { internalCost: fallback, customerPrice: fallback };
+  return withSavedTier({ internalCost: fallback, customerPrice: fallback });
 }
