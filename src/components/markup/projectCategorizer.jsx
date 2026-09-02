@@ -118,6 +118,10 @@ export function categorizeFoundationProject(p) {
   if (eq > 0) lines.push({ module: 'foundation', label: 'Foundation Equipment Rental', cost: eq, category_key: 'outsourced_services' });
   const brick = num(p.total_brick_cost) + num(p.total_wall_cost);
   if (brick > 0) lines.push({ module: 'foundation', label: 'Brick / Wall Materials', cost: brick, category_key: 'outsourced_fab' });
+  const cabinets = num(p.total_signage_cabinet_cost);
+  if (cabinets > 0) lines.push({ module: 'foundation', label: 'Purchased Signage Cabinets', cost: cabinets, category_key: 'outsourced_fab' });
+  const landscape = num(p.total_landscape_cost);
+  if (landscape > 0) lines.push({ module: 'foundation', label: 'Landscape / Site Materials', cost: landscape, category_key: 'outsourced_fab' });
   return lines;
 }
 
@@ -163,6 +167,28 @@ export function categorizeMetalProject(p) {
   return lines;
 }
 
+export function categorizeBrickStoneProject(p) {
+  if (!p) return [];
+  const lines = [];
+  const materials = num(p.material_cost) + num(p.mortar_cost);
+  if (materials > 0) lines.push({ module: 'brick_stone', label: 'Brick / Stone / Mortar Materials', cost: materials, category_key: 'outsourced_fab' });
+  const labor = num(p.labor_cost);
+  if (labor > 0) lines.push({ module: 'brick_stone', label: 'Masonry Labor', cost: labor, category_key: 'outsourced_services' });
+  return lines;
+}
+
+export function categorizeMaintenanceProject(p) {
+  if (!p) return [];
+  const lines = [];
+  const labor = num(p.labor_cost) + num(p.total_personnel_cost);
+  if (labor > 0) lines.push({ module: 'maintenance', label: 'Maintenance Labor', cost: labor, category_key: 'inhouse_labor' });
+  const materials = num(p.total_materials_cost) + num(p.total_supplies_cost);
+  if (materials > 0) lines.push({ module: 'maintenance', label: 'Maintenance Materials & Supplies', cost: materials, category_key: 'outsourced_fab' });
+  const services = num(p.total_equipment_cost) + num(p.total_travel_cost);
+  if (services > 0) lines.push({ module: 'maintenance', label: 'Equipment & Travel', cost: services, category_key: 'outsourced_services' });
+  return lines;
+}
+
 // Vinyl Estimator:
 //   Vinyl + Laminate + Transfer Tape rolls + Ink + Blade → substrates
 //   Machine time (printer / cutter / laminator amortized $/hr) → machine_time
@@ -201,4 +227,6 @@ export const MODULE_CATEGORIZERS = {
   cnc: categorizeCNCProject,
   metal_fabrication: categorizeMetalProject,
   vinyl_estimator: categorizeVinylProject,
+  brick_stone: categorizeBrickStoneProject,
+  maintenance: categorizeMaintenanceProject,
 };
