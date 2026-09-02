@@ -49,16 +49,25 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         workOrder = await base44.entities.WorkOrder.create(workOrderFields);
       }
 
+      const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+      const { id: _id, created_date, updated_date, created_by_id, created_by, ...estimateData } = estimate;
       const estimateAfter = {
         ...estimateBefore,
+        ...estimateData,
         work_order_id: workOrder.id,
         status: "approved",
+        edit_reason: "",
+        total_cost: internalCost,
+        quote_total: pricing.quoteTotal,
       };
       await base44.entities.AllInOneEstimate.update(estimate.id, {
+        ...estimateData,
         work_order_id: workOrder.id,
         status: "approved",
+        edit_reason: "",
+        total_cost: internalCost,
+        quote_total: pricing.quoteTotal,
       });
-      const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       await recordEstimateLifecycleRevision({
         estimateBefore,
         estimateAfter,
