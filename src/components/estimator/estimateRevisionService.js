@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { estimateAuditSnapshot, summarizeEstimateChanges } from "./estimateLifecycle";
+import { quoteIssueKey } from "./quoteLifecycle";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -29,9 +30,12 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
   if (existing) return existing;
 
   const before = estimateAuditSnapshot(estimate, { quoteTotal, internalCost });
+  const quoteVersion = Math.max(0, Math.floor(num(before.quote_version)));
   return base44.entities.EstimateRevision.create({
     estimate_id: estimate.id,
     revision_number: await nextRevisionNumber(estimate.id),
+    quote_version: quoteVersion,
+    quote_issue_key: quoteIssueKey(estimate.id, quoteVersion),
     revision_type: "manual_revision",
     revision_status: "open",
     reason: cleanReason,
@@ -52,8 +56,11 @@ export async function completeEstimateRevision({ revision, estimate, quoteTotal,
   if (!revision?.id) return null;
   const before = revision.estimate_snapshot_before || {};
   const after = estimateAuditSnapshot(estimate, { quoteTotal, internalCost });
+  const quoteVersion = Math.max(0, Math.floor(num(after.quote_version)));
   const payload = {
     revision_status: "completed",
+    quote_version: quoteVersion,
+    quote_issue_key: quoteIssueKey(estimate.id || revision.estimate_id, quoteVersion),
     new_status: after.status || revision.previous_status || "draft",
     new_quote_total: num(after.quote_total),
     new_total_cost: num(after.total_cost),
@@ -85,9 +92,12 @@ export async function recordEstimateLifecycleRevision({
   const before = estimateAuditSnapshot(estimateBefore || {}, { quoteTotal: quoteTotalBefore, internalCost: internalCostBefore });
   const after = estimateAuditSnapshot(estimateAfter || {}, { quoteTotal: quoteTotalAfter, internalCost: internalCostAfter });
   const timestamp = new Date().toISOString();
+  const quoteVersion = Math.max(0, Math.floor(num(after.quote_version)));
   return base44.entities.EstimateRevision.create({
     estimate_id: estimateId,
     revision_number: await nextRevisionNumber(estimateId),
+    quote_version: quoteVersion,
+    quote_issue_key: quoteIssueKey(estimateId, quoteVersion),
     revision_type: revisionType,
     revision_status: "completed",
     reason: cleanReason,
