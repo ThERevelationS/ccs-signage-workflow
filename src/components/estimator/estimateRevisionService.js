@@ -84,6 +84,7 @@ export async function recordEstimateLifecycleRevision({
   internalCostAfter,
   workOrderId = "",
   notes = "",
+  deliveryEvidence = null,
 }) {
   if (!estimateBefore?.id && !estimateAfter?.id) throw new Error("Estimate is required for revision history.");
   const estimateId = estimateAfter?.id || estimateBefore.id;
@@ -113,6 +114,7 @@ export async function recordEstimateLifecycleRevision({
     started_at: timestamp,
     completed_at: timestamp,
     work_order_id: workOrderId || "",
+    delivery_evidence: deliveryEvidence || {},
     notes: String(notes || "").trim(),
   });
 }
@@ -142,3 +144,41 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...
     notes: cleanKey,
   });
 }
+
+export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence }) {
+  const version = Math.max(0, Math.floor(num(quoteVersion)));
+  if (!estimateId || version <= 0 || !evidence) return { revision: null, warning: "" };
+
+  const issueKey = quoteIssueKey(estimateId, version);
+  const rows = await base44.entities.EstimateRevision.filter({
+    estimate_id: estimateId,
+    quote_issue_key: issueKey,
+  });
+  const issuanceRevision = (rows || []).find((row) => {
+    const beforeVersion = Math.max(0, Math.floor(num(row.estimate_snapshot_before?.quote_version)));
+    const afterVersion = Math.max(0, Math.floor(num(row.estimate_snapshot_after?.quote_version, row.quote_version)));
+    return row.revision_status === "completed" && afterVersion === version && beforeVersion !== afterVersion;
+  }) || null;
+
+  if (!issuanceRevision) {
+    return { revision: null, warning: `Quote Version ${version} was delivered, but its issuance revision could not be located for fallback delivery evidence.` };
+  }
+
+  const existingEvidence = issuanceRevision.delivery_evidence || {};
+  if (existingEvidence.gmail_message_id || existingEvidence.delivery_id || existingEvidence.attachment_file_url) {
+    return { revision: issuanceRevision, warning: "" };
+  }
+
+  const deliveryEvidence = {
+    delivery_id: evidence.deliveryId || "",
+    gmail_message_id: evidence.gmailMessageId || "",
+    recipient_email: evidence.recipientEmail || "",
+    sent_at: evidence.sentAt || new Date().toISOString(),
+    attachment_file_url: evidence.archive?.fileUrl || "",
+    attachment_sha256: evidence.archive?.sha256 || "",
+    attachment_size_bytes: Number(evidence.archive?.sizeBytes || 0),
+  };
+  const updated = await base44.entities.EstimateRevision.update(issuanceRevision.id, { delivery_evidence: deliveryEvidence });
+  return { revision: { ...issuanceRevision, delivery_evidence: deliveryEvidence, ...(updated || {}) }, warning: "" };
+}
+
