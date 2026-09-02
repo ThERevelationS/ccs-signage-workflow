@@ -416,9 +416,9 @@ export default function EstimateDetail() {
               />
             ) : (
               <>
-                <div className="flex justify-end">
+                {!readOnly && <div className="flex justify-end">
                   <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
-                </div>
+                </div>}
                 <EstimateProductsList
                   lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
                   rawTotal={pricing.rawTotal}
@@ -431,17 +431,19 @@ export default function EstimateDetail() {
                   onSaveNotes={updateProductNotes}
                   onCreateQuickProduct={createQuickProduct}
                   onPersistSettings={persistProductSettings}
+                  readOnly={readOnly}
                 />
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setClipboardOpen(true)}
-                    className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100"
+                    disabled={readOnly}
+                    className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100 disabled:opacity-40"
                     title="Open 30-day estimator clipboard"
                   >
                     <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" /> Clipboard
                   </button>
-                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
+                  {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />}
                 </div>
               </>
             )
