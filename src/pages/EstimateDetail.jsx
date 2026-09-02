@@ -31,7 +31,7 @@ import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePa
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { localDateStamp, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -374,6 +374,7 @@ export default function EstimateDetail() {
     acceptedAt,
     evidenceReference,
     notes,
+    deliveryId,
   }) => {
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
     const currentVersion = Math.max(0, Math.floor(Number(before.quote_version || 0)));
@@ -399,15 +400,23 @@ export default function EstimateDetail() {
       throw new Error("This estimate is already Approved, but no immutable acceptance record exists for the current quote version. Approval tracking cannot be reconstructed automatically.");
     }
     if (!acceptance) {
-      const deliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []);
-      const matchingDelivery = (deliveries || [])
-        .filter((row) => Number(row.quote_version || 0) === currentVersion)
-        .sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0))[0] || null;
+      let matchingDelivery = null;
+      if (deliveryId) {
+        matchingDelivery = await base44.entities.EstimateQuoteDelivery.get(deliveryId);
+        if (
+          matchingDelivery?.estimate_id !== estimate.id ||
+          Number(matchingDelivery?.quote_version || 0) !== currentVersion ||
+          matchingDelivery?.delivery_status !== "sent"
+        ) {
+          throw new Error("The selected quote delivery does not belong to this estimate/version. Reload before recording acceptance.");
+        }
+      }
 
       acceptance = await base44.entities.EstimateAcceptance.create({
         estimate_id: estimate.id,
         work_order_id: before.work_order_id || "",
         delivery_id: matchingDelivery?.id || "",
+        quote_issue_key: quoteIssueKey(estimate.id, currentVersion),
         quote_version: currentVersion,
         quote_issue_date: before.quote_issue_date || "",
         quote_total: Number(before.quote_total || 0),
@@ -651,12 +660,12 @@ export default function EstimateDetail() {
                 onChange={patch}
                 refreshKey={revisionRefreshKey}
               />
-              <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey} />
+              <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
               <EstimateAcceptancePanel
                 estimate={estimate}
                 persistedEstimate={persistedEstimate}
                 onRecordAcceptance={handleRecordAcceptance}
-                refreshKey={revisionRefreshKey}
+                refreshKey={revisionRefreshKey + deliveryRefreshKey}
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
