@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
 import { acceptBuilderPartPrices, syncBuilderParts } from "./partSync";
-import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, sourceProjectEconomics } from "../customerPricing";
+import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -178,9 +178,14 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       ? "legacy_frozen"
       : awaitingInitialFreeze
         ? "unchecked"
-        : Math.abs(liveTotal - frozen) > 0.005 || Math.abs(liveCustomerPrice - frozenCustomer) > 0.005
-          ? "changed"
-          : "current";
+        : builderProduct.price_state === "manual"
+          ? manualCustomerPriceState({
+              detached: !!builderProduct.needs_reattach_review,
+              recalcRequired: !!builderProduct.price_recalc_required,
+            })
+          : Math.abs(liveTotal - frozen) > 0.005 || Math.abs(liveCustomerPrice - frozenCustomer) > 0.005
+            ? "changed"
+            : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
       estimate_line_id: lineId,
       module_key: line.module_key,
@@ -250,13 +255,17 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       : acceptedCustomerPrice;
     const productPriceState = partSummary.detachedCount > 0
       ? "detached_parts"
-      : builderProduct.price_state === "legacy_frozen"
-        ? "legacy_frozen"
-        : partSummary.changedCount > 0 ||
-            Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005 ||
-            Math.abs(effectiveLiveCustomerPrice - frozenCustomerAfterSync) > 0.005
-          ? "changed"
-          : "current";
+      : partSummary.recalcRequired
+        ? "changed"
+        : builderProduct.price_state === "legacy_frozen"
+          ? "legacy_frozen"
+          : builderProduct.price_state === "manual"
+            ? "manual"
+            : partSummary.changedCount > 0 ||
+                Math.abs(effectiveLiveTotal - frozenAfterSync) > 0.005 ||
+                Math.abs(effectiveLiveCustomerPrice - frozenCustomerAfterSync) > 0.005
+              ? "changed"
+              : "current";
     await base44.entities.BuilderProduct.update(builderProduct.id, {
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
