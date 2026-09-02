@@ -98,7 +98,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.completed_at || row.started_at ? new Date(row.completed_at || row.started_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.reason}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span><span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
                 {(row.change_summary || []).length > 0 && <div className="mt-1 text-[9px] text-gray-500">{row.change_summary.join(" · ")}</div>}
               </div>
             ))}
