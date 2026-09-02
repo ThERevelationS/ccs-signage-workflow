@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
 import {
+  buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
-  convertedWorkOrderStage,
   mergeWorkOrderProducts,
   selectExistingEstimateWorkOrder,
 } from "./workOrderConversion";
@@ -29,32 +29,13 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted }) {
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
       const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
       const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
-      const workOrderFields = {
-        title: estimate.project_name,
-        client_name: estimate.client_name,
-        customer_id: estimate.customer_id,
-        estimate_id: estimate.id,
-        // A salesperson/production user may already have expanded the lead's
-        // description before conversion. Never overwrite that work here.
-        description: existing?.description || generatedDescription,
-        current_stage: convertedWorkOrderStage(existing?.current_stage),
-        // Conversion approves the estimate, so this is a won job rather than a
-        // merely quoted lead. This also matches syncEstimateToPipeline's
-        // approved -> won mapping.
-        sales_status: "won",
-        install_location: estimate.site_address,
-        contact_name: estimate.contact_name,
-        contact_email: estimate.contact_email,
-        contact_phone: estimate.contact_phone,
-        sales_rep: estimate.salesperson,
-        estimator: estimate.salesperson,
-        estimate_amount: pricing.quoteTotal,
-        quoted_amount: pricing.quoteTotal,
-        corbridge_invoice_number: estimate.estimate_number,
-        project_install_date: estimate.target_install_date,
-        in_pipeline: true,
+      const workOrderFields = buildConvertedWorkOrderFields({
+        estimate,
+        pricing,
+        existing,
         products,
-      };
+        generatedDescription,
+      });
 
       let workOrder;
       if (existing?.id) {
