@@ -14,6 +14,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { money } from "@/components/estimator/aioPricing";
+import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -27,7 +28,7 @@ function productPrice(product) {
   return { quantity, frozenUnit, extended };
 }
 
-function QuickProductEditDialog({ product, open, onClose, onSaved }) {
+function QuickProductEditDialog({ product, open, onClose, onSaved, productionProductTypes = [] }) {
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +39,7 @@ function QuickProductEditDialog({ product, open, onClose, onSaved }) {
       product_name: product.product_name || "",
       product_group: product.product_group === "global" ? "global" : "my",
       product_category: product.product_category || "",
+      production_product_type: product.production_product_type || "",
       categories_text: (product.categories || []).join(", "),
       client_description: product.client_description || "",
       product_notes: product.product_notes || "",
@@ -61,6 +63,7 @@ function QuickProductEditDialog({ product, open, onClose, onSaved }) {
         product_name: draft.product_name.trim(),
         product_group: draft.product_group === "global" ? "global" : "my",
         product_category: draft.product_category.trim(),
+        production_product_type: draft.production_product_type,
         categories,
         client_description: draft.client_description,
         product_notes: draft.product_notes,
@@ -87,6 +90,7 @@ function QuickProductEditDialog({ product, open, onClose, onSaved }) {
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCT NAME<input autoFocus value={draft.product_name} onChange={(event) => patch({ product_name: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" /></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500">LIBRARY<select value={draft.product_group} onChange={(event) => patch({ product_group: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="my">My Quick Products</option><option value="global">Global Quick Products</option></select></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500">PRODUCT CATEGORY<input value={draft.product_category} onChange={(event) => patch({ product_category: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" placeholder="e.g. Wall Signs" /></label>
+            <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCTION PRODUCT TYPE<select value={draft.production_product_type} onChange={(event) => patch({ production_product_type: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="">Unclassified</option>{draft.production_product_type && !productionProductTypes.includes(draft.production_product_type) && <option value={draft.production_product_type}>{draft.production_product_type} (not in current SIP list)</option>}{productionProductTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select><span className="block mt-1 text-[9px] font-normal text-gray-400">Used when this Quick Product is converted into a Work Order/SIP product.</span></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">SEARCH CATEGORIES<input value={draft.categories_text} onChange={(event) => patch({ categories_text: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" placeholder="Interior, Acrylic, Routed, ADA" /><span className="block mt-1 text-[9px] font-normal text-gray-400">Comma separated. These organize/search the reusable template and do not alter its Parts.</span></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">CLIENT DESCRIPTION<textarea value={draft.client_description} onChange={(event) => patch({ client_description: event.target.value })} rows={3} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded text-[12px] resize-y" /></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCT NOTES<textarea value={draft.product_notes} onChange={(event) => patch({ product_notes: event.target.value })} rows={3} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded text-[12px] resize-y" /></label>
@@ -103,6 +107,7 @@ function QuickProductEditDialog({ product, open, onClose, onSaved }) {
 export default function EstimatorProducts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [quickProducts, setQuickProducts] = useState([]);
+  const [productionProductTypes, setProductionProductTypes] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -120,9 +125,11 @@ export default function EstimatorProducts() {
     Promise.all([
       base44.entities.QuickProduct.list().catch(() => []),
       base44.auth.me().catch(() => null),
-    ]).then(([rows, me]) => {
+      loadProductionProductTypes(),
+    ]).then(([rows, me, productionTypes]) => {
       if (!active) return;
       setQuickProducts(rows || []);
+      setProductionProductTypes(productionTypes || []);
       setUser(me);
     }).catch((err) => active && setError(err?.message || "Products could not be loaded."))
       .finally(() => active && setLoading(false));
@@ -143,7 +150,7 @@ export default function EstimatorProducts() {
       if (status === "inactive" && product.is_active !== false) return false;
       if (moduleFilter && (product.source_module_key || (product.source_product_class === "custom" ? "custom" : "")) !== moduleFilter) return false;
       if (!q) return true;
-      const haystack = [product.product_name, product.source_builder_name, product.source_module_key, product.product_category, product.client_description, product.product_notes, ...(product.categories || [])].filter(Boolean).join(" ").toLowerCase();
+      const haystack = [product.product_name, product.source_builder_name, product.source_module_key, product.product_category, product.production_product_type, product.client_description, product.product_notes, ...(product.categories || [])].filter(Boolean).join(" ").toLowerCase();
       return q.split(/\s+/).every((term) => haystack.includes(term));
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
   }, [quickProducts, query, scope, status, moduleFilter, user?.id, user?.role]);
