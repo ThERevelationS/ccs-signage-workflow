@@ -22,6 +22,7 @@ const localDateTimeInput = (value = new Date()) => {
 export default function EstimateAcceptancePanel({ estimate, persistedEstimate, onRecordAcceptance, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
+  const [deliveryRows, setDeliveryRows] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -31,15 +32,18 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [acceptedAt, setAcceptedAt] = useState(localDateTimeInput());
   const [evidenceReference, setEvidenceReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [deliveryId, setDeliveryId] = useState("");
 
   const loadRows = async () => {
     if (!estimate?.id) return;
-    const [result, revisions] = await Promise.all([
+    const [result, revisions, deliveries] = await Promise.all([
       base44.entities.EstimateAcceptance.filter({ estimate_id: estimate.id }).catch(() => []),
       listEstimateRevisions(estimate.id),
+      base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []),
     ]);
     setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
     setRevisionRows(revisions || []);
+    setDeliveryRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
   };
 
   useEffect(() => {
@@ -49,6 +53,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const persistedStatus = persistedEstimate?.status || estimate?.status || "draft";
   const quoteVersion = Math.max(0, Math.floor(Number(estimate?.quote_version || 0)));
   const currentAcceptance = rows.find((row) => Number(row.quote_version || 0) === quoteVersion) || null;
+  const currentVersionDeliveries = deliveryRows.filter((row) => Number(row.quote_version || 0) === quoteVersion);
   const acceptanceLifecycleKey = currentAcceptance?.id ? `customer_acceptance:${currentAcceptance.id}` : "";
   const approvalRevisionRecorded = !!acceptanceLifecycleKey && revisionRows.some((row) =>
     row.revision_status === "completed" &&
@@ -70,6 +75,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     setAcceptedAt(currentAcceptance?.accepted_at ? localDateTimeInput(currentAcceptance.accepted_at) : localDateTimeInput());
     setEvidenceReference(currentAcceptance?.evidence_reference || "");
     setNotes(currentAcceptance?.notes || "");
+    setDeliveryId(currentAcceptance?.delivery_id || "");
     setError("");
     setDialogOpen(true);
   };
@@ -95,6 +101,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
         acceptedAt: new Date(acceptedAt).toISOString(),
         evidenceReference: evidenceReference.trim(),
         notes: notes.trim(),
+        deliveryId,
       });
       await loadRows();
       setDialogOpen(false);
@@ -132,7 +139,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.accepted_at ? new Date(row.accepted_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.accepted_by_name}{row.accepted_by_email ? ` · ${row.accepted_by_email}` : ""} · {METHOD_LABELS[row.acceptance_method] || row.acceptance_method}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span><span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span><span>Accepted quote ${Number(row.quote_total || 0).toFixed(2)}</span>{row.delivery_id && <span>{(() => { const delivery = deliveryRows.find((item) => item.id === row.delivery_id); return delivery ? `Delivery: ${delivery.recipient_email || "email"} · ${delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : ""}` : "Specific delivery linked"; })()}</span>}{row.evidence_reference && <span>Evidence: {row.evidence_reference}</span>}</div>
                 {row.notes && <div className="mt-1 text-[9px] text-gray-500">{row.notes}</div>}
               </div>
             ))}
@@ -153,6 +160,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">METHOD<select disabled={recoveringRecordedAcceptance} value={acceptanceMethod} onChange={(event) => setAcceptanceMethod(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500">{Object.entries(METHOD_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">ACCEPTED DATE / TIME<input type="datetime-local" disabled={recoveringRecordedAcceptance} value={acceptedAt} onChange={(event) => setAcceptedAt(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
             </div>
+            <label className="block text-[10px] font-bold tracking-wide text-gray-500">RELATED QUOTE DELIVERY (OPTIONAL)<select disabled={recoveringRecordedAcceptance} value={deliveryId} onChange={(event) => setDeliveryId(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"><option value="">Not tied to a specific delivery</option>{currentVersionDeliveries.map((delivery) => <option key={delivery.id} value={delivery.id}>{delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : "Sent"} · {delivery.recipient_email || "recipient not recorded"}{delivery.is_resend ? " · Resend" : ""}</option>)}</select><span className="mt-1 block text-[9px] font-normal normal-case tracking-normal text-gray-400">Choose the exact email delivery the customer accepted when known. Leave blank for verbal/in-person approval or when the specific delivery is unknown.</span></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">EVIDENCE / REFERENCE<input disabled={recoveringRecordedAcceptance} value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} placeholder="e.g. Signed quote received, approval email, PO #..." className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">NOTES<textarea disabled={recoveringRecordedAcceptance} value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y disabled:bg-gray-100 disabled:text-gray-500" /></label>
             {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
