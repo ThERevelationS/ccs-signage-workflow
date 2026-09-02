@@ -38,7 +38,6 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
 
   useEffect(() => {
     loadRows();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimate?.id, refreshKey]);
 
   const persistedStatus = persistedEstimate?.status || estimate?.status || "draft";
