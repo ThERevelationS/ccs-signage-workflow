@@ -203,6 +203,23 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             />
           </div>
         </div>
+
+        <div className="mt-5">
+          <CustomerPricingTab
+            project={{
+              ...project,
+              material_cost: totals.material_cost,
+              mortar_cost: totals.mortar_cost,
+              labor_cost: totals.labor_cost,
+              subtotal: totals.subtotal,
+            }}
+            categorize={categorizeBrickStoneProject}
+            accentColor="red"
+            onApplyTier={(tier) => patch({
+              customer_pricing: { ...(project.customer_pricing || {}), applied: true, tier_number: tier },
+            })}
+          />
+        </div>
       </div>
     </div>
   );
