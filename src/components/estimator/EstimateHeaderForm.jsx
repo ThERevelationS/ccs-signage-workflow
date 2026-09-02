@@ -14,7 +14,7 @@ const FIELDS = [
   { key: "target_install_date", label: "Target install date", type: "date" },
 ];
 
-export default function EstimateHeaderForm({ estimate, onChange }) {
+export default function EstimateHeaderForm({ estimate, onChange, readOnly = false }) {
   return (
     <div className="bg-white rounded-md border border-gray-200 p-4">
       <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">ESTIMATE DETAILS</div>
@@ -25,9 +25,9 @@ export default function EstimateHeaderForm({ estimate, onChange }) {
             <Input
               type={f.type || "text"}
               value={estimate[f.key] || ""}
-              readOnly={f.readOnly}
+              readOnly={f.readOnly || readOnly}
               onChange={(e) => onChange({ [f.key]: e.target.value })}
-              className={f.readOnly ? "bg-gray-50 text-gray-600" : ""}
+              className={f.readOnly || readOnly ? "bg-gray-50 text-gray-600" : ""}
             />
           </label>
         ))}
@@ -36,7 +36,8 @@ export default function EstimateHeaderForm({ estimate, onChange }) {
           <select
             value={estimate.status || "draft"}
             onChange={(e) => onChange({ status: e.target.value })}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+            disabled={readOnly}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm disabled:bg-gray-50 disabled:text-gray-500"
           >
             {["draft", "calculated", "sent", "approved", "archived"].map((s) => (
               <option key={s} value={s}>
@@ -50,7 +51,8 @@ export default function EstimateHeaderForm({ estimate, onChange }) {
           <select
             value={estimate.priority || "normal"}
             onChange={(e) => onChange({ priority: e.target.value })}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+            disabled={readOnly}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm disabled:bg-gray-50 disabled:text-gray-500"
           >
             {["low", "normal", "high", "rush"].map((p) => (
               <option key={p} value={p}>
