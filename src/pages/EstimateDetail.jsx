@@ -31,7 +31,7 @@ import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePa
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 
 const STEP_TITLES = {
