@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
  */
 export default function ExcelImporterDialog({ onClose, onComplete }) {
   const fileInputRef = useRef(null);
+  const importRef = useRef(false);
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState(null);
   const [parsing, setParsing] = useState(false);
@@ -95,8 +96,10 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
             const list = await conf.entity.list();
             existing[key] = new Map(list.map((it) => [nameKey(it[conf.nameField]), it]));
           } catch (e) {
-            console.error(`Failed to load existing ${key}:`, e);
-            existing[key] = new Map();
+            console.error(`Failed to verify existing ${key}:`, e);
+            const error = new Error(`Could not verify existing ${conf.label} inventory. No import preview was created; retry after the inventory connection is available.`);
+            error.inventoryVerification = true;
+            throw error;
           }
         })
       );
@@ -111,6 +114,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
             ...r,
             action: existingItem ? "update" : "create",
             existingId: existingItem?.id || null,
+            existingUpdatedDate: existingItem?.updated_date || null,
           };
         })
         .filter(Boolean);
@@ -125,7 +129,12 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       setRows(Array.from(seen.values()));
     } catch (err) {
       console.error("Parse error:", err);
-      setFileError("Could not read this file. Please make sure it's a valid Excel file.");
+      setRows([]);
+      setFileError(
+        err?.inventoryVerification
+          ? err.message
+          : "Could not read this file. Please make sure it's a valid Excel file."
+      );
     }
     setParsing(false);
   };
@@ -146,9 +155,11 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
   // ------------------------- Step 3: Run import -------------------------
 
   const runImport = async () => {
+    if (importRef.current || !rows.length) return;
+    importRef.current = true;
     setImporting(true);
     setProgress({ done: 0, total: rows.length });
-    const res = { created: 0, updated: 0, skipped: 0, errors: [] };
+    const res = { created: 0, updated: 0, skipped: 0, errors: [], aborted: false };
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const isRateLimit = (err) => {
@@ -158,48 +169,96 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
     };
 
     // Process one row at a time with a small delay between requests, and
-    // retry rate-limit failures with exponential backoff. This is the
-    // most reliable way to stay under the backend's per-second cap.
-    const PER_REQUEST_DELAY_MS = 120;   // ~8 req/sec steady-state
+    // retry rate-limit failures with exponential backoff.
+    const PER_REQUEST_DELAY_MS = 120;
     const MAX_RETRIES = 5;
 
-    const writeOne = async (r) => {
-      const conf = TARGETS[r.target_key];
-      let attempt = 0;
-      while (true) {
-        try {
-          if (r.action === "update") {
-            await conf.entity.update(r.existingId, r.payload);
-            res.updated += 1;
-          } else {
-            await conf.entity.create(r.payload);
-            res.created += 1;
-          }
-          return;
-        } catch (err) {
-          if (isRateLimit(err) && attempt < MAX_RETRIES) {
-            // Exponential backoff: 500ms, 1s, 2s, 4s, 8s + jitter
-            const backoff = 500 * Math.pow(2, attempt) + Math.random() * 250;
-            await sleep(backoff);
-            attempt += 1;
+    try {
+      // Full preflight across every target BEFORE the first write. Preview-time
+      // IDs are not trusted blindly: updates must still exist with the same name
+      // and updated_date, while creates must still have no matching name.
+      const liveCatalogs = {};
+      try {
+        await Promise.all(Object.entries(TARGETS).map(async ([key, conf]) => {
+          const list = await conf.entity.list();
+          liveCatalogs[key] = {
+            byId: new Map((list || []).filter((item) => item.id).map((item) => [item.id, item])),
+            byName: new Map((list || []).map((item) => [nameKey(item[conf.nameField]), item])),
+          };
+        }));
+      } catch (error) {
+        res.aborted = true;
+        res.errors.push({ name: "Inventory preflight", message: error?.message || "Could not verify current inventory." });
+        setResult(res);
+        return;
+      }
+
+      for (const row of rows) {
+        const conf = TARGETS[row.target_key];
+        const catalog = liveCatalogs[row.target_key];
+        if (row.action === "update") {
+          const live = catalog.byId.get(row.existingId);
+          if (!live) {
+            res.errors.push({ name: row.name, message: "The matched inventory item no longer exists. Refresh the import preview." });
             continue;
           }
-          console.error(`Import error for "${r.name}":`, err);
-          res.errors.push({ name: r.name, message: err?.message || "Failed" });
-          return;
+          if (nameKey(live[conf.nameField]) !== nameKey(row.name)) {
+            res.errors.push({ name: row.name, message: "The matched inventory item was renamed in another session. Refresh the import preview." });
+            continue;
+          }
+          if (row.existingUpdatedDate && live.updated_date && row.existingUpdatedDate !== live.updated_date) {
+            res.errors.push({ name: row.name, message: "The matched inventory item changed in another session. Refresh the import preview before importing." });
+          }
+        } else if (catalog.byName.has(nameKey(row.name))) {
+          res.errors.push({ name: row.name, message: "An item with this name appeared after the preview. Refresh the import preview so it can be treated as an update instead of a duplicate create." });
         }
       }
-    };
 
-    for (let i = 0; i < rows.length; i++) {
-      await writeOne(rows[i]);
-      setProgress({ done: i + 1, total: rows.length });
-      if (i < rows.length - 1) await sleep(PER_REQUEST_DELAY_MS);
+      if (res.errors.length) {
+        res.aborted = true;
+        setResult(res);
+        return;
+      }
+
+      const writeOne = async (r) => {
+        const conf = TARGETS[r.target_key];
+        let attempt = 0;
+        while (true) {
+          try {
+            if (r.action === "update") {
+              await conf.entity.update(r.existingId, r.payload);
+              res.updated += 1;
+            } else {
+              await conf.entity.create(r.payload);
+              res.created += 1;
+            }
+            return;
+          } catch (err) {
+            if (isRateLimit(err) && attempt < MAX_RETRIES) {
+              const backoff = 500 * Math.pow(2, attempt) + Math.random() * 250;
+              await sleep(backoff);
+              attempt += 1;
+              continue;
+            }
+            console.error(`Import error for "${r.name}":`, err);
+            res.errors.push({ name: r.name, message: err?.message || "Failed" });
+            return;
+          }
+        }
+      };
+
+      for (let i = 0; i < rows.length; i++) {
+        await writeOne(rows[i]);
+        setProgress({ done: i + 1, total: rows.length });
+        if (i < rows.length - 1) await sleep(PER_REQUEST_DELAY_MS);
+      }
+
+      setResult(res);
+      onComplete?.();
+    } finally {
+      setImporting(false);
+      importRef.current = false;
     }
-
-    setResult(res);
-    setImporting(false);
-    onComplete?.();
   };
 
   // ------------------------- Render -------------------------
@@ -349,10 +408,10 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
           {/* Step 3: results */}
           {result && (
             <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-emerald-900">
-                  <p className="font-semibold">Import complete</p>
+              <div className={`${result.aborted ? "bg-red-50 border-red-200" : "bg-emerald-50 border-emerald-200"} border rounded-lg p-4 flex items-start gap-2`}>
+                {result.aborted ? <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />}
+                <div className={`text-sm ${result.aborted ? "text-red-900" : "text-emerald-900"}`}>
+                  <p className="font-semibold">{result.aborted ? "Import stopped before writing" : "Import complete"}</p>
                   <p className="text-xs mt-1">
                     <span className="inline-flex items-center gap-1 mr-3">
                       <Plus className="w-3 h-3" /> {result.created} created
@@ -387,16 +446,21 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      // Keep only failed rows and re-run with the slow throttled path
+                      if (result.aborted) {
+                        setResult(null);
+                        handleFile(file);
+                        return;
+                      }
+                      // For per-row write failures after a started import, keep only
+                      // failed rows. The next run still performs a fresh full preflight.
                       const failedNames = new Set(result.errors.map((e) => e.name));
-                      const failedRows = rows.filter((r) => failedNames.has(r.name));
-                      setRows(failedRows);
+                      setRows(rows.filter((r) => failedNames.has(r.name)));
                       setResult(null);
                     }}
                     className="border-amber-300 text-amber-700 hover:bg-amber-50"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Retry {result.errors.length} Failed
+                    {result.aborted ? "Refresh Preview" : `Retry ${result.errors.length} Failed`}
                   </Button>
                 )}
                 <Button onClick={onClose} className="bg-emerald-600 hover:bg-emerald-700">
