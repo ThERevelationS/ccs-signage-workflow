@@ -93,6 +93,10 @@
     },
     "notes": {
       "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable internal key for retry-safe lifecycle events. Kept separate from revision_number and customer Quote Version; notes remains populated for backward-compatible audit lookup."
     }
   },
   "required": [
