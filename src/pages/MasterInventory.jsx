@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { User } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ export default function MasterInventory() {
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
   const [userLoaded, setUserLoaded] = useState(false);
+  const [inventoryLoadError, setInventoryLoadError] = useState("");
+  const deleteRef = useRef(new Set());
 
   const activeSource = SOURCE_BY_KEY[activeKey];
   const isAdmin = user?.role === "admin";
@@ -49,14 +51,16 @@ export default function MasterInventory() {
   const loadActive = useCallback(async () => {
     if (!activeSource || isCustomTab) return;
     setIsLoading(true);
+    setInventoryLoadError("");
     try {
       const items = await activeSource.entity.list();
       setItemsBySource((prev) => ({ ...prev, [activeKey]: items }));
     } catch (err) {
       console.error("Failed to load inventory:", err);
-      setItemsBySource((prev) => ({ ...prev, [activeKey]: [] }));
+      setInventoryLoadError(err?.message || `Could not verify ${activeSource.label} inventory.`);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [activeKey, activeSource, isCustomTab]);
 
   useEffect(() => {
@@ -82,15 +86,27 @@ export default function MasterInventory() {
   };
 
   const handleDelete = async (item) => {
-    if (!isAdmin) return;
+    if (!isAdmin || deleteRef.current.has(item.id)) return;
     const label = item[activeSource.nameField] || "this item";
-    if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return;
+    deleteRef.current.add(item.id);
+    if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) {
+      deleteRef.current.delete(item.id);
+      return;
+    }
     try {
+      const live = await activeSource.entity.get(item.id);
+      if (item.updated_date && live?.updated_date && item.updated_date !== live.updated_date) {
+        alert("This inventory item changed in another session and was not deleted. The inventory will reload so you can review the latest record first.");
+        await loadActive();
+        return;
+      }
       await activeSource.entity.delete(item.id);
       await loadActive();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete item.");
+      alert(err?.message || "Failed to delete item.");
+    } finally {
+      deleteRef.current.delete(item.id);
     }
   };
 
@@ -243,6 +259,12 @@ export default function MasterInventory() {
                   <CardContent className="p-0">
                     {isLoading ? (
                       <div className="p-12 text-center text-slate-500">Loading…</div>
+                    ) : inventoryLoadError ? (
+                      <div className="p-8 text-center bg-red-50 border border-red-200 text-red-700">
+                        <div className="font-semibold">Inventory could not be verified.</div>
+                        <div className="mt-1 text-xs">{inventoryLoadError}</div>
+                        <Button variant="outline" className="mt-3" onClick={loadActive}>Retry</Button>
+                      </div>
                     ) : (
                       <InventoryTable
                         source={s}
