@@ -64,7 +64,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
           streetViewControl: false,
           fullscreenControl: false,
           zoomControl: true,
-          zoomControlOptions: { position: maps.ControlPosition.RIGHT_BOTTOM },
+          zoomControlOptions: { position: maps.ControlPosition?.RIGHT_BOTTOM ?? 3 },
         });
 
         setLoading(false);

@@ -23,6 +23,7 @@ export default function EstimatorCustomers() {
   const [me, setMe] = useState(null);
   const [syncingWorkflowCustomers, setSyncingWorkflowCustomers] = useState(false);
   const workflowSyncRef = useRef(false);
+  const pricingTierSaveRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -61,20 +62,36 @@ export default function EstimatorCustomers() {
   };
 
   const updatePricingTier = async (customerId, tierNumber) => {
+    if (pricingTierSaveRef.current) return;
     const nextTier = Number(tierNumber) || 1;
+    const loadedCustomer = customers.find((customer) => customer.id === customerId) || null;
+    pricingTierSaveRef.current = true;
     setSavingTierId(customerId);
-    setCustomers((current) => current.map((customer) =>
-      customer.id === customerId ? { ...customer, pricing_tier: nextTier } : customer
-    ));
     try {
-      await base44.entities.Customer.update(customerId, { pricing_tier: nextTier });
+      const current = await base44.entities.Customer.get(customerId);
+      if (
+        loadedCustomer?.updated_date &&
+        current?.updated_date &&
+        loadedCustomer.updated_date !== current.updated_date
+      ) {
+        setCustomers((rows) => rows.map((customer) => customer.id === customerId ? current : customer));
+        throw new Error("This Customer changed in another session. The latest Customer data has been reloaded; review it before changing the pricing tier again.");
+      }
+
+      const updateResult = await base44.entities.Customer.update(customerId, { pricing_tier: nextTier });
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.Customer.get(customerId);
+      const saved = { ...current, ...(refreshed || {}), pricing_tier: nextTier };
+      setCustomers((rows) => rows.map((customer) => customer.id === customerId ? saved : customer));
     } catch (error) {
-      const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
-      if (refreshed) {
-        setCustomers((current) => current.map((customer) => customer.id === customerId ? refreshed : customer));
+      if (!String(error?.message || "").includes("changed in another session")) {
+        const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
+        if (refreshed) {
+          setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
+        }
       }
       window.alert(error?.message || "Customer pricing tier could not be saved.");
     } finally {
+      pricingTierSaveRef.current = false;
       setSavingTierId(null);
     }
   };
