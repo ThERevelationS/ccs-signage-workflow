@@ -847,6 +847,8 @@ export default function EstimateDetail() {
                 openRevision={openRevision}
                 onStartRevision={handleStartRevision}
                 onChange={patch}
+                onRetryPipelineSync={handleRetryPipelineSync}
+                retryingPipelineSync={saving}
                 refreshKey={revisionRefreshKey}
               />
               <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
