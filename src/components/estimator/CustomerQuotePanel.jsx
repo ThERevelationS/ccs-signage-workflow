@@ -58,6 +58,7 @@ export default function CustomerQuotePanel({
   persistedStatus = "draft",
   onQuoteDelivered,
   onDeliveryLogged,
+  onDeliveryEvidenceReady,
 }) {
   const round = estimate.round_prices_to_dollar === true;
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
@@ -176,8 +177,18 @@ export default function CustomerQuotePanel({
             archive: deliveryResult.archive,
           })
         : {};
+      const evidenceResult = !issuingNewQuote
+        ? await onDeliveryEvidenceReady?.({
+            quoteVersion: deliveryVersion,
+            deliveryId: deliveryResult.deliveryId,
+            gmailMessageId: deliveryResult.messageId,
+            recipientEmail: recipient,
+            sentAt: deliveryResult.sentAt,
+            archive: deliveryResult.archive,
+          })
+        : {};
       setSendOpen(false);
-      const warnings = [deliveryResult.deliveryLogWarning, trackingResult?.warning].filter(Boolean);
+      const warnings = [deliveryResult.deliveryLogWarning, trackingResult?.warning, evidenceResult?.warning].filter(Boolean);
       window.alert(warnings.length ? `Quote emailed successfully.\n\n${warnings.join("\n")}` : "Quote emailed successfully.");
     } catch (error) {
       const detail = error?.message || "Quote could not be emailed.";
