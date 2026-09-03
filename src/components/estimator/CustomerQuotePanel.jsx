@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Mail, Printer, Settings2 } from "lucide-react";
+import { Loader2, Mail, Printer, RefreshCw, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,6 +7,7 @@ import { buildCustomerQuoteRows } from "./customerQuote";
 import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
 import { generateCustomerQuotePdf } from "./quotePdf";
 import { defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
+import { loadQuoteDefaults, quoteDefaultsPayload } from "./quoteDefaults";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -75,6 +76,7 @@ export default function CustomerQuotePanel({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [currentVersionDelivered, setCurrentVersionDelivered] = useState(false);
+  const [applyingDefaults, setApplyingDefaults] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -95,6 +97,26 @@ export default function CustomerQuotePanel({
 
   const printQuote = () => {
     window.print();
+  };
+
+  const applyCompanyDefaults = async () => {
+    if (readOnly || applyingDefaults) return;
+    const confirmed = window.confirm("Replace this estimate's current customer quote settings with the current company Quote Defaults? Product pricing, internal cost, Quote Version, issue date, and lifecycle status will not change. Save the estimate or open revision afterward to persist these settings.");
+    if (!confirmed) return;
+
+    setApplyingDefaults(true);
+    try {
+      const defaults = await loadQuoteDefaults();
+      if (!defaults?.id) {
+        throw new Error("No company Quote Defaults have been saved yet. Open Estimator Settings → Quote Defaults and save them first.");
+      }
+      onChange?.(quoteDefaultsPayload(defaults));
+      window.alert("Company Quote Defaults applied to this estimate. Save the estimate or revision to persist the changes.");
+    } catch (error) {
+      window.alert(error?.message || "Company Quote Defaults could not be applied.");
+    } finally {
+      setApplyingDefaults(false);
+    }
   };
 
   const set = (key, value) => onChange?.({ [key]: value });
@@ -206,6 +228,17 @@ export default function CustomerQuotePanel({
           <div className="text-[10px] text-gray-500 mt-0.5">Live preview uses the same frozen Product pricing waterfall as the estimate. Quote settings are stored on this estimate.</div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={applyCompanyDefaults}
+            disabled={readOnly || applyingDefaults}
+            title={readOnly ? "Start a revision before changing quote settings on this protected estimate." : "Replace this estimate's quote settings with the current company defaults. Pricing and lifecycle fields are not changed."}
+            className="h-[31px] text-[11px]"
+          >
+            {applyingDefaults ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+            {applyingDefaults ? "Applying…" : "Apply Company Defaults"}
+          </Button>
           <Button
             type="button"
             onClick={openSendDialog}
