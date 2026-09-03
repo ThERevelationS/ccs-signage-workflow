@@ -872,7 +872,8 @@ export default function EstimateDetail() {
                     setPersistedEstimate(converted);
                     setRevisionRefreshKey((value) => value + 1);
                   }}
-                  disabled={!!openRevision}
+                  disabled={!!openRevision || !!estimate.pipeline_sync_pending}
+                  disabledReason={estimate.pipeline_sync_pending ? "Retry Pipeline Sync Before Converting" : "Save Revision First"}
                   persistedStatus={persistedStatus}
                 />
               </div>
