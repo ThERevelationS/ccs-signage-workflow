@@ -5,6 +5,7 @@ import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
 import { upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
+import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -73,7 +74,9 @@ export default function NewAllInOneEstimate() {
         );
       }
 
+      const quoteDefaults = await loadQuoteDefaults();
       const estimate = await base44.entities.AllInOneEstimate.create({
+        ...quoteDefaultsPayload(quoteDefaults || {}),
         ...form,
         client_name: clientName,
         project_name: description,
