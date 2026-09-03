@@ -9,7 +9,7 @@
 //   - Row "Edit"   → opens VinylEditDialog populated with that row.
 //   - Save in dialog persists the full draft via VinylInventory.update(id, draft).
 
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { VinylInventory, User } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,18 +58,23 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [useCaseFilter, setUseCaseFilter] = useState("all");
   const [editingVinyl, setEditingVinyl] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const itemActionRef = useRef(new Set());
+  const addRef = useRef(false);
   const isAdmin = user?.role === "admin";
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const all = await VinylInventory.list("sort_order");
       setItems(all);
     } catch (e) {
       console.error("Failed to load VinylInventory:", e);
-      setItems([]);
+      setLoadError(e?.message || "Vinyl inventory could not be verified.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -92,7 +97,8 @@ export default function VinylInventoryTab({ scope = "master" }) {
   }, [items, scope, search, categoryFilter, useCaseFilter]);
 
   const handleAdd = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin || loadError || addRef.current) return;
+    addRef.current = true;
     try {
       const created = await VinylInventory.create({ ...blankVinyl(scope), sort_order: items.length + 1 });
       setItems(prev => [created, ...prev]);
@@ -100,31 +106,56 @@ export default function VinylInventoryTab({ scope = "master" }) {
     } catch (e) {
       console.error(e);
       alert("Failed to add vinyl: " + e.message);
+    } finally {
+      addRef.current = false;
     }
   };
 
   const handleDialogSave = async (draft) => {
-    if (!draft?.id) return;
+    if (!draft?.id || itemActionRef.current.has(draft.id)) return;
+    itemActionRef.current.add(draft.id);
     try {
+      const live = await VinylInventory.get(draft.id);
+      if (draft.updated_date && live?.updated_date && draft.updated_date !== live.updated_date) {
+        setItems(prev => prev.map(v => v.id === draft.id ? live : v));
+        setEditingVinyl(live);
+        alert("This vinyl changed in another session. Your changes were not saved; the latest record has been reloaded into the editor.");
+        return;
+      }
       const { id, created_date, updated_date, created_by_id, ...patch } = draft;
-      const updated = await VinylInventory.update(id, patch);
-      setItems(prev => prev.map(v => v.id === id ? { ...v, ...patch, ...(updated || {}) } : v));
+      const updateResult = await VinylInventory.update(id, patch);
+      const refreshed = updateResult?.updated_date ? updateResult : await VinylInventory.get(id);
+      setItems(prev => prev.map(v => v.id === id ? { ...v, ...patch, ...(refreshed || {}) } : v));
       setEditingVinyl(null);
     } catch (e) {
       console.error(e);
       alert("Save failed: " + e.message);
+    } finally {
+      itemActionRef.current.delete(draft.id);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!isAdmin) return;
-    if (!confirm("Delete this vinyl?")) return;
+  const handleDelete = async (vinyl) => {
+    if (!isAdmin || !vinyl?.id || itemActionRef.current.has(vinyl.id)) return;
+    itemActionRef.current.add(vinyl.id);
+    if (!confirm("Delete this vinyl?")) {
+      itemActionRef.current.delete(vinyl.id);
+      return;
+    }
     try {
-      await VinylInventory.delete(id);
-      setItems(prev => prev.filter(v => v.id !== id));
+      const live = await VinylInventory.get(vinyl.id);
+      if (vinyl.updated_date && live?.updated_date && vinyl.updated_date !== live.updated_date) {
+        setItems(prev => prev.map(v => v.id === vinyl.id ? live : v));
+        alert("This vinyl changed in another session and was not deleted. The latest record has been reloaded.");
+        return;
+      }
+      await VinylInventory.delete(vinyl.id);
+      setItems(prev => prev.filter(v => v.id !== vinyl.id));
     } catch (e) {
       console.error(e);
       alert("Delete failed: " + e.message);
+    } finally {
+      itemActionRef.current.delete(vinyl.id);
     }
   };
 
@@ -132,11 +163,18 @@ export default function VinylInventoryTab({ scope = "master" }) {
   // recommender can find them. If the source has no product_group_key, we
   // generate one and stamp it on both rows.
   const handleDuplicate = async (source) => {
-    if (!isAdmin || !source) return;
+    if (!isAdmin || !source?.id || itemActionRef.current.has(source.id)) return;
+    itemActionRef.current.add(source.id);
     try {
+      const live = await VinylInventory.get(source.id);
+      if (source.updated_date && live?.updated_date && source.updated_date !== live.updated_date) {
+        setItems(prev => prev.map(v => v.id === source.id ? live : v));
+        alert("This vinyl changed in another session and was not duplicated. The latest record has been reloaded.");
+        return;
+      }
       // eslint-disable-next-line no-unused-vars
-      const { id, created_date, updated_date, created_by_id, ...rest } = source;
-      let groupKey = source.product_group_key;
+      const { id, created_date, updated_date, created_by_id, ...rest } = live;
+      let groupKey = live.product_group_key;
       if (!groupKey) {
         groupKey = `grp-${id || Math.random().toString(36).slice(2, 9)}`;
         await VinylInventory.update(id, { product_group_key: groupKey });
@@ -144,8 +182,8 @@ export default function VinylInventoryTab({ scope = "master" }) {
       const copy = {
         ...rest,
         product_group_key: groupKey,
-        vinyl_name: `${source.vinyl_name || "Vinyl"} (copy)`,
-        sort_order: (source.sort_order || 0) + 0.1,
+        vinyl_name: `${live.vinyl_name || "Vinyl"} (copy)`,
+        sort_order: (live.sort_order || 0) + 0.1,
       };
       const created = await VinylInventory.create(copy);
       setItems(prev => prev.map(v => v.id === id ? { ...v, product_group_key: groupKey } : v));
@@ -154,6 +192,8 @@ export default function VinylInventoryTab({ scope = "master" }) {
     } catch (e) {
       console.error(e);
       alert("Duplicate failed: " + e.message);
+    } finally {
+      itemActionRef.current.delete(source.id);
     }
   };
 
@@ -193,7 +233,7 @@ export default function VinylInventoryTab({ scope = "master" }) {
               </SelectContent>
             </Select>
             {isAdmin ? (
-              <Button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700 text-white h-9">
+              <Button onClick={handleAdd} disabled={!!loadError} className="bg-blue-600 hover:bg-blue-700 text-white h-9 disabled:opacity-50">
                 <Plus className="w-4 h-4 mr-1" /> Add Vinyl
               </Button>
             ) : (
@@ -208,6 +248,12 @@ export default function VinylInventoryTab({ scope = "master" }) {
       <CardContent className="p-4">
         {loading ? (
           <div className="p-8 text-center text-slate-500">Loading vinyl inventory…</div>
+        ) : loadError ? (
+          <div className="p-8 text-center text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            <div className="font-semibold">Vinyl inventory could not be verified.</div>
+            <div className="mt-1 text-xs">{loadError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-lg">
             No vinyl in this view.
@@ -222,7 +268,7 @@ export default function VinylInventoryTab({ scope = "master" }) {
                 isAdmin={isAdmin}
                 groupSiblings={items.filter(x => x.id !== v.id && v.product_group_key && x.product_group_key === v.product_group_key)}
                 onEdit={() => setEditingVinyl(v)}
-                onDelete={() => handleDelete(v.id)}
+                onDelete={() => handleDelete(v)}
                 onDuplicate={() => handleDuplicate(v)}
               />
             ))}
