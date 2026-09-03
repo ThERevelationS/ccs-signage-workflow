@@ -44,13 +44,6 @@ async function patchVerifiedEstimateLine(estimate, builder, patch) {
   return lineItems.find((line) => line.builder_product_id === builder.id) || null;
 }
 
-async function patchEstimateLine(builder, patch) {
-  if (!builder?.estimate_id) throw new Error("The Product is not linked to an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
-  if (!estimate) throw new Error("Estimate could not be loaded.");
-  return patchVerifiedEstimateLine(estimate, builder, patch);
-}
-
 function assertLoadedPartVersion(part, expectedPartUpdatedAt = "") {
   const expected = String(expectedPartUpdatedAt || "").trim();
   const current = String(part?.updated_date || "").trim();
@@ -428,16 +421,19 @@ export async function removeManualProductPart(partId, { expectedEstimateUpdatedA
 
 export async function refreshManualProductPricing(builderProductId) {
   if (!builderProductId) return null;
-  const builder = await base44.entities.BuilderProduct.get(builderProductId).catch(() => null);
-  if (!builder) return null;
-  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  const [{ builder, estimate }, parts, catalog] = await Promise.all([
+    loadManualMutationContext(builderProductId),
+    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
+    loadMasterPartCatalog(),
+  ]);
   const active = (parts || []).filter((part) => part.is_active !== false);
-  const catalog = await loadMasterPartCatalog();
   const catalogByKey = new Map(catalog.map((item) => [`${item.entity}:${item.inventoryId}`, item]));
   let currentTotal = 0;
   let detachedCount = 0;
   let changedCount = 0;
+  let partWrites = 0;
   const timestamp = nowIso();
+
   for (const part of active) {
     let currentUnit = num(part.frozen_unit_cost);
     let currentExtended = num(part.frozen_extended_cost);
@@ -464,34 +460,65 @@ export async function refreshManualProductPricing(builderProductId) {
       }
     }
     currentTotal += currentExtended;
-    await base44.entities.BuilderPart.update(part.id, {
-      current_unit_cost: currentUnit,
-      current_extended_cost: currentExtended,
-      current_inventory_snapshot: currentSnapshot,
-      inventory_link_state: linkState,
-      reattach_candidate_id: candidate?.inventoryId || part.reattach_candidate_id || "",
-      reattach_candidate_name: candidate?.name || part.reattach_candidate_name || "",
-      price_state: state,
-      price_delta: currentExtended - num(part.frozen_extended_cost),
-      price_delta_percent: num(part.frozen_extended_cost) ? ((currentExtended - num(part.frozen_extended_cost)) / num(part.frozen_extended_cost)) * 100 : 0,
+    const nextCandidateId = candidate?.inventoryId || part.reattach_candidate_id || "";
+    const nextCandidateName = candidate?.name || part.reattach_candidate_name || "";
+    const nextDelta = currentExtended - num(part.frozen_extended_cost);
+    const nextDeltaPercent = num(part.frozen_extended_cost) ? (nextDelta / num(part.frozen_extended_cost)) * 100 : 0;
+    const changed =
+      Math.abs(num(part.current_unit_cost, num(part.frozen_unit_cost)) - currentUnit) > 0.000001 ||
+      Math.abs(num(part.current_extended_cost, num(part.frozen_extended_cost)) - currentExtended) > 0.005 ||
+      stable(part.current_inventory_snapshot || {}) !== stable(currentSnapshot) ||
+      String(part.inventory_link_state || "manual") !== String(linkState) ||
+      String(part.reattach_candidate_id || "") !== String(nextCandidateId) ||
+      String(part.reattach_candidate_name || "") !== String(nextCandidateName) ||
+      String(part.price_state || "current") !== String(state) ||
+      Math.abs(num(part.price_delta) - nextDelta) > 0.005 ||
+      Math.abs(num(part.price_delta_percent) - nextDeltaPercent) > 0.0001;
+    if (changed) {
+      await base44.entities.BuilderPart.update(part.id, {
+        current_unit_cost: currentUnit,
+        current_extended_cost: currentExtended,
+        current_inventory_snapshot: currentSnapshot,
+        inventory_link_state: linkState,
+        reattach_candidate_id: nextCandidateId,
+        reattach_candidate_name: nextCandidateName,
+        price_state: state,
+        price_delta: nextDelta,
+        price_delta_percent: nextDeltaPercent,
+        last_price_check_at: timestamp,
+      });
+      partWrites += 1;
+    }
+  }
+
+  const frozenTotal = active.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const priceState = detachedCount > 0 ? "detached_parts" : Math.abs(currentTotal - frozenTotal) > 0.005 || changedCount > 0 ? "changed" : "current";
+  const builderChanged =
+    Math.abs(num(builder.frozen_cost) - frozenTotal) > 0.005 ||
+    Math.abs(num(builder.current_recalculated_cost, frozenTotal) - currentTotal) > 0.005 ||
+    num(builder.part_count) !== active.length ||
+    num(builder.detached_part_count) !== detachedCount ||
+    !!builder.needs_reattach_review !== (detachedCount > 0) ||
+    String(builder.price_state || "current") !== priceState ||
+    Math.abs(num(builder.price_delta) - (currentTotal - frozenTotal)) > 0.005 ||
+    Math.abs(num(builder.price_delta_percent) - (frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0)) > 0.0001;
+  if (builderChanged) {
+    await base44.entities.BuilderProduct.update(builderProductId, {
+      frozen_cost: frozenTotal,
+      current_recalculated_cost: currentTotal,
+      part_count: active.length,
+      detached_part_count: detachedCount,
+      needs_reattach_review: detachedCount > 0,
+      price_state: priceState,
+      price_delta: currentTotal - frozenTotal,
+      price_delta_percent: frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0,
       last_price_check_at: timestamp,
     });
   }
-  const frozenTotal = active.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
-  const priceState = detachedCount > 0 ? "detached_parts" : Math.abs(currentTotal - frozenTotal) > 0.005 || changedCount > 0 ? "changed" : "current";
-  await base44.entities.BuilderProduct.update(builderProductId, {
-    frozen_cost: frozenTotal,
-    current_recalculated_cost: currentTotal,
-    part_count: active.length,
-    detached_part_count: detachedCount,
-    needs_reattach_review: detachedCount > 0,
-    price_state: priceState,
-    price_delta: currentTotal - frozenTotal,
-    price_delta_percent: frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0,
-    last_price_check_at: timestamp,
-  });
+
   const frozenCustomerPrice = num(builder.frozen_customer_price, frozenTotal);
-  await patchEstimateLine(builder, {
+  const currentLine = estimateLineForBuilder(estimate, builder.id);
+  const linePatch = {
     total_snapshot: frozenTotal,
     live_total_snapshot: currentTotal,
     customer_price_snapshot: frozenCustomerPrice,
@@ -500,6 +527,17 @@ export async function refreshManualProductPricing(builderProductId) {
     needs_reattach_review: detachedCount > 0,
     price_state: priceState,
     last_price_check_at: timestamp,
-  });
-  return { frozenTotal, currentTotal, detachedCount, changedCount, priceState };
+  };
+  const lineChanged = !!currentLine && (
+    Math.abs(num(currentLine.total_snapshot) - linePatch.total_snapshot) > 0.005 ||
+    Math.abs(num(currentLine.live_total_snapshot, linePatch.total_snapshot) - linePatch.live_total_snapshot) > 0.005 ||
+    Math.abs(num(currentLine.customer_price_snapshot, linePatch.customer_price_snapshot) - linePatch.customer_price_snapshot) > 0.005 ||
+    Math.abs(num(currentLine.live_customer_price_snapshot, linePatch.customer_price_snapshot) - linePatch.live_customer_price_snapshot) > 0.005 ||
+    num(currentLine.detached_part_count) !== detachedCount ||
+    !!currentLine.needs_reattach_review !== (detachedCount > 0) ||
+    String(currentLine.price_state || "current") !== priceState
+  );
+  if (lineChanged) await patchVerifiedEstimateLine(estimate, builder, linePatch);
+
+  return { frozenTotal, currentTotal, detachedCount, changedCount, priceState, partWrites, builderChanged, lineChanged };
 }
