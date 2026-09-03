@@ -14,6 +14,7 @@ const TYPE_LABELS = {
 export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, onRepairConversionTracking, repairingConversionTracking = false, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [revisionsLoading, setRevisionsLoading] = useState(true);
+  const [revisionReadError, setRevisionReadError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [starting, setStarting] = useState(false);
@@ -22,8 +23,10 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   useEffect(() => {
     let active = true;
     setRevisionsLoading(true);
-    listEstimateRevisions(estimate?.id)
+    setRevisionReadError("");
+    listEstimateRevisions(estimate?.id, { strict: true })
       .then((result) => active && setRows(result || []))
+      .catch((err) => active && setRevisionReadError(err?.message || "Revision history could not be loaded."))
       .finally(() => active && setRevisionsLoading(false));
     return () => { active = false; };
   }, [estimate?.id, refreshKey, openRevision?.id, openRevision?.revision_status]);
@@ -39,7 +42,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
     row.revision_type === "conversion" &&
     (row.idempotency_key === conversionIdempotencyKey || row.notes === conversionIdempotencyKey || row.work_order_id === estimate.work_order_id)
   );
-  const conversionTrackingMissing = !revisionsLoading && !!estimate?.work_order_id && !hasConversionTracking;
+  const conversionTrackingMissing = !revisionsLoading && !revisionReadError && !!estimate?.work_order_id && !hasConversionTracking;
 
   const start = async () => {
     if (!reason.trim() || starting) return;
@@ -71,6 +74,12 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
       </div>
 
       <div className="p-4 space-y-3">
+        {revisionReadError && (
+          <div className="rounded border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] text-red-700">
+            <strong>Revision history could not be verified.</strong> {revisionReadError} Repair actions are disabled until the audit history loads successfully.
+          </div>
+        )}
+
         {conversionTrackingMissing && (
           <div className="rounded border border-rose-300 bg-rose-50 px-3 py-2.5 flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-2">
