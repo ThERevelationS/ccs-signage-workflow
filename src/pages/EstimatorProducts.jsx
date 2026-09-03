@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -32,19 +32,22 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
+
+  const draftFromProduct = (row) => ({
+    product_name: row?.product_name || "",
+    product_group: row?.product_group === "global" ? "global" : "my",
+    product_category: row?.product_category || "",
+    production_product_type: row?.production_product_type || "",
+    categories_text: (row?.categories || []).join(", "),
+    client_description: row?.client_description || "",
+    product_notes: row?.product_notes || "",
+    is_active: row?.is_active !== false,
+  });
 
   useEffect(() => {
     if (!open || !product) return;
-    setDraft({
-      product_name: product.product_name || "",
-      product_group: product.product_group === "global" ? "global" : "my",
-      product_category: product.product_category || "",
-      production_product_type: product.production_product_type || "",
-      categories_text: (product.categories || []).join(", "),
-      client_description: product.client_description || "",
-      product_notes: product.product_notes || "",
-      is_active: product.is_active !== false,
-    });
+    setDraft(draftFromProduct(product));
     setError("");
     setSaving(false);
   }, [open, product?.id]);
@@ -54,10 +57,18 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
 
   const save = async (event) => {
     event.preventDefault();
-    if (!draft.product_name.trim() || saving) return;
+    if (!draft.product_name.trim() || saveRef.current) return;
+    saveRef.current = true;
     setSaving(true);
     setError("");
     try {
+      const live = await base44.entities.QuickProduct.get(product.id);
+      if (!live) throw new Error("This Quick Product no longer exists. Reload the library before editing it again.");
+      if (product.updated_date && live.updated_date && product.updated_date !== live.updated_date) {
+        onSaved?.(live);
+        setDraft(draftFromProduct(live));
+        throw new Error("This Quick Product changed in another session. The latest metadata has been reloaded into this editor; review it before saving again.");
+      }
       const categories = [...new Set(draft.categories_text.split(",").map((value) => value.trim()).filter(Boolean))];
       const payload = {
         product_name: draft.product_name.trim(),
@@ -69,11 +80,14 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
         product_notes: draft.product_notes,
         is_active: draft.is_active,
       };
-      const updated = await base44.entities.QuickProduct.update(product.id, payload);
-      onSaved?.({ ...product, ...payload, ...(updated || {}) });
+      const updateResult = await base44.entities.QuickProduct.update(product.id, payload);
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.QuickProduct.get(product.id);
+      onSaved?.({ ...product, ...payload, ...(refreshed || {}) });
       onClose?.();
     } catch (err) {
       setError(err?.message || "Quick Product could not be updated.");
+    } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };
@@ -115,6 +129,9 @@ export default function EstimatorProducts() {
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
+  const [libraryError, setLibraryError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const toggleRef = useRef(new Set());
 
   const view = searchParams.get("view") || "all";
   const moduleFilter = searchParams.get("module") || "";
@@ -122,8 +139,9 @@ export default function EstimatorProducts() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setLibraryError("");
     Promise.all([
-      base44.entities.QuickProduct.list().catch(() => []),
+      base44.entities.QuickProduct.list(),
       base44.auth.me().catch(() => null),
       loadProductionProductTypes(),
     ]).then(([rows, me, productionTypes]) => {
@@ -131,10 +149,13 @@ export default function EstimatorProducts() {
       setQuickProducts(rows || []);
       setProductionProductTypes(productionTypes || []);
       setUser(me);
-    }).catch((err) => active && setError(err?.message || "Products could not be loaded."))
-      .finally(() => active && setLoading(false));
+    }).catch((err) => {
+      if (!active) return;
+      setQuickProducts([]);
+      setLibraryError(err?.message || "Quick Product Library could not be verified.");
+    }).finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, []);
+  }, [reloadKey]);
 
   const builders = useMemo(() => moduleFilter ? ESTIMATOR_MODULES.filter((module) => module.key === moduleFilter) : ESTIMATOR_MODULES, [moduleFilter]);
 
@@ -170,12 +191,24 @@ export default function EstimatorProducts() {
   const updateLocal = (updated) => setQuickProducts((current) => current.map((row) => row.id === updated.id ? { ...row, ...updated } : row));
 
   const toggleActive = async (product) => {
-    const next = product.is_active === false;
+    if (!product?.id || libraryError || toggleRef.current.has(product.id)) return;
+    toggleRef.current.add(product.id);
+    setError("");
     try {
-      const updated = await base44.entities.QuickProduct.update(product.id, { is_active: next });
-      updateLocal({ ...product, is_active: next, ...(updated || {}) });
+      const live = await base44.entities.QuickProduct.get(product.id);
+      if (!live) throw new Error("This Quick Product no longer exists. Reload the library.");
+      if ((live.is_active !== false) !== (product.is_active !== false)) {
+        updateLocal(live);
+        throw new Error("This Quick Product status changed in another session. The latest status has been restored; review it before changing again.");
+      }
+      const next = product.is_active === false;
+      const updateResult = await base44.entities.QuickProduct.update(product.id, { is_active: next });
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.QuickProduct.get(product.id);
+      updateLocal({ ...product, is_active: next, ...(refreshed || {}) });
     } catch (err) {
       setError(err?.message || "Quick Product status could not be changed.");
+    } finally {
+      toggleRef.current.delete(product.id);
     }
   };
 
@@ -229,7 +262,9 @@ export default function EstimatorProducts() {
 
             <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 text-[9px] text-gray-500 flex items-center justify-between"><span>{visibleQuickProducts.length} matching Quick Product{visibleQuickProducts.length === 1 ? "" : "s"}</span><span>{activeCount} active total</span></div>
 
-            {loading ? <div className="py-14 text-center text-[11px] text-gray-400">Loading Quick Products…</div> : visibleQuickProducts.length === 0 ? (
+            {loading ? <div className="py-14 text-center text-[11px] text-gray-400">Loading Quick Products…</div> : libraryError ? (
+              <div className="py-12 px-6 text-center bg-red-50 border-t border-red-200"><div className="text-[12px] font-bold text-red-800">Quick Product Library could not be verified.</div><div className="mt-1 text-[10px] text-red-600">{libraryError}</div><Button variant="outline" className="mt-3 h-[30px] text-[10px]" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button></div>
+            ) : visibleQuickProducts.length === 0 ? (
               <div className="py-12 px-6 text-center">
                 <PackagePlus className="w-9 h-9 text-gray-300 mx-auto" />
                 <div className="mt-2 text-[12px] font-bold text-gray-800">No Quick Products found</div>
@@ -252,7 +287,7 @@ export default function EstimatorProducts() {
                         <td className="px-3 py-2.5 text-right whitespace-nowrap"><div className="text-[11px] font-bold text-gray-900">{money(price.extended)}</div>{price.quantity !== 1 && <div className="text-[8px] text-gray-400">{price.quantity} × {money(price.frozenUnit)}</div>}</td>
                         <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 h-[22px] px-2 rounded border text-[9px] font-bold ${global ? "border-blue-200 bg-blue-50 text-blue-700" : "border-violet-200 bg-violet-50 text-violet-700"}`}>{global ? <ShieldCheck className="w-3 h-3" /> : <UserRound className="w-3 h-3" />}{global ? "GLOBAL" : "MY"}</span></td>
                         <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 text-[9px] font-semibold ${product.is_active === false ? "text-gray-400" : "text-emerald-700"}`}>{product.is_active === false ? "Inactive" : <><CheckCircle2 className="w-3 h-3" /> Active</>}</span></td>
-                        <td className="px-4 py-2.5"><div className="flex justify-end gap-1"><button type="button" onClick={() => setEditing(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-700 hover:bg-gray-50">Edit</button><button type="button" onClick={() => toggleActive(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-600 hover:bg-gray-50">{product.is_active === false ? "Activate" : "Deactivate"}</button></div></td>
+                        <td className="px-4 py-2.5"><div className="flex justify-end gap-1"><button type="button" disabled={!!libraryError} onClick={() => setEditing(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-700 hover:bg-gray-50">Edit</button><button type="button" disabled={!!libraryError} onClick={() => toggleActive(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-600 hover:bg-gray-50">{product.is_active === false ? "Activate" : "Deactivate"}</button></div></td>
                       </tr>;
                     })}
                   </tbody>

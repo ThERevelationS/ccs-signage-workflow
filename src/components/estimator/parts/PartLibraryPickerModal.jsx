@@ -20,6 +20,7 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
     setScope("all");
     setType("all");
     setError("");
+    setTemplates([]);
     setLoading(true);
     listPartTemplates()
       .then((rows) => active && setTemplates(rows || []))
@@ -73,7 +74,9 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
           <div className="px-3 py-2 border-b border-gray-100 text-[10px] text-gray-500">{visible.length} matching saved component{visible.length === 1 ? "" : "s"}</div>
 
           <div className="flex-1 overflow-y-auto max-h-[470px] p-3">
-            {loading ? <div className="py-20 text-center text-[11px] text-gray-400">Loading Part Library…</div> : visible.length === 0 ? (
+            {loading ? <div className="py-20 text-center text-[11px] text-gray-400">Loading Part Library…</div> : error ? (
+              <div className="py-20 text-center"><AlertTriangle className="w-9 h-9 text-red-300 mx-auto" /><div className="mt-2 text-[12px] font-semibold text-red-700">Part Library could not be verified.</div><div className="mt-1 text-[10px] text-red-500">Close and reopen this picker to retry.</div></div>
+            ) : visible.length === 0 ? (
               <div className="py-20 text-center"><BookmarkPlus className="w-9 h-9 text-gray-300 mx-auto" /><div className="mt-2 text-[12px] font-semibold text-gray-600">No saved Parts found.</div><div className="mt-1 text-[10px] text-gray-400">Expand a Product Part or Part Group and use Save to Library.</div></div>
             ) : <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {visible.map((template) => {

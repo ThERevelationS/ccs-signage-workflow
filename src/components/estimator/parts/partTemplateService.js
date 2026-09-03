@@ -78,7 +78,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 
 export async function listPartTemplates({ includeInactive = false } = {}) {
   const [rows, me] = await Promise.all([
-    base44.entities.PartTemplate.list().catch(() => []),
+    base44.entities.PartTemplate.list(),
     base44.auth.me().catch(() => null),
   ]);
   return (rows || [])

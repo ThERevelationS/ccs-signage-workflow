@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Boxes, Edit3, Layers3, Package, Search, ShieldCheck, UserRound } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -11,6 +11,7 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
   const canEdit = !!template && (user?.role === "admin" || !template.created_by_id || template.created_by_id === user?.id);
 
   useEffect(() => {
@@ -33,10 +34,19 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
 
   const save = async (event) => {
     event.preventDefault();
-    if (!canEdit || saving || !draft.template_name.trim()) return;
+    if (!canEdit || saveRef.current || !draft.template_name.trim()) return;
+    saveRef.current = true;
     setSaving(true);
     setError("");
     try {
+      const live = await base44.entities.PartTemplate.get(template.id);
+      if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library before editing it again.");
+      const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
+      if (!liveCanEdit) throw new Error("You no longer have permission to edit this Saved Part.");
+      if (template.updated_date && live.updated_date && template.updated_date !== live.updated_date) {
+        onSaved?.(live);
+        throw new Error("This Saved Part changed in another session. Close and reopen it to review the latest metadata before saving again.");
+      }
       const tags = [...new Set(draft.tags_text.split(",").map((value) => value.trim()).filter(Boolean))];
       const snapshotParts = template.template_type === "part_group"
         ? (template.parts_snapshot || [])
@@ -61,11 +71,14 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
           snapshotParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name]),
         ].flat(3).filter(Boolean).join(" ").toLowerCase(),
       };
-      const updated = await base44.entities.PartTemplate.update(template.id, payload);
-      onSaved?.({ ...template, ...payload, ...(updated || {}) });
+      const updateResult = await base44.entities.PartTemplate.update(template.id, payload);
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.PartTemplate.get(template.id);
+      onSaved?.({ ...template, ...payload, ...(refreshed || {}) });
       onClose?.();
     } catch (err) {
       setError(err?.message || "Saved Part could not be updated.");
+    } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };
@@ -103,16 +116,20 @@ export default function EstimatorParts() {
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
+  const [libraryError, setLibraryError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const toggleRef = useRef(new Set());
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setLibraryError("");
     Promise.all([listPartTemplates({ includeInactive: true }), base44.auth.me().catch(() => null)])
       .then(([rows, me]) => { if (!active) return; setTemplates(rows || []); setUser(me); })
-      .catch((err) => active && setError(err?.message || "Part Library could not be loaded."))
+      .catch((err) => { if (!active) return; setTemplates([]); setLibraryError(err?.message || "Part Library could not be verified."); })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, []);
+  }, [reloadKey]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -137,12 +154,26 @@ export default function EstimatorParts() {
   const toggleActive = async (template) => {
     const canEdit = user?.role === "admin" || !template.created_by_id || template.created_by_id === user?.id;
     if (!canEdit) return setEditing(template);
+    if (!template?.id || libraryError || toggleRef.current.has(template.id)) return;
+    toggleRef.current.add(template.id);
+    setError("");
     try {
+      const live = await base44.entities.PartTemplate.get(template.id);
+      if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library.");
+      const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
+      if (!liveCanEdit) { updateLocal(live); throw new Error("You no longer have permission to change this Saved Part."); }
+      if ((live.is_active !== false) !== (template.is_active !== false)) {
+        updateLocal(live);
+        throw new Error("This Saved Part status changed in another session. The latest status has been restored; review it before changing again.");
+      }
       const next = template.is_active === false;
-      const updated = await base44.entities.PartTemplate.update(template.id, { is_active: next });
-      updateLocal({ ...template, is_active: next, ...(updated || {}) });
+      const updateResult = await base44.entities.PartTemplate.update(template.id, { is_active: next });
+      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.PartTemplate.get(template.id);
+      updateLocal({ ...template, is_active: next, ...(refreshed || {}) });
     } catch (err) {
       setError(err?.message || "Saved Part status could not be changed.");
+    } finally {
+      toggleRef.current.delete(template.id);
     }
   };
 
@@ -158,7 +189,7 @@ export default function EstimatorParts() {
           <div className="px-4 py-3 border-b border-gray-200 flex flex-col xl:flex-row xl:items-center gap-3"><div className="min-w-0 xl:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Part Library</h2><p className="text-[10px] text-gray-500">Save a Part or Part Group from any estimate Product. Reusing it creates a new independent copy and never changes the saved template or source Product.</p></div><div className="flex flex-wrap items-center gap-1.5"><div className="relative w-[240px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saved Parts..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div><select value={scope} onChange={(event) => setScope(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select><select value={type} onChange={(event) => setType(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">Parts + Groups</option><option value="part">Single Parts</option><option value="part_group">Part Groups</option></select><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select></div></div>
           <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 text-[9px] text-gray-500">{visible.length} matching saved component{visible.length === 1 ? "" : "s"}</div>
 
-          {loading ? <div className="py-16 text-center text-[11px] text-gray-400">Loading Part Library…</div> : visible.length === 0 ? <div className="py-14 text-center"><Layers3 className="w-9 h-9 text-gray-300 mx-auto" /><div className="mt-2 text-[12px] font-bold text-gray-700">No saved Parts found</div><div className="mt-1 text-[10px] text-gray-400">Inside an estimate, expand a Product Part or Part Group and choose Save to Library.</div></div> : <div className="overflow-x-auto"><table className="w-full text-left"><thead className="bg-gray-50 border-b border-gray-200"><tr className="text-[9px] tracking-wide text-gray-500"><th className="px-4 py-2 font-bold">SAVED PART</th><th className="px-3 py-2 font-bold">TYPE</th><th className="px-3 py-2 font-bold">SOURCE</th><th className="px-3 py-2 font-bold text-right">FROZEN COST</th><th className="px-3 py-2 font-bold">LIBRARY</th><th className="px-3 py-2 font-bold">STATUS</th><th className="px-4 py-2 font-bold text-right">ACTIONS</th></tr></thead><tbody className="divide-y divide-gray-100">{visible.map((template) => {
+          {loading ? <div className="py-16 text-center text-[11px] text-gray-400">Loading Part Library…</div> : libraryError ? <div className="py-12 px-6 text-center bg-red-50 border-t border-red-200"><div className="text-[12px] font-bold text-red-800">Part Library could not be verified.</div><div className="mt-1 text-[10px] text-red-600">{libraryError}</div><Button variant="outline" className="mt-3 h-[30px] text-[10px]" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button></div> : visible.length === 0 ? <div className="py-14 text-center"><Layers3 className="w-9 h-9 text-gray-300 mx-auto" /><div className="mt-2 text-[12px] font-bold text-gray-700">No saved Parts found</div><div className="mt-1 text-[10px] text-gray-400">Inside an estimate, expand a Product Part or Part Group and choose Save to Library.</div></div> : <div className="overflow-x-auto"><table className="w-full text-left"><thead className="bg-gray-50 border-b border-gray-200"><tr className="text-[9px] tracking-wide text-gray-500"><th className="px-4 py-2 font-bold">SAVED PART</th><th className="px-3 py-2 font-bold">TYPE</th><th className="px-3 py-2 font-bold">SOURCE</th><th className="px-3 py-2 font-bold text-right">FROZEN COST</th><th className="px-3 py-2 font-bold">LIBRARY</th><th className="px-3 py-2 font-bold">STATUS</th><th className="px-4 py-2 font-bold text-right">ACTIONS</th></tr></thead><tbody className="divide-y divide-gray-100">{visible.map((template) => {
             const isGroup = template.template_type === "part_group";
             const global = template.product_group === "global";
             const changed = Math.abs(Number(template.current_cost || 0) - Number(template.frozen_cost || 0)) > 0.005;
