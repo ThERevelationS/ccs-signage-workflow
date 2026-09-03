@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Boxes, Loader2, Plus, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadMasterPartCatalog, typeDetails } from "./partCatalog";
@@ -12,12 +12,17 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
   const [selectedId, setSelectedId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const addRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
     let active = true;
     setQuantity(initialQuantity);
     setLoading(true);
+    setLoadError("");
+    setItems([]);
+    setSelectedId("");
     loadMasterPartCatalog()
       .then((rows) => {
         if (!active) return;
@@ -25,6 +30,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
         setItems(scopedRows);
         setSelectedId(scopedRows[0]?.id || "");
       })
+      .catch((error) => active && setLoadError(error?.message || "Master Inventory could not be verified."))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [open, initialQuantity, catalogFilter]);
@@ -36,6 +42,8 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
       setQuantity(1);
       setSelectedId("");
       setAdding(false);
+      setLoadError("");
+      addRef.current = false;
     }
   }, [open]);
 
@@ -58,12 +66,14 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
   const details = selected ? typeDetails(selected.entity, selected.row) : [];
 
   const add = async () => {
-    if (!selected || adding) return;
+    if (!selected || loadError || addRef.current) return;
+    addRef.current = true;
     setAdding(true);
     try {
       await onAdd?.(selected, mode === "switch" ? Math.max(0, Number(initialQuantity || 0)) : mode === "select" ? 1 : Math.max(0, Number(quantity || 0)));
       onClose?.();
     } finally {
+      addRef.current = false;
       setAdding(false);
     }
   };
@@ -99,6 +109,8 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
             <div className="flex-1 overflow-y-auto max-h-[480px] p-2 space-y-1">
               {loading ? (
                 <div className="py-16 flex items-center justify-center gap-2 text-[12px] text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading Master Inventory…</div>
+              ) : loadError ? (
+                <div className="py-16 text-center"><div className="text-[12px] font-semibold text-red-700">Master Inventory could not be verified.</div><div className="text-[10px] text-red-500 mt-1">{loadError}</div><div className="text-[10px] text-gray-400 mt-1">Close and reopen the picker to retry. No Part can be selected from a partial catalog.</div></div>
               ) : filtered.length === 0 ? (
                 <div className="py-16 text-center text-[12px] text-gray-400">No inventory Parts match this search.</div>
               ) : filtered.map((item) => (
@@ -116,7 +128,9 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
           </section>
 
           <aside className="p-4 bg-gray-50 flex flex-col">
-            {selected ? (
+            {loadError ? (
+              <div className="flex-1 flex items-center justify-center text-center px-5"><div><div className="text-[12px] font-semibold text-red-700">Inventory unavailable</div><div className="text-[10px] text-gray-500 mt-1">Part creation and switching are disabled until the complete Master Inventory catalog can be read.</div></div></div>
+            ) : selected ? (
               <>
                 <div className="text-[9px] font-bold tracking-widest text-gray-400">SELECTED PART</div>
                 <div className="text-[16px] font-bold text-gray-900 mt-1">{selected.name}</div>

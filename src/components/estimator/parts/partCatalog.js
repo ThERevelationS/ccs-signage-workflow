@@ -178,7 +178,9 @@ const SOURCES = [
 ];
 
 async function list(entity) {
-  try { return await base44.entities[entity].list(); } catch { return []; }
+  const rows = await base44.entities[entity].list();
+  if (!Array.isArray(rows)) throw new Error(`${entity} inventory could not be verified.`);
+  return rows;
 }
 
 export async function loadMasterPartCatalog() {
