@@ -48,6 +48,7 @@ export default function EstimateDetail() {
   const [openRevision, setOpenRevision] = useState(null);
   const [revisionRefreshKey, setRevisionRefreshKey] = useState(0);
   const [deliveryRefreshKey, setDeliveryRefreshKey] = useState(0);
+  const [repairingConversionTracking, setRepairingConversionTracking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(2);
@@ -461,6 +462,43 @@ export default function EstimateDetail() {
       window.alert("Sales Pipeline synchronization completed successfully.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRepairConversionTracking = async () => {
+    if (!estimate?.work_order_id || repairingConversionTracking) return;
+    setRepairingConversionTracking(true);
+    try {
+      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      if (!current?.work_order_id) throw new Error("This estimate is no longer linked to a Work Order. Reload the estimate before repairing conversion tracking.");
+      if (current.work_order_id !== estimate.work_order_id) throw new Error("The linked Work Order changed in another session. Reload before repairing conversion tracking.");
+      const workOrder = await base44.entities.WorkOrder.get(current.work_order_id).catch(() => null);
+      if (!workOrder?.id) throw new Error("The linked Work Order could not be found. Conversion tracking was not changed.");
+
+      const internalCost = Number.isFinite(Number(current.total_cost))
+        ? Number(current.total_cost)
+        : acceptedInternalEstimateCost(current.line_items || []);
+      const quoteTotal = Number(current.quote_total || 0);
+      const conversionAfter = { ...current, status: "approved", work_order_id: workOrder.id, edit_reason: "" };
+      const conversionBefore = { ...conversionAfter, work_order_id: "" };
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: `work_order_conversion:${workOrder.id}`,
+        estimateBefore: conversionBefore,
+        estimateAfter: conversionAfter,
+        reason: "Converted approved estimate to Work Order",
+        revisionType: "conversion",
+        quoteTotalBefore: quoteTotal,
+        quoteTotalAfter: quoteTotal,
+        internalCostBefore: internalCost,
+        internalCostAfter: internalCost,
+        workOrderId: workOrder.id,
+      });
+      setRevisionRefreshKey((value) => value + 1);
+      window.alert("Work Order conversion tracking repaired. The estimate and Work Order were not modified.");
+    } catch (error) {
+      window.alert(error?.message || "Work Order conversion tracking could not be repaired.");
+    } finally {
+      setRepairingConversionTracking(false);
     }
   };
 
@@ -940,6 +978,8 @@ export default function EstimateDetail() {
                 onChange={patch}
                 onRetryPipelineSync={handleRetryPipelineSync}
                 retryingPipelineSync={saving}
+                onRepairConversionTracking={handleRepairConversionTracking}
+                repairingConversionTracking={repairingConversionTracking}
                 refreshKey={revisionRefreshKey}
               />
               <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
