@@ -24,6 +24,7 @@ export async function addPartPackageToProduct({
   payload,
   sourceType = "library",
   sourceId = "",
+  expectedEstimateUpdatedAt = "",
 }) {
   if (!estimateId || !targetBuilderProductId) throw new Error("Estimate and target Product are required.");
   if (!["part", "part_group"].includes(itemType)) throw new Error("A Part or Part Group package is required.");
@@ -33,7 +34,7 @@ export async function addPartPackageToProduct({
     base44.entities.BuilderProduct.get(targetBuilderProductId),
   ]);
   if (!estimate || !builder) throw new Error("Target Product could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate);
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const targetLine = getEstimateLine(estimate, targetBuilderProductId);
   if (!targetLine) throw new Error("Target Product is not part of this estimate.");
 

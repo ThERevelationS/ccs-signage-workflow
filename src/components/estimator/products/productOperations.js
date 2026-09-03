@@ -3,6 +3,7 @@ import { makeStableId, snapshotHash } from "@/components/estimator/builder/build
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -11,8 +12,8 @@ async function cloneSourceProject(builder, line, copyName) {
   if (!builder?.source_entity || !builder?.source_project_id || line?.module_key === "custom") {
     return { sourceProjectId: "", sourceProject: null };
   }
-  const source = await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null);
-  if (!source) return { sourceProjectId: "", sourceProject: null };
+  const source = await base44.entities[builder.source_entity].get(builder.source_project_id);
+  if (!source) throw new Error("The source Builder record could not be verified for this Product clone.");
   const data = stripEntitySystemFields(source);
   if (Object.prototype.hasOwnProperty.call(data, "project_name")) data.project_name = copyName;
   if (Object.prototype.hasOwnProperty.call(data, "estimate_number")) data.estimate_number = line?.estimate_number || data.estimate_number;
@@ -20,7 +21,7 @@ async function cloneSourceProject(builder, line, copyName) {
   return { sourceProjectId: created.id, sourceProject: created };
 }
 
-export async function cloneProductInEstimate({ estimateId, line }) {
+export async function cloneProductInEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record to clone.");
   const [estimate, builder, parts, groups] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
@@ -29,10 +30,15 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
   ]);
   if (!estimate || !builder) throw new Error("The Product could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const currentLine = (estimate.line_items || []).find((item) =>
+    item.builder_product_id === builder.id || (line.line_id && item.line_id === line.line_id)
+  );
+  if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before cloning it.");
 
-  const originalName = line.client_product_name || builder.client_product_name || line.project_name || "Product";
+  const originalName = currentLine.client_product_name || builder.client_product_name || currentLine.project_name || "Product";
   const copyName = `${originalName} — Copy`;
-  const { sourceProjectId, sourceProject } = await cloneSourceProject(builder, line, copyName);
+  const { sourceProjectId, sourceProject } = await cloneSourceProject(builder, currentLine, copyName);
   const newLineId = makeStableId("line");
   const timestamp = nowIso();
 
@@ -89,9 +95,9 @@ export async function cloneProductInEstimate({ estimateId, line }) {
     needs_reattach_review: reattachCount > 0,
   });
 
-  const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
-  const frozenCustomer = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(line));
-  const liveCustomer = liveCustomerUnitPrice(line);
+  const frozenTotal = num(builder.frozen_cost, num(currentLine.total_snapshot));
+  const frozenCustomer = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(currentLine));
+  const liveCustomer = liveCustomerUnitPrice(currentLine);
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: newBuilder.id,
     estimate_id: estimateId,
@@ -117,14 +123,14 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   });
 
   const newLine = {
-    ...cloneSnapshot(line),
+    ...cloneSnapshot(currentLine),
     line_id: newLineId,
     builder_product_id: newBuilder.id,
     project_id: sourceProjectId,
     project_name: sourceProjectId ? copyName : copyName,
     client_product_name: copyName,
     total_snapshot: frozenTotal,
-    live_total_snapshot: num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal)),
+    live_total_snapshot: num(builder.current_recalculated_cost, num(currentLine.live_total_snapshot, frozenTotal)),
     customer_price_snapshot: frozenCustomer,
     live_customer_price_snapshot: liveCustomer,
     price_state: builder.price_state || line.price_state || "current",
@@ -139,14 +145,17 @@ export async function cloneProductInEstimate({ estimateId, line }) {
   return { line: newLine, builderProduct: newBuilder, parts: clonedParts, groups: activeGroups.length };
 }
 
-export async function saveProductSettings({ estimateId, line, patch = {} }) {
+export async function saveProductSettings({ estimateId, line, patch = {}, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line) return null;
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const matches = (item) =>
     (line.line_id && item.line_id === line.line_id) ||
     (line.builder_product_id && item.builder_product_id === line.builder_product_id) ||
     (line.project_id && item.project_id === line.project_id);
-  const currentLine = (estimate.line_items || []).find(matches) || line;
+  const currentLine = (estimate.line_items || []).find(matches);
+  if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before changing its settings.");
   const nextPatch = { ...patch };
   const timestamp = nowIso();
   let builderPatch = {};
@@ -227,9 +236,15 @@ export async function saveProductSettings({ estimateId, line, patch = {} }) {
   return lineItems.find(matches) || { ...line, ...nextPatch };
 }
 
-export async function saveProductNotes({ estimateId, line, notes }) {
+export async function saveProductNotes({ estimateId, line, notes, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line) return;
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const exists = (estimate.line_items || []).some((item) =>
+    (item.line_id && item.line_id === line.line_id) || (item.builder_product_id && item.builder_product_id === line.builder_product_id)
+  );
+  if (!exists) throw new Error("This Product is no longer part of the estimate. Reload before changing its notes.");
   const lineItems = (estimate.line_items || []).map((item) =>
     (item.line_id && item.line_id === line.line_id) || (item.builder_product_id && item.builder_product_id === line.builder_product_id)
       ? { ...item, product_notes: notes }

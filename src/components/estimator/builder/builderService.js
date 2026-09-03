@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
 import { acceptBuilderPartPrices, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -588,13 +589,16 @@ export async function deleteBuilderProductCascade(builderProductId) {
   await base44.entities.BuilderProduct.delete(builderProductId).catch(() => null);
 }
 
-export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation." }) {
+export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation.", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) return null;
   const [estimate, builder] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(line.builder_product_id),
   ]);
   if (!estimate || !builder) return null;
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const verifiedEstimateLine = (estimate.line_items || []).find((item) => item.builder_product_id === builder.id);
+  if (!verifiedEstimateLine) throw new Error("This Product is no longer part of the estimate. Reload before updating its price.");
 
   // Part prices are accepted first because this call performs the all-or-nothing
   // detached-link guard. If anything is detached, product pricing remains frozen.
@@ -658,7 +662,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   }
 
   const timestamp = nowIso();
-  const currentEstimateLine = (estimate.line_items || []).find((item) => item.builder_product_id === builder.id) || line;
+  const currentEstimateLine = verifiedEstimateLine;
   const previousTotal = num(builder.frozen_cost, num(currentEstimateLine.total_snapshot));
   const nextTotal = num(builder.current_recalculated_cost, num(currentEstimateLine.live_total_snapshot, previousTotal));
   const previousCustomerPrice = hasNumericValue(builder.frozen_customer_price)

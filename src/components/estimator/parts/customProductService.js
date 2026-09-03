@@ -3,6 +3,7 @@ import { ensureBuilderProductForLine } from "@/components/estimator/builder/buil
 import { pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -25,8 +26,11 @@ async function patchEstimateLine(builder, patch) {
   await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
 }
 
-export async function createCustomProduct({ estimate, name = "Custom Product" }) {
+export async function createCustomProduct({ estimate, name = "Custom Product", expectedEstimateUpdatedAt = "" }) {
   if (!estimate?.id) throw new Error("Estimate is required.");
+  const currentEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  if (!currentEstimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(currentEstimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const provisionalLine = {
     module_key: "custom",
     project_id: "",
@@ -34,7 +38,7 @@ export async function createCustomProduct({ estimate, name = "Custom Product" })
     builder_name: "Custom Product",
     client_product_name: name,
     product_category: "",
-    client_name: estimate.client_name,
+    client_name: currentEstimate.client_name,
     total_snapshot: 0,
     live_total_snapshot: 0,
     customer_price_snapshot: 0,
@@ -47,7 +51,7 @@ export async function createCustomProduct({ estimate, name = "Custom Product" })
     owned: true,
     linked_date: nowIso(),
   };
-  const result = await ensureBuilderProductForLine({ estimate, line: provisionalLine, isNew: true });
+  const result = await ensureBuilderProductForLine({ estimate: currentEstimate, line: provisionalLine, isNew: true });
   await base44.entities.BuilderProduct.update(result.builderProduct.id, {
     module_key: "custom",
     builder_name: "Custom Product",

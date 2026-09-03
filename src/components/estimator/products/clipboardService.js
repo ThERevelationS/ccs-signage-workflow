@@ -148,7 +148,7 @@ export async function removeClipboardItem(id) {
   await base44.entities.EstimateClipboardItem.delete(id);
 }
 
-export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "" }) {
+export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !clipboardItem?.id) throw new Error("Clipboard item is required.");
   const liveItem = await base44.entities.EstimateClipboardItem.get(clipboardItem.id);
   if (!liveItem) throw new Error("This clipboard item no longer exists. Reopen the Estimator Clipboard to refresh it.");
@@ -160,7 +160,7 @@ export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuil
     throw new Error("This clipboard item changed after the clipboard opened. Reopen it before pasting.");
   }
   if (liveItem.item_type === "product") {
-    return instantiateProductSnapshot({ estimateId, productSnapshot: liveItem.payload });
+    return instantiateProductSnapshot({ estimateId, productSnapshot: liveItem.payload, expectedEstimateUpdatedAt });
   }
   return addPartPackageToProduct({
     estimateId,
@@ -170,5 +170,6 @@ export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuil
     payload: liveItem.payload,
     sourceType: "clipboard",
     sourceId: liveItem.id,
+    expectedEstimateUpdatedAt,
   });
 }

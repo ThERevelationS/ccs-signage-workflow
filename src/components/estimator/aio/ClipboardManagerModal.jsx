@@ -6,7 +6,7 @@ import { listClipboardItems, pasteClipboardItem, removeClipboardItem } from "@/c
 const typeLabel = (type) => type === "part_group" ? "Part Group" : type === "part" ? "Part" : "Product";
 const daysLeft = (date) => Math.max(0, Math.ceil((new Date(date).getTime() - Date.now()) / 86400000));
 
-export default function ClipboardManagerModal({ open, estimateId, lines = [], onClose, onPasted }) {
+export default function ClipboardManagerModal({ open, estimateId, expectedEstimateUpdatedAt = "", lines = [], onClose, onPasted }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -62,7 +62,7 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
     setBusyId(item.id);
     setError("");
     try {
-      await pasteClipboardItem({ estimateId, clipboardItem: item, targetBuilderProductId });
+      await pasteClipboardItem({ estimateId, clipboardItem: item, targetBuilderProductId, expectedEstimateUpdatedAt });
       await onPasted?.();
     } catch (err) {
       setError(err?.message || "Clipboard item could not be pasted.");

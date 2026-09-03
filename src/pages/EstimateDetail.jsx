@@ -33,6 +33,7 @@ import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/componen
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -116,6 +117,13 @@ export default function EstimateDetail() {
     current?.updated_date
   );
 
+  const loadCurrentProductMutationEstimate = async () => {
+    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (!current) throw new Error("This estimate no longer exists.");
+    await assertEstimateProductMutationAllowed(current, { expectedUpdatedAt: serverUpdatedAtRef.current });
+    return current;
+  };
+
   const refreshProducts = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
     const withBuilders = await ensureEstimateBuilderProducts(current);
@@ -132,81 +140,118 @@ export default function EstimateDetail() {
 
   const removeLine = async (index) => {
     if (readOnly) return;
-    const line = estimate.line_items[index];
-    const line_items = estimate.line_items.filter((_, i) => i !== index);
-    setEstimate((prev) => ({ ...prev, line_items }));
+    const loadedLine = estimate.line_items[index];
+    if (!loadedLine) return;
+    const current = await loadCurrentProductMutationEstimate();
+    const matches = (line) =>
+      (loadedLine.line_id && line.line_id === loadedLine.line_id) ||
+      (loadedLine.builder_product_id && line.builder_product_id === loadedLine.builder_product_id) ||
+      (loadedLine.project_id && line.project_id === loadedLine.project_id);
+    const line = (current.line_items || []).find(matches);
+    if (!line) throw new Error("This Product is no longer part of the estimate. Reload before removing it.");
+    const line_items = (current.line_items || []).filter((item) => !matches(item));
     const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
     await rememberServerVersion(updateResult);
+    setEstimate((prev) => ({ ...prev, line_items }));
     await deleteOwnedSection(line);
     if (line.builder_product_id) await deleteBuilderProductCascade(line.builder_product_id);
   };
 
   const addSection = async (mod) => {
     if (readOnly) return;
-    const sectionName = `${estimate.project_name} — ${mod.label}`;
-    const created = await base44.entities[mod.entity].create({
-      project_name: sectionName,
-      client_name: estimate.client_name,
-      customer_id: estimate.customer_id,
-      estimate_number: estimate.estimate_number,
-    });
-    const provisionalLine = {
-      module_key: mod.key,
-      project_id: created.id,
-      project_name: sectionName,
-      builder_name: mod.label,
-      client_product_name: sectionName,
-      client_name: estimate.client_name,
-      total_snapshot: 0,
-      live_total_snapshot: 0,
-      customer_price_snapshot: 0,
-      live_customer_price_snapshot: 0,
-      price_state: "unchecked",
-      adjustment_percent: 0,
-      section_status: "in_progress",
-      customer_quantity: 1,
-      include_in_customer: true,
-      owned: true,
-      linked_date: new Date().toISOString(),
-    };
-    const builderResult = await ensureBuilderProductForLine({
-      estimate,
-      line: provisionalLine,
-      isNew: true,
-    });
-    const line_items = [...(estimate.line_items || []), builderResult.line];
-    // Persist immediately, then open the new product in the inline editor.
-    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
-    await rememberServerVersion(updateResult);
-    setEstimate((prev) => ({ ...prev, line_items }));
-    setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
+    const current = await loadCurrentProductMutationEstimate();
+    const sectionName = `${current.project_name} — ${mod.label}`;
+    let created = null;
+    let builderResult = null;
+    let linked = false;
+    try {
+      created = await base44.entities[mod.entity].create({
+        project_name: sectionName,
+        client_name: current.client_name,
+        customer_id: current.customer_id,
+        estimate_number: current.estimate_number,
+      });
+      const provisionalLine = {
+        module_key: mod.key,
+        project_id: created.id,
+        project_name: sectionName,
+        builder_name: mod.label,
+        client_product_name: sectionName,
+        client_name: current.client_name,
+        total_snapshot: 0,
+        live_total_snapshot: 0,
+        customer_price_snapshot: 0,
+        live_customer_price_snapshot: 0,
+        price_state: "unchecked",
+        adjustment_percent: 0,
+        section_status: "in_progress",
+        customer_quantity: 1,
+        include_in_customer: true,
+        owned: true,
+        linked_date: new Date().toISOString(),
+      };
+      builderResult = await ensureBuilderProductForLine({
+        estimate: current,
+        line: provisionalLine,
+        isNew: true,
+      });
+      const line_items = [...(current.line_items || []), builderResult.line];
+      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+      linked = true;
+      await rememberServerVersion(updateResult);
+      setEstimate((prev) => ({ ...prev, line_items }));
+      setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
+    } catch (error) {
+      if (!linked) {
+        if (builderResult?.builderProduct?.id) await deleteBuilderProductCascade(builderResult.builderProduct.id);
+        if (created?.id) await base44.entities[mod.entity].delete(created.id).catch(() => null);
+      }
+      throw error;
+    }
   };
 
   const addCustomSection = async (name = "Custom Product") => {
     if (readOnly) return;
-    const result = await createCustomProduct({ estimate, name });
-    const line_items = [...(estimate.line_items || []), result.line];
-    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
-    await rememberServerVersion(updateResult);
-    setEstimate((prev) => ({ ...prev, line_items }));
+    const current = await loadCurrentProductMutationEstimate();
+    let result = null;
+    let linked = false;
+    try {
+      result = await createCustomProduct({
+        estimate: current,
+        name,
+        expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
+      });
+      const line_items = [...(current.line_items || []), result.line];
+      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+      linked = true;
+      await rememberServerVersion(updateResult);
+      setEstimate((prev) => ({ ...prev, line_items }));
+    } catch (error) {
+      if (!linked && result?.builderProduct?.id) await deleteBuilderProductCascade(result.builderProduct.id);
+      throw error;
+    }
   };
 
   const cloneProduct = async (line) => {
     if (readOnly) return;
-    await cloneProductInEstimate({ estimateId: estimate.id, line });
+    await cloneProductInEstimate({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
     await refreshProducts();
   };
 
   const updateProductNotes = async (line, notes) => {
     if (readOnly) return;
-    await saveProductNotes({ estimateId: estimate.id, line, notes });
+    await saveProductNotes({ estimateId: estimate.id, line, notes, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
     await refreshProducts();
   };
 
   const persistProductSettings = async (line, index, patch) => {
     if (readOnly) return;
-    patchLine(index, patch);
-    const savedLine = await saveProductSettings({ estimateId: estimate.id, line, patch });
+    const savedLine = await saveProductSettings({
+      estimateId: estimate.id,
+      line,
+      patch,
+      expectedEstimateUpdatedAt: serverUpdatedAtRef.current,
+    });
     await rememberServerVersion();
     if (savedLine) patchLine(index, savedLine);
   };
@@ -228,13 +273,13 @@ export default function EstimateDetail() {
 
   const addQuickProduct = async (quickProduct) => {
     if (readOnly) return;
-    await instantiateQuickProduct({ estimateId: estimate.id, quickProduct });
+    await instantiateQuickProduct({ estimateId: estimate.id, quickProduct, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
     await refreshProducts();
   };
 
   const updateProductPrice = async (line) => {
     if (readOnly) return;
-    const result = await acceptBuilderPrice({ estimateId: estimate.id, line });
+    const result = await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
     if (result?.blocked && result.reason === "detached_parts") {
       const names = (result.detachedParts || [])
         .map((part) => part.part_name || part.inventory_item_name)
@@ -1031,6 +1076,7 @@ export default function EstimateDetail() {
       <ClipboardManagerModal
         open={clipboardOpen}
         estimateId={estimate.id}
+        expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
         lines={lines}
         onClose={() => setClipboardOpen(false)}
         onPasted={refreshProducts}

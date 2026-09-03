@@ -402,7 +402,7 @@ async function instantiateProductPayload({ estimate, productPayload }) {
   return instantiateLegacyQuickProduct({ estimate, quickProduct: productPayload });
 }
 
-export async function instantiateQuickProduct({ estimateId, quickProduct }) {
+export async function instantiateQuickProduct({ estimateId, quickProduct, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !quickProduct?.id) throw new Error("Estimate and Quick Product are required.");
   const [estimate, liveQuickProduct, me] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
@@ -410,7 +410,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct }) {
     base44.auth.me().catch(() => null),
   ]);
   if (!estimate) throw new Error("Estimate could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate);
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
   const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || (!!me?.id && liveQuickProduct.created_by_id === me.id);
@@ -421,11 +421,11 @@ export async function instantiateQuickProduct({ estimateId, quickProduct }) {
   return instantiateProductPayload({ estimate, productPayload: liveQuickProduct });
 }
 
-export async function instantiateProductSnapshot({ estimateId, productSnapshot }) {
+export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !productSnapshot) throw new Error("Estimate and Product snapshot are required.");
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate);
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   return instantiateProductPayload({ estimate, productPayload: productSnapshot });
 }
 
