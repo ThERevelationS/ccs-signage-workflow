@@ -171,6 +171,9 @@ export default function CustomerQuotePanel({
             quoteVersion: deliveryVersion,
             quoteIssueDate: deliveryIssueDate,
             gmailMessageId: deliveryResult.messageId,
+            sentAt: deliveryResult.sentAt,
+            deliveryId: deliveryResult.deliveryId,
+            archive: deliveryResult.archive,
           })
         : {};
       setSendOpen(false);
