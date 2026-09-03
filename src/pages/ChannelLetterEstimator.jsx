@@ -94,7 +94,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [confirmModal, setConfirmModal] = useState(null); // { title, description, ... }
   const [helpTrigger, setHelpTrigger] = useState(false);
 
-  useEffect(() => { if (!isLoading) setHasLoaded(true); }, [isLoading]);
+  useEffect(() => { if (!isLoading && !loadError) setHasLoaded(true); }, [isLoading, loadError]);
   useEffect(() => { if (hasLoaded) setIsDirty(true); }, [project, hasLoaded, setIsDirty]);
 
   // Load settings + inventory + (maybe) existing project
