@@ -132,20 +132,52 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...
   const cleanKey = String(idempotencyKey || "").trim();
   const estimateId = payload.estimateAfter?.id || payload.estimateBefore?.id || "";
   if (!estimateId) throw new Error("Estimate is required for revision history.");
+  if (!cleanKey) return recordEstimateLifecycleRevision(payload);
 
-  if (cleanKey) {
-    const rows = await base44.entities.EstimateRevision.filter({
-      estimate_id: estimateId,
-      notes: cleanKey,
-    });
-    const existing = (rows || []).find((row) => row.revision_status === "completed");
-    if (existing) return existing;
-  }
-
-  return recordEstimateLifecycleRevision({
-    ...payload,
-    notes: cleanKey,
+  const cleanReason = String(payload.reason || "").trim();
+  if (!cleanReason) throw new Error("A lifecycle reason is required.");
+  const before = estimateAuditSnapshot(payload.estimateBefore || {}, {
+    quoteTotal: payload.quoteTotalBefore,
+    internalCost: payload.internalCostBefore,
   });
+  const after = estimateAuditSnapshot(payload.estimateAfter || {}, {
+    quoteTotal: payload.quoteTotalAfter,
+    internalCost: payload.internalCostAfter,
+  });
+  const timestamp = new Date().toISOString();
+  const quoteVersion = Math.max(0, Math.floor(num(after.quote_version)));
+  const revisionPayload = {
+    estimate_id: estimateId,
+    quote_version: quoteVersion,
+    quote_issue_key: quoteIssueKey(estimateId, quoteVersion),
+    revision_type: payload.revisionType || "status_transition",
+    revision_status: "completed",
+    reason: cleanReason,
+    previous_status: before.status || "draft",
+    new_status: after.status || "draft",
+    previous_quote_total: num(before.quote_total),
+    new_quote_total: num(after.quote_total),
+    previous_total_cost: num(before.total_cost),
+    new_total_cost: num(after.total_cost),
+    change_summary: summarizeEstimateChanges(before, after),
+    estimate_snapshot_before: before,
+    estimate_snapshot_after: after,
+    started_at: timestamp,
+    completed_at: timestamp,
+    work_order_id: payload.workOrderId || "",
+    delivery_evidence: payload.deliveryEvidence || {},
+    notes: cleanKey,
+    idempotency_key: cleanKey,
+  };
+
+  const response = await base44.functions.invoke("ensureEstimateLifecycleRevision", {
+    idempotency_key: cleanKey,
+    revision: revisionPayload,
+  });
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.revision?.id) throw new Error("Estimate lifecycle revision could not be verified after recording.");
+  return result.revision;
 }
 
 export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence }) {
