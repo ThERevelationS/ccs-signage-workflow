@@ -74,7 +74,11 @@ export default function EstimateDetail() {
       const withBuilders = await ensureEstimateBuilderProducts(res);
       for (const line of withBuilders.line_items || []) {
         if (line.module_key === "custom" && line.builder_product_id) {
-          await refreshManualProductPricing(line.builder_product_id);
+          try {
+            await refreshManualProductPricing(line.builder_product_id);
+          } catch (error) {
+            console.warn("Custom Product live pricing refresh skipped because its Master Inventory catalog could not be fully verified:", error);
+          }
         }
       }
       const current = await base44.entities.AllInOneEstimate.get(id);
@@ -969,7 +973,7 @@ export default function EstimateDetail() {
                   <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
                 </div>}
                 <EstimateProductsList
-                  lines={lines.map((l) => ({ ...l, estimate_id: estimate.id }))}
+                  lines={lines.map((l) => ({ ...l, estimate_id: estimate.id, estimate_updated_date: serverUpdatedAtRef.current }))}
                   rawTotal={pricing.rawTotal}
                   onChange={patchLine}
                   onRemove={removeLine}

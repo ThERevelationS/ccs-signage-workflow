@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { money } from "@/components/estimator/aioPricing";
 import { instantiatePartTemplate, listPartTemplates } from "./partTemplateService";
 
-export default function PartLibraryPickerModal({ open, estimateId, builderProductId, onClose, onAdded }) {
+export default function PartLibraryPickerModal({ open, estimateId, builderProductId, expectedEstimateUpdatedAt = "", onClose, onAdded }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -48,7 +48,7 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
     setAddingId(template.id);
     setError("");
     try {
-      await instantiatePartTemplate({ estimateId, targetBuilderProductId: builderProductId, template });
+      await instantiatePartTemplate({ estimateId, targetBuilderProductId: builderProductId, template, expectedEstimateUpdatedAt });
       await onAdded?.();
       onClose?.();
     } catch (err) {

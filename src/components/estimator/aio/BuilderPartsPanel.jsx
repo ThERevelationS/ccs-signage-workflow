@@ -53,7 +53,7 @@ const priceStateMeta = (part) => {
   return { label: "Price current", className: "bg-green-50 text-green-700 border-green-200", icon: Link2 };
 };
 
-function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder, estimateId, readOnly = false }) {
+function PartRow({ part, index, selectionMode = false, selected = false, onSelect, onChanged, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", readOnly = false }) {
   const [open, setOpen] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -146,7 +146,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                 </button>
               )}
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
+                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
               )}
             </div>
           </div>
@@ -223,7 +223,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         mode={isDirectlyEditable ? "manual" : "detached"}
         onClose={() => setOverrideOpen(false)}
         onSave={async (changes) => {
-          if (isDirectlyEditable) await updateManualProductPart(part.id, changes);
+          if (isDirectlyEditable) await updateManualProductPart(part.id, changes, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
           else await updateDetachedPartOverride(part.id, changes);
           setOverrideOpen(false);
           await onChanged?.();
@@ -244,7 +244,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           initialQuantity={part.quantity || 1}
           onClose={() => setSwitchOpen(false)}
           onAdd={async (item) => {
-            await switchManualProductPart(part.id, item);
+            await switchManualProductPart(part.id, item, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
             setSwitchOpen(false);
             await onChanged?.();
           }}
@@ -254,7 +254,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, availableProducts = [], readOnly = false }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
@@ -412,6 +412,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               onChanged={onChanged}
               onEditBuilder={onEditBuilder}
               estimateId={estimateId}
+              expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
               readOnly={readOnly}
             />
           ))}
@@ -442,7 +443,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   );
 }
 
-export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId, availableProducts = [], readOnly = false }) {
+export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoaded, onEditBuilder, onProductRefresh, allowAddParts = false, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -562,7 +563,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           open={partPickerOpen}
           onClose={() => setPartPickerOpen(false)}
           onAdd={async (item, quantity) => {
-            await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+            await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity, expectedEstimateUpdatedAt });
             setRefreshNonce((value) => value + 1);
             await onProductRefresh?.();
           }}
@@ -571,6 +572,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           open={partLibraryOpen}
           estimateId={estimateId}
           builderProductId={builderProductId}
+          expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
           onClose={() => setPartLibraryOpen(false)}
           onAdded={async () => {
             setRefreshNonce((value) => value + 1);
@@ -644,6 +646,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
             totalGroups={groups.length}
             onEditBuilder={onEditBuilder}
             estimateId={estimateId}
+            expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
             availableProducts={availableProducts}
             readOnly={readOnly}
           />
@@ -665,6 +668,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           }}
           onEditBuilder={onEditBuilder}
           estimateId={estimateId}
+          expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
           readOnly={readOnly}
         />
       ))}
@@ -679,7 +683,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         open={partPickerOpen}
         onClose={() => setPartPickerOpen(false)}
         onAdd={async (item, quantity) => {
-          await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity });
+          await addCatalogPartToProduct({ builderProductId, catalogItem: item, quantity, expectedEstimateUpdatedAt });
           setRefreshNonce((value) => value + 1);
           await onProductRefresh?.();
         }}

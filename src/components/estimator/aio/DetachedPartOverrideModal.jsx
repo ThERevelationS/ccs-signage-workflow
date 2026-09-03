@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { LockKeyhole, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
@@ -22,6 +22,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
 
   useEffect(() => {
     if (!open || !part) return;
@@ -36,6 +37,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
     });
     setSaving(false);
     setError("");
+    saveRef.current = false;
   }, [open, part?.id]);
 
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -73,12 +75,15 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
 
   const submit = async (event) => {
     event.preventDefault();
+    if (saveRef.current) return;
+    saveRef.current = true;
     setSaving(true);
     setError("");
     try {
       await onSave?.(form);
     } catch (err) {
       setError(err?.message || "The Part override could not be saved.");
+      saveRef.current = false;
       setSaving(false);
     }
   };

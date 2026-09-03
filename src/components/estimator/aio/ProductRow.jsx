@@ -468,7 +468,7 @@ export default function ProductRow({
         onClose={() => setPartPickerOpen(false)}
         onAdd={async (item, quantity) => {
           try {
-            await addCatalogPartToProduct({ builderProductId: line.builder_product_id, catalogItem: item, quantity });
+            await addCatalogPartToProduct({ builderProductId: line.builder_product_id, catalogItem: item, quantity, expectedEstimateUpdatedAt: line.estimate_updated_date || "" });
             setPartPickerOpen(false);
             await onProductRefresh?.();
           } catch (error) {
@@ -511,6 +511,7 @@ export default function ProductRow({
           onProductRefresh={onProductRefresh}
           allowAddParts={true}
           estimateId={line.estimate_id}
+          expectedEstimateUpdatedAt={line.estimate_updated_date || ""}
           availableProducts={allLines}
           readOnly={readOnly}
         />

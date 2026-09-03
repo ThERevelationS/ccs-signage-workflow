@@ -115,7 +115,7 @@ export async function listPartTemplates({ includeInactive = false } = {}) {
     .sort((a, b) => String(a.template_name || "").localeCompare(String(b.template_name || "")));
 }
 
-export async function instantiatePartTemplate({ estimateId, targetBuilderProductId, template }) {
+export async function instantiatePartTemplate({ estimateId, targetBuilderProductId, template, expectedEstimateUpdatedAt = "" }) {
   if (!template?.id) throw new Error("Saved Part is required.");
   const [liveTemplate, me] = await Promise.all([
     base44.entities.PartTemplate.get(template.id),
@@ -139,5 +139,6 @@ export async function instantiatePartTemplate({ estimateId, targetBuilderProduct
       : { part: cloneSnapshot(liveTemplate.part_snapshot || {}) },
     sourceType: "library",
     sourceId: liveTemplate.id,
+    expectedEstimateUpdatedAt,
   });
 }
