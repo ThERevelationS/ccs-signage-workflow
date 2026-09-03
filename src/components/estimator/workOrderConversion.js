@@ -66,7 +66,12 @@ export function selectExistingEstimateWorkOrder(rows = [], linkedWorkOrderId = "
     const linked = (rows || []).find((row) => row.id === linkedWorkOrderId);
     if (linked) return linked;
   }
-  return (rows || [])[0] || null;
+  return (rows || []).slice().sort((a, b) => {
+    const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
+    const bTime = Date.parse(b?.created_date || b?.updated_date || "") || 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return String(a?.id || "").localeCompare(String(b?.id || ""));
+  })[0] || null;
 }
 
 export function convertedWorkOrderStage(existingStage) {
@@ -75,11 +80,13 @@ export function convertedWorkOrderStage(existingStage) {
   return "sales";
 }
 
-export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "", conversionDate = "" } = {}) {
+export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, existing = null, products = [], generatedDescription = "", conversionDate = "", verifiedCustomerId = "" } = {}) {
   return {
     title: firstNonBlank(estimate.project_name, existing?.title),
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
-    customer_id: firstNonBlank(estimate.customer_id, existing?.customer_id),
+    // Conversion must not revive a stale estimate.customer_id. The caller passes
+    // only a Customer ID verified against the live Customer entity.
+    customer_id: firstNonBlank(verifiedCustomerId, existing?.customer_id),
     estimate_id: estimate.id || existing?.estimate_id || "",
     // Preserve richer sales/production notes already entered on the pipeline lead.
     description: firstNonBlank(existing?.description, generatedDescription),
