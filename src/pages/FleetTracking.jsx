@@ -126,16 +126,42 @@ export default function FleetTracking() {
   }, [selectedVin, daysBack, vehicles, loadTrips]);
 
   const handleConnect = async () => {
+    // Open a blank tab synchronously so popup blockers allow it, then navigate
+    // it once we have the auth URL. Bouncie's SSO page sets X-Frame-Options,
+    // so the flow must run at the top level, not inside the builder iframe.
+    const popup = window.open("", "_blank");
+    setConnecting(true);
     try {
-      setConnecting(true);
       const { data } = await base44.functions.invoke("bouncieAuthInitiate", { redirectBase: window.location.origin });
       if (data?.authUrl) {
-        window.location.href = data.authUrl;
+        if (popup) {
+          popup.location.href = data.authUrl;
+        } else {
+          // Popup was blocked — fall back to navigating this tab directly.
+          window.location.href = data.authUrl;
+        }
+        // Poll for connection so this tab refreshes once the popup completes.
+        const started = Date.now();
+        const poll = setInterval(async () => {
+          const s = await loadStatus();
+          if (s?.connected) {
+            clearInterval(poll);
+            setConnecting(false);
+            loadVehicles();
+            loadNotifications();
+            syncNotifications();
+          } else if (Date.now() - started > 5 * 60 * 1000) {
+            clearInterval(poll);
+            setConnecting(false);
+          }
+        }, 4000);
       } else {
+        if (popup) popup.close();
         setError(data?.error || "Failed to start Bouncie connection");
         setConnecting(false);
       }
     } catch (e) {
+      if (popup) popup.close();
       setError(e.message || "Failed to connect");
       setConnecting(false);
     }
