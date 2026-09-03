@@ -58,6 +58,10 @@ export default function EstimateDetail() {
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
   const serverUpdatedAtRef = useRef("");
+  // Same-page recovery anchor for a lifecycle transition whose estimate write
+  // succeeds but audit/pipeline work fails afterward. This preserves the true
+  // pre-transition snapshot and a stable idempotency key across retries.
+  const pendingLifecycleBaselineRef = useRef(null);
 
   useEffect(() => {
     if (!id) {
@@ -281,17 +285,35 @@ export default function EstimateDetail() {
       }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+      const revisionBaseVersion = Math.max(0, Math.floor(Number(
+        openRevision?.estimate_snapshot_before?.quote_version ?? before.quote_version ?? 0
+      )));
+      const completingSentRevision = !!openRevision &&
+        before.status === "sent" &&
+        estimate.status === "sent" &&
+        Math.max(0, Math.floor(Number(before.quote_version || 0))) === revisionBaseVersion;
       const quoteIssueMetadata = resolveQuoteIssueMetadata({
         previousStatus: before.status || "",
         nextStatus: estimate.status || "",
         currentVersion: before.quote_version || 0,
         today: localDateStamp(),
-        completingSentRevision: !!openRevision,
+        completingSentRevision,
       });
+      if (lifecycleReasonRequired) {
+        const pending = pendingLifecycleBaselineRef.current;
+        if (!pending || pending.nextStatus !== estimate.status || pending.reason !== lifecycleReason) {
+          pendingLifecycleBaselineRef.current = {
+            estimateBefore: before,
+            nextStatus: estimate.status,
+            reason: lifecycleReason,
+            key: `status_transition:${estimate.id}:${before.updated_date || "unknown"}:${before.status || "draft"}:${estimate.status}:${Number(quoteIssueMetadata.quote_version ?? before.quote_version ?? 0)}`,
+          };
+        }
+      }
       const persistedData = {
         ...data,
         ...quoteIssueMetadata,
-        edit_reason: "",
+        edit_reason: lifecycleReasonRequired ? lifecycleReason : "",
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
