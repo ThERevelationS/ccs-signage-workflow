@@ -275,7 +275,11 @@ export default function EstimateDetail() {
 
     setSaving(true);
     try {
-      const before = persistedEstimate || await base44.entities.AllInOneEstimate.get(estimate.id);
+      const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+      if (hasServerConflict(before)) {
+        window.alert("This estimate changed in another session after this page last read or saved it. Your local changes were not written. Reload the estimate and reconcile the newer server changes before saving.");
+        return;
+      }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const quoteIssueMetadata = resolveQuoteIssueMetadata({
@@ -295,6 +299,7 @@ export default function EstimateDetail() {
       const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
       const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
       const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+      await rememberServerVersion(saved);
       // Keep the shared customer record and the Sales Pipeline lead in step.
       await syncEstimateEverywhere(saved, { previousEstimateStatus: before.status || "" });
 
@@ -325,6 +330,8 @@ export default function EstimateDetail() {
 
       setEstimate(saved);
       setPersistedEstimate(saved);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be saved.");
     } finally {
       setSaving(false);
     }
@@ -339,11 +346,7 @@ export default function EstimateDetail() {
     if (!issuingNewQuote) {
       throw new Error("The quote email was sent, but this estimate changed lifecycle status during delivery. The delivery was logged, but the estimate was not auto-finalized.");
     }
-    if (
-      persistedEstimate?.updated_date &&
-      before.updated_date &&
-      persistedEstimate.updated_date !== before.updated_date
-    ) {
+    if (hasServerConflict(before)) {
       throw new Error("The quote email was sent, but this estimate was edited by another session during delivery. The delivery was logged, but the estimate was not overwritten or auto-finalized.");
     }
     if (openRevision || isEstimateProtected(sourceStatus)) {
@@ -377,6 +380,7 @@ export default function EstimateDetail() {
     const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
     const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
     const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+    await rememberServerVersion(saved);
     await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
     await recordEstimateLifecycleRevision({
       estimateBefore: before,
@@ -520,6 +524,7 @@ export default function EstimateDetail() {
 
     const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
     const savedAfter = { ...after, ...(refreshed || {}), status: "approved", edit_reason: "" };
+    if (savedAfter.updated_date) serverUpdatedAtRef.current = savedAfter.updated_date;
     setEstimate(savedAfter);
     setPersistedEstimate(savedAfter);
     setRevisionRefreshKey((value) => value + 1);
@@ -532,6 +537,10 @@ export default function EstimateDetail() {
       return;
     }
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (hasServerConflict(before)) {
+      window.alert("This estimate changed in another session. Reload before cancelling so newer work is not cancelled from a stale page.");
+      return;
+    }
     if (before.work_order_id) {
       throw new Error("This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of cancelling the source estimate.");
     }
