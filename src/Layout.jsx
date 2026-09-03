@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   ChevronDown,
+  Navigation as NavigationIcon,
   Calendar,
   Maximize2,
   PanelLeft,
