@@ -22,6 +22,7 @@ export default function SalesHome() {
     sent: estimates.filter((e) => e.status === "sent").length,
     approved: estimates.filter((e) => e.status === "approved").length,
     draft: estimates.filter((e) => !e.status || e.status === "draft").length,
+    syncIssues: estimates.filter((e) => e.pipeline_sync_pending === true).length,
   };
 
   return (
