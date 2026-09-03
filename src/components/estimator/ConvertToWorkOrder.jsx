@@ -95,6 +95,8 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
 
       setWorkOrderId(workOrder.id);
       onConverted?.(workOrder.id);
+    } catch (error) {
+      window.alert(error?.message || "The Work Order could not be created.");
     } finally {
       setBusy(false);
     }
