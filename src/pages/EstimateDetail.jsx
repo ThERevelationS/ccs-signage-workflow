@@ -25,7 +25,7 @@ import {
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
-import { estimateCustomerFieldsChanged, syncEstimateEverywhere } from "@/components/estimator/customerSync";
+import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
@@ -365,9 +365,11 @@ export default function EstimateDetail() {
 
       try {
         // Customer/WorkOrder sync resolves existing records and is safe to retry.
+        const customerChangedKeys = estimateCustomerChangedKeys(before, saved);
         await syncEstimateEverywhere(saved, {
           previousEstimateStatus: syncPreviousStatus,
-          syncCustomer: estimateCustomerFieldsChanged(before, saved),
+          syncCustomer: customerChangedKeys.length > 0,
+          customerChangedKeys,
         });
         const cleanup = {};
         if (lifecycleReasonRequired && saved.edit_reason) cleanup.edit_reason = "";
