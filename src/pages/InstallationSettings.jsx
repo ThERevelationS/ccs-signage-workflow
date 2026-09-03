@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Settings as SettingsEntity, User } from "@/entities/all";
 import { ArrowLeft, Building2, DollarSign, Layers, Lock, Ruler, Save, TriangleAlert, Type } from "lucide-react";
@@ -10,6 +10,7 @@ import BaseTimesSizeCard from "@/components/channelLetterInstall/BaseTimesSizeCa
 import RacewayTimesCard from "@/components/channelLetterInstall/RacewayTimesCard";
 import { HEIGHT_BUCKETS, ENV_KEYS, qualifiedKey, qualifiedNotesKey } from "@/components/channelLetterInstall/installSizeRates";
 import { WALL_MATERIALS } from "@/components/channelLetterInstall/wallMaterials";
+import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
 
 const SIZE_DEFS = [
   { key: "extra_small", label: "XS", range: '2"–8"' },
@@ -82,6 +83,7 @@ export default function InstallationSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const settingsSaveRef = useRef(false);
 
   const isAdmin = user?.role === "admin";
   const rowByName = useMemo(() => Object.fromEntries(rows.map((row) => [row.setting_name, row])), [rows]);
@@ -114,28 +116,60 @@ export default function InstallationSettings() {
   const dirtyNames = useMemo(() => [...touched].filter((name) => String(values[name] ?? "") !== String(original[name] ?? "")), [touched, values, original]);
 
   const save = async () => {
-    if (!isAdmin || !dirtyNames.length) return;
+    if (!isAdmin || !dirtyNames.length || settingsSaveRef.current) return;
+    settingsSaveRef.current = true;
     setSaving(true);
     setError("");
     setMessage("");
     try {
+      const existingDirtyRows = dirtyNames.map((name) => rowByName[name]).filter(Boolean);
+      const missingDirtyNames = dirtyNames.filter((name) => !rowByName[name]);
+
+      // Validate the entire mixed update/create batch before the first write.
+      await preflightSettingsRows({
+        SettingsEntity,
+        rows,
+        values,
+        originalValues: original,
+        changedRows: existingDirtyRows,
+      });
+      const liveBeforeWrite = await SettingsEntity.list();
+      const appearedNames = missingDirtyNames.filter((name) =>
+        (liveBeforeWrite || []).some((row) => row.setting_name === name)
+      );
+      if (appearedNames.length) {
+        throw new Error(`These Installation Settings were created in another session: ${appearedNames.join(", ")}. Reload this page, review the new stored overrides, and apply your changes again.`);
+      }
+
       let created = 0;
       let updated = 0;
-      for (const name of dirtyNames) {
-        const existing = rowByName[name];
+      for (const row of existingDirtyRows) {
+        await SettingsEntity.update(row.id, { setting_value: String(values[row.setting_name] ?? "") });
+        updated += 1;
+      }
+      for (const name of missingDirtyNames) {
         const setting_value = String(values[name] ?? "");
-        if (existing) {
-          await SettingsEntity.update(existing.id, { setting_value });
-          updated += 1;
-        } else {
-          await SettingsEntity.create({
-            setting_name: name,
-            setting_value,
-            setting_type: settingType(name),
-            category: categoryForVirtual(name),
-            description: name.endsWith("__notes") ? "Installation rate notes" : "Installation time override by environment and height",
+        const createdRow = await SettingsEntity.create({
+          setting_name: name,
+          setting_value,
+          setting_type: settingType(name),
+          category: categoryForVirtual(name),
+          description: name.endsWith("__notes") ? "Installation rate notes" : "Installation time override by environment and height",
+        });
+        created += 1;
+
+        // Practical race collapse: if another admin created the same qualified
+        // setting between preflight and our create, keep the deterministic oldest
+        // row and remove only this request's newly-created losing row.
+        const sameName = (await SettingsEntity.list())
+          .filter((row) => row.setting_name === name)
+          .sort((a, b) => {
+            const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
+            return dateCompare || String(a.id).localeCompare(String(b.id));
           });
-          created += 1;
+        if (sameName.length > 1 && sameName[0]?.id !== createdRow?.id) {
+          await SettingsEntity.delete(createdRow.id);
+          throw new Error(`The Installation Setting ${name} was created concurrently in another session. This save's duplicate was discarded; reload and review the canonical stored value before saving again.`);
         }
       }
       const refreshed = await SettingsEntity.list();
@@ -147,8 +181,20 @@ export default function InstallationSettings() {
       setTouched(new Set());
       setMessage(`Saved ${updated + created} Installation setting${updated + created === 1 ? "" : "s"}${created ? ` (${created} new height/environment override${created === 1 ? "" : "s"})` : ""}.`);
     } catch (e) {
+      // Always reload after a failed mixed save so a retry starts from the
+      // authoritative Settings set even if an earlier write succeeded.
+      const refreshed = await SettingsEntity.list().catch(() => null);
+      if (refreshed) {
+        const relevant = refreshed.filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
+        const effective = buildEffective(relevant);
+        setRows(relevant);
+        setValues(effective);
+        setOriginal(effective);
+        setTouched(new Set());
+      }
       setError(e.message || "Could not save Installation settings.");
     } finally {
+      settingsSaveRef.current = false;
       setSaving(false);
     }
   };
