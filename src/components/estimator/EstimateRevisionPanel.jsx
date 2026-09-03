@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { History, LockKeyhole, PencilLine, ShieldCheck } from "lucide-react";
+import { History, LockKeyhole, PencilLine, RefreshCw, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "./estimateLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
@@ -11,7 +11,7 @@ const TYPE_LABELS = {
   conversion: "Work Order conversion",
 };
 
-export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, refreshKey = 0 }) {
+export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -60,6 +60,22 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
       </div>
 
       <div className="p-4 space-y-3">
+        {estimate?.pipeline_sync_pending && (
+          <div className="rounded border border-orange-300 bg-orange-50 px-3 py-2.5 flex items-start justify-between gap-3">
+            <div className="min-w-0 flex items-start gap-2">
+              <RefreshCw className="w-4 h-4 text-orange-700 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold text-orange-900">Sales Pipeline synchronization pending</div>
+                <div className="text-[10px] text-orange-800 mt-0.5">The estimate and lifecycle history are saved. Only the shared Customer / Sales Pipeline synchronization needs to be retried.</div>
+                {estimate.pipeline_sync_error && <div className="text-[9px] text-orange-700 mt-1 break-words">Last error: {estimate.pipeline_sync_error}</div>}
+              </div>
+            </div>
+            <button type="button" onClick={onRetryPipelineSync} disabled={retryingPipelineSync} className="h-[30px] px-3 rounded border border-orange-300 bg-white text-[10px] font-bold text-orange-800 hover:bg-orange-100 disabled:opacity-50 inline-flex items-center gap-1.5 whitespace-nowrap">
+              <RefreshCw className={`w-3.5 h-3.5 ${retryingPipelineSync ? "animate-spin" : ""}`} /> {retryingPipelineSync ? "Retrying…" : "Retry Pipeline Sync"}
+            </button>
+          </div>
+        )}
+
         {protectedEstimate && !openRevision && (
           <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
             <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" />
