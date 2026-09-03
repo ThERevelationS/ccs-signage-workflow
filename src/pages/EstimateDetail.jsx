@@ -711,6 +711,7 @@ export default function EstimateDetail() {
                     setRevisionRefreshKey((value) => value + 1);
                   }}
                   disabled={!!openRevision}
+                  persistedStatus={persistedStatus}
                 />
               </div>
               <CustomerQuotePanel
