@@ -62,7 +62,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     row.revision_type === "status_transition" &&
     row.previous_status === "sent" &&
     row.new_status === "approved" &&
-    row.notes === acceptanceLifecycleKey
+    (row.idempotency_key === acceptanceLifecycleKey || row.notes === acceptanceLifecycleKey)
   );
   const canRecord = persistedStatus === "sent" && quoteVersion > 0;
   const repairingApprovedAcceptance = persistedStatus === "approved" && !!currentAcceptance && !approvalRevisionRecorded;
