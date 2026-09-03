@@ -469,6 +469,15 @@
     "edit_reason": {
       "type": "string",
       "description": "Pending lifecycle reason used when a draft/calculated estimate is moved into or out of a protected status. The reason is written to EstimateRevision history and this temporary field is cleared after save."
+    },
+    "pipeline_sync_pending": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only when the estimate/lifecycle audit saved successfully but synchronization to the shared Customer/Sales Pipeline did not complete. Cleared after a successful retry."
+    },
+    "pipeline_sync_error": {
+      "type": "string",
+      "description": "Last downstream Customer/Sales Pipeline synchronization error for a pending retry. Internal recovery metadata; never shown on the customer quote."
     }
   },
   "required": [
