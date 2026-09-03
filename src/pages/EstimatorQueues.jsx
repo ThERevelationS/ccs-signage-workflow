@@ -11,6 +11,7 @@ const STATUSES = [
   { key: "sent", label: "Awaiting Approval" },
   { key: "approved", label: "Approved" },
   { key: "archived", label: "Archived" },
+  { key: "sync_issues", label: "Sync Issues" },
 ];
 
 export default function EstimatorQueues() {
@@ -28,9 +29,11 @@ export default function EstimatorQueues() {
     load();
   }, []);
 
-  const rows = status
-    ? estimates.filter((e) => (e.status || "draft") === status)
-    : estimates;
+  const rows = status === "sync_issues"
+    ? estimates.filter((e) => e.pipeline_sync_pending === true)
+    : status
+      ? estimates.filter((e) => (e.status || "draft") === status)
+      : estimates;
 
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
@@ -76,9 +79,12 @@ export default function EstimatorQueues() {
                       {e.estimate_number ? ` · ${e.estimate_number}` : ""}
                     </div>
                   </div>
-                  <span className="text-xs font-medium text-gray-500 capitalize flex-shrink-0">
-                    {e.status || "draft"}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {e.pipeline_sync_pending && <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">SYNC ISSUE</span>}
+                    <span className="text-xs font-medium text-gray-500 capitalize">
+                      {e.status || "draft"}
+                    </span>
+                  </div>
                   <div className="text-sm font-bold text-gray-800 w-24 text-right flex-shrink-0">
                     ${Number(e.quote_total || e.total_cost || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
