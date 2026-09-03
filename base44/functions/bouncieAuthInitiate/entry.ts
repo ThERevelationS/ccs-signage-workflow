@@ -11,8 +11,9 @@ export default async function(req) {
     const clientId = secrets.get('BOUNCIE_CLIENT_ID');
     if (!clientId) return Response.json({ error: 'BOUNCIE_CLIENT_ID not set' }, { status: 500 });
 
-    const url = new URL(req.url);
-    const redirectUri = `${url.origin}/functions/bouncieAuthCallback`;
+    const body = await req.json().catch(() => ({}));
+    const origin = body.redirectBase || new URL(req.url).origin;
+    const redirectUri = `${origin}/functions/bouncieAuthCallback`;
     const state = crypto.randomUUID();
 
     const authUrl = new URL('https://auth.bouncie.com/dialog/authorize');

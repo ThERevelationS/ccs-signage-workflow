@@ -125,7 +125,7 @@ export default function FleetTracking() {
   const handleConnect = async () => {
     try {
       setConnecting(true);
-      const { data } = await base44.functions.invoke("bouncieAuthInitiate", {});
+      const { data } = await base44.functions.invoke("bouncieAuthInitiate", { redirectBase: window.location.origin });
       if (data?.authUrl) {
         window.location.href = data.authUrl;
       } else {
