@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Save, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
@@ -36,6 +36,7 @@ export default function QuoteSettings() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -57,7 +58,8 @@ export default function QuoteSettings() {
   const patch = (changes) => setForm((prev) => ({ ...prev, ...changes }));
 
   const save = async () => {
-    if (!canEdit || saving) return;
+    if (!canEdit || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setMessage("");
     setError("");
@@ -71,9 +73,19 @@ export default function QuoteSettings() {
       }
 
       const payload = { config_name: "default", ...quoteDefaultsPayload(form) };
-      const saved = record?.id
+      let saved = record?.id
         ? await base44.entities.QuoteDefaults.update(record.id, payload)
         : await base44.entities.QuoteDefaults.create(payload);
+
+      if (!record?.id && saved?.id) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const canonical = await loadQuoteDefaults();
+        if (canonical?.id && canonical.id !== saved.id) {
+          await base44.entities.QuoteDefaults.delete(saved.id);
+          saved = canonical;
+        }
+      }
+
       const refreshed = saved?.updated_date ? saved : await loadQuoteDefaults();
       setRecord(refreshed || saved || null);
       setForm(quoteDefaultsForm(refreshed || saved || payload));
@@ -81,6 +93,7 @@ export default function QuoteSettings() {
     } catch (err) {
       setError(err?.message || "Quote Defaults could not be saved.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
