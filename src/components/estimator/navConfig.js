@@ -21,6 +21,7 @@ export const ESTIMATOR_TABS = [
       { label: "Awaiting Approval", to: "/EstimatorQueues?status=sent" },
       { label: "Approved", to: "/EstimatorQueues?status=approved" },
       { label: "Archived", to: "/EstimatorQueues?status=archived" },
+      { label: "Sync Issues", to: "/EstimatorQueues?status=sync_issues" },
     ],
   },
   {
