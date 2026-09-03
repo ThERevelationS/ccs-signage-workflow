@@ -90,6 +90,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const [inventory, setInventory] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [autoSave, setAutoSave] = useState(false);
@@ -103,31 +104,42 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       setLoading(false);
       return;
     }
+    let active = true;
+    setLoading(true);
+    setLoadError("");
     Promise.all([
       base44.entities.FoundationProject.get(id),
       base44.entities.FoundationInventory.filter({ show_in_foundation: true }),
       base44.entities.LaborServiceInventory.filter({ service_category: "concrete_service", is_active: true }),
       base44.entities.Settings.list(),
-    ]).then(([proj, inv, concreteServices, settingRows]) => {
-      setProject({
-        ...proj,
-        excavation_method: proj.excavation_method || "hand_dig",
-        project_concrete_type: proj.project_concrete_type || "4000_ae",
-        project_concrete_admixtures: proj.project_concrete_admixtures || [],
-        items: proj.items || [],
-        walls: proj.walls || [],
-        poles: proj.poles || [],
-        wall_caps: proj.wall_caps || [],
-        signage_cabinets: proj.signage_cabinets || [],
-        landscape: proj.landscape || { cell_size_inches: 12, cells: {} },
-        selected_equipment: proj.selected_equipment || [],
-      });
-      setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
-      setSettings(
-        Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
-      );
-      setLoading(false);
-    });
+    ])
+      .then(([proj, inv, concreteServices, settingRows]) => {
+        if (!active) return;
+        setProject({
+          ...proj,
+          excavation_method: proj.excavation_method || "hand_dig",
+          project_concrete_type: proj.project_concrete_type || "4000_ae",
+          project_concrete_admixtures: proj.project_concrete_admixtures || [],
+          items: proj.items || [],
+          walls: proj.walls || [],
+          poles: proj.poles || [],
+          wall_caps: proj.wall_caps || [],
+          signage_cabinets: proj.signage_cabinets || [],
+          landscape: proj.landscape || { cell_size_inches: 12, cells: {} },
+          selected_equipment: proj.selected_equipment || [],
+        });
+        setInventory([...(inv || []), ...(concreteServices || []).map(normalizeConcreteSupplier)]);
+        setSettings(
+          Object.fromEntries((settingRows || []).map((s) => [s.setting_name, s.setting_value]))
+        );
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error("Foundation Builder prerequisites could not be loaded:", error);
+        setLoadError(error?.message || "Foundation Builder prerequisites could not be verified.");
+      })
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, [id]);
 
   const calc = useMemo(
@@ -159,6 +171,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   }, [autoSave, dirty, project]);
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
   const commit = (updater) => {
