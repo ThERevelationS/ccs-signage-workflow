@@ -334,12 +334,9 @@ export default function EstimateDetail() {
         transitionIdempotencyKey = pending?.key || `status_transition:${estimate.id}:${transitionBefore.updated_date || "unknown"}:${transitionBefore.status || "draft"}:${saved.status || "draft"}:${Number(saved.quote_version || 0)}`;
       }
 
-      // Synchronize downstream before closing the lifecycle audit. If pipeline
-      // sync fails, the revision/baseline remains open and the same quote version
-      // can be retried without losing later edits. Pipeline sync resolves the
-      // existing WorkOrder by estimate_id, so retries do not duplicate jobs.
-      await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
-
+      // First make the estimate/lifecycle audit authoritative. Quote issuance is
+      // anchored to the original revision version and lifecycle rows are retry-safe,
+      // so a later downstream retry cannot issue another customer quote version.
       if (openRevision) {
         await completeEstimateRevision({
           revision: openRevision,
@@ -363,13 +360,45 @@ export default function EstimateDetail() {
         });
       }
 
-      if (lifecycleReasonRequired && saved.edit_reason) {
-        const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, { edit_reason: "" });
-        const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
-        saved = { ...saved, ...(cleared || {}), edit_reason: "" };
-        await rememberServerVersion(saved);
+      try {
+        // Customer/WorkOrder sync resolves existing records and is safe to retry.
+        await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
+        const cleanup = {};
+        if (lifecycleReasonRequired && saved.edit_reason) cleanup.edit_reason = "";
+        if (saved.pipeline_sync_pending) cleanup.pipeline_sync_pending = false;
+        if (saved.pipeline_sync_error) cleanup.pipeline_sync_error = "";
+        if (Object.keys(cleanup).length) {
+          const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, cleanup);
+          const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+          saved = { ...saved, ...(cleared || {}), ...cleanup };
+          await rememberServerVersion(saved);
+        }
+      } catch (syncError) {
+        const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+        const recoveryPatch = {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+          ...(lifecycleReasonRequired ? { edit_reason: "" } : {}),
+        };
+        try {
+          const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, recoveryPatch);
+          const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+          saved = { ...saved, ...(recovered || {}), ...recoveryPatch };
+          await rememberServerVersion(saved);
+        } catch (markerError) {
+          saved = { ...saved, ...recoveryPatch };
+          window.alert(`Estimate saved and lifecycle history recorded, but Sales Pipeline sync failed and the durable retry marker could not be saved.\n\nPipeline error: ${message}\nMarker error: ${markerError?.message || "unknown error"}`);
+        }
         pendingLifecycleBaselineRef.current = null;
+        if (openRevision) setOpenRevision(null);
+        if (openRevision || lifecycleReasonRequired) setRevisionRefreshKey((value) => value + 1);
+        setEstimate(saved);
+        setPersistedEstimate(saved);
+        window.alert(`Estimate saved successfully, but Sales Pipeline synchronization is pending.\n\n${message}\n\nOpen Finalize Estimate and use Retry Pipeline Sync.`);
+        return;
       }
+
+      pendingLifecycleBaselineRef.current = null;
       if (openRevision) setOpenRevision(null);
       if (openRevision || lifecycleReasonRequired) setRevisionRefreshKey((value) => value + 1);
 
