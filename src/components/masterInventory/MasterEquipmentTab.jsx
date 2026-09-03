@@ -12,7 +12,7 @@
 // Attachments and Sub-Attachments inherit visibility from the Equipment they
 // are linked to — they are not surfaced independently to estimators.
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,9 +103,12 @@ export default function MasterEquipmentTab({ isAdmin }) {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);          // normalized row or { kind, _source, raw: {} } for new
   const [newSource, setNewSource] = useState("foundation_equipment");
+  const [loadError, setLoadError] = useState("");
+  const actionRef = useRef(new Set());
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [fnd, chn] = await Promise.all([
         FoundationInventoryEntity.list(),
@@ -113,8 +116,12 @@ export default function MasterEquipmentTab({ isAdmin }) {
       ]);
       setFoundationRows(fnd.filter((r) => FOUNDATION_EQUIPMENT_TYPES.includes(r.material_type)));
       setChannelRows(chn);
-    } catch (e) { console.error(e); }
-    setLoading(false);
+    } catch (e) {
+      console.error(e);
+      setLoadError(e?.message || "Equipment inventory could not be verified.");
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -140,39 +147,87 @@ export default function MasterEquipmentTab({ isAdmin }) {
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
   const deleteItem = async (row) => {
-    if (!window.confirm(`Delete "${row.name}"? This cannot be undone.`)) return;
-    if (row._source === "channel_letter_equipment") {
-      await ChannelLetterInstallEquipmentEntity.delete(row.id);
-    } else {
-      await FoundationInventoryEntity.delete(row.id);
+    const lockKey = `delete:${row._source}:${row.id}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    if (!window.confirm(`Delete "${row.name}"? This cannot be undone.`)) {
+      actionRef.current.delete(lockKey);
+      return;
     }
-    load();
+    const entity = row._source === "channel_letter_equipment" ? ChannelLetterInstallEquipmentEntity : FoundationInventoryEntity;
+    try {
+      const live = await entity.get(row.id);
+      if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
+        alert("This equipment item changed in another session and was not deleted. The latest equipment inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      await entity.delete(row.id);
+      await load();
+    } catch (error) {
+      console.error("Equipment delete failed:", error);
+      alert(error?.message || "Equipment could not be deleted.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const toggleVisibility = async (row, field, next) => {
+    const lockKey = `toggle:${row._source}:${row.id}:${field}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
     const entity = row._source === "channel_letter_equipment" ? ChannelLetterInstallEquipmentEntity : FoundationInventoryEntity;
-    await entity.update(row.id, { [field]: next });
-    // optimistic local refresh
-    if (row._source === "channel_letter_equipment") {
-      setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
-    } else {
-      setFoundationRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+    try {
+      const live = await entity.get(row.id);
+      if (live?.[field] !== row.raw?.[field]) {
+        alert("This equipment visibility setting changed in another session. The latest equipment inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      await entity.update(row.id, { [field]: next });
+      if (row._source === "channel_letter_equipment") {
+        setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      } else {
+        setFoundationRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      }
+    } catch (error) {
+      console.error("Equipment toggle failed:", error);
+      alert(error?.message || "Equipment visibility could not be updated.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
     }
   };
 
   // Mark a boom lift as the "Primary owned lift" — the suggester's go-to pick.
-  // Only ONE channel-letter equipment row can be primary at a time, so clear it
-  // on every other channel row first.
+  // Use the live channel-equipment set so unrelated stale browser rows are never
+  // used to decide which current primary flags should be cleared.
   const setPrimaryOwned = async (row, next) => {
-    if (row._source !== "channel_letter_equipment") return;
-    if (next) {
-      const others = channelRows.filter((r) => r.id !== row.id && r.is_primary_owned);
-      await Promise.all(others.map((r) => ChannelLetterInstallEquipmentEntity.update(r.id, { is_primary_owned: false })));
+    const lockKey = `primary:${row.id}`;
+    if (row._source !== "channel_letter_equipment" || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    try {
+      const liveRows = await ChannelLetterInstallEquipmentEntity.list();
+      const liveTarget = liveRows.find((item) => item.id === row.id);
+      if (!liveTarget || liveTarget.is_primary_owned !== row.raw?.is_primary_owned) {
+        alert("This owned-lift primary setting changed in another session. The latest equipment inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      if (next) {
+        const others = liveRows.filter((item) => item.id !== row.id && item.is_primary_owned);
+        await Promise.all(others.map((item) => ChannelLetterInstallEquipmentEntity.update(item.id, { is_primary_owned: false })));
+      }
+      await ChannelLetterInstallEquipmentEntity.update(row.id, { is_primary_owned: next });
+      await load();
+    } catch (error) {
+      console.error("Primary owned equipment update failed:", error);
+      alert(error?.message || "Primary owned equipment could not be updated.");
+      await load();
+    } finally {
+      actionRef.current.delete(lockKey);
     }
-    await ChannelLetterInstallEquipmentEntity.update(row.id, { is_primary_owned: next });
-    setChannelRows((prev) => prev.map((r) =>
-      r.id === row.id ? { ...r, is_primary_owned: next } : (next ? { ...r, is_primary_owned: false } : r)
-    ));
   };
 
   const openAdd = () => {
@@ -240,7 +295,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
             </TabsList>
           </Tabs>
           {isAdmin && (
-            <Button size="sm" onClick={openAdd} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button size="sm" onClick={openAdd} disabled={!!loadError} className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
               <Plus className="w-4 h-4 mr-1" /> Add {activeKind === "equipment" ? "Construction Equipment" : activeKind === "boom_lift" ? "Boom Lift" : activeKind === "attachment" ? "Attachment" : "Sub-Attachment"}
             </Button>
           )}
@@ -262,6 +317,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
               attachments={allFoundationAttachments}
               equipment={allFoundationEquipment}
               loading={loading}
+              loadError={loadError}
               isAdmin={isAdmin}
               onEdit={openEdit}
               onDelete={deleteItem}
@@ -274,6 +330,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
               attachments={allFoundationAttachments}
               equipment={allFoundationEquipment}
               loading={loading}
+              loadError={loadError}
               isAdmin={isAdmin}
               isBoomList
               onEdit={openEdit}
@@ -290,6 +347,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
               equipment={allFoundationEquipment}
               isAttachment
               loading={loading}
+              loadError={loadError}
               isAdmin={isAdmin}
               onEdit={openEdit}
               onDelete={deleteItem}
@@ -302,6 +360,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
               attachments={allFoundationAttachments}
               isSubAttachment
               loading={loading}
+              loadError={loadError}
               isAdmin={isAdmin}
               onEdit={openEdit}
               onDelete={deleteItem}
@@ -332,8 +391,9 @@ export default function MasterEquipmentTab({ isAdmin }) {
 }
 
 // ── List ──────────────────────────────────────────────────────────────────
-function EquipmentList({ rows, attachments = [], subAttachments = [], equipment = [], isAttachment, isSubAttachment, isBoomList, loading, isAdmin, onEdit, onDelete, onToggle, onSetPrimary }) {
+function EquipmentList({ rows, attachments = [], subAttachments = [], equipment = [], isAttachment, isSubAttachment, isBoomList, loading, loadError, isAdmin, onEdit, onDelete, onToggle, onSetPrimary }) {
   if (loading) return <div className="text-center text-slate-400 py-8">Loading…</div>;
+  if (loadError) return <div className="text-center text-red-700 py-8 bg-red-50 border border-red-200 rounded"><div className="font-semibold">Equipment inventory could not be verified.</div><div className="text-xs mt-1">{loadError}</div></div>;
   if (rows.length === 0) return <div className="text-center py-8 text-slate-400 text-sm italic border rounded bg-slate-50">No items in this category.</div>;
 
   return (
