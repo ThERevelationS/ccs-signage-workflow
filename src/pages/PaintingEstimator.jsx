@@ -45,8 +45,8 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
       try {
         const [settingsRows, existing, estimate] = await Promise.all([
           Settings.list(),
-          editId ? Project.get(editId).catch(() => null) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+          editId ? Project.get(editId) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (!active) return;
         const settingsMap = {};
