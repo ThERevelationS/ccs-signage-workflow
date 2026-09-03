@@ -61,7 +61,16 @@ export function quoteDefaultsForm(record = null) {
   return { ...DEFAULT_QUOTE_SETTINGS, ...quoteDefaultsPayload(record || {}) };
 }
 
+export function canonicalQuoteDefaults(rows = []) {
+  return (rows || []).slice().sort((a, b) => {
+    const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
+    const bTime = Date.parse(b?.created_date || b?.updated_date || "") || 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return String(a?.id || "").localeCompare(String(b?.id || ""));
+  })[0] || null;
+}
+
 export async function loadQuoteDefaults() {
   const rows = await base44.entities.QuoteDefaults.filter({ config_name: "default" });
-  return (rows || []).slice().sort((a, b) => new Date(b.updated_date || b.created_date || 0) - new Date(a.updated_date || a.created_date || 0))[0] || null;
+  return canonicalQuoteDefaults(rows || []);
 }
