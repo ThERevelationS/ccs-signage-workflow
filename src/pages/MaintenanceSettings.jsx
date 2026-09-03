@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MaintenanceActionRate, Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, Save, Wrench } from "lucide-react";
@@ -10,6 +10,7 @@ import TravelTab from "@/components/signMaintenance/TravelTab";
 import MinimumsTab from "@/components/signMaintenance/MinimumsTab";
 import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
 import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
+import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -36,6 +37,7 @@ export default function MaintenanceSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const settingsSaveRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -99,30 +101,66 @@ export default function MaintenanceSettings() {
   };
 
   const saveAll = async () => {
-    if (saving || dirtyCount === 0) return;
+    if (dirtyCount === 0 || settingsSaveRef.current) return;
+    settingsSaveRef.current = true;
     setSaving(true);
     setMessage("");
     setError("");
     try {
-      // Existing global Maintenance settings are updated in place. No duplicate
-      // settings store and no bulk default seeding are performed here.
+      // Preflight Settings and the rate matrix before the first write so an older
+      // admin browser cannot silently overwrite newer pricing/labor configuration.
+      await preflightSettingsRows({
+        SettingsEntity,
+        rows: settingsRows,
+        values: globalSettings,
+        originalValues: originalSettings,
+        changedRows: changedSettingRows,
+      });
+
+      const liveRates = await MaintenanceActionRate.list();
+      const liveById = new Map((liveRates || []).filter((row) => row.id).map((row) => [row.id, row]));
+      const liveByKey = new Map((liveRates || []).map((row) => [`${row.sign_type}|${row.action}`, row]));
+      const existingRateConflicts = changedRateRows.filter((row) => {
+        if (!row.id) return false;
+        const key = `${row.sign_type}|${row.action}`;
+        const loaded = originalRates.get(key);
+        const live = liveById.get(row.id);
+        if (!loaded || !live) return true;
+        const versionChanged = !!(loaded.updated_date && live.updated_date && loaded.updated_date !== live.updated_date);
+        return versionChanged || !sameRate(live, loaded);
+      });
+      const appearedRateRows = changedRateRows.filter((row) => !row.id && liveByKey.has(`${row.sign_type}|${row.action}`));
+      if (existingRateConflicts.length || appearedRateRows.length) {
+        const keys = [...existingRateConflicts, ...appearedRateRows].map((row) => `${row.sign_type}/${row.action}`).join(", ");
+        throw new Error(`These Maintenance action rates changed in another session: ${keys}. Reload this page, review the latest values, and apply your changes again.`);
+      }
+
+      // Create genuinely missing, explicitly edited rate rows first. If another
+      // session creates the same key after preflight, remove only our losing row.
+      for (const row of changedRateRows.filter((item) => !item.id)) {
+        const payload = { sign_type: row.sign_type, action: row.action, ...comparableRate(row) };
+        const created = await MaintenanceActionRate.create(payload);
+        const sameKey = (await MaintenanceActionRate.list())
+          .filter((item) => item.sign_type === row.sign_type && item.action === row.action)
+          .sort((a, b) => {
+            const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
+            return dateCompare || String(a.id).localeCompare(String(b.id));
+          });
+        if (sameKey.length > 1 && sameKey[0]?.id !== created?.id) {
+          await MaintenanceActionRate.delete(created.id);
+          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's duplicate was discarded; reload before saving again.`);
+        }
+      }
+
       for (const row of changedSettingRows) {
         await SettingsEntity.update(row.id, { setting_value: String(globalSettings[row.setting_name] ?? "") });
       }
-
-      for (const row of changedRateRows) {
-        const payload = {
+      for (const row of changedRateRows.filter((item) => item.id)) {
+        await MaintenanceActionRate.update(row.id, {
           sign_type: row.sign_type,
           action: row.action,
           ...comparableRate(row),
-        };
-        if (row.id) {
-          await MaintenanceActionRate.update(row.id, payload);
-        } else {
-          // This path is intentionally edit-driven only; opening the page never
-          // creates missing MaintenanceActionRate rows.
-          await MaintenanceActionRate.create(payload);
-        }
+        });
       }
 
       const [freshSettings, freshRates] = await Promise.all([SettingsEntity.list(), MaintenanceActionRate.list()]);
@@ -135,8 +173,23 @@ export default function MaintenanceSettings() {
       setOriginalRates(new Map((freshRates || []).map((row) => [`${row.sign_type}|${row.action}`, structuredClone(row)])));
       setMessage(`Saved ${dirtyCount} Maintenance change${dirtyCount === 1 ? "" : "s"}.`);
     } catch (e) {
+      // Reload both stores after any failure so a retry never starts from a
+      // partially stale browser snapshot.
+      try {
+        const [freshSettings, freshRates] = await Promise.all([SettingsEntity.list(), MaintenanceActionRate.list()]);
+        const maintenanceRows = (freshSettings || []).filter((row) => String(row.setting_name || "").startsWith("maintenance_"));
+        const settingsMap = Object.fromEntries(maintenanceRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
+        setSettingsRows(maintenanceRows);
+        setGlobalSettings(settingsMap);
+        setOriginalSettings(settingsMap);
+        setRates(freshRates || []);
+        setOriginalRates(new Map((freshRates || []).map((row) => [`${row.sign_type}|${row.action}`, structuredClone(row)])));
+      } catch (reloadError) {
+        console.error("Maintenance settings reload after save failure also failed:", reloadError);
+      }
       setError(e.message || "Could not save Maintenance settings. Admin permission may be required.");
     } finally {
+      settingsSaveRef.current = false;
       setSaving(false);
     }
   };
