@@ -69,8 +69,8 @@ export async function exchangeAuthorizationCode(base44, code, redirectUri) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      client_id: secrets.get("BOUNCIE_CLIENT_ID"),
-      client_secret: secrets.get("BOUNCIE_CLIENT_SECRET"),
+      client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
+      client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
       grant_type: "authorization_code",
       code,
       redirect_uri: redirectUri
@@ -89,8 +89,8 @@ export async function refreshAccessToken(base44, connection) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      client_id: secrets.get("BOUNCIE_CLIENT_ID"),
-      client_secret: secrets.get("BOUNCIE_CLIENT_SECRET"),
+      client_id: (secrets.get("BOUNCIE_CLIENT_ID") || "").trim(),
+      client_secret: (secrets.get("BOUNCIE_CLIENT_SECRET") || "").trim(),
       grant_type: "refresh_token",
       refresh_token: connection.refresh_token
     })

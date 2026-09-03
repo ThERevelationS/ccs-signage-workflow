@@ -10,9 +10,9 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
 
-    const clientId = secrets.get('BOUNCIE_CLIENT_ID');
+    const clientId = (secrets.get('BOUNCIE_CLIENT_ID') || '').trim();
     if (!clientId) {
-      return Response.json({ error: 'Bouncie client credentials are not configured.' }, { status: 500 });
+      return Response.json({ error: 'Bouncie client credentials are not configured. Set BOUNCIE_CLIENT_ID in app secrets.' }, { status: 500 });
     }
 
     const body = await req.json().catch(() => ({}));
