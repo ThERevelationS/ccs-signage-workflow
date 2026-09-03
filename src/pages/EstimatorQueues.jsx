@@ -11,6 +11,7 @@ const STATUSES = [
   { key: "sent", label: "Awaiting Approval" },
   { key: "approved", label: "Approved" },
   { key: "archived", label: "Archived" },
+  { key: "cancelled", label: "Cancelled" },
   { key: "sync_issues", label: "Sync Issues" },
 ];
 
