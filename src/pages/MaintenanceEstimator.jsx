@@ -55,19 +55,21 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   const [rates, setRates] = useState([]);
   const [estimateContext, setEstimateContext] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
 
   const loadAll = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         Settings.list(),
         loadMaintenanceMaterialRules({ includeInactive: true }).then((data) => data.rules),
         base44.entities.ChannelLetterInstallEquipment.list("sort_order", 500),
         MaintenanceActionRate.list(),
-        editId ? MaintenanceProject.get(editId).catch(() => null) : Promise.resolve(null),
-        estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+        editId ? MaintenanceProject.get(editId) : Promise.resolve(null),
+        estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const sObj = {};
       (s || []).forEach(x => { sObj[x.setting_name] = x.setting_value; });
@@ -103,6 +105,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       }
     } catch (e) {
       console.error("Load error:", e);
+      setLoadError(e?.message || "Maintenance Builder prerequisites could not be verified.");
     } finally {
       setLoading(false);
     }
@@ -212,6 +215,18 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     return (
       <div className="p-6 md:p-8 bg-slate-50 min-h-screen flex items-center justify-center">
         <p className="text-slate-600">Loading…</p>
+      </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="font-bold">Maintenance Builder unavailable</div>
+          <div className="mt-1 text-sm">Required Settings, maintenance material rules, equipment, labor rates, project data, or estimate context could not be verified. Fallback configuration was not used.</div>
+          <div className="mt-2 text-xs break-words">{loadError}</div>
+          <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+        </div>
       </div>
     );
   }
