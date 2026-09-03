@@ -15,10 +15,15 @@ export async function getOpenEstimateRevision(estimateId) {
   return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number))[0] || null;
 }
 
-export async function listEstimateRevisions(estimateId) {
+export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
   if (!estimateId) return [];
-  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId }).catch(() => []);
-  return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
+  try {
+    const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId });
+    return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
+  } catch (error) {
+    if (strict) throw error;
+    return [];
+  }
 }
 
 export async function startEstimateRevision({ estimate, reason, quoteTotal, internalCost }) {
