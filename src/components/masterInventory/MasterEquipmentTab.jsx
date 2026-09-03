@@ -380,6 +380,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
               allFoundationEquipment={allFoundationEquipment}
               allFoundationAttachments={allFoundationAttachments}
               allFoundationSubAttachments={allFoundationSubAttachments}
+              allChannelEquipment={channelRows}
               onCancel={() => { setShowForm(false); setEditItem(null); }}
               onSaved={() => { setShowForm(false); setEditItem(null); load(); }}
             />
@@ -492,7 +493,7 @@ function ToggleRow({ label, checked, onChange, disabled }) {
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────
-function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFoundationAttachments, allFoundationSubAttachments, onCancel, onSaved }) {
+function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFoundationAttachments, allFoundationSubAttachments, allChannelEquipment, onCancel, onSaved }) {
   const isNew = !!normalized._new;
   const source = normalized._source;
   const kind   = normalized.kind;
@@ -559,6 +560,8 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
   }, [normalized, source, kind, ownership]);
 
   const [form, setForm] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const saveRef = useRef(false);
   // For attachments, allow reverse-linking to top-level equipment.
   const [linkedEquipmentIds, setLinkedEquipmentIds] = useState(
     kind === "attachment" ? allFoundationEquipment.filter((e) => e.compatible_attachment_ids?.includes(normalized.id)).map((e) => e.id) : []
@@ -572,65 +575,149 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
   const isValid = !!form[nameField];
 
   const handleSave = async () => {
-    let savedId = normalized.id;
-    // When Owned, blank out rental-only fields so we don't carry stale values.
-    const cleanForOwnership = (p) => {
-      if ((p.ownership || ownership) === "owned") {
-        p.rental_company = "";
-        // Owned items don't have a rental pricing mode — force flat.
-        if ("pricing_mode" in p) p.pricing_mode = "owned_flat";
-      } else if ("pricing_mode" in p) {
-        // Rented items default to per_day if not already a per_* mode.
-        if (!/^per_(day|week|month)$/.test(p.pricing_mode || "")) p.pricing_mode = "per_day";
-      }
-      return p;
-    };
-    if (source === "channel_letter_equipment") {
+    if (saveRef.current) return;
+    saveRef.current = true;
+    setSaving(true);
+    let wroteAnything = false;
+    try {
+      let savedId = normalized.id;
+      // When Owned, blank out rental-only fields so we don't carry stale values.
+      const cleanForOwnership = (p) => {
+        if ((p.ownership || ownership) === "owned") {
+          p.rental_company = "";
+          if ("pricing_mode" in p) p.pricing_mode = "owned_flat";
+        } else if ("pricing_mode" in p) {
+          if (!/^per_(day|week|month)$/.test(p.pricing_mode || "")) p.pricing_mode = "per_day";
+        }
+        return p;
+      };
+      const sameIds = (a = [], b = []) => {
+        const left = [...a].map(String).sort();
+        const right = [...b].map(String).sort();
+        return left.length === right.length && left.every((value, index) => value === right[index]);
+      };
+      const assertFreshRow = (loaded, live, label) => {
+        if (!live) throw new Error(`${label} no longer exists. Reload Equipment before saving.`);
+        if (loaded?.updated_date && live.updated_date && loaded.updated_date !== live.updated_date) {
+          throw new Error(`${label} changed in another session. Reload Equipment, review the latest record, and apply your changes again.`);
+        }
+      };
+
       const payload = cleanForOwnership({ ...form });
-      if (isNew) {
-        const saved = await ChannelLetterInstallEquipmentEntity.create(payload);
-        savedId = saved.id;
-      } else {
-        await ChannelLetterInstallEquipmentEntity.update(normalized.id, payload);
-      }
-      // Only one boom may be the Primary owned lift — clear it on all others.
-      if (payload.is_primary_owned) {
-        const all = await ChannelLetterInstallEquipmentEntity.list();
-        await Promise.all(
-          all
-            .filter((r) => r.id !== savedId && r.is_primary_owned)
-            .map((r) => ChannelLetterInstallEquipmentEntity.update(r.id, { is_primary_owned: false }))
-        );
-      }
-    } else {
-      const payload = cleanForOwnership({ ...form });
-      if (isNew) {
-        const saved = await FoundationInventoryEntity.create(payload);
-        savedId = saved.id;
-      } else {
-        await FoundationInventoryEntity.update(normalized.id, payload);
+      const targetEntity = source === "channel_letter_equipment"
+        ? ChannelLetterInstallEquipmentEntity
+        : FoundationInventoryEntity;
+
+      // Preflight the edited target before any write.
+      if (!isNew) {
+        const liveTarget = await targetEntity.get(normalized.id);
+        assertFreshRow(normalized.raw, liveTarget, normalized.name || "This equipment item");
       }
 
-      // Bi-directional link sync for foundation attachments / sub-attachments.
-      if (form.material_type === "attachment") {
-        for (const eq of allFoundationEquipment) {
-          const selected = linkedEquipmentIds.includes(eq.id);
-          const arr = eq.compatible_attachment_ids || [];
-          const has = arr.includes(savedId);
-          if (selected && !has) await FoundationInventoryEntity.update(eq.id, { compatible_attachment_ids: [...arr, savedId] });
-          else if (!selected && has) await FoundationInventoryEntity.update(eq.id, { compatible_attachment_ids: arr.filter((i) => i !== savedId) });
-        }
-      } else if (form.material_type === "sub_attachment") {
-        for (const att of allFoundationAttachments) {
-          const selected = linkedAttachmentIdsForSub.includes(att.id);
-          const arr = att.compatible_sub_attachment_ids || [];
-          const has = arr.includes(savedId);
-          if (selected && !has) await FoundationInventoryEntity.update(att.id, { compatible_sub_attachment_ids: [...arr, savedId] });
-          else if (!selected && has) await FoundationInventoryEntity.update(att.id, { compatible_sub_attachment_ids: arr.filter((i) => i !== savedId) });
+      let liveChannelRows = [];
+      let equipmentRelationshipRows = [];
+      let attachmentRelationshipRows = [];
+
+      // Primary-owned updates may clear other channel-equipment rows. Verify the
+      // primary flags we intend to rely on before the target write happens.
+      if (source === "channel_letter_equipment" && payload.is_primary_owned) {
+        liveChannelRows = await ChannelLetterInstallEquipmentEntity.list();
+        const loadedById = new Map((allChannelEquipment || []).map((row) => [row.id, row]));
+        const primaryConflicts = liveChannelRows.filter((live) => {
+          if (live.id === normalized.id) return false;
+          const loaded = loadedById.get(live.id);
+          if (!loaded) return !!live.is_primary_owned;
+          return !!live.is_primary_owned !== !!loaded.is_primary_owned;
+        });
+        if (primaryConflicts.length) {
+          throw new Error("The Primary owned lift selection changed in another session. Reload Equipment before saving this boom lift.");
         }
       }
+
+      // Preflight every compatibility row this save may modify. For a new
+      // attachment/sub-attachment, selected parents are the rows that will gain
+      // the new id. For an existing row, only parents whose selection changed are
+      // included. All checks finish before create/update begins.
+      if (source === "foundation_equipment" && payload.material_type === "attachment") {
+        const rowsToChange = (allFoundationEquipment || []).filter((eq) => {
+          const selected = linkedEquipmentIds.includes(eq.id);
+          const has = !isNew && (eq.compatible_attachment_ids || []).includes(normalized.id);
+          return isNew ? selected : selected !== has;
+        });
+        equipmentRelationshipRows = await Promise.all(rowsToChange.map(async (loaded) => {
+          const live = await FoundationInventoryEntity.get(loaded.id);
+          if (!live || !sameIds(loaded.compatible_attachment_ids || [], live.compatible_attachment_ids || [])) {
+            throw new Error(`Compatibility links for ${loaded.material_name || "equipment"} changed in another session. Reload Equipment before saving.`);
+          }
+          return { loaded, live };
+        }));
+      } else if (source === "foundation_equipment" && payload.material_type === "sub_attachment") {
+        const rowsToChange = (allFoundationAttachments || []).filter((att) => {
+          const selected = linkedAttachmentIdsForSub.includes(att.id);
+          const has = !isNew && (att.compatible_sub_attachment_ids || []).includes(normalized.id);
+          return isNew ? selected : selected !== has;
+        });
+        attachmentRelationshipRows = await Promise.all(rowsToChange.map(async (loaded) => {
+          const live = await FoundationInventoryEntity.get(loaded.id);
+          if (!live || !sameIds(loaded.compatible_sub_attachment_ids || [], live.compatible_sub_attachment_ids || [])) {
+            throw new Error(`Sub-attachment links for ${loaded.material_name || "attachment"} changed in another session. Reload Equipment before saving.`);
+          }
+          return { loaded, live };
+        }));
+      }
+
+      if (source === "channel_letter_equipment") {
+        if (isNew) {
+          const saved = await ChannelLetterInstallEquipmentEntity.create(payload);
+          wroteAnything = true;
+          savedId = saved.id;
+        } else {
+          await ChannelLetterInstallEquipmentEntity.update(normalized.id, payload);
+          wroteAnything = true;
+        }
+        if (payload.is_primary_owned) {
+          const others = liveChannelRows.filter((row) => row.id !== savedId && row.is_primary_owned);
+          for (const row of others) {
+            await ChannelLetterInstallEquipmentEntity.update(row.id, { is_primary_owned: false });
+            wroteAnything = true;
+          }
+        }
+      } else {
+        if (isNew) {
+          const saved = await FoundationInventoryEntity.create(payload);
+          wroteAnything = true;
+          savedId = saved.id;
+        } else {
+          await FoundationInventoryEntity.update(normalized.id, payload);
+          wroteAnything = true;
+        }
+
+        for (const { live } of equipmentRelationshipRows) {
+          const selected = linkedEquipmentIds.includes(live.id);
+          const arr = live.compatible_attachment_ids || [];
+          const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
+          await FoundationInventoryEntity.update(live.id, { compatible_attachment_ids: next });
+          wroteAnything = true;
+        }
+        for (const { live } of attachmentRelationshipRows) {
+          const selected = linkedAttachmentIdsForSub.includes(live.id);
+          const arr = live.compatible_sub_attachment_ids || [];
+          const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
+          await FoundationInventoryEntity.update(live.id, { compatible_sub_attachment_ids: next });
+          wroteAnything = true;
+        }
+      }
+      onSaved?.();
+    } catch (error) {
+      console.error("Equipment save failed:", error);
+      alert(error?.message || "Equipment could not be saved.");
+      // If any write occurred before a later network failure, close/reload so a
+      // retry cannot continue from a partially stale relationship snapshot.
+      if (wroteAnything) onSaved?.();
+    } finally {
+      saveRef.current = false;
+      setSaving(false);
     }
-    onSaved?.();
   };
 
   // === Derived state =========================================================
@@ -923,7 +1010,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
 
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={handleSave} disabled={!isValid}>Save</Button>
+        <Button size="sm" onClick={handleSave} disabled={!isValid || saving}>{saving ? "Saving…" : "Save"}</Button>
       </div>
     </div>
   );
