@@ -71,6 +71,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   const [globalSettings, setGlobalSettings] = useState({});
   const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
 
@@ -78,11 +79,12 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
+      setLoadError("");
       try {
         const [settingsData, existing, estimate] = await Promise.all([
           Settings.list(),
-          editId ? LaserProject.get(editId).catch(() => null) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+          editId ? LaserProject.get(editId) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 
@@ -140,6 +142,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         }
       } catch (error) {
         console.error('Error loading laser estimator:', error);
+        if (!cancelled) setLoadError(error?.message || "Laser Builder prerequisites could not be verified.");
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -1358,6 +1361,18 @@ Best regards`;
         <p className="text-slate-600">Loading...</p>
       </div>);
 
+  }
+  if (loadError) {
+    return (
+      <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="font-bold">Laser Builder unavailable</div>
+          <div className="mt-1 text-sm">Required Settings, project data, or estimate context could not be verified. Hard-coded fallback rates were not used.</div>
+          <div className="mt-2 text-xs break-words">{loadError}</div>
+          <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
