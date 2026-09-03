@@ -319,12 +319,12 @@ export default function EstimateDetail() {
       };
       const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
       const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
-      const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+      let saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
       await rememberServerVersion(saved);
-      // Keep the shared customer record and the Sales Pipeline lead in step.
-      await syncEstimateEverywhere(saved, { previousEstimateStatus: before.status || "" });
 
+      let syncPreviousStatus = before.status || "";
       if (openRevision) {
+        syncPreviousStatus = openRevision.estimate_snapshot_before?.status || syncPreviousStatus;
         await completeEstimateRevision({
           revision: openRevision,
           estimate: saved,
@@ -332,22 +332,37 @@ export default function EstimateDetail() {
           internalCost,
           workOrderId: saved.work_order_id || "",
         });
-        setOpenRevision(null);
-        setRevisionRefreshKey((value) => value + 1);
       } else if (lifecycleReasonRequired) {
-        await recordEstimateLifecycleRevision({
-          estimateBefore: before,
+        const pending = pendingLifecycleBaselineRef.current;
+        const transitionBefore = pending?.estimateBefore || before;
+        syncPreviousStatus = transitionBefore.status || syncPreviousStatus;
+        await ensureEstimateLifecycleRevision({
+          idempotencyKey: pending?.key || `status_transition:${estimate.id}:${transitionBefore.updated_date || "unknown"}:${transitionBefore.status || "draft"}:${saved.status || "draft"}:${Number(saved.quote_version || 0)}`,
+          estimateBefore: transitionBefore,
           estimateAfter: saved,
           reason: lifecycleReason,
           revisionType: "status_transition",
-          quoteTotalBefore: before.quote_total,
+          quoteTotalBefore: transitionBefore.quote_total,
           quoteTotalAfter: pricing.quoteTotal,
-          internalCostBefore: before.total_cost,
+          internalCostBefore: transitionBefore.total_cost,
           internalCostAfter: internalCost,
           workOrderId: saved.work_order_id || "",
         });
-        setRevisionRefreshKey((value) => value + 1);
       }
+
+      // Audit the accepted lifecycle state first; then synchronize downstream.
+      // A retry will reuse the same revision and issued quote version.
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
+
+      if (lifecycleReasonRequired && saved.edit_reason) {
+        const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, { edit_reason: "" });
+        const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+        saved = { ...saved, ...(cleared || {}), edit_reason: "" };
+        await rememberServerVersion(saved);
+        pendingLifecycleBaselineRef.current = null;
+      }
+      if (openRevision) setOpenRevision(null);
+      if (openRevision || lifecycleReasonRequired) setRevisionRefreshKey((value) => value + 1);
 
       setEstimate(saved);
       setPersistedEstimate(saved);
