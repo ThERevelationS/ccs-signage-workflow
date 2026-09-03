@@ -14,6 +14,7 @@ const LINKS = [
   { label: "Installation Settings", desc: "Install labor, size/height/environment times, conditions, travel and letter pricing", to: "/InstallationSettings" },
   { label: "Vinyl Inventory", desc: "Shared vinyl, laminate and transfer-tape catalog", to: "/VinylInventory" },
   { label: "Vinyl Settings", desc: "Printers, cutters, laminators, geometry, ink, blade and machine rates", to: "/VinylSettings" },
+  { label: "Quote Defaults", desc: "Company branding, quote content, validity and default customer-facing display settings for new estimates", to: "/QuoteSettings" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
