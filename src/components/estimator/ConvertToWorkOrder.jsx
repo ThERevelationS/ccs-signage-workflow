@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
 import { acceptedInternalEstimateCost } from "./customerPricing";
-import { recordEstimateLifecycleRevision } from "./estimateRevisionService";
+import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { localDateStamp } from "./quoteLifecycle";
 import {
   buildConvertedWorkOrderFields,
@@ -16,7 +16,7 @@ import {
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
-export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false }) {
+export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, persistedStatus = "draft" }) {
   const [busy, setBusy] = useState(false);
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
 
@@ -29,6 +29,16 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         .join("\n");
 
       const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
+      if (estimateBefore.status !== "approved") {
+        throw new Error("Only an Approved estimate can be converted to a Work Order. Record customer acceptance or approve the estimate first.");
+      }
+      if (
+        estimate.updated_date &&
+        estimateBefore.updated_date &&
+        estimate.updated_date !== estimateBefore.updated_date
+      ) {
+        throw new Error("This estimate changed in another session. Reload before converting so newer approved pricing/details are not overwritten.");
+      }
       const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
       const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
@@ -70,10 +80,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       });
-      await recordEstimateLifecycleRevision({
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: `work_order_conversion:${workOrder.id}`,
         estimateBefore,
         estimateAfter,
-        reason: "Converted estimate to Work Order",
+        reason: "Converted approved estimate to Work Order",
         revisionType: "conversion",
         quoteTotalBefore: estimateBefore.quote_total,
         quoteTotalAfter: pricing.quoteTotal,
@@ -108,18 +119,22 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
     );
   }
 
+  const approved = persistedStatus === "approved";
+
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4">
       <h3 className="font-semibold text-gray-800 text-sm mb-1">Convert to Job</h3>
       <p className="text-xs text-gray-500 mb-3">
-        Creates a work order in the sales pipeline linked to this estimate and customer.
+        {approved
+          ? "Creates a Work Order in the sales pipeline linked to this approved estimate and customer."
+          : "Approve the estimate first. Customer acceptance can approve it automatically, or the shop can use the existing manual approval workflow."}
       </p>
       <Button
         onClick={handleConvert}
-        disabled={disabled || busy || !(estimate.line_items || []).length}
-        className="w-full rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold"
+        disabled={disabled || busy || !approved || !(estimate.line_items || []).length}
+        className="w-full rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold disabled:opacity-50"
       >
-        <Briefcase className="w-4 h-4" /> {disabled ? "Save Revision First" : busy ? "Creating job…" : "Create Work Order"}
+        <Briefcase className="w-4 h-4" /> {disabled ? "Save Revision First" : !approved ? "Approve Estimate Before Converting" : busy ? "Creating job…" : "Create Work Order"}
       </Button>
     </div>
   );
