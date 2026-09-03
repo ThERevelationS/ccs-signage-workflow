@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,21 @@ export default function FoundationCatalog() {
   const [activeType, setActiveType] = useState("concrete_service");
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const deleteRef = useRef(new Set());
 
   const load = async () => {
-    const res = await base44.entities.FoundationInventory.list("-created_date", 500);
-    setRows(res || []);
-    setLoading(false);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await base44.entities.FoundationInventory.list("-created_date", 500);
+      setRows(res || []);
+    } catch (error) {
+      console.error("Foundation catalog load failed:", error);
+      setLoadError(error?.message || "Foundation Catalog could not be verified.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -26,8 +36,28 @@ export default function FoundationCatalog() {
   const visible = rows.filter((r) => r.material_type === activeType);
 
   const handleDelete = async (row) => {
-    await base44.entities.FoundationInventory.delete(row.id);
-    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    if (!row?.id || loadError || deleteRef.current.has(row.id)) return;
+    deleteRef.current.add(row.id);
+    if (!window.confirm(`Delete "${row.material_name || "this material"}"? This cannot be undone.`)) {
+      deleteRef.current.delete(row.id);
+      return;
+    }
+    try {
+      const live = await base44.entities.FoundationInventory.get(row.id);
+      if (row.updated_date && live?.updated_date && row.updated_date !== live.updated_date) {
+        alert("This Foundation Catalog item changed in another session and was not deleted. The latest catalog will be reloaded first.");
+        await load();
+        return;
+      }
+      await base44.entities.FoundationInventory.delete(row.id);
+      await load();
+    } catch (error) {
+      console.error("Foundation catalog delete failed:", error);
+      alert(error?.message || "Foundation Catalog item could not be deleted.");
+      await load();
+    } finally {
+      deleteRef.current.delete(row.id);
+    }
   };
 
   return (
@@ -38,11 +68,12 @@ export default function FoundationCatalog() {
             <ArrowLeft className="w-4 h-4" /> Estimator
           </Link>
           <Button
+            disabled={!!loadError}
             onClick={() => {
               setEditing(null);
               setDialogOpen(true);
             }}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
           >
             <Plus className="w-4 h-4" /> New Material
           </Button>
@@ -71,6 +102,12 @@ export default function FoundationCatalog() {
 
         {loading ? (
           <div className="py-12 text-center text-gray-400">Loading catalog…</div>
+        ) : loadError ? (
+          <div className="py-8 text-center bg-red-50 rounded-xl border border-red-200 text-red-700">
+            <div className="font-semibold">Foundation Catalog could not be verified.</div>
+            <div className="text-xs mt-1">{loadError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
+          </div>
         ) : visible.length === 0 ? (
           <div className="py-12 text-center bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">
             No {typeLabel(activeType)} entries yet.
@@ -96,6 +133,7 @@ export default function FoundationCatalog() {
                     </span>
                   </div>
                   <button
+                    disabled={!!loadError}
                     onClick={() => {
                       setEditing(row);
                       setDialogOpen(true);

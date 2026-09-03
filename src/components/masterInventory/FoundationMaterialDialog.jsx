@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { MATERIAL_TYPES, fieldsFor } from "./foundationFieldSchema";
 export default function FoundationMaterialDialog({ open, record, defaultType, onClose, onSaved }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const saveRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -19,16 +20,35 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
   const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
   const handleSave = async () => {
-    if (!form.material_name) return;
+    if (!form.material_name || saveRef.current) return;
+    saveRef.current = true;
     setSaving(true);
     try {
       const { id, created_date, updated_date, created_by_id, created_by, ...data } = form;
       data.material_type = type;
       data.show_in_foundation = true;
-      if (id) await base44.entities.FoundationInventory.update(id, data);
-      else await base44.entities.FoundationInventory.create(data);
+      if (id) {
+        const live = await base44.entities.FoundationInventory.get(id);
+        if (!live) {
+          alert("This Foundation Catalog item no longer exists. The catalog will reload.");
+          onSaved();
+          return;
+        }
+        if (updated_date && live.updated_date && updated_date !== live.updated_date) {
+          alert("This Foundation Catalog item changed in another session. Your changes were not saved; the latest catalog will reload.");
+          onSaved();
+          return;
+        }
+        await base44.entities.FoundationInventory.update(id, data);
+      } else {
+        await base44.entities.FoundationInventory.create(data);
+      }
       onSaved();
+    } catch (error) {
+      console.error("Foundation Catalog save failed:", error);
+      alert(error?.message || "Foundation Catalog item could not be saved.");
     } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };
