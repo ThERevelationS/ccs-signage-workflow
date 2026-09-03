@@ -243,8 +243,7 @@ export default function EstimateDetail() {
   const handleStartRevision = async (reason) => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
     if (hasServerConflict(current)) {
-      window.alert("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
-      return null;
+      throw new Error("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
     }
     const currentPricing = computePricing(current);
     const internalCost = acceptedInternalEstimateCost(current.line_items || []);
