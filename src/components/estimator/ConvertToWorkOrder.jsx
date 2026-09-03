@@ -16,7 +16,7 @@ import {
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
-export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, persistedStatus = "draft" }) {
+export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, disabledReason = "", persistedStatus = "draft" }) {
   const [busy, setBusy] = useState(false);
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
 
@@ -139,7 +139,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         disabled={disabled || busy || !approved || !(estimate.line_items || []).length}
         className="w-full rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold disabled:opacity-50"
       >
-        <Briefcase className="w-4 h-4" /> {disabled ? "Save Revision First" : !approved ? "Approve Estimate Before Converting" : busy ? "Creating job…" : "Create Work Order"}
+        <Briefcase className="w-4 h-4" /> {disabled ? (disabledReason || "Save Revision First") : !approved ? "Approve Estimate Before Converting" : busy ? "Creating job…" : "Create Work Order"}
       </Button>
     </div>
   );
