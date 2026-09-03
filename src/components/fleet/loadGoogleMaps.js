@@ -20,7 +20,7 @@ export function loadGoogleMaps() {
       }
       const script = document.createElement("script");
       script.id = "google-maps-script";
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=weekly&loading=async&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=weekly&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = () => resolve(window.google.maps);

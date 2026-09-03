@@ -24,10 +24,23 @@ export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
-  const searchInputRef = useRef(null);
-  const searchBoxRef = useRef(null);
+  const [searchValue, setSearchValue] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const maps = window.google?.maps;
+    if (!maps || !mapRef.current || !searchValue.trim()) return;
+    const geocoder = new maps.Geocoder();
+    geocoder.geocode({ address: searchValue }, (results, status) => {
+      if (status === "OK" && results && results.length) {
+        const loc = results[0].geometry.location;
+        mapRef.current.panTo(loc);
+        mapRef.current.setZoom(14);
+      }
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -43,22 +56,6 @@ export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
           zoomControl: true,
           zoomControlOptions: { position: maps.ControlPosition.RIGHT_BOTTOM },
         });
-
-        // Search box
-        if (searchInputRef.current) {
-          searchBoxRef.current = new maps.places.SearchBox(searchInputRef.current);
-          searchBoxRef.current.addListener("places_changed", () => {
-            const places = searchBoxRef.current.getPlaces();
-            if (places && places.length) {
-              const loc = places[0].geometry?.location;
-              if (loc) {
-                mapRef.current.panTo(loc);
-                mapRef.current.setZoom(14);
-              }
-            }
-          });
-          mapRef.current.controls[maps.ControlPosition.TOP_LEFT].push(searchInputRef.current.parentElement);
-        }
 
         setLoading(false);
       })
@@ -135,18 +132,19 @@ export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* Search box */}
-      <div className="absolute top-3 left-3 z-10" style={{ width: "min(340px, 70vw)" }}>
+      <form onSubmit={handleSearch} className="absolute top-3 left-3 z-10" style={{ width: "min(340px, 70vw)" }}>
         <div className="flex items-center gap-2 bg-white rounded shadow-md px-3 py-2 border border-gray-200">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
-            ref={searchInputRef}
             type="text"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             placeholder="City, Neighborhood, ZIP, Address"
             className="flex-1 outline-none text-sm text-gray-700 bg-transparent"
           />
           <Layers className="w-4 h-4 text-gray-400 flex-shrink-0" />
         </div>
-      </div>
+      </form>
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100/40 pointer-events-none">
