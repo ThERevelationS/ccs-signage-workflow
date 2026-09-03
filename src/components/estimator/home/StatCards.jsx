@@ -6,11 +6,12 @@ const CARDS = [
   { key: "sent", label: "AWAITING APPROVAL", color: "text-blue-600", to: "/EstimatorQueues?status=sent" },
   { key: "approved", label: "APPROVED", color: "text-emerald-600", to: "/EstimatorQueues?status=approved" },
   { key: "draft", label: "IN DRAFT", color: "text-amber-600", to: "/EstimatorQueues?status=draft" },
+  { key: "syncIssues", label: "SYNC ISSUES", color: "text-red-600", to: "/EstimatorQueues?status=sync_issues" },
 ];
 
 export default function StatCards({ counts }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       {CARDS.map((c) => (
         <Link key={c.key} to={c.to} className="bg-white p-4 hover:opacity-90 transition-opacity">
           <div className="text-[11px] font-semibold tracking-wide text-gray-500">{c.label}</div>
