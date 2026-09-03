@@ -163,10 +163,29 @@ export async function migrateLegacyInventoryRows(allInventoryRows, { onProgress 
   for (let i = 0; i < rowsToMigrate.length; i++) {
     const { row, target } = rowsToMigrate[i];
     try {
-      const payload = buildPayload(row, target);
+      const live = await Inventory.get(row.id);
+      if (!live) throw new Error(`Legacy Inventory row ${row.id} no longer exists.`);
+      if (row.updated_date && live.updated_date && row.updated_date !== live.updated_date) {
+        throw new Error(`Legacy Inventory row ${row.id} changed after this cleanup preview was loaded.`);
+      }
+      const payload = buildPayload(live, target);
       if (payload) {
-        await TARGET_ENTITY[target].create(payload);
-        await Inventory.delete(row.id);
+        const created = await TARGET_ENTITY[target].create(payload);
+        try {
+          await Inventory.delete(row.id);
+        } catch (deleteError) {
+          // The target row belongs only to this migration attempt. If the source
+          // could not be removed, roll back our new target so a retry cannot
+          // silently create duplicate inventory.
+          if (created?.id) {
+            try {
+              await TARGET_ENTITY[target].delete(created.id);
+            } catch (rollbackError) {
+              console.error("Migration rollback also failed for target row", created.id, rollbackError);
+            }
+          }
+          throw deleteError;
+        }
         summary[target] += 1;
       }
     } catch (err) {

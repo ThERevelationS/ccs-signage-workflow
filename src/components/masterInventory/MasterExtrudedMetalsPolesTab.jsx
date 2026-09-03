@@ -14,7 +14,7 @@
 // FoundationInventory pole rows still work exactly as before — nothing is
 // migrated.
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Inventory, FoundationInventory } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -148,9 +148,13 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
   const [formSource, setFormSource] = useState(EXTRUDED_METALS_SOURCE);
   const [migrating, setMigrating] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState({ done: 0, total: 0 });
+  const [loadError, setLoadError] = useState("");
+  const deleteRef = useRef(new Set());
+  const migrationRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [metals, foundation] = await Promise.all([
         Inventory.list(),
@@ -162,8 +166,10 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
       setPolesItems(foundation.filter((r) => r.material_type === "pole"));
     } catch (e) {
       console.error("Failed to load extruded metals & poles:", e);
+      setLoadError(e?.message || "Extruded Metals & Poles inventory could not be verified.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -212,9 +218,29 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
   const handleDelete = async (item) => {
     const src = item._kind === "Pole" ? POLES_SOURCE : EXTRUDED_METALS_SOURCE;
     const name = item._displayName || item[src.nameField];
-    if (!window.confirm(`Delete "${name}"?`)) return;
-    await src.entity.delete(item.id);
-    load();
+    const lockKey = `${item._kind}:${item.id}`;
+    if (loadError || deleteRef.current.has(lockKey)) return;
+    deleteRef.current.add(lockKey);
+    if (!window.confirm(`Delete "${name}"?`)) {
+      deleteRef.current.delete(lockKey);
+      return;
+    }
+    try {
+      const live = await src.entity.get(item.id);
+      if (item.updated_date && live?.updated_date && item.updated_date !== live.updated_date) {
+        alert("This inventory item changed in another session and was not deleted. The latest catalog will be reloaded first.");
+        await load();
+        return;
+      }
+      await src.entity.delete(item.id);
+      await load();
+    } catch (error) {
+      console.error("Extruded/Poles delete failed:", error);
+      alert(error?.message || "Inventory item could not be deleted.");
+      await load();
+    } finally {
+      deleteRef.current.delete(lockKey);
+    }
   };
 
   const handleSaved = () => {
@@ -224,14 +250,18 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
   };
 
   const handleCleanupLegacy = async () => {
-    if (legacyTotal === 0) return;
+    if (legacyTotal === 0 || loadError || migrationRef.current) return;
+    migrationRef.current = true;
     const msg =
       `Migrate ${legacyTotal} legacy row${legacyTotal === 1 ? "" : "s"} out of Extruded Metals?\n\n` +
       `  • ${legacyPreview.labor_service} → Labor & Services\n` +
       `  • ${legacyPreview.sign_parts_supplies} → Sign Parts | Supplies\n` +
       `  • ${legacyPreview.substrate} → Substrates\n\n` +
       `Original rows will be DELETED from Inventory after a successful copy.\n\nContinue?`;
-    if (!window.confirm(msg)) return;
+    if (!window.confirm(msg)) {
+      migrationRef.current = false;
+      return;
+    }
 
     setMigrating(true);
     setMigrationProgress({ done: 0, total: legacyTotal });
@@ -250,8 +280,10 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
     } catch (e) {
       console.error(e);
       alert("Migration failed — see console for details.");
+    } finally {
+      setMigrating(false);
+      migrationRef.current = false;
     }
-    setMigrating(false);
   };
 
   return (
@@ -283,7 +315,7 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
             {isAdmin && legacyTotal > 0 && (
               <Button
                 onClick={handleCleanupLegacy}
-                disabled={migrating}
+                disabled={migrating || !!loadError}
                 variant="outline"
                 className="h-9 border-amber-300 text-amber-800 hover:bg-amber-50"
                 title={`Move ${legacyTotal} misfiled legacy row(s) to their correct entities`}
@@ -303,11 +335,11 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
             )}
             {isAdmin && (
               <>
-                <Button onClick={handleAddMetal} className="bg-blue-600 hover:bg-blue-700 text-white h-9">
+                <Button onClick={handleAddMetal} disabled={!!loadError} className="bg-blue-600 hover:bg-blue-700 text-white h-9 disabled:opacity-50">
                   <Plus className="w-4 h-4 mr-1" />
                   Add Metal
                 </Button>
-                <Button onClick={handleAddPole} variant="outline" className="h-9">
+                <Button onClick={handleAddPole} disabled={!!loadError} variant="outline" className="h-9 disabled:opacity-50">
                   <Anchor className="w-4 h-4 mr-1" />
                   Add Pole
                 </Button>
@@ -330,6 +362,12 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
         </div>
         {loading ? (
           <div className="p-12 text-center text-slate-500">Loading…</div>
+        ) : loadError ? (
+          <div className="p-8 text-center text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            <div className="font-semibold">Extruded Metals & Poles inventory could not be verified.</div>
+            <div className="mt-1 text-xs">{loadError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
+          </div>
         ) : (
           <InventoryTable
             source={COMBINED_TABLE_SOURCE}

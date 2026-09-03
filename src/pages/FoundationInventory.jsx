@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -326,7 +326,7 @@ function GenericTab({ tabKey, items, onEdit, onDelete, onAdd, isAdmin }) {
                 {isAdmin && (
                   <div className="flex gap-1 flex-shrink-0">
                     <Button size="sm" variant="ghost" onClick={() => onEdit(item)}><Edit className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => onDelete(item.id)}><Trash2 className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => onDelete(item)}><Trash2 className="w-3 h-3" /></Button>
                   </div>
                 )}
               </CardContent>
@@ -347,6 +347,8 @@ export default function FoundationInventoryPage({ embedded = false }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('wall_material');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const actionRef = useRef(new Set());
 
   // Wall material dialog
   const [showWallForm, setShowWallForm] = useState(false);
@@ -369,29 +371,93 @@ export default function FoundationInventoryPage({ embedded = false }) {
 
   const loadItems = async () => {
     setLoading(true);
-    const data = await FoundationInventoryEntity.list('-created_date', 200);
-    setItems(data);
-    setLoading(false);
+    setLoadError('');
+    try {
+      const data = await FoundationInventoryEntity.list('-created_date', 200);
+      setItems(data);
+    } catch (error) {
+      console.error('Foundation inventory load failed:', error);
+      setLoadError(error?.message || 'Concrete & Stone inventory could not be verified.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this item?')) return;
-    await FoundationInventoryEntity.delete(id);
-    loadItems();
+  const handleDelete = async (item) => {
+    if (!item?.id || loadError || actionRef.current.has(`delete:${item.id}`)) return;
+    const lockKey = `delete:${item.id}`;
+    actionRef.current.add(lockKey);
+    if (!window.confirm('Delete this item?')) { actionRef.current.delete(lockKey); return; }
+    try {
+      const live = await FoundationInventoryEntity.get(item.id);
+      if (item.updated_date && live?.updated_date && item.updated_date !== live.updated_date) {
+        alert('This material changed in another session and was not deleted. The latest Concrete & Stone inventory will be reloaded first.');
+        await loadItems();
+        return;
+      }
+      await FoundationInventoryEntity.delete(item.id);
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation inventory delete failed:', error);
+      alert(error?.message || 'Material could not be deleted.');
+      await loadItems();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const handleSaveWall = async (form) => {
-    if (wallEditItem?.id) await FoundationInventoryEntity.update(wallEditItem.id, form);
-    else await FoundationInventoryEntity.create(form);
-    setShowWallForm(false); setWallEditItem(null); setWallEditItemIsFill(false);
-    loadItems();
+    const lockKey = `wall:${wallEditItem?.id || 'new'}`;
+    if (loadError || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    try {
+      if (wallEditItem?.id) {
+        const live = await FoundationInventoryEntity.get(wallEditItem.id);
+        if (wallEditItem.updated_date && live?.updated_date && wallEditItem.updated_date !== live.updated_date) {
+          alert('This wall material changed in another session. Your changes were not saved; the latest inventory will be reloaded.');
+          setShowWallForm(false); setWallEditItem(null); setWallEditItemIsFill(false);
+          await loadItems();
+          return;
+        }
+        await FoundationInventoryEntity.update(wallEditItem.id, form);
+      } else {
+        await FoundationInventoryEntity.create(form);
+      }
+      setShowWallForm(false); setWallEditItem(null); setWallEditItemIsFill(false);
+      await loadItems();
+    } catch (error) {
+      console.error('Wall material save failed:', error);
+      alert(error?.message || 'Wall material could not be saved.');
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const handleSaveGeneric = async (form) => {
-    if (genericEditItem?.id) await FoundationInventoryEntity.update(genericEditItem.id, form);
-    else await FoundationInventoryEntity.create(form);
-    setShowGenericForm(false); setGenericEditItem(null); setGenericTabKey(null);
-    loadItems();
+    const lockKey = `generic:${genericEditItem?.id || 'new'}`;
+    if (loadError || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    try {
+      if (genericEditItem?.id) {
+        const live = await FoundationInventoryEntity.get(genericEditItem.id);
+        if (genericEditItem.updated_date && live?.updated_date && genericEditItem.updated_date !== live.updated_date) {
+          alert('This material changed in another session. Your changes were not saved; the latest inventory will be reloaded.');
+          setShowGenericForm(false); setGenericEditItem(null); setGenericTabKey(null);
+          await loadItems();
+          return;
+        }
+        await FoundationInventoryEntity.update(genericEditItem.id, form);
+      } else {
+        await FoundationInventoryEntity.create(form);
+      }
+      setShowGenericForm(false); setGenericEditItem(null); setGenericTabKey(null);
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation material save failed:', error);
+      alert(error?.message || 'Material could not be saved.');
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const openGenericAdd = (tabKey) => { setGenericTabKey(tabKey); setGenericEditItem(null); setShowGenericForm(true); };
@@ -401,6 +467,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
   const byType = (types) => items.filter(i => types.includes(i.material_type));
   const wallMaterials = byType(['wall_material']);
   const fillMaterials = byType(['fill_material']);
+  const canEdit = isAdmin && !loadError;
 
   return (
     <div className={embedded ? "space-y-4" : "p-6 max-w-7xl mx-auto space-y-6"}>
@@ -415,6 +482,8 @@ export default function FoundationInventoryPage({ embedded = false }) {
           </div>
         </>
       )}
+
+      {loadError && <div className="p-3 text-center text-red-700 bg-red-50 border border-red-200 rounded"><div className="font-semibold">Concrete & Stone inventory could not be verified.</div><div className="text-xs mt-1">{loadError}</div><Button variant="outline" size="sm" className="mt-2" onClick={loadItems}>Retry</Button></div>}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap h-auto gap-1 bg-slate-100/80 p-1.5 border border-slate-200 rounded-xl shadow-sm">
@@ -432,7 +501,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
         <TabsContent value="wall_material" className="space-y-4 mt-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">Brick, cinderblock, stone, and concrete units for building walls above the foundation.</p>
-            {isAdmin && (
+            {canEdit && (
               <Button size="sm" onClick={() => { setWallEditItem(null); setShowWallForm(true); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Wall Material
               </Button>
@@ -459,10 +528,10 @@ export default function FoundationInventoryPage({ embedded = false }) {
                             <Badge variant="outline" className="text-xs capitalize">{m.wall_material_subtype}</Badge>
                           </div>
                         </div>
-                        {isAdmin && (
+                        {canEdit && (
                           <div className="flex gap-1">
                             <Button size="sm" variant="ghost" onClick={() => { setWallEditItem(m); setShowWallForm(true); }}><Edit className="w-3 h-3" /></Button>
-                            <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                            <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(m)}><Trash2 className="w-3 h-3" /></Button>
                           </div>
                         )}
                       </div>
@@ -484,7 +553,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
         <TabsContent value="fill_material" className="space-y-4 mt-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">Materials for internal walls (configured identically to Wall Materials).</p>
-            {isAdmin && (
+            {canEdit && (
               <Button size="sm" onClick={() => { setWallEditItem(null); setWallEditItemIsFill(true); setShowWallForm(true); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Wall Fill
               </Button>
@@ -511,10 +580,10 @@ export default function FoundationInventoryPage({ embedded = false }) {
                             <Badge variant="outline" className="text-xs capitalize">{m.wall_material_subtype}</Badge>
                           </div>
                         </div>
-                        {isAdmin && (
+                        {canEdit && (
                           <div className="flex gap-1">
                             <Button size="sm" variant="ghost" onClick={() => { setWallEditItem(m); setWallEditItemIsFill(true); setShowWallForm(true); }}><Edit className="w-3 h-3" /></Button>
-                            <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                            <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(m)}><Trash2 className="w-3 h-3" /></Button>
                           </div>
                         )}
                       </div>
@@ -534,12 +603,12 @@ export default function FoundationInventoryPage({ embedded = false }) {
 
         {/* EQUIPMENT (Custom UI) */}
         <TabsContent value="equipment">
-            <EquipmentInventoryTab allItems={items} loadItems={loadItems} isAdmin={isAdmin} />
+            <EquipmentInventoryTab allItems={items} loadItems={loadItems} isAdmin={canEdit} />
         </TabsContent>
 
         {/* WALL CAPS (Custom UI) */}
         <TabsContent value="wall_cap">
-            <WallCapsInventoryTab allItems={items} FoundationInventoryEntity={FoundationInventoryEntity} loadItems={loadItems} isAdmin={isAdmin} />
+            <WallCapsInventoryTab allItems={items} FoundationInventoryEntity={FoundationInventoryEntity} loadItems={loadItems} isAdmin={canEdit} />
         </TabsContent>
 
         {/* GENERIC TABS */}
@@ -551,7 +620,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
               onAdd={() => openGenericAdd(tabKey)}
               onEdit={(item) => openGenericEdit(tabKey, item)}
               onDelete={handleDelete}
-              isAdmin={isAdmin}
+              isAdmin={canEdit}
             />
           </TabsContent>
         ))}

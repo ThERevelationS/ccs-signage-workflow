@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -116,20 +116,58 @@ function CapForm({ item, onSave, onCancel }) {
 export default function WallCapsInventoryTab({ allItems, FoundationInventoryEntity, loadItems, isAdmin }) {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const actionRef = useRef(new Set());
 
   const caps = allItems.filter(i => i.material_type === 'wall_cap');
 
   const handleSave = async (form) => {
-    if (editItem?.id) await FoundationInventoryEntity.update(editItem.id, form);
-    else await FoundationInventoryEntity.create(form);
-    setShowForm(false); setEditItem(null);
-    loadItems();
+    const lockKey = `save:${editItem?.id || 'new'}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    try {
+      if (editItem?.id) {
+        const live = await FoundationInventoryEntity.get(editItem.id);
+        if (editItem.updated_date && live?.updated_date && editItem.updated_date !== live.updated_date) {
+          alert('This wall cap changed in another session. Your changes were not saved; the latest inventory will be reloaded.');
+          setShowForm(false); setEditItem(null);
+          await loadItems();
+          return;
+        }
+        await FoundationInventoryEntity.update(editItem.id, form);
+      } else {
+        await FoundationInventoryEntity.create(form);
+      }
+      setShowForm(false); setEditItem(null);
+      await loadItems();
+    } catch (error) {
+      console.error('Wall cap save failed:', error);
+      alert(error?.message || 'Wall cap could not be saved.');
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this wall cap?')) return;
-    await FoundationInventoryEntity.delete(id);
-    loadItems();
+  const handleDelete = async (cap) => {
+    const lockKey = `delete:${cap?.id}`;
+    if (!cap?.id || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    if (!window.confirm('Delete this wall cap?')) { actionRef.current.delete(lockKey); return; }
+    try {
+      const live = await FoundationInventoryEntity.get(cap.id);
+      if (cap.updated_date && live?.updated_date && cap.updated_date !== live.updated_date) {
+        alert('This wall cap changed in another session and was not deleted. The latest inventory will be reloaded first.');
+        await loadItems();
+        return;
+      }
+      await FoundationInventoryEntity.delete(cap.id);
+      await loadItems();
+    } catch (error) {
+      console.error('Wall cap delete failed:', error);
+      alert(error?.message || 'Wall cap could not be deleted.');
+      await loadItems();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   return (
@@ -169,7 +207,7 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
                   {isAdmin && (
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => { setEditItem(cap); setShowForm(true); }}><Edit className="w-3 h-3" /></Button>
-                      <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(cap.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(cap)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   )}
                 </div>
