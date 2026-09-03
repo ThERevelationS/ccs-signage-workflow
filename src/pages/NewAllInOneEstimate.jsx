@@ -84,7 +84,29 @@ export default function NewAllInOneEstimate() {
         status: "draft",
       });
       if (customer) {
-        await syncEstimateToPipeline(estimate, customer);
+        try {
+          await syncEstimateToPipeline(estimate, customer);
+        } catch (syncError) {
+          const syncMessage = syncError?.message || "Sales Pipeline synchronization failed.";
+          let recoveryFlagSaved = false;
+          try {
+            await base44.entities.AllInOneEstimate.update(estimate.id, {
+              pipeline_sync_pending: true,
+              pipeline_sync_error: syncMessage,
+            });
+            recoveryFlagSaved = true;
+          } catch (flagError) {
+            console.error("New estimate pipeline recovery flag could not be saved:", flagError);
+          }
+
+          window.alert(
+            recoveryFlagSaved
+              ? `Estimate ${estimate.estimate_number ? `#${estimate.estimate_number} ` : ""}was created successfully, but Sales Pipeline synchronization did not complete. The estimate has been marked Sync Issue; open Finalize Estimate and use Retry Pipeline Sync.`
+              : `Estimate ${estimate.estimate_number ? `#${estimate.estimate_number} ` : ""}was created successfully, but Sales Pipeline synchronization did not complete and the recovery flag could not be saved. The created estimate will be opened now so it is not duplicated. Error: ${syncMessage}`
+          );
+          navigate(`/EstimateDetail?id=${estimate.id}`);
+          return;
+        }
       }
       navigate(`/EstimateDetail?id=${estimate.id}`);
     } catch (e) {
