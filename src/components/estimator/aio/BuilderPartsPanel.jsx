@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -27,7 +27,7 @@ import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPa
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
-import { clonePartGroupInProduct, moveIndependentPartGroup } from "@/components/estimator/parts/partGroupService";
+import { clonePartGroupInProduct, createPartGroupInProduct, dissolvePartGroup, moveIndependentPartGroup, renamePartGroup } from "@/components/estimator/parts/partGroupService";
 import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
@@ -254,7 +254,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
   );
 }
 
-function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, totalGroups, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
+function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
   const [open, setOpen] = useState(!group.is_collapsed);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
@@ -263,6 +263,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const [cloning, setCloning] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [saveLibraryOpen, setSaveLibraryOpen] = useState(false);
+  const structuralActionRef = useRef(false);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const canMove = parts.length > 0 && parts.every((part) => ["manual", "manual_addon"].includes(part.builder_sync_state));
   const moveTargets = (availableProducts || []).filter((line) => line.builder_product_id && line.builder_product_id !== builderProductId);
@@ -274,23 +275,45 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   };
 
   const saveName = async () => {
+    if (structuralActionRef.current) return;
+    structuralActionRef.current = true;
     const nextName = name.trim() || "Part Group";
     setName(nextName);
     setRenaming(false);
-    await base44.entities.BuilderPartGroup.update(group.id, { group_name: nextName });
-    onChanged?.();
+    try {
+      await renamePartGroup({
+        builderProductId,
+        groupId: group.id,
+        groupName: nextName,
+        expectedEstimateUpdatedAt,
+        expectedGroupUpdatedAt: group.updated_date || "",
+      });
+      await onChanged?.();
+    } catch (error) {
+      window.alert(error?.message || "Part Group could not be renamed.");
+    } finally {
+      structuralActionRef.current = false;
+    }
   };
 
   const dissolve = async () => {
+    if (structuralActionRef.current) return;
     if (!window.confirm(`Dissolve “${group.group_name || "Part Group"}”? The Parts will stay in this Product and keep all frozen pricing.`)) return;
-    await Promise.all(parts.map((part) => base44.entities.BuilderPart.update(part.id, { part_group_id: "" })));
-    await base44.entities.BuilderPartGroup.delete(group.id);
-    if (builderProductId) {
-      await base44.entities.BuilderProduct.update(builderProductId, {
-        group_count: Math.max(0, num(totalGroups) - 1),
+    structuralActionRef.current = true;
+    try {
+      await dissolvePartGroup({
+        builderProductId,
+        groupId: group.id,
+        expectedEstimateUpdatedAt,
+        expectedGroupUpdatedAt: group.updated_date || "",
+        expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
       });
+      await onChanged?.();
+    } catch (error) {
+      window.alert(error?.message || "Part Group could not be dissolved.");
+    } finally {
+      structuralActionRef.current = false;
     }
-    onChanged?.();
   };
 
   return (
@@ -359,13 +382,22 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 disabled={cloning}
                 onClick={async () => {
                   if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
+                  if (structuralActionRef.current) return;
+                  structuralActionRef.current = true;
                   setCloning(true);
                   try {
-                    await clonePartGroupInProduct({ builderProductId, groupId: group.id });
+                    await clonePartGroupInProduct({
+                      builderProductId,
+                      groupId: group.id,
+                      expectedEstimateUpdatedAt,
+                      expectedGroupUpdatedAt: group.updated_date || "",
+                      expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
+                    });
                     await onChanged?.();
                   } catch (error) {
                     window.alert(error?.message || "Part Group could not be cloned.");
                   } finally {
+                    structuralActionRef.current = false;
                     setCloning(false);
                   }
                 }}
@@ -425,9 +457,22 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
         products={moveTargets}
         onClose={() => setMoveOpen(false)}
         onMove={async (targetBuilderProductId) => {
-          await moveIndependentPartGroup({ sourceBuilderProductId: builderProductId, targetBuilderProductId, groupId: group.id });
-          setMoveOpen(false);
-          await onChanged?.();
+          if (structuralActionRef.current) return;
+          structuralActionRef.current = true;
+          try {
+            await moveIndependentPartGroup({
+              sourceBuilderProductId: builderProductId,
+              targetBuilderProductId,
+              groupId: group.id,
+              expectedEstimateUpdatedAt,
+              expectedGroupUpdatedAt: group.updated_date || "",
+              expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
+            });
+            setMoveOpen(false);
+            await onChanged?.();
+          } finally {
+            structuralActionRef.current = false;
+          }
         }}
       />
       <SavePartTemplateModal
@@ -453,6 +498,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [partPickerOpen, setPartPickerOpen] = useState(false);
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const groupCreateRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -507,28 +553,24 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
 
   const createGroup = async (groupName) => {
     const selectedParts = parts.filter((part) => selectedIds.has(part.id));
-    if (!builderProductId || selectedParts.length < 2) return;
-    const group = await base44.entities.BuilderPartGroup.create({
-      builder_product_id: builderProductId,
-      group_key: globalThis.crypto?.randomUUID?.() || `group-${Date.now()}`,
-      group_name: groupName,
-      sort_order: groups.length,
-      copy_as_unit: true,
-      is_collapsed: false,
-      is_active: true,
-    });
-    await Promise.all(
-      selectedParts.map((part) =>
-        base44.entities.BuilderPart.update(part.id, { part_group_id: group.id })
-      )
-    );
-    await base44.entities.BuilderProduct.update(builderProductId, {
-      group_count: groups.length + 1,
-    });
-    setGroupModalOpen(false);
-    setSelectionMode(false);
-    setSelectedIds(new Set());
-    setRefreshNonce((value) => value + 1);
+    if (!builderProductId || selectedParts.length < 2 || groupCreateRef.current) return;
+    groupCreateRef.current = true;
+    try {
+      await createPartGroupInProduct({
+        builderProductId,
+        partIds: selectedParts.map((part) => part.id),
+        groupName,
+        expectedEstimateUpdatedAt,
+        expectedPartVersions: Object.fromEntries(selectedParts.map((part) => [part.id, part.updated_date || ""])),
+      });
+      setGroupModalOpen(false);
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setRefreshNonce((value) => value + 1);
+      await onProductRefresh?.();
+    } finally {
+      groupCreateRef.current = false;
+    }
   };
 
   const grouped = useMemo(() => {
@@ -643,7 +685,6 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               await onProductRefresh?.();
             }}
             builderProductId={builderProductId}
-            totalGroups={groups.length}
             onEditBuilder={onEditBuilder}
             estimateId={estimateId}
             expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
