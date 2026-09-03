@@ -23,6 +23,8 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
   const [deliveryRows, setDeliveryRows] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditReadError, setAuditReadError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -35,15 +37,25 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [deliveryId, setDeliveryId] = useState("");
 
   const loadRows = async () => {
-    if (!estimate?.id) return;
-    const [result, revisions, deliveries] = await Promise.all([
-      base44.entities.EstimateAcceptance.filter({ estimate_id: estimate.id }).catch(() => []),
-      listEstimateRevisions(estimate.id),
-      base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []),
-    ]);
-    setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
-    setRevisionRows(revisions || []);
-    setDeliveryRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
+    if (!estimate?.id) return false;
+    setAuditLoading(true);
+    setAuditReadError("");
+    try {
+      const [result, revisions, deliveries] = await Promise.all([
+        base44.entities.EstimateAcceptance.filter({ estimate_id: estimate.id }),
+        listEstimateRevisions(estimate.id, { strict: true }),
+        base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []),
+      ]);
+      setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
+      setRevisionRows(revisions || []);
+      setDeliveryRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
+      return true;
+    } catch (err) {
+      setAuditReadError(err?.message || "Customer acceptance or revision history could not be verified.");
+      return false;
+    } finally {
+      setAuditLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -66,7 +78,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   );
   const canRecord = persistedStatus === "sent" && quoteVersion > 0;
   const repairingApprovedAcceptance = persistedStatus === "approved" && !!currentAcceptance && !approvalRevisionRecorded;
-  const canAct = canRecord || repairingApprovedAcceptance;
+  const canAct = !auditLoading && !auditReadError && (canRecord || repairingApprovedAcceptance);
   const recoveringRecordedAcceptance = !!currentAcceptance;
 
   const openDialog = () => {
@@ -130,7 +142,14 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
       </div>
 
       <div className="p-4">
-        {rows.length === 0 ? (
+        {auditReadError && (
+          <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] text-red-700">
+            <strong>Customer acceptance history could not be verified.</strong> {auditReadError} Acceptance actions are disabled until the audit history loads successfully.
+          </div>
+        )}
+        {auditLoading ? (
+          <div className="py-2 text-center text-[10px] text-gray-400">Loading customer acceptance history…</div>
+        ) : rows.length === 0 ? (
           <div className="py-2 text-center text-[10px] text-gray-400">No customer acceptance has been recorded.</div>
         ) : (
           <div className="border border-gray-200 rounded overflow-hidden">
