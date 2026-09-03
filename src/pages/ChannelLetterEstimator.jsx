@@ -85,6 +85,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [inventory, setInventory] = useState([]);
   const [equipmentInventory, setEquipmentInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
@@ -98,6 +99,8 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
 
   // Load settings + inventory + (maybe) existing project
   const loadEverything = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
     try {
       const [settingsList, inv, equipInv] = await Promise.all([
         Settings.list(),
@@ -145,6 +148,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
       }
     } catch (e) {
       console.error("Load error:", e);
+      setLoadError(e?.message || "Channel / Dimensional Letter Builder prerequisites could not be verified.");
     }
     setIsLoading(false);
   }, [editId, navigate]);
@@ -552,6 +556,18 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     return (
       <div className="p-6 md:p-8 bg-slate-50 min-h-screen flex items-center justify-center">
         <p className="text-slate-600">Loading...</p>
+      </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="font-bold">Channel / Dimensional Letter Builder unavailable</div>
+          <div className="mt-1 text-sm">Required Settings, installation inventory, equipment, or project data could not be verified. Fallback configuration was not used.</div>
+          <div className="mt-2 text-xs break-words">{loadError}</div>
+          <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : navigate(estimateId ? `/EstimateDetail?id=${estimateId}` : createPageUrl("Estimator"))}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+        </div>
       </div>
     );
   }
