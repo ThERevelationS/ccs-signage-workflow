@@ -38,7 +38,7 @@ const TOGGLES = [
   ["show_fees_line", "Show fees", true],
   ["show_tax_line", "Show tax", true],
   ["show_deposit_lines", "Show deposit / balance", true],
-  ["show_notes_on_quote", "Show estimate notes", true],
+  ["show_notes_on_quote", "Show estimate notes", false],
   ["show_terms_block", "Show terms & conditions", true],
   ["show_warranty_block", "Show warranty", true],
   ["show_lead_time_block", "Show lead time", true],
@@ -261,6 +261,11 @@ export default function CustomerQuotePanel({
                 </label>
               ))}
             </div>
+            {defaultBool(estimate, "show_notes_on_quote", false) && estimate.notes && (
+              <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[9px] leading-relaxed text-amber-800">
+                <strong>Estimate notes will be customer-visible.</strong> Review them for internal pricing, production, vendor, or shop-only information before printing or emailing this quote.
+              </div>
+            )}
           </div>
         </div>
 
@@ -337,7 +342,7 @@ export default function CustomerQuotePanel({
 
             {defaultBool(estimate, "show_lead_time_block") && estimate.lead_time_text && <TextBlock title="Lead Time" text={estimate.lead_time_text} />}
             {defaultBool(estimate, "show_warranty_block") && estimate.warranty_text && <TextBlock title="Warranty" text={estimate.warranty_text} />}
-            {defaultBool(estimate, "show_notes_on_quote") && estimate.notes && <TextBlock title="Notes" text={estimate.notes} />}
+            {defaultBool(estimate, "show_notes_on_quote", false) && estimate.notes && <TextBlock title="Notes" text={estimate.notes} />}
             {defaultBool(estimate, "show_terms_block") && (estimate.payment_terms || estimate.quote_terms_conditions) && <TextBlock title="Terms & Conditions" text={[estimate.payment_terms, estimate.quote_terms_conditions].filter(Boolean).join("\n\n")} />}
 
             {defaultBool(estimate, "show_signature_block") && (
