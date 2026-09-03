@@ -501,34 +501,64 @@ export default function EstimateDetail() {
     };
     const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
     const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
-    const saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+    let saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
     await rememberServerVersion(saved);
-    await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
-    await recordEstimateLifecycleRevision({
-      estimateBefore: before,
-      estimateAfter: saved,
-      reason: `Quote emailed to ${recipientEmail}`,
-      revisionType: "status_transition",
-      quoteTotalBefore: before.quote_total,
-      quoteTotalAfter: pricing.quoteTotal,
-      internalCostBefore: before.total_cost,
-      internalCostAfter: internalCost,
-      workOrderId: saved.work_order_id || "",
-      deliveryEvidence: {
-        delivery_id: deliveryId || "",
-        gmail_message_id: gmailMessageId || "",
-        recipient_email: recipientEmail,
-        sent_at: sentAt || new Date().toISOString(),
-        attachment_file_url: archive?.fileUrl || "",
-        attachment_sha256: archive?.sha256 || "",
-        attachment_size_bytes: Number(archive?.sizeBytes || 0),
-      },
-    });
+
+    const warnings = [];
+    const deliveryIdentity = deliveryId || gmailMessageId || quoteIssueKey(estimate.id, quoteVersion);
+    try {
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: `quote_issuance:${deliveryIdentity}`,
+        estimateBefore: before,
+        estimateAfter: saved,
+        reason: `Quote emailed to ${recipientEmail}`,
+        revisionType: "status_transition",
+        quoteTotalBefore: before.quote_total,
+        quoteTotalAfter: pricing.quoteTotal,
+        internalCostBefore: before.total_cost,
+        internalCostAfter: internalCost,
+        workOrderId: saved.work_order_id || "",
+        deliveryEvidence: {
+          delivery_id: deliveryId || "",
+          gmail_message_id: gmailMessageId || "",
+          recipient_email: recipientEmail,
+          sent_at: sentAt || new Date().toISOString(),
+          attachment_file_url: archive?.fileUrl || "",
+          attachment_sha256: archive?.sha256 || "",
+          attachment_size_bytes: Number(archive?.sizeBytes || 0),
+        },
+      });
+    } catch (revisionError) {
+      warnings.push(`The quote is issued and the delivery is recorded, but its lifecycle revision could not be saved: ${revisionError?.message || "unknown error"}`);
+    }
+
+    try {
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
+      if (saved.pipeline_sync_pending || saved.pipeline_sync_error) {
+        const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
+          pipeline_sync_pending: false,
+          pipeline_sync_error: "",
+        });
+        const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+        saved = { ...saved, ...(cleared || {}), pipeline_sync_pending: false, pipeline_sync_error: "" };
+        await rememberServerVersion(saved);
+      }
+    } catch (syncError) {
+      const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+      const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
+        pipeline_sync_pending: true,
+        pipeline_sync_error: message,
+      }).catch(() => null);
+      const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => saved);
+      saved = { ...saved, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
+      await rememberServerVersion(saved);
+      warnings.push(`The quote is issued, but Sales Pipeline synchronization is pending: ${message}`);
+    }
 
     setEstimate(saved);
     setPersistedEstimate(saved);
     setRevisionRefreshKey((value) => value + 1);
-    return {};
+    return { warning: warnings.join("\n") };
   };
 
   const handleDeliveryEvidenceReady = async ({ quoteVersion, deliveryId, gmailMessageId, recipientEmail, sentAt, archive }) => {
