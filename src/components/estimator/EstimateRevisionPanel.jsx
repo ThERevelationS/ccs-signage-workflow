@@ -27,7 +27,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   const persistedStatus = persistedEstimate?.status || estimate?.status || "draft";
   const protectedEstimate = isEstimateProtected(persistedStatus);
   const cancelledEstimate = persistedStatus === "cancelled";
-  const canStartRevision = protectedEstimate && !cancelledEstimate && !openRevision;
+  const canStartRevision = protectedEstimate && !cancelledEstimate && !openRevision && !estimate?.pipeline_sync_pending;
   const pendingTransitionReason = !openRevision && requiresEstimateLifecycleReason(persistedStatus, estimate?.status);
 
   const start = async () => {
