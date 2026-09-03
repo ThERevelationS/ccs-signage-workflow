@@ -743,6 +743,16 @@ export default function WorkOrderDetailsDialog({
                     <Badge className="rounded-full bg-red-600 text-white">ASAP</Badge>
                     }
                         <ProjectHealthBadge workOrder={workOrder} />
+                        {workOrder.estimate_id &&
+                    <Link
+                      to={`/EstimateDetail?id=${workOrder.estimate_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-7 px-2.5 inline-flex items-center gap-1.5 rounded border border-blue-200 bg-blue-50 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
+                      title="Open the protected source estimate, quote delivery history, and customer acceptance audit in a new tab">
+                      <FileText className="w-3.5 h-3.5" /> Source Estimate <ExternalLink className="w-3 h-3" />
+                    </Link>
+                    }
                       </>
                   }
                 </div>
