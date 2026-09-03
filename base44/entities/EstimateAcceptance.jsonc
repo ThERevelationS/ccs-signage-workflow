@@ -61,6 +61,14 @@
     },
     "notes": {
       "type": "string"
+    },
+    "recorded_by_email": {
+      "type": "string",
+      "description": "Internal staff email that recorded the acceptance through the authenticated acceptance service."
+    },
+    "recorded_by_name": {
+      "type": "string",
+      "description": "Internal staff display name that recorded the acceptance."
     }
   },
   "required": [
