@@ -323,8 +323,24 @@ export default function EstimateDetail() {
       await rememberServerVersion(saved);
 
       let syncPreviousStatus = before.status || "";
+      let transitionBefore = null;
+      let transitionIdempotencyKey = "";
       if (openRevision) {
         syncPreviousStatus = openRevision.estimate_snapshot_before?.status || syncPreviousStatus;
+      } else if (lifecycleReasonRequired) {
+        const pending = pendingLifecycleBaselineRef.current;
+        transitionBefore = pending?.estimateBefore || before;
+        syncPreviousStatus = transitionBefore.status || syncPreviousStatus;
+        transitionIdempotencyKey = pending?.key || `status_transition:${estimate.id}:${transitionBefore.updated_date || "unknown"}:${transitionBefore.status || "draft"}:${saved.status || "draft"}:${Number(saved.quote_version || 0)}`;
+      }
+
+      // Synchronize downstream before closing the lifecycle audit. If pipeline
+      // sync fails, the revision/baseline remains open and the same quote version
+      // can be retried without losing later edits. Pipeline sync resolves the
+      // existing WorkOrder by estimate_id, so retries do not duplicate jobs.
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
+
+      if (openRevision) {
         await completeEstimateRevision({
           revision: openRevision,
           estimate: saved,
@@ -333,26 +349,19 @@ export default function EstimateDetail() {
           workOrderId: saved.work_order_id || "",
         });
       } else if (lifecycleReasonRequired) {
-        const pending = pendingLifecycleBaselineRef.current;
-        const transitionBefore = pending?.estimateBefore || before;
-        syncPreviousStatus = transitionBefore.status || syncPreviousStatus;
         await ensureEstimateLifecycleRevision({
-          idempotencyKey: pending?.key || `status_transition:${estimate.id}:${transitionBefore.updated_date || "unknown"}:${transitionBefore.status || "draft"}:${saved.status || "draft"}:${Number(saved.quote_version || 0)}`,
-          estimateBefore: transitionBefore,
+          idempotencyKey: transitionIdempotencyKey,
+          estimateBefore: transitionBefore || before,
           estimateAfter: saved,
           reason: lifecycleReason,
           revisionType: "status_transition",
-          quoteTotalBefore: transitionBefore.quote_total,
+          quoteTotalBefore: (transitionBefore || before).quote_total,
           quoteTotalAfter: pricing.quoteTotal,
-          internalCostBefore: transitionBefore.total_cost,
+          internalCostBefore: (transitionBefore || before).total_cost,
           internalCostAfter: internalCost,
           workOrderId: saved.work_order_id || "",
         });
       }
-
-      // Audit the accepted lifecycle state first; then synchronize downstream.
-      // A retry will reuse the same revision and issued quote version.
-      await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
 
       if (lifecycleReasonRequired && saved.edit_reason) {
         const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, { edit_reason: "" });
