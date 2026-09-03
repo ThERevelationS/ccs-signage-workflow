@@ -23,14 +23,37 @@ const newCustomerState = () => ({ ...EMPTY, pricing_tier: 1 });
 export default function NewCustomerDialog({ open, onClose, onCreated }) {
   const [data, setData] = useState(newCustomerState);
   const [tiers, setTiers] = useState([]);
+  const [tierLoading, setTierLoading] = useState(false);
+  const [tierLoadError, setTierLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
+    let active = true;
+    setTierLoading(true);
+    setTierLoadError("");
     base44.entities.MarkupTier.list("sort_order")
-      .then((rows) => setTiers(rows || []))
-      .catch(() => setTiers([]));
+      .then((rows) => {
+        if (!active) return;
+        const loaded = rows || [];
+        setTiers(loaded);
+        if (loaded.length) {
+          setData((current) => {
+            const selected = Number(current.pricing_tier) || 1;
+            if (loaded.some((tier) => Number(tier.tier_number) === selected)) return current;
+            return { ...current, pricing_tier: Number(loaded[0].tier_number) || 1 };
+          });
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        setTiers([]);
+        setTierLoadError(err?.message || "Pricing tiers could not be verified.");
+      })
+      .finally(() => active && setTierLoading(false));
+    return () => { active = false; };
   }, [open]);
 
   const handleSave = async () => {
