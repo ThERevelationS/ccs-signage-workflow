@@ -6,24 +6,19 @@ export function changedSettingRows(rows = [], values = {}, originalValues = {}) 
   );
 }
 
-export async function saveSettingsRowsSafely({
+export async function preflightSettingsRows({
   SettingsEntity,
   rows = [],
   values = {},
   originalValues = {},
+  changedRows = null,
 }) {
-  const changed = changedSettingRows(rows, values, originalValues);
-  if (!changed.length) {
-    return {
-      changedCount: 0,
-      rows,
-      snapshot: Object.fromEntries((rows || []).map((row) => [row.setting_name, text(values[row.setting_name])])),
-    };
-  }
+  const changed = changedRows || changedSettingRows(rows, values, originalValues);
+  if (!changed.length) return { changed, liveRows: [] };
 
-  // Preflight every changed record before writing any of them. Settings directly
-  // affect estimator cost/customer pricing, so a stale admin browser must not
-  // overwrite a newer Settings edit from another session.
+  // Preflight every changed record before any caller writes. This is exported so
+  // mixed Settings pages (Settings + another pricing entity) can validate the
+  // entire transaction-like batch before its first write.
   const liveRows = await Promise.all(changed.map((row) => SettingsEntity.get(row.id)));
   const conflicts = changed.filter((row, index) => {
     const live = liveRows[index];
@@ -39,6 +34,25 @@ export async function saveSettingsRowsSafely({
     const names = conflicts.map((row) => row.setting_name).join(", ");
     throw new Error(`These Settings changed in another session: ${names}. Reload this Settings page, review the latest values, and apply your changes again.`);
   }
+  return { changed, liveRows };
+}
+
+export async function saveSettingsRowsSafely({
+  SettingsEntity,
+  rows = [],
+  values = {},
+  originalValues = {},
+}) {
+  const changed = changedSettingRows(rows, values, originalValues);
+  if (!changed.length) {
+    return {
+      changedCount: 0,
+      rows,
+      snapshot: Object.fromEntries((rows || []).map((row) => [row.setting_name, text(values[row.setting_name])])),
+    };
+  }
+
+  await preflightSettingsRows({ SettingsEntity, rows, values, originalValues, changedRows: changed });
 
   await Promise.all(changed.map((row) =>
     SettingsEntity.update(row.id, { setting_value: text(values[row.setting_name]) })
