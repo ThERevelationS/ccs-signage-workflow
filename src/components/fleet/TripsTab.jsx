@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { formatTime, formatMiles, groupTripsByDay, monthLabel, formatRelativeDay } from "./fleetHelpers";
 import { Loader2, ChevronDown, Car } from "lucide-react";
 
-export default function TripsTab({ vehicle, trips, loading, onRefresh }) {
+export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedTripId, onSelectTrip }) {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState({});
   const [collapsedMonths, setCollapsedMonths] = useState({});
@@ -69,11 +69,13 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh }) {
                 {g.trips.map((t) => {
                   const id = t.transactionId;
                   const isSel = selected[id];
+                  const isActive = id === selectedTripId;
                   return (
                     <div
                       key={id}
-                      className="flex items-center gap-3 py-2.5 border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => selectMode && setSelected(s => ({ ...s, [id]: !s[id] }))}
+                      className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                      style={isActive ? { background: "#e8f0fe" } : undefined}
+                      onClick={() => selectMode ? setSelected(s => ({ ...s, [id]: !s[id] })) : onSelectTrip?.(t)}
                     >
                       {selectMode && (
                         <input type="checkbox" checked={!!isSel} readOnly className="w-4 h-4" />

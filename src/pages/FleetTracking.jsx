@@ -17,6 +17,7 @@ export default function FleetTracking() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [trips, setTrips] = useState([]);
   const [tripsLoading, setTripsLoading] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [daysBack, setDaysBack] = useState(7);
   const [avgBy, setAvgBy] = useState("trip");
@@ -97,6 +98,7 @@ export default function FleetTracking() {
         setCurrentUser(user);
       } catch {}
       const s = await loadStatus();
+      setStatusLoading(false);
       if (s?.connected) {
         loadVehicles();
         loadNotifications();
@@ -117,6 +119,7 @@ export default function FleetTracking() {
 
   // Load trips when selection / range changes
   useEffect(() => {
+    setSelectedTrip(null);
     if (!selectedVin) return;
     const v = vehicles.find(v => v.vin === selectedVin);
     if (v?.imei) loadTrips(v.imei, daysBack);
@@ -228,6 +231,7 @@ export default function FleetTracking() {
           <FleetMap
             vehicles={vehicles}
             selectedVin={selectedVin}
+            selectedTrip={selectedTrip}
             onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
           />
         )}
@@ -270,6 +274,8 @@ export default function FleetTracking() {
             vehicle={selectedVehicle}
             trips={trips}
             tripsLoading={tripsLoading}
+            selectedTripId={selectedTrip?.transactionId}
+            onSelectTrip={(t) => setSelectedTrip(prev => prev?.transactionId === t.transactionId ? null : t)}
             notifications={notifications.filter(n => n.vehicle_vin === selectedVehicle.vin)}
             onClearNotifications={handleClearNotifications}
             onMarkNotificationRead={handleMarkRead}

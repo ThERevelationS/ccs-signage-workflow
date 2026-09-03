@@ -20,10 +20,20 @@ function pinSvg(color, selected) {
   };
 }
 
-export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
+function tripCoords(trip) {
+  const gps = trip?.gps;
+  if (!gps) return [];
+  const geom = gps.type === "Feature" ? gps.geometry : gps;
+  const coords = geom?.type === "LineString" ? geom.coordinates
+    : geom?.type === "MultiLineString" ? geom.coordinates.flat() : [];
+  return coords.filter(c => Array.isArray(c) && c.length >= 2).map(([lng, lat]) => ({ lat, lng }));
+}
+
+export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelectVehicle }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const tripLayerRef = useRef([]);
   const [searchValue, setSearchValue] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -117,6 +127,26 @@ export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVin]);
 
+  // Draw selected trip route
+  useEffect(() => {
+    const maps = window.google?.maps;
+    if (!maps || !mapRef.current) return;
+    tripLayerRef.current.forEach(o => o.setMap(null));
+    tripLayerRef.current = [];
+    const path = tripCoords(selectedTrip);
+    if (path.length < 2) return;
+    const dot = (color) => ({
+      path: maps.SymbolPath.CIRCLE, scale: 7, fillColor: color, fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2,
+    });
+    const line = new maps.Polyline({ path, map: mapRef.current, strokeColor: "#2b73ff", strokeWeight: 4, strokeOpacity: 0.9 });
+    const start = new maps.Marker({ position: path[0], map: mapRef.current, icon: dot("#28a745"), title: "Trip start", zIndex: 1000 });
+    const end = new maps.Marker({ position: path[path.length - 1], map: mapRef.current, icon: dot("#dc3545"), title: "Trip end", zIndex: 1000 });
+    tripLayerRef.current = [line, start, end];
+    const bounds = new maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    mapRef.current.fitBounds(bounds, 80);
+  }, [selectedTrip]);
+
   useEffect(() => {
     if (!containerRef.current || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => {
@@ -132,7 +162,7 @@ export default function FleetMap({ vehicles, selectedVin, onSelectVehicle }) {
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* Search box */}
-      <form onSubmit={handleSearch} className="absolute top-3 left-3 z-10" style={{ width: "min(340px, 70vw)" }}>
+      <form onSubmit={handleSearch} className="absolute top-14 left-3 z-10" style={{ width: "min(340px, 70vw)" }}>
         <div className="flex items-center gap-2 bg-white rounded shadow-md px-3 py-2 border border-gray-200">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input

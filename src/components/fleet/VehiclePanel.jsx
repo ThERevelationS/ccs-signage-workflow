@@ -15,7 +15,7 @@ const TABS = [
 export default function VehiclePanel({
   vehicle, trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
   onOpenAlertSettings, onClose, daysBack, onDaysBackChange, avgBy, onAvgByChange,
-  onTripsRefresh
+  onTripsRefresh, selectedTripId, onSelectTrip
 }) {
   const [activeTab, setActiveTab] = useState("trips");
   const stats = vehicle?.stats || {};
@@ -53,7 +53,8 @@ export default function VehiclePanel({
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {activeTab === "trips" && (
-          <TripsTab vehicle={vehicle} trips={trips} loading={tripsLoading} onRefresh={onTripsRefresh} />
+          <TripsTab vehicle={vehicle} trips={trips} loading={tripsLoading} onRefresh={onTripsRefresh}
+            selectedTripId={selectedTripId} onSelectTrip={onSelectTrip} />
         )}
         {activeTab === "stats" && (
           <StatsTab vehicle={vehicle} trips={trips} loading={tripsLoading}

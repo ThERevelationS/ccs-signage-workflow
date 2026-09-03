@@ -79,20 +79,13 @@ export default async function(req) {
     }
 
     const event = await req.json();
+    if (!event?.eventType || !event?.vin) {
+      return Response.json({ error: 'Missing eventType or vin' }, { status: 400 });
+    }
     const base44 = createClientFromRequest(req);
     const notif = buildNotification(event);
-
-    // Look up vehicle nickname from a cached vehicle record if available
-    try {
-      const vehicles = await base44.asServiceRole.entities.BouncieNotification.filter({ vehicle_vin: notif.vehicle_vin });
-      // nickname backfill not stored separately; leave as-is
-    } catch {}
-
     await base44.asServiceRole.entities.BouncieNotification.create(notif);
-
-    // Allow key rotation via response header
-    const headers = { 'Content-Type': 'application/json' };
-    return Response.json({ received: true }, { headers });
+    return Response.json({ received: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
