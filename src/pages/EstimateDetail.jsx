@@ -730,26 +730,62 @@ export default function EstimateDetail() {
       window.alert("This estimate changed in another session. Reload before cancelling so newer work is not cancelled from a stale page.");
       return;
     }
+    if (before.pipeline_sync_pending) {
+      window.alert("Sales Pipeline synchronization is still pending. Retry that synchronization before cancelling this estimate.");
+      return;
+    }
     if (before.work_order_id) {
       throw new Error("This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of cancelling the source estimate.");
     }
-    const after = { ...before, status: "cancelled", cancel_reason: reason };
-    await base44.entities.AllInOneEstimate.update(estimate.id, {
+    const cancellationResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
       status: "cancelled",
       cancel_reason: reason,
+      edit_reason: "",
     });
-    await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "" });
-    await recordEstimateLifecycleRevision({
-      estimateBefore: before,
-      estimateAfter: after,
-      reason,
-      revisionType: "cancel",
-      quoteTotalBefore: before.quote_total,
-      quoteTotalAfter: before.quote_total,
-      internalCostBefore: before.total_cost,
-      internalCostAfter: before.total_cost,
-      workOrderId: "",
-    });
+    const cancelled = cancellationResult?.updated_date ? cancellationResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+    let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, edit_reason: "" };
+    await rememberServerVersion(after);
+
+    try {
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: `cancel:${estimate.id}:${before.updated_date || "unknown"}`,
+        estimateBefore: before,
+        estimateAfter: after,
+        reason,
+        revisionType: "cancel",
+        quoteTotalBefore: before.quote_total,
+        quoteTotalAfter: before.quote_total,
+        internalCostBefore: before.total_cost,
+        internalCostAfter: before.total_cost,
+        workOrderId: "",
+      });
+    } catch (revisionError) {
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setShowCancel(false);
+      setRevisionRefreshKey((value) => value + 1);
+      throw new Error(`The estimate is cancelled, but its cancellation lifecycle revision could not be saved: ${revisionError?.message || "unknown error"}`);
+    }
+
+    try {
+      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "" });
+    } catch (syncError) {
+      const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+      const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
+        pipeline_sync_pending: true,
+        pipeline_sync_error: message,
+      }).catch(() => null);
+      const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
+      await rememberServerVersion(after);
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setShowCancel(false);
+      setRevisionRefreshKey((value) => value + 1);
+      window.alert(`The estimate is cancelled and its lifecycle history is saved, but Sales Pipeline synchronization is pending.\n\n${message}\n\nUse Retry Pipeline Sync in Finalize Estimate.`);
+      return;
+    }
+
     setShowCancel(false);
     navigate("/Estimator");
   };
