@@ -99,7 +99,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
   const fields = {
     title: firstNonBlank(estimate.project_name, existing?.title),
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
-    customer_id: firstNonBlank(customer?.id, estimate.customer_id, existing?.customer_id),
+    // Only propagate a Customer ID that was resolved from the live Customer entity,
+    // or preserve an existing WorkOrder link. Never copy an unverified/stale
+    // estimate.customer_id into a new pipeline record.
+    customer_id: firstNonBlank(customer?.id, existing?.customer_id),
     estimate_id: estimate.id,
     in_pipeline: true,
     sales_status: resolvePipelineSalesStatus(estimate.status, existing?.sales_status),
