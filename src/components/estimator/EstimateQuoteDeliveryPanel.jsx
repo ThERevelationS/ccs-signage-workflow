@@ -15,22 +15,35 @@ const formatBytes = (value) => {
 export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditReadError, setAuditReadError] = useState("");
 
   useEffect(() => {
     let active = true;
     if (!estimate?.id) {
       setRows([]);
+      setRevisionRows([]);
+      setAuditReadError("");
+      setAuditLoading(false);
       return () => { active = false; };
     }
 
+    setAuditLoading(true);
+    setAuditReadError("");
     Promise.all([
-      base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []),
-      listEstimateRevisions(estimate.id),
-    ]).then(([deliveries, revisions]) => {
-      if (!active) return;
-      setRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
-      setRevisionRows(revisions || []);
-    });
+      base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }),
+      listEstimateRevisions(estimate.id, { strict: true }),
+    ])
+      .then(([deliveries, revisions]) => {
+        if (!active) return;
+        setRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
+        setRevisionRows(revisions || []);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setAuditReadError(error?.message || "Quote delivery or revision history could not be verified.");
+      })
+      .finally(() => active && setAuditLoading(false));
 
     return () => { active = false; };
   }, [estimate?.id, refreshKey]);
@@ -95,7 +108,14 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
       </div>
 
       <div className="p-4">
-        {visibleRows.length === 0 ? (
+        {auditReadError && (
+          <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] text-red-700">
+            <strong>Quote delivery history could not be verified.</strong> {auditReadError} Delivery absence and issuance-tracking status are not shown until both audit sources load successfully.
+          </div>
+        )}
+        {auditLoading ? (
+          <div className="py-2 text-center text-[10px] text-gray-400">Loading quote delivery history…</div>
+        ) : auditReadError ? null : visibleRows.length === 0 ? (
           <div className="py-2 text-center text-[10px] text-gray-400">No customer quote deliveries have been recorded.</div>
         ) : (
           <div className="border border-gray-200 rounded overflow-hidden">
