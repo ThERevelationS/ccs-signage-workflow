@@ -32,6 +32,9 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       if (estimateBefore.status !== "approved") {
         throw new Error("Only an Approved estimate can be converted to a Work Order. Record customer acceptance or approve the estimate first.");
       }
+      if (estimateBefore.pipeline_sync_pending) {
+        throw new Error("Sales Pipeline synchronization is still pending. Retry that synchronization from Finalize Estimate before converting this estimate to a Work Order.");
+      }
       if (
         estimate.updated_date &&
         estimateBefore.updated_date &&
