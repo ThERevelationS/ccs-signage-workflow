@@ -20,18 +20,33 @@ function resolveTierNumber({ project, customer, requestedTierNumber, tiers }) {
   return num(tiers?.[0]?.tier_number, 1);
 }
 
-export async function loadCustomerPricingConfig(project = {}) {
-  const [tiers, categories, settings, customer] = await Promise.all([
-    base44.entities.MarkupTier.list("sort_order").catch(() => []),
-    base44.entities.MarkupCategory.list("sort_order").catch(() => []),
-    base44.entities.Settings.filter({ category: "pricing" }).catch(() => []),
-    project?.customer_id
-      ? base44.entities.Customer.get(project.customer_id).catch(() => null)
-      : Promise.resolve(null),
-  ]);
+const isNotFoundError = (error) => Number(error?.response?.status || error?.status || error?.statusCode || 0) === 404;
 
-  const defaultTierNumber = resolveTierNumber({ project, customer, tiers });
-  return { tiers: tiers || [], categories: categories || [], settings: settings || [], customer, defaultTierNumber };
+export async function loadCustomerPricingConfig(project = {}) {
+  try {
+    const [tiers, categories, settings, customer] = await Promise.all([
+      // Tier definitions and pricing Settings directly change customer selling
+      // price, so a read failure must never masquerade as "not configured".
+      base44.entities.MarkupTier.list("sort_order"),
+      // Category records only provide display labels; pricing lines already carry
+      // their category keys, so this metadata may remain non-blocking.
+      base44.entities.MarkupCategory.list("sort_order").catch(() => []),
+      base44.entities.Settings.filter({ category: "pricing" }),
+      project?.customer_id
+        ? base44.entities.Customer.get(project.customer_id).catch((error) => {
+            // Preserve legacy projects whose historical Customer record no longer
+            // exists, but fail closed on permission/network/service read errors.
+            if (isNotFoundError(error)) return null;
+            throw error;
+          })
+        : Promise.resolve(null),
+    ]);
+
+    const defaultTierNumber = resolveTierNumber({ project, customer, tiers });
+    return { tiers: tiers || [], categories: categories || [], settings: settings || [], customer, defaultTierNumber };
+  } catch (error) {
+    throw new Error(`Customer pricing configuration could not be verified: ${error?.message || "unknown read error"}`);
+  }
 }
 
 export function calculateCustomerPricingFromConfig({ project, categorize, tierNumber, tiers = [], settings = [], customer = null }) {
