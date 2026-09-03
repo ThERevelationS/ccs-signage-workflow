@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { liquidPaintRatePerSqft } from "@/components/estimator/paint/paintCalc";
 
@@ -69,6 +70,7 @@ export default function PaintingSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const settingsSaveRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -150,18 +152,25 @@ export default function PaintingSettings() {
   const removeConsumable = (index) => patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
 
   const handleSave = async () => {
+    if (settingsSaveRef.current) return;
+    settingsSaveRef.current = true;
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      const changed = rows.filter((row) => String(values[row.setting_name] ?? "") !== String(originalValues[row.setting_name] ?? ""));
-      await Promise.all(changed.map((row) => SettingsEntity.update(row.id, { setting_value: String(values[row.setting_name] ?? "") })));
-      const snapshot = Object.fromEntries(rows.map((row) => [row.setting_name, String(values[row.setting_name] ?? "")]));
-      setOriginalValues(snapshot);
-      setMessage(changed.length ? `Saved ${changed.length} Painting setting${changed.length === 1 ? "" : "s"}.` : "No Painting settings changed.");
+      const result = await saveSettingsRowsSafely({
+        SettingsEntity,
+        rows,
+        values,
+        originalValues: originalValues,
+      });
+      setRows(result.rows);
+      setOriginalValues(result.snapshot);
+      setMessage(result.changedCount ? `Saved ${result.changedCount} Painting setting${result.changedCount === 1 ? "" : "s"}.` : "No Painting settings changed.");
     } catch (e) {
       setError(e.message || "Could not save Painting settings. Admin permission may be required.");
     } finally {
+      settingsSaveRef.current = false;
       setSaving(false);
     }
   };

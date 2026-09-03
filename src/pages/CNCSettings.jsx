@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Calculator, Cpu, DollarSign, Gauge, Save, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 
 const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const MATERIALS = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -26,6 +27,7 @@ export default function CNCSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const settingsSaveRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -65,18 +67,25 @@ export default function CNCSettings() {
   }, [values]);
 
   const handleSave = async () => {
+    if (settingsSaveRef.current) return;
+    settingsSaveRef.current = true;
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      const changed = rows.filter((row) => String(values[row.setting_name] ?? "") !== String(original[row.setting_name] ?? ""));
-      await Promise.all(changed.map((row) => SettingsEntity.update(row.id, { setting_value: String(values[row.setting_name] ?? "") })));
-      const next = Object.fromEntries(rows.map((row) => [row.setting_name, String(values[row.setting_name] ?? "")]));
-      setOriginal(next);
-      setMessage(changed.length ? `Saved ${changed.length} CNC setting${changed.length === 1 ? "" : "s"}.` : "No CNC settings changed.");
+      const result = await saveSettingsRowsSafely({
+        SettingsEntity,
+        rows,
+        values,
+        originalValues: original,
+      });
+      setRows(result.rows);
+      setOriginal(result.snapshot);
+      setMessage(result.changedCount ? `Saved ${result.changedCount} CNC setting${result.changedCount === 1 ? "" : "s"}.` : "No CNC settings changed.");
     } catch (e) {
       setError(e.message || "Could not save CNC settings. Admin permission may be required.");
     } finally {
+      settingsSaveRef.current = false;
       setSaving(false);
     }
   };

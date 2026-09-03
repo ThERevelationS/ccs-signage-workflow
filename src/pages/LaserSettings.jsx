@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Calculator, Clock, DollarSign, Save, Scissors, Settings as SettingsIcon, Type, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"];
@@ -51,6 +52,7 @@ export default function LaserSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const settingsSaveRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -76,17 +78,25 @@ export default function LaserSettings() {
   const engravingRate = useMemo(() => calculateLaserRate(values, "engraving_laser"), [values]);
 
   const save = async () => {
+    if (settingsSaveRef.current) return;
+    settingsSaveRef.current = true;
     setSaving(true);
-    setMessage("");
     setError("");
+    setMessage("");
     try {
-      const changed = rows.filter((row) => String(values[row.setting_name] ?? "") !== String(original[row.setting_name] ?? ""));
-      await Promise.all(changed.map((row) => SettingsEntity.update(row.id, { setting_value: String(values[row.setting_name] ?? "") })));
-      setOriginal(Object.fromEntries(rows.map((row) => [row.setting_name, String(values[row.setting_name] ?? "")] )));
-      setMessage(changed.length ? `Saved ${changed.length} Laser setting${changed.length === 1 ? "" : "s"}.` : "No Laser settings changed.");
+      const result = await saveSettingsRowsSafely({
+        SettingsEntity,
+        rows,
+        values,
+        originalValues: original,
+      });
+      setRows(result.rows);
+      setOriginal(result.snapshot);
+      setMessage(result.changedCount ? `Saved ${result.changedCount} Laser setting${result.changedCount === 1 ? "" : "s"}.` : "No Laser settings changed.");
     } catch (e) {
       setError(e.message || "Could not save Laser settings. Admin permission may be required.");
     } finally {
+      settingsSaveRef.current = false;
       setSaving(false);
     }
   };
