@@ -101,7 +101,7 @@ export default function CustomerQuotePanel({
 
   const applyCompanyDefaults = async () => {
     if (readOnly || applyingDefaults) return;
-    const confirmed = window.confirm("Replace this estimate's current customer quote settings with the current company Quote Defaults? Product pricing, internal cost, Quote Version, issue date, and lifecycle status will not change. Save the estimate or open revision afterward to persist these settings.");
+    const confirmed = window.confirm("Replace this estimate's current customer quote settings with the current company Quote Defaults? Product pricing, internal cost, Quote Version, issue date, and lifecycle status will not change. Save the estimate or revision afterward to persist these settings.");
     if (!confirmed) return;
 
     setApplyingDefaults(true);
