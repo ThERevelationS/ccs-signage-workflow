@@ -20,15 +20,21 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const [project, setProject] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const [p, legacyMats, foundationMats] = await Promise.all([
-        id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
-        base44.entities.BrickStoneInventory.list("material_name", 500).catch(() => []),
-        base44.entities.FoundationInventory.list("material_name", 500).catch(() => []),
-      ]);
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [p, legacyMats, foundationMats] = await Promise.all([
+          id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
+          // Legacy entity is optional compatibility data; the modern Foundation
+          // inventory below is the authoritative masonry catalog and is strict.
+          base44.entities.BrickStoneInventory.list("material_name", 500).catch(() => []),
+          base44.entities.FoundationInventory.list("material_name", 500),
+        ]);
 
       // The committed SignEstimate Pro repo defined BrickStoneInventory but never
       // shipped a Brick estimator implementation or any BrickStoneInventory data.
@@ -54,9 +60,14 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         _inventory_entity: "BrickStoneInventory",
       }));
 
-      setProject(p);
-      setMaterials([...modernMats, ...legacyNormalized]);
-      setLoading(false);
+        setProject(p);
+        setMaterials([...modernMats, ...legacyNormalized]);
+      } catch (error) {
+        console.error("Brick & Stone prerequisites could not be loaded:", error);
+        setLoadError(error?.message || "Brick & Stone Builder prerequisites could not be verified.");
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [id]);
@@ -71,6 +82,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   );
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
 
   const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
