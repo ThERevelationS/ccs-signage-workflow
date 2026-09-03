@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { User } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Boxes, Lock, Upload, ShieldAlert } from "lucide-react";
+import { Plus, Search, Boxes, Upload, ShieldAlert } from "lucide-react";
 
 import { INVENTORY_SOURCES, SOURCE_BY_KEY } from "@/components/masterInventory/inventorySources";
 import InventoryFormModal from "@/components/masterInventory/InventoryFormModal";
