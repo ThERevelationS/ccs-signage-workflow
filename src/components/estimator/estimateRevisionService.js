@@ -54,23 +54,26 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
 
 export async function completeEstimateRevision({ revision, estimate, quoteTotal, internalCost, workOrderId = "" }) {
   if (!revision?.id) return null;
-  const before = revision.estimate_snapshot_before || {};
+  const current = await base44.entities.EstimateRevision.get(revision.id).catch(() => null);
+  if (current?.revision_status === "completed") return current;
+  const sourceRevision = current || revision;
+  const before = sourceRevision.estimate_snapshot_before || {};
   const after = estimateAuditSnapshot(estimate, { quoteTotal, internalCost });
   const quoteVersion = Math.max(0, Math.floor(num(after.quote_version)));
   const payload = {
     revision_status: "completed",
     quote_version: quoteVersion,
     quote_issue_key: quoteIssueKey(estimate.id || revision.estimate_id, quoteVersion),
-    new_status: after.status || revision.previous_status || "draft",
+    new_status: after.status || sourceRevision.previous_status || "draft",
     new_quote_total: num(after.quote_total),
     new_total_cost: num(after.total_cost),
     change_summary: summarizeEstimateChanges(before, after),
     estimate_snapshot_after: after,
     completed_at: new Date().toISOString(),
-    work_order_id: workOrderId || revision.work_order_id || "",
+    work_order_id: workOrderId || sourceRevision.work_order_id || "",
   };
-  const updated = await base44.entities.EstimateRevision.update(revision.id, payload);
-  return { ...revision, ...payload, ...(updated || {}) };
+  const updated = await base44.entities.EstimateRevision.update(sourceRevision.id, payload);
+  return { ...sourceRevision, ...payload, ...(updated || {}) };
 }
 
 export async function recordEstimateLifecycleRevision({
