@@ -301,7 +301,7 @@ export default function EstimateDetail() {
     }
   };
 
-  const handleQuoteDelivered = async ({ recipientEmail, issueMetadata }) => {
+  const handleQuoteDelivered = async ({ recipientEmail, issueMetadata, quoteVersion, gmailMessageId, sentAt, deliveryId, archive }) => {
     // Re-read after Gmail accepts the message so a concurrent lifecycle change
     // cannot silently be overwritten by the delivery finalization.
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
@@ -358,6 +358,13 @@ export default function EstimateDetail() {
       internalCostBefore: before.total_cost,
       internalCostAfter: internalCost,
       workOrderId: saved.work_order_id || "",
+      deliveryEvidence: {
+        deliveryId: deliveryId || "",
+        gmailMessageId: gmailMessageId || "",
+        recipientEmail,
+        sentAt: sentAt || new Date().toISOString(),
+        archive: archive || null,
+      },
     });
 
     setEstimate(saved);
