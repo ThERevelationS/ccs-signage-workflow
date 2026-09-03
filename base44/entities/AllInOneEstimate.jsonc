@@ -271,7 +271,8 @@
     },
     "show_notes_on_quote": {
       "type": "boolean",
-      "default": true
+      "default": false,
+      "description": "When true, estimate-level notes are included on the customer quote. Defaults off because estimate notes may contain internal project context."
     },
     "show_terms_block": {
       "type": "boolean",
