@@ -26,10 +26,15 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
   const [tierNumber, setTierNumber] = useState(1);
   const [customerDefaultTier, setCustomerDefaultTier] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     let active = true;
     (async () => {
+      if (active) {
+        setLoading(true);
+        setLoadError("");
+      }
       try {
         const config = await loadCustomerPricingConfig(project);
         if (!active) return;
@@ -40,6 +45,7 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
         setTierNumber(Number(config.defaultTierNumber) || 1);
       } catch (e) {
         console.error("CustomerPricingTab load error:", e);
+        if (active) setLoadError(e?.message || "Customer pricing configuration could not be verified.");
       }
       if (active) setLoading(false);
     })();
@@ -99,6 +105,23 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
     return (
       <Card className="bg-white border-0 shadow-sm">
         <CardContent className="p-8 text-center text-slate-500">Loading pricing tiers…</CardContent>
+      </Card>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card className="bg-red-50 border-red-200">
+        <CardContent className="p-6 text-sm text-red-900">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium mb-1">Customer pricing unavailable</p>
+              <p className="text-xs">{loadError}</p>
+              <p className="text-xs mt-1">Tier-based customer pricing is not treated as missing or recalculated from fallback configuration while these pricing records cannot be verified.</p>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     );
   }
