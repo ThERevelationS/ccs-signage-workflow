@@ -4,6 +4,10 @@ import { localDateStamp } from "./quoteLifecycle";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
+const CUSTOMER_SYNC_KEYS = ["client_name", "office_phone", "order_contact", "contact_email", "office_phone_ext", "salesperson", "sales_center", "tax_group", "terms", "site_address"];
+
+export const estimateCustomerFieldsChanged = (before = {}, after = {}) =>
+  CUSTOMER_SYNC_KEYS.some((key) => String(before?.[key] ?? "") !== String(after?.[key] ?? ""));
 
 export const canonicalEstimateWorkOrder = (rows = []) => (rows || []).slice().sort((a, b) => {
   const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
@@ -48,10 +52,21 @@ const customerFieldsFromEstimate = (form) => {
  * Create or update the shared Customer record from an estimate's Step 1 form.
  * Returns the Customer record.
  */
+export const resolveCustomerForEstimate = async (form, customers = []) => {
+  const linkedId = String(form?.customer_id || "").trim();
+  if (linkedId) {
+    const linked = customers.find((customer) => customer.id === linkedId);
+    if (linked) return linked;
+    const fetched = await base44.entities.Customer.get(linkedId).catch(() => null);
+    if (fetched) return fetched;
+  }
+  return findCustomerByName(customers, form?.client_name);
+};
+
 export const upsertCustomerFromEstimate = async (form, customers = []) => {
   const name = String(form.client_name || "").trim();
   const fields = customerFieldsFromEstimate(form);
-  const existing = findCustomerByName(customers, name);
+  const existing = await resolveCustomerForEstimate(form, customers);
   if (existing) {
     if (Object.keys(fields).length) await base44.entities.Customer.update(existing.id, fields);
     return { ...existing, ...fields };
@@ -136,9 +151,11 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
  * One call used when an estimate is saved: keep the shared Customer record and the
  * Sales Pipeline lead in step with the estimate.
  */
-export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "" } = {}) => {
+export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = true } = {}) => {
   const customers = await base44.entities.Customer.list("company_name", 1000);
-  const customer = await upsertCustomerFromEstimate(estimate, customers || []);
+  const customer = syncCustomer
+    ? await upsertCustomerFromEstimate(estimate, customers || [])
+    : await resolveCustomerForEstimate(estimate, customers || []);
   await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus });
   return customer;
 };
