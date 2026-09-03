@@ -249,6 +249,9 @@ export default function EstimateDetail() {
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
     }
+    if (current.pipeline_sync_pending) {
+      throw new Error("Sales Pipeline synchronization is still pending. Retry that synchronization before starting another estimate revision.");
+    }
     const currentPricing = computePricing(current);
     const internalCost = acceptedInternalEstimateCost(current.line_items || []);
     const revision = await startEstimateRevision({
