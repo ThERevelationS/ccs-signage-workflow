@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookmarkPlus, Layers3, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
@@ -25,6 +25,7 @@ export default function SavePartTemplateModal({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
 
   const isGroup = itemType === "part_group";
   const activeParts = useMemo(() => (parts || []).filter((row) => row.is_active !== false), [parts]);
@@ -47,7 +48,8 @@ export default function SavePartTemplateModal({
 
   const save = async (event) => {
     event.preventDefault();
-    if (!name.trim() || saving) return;
+    if (!name.trim() || saveRef.current) return;
+    saveRef.current = true;
     setSaving(true);
     setError("");
     try {
@@ -66,6 +68,8 @@ export default function SavePartTemplateModal({
       onClose?.();
     } catch (err) {
       setError(err?.message || "Part could not be saved to the Part Library.");
+    } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };

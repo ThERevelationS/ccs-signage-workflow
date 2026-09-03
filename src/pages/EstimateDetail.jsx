@@ -212,6 +212,11 @@ export default function EstimateDetail() {
   };
 
   const createQuickProduct = async (line, options) => {
+    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (!current) throw new Error("This estimate no longer exists.");
+    if (hasServerConflict(current)) {
+      throw new Error("This estimate changed in another session. Reload it before saving a Quick Product so the reusable snapshot cannot mix old and new Product state.");
+    }
     await saveProductAsQuickProduct({
       estimateId: estimate.id,
       line,

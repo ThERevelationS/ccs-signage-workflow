@@ -23,35 +23,60 @@ function searchText(values) {
 
 export async function savePartTemplate({ estimateId = "", builderProductId = "", part, options = {} }) {
   if (!part?.id) throw new Error("Part is required.");
-  const meta = normalizeOptions({ template_name: part.client_label || part.part_name || "Saved Part", ...options });
+  const livePart = await base44.entities.BuilderPart.get(part.id);
+  if (!livePart) throw new Error("This Part no longer exists. Reload the Product before saving it to the Part Library.");
+  if (part.updated_date && livePart.updated_date && part.updated_date !== livePart.updated_date) {
+    throw new Error("This Part changed in another session. Reload the Product and review the latest Part before saving it to the Part Library.");
+  }
+  const meta = normalizeOptions({ template_name: livePart.client_label || livePart.part_name || "Saved Part", ...options });
   return base44.entities.PartTemplate.create({
     ...meta,
     template_version: 1,
     template_type: "part",
-    source_module_key: part.source_module_key || "",
-    source_part_type: part.part_type || "",
-    source_part_subtype: part.part_subtype || "",
+    source_module_key: livePart.source_module_key || "",
+    source_part_type: livePart.part_type || "",
+    source_part_subtype: livePart.part_subtype || "",
     created_from_estimate_id: estimateId,
-    created_from_product_id: builderProductId || part.builder_product_id || "",
-    created_from_part_id: part.id,
-    created_from_part_group_id: part.part_group_id || "",
-    part_snapshot: cloneSnapshot(part),
+    created_from_product_id: builderProductId || livePart.builder_product_id || "",
+    created_from_part_id: livePart.id,
+    created_from_part_group_id: livePart.part_group_id || "",
+    part_snapshot: cloneSnapshot(livePart),
     group_snapshot: {},
     parts_snapshot: [],
     part_count: 1,
-    frozen_cost: num(part.frozen_extended_cost),
-    current_cost: num(part.current_extended_cost, num(part.frozen_extended_cost)),
-    contains_detached_parts: detached(part),
-    search_text: searchText([meta.template_name, meta.category, meta.tags, part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name, part.source_module_key]),
+    frozen_cost: num(livePart.frozen_extended_cost),
+    current_cost: num(livePart.current_extended_cost, num(livePart.frozen_extended_cost)),
+    contains_detached_parts: detached(livePart),
+    search_text: searchText([meta.template_name, meta.category, meta.tags, livePart.part_name, livePart.client_label, livePart.part_type, livePart.part_subtype, livePart.inventory_item_name, livePart.source_module_key]),
     is_active: true,
   });
 }
 
 export async function savePartGroupTemplate({ estimateId = "", builderProductId = "", group, parts = [], options = {} }) {
   if (!group?.id) throw new Error("Part Group is required.");
-  const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  if (!activeParts.length) throw new Error("Part Group does not contain any active Parts.");
-  const meta = normalizeOptions({ template_name: group.client_label || group.group_name || "Saved Part Group", ...options });
+  const loadedActiveParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  if (!loadedActiveParts.length) throw new Error("Part Group does not contain any active Parts.");
+
+  const [liveGroup, liveRows] = await Promise.all([
+    base44.entities.BuilderPartGroup.get(group.id),
+    base44.entities.BuilderPart.filter({ part_group_id: group.id }),
+  ]);
+  if (!liveGroup) throw new Error("This Part Group no longer exists. Reload the Product before saving it to the Part Library.");
+  if (group.updated_date && liveGroup.updated_date && group.updated_date !== liveGroup.updated_date) {
+    throw new Error("This Part Group changed in another session. Reload the Product before saving it to the Part Library.");
+  }
+  const activeParts = (liveRows || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const loadedById = new Map(loadedActiveParts.map((part) => [part.id, part]));
+  const membershipChanged = activeParts.length !== loadedActiveParts.length || activeParts.some((part) => !loadedById.has(part.id));
+  const memberVersionChanged = activeParts.some((livePart) => {
+    const loaded = loadedById.get(livePart.id);
+    return !!(loaded?.updated_date && livePart.updated_date && loaded.updated_date !== livePart.updated_date);
+  });
+  if (membershipChanged || memberVersionChanged) {
+    throw new Error("One or more Parts in this Part Group changed in another session. Reload the Product and review the current group before saving it to the Part Library.");
+  }
+
+  const meta = normalizeOptions({ template_name: liveGroup.client_label || liveGroup.group_name || "Saved Part Group", ...options });
   const first = activeParts[0] || {};
   return base44.entities.PartTemplate.create({
     ...meta,
@@ -61,17 +86,17 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
     source_part_type: "part_group",
     source_part_subtype: "",
     created_from_estimate_id: estimateId,
-    created_from_product_id: builderProductId || group.builder_product_id || "",
-    created_from_part_group_id: group.id,
+    created_from_product_id: builderProductId || liveGroup.builder_product_id || "",
+    created_from_part_group_id: liveGroup.id,
     created_from_part_id: "",
     part_snapshot: {},
-    group_snapshot: { ...cloneSnapshot(group), snapshot_source_group_id: group.id },
+    group_snapshot: { ...cloneSnapshot(liveGroup), snapshot_source_group_id: liveGroup.id },
     parts_snapshot: activeParts.map(cloneSnapshot),
     part_count: activeParts.length,
     frozen_cost: activeParts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0),
     current_cost: activeParts.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0),
     contains_detached_parts: activeParts.some(detached),
-    search_text: searchText([meta.template_name, meta.category, meta.tags, group.group_name, group.client_label, group.description, first.source_module_key, activeParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name])]),
+    search_text: searchText([meta.template_name, meta.category, meta.tags, liveGroup.group_name, liveGroup.client_label, liveGroup.description, first.source_module_key, activeParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name])]),
     is_active: true,
   });
 }

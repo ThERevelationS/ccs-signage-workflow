@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PackagePlus, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
   const [extraCategories, setExtraCategories] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +45,8 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
 
   const submit = async (event) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || saveRef.current) return;
+    saveRef.current = true;
     const extra = extraCategories.split(",").map((item) => item.trim()).filter(Boolean);
     const finalCategories = [...new Set([...categories, ...extra])];
     setSaving(true);
@@ -54,6 +56,8 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
       onClose?.();
     } catch (err) {
       setError(err?.message || "Quick Product could not be saved.");
+    } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };
