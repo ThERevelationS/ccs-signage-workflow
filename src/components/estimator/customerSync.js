@@ -68,6 +68,8 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     previousEstimateStatus,
     existingDateEstimateSent: existing?.date_estimate_sent,
     today: localDateStamp(),
+    issuedQuoteDate: estimate.quote_issue_date || "",
+    issuedQuoteVersion: estimate.quote_version || 0,
   });
   const fields = {
     title: firstNonBlank(estimate.project_name, existing?.title),
