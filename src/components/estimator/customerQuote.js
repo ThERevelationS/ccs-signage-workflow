@@ -16,7 +16,7 @@ export function buildCustomerQuoteRows(estimate, pricing) {
     .filter((section) => section.include_in_customer !== false)
     .map((section, index) => ({
       key: section.line_id || section.project_id || `product-${index}`,
-      name: section.client_product_name || section.project_name || section.builder_name || `Product ${index + 1}`,
+      name: section.client_product_name || section.project_name || section.product_category || `Product ${index + 1}`,
       category: section.product_category || "",
       quantity: section.quantity,
       description: section.customer_description || "",

@@ -1,0 +1,79 @@
+{
+  "name": "BouncieNotification",
+  "type": "object",
+  "description": "Fleet notifications derived from Bouncie webhooks and vehicle stats (MIL/check-engine, battery, fuel, device connect/disconnect, trips). Visible to all app users; only admins delete.",
+  "properties": {
+    "vehicle_vin": {
+      "type": "string",
+      "description": "VIN of the vehicle this notification relates to."
+    },
+    "vehicle_imei": {
+      "type": "string",
+      "description": "Bouncie device IMEI for the vehicle."
+    },
+    "vehicle_nickname": {
+      "type": "string",
+      "description": "Vehicle nickname at the time the notification was generated."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "drive",
+        "vehicle",
+        "care"
+      ],
+      "description": "Bouncie notification category: drive (trips/fuel/speed), vehicle (battery/device), care (MIL/engine)."
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Underlying Bouncie event type: mil, battery, fuel, connect, disconnect, tripStart, tripEnd, etc."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short headline shown in the notification list."
+    },
+    "description": {
+      "type": "string",
+      "description": "Longer detail text (e.g. DTC code + name, or disconnect duration)."
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ],
+      "default": "info"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the underlying event occurred."
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "raw_data": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Original webhook payload or vehicle stat snapshot."
+    }
+  },
+  "required": [
+    "vehicle_vin",
+    "category",
+    "title",
+    "timestamp"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "name": "BouncieConnection",
+  "type": "object",
+  "description": "Stores the Bouncie OAuth tokens for the company fleet account. A single shared connection record is used; the most recently updated record is treated as active.",
+  "properties": {
+    "access_token": {
+      "type": "string",
+      "description": "Bouncie API access token (sent raw in the Authorization header, no Bearer prefix)."
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "Bouncie OAuth refresh token used to obtain new access tokens."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when the access token expires."
+    },
+    "token_type": {
+      "type": "string",
+      "default": "Bearer"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the Bouncie account holder."
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the Bouncie account holder."
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Bouncie user id."
+    },
+    "connected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "connected_by": {
+      "type": "string",
+      "description": "Email of the app admin who initiated the connection."
+    }
+  },
+  "required": [
+    "access_token",
+    "refresh_token"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
