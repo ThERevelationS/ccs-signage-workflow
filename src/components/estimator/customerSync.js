@@ -6,8 +6,11 @@ const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
 const CUSTOMER_SYNC_KEYS = ["client_name", "office_phone", "order_contact", "contact_email", "office_phone_ext", "salesperson", "sales_center", "tax_group", "terms", "site_address"];
 
+export const estimateCustomerChangedKeys = (before = {}, after = {}) =>
+  CUSTOMER_SYNC_KEYS.filter((key) => String(before?.[key] ?? "") !== String(after?.[key] ?? ""));
+
 export const estimateCustomerFieldsChanged = (before = {}, after = {}) =>
-  CUSTOMER_SYNC_KEYS.some((key) => String(before?.[key] ?? "") !== String(after?.[key] ?? ""));
+  estimateCustomerChangedKeys(before, after).length > 0;
 
 export const canonicalEstimateWorkOrder = (rows = []) => (rows || []).slice().sort((a, b) => {
   const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
@@ -28,23 +31,23 @@ export const findCustomerByName = (customers, name) => {
 };
 
 /** Map estimate Step-1 form values onto Customer fields (only non-empty values). */
-const customerFieldsFromEstimate = (form) => {
+const customerFieldsFromEstimate = (form, changedKeys = null) => {
+  const allowed = changedKeys ? new Set(changedKeys) : null;
+  const include = (sourceKey) => !allowed || allowed.has(sourceKey);
   const [first, ...rest] = String(form.order_contact || "").trim().split(" ");
   const fields = {
-    company_phone: form.office_phone,
-    contact_first_name: first,
-    contact_last_name: rest.join(" "),
-    contact_email: form.contact_email,
-    contact_office_phone: form.office_phone,
-    contact_office_ext: form.office_phone_ext,
-    salesperson: form.salesperson,
-    location: form.sales_center,
-    default_tax_group: form.tax_group,
-    terms: form.terms,
-    location_address_1: form.site_address,
+    ...(include("office_phone") ? { company_phone: form.office_phone, contact_office_phone: form.office_phone } : {}),
+    ...(include("order_contact") ? { contact_first_name: first, contact_last_name: rest.join(" ") } : {}),
+    ...(include("contact_email") ? { contact_email: form.contact_email } : {}),
+    ...(include("office_phone_ext") ? { contact_office_ext: form.office_phone_ext } : {}),
+    ...(include("salesperson") ? { salesperson: form.salesperson } : {}),
+    ...(include("sales_center") ? { location: form.sales_center } : {}),
+    ...(include("tax_group") ? { default_tax_group: form.tax_group } : {}),
+    ...(include("terms") ? { terms: form.terms } : {}),
+    ...(include("site_address") ? { location_address_1: form.site_address } : {}),
   };
   return Object.fromEntries(
-    Object.entries(fields).filter(([, v]) => v !== undefined && v !== null && v !== "")
+    Object.entries(fields).filter(([, v]) => v !== undefined && v !== null)
   );
 };
 
@@ -63,9 +66,9 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
   return findCustomerByName(customers, form?.client_name);
 };
 
-export const upsertCustomerFromEstimate = async (form, customers = []) => {
+export const upsertCustomerFromEstimate = async (form, customers = [], { changedKeys = null } = {}) => {
   const name = String(form.client_name || "").trim();
-  const fields = customerFieldsFromEstimate(form);
+  const fields = customerFieldsFromEstimate(form, changedKeys);
   const existing = await resolveCustomerForEstimate(form, customers);
   if (existing) {
     if (Object.keys(fields).length) await base44.entities.Customer.update(existing.id, fields);
@@ -151,10 +154,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
  * One call used when an estimate is saved: keep the shared Customer record and the
  * Sales Pipeline lead in step with the estimate.
  */
-export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false } = {}) => {
+export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false, customerChangedKeys = null } = {}) => {
   const customers = await base44.entities.Customer.list("company_name", 1000);
   const customer = syncCustomer
-    ? await upsertCustomerFromEstimate(estimate, customers || [])
+    ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys })
     : await resolveCustomerForEstimate(estimate, customers || []);
   await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus });
   return customer;
