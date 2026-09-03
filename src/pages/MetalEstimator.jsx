@@ -40,6 +40,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const [inventory, setInventory] = useState([]);
   const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
 
@@ -47,12 +48,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
+      setLoadError("");
       try {
         const [settingsData, inventoryData, existing, estimate] = await Promise.all([
           Settings.list(),
           InventoryEntity.list(),
-          editId ? MetalProject.get(editId).catch(() => null) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+          editId ? MetalProject.get(editId) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 
@@ -94,6 +96,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
         }
       } catch (error) {
         console.error('Error loading metal estimator:', error);
+        if (!cancelled) setLoadError(error?.message || "Metal Builder prerequisites could not be verified.");
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -1160,6 +1163,16 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const { totalMaterialsCost, totalSuppliesCost, totalFabricationCost, totalWeldingCost, totalFinishingCost, grandTotal } = getProjectCalculations();
 
   if (isLoading) return <div className="p-8">Loading...</div>;
+  if (loadError) return (
+    <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+      <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+        <div className="font-bold">Metal Builder unavailable</div>
+        <div className="mt-1 text-sm">Required Settings, inventory, project data, or estimate context could not be verified. Hard-coded fallback rates were not used.</div>
+        <div className="mt-2 text-xs break-words">{loadError}</div>
+        <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : (window.location.href = estimateId ? `/EstimateDetail?id=${estimateId}` : '/Estimator')}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
