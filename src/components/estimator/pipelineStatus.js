@@ -1,6 +1,10 @@
 export function resolvePipelineSalesStatus(estimateStatus, existingStatus = "") {
   if (estimateStatus === "approved") return "won";
-  if (["archived", "cancelled"].includes(estimateStatus)) return "lost";
+  if (estimateStatus === "cancelled") return "lost";
+  // Archived is an Estimator filing/queue state, not a sales outcome. Preserve
+  // the pipeline result already earned (won/quoted/lost/on-hold/etc.) rather
+  // than silently reclassifying an archived record as Lost.
+  if (estimateStatus === "archived") return existingStatus || "lead";
   if (estimateStatus === "sent") {
     return ["won", "lost", "on_hold"].includes(existingStatus) ? existingStatus : "quoted";
   }
