@@ -27,6 +27,12 @@ const SCOPE_META = {
   sign_maintenance: { label: "Sign Maintenance",  color: "text-cyan-600", accent: "bg-cyan-50 border-cyan-200" },
 };
 
+const stripVinylMeta = (row = {}) => {
+  const payload = { ...row };
+  ["id", "created_date", "updated_date", "created_by_id"].forEach((key) => delete payload[key]);
+  return payload;
+};
+
 const blankVinyl = (scope) => ({
   vinyl_name: "New Vinyl",
   vinyl_category: "calendered",
@@ -122,7 +128,8 @@ export default function VinylInventoryTab({ scope = "master" }) {
         alert("This vinyl changed in another session. Your changes were not saved; the latest record has been reloaded into the editor.");
         return;
       }
-      const { id, created_date, updated_date, created_by_id, ...patch } = draft;
+      const id = draft.id;
+      const patch = stripVinylMeta(draft);
       const updateResult = await VinylInventory.update(id, patch);
       const refreshed = updateResult?.updated_date ? updateResult : await VinylInventory.get(id);
       setItems(prev => prev.map(v => v.id === id ? { ...v, ...patch, ...(refreshed || {}) } : v));
@@ -172,8 +179,8 @@ export default function VinylInventoryTab({ scope = "master" }) {
         alert("This vinyl changed in another session and was not duplicated. The latest record has been reloaded.");
         return;
       }
-      // eslint-disable-next-line no-unused-vars
-      const { id, created_date, updated_date, created_by_id, ...rest } = live;
+      const id = live.id;
+      const rest = stripVinylMeta(live);
       let groupKey = live.product_group_key;
       if (!groupKey) {
         groupKey = `grp-${id || Math.random().toString(36).slice(2, 9)}`;
