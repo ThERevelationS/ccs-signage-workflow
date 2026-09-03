@@ -72,6 +72,9 @@ Deno.serve(async (req) => {
       quote_version: quoteVersion,
     }));
     if (existing) return Response.json({ acceptance: existing, reused: true });
+    if (estimate.status === 'approved') {
+      return Response.json({ error: 'This estimate is already Approved, but no immutable acceptance record exists for the current Quote Version. Acceptance cannot be reconstructed automatically.' }, { status: 409 });
+    }
 
     let delivery: any = null;
     if (deliveryId) {
