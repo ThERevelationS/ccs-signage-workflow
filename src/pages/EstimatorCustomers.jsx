@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Phone, Mail } from "lucide-react";
+import { Users, Search, Phone, Mail, RefreshCw } from "lucide-react";
 import { backfillCustomersFromWorkOrders } from "@/components/estimator/customerSync";
 
 const FILTERS = [
@@ -20,28 +20,45 @@ export default function EstimatorCustomers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [savingTierId, setSavingTierId] = useState(null);
+  const [me, setMe] = useState(null);
+  const [syncingWorkflowCustomers, setSyncingWorkflowCustomers] = useState(false);
+  const workflowSyncRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
-      const [res, tierRows] = await Promise.all([
+      const [res, tierRows, user] = await Promise.all([
         base44.entities.Customer.list("company_name", 1000),
         base44.entities.MarkupTier.list("sort_order").catch(() => []),
+        base44.auth.me().catch(() => null),
       ]);
       setCustomers(res || []);
       setTiers(tierRows || []);
+      setMe(user);
       setLoading(false);
-      // Pull in any client that only exists in the Sales Pipeline / workflow
-      const merged = await backfillCustomersFromWorkOrders(res || []);
-      if (merged.length !== (res || []).length) {
-        setCustomers(
-          [...merged].sort((a, b) =>
-            String(a.company_name || "").localeCompare(String(b.company_name || ""))
-          )
-        );
-      }
     };
     load();
   }, []);
+
+  const syncWorkflowCustomers = async () => {
+    if (me?.role !== "admin" || workflowSyncRef.current) return;
+    if (!window.confirm("Create shared Customer records for workflow/Sales Pipeline client names that do not already have an exact Customer or legacy-name match? Existing Customer records will not be merged or overwritten.")) return;
+    workflowSyncRef.current = true;
+    setSyncingWorkflowCustomers(true);
+    try {
+      const current = await base44.entities.Customer.list("company_name", 1000);
+      const merged = await backfillCustomersFromWorkOrders(current || []);
+      const createdCount = Math.max(0, merged.length - (current || []).length);
+      setCustomers(
+        [...merged].sort((a, b) => String(a.company_name || "").localeCompare(String(b.company_name || "")))
+      );
+      window.alert(createdCount ? `${createdCount} workflow customer${createdCount === 1 ? "" : "s"} added.` : "No missing workflow customers were found.");
+    } catch (error) {
+      window.alert(error?.message || "Workflow customers could not be synchronized.");
+    } finally {
+      workflowSyncRef.current = false;
+      setSyncingWorkflowCustomers(false);
+    }
+  };
 
   const updatePricingTier = async (customerId, tierNumber) => {
     const nextTier = Number(tierNumber) || 1;
@@ -80,6 +97,18 @@ export default function EstimatorCustomers() {
           <Users className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">CUSTOMERS</h1>
           <span className="ml-auto text-xs text-gray-400">{customers.length} total</span>
+          {me?.role === "admin" && (
+            <button
+              type="button"
+              onClick={syncWorkflowCustomers}
+              disabled={syncingWorkflowCustomers}
+              className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              title="Explicitly add workflow/Sales Pipeline client names that do not already have a shared Customer record"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingWorkflowCustomers ? "animate-spin" : ""}`} />
+              {syncingWorkflowCustomers ? "Syncing…" : "Sync Workflow Customers"}
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">
