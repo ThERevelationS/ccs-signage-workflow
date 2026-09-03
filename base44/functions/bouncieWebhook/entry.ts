@@ -20,7 +20,13 @@ export default async function(req) {
       return Response.json({ error: 'Malformed payload' }, { status: 400 });
     }
 
-    const base44 = createClientFromRequest(req);
+    // Bouncie sends its webhook key in Authorization, which is not a Base44 bearer
+    // token — strip it so the SDK client initializes as an unauthenticated service caller.
+    const cleanHeaders = new Headers(req.headers);
+    cleanHeaders.delete('Authorization');
+    cleanHeaders.delete('X-Bouncie-Authorization');
+    const base44 = createClientFromRequest(new Request(req.url, { method: 'POST', headers: cleanHeaders }));
+
     const normalized = normalizeWebhookEvent(event);
     const vin = event.vin || '';
 
@@ -62,6 +68,6 @@ export default async function(req) {
     // Always 2xx on a valid, authenticated event so Bouncie does not retry.
     return Response.json({ received: true, duplicate, eventType: normalized.eventType });
   } catch (error) {
-    return Response.json({ error: 'Processing error' }, { status: 500 });
+    return Response.json({ error: 'Processing error', detail: String(error && error.message) }, { status: 500 });
   }
 }
