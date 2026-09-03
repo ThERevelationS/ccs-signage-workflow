@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Mail, Printer, RefreshCw, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -71,6 +71,7 @@ export default function CustomerQuotePanel({
   const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
   const [sendOpen, setSendOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [sendError, setSendError] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
@@ -131,6 +132,7 @@ export default function CustomerQuotePanel({
   };
 
   const sendQuote = async () => {
+    if (sendingRef.current) return;
     const recipient = String(recipientEmail || "").trim();
     const subject = String(emailSubject || "").trim();
     const message = String(emailMessage || "").trim();
@@ -143,6 +145,7 @@ export default function CustomerQuotePanel({
       return;
     }
 
+    sendingRef.current = true;
     setSending(true);
     setSendError("");
     let emailWasSent = false;
@@ -216,6 +219,7 @@ export default function CustomerQuotePanel({
       const detail = error?.message || "Quote could not be emailed.";
       setSendError(emailWasSent ? `The email was sent, but estimate tracking could not be finalized: ${detail}` : detail);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
