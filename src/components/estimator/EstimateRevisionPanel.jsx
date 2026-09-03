@@ -11,8 +11,9 @@ const TYPE_LABELS = {
   conversion: "Work Order conversion",
 };
 
-export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, refreshKey = 0 }) {
+export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, onRepairConversionTracking, repairingConversionTracking = false, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
+  const [revisionsLoading, setRevisionsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [starting, setStarting] = useState(false);
@@ -20,7 +21,10 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
 
   useEffect(() => {
     let active = true;
-    listEstimateRevisions(estimate?.id).then((result) => active && setRows(result || []));
+    setRevisionsLoading(true);
+    listEstimateRevisions(estimate?.id)
+      .then((result) => active && setRows(result || []))
+      .finally(() => active && setRevisionsLoading(false));
     return () => { active = false; };
   }, [estimate?.id, refreshKey, openRevision?.id, openRevision?.revision_status]);
 
@@ -29,6 +33,13 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   const cancelledEstimate = persistedStatus === "cancelled";
   const canStartRevision = protectedEstimate && !cancelledEstimate && !openRevision && !estimate?.pipeline_sync_pending;
   const pendingTransitionReason = !openRevision && requiresEstimateLifecycleReason(persistedStatus, estimate?.status);
+  const conversionIdempotencyKey = estimate?.work_order_id ? `work_order_conversion:${estimate.work_order_id}` : "";
+  const hasConversionTracking = !conversionIdempotencyKey || rows.some((row) =>
+    row.revision_status === "completed" &&
+    row.revision_type === "conversion" &&
+    (row.idempotency_key === conversionIdempotencyKey || row.notes === conversionIdempotencyKey || row.work_order_id === estimate.work_order_id)
+  );
+  const conversionTrackingMissing = !revisionsLoading && !!estimate?.work_order_id && !hasConversionTracking;
 
   const start = async () => {
     if (!reason.trim() || starting) return;
@@ -60,6 +71,21 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
       </div>
 
       <div className="p-4 space-y-3">
+        {conversionTrackingMissing && (
+          <div className="rounded border border-rose-300 bg-rose-50 px-3 py-2.5 flex items-start justify-between gap-3">
+            <div className="min-w-0 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-rose-700 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold text-rose-900">Work Order conversion tracking incomplete</div>
+                <div className="text-[10px] text-rose-800 mt-0.5">The estimate is already linked to Work Order {estimate.work_order_id}, but its conversion lifecycle revision is missing. Repairing this adds only the missing audit row; it does not change the estimate, pricing, or Work Order.</div>
+              </div>
+            </div>
+            <button type="button" onClick={onRepairConversionTracking} disabled={repairingConversionTracking} className="h-[30px] px-3 rounded border border-rose-300 bg-white text-[10px] font-bold text-rose-800 hover:bg-rose-100 disabled:opacity-50 inline-flex items-center gap-1.5 whitespace-nowrap">
+              <RefreshCw className={`w-3.5 h-3.5 ${repairingConversionTracking ? "animate-spin" : ""}`} /> {repairingConversionTracking ? "Repairing…" : "Repair Conversion Tracking"}
+            </button>
+          </div>
+        )}
+
         {estimate?.pipeline_sync_pending && (
           <div className="rounded border border-orange-300 bg-orange-50 px-3 py-2.5 flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-2">
