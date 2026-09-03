@@ -178,7 +178,7 @@ export default function MasterSuppliesTab({ isAdmin }) {
         <div className="flex gap-2 items-center">
           <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-56" />
           {isAdmin && (
-            <Button size="sm" onClick={() => { setEditItem({ _new: true, _source: "channel_letter", raw: {} }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button size="sm" disabled={!!loadError} onClick={() => { setEditItem({ _new: true, _source: "channel_letter", raw: {} }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
               <Plus className="w-4 h-4 mr-1" /> Add Supply
             </Button>
           )}
