@@ -119,16 +119,20 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
             Default pricing tier
             <select
               value={String(Number(data.pricing_tier) || 1)}
+              disabled={tierLoading || !!tierLoadError || saving}
               onChange={(event) => setData((current) => ({ ...current, pricing_tier: Number(event.target.value) || 1 }))}
-              className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] bg-white focus:outline-none focus:border-red-400"
+              className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] bg-white focus:outline-none focus:border-red-400 disabled:bg-gray-100 disabled:text-gray-500"
             >
-              {tiers.length === 0 && <option value="1">Tier 1 — General Public</option>}
-              {tiers.map((tier) => (
+              {tierLoading && <option value="1">Loading pricing tiers…</option>}
+              {!tierLoading && tierLoadError && <option value="1">Pricing tiers unavailable</option>}
+              {!tierLoading && !tierLoadError && tiers.length === 0 && <option value="1">Tier 1 — General Public</option>}
+              {!tierLoading && !tierLoadError && tiers.map((tier) => (
                 <option key={tier.id} value={String(tier.tier_number)}>
                   Tier {tier.tier_number} — {tier.tier_name}
                 </option>
               ))}
             </select>
+            {tierLoadError && <span className="block mt-1 text-[9px] text-red-600">Pricing tiers could not be verified: {tierLoadError}</span>}
             <span className="block mt-1 text-[9px] text-gray-400">Used as the default Markup Tier when new estimator Products are priced for this customer.</span>
           </label>
         </div>
@@ -142,7 +146,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || tierLoading || !!tierLoadError}
             className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-60"
           >
             {saving ? "Saving…" : "Create Customer"}
