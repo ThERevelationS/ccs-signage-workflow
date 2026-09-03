@@ -32,6 +32,7 @@ import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeli
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -105,10 +106,9 @@ export default function EstimateDetail() {
     return current;
   };
 
-  const hasServerConflict = (current) => !!(
-    serverUpdatedAtRef.current &&
-    current?.updated_date &&
-    serverUpdatedAtRef.current !== current.updated_date
+  const hasServerConflict = (current) => hasEstimateVersionConflict(
+    serverUpdatedAtRef.current,
+    current?.updated_date
   );
 
   const refreshProducts = async () => {
