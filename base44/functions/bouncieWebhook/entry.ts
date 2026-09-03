@@ -68,6 +68,6 @@ export default async function(req) {
     // Always 2xx on a valid, authenticated event so Bouncie does not retry.
     return Response.json({ received: true, duplicate, eventType: normalized.eventType });
   } catch (error) {
-    return Response.json({ error: 'Processing error', detail: String(error && error.message) }, { status: 500 });
+    return Response.json({ error: 'Processing error' }, { status: 500 });
   }
 }
