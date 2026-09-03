@@ -10,7 +10,7 @@
 // The Add form lets the user choose which storage entity + which type the new
 // item is, so all existing fields/settings are still available.
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,9 +72,13 @@ export default function MasterSuppliesTab({ isAdmin }) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const toggleRef = useRef(new Set());
+  const deleteRef = useRef(new Set());
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const [chn, fnd] = await Promise.all([
         ChannelLetterInstallInventoryEntity.list(),
@@ -82,8 +86,12 @@ export default function MasterSuppliesTab({ isAdmin }) {
       ]);
       setChannelRows(chn);
       setFoundationRows(fnd.filter((r) => FOUNDATION_SUPPLY_TYPES.includes(r.material_type)));
-    } catch (e) { console.error(e); }
-    setLoading(false);
+    } catch (e) {
+      console.error(e);
+      setLoadError(e?.message || "Supply inventory could not be verified.");
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -105,19 +113,58 @@ export default function MasterSuppliesTab({ isAdmin }) {
       if (masterField === "show_in_channel_letters")  field = "show_in_install_materials";
       if (masterField === "show_in_sign_maintenance") field = "show_in_maintenance_materials";
       if (masterField === "show_in_foundation")       field = "show_in_foundation_materials";
-      await ChannelLetterInstallInventoryEntity.update(row.id, { [field]: next });
-      setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
-    } else {
-      await FoundationInventoryEntity.update(row.id, { [field]: next });
-      setFoundationRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+    }
+    const entity = row._source === "channel_letter" ? ChannelLetterInstallInventoryEntity : FoundationInventoryEntity;
+    const lockKey = `${row._source}:${row.id}:${field}`;
+    if (toggleRef.current.has(lockKey)) return;
+    toggleRef.current.add(lockKey);
+    try {
+      const live = await entity.get(row.id);
+      if (live?.[field] !== row.raw?.[field]) {
+        alert("This supply visibility setting changed in another session. The latest inventory will be reloaded before you edit it again.");
+        await load();
+        return;
+      }
+      await entity.update(row.id, { [field]: next });
+      if (row._source === "channel_letter") {
+        setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      } else {
+        setFoundationRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
+      }
+    } catch (error) {
+      console.error("Supply toggle failed:", error);
+      alert(error?.message || "Supply visibility could not be updated.");
+      await load();
+    } finally {
+      toggleRef.current.delete(lockKey);
     }
   };
 
   const deleteItem = async (row) => {
-    if (!window.confirm(`Delete "${row.name}"?`)) return;
+    const lockKey = `${row._source}:${row.id}`;
+    if (deleteRef.current.has(lockKey)) return;
+    deleteRef.current.add(lockKey);
+    if (!window.confirm(`Delete "${row.name}"?`)) {
+      deleteRef.current.delete(lockKey);
+      return;
+    }
     const entity = row._source === "channel_letter" ? ChannelLetterInstallInventoryEntity : FoundationInventoryEntity;
-    await entity.delete(row.id);
-    load();
+    try {
+      const live = await entity.get(row.id);
+      if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
+        alert("This supply changed in another session and was not deleted. The latest inventory will be reloaded first.");
+        await load();
+        return;
+      }
+      await entity.delete(row.id);
+      await load();
+    } catch (error) {
+      console.error("Supply delete failed:", error);
+      alert(error?.message || "Supply could not be deleted.");
+      await load();
+    } finally {
+      deleteRef.current.delete(lockKey);
+    }
   };
 
   return (
@@ -141,6 +188,12 @@ export default function MasterSuppliesTab({ isAdmin }) {
       <CardContent className="p-0">
         {loading ? (
           <div className="p-8 text-center text-slate-500">Loading…</div>
+        ) : loadError ? (
+          <div className="p-8 text-center text-red-700 bg-red-50 border border-red-200">
+            <div className="font-semibold">Supply inventory could not be verified.</div>
+            <div className="mt-1 text-xs">{loadError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
+          </div>
         ) : rows.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-sm">No supplies yet.</div>
         ) : (
@@ -204,6 +257,7 @@ export default function MasterSuppliesTab({ isAdmin }) {
 function SupplyForm({ row, onCancel, onSaved }) {
   const isNew = !!row._new;
   const [source, setSource] = useState(row._source);
+  const saveRef = useRef(false);
 
   // Init form from raw row, with safe defaults per source.
   const buildInitial = (src, raw) => {
@@ -256,14 +310,28 @@ function SupplyForm({ row, onCancel, onSaved }) {
   const isValid = !!form[nameField];
 
   const handleSave = async () => {
-    if (source === "channel_letter") {
-      if (isNew) await ChannelLetterInstallInventoryEntity.create(form);
-      else       await ChannelLetterInstallInventoryEntity.update(row.id, form);
-    } else {
-      if (isNew) await FoundationInventoryEntity.create(form);
-      else       await FoundationInventoryEntity.update(row.id, form);
+    if (saveRef.current) return;
+    saveRef.current = true;
+    const entity = source === "channel_letter" ? ChannelLetterInstallInventoryEntity : FoundationInventoryEntity;
+    try {
+      if (isNew) {
+        await entity.create(form);
+      } else {
+        const live = await entity.get(row.id);
+        if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
+          alert("This supply changed in another session. Your changes were not saved; the inventory will reload so you can review the latest record.");
+          onSaved?.();
+          return;
+        }
+        await entity.update(row.id, form);
+      }
+      onSaved?.();
+    } catch (error) {
+      console.error("Supply save failed:", error);
+      alert(error?.message || "Supply could not be saved.");
+    } finally {
+      saveRef.current = false;
     }
-    onSaved?.();
   };
 
   return (
