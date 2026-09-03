@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { DimensionalLetterMaterial } from "@/entities/all";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,14 @@ const TYPE_COLORS = {
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
+const stripMaterialMeta = (row = {}) => {
+  const data = { ...row };
+  ["id", "_isNew", "created_date", "updated_date", "created_by_id", "created_by", "is_sample"].forEach((key) => delete data[key]);
+  return data;
+};
+
+const materialSnapshot = (row) => JSON.stringify(stripMaterialMeta(row));
+
 // Filters substrates by which pages they're enabled for in Master Inventory.
 // scope = "install"     → show items with show_in_dimensional_letters OR show_in_lobby_sign_backer
 // scope = "maintenance" → show items with show_in_vinyl_replacement OR show_in_replace_returns OR show_in_replace_face
@@ -61,19 +69,28 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [dirty, setDirty] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [originalById, setOriginalById] = useState({});
+  const saveRef = useRef(false);
+  const deleteRef = useRef(new Set());
   const { toast } = useToast();
 
   useEffect(() => { load(); }, []);
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const data = await DimensionalLetterMaterial.list("sort_order");
-      setMaterials(data);
+      setMaterials(data || []);
+      setOriginalById(Object.fromEntries((data || []).filter((row) => row.id).map((row) => [row.id, materialSnapshot(row)])));
+      setDirty(false);
     } catch (e) {
       console.error(e);
+      setLoadError(e?.message || "Dimensional material inventory could not be verified.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const addMaterial = () => {
@@ -124,32 +141,67 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
 
   const removeMaterial = async (idx) => {
     const m = materials[idx];
-    if (!confirm(`Delete "${m.material_name}"?`)) return;
-    if (m.id) {
-      try { await DimensionalLetterMaterial.delete(m.id); }
-      catch (e) { toast({ variant: "destructive", description: "Delete failed: " + e.message }); return; }
+    const lockKey = m.id || `new:${idx}`;
+    if (loadError || deleteRef.current.has(lockKey)) return;
+    deleteRef.current.add(lockKey);
+    if (!confirm(`Delete "${m.material_name}"?`)) {
+      deleteRef.current.delete(lockKey);
+      return;
     }
-    setMaterials(prev => prev.filter((_, i) => i !== idx));
+    try {
+      if (m.id) {
+        const live = await DimensionalLetterMaterial.get(m.id);
+        if (m.updated_date && live?.updated_date && m.updated_date !== live.updated_date) {
+          toast({ variant: "destructive", description: "This material changed in another session and was not deleted. Reloading the latest inventory." });
+          await load();
+          return;
+        }
+        await DimensionalLetterMaterial.delete(m.id);
+      }
+      setMaterials(prev => prev.filter((_, i) => i !== idx));
+      if (m.id) setOriginalById((prev) => { const next = { ...prev }; delete next[m.id]; return next; });
+    } catch (e) {
+      toast({ variant: "destructive", description: "Delete failed: " + e.message });
+    } finally {
+      deleteRef.current.delete(lockKey);
+    }
   };
 
+  const changedMaterials = useMemo(() => materials.filter((m) =>
+    m._isNew || !m.id || materialSnapshot(m) !== originalById[m.id]
+  ), [materials, originalById]);
+
   const saveAll = async () => {
+    if (saveRef.current || loadError || changedMaterials.length === 0) return;
+    saveRef.current = true;
     setSaving(true);
     try {
-      const ops = materials.map(m => {
-        const data = { ...m };
-        delete data._isNew;
-        delete data.id;
-        if (m.id) return DimensionalLetterMaterial.update(m.id, data);
-        return DimensionalLetterMaterial.create(data);
+      const existingChanged = changedMaterials.filter((m) => m.id && !m._isNew);
+      const liveRows = await Promise.all(existingChanged.map((m) => DimensionalLetterMaterial.get(m.id)));
+      const conflicts = existingChanged.filter((m, index) => {
+        const live = liveRows[index];
+        if (!live) return true;
+        const versionChanged = !!(m.updated_date && live.updated_date && m.updated_date !== live.updated_date);
+        const loadedSnapshot = originalById[m.id];
+        return versionChanged || (loadedSnapshot !== undefined && materialSnapshot(live) !== loadedSnapshot);
       });
-      await Promise.all(ops);
-      toast({ description: "Materials saved" });
-      setDirty(false);
-      load();
+      if (conflicts.length) {
+        throw new Error(`These materials changed in another session: ${conflicts.map((m) => m.material_name).join(", ")}. Reload before saving.`);
+      }
+
+      await Promise.all(changedMaterials.map((m) => {
+        const data = stripMaterialMeta(m);
+        if (m.id && !m._isNew) return DimensionalLetterMaterial.update(m.id, data);
+        return DimensionalLetterMaterial.create(data);
+      }));
+      toast({ description: `Saved ${changedMaterials.length} material${changedMaterials.length === 1 ? "" : "s"}` });
+      await load();
     } catch (e) {
       toast({ variant: "destructive", description: "Save failed: " + e.message });
+    } finally {
+      saveRef.current = false;
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const filtered = materials.filter(m => {
@@ -165,10 +217,10 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
         <div className="flex-1 min-w-[200px]">
           <p className="text-sm text-slate-600">Sheet material library used for dimensional letter fabrication (CNC + Paint cost build-up).</p>
         </div>
-        <Button onClick={addMaterial} variant="outline">
+        <Button onClick={addMaterial} variant="outline" disabled={!!loadError}>
           <Plus className="w-4 h-4 mr-1" /> Add Material
         </Button>
-        <Button onClick={saveAll} disabled={saving || !dirty} className="bg-slate-900 hover:bg-slate-800 text-white">
+        <Button onClick={saveAll} disabled={saving || !dirty || !!loadError || changedMaterials.length === 0} className="bg-slate-900 hover:bg-slate-800 text-white">
           {saving ? "Saving…" : <><Save className="w-4 h-4 mr-1" /> Save All</>}
         </Button>
       </div>
@@ -199,12 +251,14 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
 
       {loading ? (
         <div className="text-center py-12 text-slate-500">Loading…</div>
+      ) : loadError ? (
+        <Card className="border-red-200 bg-red-50"><CardContent className="p-8 text-center text-red-700"><div className="font-semibold">Dimensional material inventory could not be verified.</div><div className="text-xs mt-1">{loadError}</div><Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button></CardContent></Card>
       ) : filtered.length === 0 ? (
         <Card className="border-2 border-dashed">
           <CardContent className="p-12 text-center text-slate-500">
             <Layers className="w-12 h-12 mx-auto mb-3 text-slate-300" />
             <p className="mb-3 font-medium">No materials yet</p>
-            <Button onClick={addMaterial} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button onClick={addMaterial} disabled={!!loadError} className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50">
               <Plus className="w-4 h-4 mr-1" /> Add First Material
             </Button>
           </CardContent>
