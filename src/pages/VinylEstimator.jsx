@@ -52,6 +52,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   const [equipmentInventory, setEquipmentInventory] = useState([]);
   const [estimateContext, setEstimateContext] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
 
@@ -68,6 +69,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setLoadError("");
       try {
         const [vList, mList, sList, eList, p, estimate] = await Promise.all([
           VinylInventory.list("sort_order"),
@@ -75,7 +77,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
           Settings.list(),
           ChannelLetterInstallEquipment.list("sort_order"),
           projectId ? VinylProject.get(projectId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         setVinyls(vList || []);
         setMachines(mList || []);
@@ -133,7 +135,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
             }],
           }));
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        setLoadError(e?.message || "Vinyl Builder prerequisites could not be verified.");
+      }
       setLoading(false);
     };
     load();
@@ -323,6 +328,18 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
   if (loading) {
     return <div className="p-12 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loading…</div>;
+  }
+  if (loadError) {
+    return (
+      <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="font-bold">Vinyl Builder unavailable</div>
+          <div className="mt-1 text-sm">Required vinyl inventory, machine settings, installation equipment, project data, or estimate context could not be verified. Fallback configuration was not used.</div>
+          <div className="mt-2 text-xs break-words">{loadError}</div>
+          <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : navigate(estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator")}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+        </div>
+      </div>
+    );
   }
 
   const TabBtn = ({ value, icon: Icon, label, amount, warn }) => (
