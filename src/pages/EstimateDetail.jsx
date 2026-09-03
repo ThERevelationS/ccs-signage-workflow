@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardPaste, FileMinus, LockKeyhole } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -53,6 +53,10 @@ export default function EstimateDetail() {
   const [showCancel, setShowCancel] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
+  // Tracks the exact server version this browser session last read or wrote.
+  // Keep it separate from persistedEstimate because Product operations may save
+  // immediately while the lifecycle baseline intentionally remains older.
+  const serverUpdatedAtRef = useRef("");
 
   useEffect(() => {
     if (!id) {
@@ -70,6 +74,7 @@ export default function EstimateDetail() {
       const line_items = await refreshSectionSnapshots(current.line_items);
       const loaded = { ...current, line_items };
       const revision = await getOpenEstimateRevision(id);
+      serverUpdatedAtRef.current = current.updated_date || "";
       setEstimate(loaded);
       setPersistedEstimate(loaded);
       setOpenRevision(revision);
@@ -93,6 +98,19 @@ export default function EstimateDetail() {
       line_items: prev.line_items.map((l, i) => (i === index ? { ...l, ...changes } : l)),
     }));
 
+  const rememberServerVersion = async (record = null) => {
+    let current = record;
+    if (!current?.updated_date) current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (current?.updated_date) serverUpdatedAtRef.current = current.updated_date;
+    return current;
+  };
+
+  const hasServerConflict = (current) => !!(
+    serverUpdatedAtRef.current &&
+    current?.updated_date &&
+    serverUpdatedAtRef.current !== current.updated_date
+  );
+
   const refreshProducts = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
     const withBuilders = await ensureEstimateBuilderProducts(current);
@@ -103,6 +121,7 @@ export default function EstimateDetail() {
     }
     const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id);
     const line_items = await refreshSectionSnapshots(refreshed.line_items);
+    serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
   };
 
@@ -111,7 +130,8 @@ export default function EstimateDetail() {
     const line = estimate.line_items[index];
     const line_items = estimate.line_items.filter((_, i) => i !== index);
     setEstimate((prev) => ({ ...prev, line_items }));
-    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    await rememberServerVersion(updateResult);
     await deleteOwnedSection(line);
     if (line.builder_product_id) await deleteBuilderProductCascade(line.builder_product_id);
   };
@@ -151,7 +171,8 @@ export default function EstimateDetail() {
     });
     const line_items = [...(estimate.line_items || []), builderResult.line];
     // Persist immediately, then open the new product in the inline editor.
-    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    await rememberServerVersion(updateResult);
     setEstimate((prev) => ({ ...prev, line_items }));
     setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
   };
@@ -160,7 +181,8 @@ export default function EstimateDetail() {
     if (readOnly) return;
     const result = await createCustomProduct({ estimate, name });
     const line_items = [...(estimate.line_items || []), result.line];
-    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
+    await rememberServerVersion(updateResult);
     setEstimate((prev) => ({ ...prev, line_items }));
   };
 
@@ -180,6 +202,7 @@ export default function EstimateDetail() {
     if (readOnly) return;
     patchLine(index, patch);
     const savedLine = await saveProductSettings({ estimateId: estimate.id, line, patch });
+    await rememberServerVersion();
     if (savedLine) patchLine(index, savedLine);
   };
 
@@ -218,11 +241,17 @@ export default function EstimateDetail() {
   };
 
   const handleStartRevision = async (reason) => {
-    const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
+    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (hasServerConflict(current)) {
+      window.alert("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
+      return null;
+    }
+    const currentPricing = computePricing(current);
+    const internalCost = acceptedInternalEstimateCost(current.line_items || []);
     const revision = await startEstimateRevision({
-      estimate: persistedEstimate || estimate,
+      estimate: current,
       reason,
-      quoteTotal: pricing.quoteTotal,
+      quoteTotal: currentPricing.quoteTotal,
       internalCost,
     });
     setOpenRevision(revision);
