@@ -151,7 +151,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
  * One call used when an estimate is saved: keep the shared Customer record and the
  * Sales Pipeline lead in step with the estimate.
  */
-export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = true } = {}) => {
+export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false } = {}) => {
   const customers = await base44.entities.Customer.list("company_name", 1000);
   const customer = syncCustomer
     ? await upsertCustomerFromEstimate(estimate, customers || [])
