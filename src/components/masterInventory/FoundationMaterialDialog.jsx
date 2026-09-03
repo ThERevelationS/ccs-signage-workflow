@@ -24,7 +24,10 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
     saveRef.current = true;
     setSaving(true);
     try {
-      const { id, created_date, updated_date, created_by_id, created_by, ...data } = form;
+      const id = form.id;
+      const updated_date = form.updated_date;
+      const data = { ...form };
+      ["id", "created_date", "updated_date", "created_by_id", "created_by"].forEach((key) => delete data[key]);
       data.material_type = type;
       data.show_in_foundation = true;
       if (id) {
