@@ -22,14 +22,30 @@ export function resolvePipelineLifecycleDates({
   previousEstimateStatus = "",
   existingDateEstimateSent = "",
   today,
+  issuedQuoteDate = "",
+  issuedQuoteVersion = 0,
 }) {
+  if (existingDateEstimateSent) return {};
+
   if (
     estimateStatus === "sent" &&
     previousEstimateStatus &&
-    previousEstimateStatus !== "sent" &&
-    !existingDateEstimateSent
+    previousEstimateStatus !== "sent"
   ) {
     return { date_estimate_sent: today };
   }
+
+  // Recovery for new-system issued quotes only. A lifecycle/pipeline partial
+  // failure may leave the estimate with a real Quote Version/issue date but no
+  // WorkOrder sent date. Using those explicit issuance fields repairs that case
+  // without backfilling legacy records that never had customer quote versioning.
+  if (
+    ["sent", "approved", "archived", "cancelled"].includes(estimateStatus) &&
+    Number(issuedQuoteVersion || 0) > 0 &&
+    issuedQuoteDate
+  ) {
+    return { date_estimate_sent: issuedQuoteDate };
+  }
+
   return {};
 }
