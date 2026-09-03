@@ -411,6 +411,51 @@ export default function EstimateDetail() {
     }
   };
 
+  const handleRetryPipelineSync = async () => {
+    if (!estimate?.pipeline_sync_pending || saving) return;
+    setSaving(true);
+    try {
+      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      if (hasServerConflict(current)) {
+        window.alert("This estimate changed in another session. Reload before retrying Sales Pipeline synchronization.");
+        return;
+      }
+
+      try {
+        // No historical transition guess is needed here. Versioned quotes recover
+        // their first-sent date from quote_issue_date; legacy Quote Version 0 data
+        // is intentionally left untouched.
+        await syncEstimateEverywhere(current, { previousEstimateStatus: "" });
+      } catch (syncError) {
+        const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+        const errorResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        }).catch(() => null);
+        const failed = errorResult?.updated_date ? errorResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => current);
+        const failedState = { ...current, ...(failed || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
+        await rememberServerVersion(failedState);
+        setEstimate(failedState);
+        setPersistedEstimate(failedState);
+        window.alert(`Sales Pipeline synchronization is still pending.\n\n${message}`);
+        return;
+      }
+
+      const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
+        pipeline_sync_pending: false,
+        pipeline_sync_error: "",
+      });
+      const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+      const saved = { ...current, ...(cleared || {}), pipeline_sync_pending: false, pipeline_sync_error: "" };
+      await rememberServerVersion(saved);
+      setEstimate(saved);
+      setPersistedEstimate(saved);
+      window.alert("Sales Pipeline synchronization completed successfully.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleQuoteDelivered = async ({ recipientEmail, issueMetadata, quoteVersion, gmailMessageId, sentAt, deliveryId, archive }) => {
     // Re-read after Gmail accepts the message so a concurrent lifecycle change
     // cannot silently be overwritten by the delivery finalization.
