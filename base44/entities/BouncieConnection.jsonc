@@ -1,7 +1,7 @@
 {
   "name": "BouncieConnection",
   "type": "object",
-  "description": "Stores the Bouncie OAuth tokens for the company fleet account. A single shared connection record is used; the most recently updated record is treated as active.",
+  "description": "Stores the Bouncie OAuth tokens for the company fleet account plus integration health. A single shared connection record is used; the most recently updated record is treated as active. Tokens are only ever read server-side.",
   "properties": {
     "access_token": {
       "type": "string",
@@ -9,7 +9,7 @@
     },
     "refresh_token": {
       "type": "string",
-      "description": "Bouncie OAuth refresh token used to obtain new access tokens."
+      "description": "Bouncie OAuth refresh token used to obtain new access tokens. Bouncie rotates this on every refresh."
     },
     "expires_at": {
       "type": "string",
@@ -39,6 +39,58 @@
     "connected_by": {
       "type": "string",
       "description": "Email of the app admin who initiated the connection."
+    },
+    "needs_reconnect": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the refresh token is no longer accepted and an admin must reauthorize."
+    },
+    "last_error": {
+      "type": "string",
+      "description": "Last Bouncie API/token error message (never contains secrets)."
+    },
+    "last_error_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_sync_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successful Bouncie REST API call."
+    },
+    "last_webhook_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successfully processed Bouncie webhook event."
+    },
+    "last_webhook_event": {
+      "type": "string",
+      "description": "Event type of the last processed webhook."
+    },
+    "webhook_id": {
+      "type": "string",
+      "description": "Bouncie webhook id registered for this app."
+    },
+    "webhook_url": {
+      "type": "string"
+    },
+    "webhook_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "webhook_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "webhook_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "webhook_error": {
+      "type": "string"
     }
   },
   "required": [

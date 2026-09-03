@@ -1,0 +1,78 @@
+{
+  "name": "FleetAlertSetting",
+  "type": "object",
+  "description": "CCS-local fleet alert rule. These rules are evaluated inside CCS Signage Workflow against Bouncie data \u2014 they do NOT change Bouncie's own notification configuration, which must be managed in the Bouncie app.",
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": [
+        "global",
+        "vehicle"
+      ],
+      "default": "global",
+      "description": "'global' applies to the whole fleet; 'vehicle' applies to vehicle_vin only and overrides the global rule."
+    },
+    "vehicle_vin": {
+      "type": "string",
+      "description": "Required when scope is 'vehicle'."
+    },
+    "rule_key": {
+      "type": "string",
+      "enum": [
+        "speed",
+        "fuel_level",
+        "idle_time",
+        "trip_start_end",
+        "hard_acceleration",
+        "hard_braking",
+        "distance_driven",
+        "fuel_economy",
+        "battery",
+        "dtc",
+        "device_disconnect",
+        "geozone",
+        "curfew"
+      ]
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "threshold": {
+      "type": "number",
+      "description": "Numeric threshold for rules that need one (mph, percent, minutes, miles, mpg, event count)."
+    },
+    "curfew_start_minutes": {
+      "type": "number",
+      "description": "Curfew window start, minutes after midnight (curfew rule only)."
+    },
+    "curfew_end_minutes": {
+      "type": "number",
+      "description": "Curfew window end, minutes after midnight (curfew rule only)."
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

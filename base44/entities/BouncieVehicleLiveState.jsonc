@@ -1,0 +1,101 @@
+{
+  "name": "BouncieVehicleLiveState",
+  "type": "object",
+  "description": "Bounded live driving state for one vehicle, maintained from Bouncie tripStart/tripData/tripEnd webhooks. One record per vehicle (keyed by IMEI/VIN). Historical trips come from the Bouncie REST trip endpoint, not from here.",
+  "properties": {
+    "vehicle_vin": {
+      "type": "string"
+    },
+    "vehicle_imei": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "string",
+      "description": "Bouncie transactionId of the trip currently in progress."
+    },
+    "is_trip_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "heading": {
+      "type": "number"
+    },
+    "speed": {
+      "type": "number"
+    },
+    "fuel_level": {
+      "type": "number"
+    },
+    "odometer": {
+      "type": "number"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_event_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recent_path_points": {
+      "type": "array",
+      "description": "Bounded ring buffer of recent GPS points for the active trip (most recent last, capped server-side).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          },
+          "ts": {
+            "type": "string"
+          },
+          "speed": {
+            "type": "number"
+          },
+          "heading": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "vehicle_vin"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "name": "FleetVehicleMetadata",
+  "type": "object",
+  "description": "CCS-local fleet metadata for a vehicle, keyed by VIN. These fields are NOT supplied or writable through the Bouncie API \u2014 they live only in CCS Signage Workflow.",
+  "properties": {
+    "vehicle_vin": {
+      "type": "string",
+      "description": "Bouncie VIN this metadata belongs to."
+    },
+    "license_plate": {
+      "type": "string"
+    },
+    "assigned_driver": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string",
+      "description": "Internal CCS unit / truck number."
+    },
+    "insurance_provider": {
+      "type": "string"
+    },
+    "insurance_policy_number": {
+      "type": "string"
+    },
+    "insurance_agent": {
+      "type": "string"
+    },
+    "insurance_agent_contact": {
+      "type": "string"
+    },
+    "insurance_effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "insurance_expiration_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "registration_expiration_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "maintenance_notes": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "vehicle_vin"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

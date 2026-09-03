@@ -1,0 +1,59 @@
+{
+  "name": "BouncieOAuthState",
+  "type": "object",
+  "description": "Short-lived, one-time-use OAuth state values for the Bouncie authorization code flow. Created when an admin starts the connect flow and consumed by the callback.",
+  "properties": {
+    "state": {
+      "type": "string",
+      "description": "Cryptographically random state value sent to Bouncie."
+    },
+    "redirect_uri": {
+      "type": "string",
+      "description": "Exact redirect_uri used in the authorization request."
+    },
+    "initiated_by": {
+      "type": "string",
+      "description": "Email of the admin who started the flow."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "State expiry \u2014 callbacks after this time are rejected."
+    },
+    "used": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once consumed; a second callback with the same state is rejected."
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "state",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
