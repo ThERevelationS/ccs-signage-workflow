@@ -42,6 +42,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const [globalSettings, setGlobalSettings] = useState({});
   const [estimateContext, setEstimateContext] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
 
@@ -51,11 +52,13 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   }, [editId, estimateId]);
 
   const loadPrerequisites = async () => {
+    setIsLoading(true);
+    setLoadError("");
     try {
       const [settingsData, existing, estimate] = await Promise.all([
         Settings.list(),
-        editId ? CNCProject.get(editId).catch(() => null) : Promise.resolve(null),
-        estimateId ? base44.entities.AllInOneEstimate.get(estimateId).catch(() => null) : Promise.resolve(null),
+        editId ? CNCProject.get(editId) : Promise.resolve(null),
+        estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const settingsObj = {};
       (settingsData || []).forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
@@ -98,6 +101,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       }
     } catch (error) {
       console.error('Error loading prerequisites:', error);
+      setLoadError(error?.message || "CNC Builder prerequisites could not be verified.");
     }
     setIsLoading(false);
   };
@@ -1114,6 +1118,16 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const { totalMachine, totalLabor } = calculateTotals();
 
   if (isLoading) return <div className="p-8">Loading...</div>;
+  if (loadError) return (
+    <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+      <div className="max-w-2xl mx-auto rounded border border-red-200 bg-red-50 p-5 text-red-800">
+        <div className="font-bold">CNC Builder unavailable</div>
+        <div className="mt-1 text-sm">Required Settings, project data, or estimate context could not be verified. Hard-coded fallback rates were not used.</div>
+        <div className="mt-2 text-xs break-words">{loadError}</div>
+        <Button variant="outline" className="mt-4" onClick={() => embedded ? onClose?.() : navigate(estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator")}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
