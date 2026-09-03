@@ -57,11 +57,21 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
   }, [open]);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     setError("");
     if (!data.company_name.trim()) {
       setError("Company name is required.");
       return;
     }
+    if (tierLoading || tierLoadError) {
+      setError(tierLoadError || "Pricing tiers are still loading. Try again after they are verified.");
+      return;
+    }
+    if (tiers.length && !tiers.some((tier) => Number(tier.tier_number) === Number(data.pricing_tier))) {
+      setError("The selected pricing tier is no longer available. Review the pricing tier before saving this Customer.");
+      return;
+    }
+    savingRef.current = true;
     setSaving(true);
     try {
       const created = await base44.entities.Customer.create({
@@ -76,6 +86,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     } catch (e) {
       setError(e.message || "Could not create the customer.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
