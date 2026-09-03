@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -34,6 +34,7 @@ export default function NewAllInOneEstimate() {
   const [users, setUsers] = useState([]);
   const [me, setMe] = useState(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +58,7 @@ export default function NewAllInOneEstimate() {
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     setError("");
     const clientName = form.client_name.trim();
     const description = form.project_name.trim();
@@ -64,6 +66,7 @@ export default function NewAllInOneEstimate() {
       setError("Estimate description is required.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     try {
       let customer = null;
@@ -110,6 +113,7 @@ export default function NewAllInOneEstimate() {
       }
       navigate(`/EstimateDetail?id=${estimate.id}`);
     } catch (e) {
+      savingRef.current = false;
       setError(e.message || "Could not save the estimate.");
       setSaving(false);
     }
