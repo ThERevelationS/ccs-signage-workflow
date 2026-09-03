@@ -329,6 +329,7 @@ export default function EstimateDetail() {
     });
     if (
       Number(expectedMetadata.quote_version || 0) !== Number(issueMetadata?.quote_version || 0) ||
+      Number(expectedMetadata.quote_version || 0) !== Number(quoteVersion || 0) ||
       expectedMetadata.quote_issue_date !== issueMetadata?.quote_issue_date
     ) {
       throw new Error("The estimate changed while the quote was being sent. The email was delivered, but the estimate was not auto-finalized to avoid recording the wrong quote version.");
@@ -359,11 +360,13 @@ export default function EstimateDetail() {
       internalCostAfter: internalCost,
       workOrderId: saved.work_order_id || "",
       deliveryEvidence: {
-        deliveryId: deliveryId || "",
-        gmailMessageId: gmailMessageId || "",
-        recipientEmail,
-        sentAt: sentAt || new Date().toISOString(),
-        archive: archive || null,
+        delivery_id: deliveryId || "",
+        gmail_message_id: gmailMessageId || "",
+        recipient_email: recipientEmail,
+        sent_at: sentAt || new Date().toISOString(),
+        attachment_file_url: archive?.fileUrl || "",
+        attachment_sha256: archive?.sha256 || "",
+        attachment_size_bytes: Number(archive?.sizeBytes || 0),
       },
     });
 
