@@ -604,50 +604,30 @@ export default function EstimateDetail() {
       throw new Error("The issued quote version changed. Reload the estimate before recording acceptance.");
     }
 
-    // This is a duplicate-prevention read. Fail closed if it cannot be verified;
-    // treating a read error as "no acceptance" could create a second immutable row.
-    const existingAcceptances = await base44.entities.EstimateAcceptance.filter({
-      estimate_id: estimate.id,
-      quote_version: currentVersion,
-    });
-    const existingAcceptance = (existingAcceptances || [])
-      .slice()
-      .sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0))[0] || null;
-
-    let acceptance = existingAcceptance;
-    if (!acceptance && before.status === "approved") {
-      throw new Error("This estimate is already Approved, but no immutable acceptance record exists for the current quote version. Approval tracking cannot be reconstructed automatically.");
-    }
-    if (!acceptance) {
-      let matchingDelivery = null;
-      if (deliveryId) {
-        matchingDelivery = await base44.entities.EstimateQuoteDelivery.get(deliveryId);
-        if (
-          matchingDelivery?.estimate_id !== estimate.id ||
-          Number(matchingDelivery?.quote_version || 0) !== currentVersion ||
-          matchingDelivery?.delivery_status !== "sent"
-        ) {
-          throw new Error("The selected quote delivery does not belong to this estimate/version. Reload before recording acceptance.");
-        }
-      }
-
-      acceptance = await base44.entities.EstimateAcceptance.create({
+    // Acceptance creation is centralized server-side so the immutable quote
+    // totals/dates come from the persisted estimate and simultaneous estimator
+    // sessions converge on one canonical acceptance record.
+    let acceptanceResponse;
+    try {
+      const response = await base44.functions.invoke("recordEstimateAcceptance", {
         estimate_id: estimate.id,
-        work_order_id: before.work_order_id || "",
-        delivery_id: matchingDelivery?.id || "",
-        quote_issue_key: quoteIssueKey(estimate.id, currentVersion),
         quote_version: currentVersion,
-        quote_issue_date: before.quote_issue_date || "",
-        quote_expiration_date: quoteExpirationDate(before.quote_issue_date, before.quote_valid_days ?? 30),
-        quote_total: Number(before.quote_total || 0),
         accepted_at: acceptedAt,
         accepted_by_name: acceptedByName,
         accepted_by_email: acceptedByEmail || "",
         acceptance_method: acceptanceMethod,
+        delivery_id: deliveryId || "",
         evidence_reference: evidenceReference || "",
         notes: notes || "",
       });
+      acceptanceResponse = response?.data || response;
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.data?.error || error?.message || "Customer acceptance could not be recorded.";
+      throw new Error(message);
     }
+    if (acceptanceResponse?.error) throw new Error(acceptanceResponse.error);
+    const acceptance = acceptanceResponse?.acceptance;
+    if (!acceptance?.id) throw new Error("Customer acceptance could not be verified after recording.");
 
     const transitionBefore = before.status === "approved" ? { ...before, status: "sent" } : before;
     let after = { ...before, status: "approved", edit_reason: "" };
