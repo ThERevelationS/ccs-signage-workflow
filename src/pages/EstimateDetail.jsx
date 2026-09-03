@@ -30,7 +30,7 @@ import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel"
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
-import { completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
+import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, recordEstimateLifecycleRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 
 const STEP_TITLES = {
@@ -376,6 +376,27 @@ export default function EstimateDetail() {
     return {};
   };
 
+  const handleDeliveryEvidenceReady = async ({ quoteVersion, deliveryId, gmailMessageId, recipientEmail, sentAt, archive }) => {
+    try {
+      const result = await attachQuoteDeliveryEvidenceToIssuanceRevision({
+        estimateId: estimate.id,
+        quoteVersion,
+        evidence: {
+          deliveryId,
+          gmailMessageId,
+          recipientEmail,
+          sentAt,
+          archive,
+        },
+      });
+      setRevisionRefreshKey((value) => value + 1);
+      setDeliveryRefreshKey((value) => value + 1);
+      return { warning: result?.warning || "" };
+    } catch (error) {
+      return { warning: `Quote delivery evidence could not be attached to the issuance revision: ${error?.message || "unknown error"}` };
+    }
+  };
+
   const handleRecordAcceptance = async ({
     quoteVersion,
     acceptedByName,
@@ -701,6 +722,7 @@ export default function EstimateDetail() {
                 persistedStatus={persistedStatus}
                 onQuoteDelivered={handleQuoteDelivered}
                 onDeliveryLogged={() => setDeliveryRefreshKey((value) => value + 1)}
+                onDeliveryEvidenceReady={handleDeliveryEvidenceReady}
               />
             </>
           )}
