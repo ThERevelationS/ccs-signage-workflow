@@ -7,7 +7,7 @@ const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(val
 const nowIso = () => new Date().toISOString();
 
 async function nextRevisionNumber(builderProductId) {
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []);
+  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
   return Math.max(0, ...(revisions || []).map((row) => num(row.revision_number))) + 1;
 }
 
@@ -40,8 +40,8 @@ export async function addPartPackageToProduct({
   if (!payloadParts.length) throw new Error("This saved package does not contain any Parts.");
 
   const timestamp = nowIso();
-  const activeParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id }).catch(() => []);
-  const activeGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }).catch(() => []);
+  const activeParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const activeGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id });
   const targetPartCount = (activeParts || []).filter((part) => part.is_active !== false).length;
   const targetGroupCount = (activeGroups || []).filter((group) => group.is_active !== false).length;
 

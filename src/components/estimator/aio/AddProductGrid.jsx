@@ -112,7 +112,10 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
   const [customName, setCustomName] = useState("Custom Product");
   const [quickProducts, setQuickProducts] = useState([]);
   const [quickLoading, setQuickLoading] = useState(false);
+  const [quickError, setQuickError] = useState("");
+  const [actionError, setActionError] = useState("");
   const searchRef = useRef(null);
+  const actionRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
@@ -121,9 +124,12 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
     }
     const timer = setTimeout(() => searchRef.current?.focus(), 80);
     setQuickLoading(true);
+    setQuickError("");
+    setActionError("");
+    setQuickProducts([]);
     listQuickProducts()
       .then((rows) => setQuickProducts(rows || []))
-      .catch(() => setQuickProducts([]))
+      .catch((error) => setQuickError(error?.message || "Quick Product Library could not be verified."))
       .finally(() => setQuickLoading(false));
     return () => clearTimeout(timer);
   }, [open]);
@@ -168,12 +174,17 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
   }, [query, counts]);
 
   const handleAdd = async (mod) => {
-    if (!mod || addingKey) return;
+    if (!mod || actionRef.current) return;
+    actionRef.current = true;
     setAddingKey(mod.key);
+    setActionError("");
     try {
       await onAdd(mod);
       setOpen(false);
+    } catch (error) {
+      setActionError(error?.message || "Product could not be added.");
     } finally {
+      actionRef.current = false;
       setAddingKey(null);
     }
   };
@@ -186,23 +197,33 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
   };
 
   const handleAddCustom = async () => {
-    if (addingKey) return;
+    if (actionRef.current) return;
+    actionRef.current = true;
     setAddingKey("custom");
+    setActionError("");
     try {
       await onAddCustom?.(customName.trim() || "Custom Product");
       setCustomNameOpen(false);
+    } catch (error) {
+      setActionError(error?.message || "Custom Product could not be created.");
     } finally {
+      actionRef.current = false;
       setAddingKey(null);
     }
   };
 
   const handleAddQuick = async (quickProduct) => {
-    if (!quickProduct || addingKey) return;
+    if (!quickProduct?.id || quickError || actionRef.current) return;
+    actionRef.current = true;
     setAddingKey(`quick:${quickProduct.id}`);
+    setActionError("");
     try {
       await onAddQuickProduct?.(quickProduct);
       setOpen(false);
+    } catch (error) {
+      setActionError(error?.message || "Quick Product could not be added.");
     } finally {
+      actionRef.current = false;
       setAddingKey(null);
     }
   };
@@ -272,6 +293,8 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
             </div>
 
             <div className="p-3 max-h-[520px] overflow-y-auto">
+              {actionError && <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{actionError}</div>}
+              {quickError && <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800"><strong>Quick Products unavailable.</strong> {quickError} Builders and Blank / Custom Product remain available.</div>}
               {!customMatches && results.length === 0 && quickResults.length === 0 && !quickLoading ? (
                 <div className="py-14 px-6 text-center">
                   <div className="mx-auto w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -354,7 +377,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                   </div>
                   )}
 
-                  {(quickLoading || quickResults.length > 0) && (
+                  {!quickError && (quickLoading || quickResults.length > 0) && (
                     <div>
                       <div className="text-[9px] font-extrabold tracking-widest text-gray-400 px-1 pb-1.5 flex items-center justify-between">
                         <span>QUICK PRODUCTS</span>

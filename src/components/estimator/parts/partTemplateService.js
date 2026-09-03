@@ -117,16 +117,27 @@ export async function listPartTemplates({ includeInactive = false } = {}) {
 
 export async function instantiatePartTemplate({ estimateId, targetBuilderProductId, template }) {
   if (!template?.id) throw new Error("Saved Part is required.");
-  const isGroup = template.template_type === "part_group";
+  const [liveTemplate, me] = await Promise.all([
+    base44.entities.PartTemplate.get(template.id),
+    base44.auth.me().catch(() => null),
+  ]);
+  if (!liveTemplate) throw new Error("This Saved Part no longer exists. Reopen the Part Library to refresh it.");
+  if (liveTemplate.is_active === false) throw new Error("This Saved Part is now inactive and cannot be added. Reopen the Part Library to refresh it.");
+  const accessible = liveTemplate.product_group === "global" || !liveTemplate.created_by_id || (!!me?.id && liveTemplate.created_by_id === me.id);
+  if (!accessible) throw new Error("This Saved Part is no longer available to your account.");
+  if (template.updated_date && liveTemplate.updated_date && template.updated_date !== liveTemplate.updated_date) {
+    throw new Error("This Saved Part changed after the Part Library opened. Reopen the library and review the latest reusable snapshot before adding it.");
+  }
+  const isGroup = liveTemplate.template_type === "part_group";
   return addPartPackageToProduct({
     estimateId,
     targetBuilderProductId,
     itemType: isGroup ? "part_group" : "part",
-    itemName: template.template_name || (isGroup ? "Saved Part Group" : "Saved Part"),
+    itemName: liveTemplate.template_name || (isGroup ? "Saved Part Group" : "Saved Part"),
     payload: isGroup
-      ? { group: cloneSnapshot(template.group_snapshot || {}), parts: (template.parts_snapshot || []).map(cloneSnapshot) }
-      : { part: cloneSnapshot(template.part_snapshot || {}) },
+      ? { group: cloneSnapshot(liveTemplate.group_snapshot || {}), parts: (liveTemplate.parts_snapshot || []).map(cloneSnapshot) }
+      : { part: cloneSnapshot(liveTemplate.part_snapshot || {}) },
     sourceType: "library",
-    sourceId: template.id,
+    sourceId: liveTemplate.id,
   });
 }

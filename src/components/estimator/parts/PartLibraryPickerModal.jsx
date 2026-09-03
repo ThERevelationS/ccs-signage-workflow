@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, BookmarkPlus, Layers3, PackagePlus, Search, ShieldCheck, UserRound } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
@@ -12,6 +12,7 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
   const [type, setType] = useState("all");
   const [addingId, setAddingId] = useState("");
   const [error, setError] = useState("");
+  const addRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +43,8 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
   }, [templates, query, scope, type]);
 
   const add = async (template) => {
-    if (!template?.id || addingId) return;
+    if (!template?.id || addRef.current) return;
+    addRef.current = true;
     setAddingId(template.id);
     setError("");
     try {
@@ -52,6 +54,7 @@ export default function PartLibraryPickerModal({ open, estimateId, builderProduc
     } catch (err) {
       setError(err?.message || "Saved Part could not be added to this Product.");
     } finally {
+      addRef.current = false;
       setAddingId("");
     }
   };
