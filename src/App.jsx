@@ -41,6 +41,7 @@ import EstimatorTools from './pages/EstimatorTools';
 import EstimatorShell from './components/estimator/EstimatorShell';
 import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
 import MasterInventory from './pages/MasterInventory';
+import FleetTracking from './pages/FleetTracking';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -128,6 +129,14 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route
+        path="/fleettracking"
+        element={
+          <LayoutWrapper currentPageName="FleetTracking">
+            <FleetTracking />
+          </LayoutWrapper>
+        }
+      />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

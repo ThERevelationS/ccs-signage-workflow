@@ -41,10 +41,9 @@ export default async function(req) {
       connected_by: appUser?.email || ''
     });
 
-    return new Response(
-      renderPage('Bouncie Connected!', 'Your Bouncie fleet account is now connected. You can close this window and return to the Fleet Tracking page.', true),
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
-    );
+    const successHtml = renderPage('Bouncie Connected!', 'Your Bouncie fleet account is now connected. Redirecting you back to Fleet Tracking...', true) +
+      '<script>setTimeout(function(){ window.location.href = "/fleettracking"; }, 2500);</script>';
+    return new Response(successHtml, { status: 200, headers: { 'Content-Type': 'text/html' } });
   } catch (error) {
     return new Response(renderPage('Connection Error', error.message, false), { status: 500, headers: { 'Content-Type': 'text/html' } });
   }
