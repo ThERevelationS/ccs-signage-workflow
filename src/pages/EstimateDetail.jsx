@@ -25,7 +25,7 @@ import {
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
-import { syncEstimateEverywhere } from "@/components/estimator/customerSync";
+import { estimateCustomerFieldsChanged, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
@@ -365,7 +365,10 @@ export default function EstimateDetail() {
 
       try {
         // Customer/WorkOrder sync resolves existing records and is safe to retry.
-        await syncEstimateEverywhere(saved, { previousEstimateStatus: syncPreviousStatus });
+        await syncEstimateEverywhere(saved, {
+          previousEstimateStatus: syncPreviousStatus,
+          syncCustomer: estimateCustomerFieldsChanged(before, saved),
+        });
         const cleanup = {};
         if (lifecycleReasonRequired && saved.edit_reason) cleanup.edit_reason = "";
         if (saved.pipeline_sync_pending) cleanup.pipeline_sync_pending = false;
@@ -428,7 +431,7 @@ export default function EstimateDetail() {
         // No historical transition guess is needed here. Versioned quotes recover
         // their first-sent date from quote_issue_date; legacy Quote Version 0 data
         // is intentionally left untouched.
-        await syncEstimateEverywhere(current, { previousEstimateStatus: "" });
+        await syncEstimateEverywhere(current, { previousEstimateStatus: "", syncCustomer: false });
       } catch (syncError) {
         const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
         const errorResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
@@ -533,7 +536,7 @@ export default function EstimateDetail() {
     }
 
     try {
-      await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus });
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus, syncCustomer: false });
       if (saved.pipeline_sync_pending || saved.pipeline_sync_error) {
         const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
           pipeline_sync_pending: false,
@@ -668,7 +671,7 @@ export default function EstimateDetail() {
 
     let syncWarning = "";
     try {
-      await syncEstimateEverywhere(after, { previousEstimateStatus: "sent" });
+      await syncEstimateEverywhere(after, { previousEstimateStatus: "sent", syncCustomer: false });
       if (after.pipeline_sync_pending || after.pipeline_sync_error) {
         const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
           pipeline_sync_pending: false,
@@ -748,7 +751,7 @@ export default function EstimateDetail() {
     }
 
     try {
-      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "" });
+      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "", syncCustomer: false });
     } catch (syncError) {
       const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
       const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
