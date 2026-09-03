@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { VinylMachine, User } from "@/entities/all";
 import { ArrowLeft, Layers, Lock, Plus, Printer, Save, Scissors, Settings2 } from "lucide-react";
@@ -73,6 +73,8 @@ export default function VinylSettings() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const machineSaveRef = useRef(new Set());
+  const addMachineRef = useRef(false);
 
   const isAdmin = user?.role === "admin";
 
@@ -103,26 +105,49 @@ export default function VinylSettings() {
   const patch = (id, changes) => setMachines((prev) => prev.map((row) => row.id === id ? { ...row, ...changes } : row));
 
   const save = async (machine) => {
-    if (!isAdmin || !machine?.id) return;
+    if (!isAdmin || !machine?.id || machineSaveRef.current.has(machine.id)) return;
+    machineSaveRef.current.add(machine.id);
     setSavingId(machine.id);
     setError("");
     setMessage("");
     try {
+      const live = await VinylMachine.get(machine.id);
+      const loadedSnapshot = original[machine.id];
+      const liveSnapshot = JSON.stringify(stripMeta(live || {}));
+      const versionChanged = !!(machine.updated_date && live?.updated_date && machine.updated_date !== live.updated_date);
+      if (!live || versionChanged || (loadedSnapshot !== undefined && liveSnapshot !== loadedSnapshot)) {
+        if (live) {
+          setMachines((prev) => prev.map((row) => row.id === machine.id ? live : row));
+          setOriginal((prev) => ({ ...prev, [machine.id]: liveSnapshot }));
+        }
+        throw new Error("This Vinyl machine changed in another session. The latest machine data has been reloaded; review it before saving again.");
+      }
+
       const payload = stripMeta(machine);
-      const updated = await VinylMachine.update(machine.id, payload);
-      const merged = { ...machine, ...(updated || {}) };
+      const updateResult = await VinylMachine.update(machine.id, payload);
+      const refreshed = updateResult?.updated_date ? updateResult : await VinylMachine.get(machine.id);
+      const merged = { ...machine, ...(refreshed || {}) };
       setMachines((prev) => prev.map((row) => row.id === machine.id ? merged : row));
       setOriginal((prev) => ({ ...prev, [machine.id]: JSON.stringify(stripMeta(merged)) }));
       setMessage(`Saved ${machine.machine_name || "Vinyl machine"}.`);
     } catch (e) {
+      if (!String(e?.message || "").includes("changed in another session")) {
+        const refreshed = await VinylMachine.get(machine.id).catch(() => null);
+        if (refreshed) {
+          setMachines((prev) => prev.map((row) => row.id === machine.id ? refreshed : row));
+          setOriginal((prev) => ({ ...prev, [machine.id]: JSON.stringify(stripMeta(refreshed)) }));
+        }
+      }
       setError(e.message || "Could not save Vinyl machine.");
     } finally {
+      machineSaveRef.current.delete(machine.id);
       setSavingId(null);
     }
   };
 
   const addMachine = async (type) => {
-    if (!isAdmin) return;
+    if (!isAdmin || addMachineRef.current) return;
+    addMachineRef.current = true;
     setError("");
     setMessage("");
     try {
@@ -139,6 +164,8 @@ export default function VinylSettings() {
       setMessage(`Added ${meta.label}. It starts inactive so it cannot affect estimating until configured and enabled.`);
     } catch (e) {
       setError(e.message || "Could not add Vinyl machine.");
+    } finally {
+      addMachineRef.current = false;
     }
   };
 
