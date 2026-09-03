@@ -5,6 +5,13 @@ import { localDateStamp } from "./quoteLifecycle";
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
 
+export const canonicalEstimateWorkOrder = (rows = []) => (rows || []).slice().sort((a, b) => {
+  const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
+  const bTime = Date.parse(b?.created_date || b?.updated_date || "") || 0;
+  if (aTime !== bTime) return aTime - bTime;
+  return String(a?.id || "").localeCompare(String(b?.id || ""));
+})[0] || null;
+
 /** Find a Customer by company name (or legacy workflow client name). */
 export const findCustomerByName = (customers, name) => {
   const n = norm(name);
@@ -62,7 +69,7 @@ export const upsertCustomerFromEstimate = async (form, customers = []) => {
  */
 export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "" } = {}) => {
   const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-  const existing = existingRows?.[0] || null;
+  const existing = canonicalEstimateWorkOrder(existingRows || []);
   const lifecycleDates = resolvePipelineLifecycleDates({
     estimateStatus: estimate.status,
     previousEstimateStatus,
@@ -96,11 +103,33 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     return { ...existing, ...fields };
   }
 
-  return base44.entities.WorkOrder.create({
+  const created = await base44.entities.WorkOrder.create({
     ...fields,
     current_stage: "estimating",
     date_initial_contact: new Date().toISOString().slice(0, 10),
   });
+
+  // Collapse only the practical two-session create race for this exact estimate.
+  // Never delete/merge a WorkOrder that existed before this request. If another
+  // session won, discard only this request's newly-created losing row and apply
+  // the latest estimator fields to the canonical pipeline record.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const canonical = canonicalEstimateWorkOrder(
+    await base44.entities.WorkOrder.filter({ estimate_id: estimate.id })
+  ) || created;
+
+  if (canonical?.id && created?.id && canonical.id !== created.id) {
+    try {
+      await base44.entities.WorkOrder.delete(created.id);
+    } catch (error) {
+      console.error("Duplicate estimate-linked WorkOrder could not be discarded:", error);
+      throw new Error("A duplicate Sales Pipeline record was detected for this estimate and the losing duplicate could not be removed. Retry Pipeline Sync or contact an administrator.");
+    }
+    await base44.entities.WorkOrder.update(canonical.id, fields);
+    return { ...canonical, ...fields };
+  }
+
+  return canonical;
 };
 
 /**
