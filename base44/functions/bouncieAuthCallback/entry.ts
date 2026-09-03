@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
-import { exchangeAuthorizationCode, saveConnection, fetchBouncieUser, upsertWebhook } from '../../shared/bouncie.ts';
+import { exchangeAuthorizationCode, saveConnection, fetchBouncieUser, upsertWebhook, APP_BASE } from '../../shared/bouncie.ts';
 
 const FLEET_ROUTE = '/fleettracking';
 
@@ -86,7 +86,7 @@ export default async function(req) {
     // Automatically verify / repair the webhook registration for this app.
     let webhookNote = '';
     try {
-      const result = await upsertWebhook(base44, url.origin);
+      const result = await upsertWebhook(base44, APP_BASE);
       webhookNote = `Fleet event webhook ${result.action}.`;
     } catch (e) {
       webhookNote = 'Connected, but the fleet event webhook could not be configured automatically — use "Repair Webhook" on the Fleet Tracking integration panel.';

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
+import { appFunctionUrl } from '../../shared/bouncie.ts';
 
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -15,9 +16,10 @@ export default async function(req) {
       return Response.json({ error: 'Bouncie client credentials are not configured. Set BOUNCIE_CLIENT_ID in app secrets.' }, { status: 500 });
     }
 
-    const body = await req.json().catch(() => ({}));
-    const origin = body.redirectBase || new URL(req.url).origin;
-    const redirectUri = `${origin}/functions/bouncieAuthCallback`;
+    // Always use the published app domain — the runtime's own origin and the
+    // browser's window.location.origin (inside the builder preview) do not
+    // match the redirect URI registered in the Bouncie Developer Portal.
+    const redirectUri = appFunctionUrl('bouncieAuthCallback');
 
     // Cryptographically random, short-lived, one-time-use state.
     const bytes = new Uint8Array(32);

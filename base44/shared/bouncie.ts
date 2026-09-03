@@ -3,6 +3,16 @@ import { secrets } from "base44:runtime";
 const AUTH_BASE = "https://auth.bouncie.com";
 const API_BASE = "https://api.bouncie.dev";
 
+// Published app origin used for externally-registered URLs (OAuth redirect_uri,
+// webhook endpoint). The function runtime's own req.url origin resolves to an
+// internal dispatcher host, which does NOT match what partners register in
+// their dashboards — so this must be the public app domain.
+export const APP_BASE = "https://clay-flow-signage-suite-387da97c.base44.app";
+
+export function appFunctionUrl(name) {
+  return `${APP_BASE}/functions/${name}`;
+}
+
 export const WEBHOOK_NAME = "CCS Signage Workflow Fleet Events";
 
 export const WEBHOOK_EVENTS = [
