@@ -133,7 +133,7 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
     live_total_snapshot: num(builder.current_recalculated_cost, num(currentLine.live_total_snapshot, frozenTotal)),
     customer_price_snapshot: frozenCustomer,
     live_customer_price_snapshot: liveCustomer,
-    price_state: builder.price_state || line.price_state || "current",
+    price_state: builder.price_state || currentLine.price_state || "current",
     detached_part_count: reattachCount,
     needs_reattach_review: reattachCount > 0,
     owned: true,
