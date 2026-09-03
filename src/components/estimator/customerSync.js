@@ -30,7 +30,7 @@ export const findCustomerByName = (customers, name) => {
   );
 };
 
-/** Map estimate Step-1 form values onto Customer fields (only non-empty values). */
+/** Map estimate Step-1 values onto Customer fields. Full/new-estimate sync ignores blanks; explicit changed-key sync may intentionally clear a changed field. */
 const customerFieldsFromEstimate = (form, changedKeys = null) => {
   const allowed = changedKeys ? new Set(changedKeys) : null;
   const include = (sourceKey) => !allowed || allowed.has(sourceKey);
@@ -47,7 +47,7 @@ const customerFieldsFromEstimate = (form, changedKeys = null) => {
     ...(include("site_address") ? { location_address_1: form.site_address } : {}),
   };
   return Object.fromEntries(
-    Object.entries(fields).filter(([, v]) => v !== undefined && v !== null)
+    Object.entries(fields).filter(([, v]) => v !== undefined && v !== null && (changedKeys ? true : v !== ""))
   );
 };
 
