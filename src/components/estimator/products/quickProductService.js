@@ -3,6 +3,7 @@ import { makeStableId, snapshotHash } from "@/components/estimator/builder/build
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -394,6 +395,13 @@ async function instantiateLegacyQuickProduct({ estimate, quickProduct }) {
   return { line, builderProduct: builder, parts: createdParts, groups: [] };
 }
 
+async function instantiateProductPayload({ estimate, productPayload }) {
+  if (num(productPayload?.template_version) >= 2 && productPayload?.product_snapshot) {
+    return instantiateV2QuickProduct({ estimate, quickProduct: productPayload });
+  }
+  return instantiateLegacyQuickProduct({ estimate, quickProduct: productPayload });
+}
+
 export async function instantiateQuickProduct({ estimateId, quickProduct }) {
   if (!estimateId || !quickProduct?.id) throw new Error("Estimate and Quick Product are required.");
   const [estimate, liveQuickProduct, me] = await Promise.all([
@@ -402,6 +410,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct }) {
     base44.auth.me().catch(() => null),
   ]);
   if (!estimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate);
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
   const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || (!!me?.id && liveQuickProduct.created_by_id === me.id);
@@ -409,10 +418,15 @@ export async function instantiateQuickProduct({ estimateId, quickProduct }) {
   if (quickProduct.updated_date && liveQuickProduct.updated_date && quickProduct.updated_date !== liveQuickProduct.updated_date) {
     throw new Error("This Quick Product changed after the Add Product window loaded. Reopen Add Product and review the latest reusable Product before adding it.");
   }
-  if (num(liveQuickProduct.template_version) >= 2 && liveQuickProduct.product_snapshot) {
-    return instantiateV2QuickProduct({ estimate, quickProduct: liveQuickProduct });
-  }
-  return instantiateLegacyQuickProduct({ estimate, quickProduct: liveQuickProduct });
+  return instantiateProductPayload({ estimate, productPayload: liveQuickProduct });
+}
+
+export async function instantiateProductSnapshot({ estimateId, productSnapshot }) {
+  if (!estimateId || !productSnapshot) throw new Error("Estimate and Product snapshot are required.");
+  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate);
+  return instantiateProductPayload({ estimate, productPayload: productSnapshot });
 }
 
 export async function listQuickProducts() {

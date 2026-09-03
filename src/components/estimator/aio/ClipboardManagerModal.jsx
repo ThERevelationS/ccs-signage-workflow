@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardPaste, Package, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { listClipboardItems, pasteClipboardItem, removeClipboardItem } from "@/components/estimator/products/clipboardService";
@@ -14,10 +14,12 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
   const [targetByItem, setTargetByItem] = useState({});
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
+  const pasteRef = useRef(false);
 
   const load = async () => {
     setLoading(true);
     setError("");
+    setItems([]);
     try {
       setItems(await listClipboardItems());
     } catch (err) {
@@ -47,9 +49,12 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
   }, [items, query, typeFilter]);
 
   const paste = async (item) => {
+    if (!item?.id || pasteRef.current) return;
+    pasteRef.current = true;
     const targetBuilderProductId = item.item_type === "product" ? "" : (targetByItem[item.id] || targets[0]?.builder_product_id || "");
     if (item.item_type !== "product" && !targetBuilderProductId) {
       setError("Add or choose a target Product before pasting this Part or Part Group.");
+      pasteRef.current = false;
       return;
     }
     setBusyId(item.id);
@@ -60,6 +65,7 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
     } catch (err) {
       setError(err?.message || "Clipboard item could not be pasted.");
     } finally {
+      pasteRef.current = false;
       setBusyId("");
     }
   };
@@ -97,6 +103,8 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
           <div className="flex-1 overflow-y-auto max-h-[510px] p-3">
             {loading ? (
               <div className="py-20 text-center text-[12px] text-gray-400">Loading clipboard…</div>
+            ) : error ? (
+              <div className="py-20 text-center"><Package className="w-9 h-9 text-red-300 mx-auto mb-2" /><div className="text-[12px] font-semibold text-red-700">Clipboard could not be verified.</div><div className="text-[10px] text-red-500 mt-1">Close and reopen the clipboard to retry.</div></div>
             ) : visible.length === 0 ? (
               <div className="py-20 text-center">
                 <Package className="w-9 h-9 text-gray-300 mx-auto mb-2" />

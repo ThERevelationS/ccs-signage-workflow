@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { snapshotHash } from "@/components/estimator/builder/builderService";
-import { instantiateQuickProduct } from "@/components/estimator/products/quickProductService";
+import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
@@ -132,7 +132,7 @@ export async function copyPartGroupToClipboard({ estimateId, builderProductId, g
 }
 
 export async function listClipboardItems() {
-  const rows = await base44.entities.EstimateClipboardItem.list().catch(() => []);
+  const rows = await base44.entities.EstimateClipboardItem.list();
   const now = Date.now();
   const expired = (rows || []).filter((row) => row.expires_at && new Date(row.expires_at).getTime() <= now);
   if (expired.length) {
@@ -149,17 +149,26 @@ export async function removeClipboardItem(id) {
 }
 
 export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "" }) {
-  if (!estimateId || !clipboardItem) throw new Error("Clipboard item is required.");
-  if (clipboardItem.item_type === "product") {
-    return instantiateQuickProduct({ estimateId, quickProduct: clipboardItem.payload });
+  if (!estimateId || !clipboardItem?.id) throw new Error("Clipboard item is required.");
+  const liveItem = await base44.entities.EstimateClipboardItem.get(clipboardItem.id);
+  if (!liveItem) throw new Error("This clipboard item no longer exists. Reopen the Estimator Clipboard to refresh it.");
+  if (liveItem.is_active === false) throw new Error("This clipboard item is inactive and cannot be pasted.");
+  if (liveItem.expires_at && new Date(liveItem.expires_at).getTime() <= Date.now()) {
+    throw new Error("This clipboard item has expired. Reopen the Estimator Clipboard to refresh it.");
+  }
+  if (clipboardItem.updated_date && liveItem.updated_date && clipboardItem.updated_date !== liveItem.updated_date) {
+    throw new Error("This clipboard item changed after the clipboard opened. Reopen it before pasting.");
+  }
+  if (liveItem.item_type === "product") {
+    return instantiateProductSnapshot({ estimateId, productSnapshot: liveItem.payload });
   }
   return addPartPackageToProduct({
     estimateId,
     targetBuilderProductId,
-    itemType: clipboardItem.item_type,
-    itemName: clipboardItem.item_name,
-    payload: clipboardItem.payload,
+    itemType: liveItem.item_type,
+    itemName: liveItem.item_name,
+    payload: liveItem.payload,
     sourceType: "clipboard",
-    sourceId: clipboardItem.id,
+    sourceId: liveItem.id,
   });
 }

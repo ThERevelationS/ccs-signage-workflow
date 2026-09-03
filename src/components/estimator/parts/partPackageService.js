@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -32,6 +33,7 @@ export async function addPartPackageToProduct({
     base44.entities.BuilderProduct.get(targetBuilderProductId),
   ]);
   if (!estimate || !builder) throw new Error("Target Product could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate);
   const targetLine = getEstimateLine(estimate, targetBuilderProductId);
   if (!targetLine) throw new Error("Target Product is not part of this estimate.");
 
