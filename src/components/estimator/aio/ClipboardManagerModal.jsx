@@ -13,17 +13,19 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
   const [typeFilter, setTypeFilter] = useState("all");
   const [targetByItem, setTargetByItem] = useState({});
   const [busyId, setBusyId] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [error, setError] = useState("");
   const pasteRef = useRef(false);
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     setError("");
     setItems([]);
     try {
       setItems(await listClipboardItems());
     } catch (err) {
-      setError(err?.message || "Clipboard could not be loaded.");
+      setLoadError(err?.message || "Clipboard could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -98,12 +100,12 @@ export default function ClipboardManagerModal({ open, estimateId, lines = [], on
             </select>
           </div>
 
-          {error && <div className="mx-3 mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {(loadError || error) && <div className="mx-3 mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{loadError || error}</div>}
 
           <div className="flex-1 overflow-y-auto max-h-[510px] p-3">
             {loading ? (
               <div className="py-20 text-center text-[12px] text-gray-400">Loading clipboard…</div>
-            ) : error ? (
+            ) : loadError ? (
               <div className="py-20 text-center"><Package className="w-9 h-9 text-red-300 mx-auto mb-2" /><div className="text-[12px] font-semibold text-red-700">Clipboard could not be verified.</div><div className="text-[10px] text-red-500 mt-1">Close and reopen the clipboard to retry.</div></div>
             ) : visible.length === 0 ? (
               <div className="py-20 text-center">
