@@ -18,7 +18,7 @@ export default function SalesHome() {
   }, []);
 
   const counts = {
-    active: estimates.filter((e) => e.status !== "archived").length,
+    active: estimates.filter((e) => !["archived", "cancelled"].includes(e.status)).length,
     sent: estimates.filter((e) => e.status === "sent").length,
     approved: estimates.filter((e) => e.status === "approved").length,
     draft: estimates.filter((e) => !e.status || e.status === "draft").length,
