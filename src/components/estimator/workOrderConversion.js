@@ -86,7 +86,7 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     client_name: firstNonBlank(estimate.client_name, existing?.client_name),
     // Conversion must not revive a stale estimate.customer_id. The caller passes
     // only a Customer ID verified against the live Customer entity.
-    customer_id: firstNonBlank(verifiedCustomerId, existing?.customer_id),
+    customer_id: verifiedCustomerId || "",
     estimate_id: estimate.id || existing?.estimate_id || "",
     // Preserve richer sales/production notes already entered on the pipeline lead.
     description: firstNonBlank(existing?.description, generatedDescription),
