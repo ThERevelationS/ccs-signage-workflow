@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 export default function InventoryFormModal({ source, editingItem, onCancel, onSaved }) {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const saveRef = useRef(false);
 
   // Is this the Labor & Services source? If so we drive category-specific
   // fields from the per-category schema below.
@@ -53,6 +54,7 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saveRef.current) return;
 
     // Required check
     for (const f of source.fields) {
@@ -97,9 +99,20 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
       });
     }
 
+    saveRef.current = true;
     setSaving(true);
     try {
       if (editingItem?.id) {
+        const live = await source.entity.get(editingItem.id);
+        if (
+          editingItem.updated_date &&
+          live?.updated_date &&
+          editingItem.updated_date !== live.updated_date
+        ) {
+          alert("This inventory item changed in another session. Your changes were not saved. The inventory list will reload so you can review the latest record before editing again.");
+          onSaved?.();
+          return;
+        }
         await source.entity.update(editingItem.id, payload);
       } else {
         await source.entity.create(payload);
@@ -107,9 +120,11 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
       onSaved?.();
     } catch (err) {
       console.error("Save failed:", err);
-      alert("Error saving item. Please try again.");
+      alert(err?.message || "Error saving item. Please try again.");
+    } finally {
+      saveRef.current = false;
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (

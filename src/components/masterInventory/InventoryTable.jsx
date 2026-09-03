@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -20,9 +20,12 @@ const formatCell = (val, field) => {
 
 export default function InventoryTable({ source, items, canEdit, onEdit, onDelete, onInlineToggle }) {
   const tableFields = source.fields.filter((f) => f.table);
+  const toggleRef = useRef(new Set());
 
   const handleToggle = async (item, field, next) => {
-    if (!canEdit) return;
+    const lockKey = `${item.id}:${field.name}`;
+    if (!canEdit || toggleRef.current.has(lockKey)) return;
+    toggleRef.current.add(lockKey);
     try {
       // Per-row entity routing for combined-view tabs (e.g. Extruded Metals & Poles).
       // The row may carry an explicit `_entity` reference; otherwise fall back to source.entity.
@@ -31,11 +34,19 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
         console.warn("No entity available for inline toggle on", item);
         return;
       }
+      const live = await entity.get(item.id);
+      if (live?.[field.name] !== item[field.name]) {
+        onInlineToggle?.(item.id, field.name, live?.[field.name]);
+        alert("This inventory toggle changed in another session. The latest value has been restored; review it before changing again.");
+        return;
+      }
       await entity.update(item.id, { [field.name]: next });
       onInlineToggle?.(item.id, field.name, next);
     } catch (e) {
       console.error("Toggle failed:", e);
       alert("Failed to update toggle.");
+    } finally {
+      toggleRef.current.delete(lockKey);
     }
   };
 
