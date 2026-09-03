@@ -7,6 +7,7 @@ import { getModuleLabel } from "./moduleRegistry";
 import { acceptedInternalEstimateCost } from "./customerPricing";
 import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { localDateStamp } from "./quoteLifecycle";
+import { resolveCustomerForEstimate } from "./customerSync";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -44,6 +45,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       }
       const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
       const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
+      const customers = await base44.entities.Customer.list("company_name", 1000);
+      const resolvedCustomer = await resolveCustomerForEstimate(
+        { ...estimateBefore, customer_id: existing?.customer_id || estimateBefore.customer_id || "" },
+        customers || []
+      );
+      const verifiedCustomerId = resolvedCustomer?.id || "";
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
       const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
       const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
@@ -54,6 +61,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         products,
         generatedDescription,
         conversionDate: localDateStamp(),
+        verifiedCustomerId,
       });
 
       let workOrder;
