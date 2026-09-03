@@ -102,7 +102,6 @@ export default function MasterEquipmentTab({ isAdmin }) {
   const [activeKind, setActiveKind] = useState("equipment");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);          // normalized row or { kind, _source, raw: {} } for new
-  const [newSource, setNewSource] = useState("foundation_equipment");
   const [loadError, setLoadError] = useState("");
   const actionRef = useRef(new Set());
 
@@ -233,7 +232,6 @@ export default function MasterEquipmentTab({ isAdmin }) {
   const openAdd = () => {
     // Boom Lifts tab → create a ChannelLetterInstallEquipment boom_lift (no attachment tree).
     if (activeKind === "boom_lift") {
-      setNewSource("channel_letter_equipment");
       setEditItem({
         _new: true,
         kind: "equipment",
@@ -253,7 +251,6 @@ export default function MasterEquipmentTab({ isAdmin }) {
     }
     // New rows default to FoundationInventory so attachment-tree linking is available.
     // The form lets the user pick the entity for top-level Equipment.
-    setNewSource("foundation_equipment");
     setEditItem({
       _new: true,
       kind: activeKind,
@@ -274,7 +271,6 @@ export default function MasterEquipmentTab({ isAdmin }) {
   };
 
   const openEdit = (row) => {
-    setNewSource(row._source);
     setEditItem({ ...row });
     setShowForm(true);
   };
