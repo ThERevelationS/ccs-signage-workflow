@@ -26,7 +26,7 @@ export async function assertEstimateProductMutationAllowed(estimate, { expectedU
   const pendingEntry = getPendingEstimatePriceAcceptance(estimate);
   const pendingKey = String(pendingEntry?.pending?.key || "").trim();
   if (pendingKey && pendingKey !== allowedKey) {
-    throw new Error("A Product price-acceptance action is still being recovered. Resume that pricing action before changing Products or Parts.");
+    throw new Error("A Builder mutation is still being recovered for this Product. Resume that operation before changing Products or Parts.");
   }
   const status = String(estimate.status || "draft");
   if (status === "cancelled") {
