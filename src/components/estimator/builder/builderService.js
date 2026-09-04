@@ -3,6 +3,7 @@ import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/esti
 import { acceptBuilderPartPrices, applyBuilderPartPriceAcceptancePlan, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -511,7 +512,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
   ) || line;
 
-  const existingPending = pendingPriceAcceptance(currentLine);
+  const existingPending = pendingBuilderMutation(currentLine);
   if (existingPending) {
     const pendingBuilderId = currentLine.builder_product_id || existingPending.builder_product_id || "";
     const [pendingBuilder, pendingParts] = await Promise.all([
@@ -521,7 +522,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     if (!pendingBuilder?.id || !Array.isArray(pendingParts)) {
       throw new Error("The pending initial price acceptance could not verify its Builder Product or Parts. The recovery marker was retained.");
     }
-    const recovered = await resumeBuilderPriceAcceptance({
+    const recovered = await resumeBuilderMutation({
       estimateId,
       estimate,
       builder: pendingBuilder,
@@ -737,11 +738,11 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
       ]);
       const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
-      const canonicalPending = pendingPriceAcceptance(markedLine);
+      const canonicalPending = pendingBuilderMutation(markedLine);
       if (!canonicalPending || canonicalPending.key !== operationKey) {
         throw new Error("Another Builder price-acceptance operation won the recovery marker race. Reload before continuing.");
       }
-      const recovered = await resumeBuilderPriceAcceptance({
+      const recovered = await resumeBuilderMutation({
         estimateId,
         estimate: markedEstimate,
         builder: currentBuilder,
@@ -831,93 +832,6 @@ export async function deleteBuilderProductCascade(builderProductId) {
   await base44.entities.BuilderProduct.delete(builderProductId).catch(() => null);
 }
 
-async function ensureBuilderPriceRevision(idempotencyKey, revision) {
-  const response = await base44.functions.invoke("ensureBuilderPriceRevision", {
-    idempotency_key: idempotencyKey,
-    revision,
-  });
-  const result = response?.data || response;
-  if (result?.error) throw new Error(result.error);
-  if (!result?.revision?.id) throw new Error("Builder price revision could not be verified after recording.");
-  return result.revision;
-}
-
-function pendingPriceAcceptance(line) {
-  const pending = line?.price_acceptance_pending;
-  return pending && typeof pending === "object" && String(pending.key || "").trim() ? pending : null;
-}
-
-function validatePendingPriceAcceptance(pending, { estimateId, builder, line }) {
-  if (!pending || !["builder_update_price", "builder_initial_freeze"].includes(pending.kind)) {
-    throw new Error("The pending Product price recovery marker is invalid. No pricing was changed.");
-  }
-  if (
-    String(pending.estimate_id || "") !== String(estimateId || "") ||
-    String(pending.builder_product_id || "") !== String(builder?.id || "") ||
-    (pending.estimate_line_id && line?.line_id && pending.estimate_line_id !== line.line_id)
-  ) {
-    throw new Error("The pending Product price recovery marker no longer matches this Estimate Product.");
-  }
-}
-
-async function resumeBuilderPriceAcceptance({ estimateId, estimate, builder, parts, line, pending }) {
-  validatePendingPriceAcceptance(pending, { estimateId, builder, line });
-  await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
-
-  const plan = pending.part_acceptance_plan || {};
-  await applyBuilderPartPriceAcceptancePlan(builder.id, plan, { partsOverride: parts });
-  await ensureBuilderPriceRevision(pending.key, pending.revision || {});
-
-  const builderPatch = pending.builder_patch || {};
-  if (patchDiffers(builder, builderPatch)) {
-    const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
-    const currentBuilderUpdatedAt = String(builder.updated_date || "").trim();
-    if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
-      throw new Error("This Builder Product changed while price acceptance was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
-    }
-    await base44.entities.BuilderProduct.update(builder.id, builderPatch);
-  }
-
-  // Re-read the Estimate before the final line write. The durable marker makes
-  // this safe after partial success and lets us preserve unrelated fresh fields.
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
-  if (!latestEstimate) throw new Error("Estimate could not be verified while completing Builder price acceptance.");
-  const latestLine = (latestEstimate.line_items || []).find((item) => item.builder_product_id === builder.id);
-  if (!latestLine) throw new Error("This Product is no longer part of the estimate. The pending price recovery marker could not be completed.");
-  const latestPending = pendingPriceAcceptance(latestLine);
-  const linePatch = pending.line_patch || {};
-
-  if (!latestPending) {
-    if (!patchDiffers(latestLine, linePatch)) {
-      return {
-        blocked: false,
-        recovered: true,
-        alreadyCompleted: true,
-        changedParts: plan.changed_parts || [],
-        line: latestLine,
-      };
-    }
-    throw new Error("The price-acceptance recovery marker disappeared before the accepted Estimate line was verified. Reload before continuing.");
-  }
-  if (latestPending.key !== pending.key) {
-    throw new Error("A different price-acceptance recovery operation is now active for this Product. Reload before continuing.");
-  }
-  await assertEstimateProductMutationAllowed(latestEstimate, { allowPriceAcceptanceKey: pending.key });
-
-  const lineItems = (latestEstimate.line_items || []).map((item) =>
-    item.builder_product_id === builder.id
-      ? { ...item, ...linePatch, price_acceptance_pending: {} }
-      : item
-  );
-  const updateResult = await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-  const completedLine = (updateResult?.line_items || lineItems).find((item) => item.builder_product_id === builder.id) || null;
-  return {
-    blocked: false,
-    recovered: true,
-    changedParts: plan.changed_parts || [],
-    line: completedLine,
-  };
-}
 
 export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation.", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) return null;
@@ -940,9 +854,9 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     throw new Error("One or more Builder Parts no longer belong to this Product. Reload before updating its price.");
   }
 
-  const existingPending = pendingPriceAcceptance(verifiedEstimateLine);
+  const existingPending = pendingBuilderMutation(verifiedEstimateLine);
   if (existingPending) {
-    return resumeBuilderPriceAcceptance({
+    return resumeBuilderMutation({
       estimateId,
       estimate,
       builder,
@@ -1136,12 +1050,12 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
-  const canonicalPending = pendingPriceAcceptance(markedLine);
+  const canonicalPending = pendingBuilderMutation(markedLine);
   if (!canonicalPending || canonicalPending.key !== operationKey) {
     throw new Error("Another Update Price operation won the recovery marker race. Reload before continuing.");
   }
 
-  return resumeBuilderPriceAcceptance({
+  return resumeBuilderMutation({
     estimateId,
     estimate: markedEstimate,
     builder: currentBuilder,
