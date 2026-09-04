@@ -3515,14 +3515,6 @@ async function loadEstimatorBuilderMutationContext(builderProductId, expectedEst
   return { builder, estimate, line };
 }
 
-async function loadEstimatorPartMutationContext(partId, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
-  const part = await base44.entities.BuilderPart.get(partId);
-  if (!part?.id) throw new Error("The Part could not be loaded.");
-  assertEstimatorPartVersion(part, expectedPartUpdatedAt);
-  const context = await loadEstimatorBuilderMutationContext(part.builder_product_id, expectedEstimateUpdatedAt);
-  return { ...context, part };
-}
-
 async function loadPendingAwarePartMutationContext(partId, options = {}, allowedKinds = []) {
   const part = await base44.entities.BuilderPart.get(partId);
   if (!part?.id) throw new Error("The Part could not be loaded.");
@@ -3551,7 +3543,7 @@ async function loadPendingAwarePartMutationContext(partId, options = {}, allowed
   return { part, builder, estimate, line, pending: null, alreadyComplete: false };
 }
 
-async function markBuilderMutationPending({ estimate, builder, line, pending }) {
+async function markBuilderMutationPending({ estimate, builder, pending }) {
   const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
   if (!latestEstimate) throw new Error("Estimate could not be verified before starting this Builder mutation.");
   if (
