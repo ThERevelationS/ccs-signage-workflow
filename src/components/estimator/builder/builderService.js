@@ -817,6 +817,20 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     });
   }
 
+  // If the final Estimate write succeeded but its response was lost, the browser
+  // may retry with the pre-operation timestamp. Verify the complete accepted
+  // server state before enforcing that stale timestamp so the retry becomes a
+  // no-op instead of creating a second pricing operation.
+  const serverAlreadyCurrent =
+    builder.price_state === "current" &&
+    verifiedEstimateLine.price_state === "current" &&
+    sameNumber(builder.frozen_cost, builder.current_recalculated_cost) &&
+    sameNumber(verifiedEstimateLine.total_snapshot, verifiedEstimateLine.live_total_snapshot) &&
+    sameNumber(acceptedCustomerUnitPrice(verifiedEstimateLine), liveCustomerUnitPrice(verifiedEstimateLine));
+  if (serverAlreadyCurrent) {
+    return { blocked: false, alreadyCompleted: true, changedParts: [], line: verifiedEstimateLine };
+  }
+
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const timestamp = nowIso();
   const partAcceptance = await acceptBuilderPartPrices(builder.id, {
