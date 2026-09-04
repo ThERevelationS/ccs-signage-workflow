@@ -3303,7 +3303,39 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   };
 }
 
-export async function acceptBuilderPartPrices(builderProductId, { builderOverride = undefined, partsOverride = undefined } = {}) {
+export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan, { partsOverride = undefined } = {}) {
+  const parts = partsOverride !== undefined
+    ? partsOverride
+    : await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while recovering pricing acceptance.");
+  const byId = new Map(parts.map((part) => [part.id, part]));
+  let writesPerformed = 0;
+
+  for (const step of plan?.part_updates || []) {
+    const part = byId.get(step.part_id);
+    if (!part || part.builder_product_id !== builderProductId) {
+      throw new Error("A Builder Part changed ownership while pricing acceptance was pending. Reload before continuing.");
+    }
+    const targetPatch = step.patch || {};
+    if (!patchDiffers(part, targetPatch)) continue;
+    const expected = String(step.expected_updated_date || "").trim();
+    const current = String(part.updated_date || "").trim();
+    if (expected && current && current !== expected) {
+      throw new Error(`Part “${part.part_name || "Part"}” changed while Update Price was pending. No unrelated Part edit was overwritten.`);
+    }
+    await base44.entities.BuilderPart.update(part.id, targetPatch);
+    writesPerformed += 1;
+  }
+
+  return { writesPerformed };
+}
+
+export async function acceptBuilderPartPrices(builderProductId, {
+  builderOverride = undefined,
+  partsOverride = undefined,
+  apply = true,
+  timestamp = nowIso(),
+} = {}) {
   const [parts, builder] = await Promise.all([
     partsOverride !== undefined
       ? Promise.resolve(partsOverride)
@@ -3375,8 +3407,8 @@ export async function acceptBuilderPartPrices(builderProductId, { builderOverrid
     };
   }
 
-  const timestamp = nowIso();
   const changedParts = [];
+  const partUpdates = [];
   let activePartCount = 0;
 
   for (const part of activeParts) {
@@ -3406,19 +3438,33 @@ export async function acceptBuilderPartPrices(builderProductId, { builderOverrid
     }
     const acceptedBuilderData = { ...(part.builder_data || {}) };
     delete acceptedBuilderData[PENDING_REMOVAL_KEY];
-    await base44.entities.BuilderPart.update(part.id, {
-      frozen_inventory_snapshot: part.current_inventory_snapshot || part.frozen_inventory_snapshot || {},
-      frozen_unit_cost: num(part.current_unit_cost, num(part.frozen_unit_cost)),
-      frozen_extended_cost: num(part.current_extended_cost, num(part.frozen_extended_cost)),
-      inventory_updated_date_snapshot: part.current_inventory_snapshot?.updated_date || part.inventory_updated_date_snapshot || "",
-      price_state: "current",
-      price_delta: 0,
-      price_delta_percent: 0,
-      builder_data: acceptedBuilderData,
-      is_active: !pendingRemoval,
-      last_price_update_at: timestamp,
+    partUpdates.push({
+      part_id: part.id,
+      expected_updated_date: part.updated_date || "",
+      patch: {
+        frozen_inventory_snapshot: part.current_inventory_snapshot || part.frozen_inventory_snapshot || {},
+        frozen_unit_cost: num(part.current_unit_cost, num(part.frozen_unit_cost)),
+        frozen_extended_cost: num(part.current_extended_cost, num(part.frozen_extended_cost)),
+        inventory_updated_date_snapshot: part.current_inventory_snapshot?.updated_date || part.inventory_updated_date_snapshot || "",
+        price_state: "current",
+        price_delta: 0,
+        price_delta_percent: 0,
+        builder_data: acceptedBuilderData,
+        is_active: !pendingRemoval,
+        last_price_update_at: timestamp,
+      },
     });
     if (!pendingRemoval) activePartCount += 1;
+  }
+
+  const acceptancePlan = {
+    timestamp,
+    part_updates: partUpdates,
+    changed_parts: changedParts,
+    active_part_count: activePartCount,
+  };
+  if (apply) {
+    await applyBuilderPartPriceAcceptancePlan(builderProductId, acceptancePlan, { partsOverride: parts });
   }
 
   return {
@@ -3429,6 +3475,7 @@ export async function acceptBuilderPartPrices(builderProductId, { builderOverrid
     recalcParts: [],
     recalcReason: "",
     activePartCount,
+    acceptancePlan,
   };
 }
 
