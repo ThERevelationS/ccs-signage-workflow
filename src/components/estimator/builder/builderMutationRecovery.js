@@ -65,6 +65,25 @@ export async function ensureBuilderPriceRevision(idempotencyKey, revision) {
   return result.revision;
 }
 
+async function applyPendingSourcePatch(pending) {
+  const sourceEntity = String(pending?.source_entity || "").trim();
+  const sourceProjectId = String(pending?.source_project_id || "").trim();
+  const sourcePatch = pending?.source_patch && typeof pending.source_patch === "object" ? pending.source_patch : null;
+  if (!sourceEntity || !sourceProjectId || !sourcePatch || Object.keys(sourcePatch).length === 0) return null;
+  const entity = base44.entities[sourceEntity];
+  if (!entity?.get || !entity?.update) throw new Error("The Builder source entity needed for recovery is unavailable.");
+  const current = await entity.get(sourceProjectId);
+  if (!current) throw new Error("The Builder source project could not be verified while recovering the pending mutation.");
+  if (!recoveryPatchDiffers(current, sourcePatch)) return current;
+
+  const expected = String(pending?.source_updated_date_before || "").trim();
+  const actual = String(current?.updated_date || "").trim();
+  if (expected && actual && expected !== actual) {
+    throw new Error("The Builder source project changed while reattachment was pending. The recovery marker was retained and no unrelated source edit was overwritten.");
+  }
+  return entity.update(sourceProjectId, sourcePatch);
+}
+
 export async function resumeBuilderMutation({
   estimateId,
   estimate,
@@ -79,6 +98,7 @@ export async function resumeBuilderMutation({
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
   const plan = pending.part_acceptance_plan || {};
+  await applyPendingSourcePatch(pending);
   await applyPartPlan(builder.id, plan, { partsOverride: parts });
   await ensureBuilderPriceRevision(pending.key, pending.revision || {});
 
