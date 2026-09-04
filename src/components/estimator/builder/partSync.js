@@ -5,6 +5,7 @@ import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance/maintenanceCalculator";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { builderMutationHash, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
