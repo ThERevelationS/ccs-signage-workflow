@@ -31,6 +31,43 @@ async function loadManualMutationContext(builderProductId, expectedEstimateUpdat
   return { builder, estimate, line };
 }
 
+async function loadRawManualMutationContext(builderProductId) {
+  if (!builderProductId) throw new Error("Product is required.");
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const line = estimateLineForBuilder(estimate, builder.id);
+  if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
+  return { builder, estimate, line, pending: pendingBuilderMutation(line) };
+}
+
+async function resumeStoredManualPartMutation({ builder, estimate, line, pending }) {
+  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while resuming the manual Part mutation.");
+  return resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate,
+    builder,
+    parts,
+    line,
+    pending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
+}
+
+function manualPartChangesAlreadyApplied(part, changes = {}) {
+  if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) return false;
+  if (changes.part_name !== undefined && String(part.part_name || "") !== String(changes.part_name || "Part")) return false;
+  if (changes.client_label !== undefined && String(part.client_label || "") !== String(changes.client_label || "")) return false;
+  if (changes.quantity !== undefined && Math.abs(num(part.quantity) - Math.max(0, num(changes.quantity))) > 0.000001) return false;
+  if (changes.unit !== undefined && String(part.unit || "") !== String(changes.unit || "")) return false;
+  if (changes.frozen_unit_cost !== undefined && Math.abs(num(part.frozen_unit_cost) - num(changes.frozen_unit_cost)) > 0.000001) return false;
+  if (changes.detail_overrides !== undefined && stable(part.detail_overrides || {}) !== stable(changes.detail_overrides || {})) return false;
+  if (changes.notes !== undefined && String(part.notes || "") !== String(changes.notes || "")) return false;
+  return true;
+}
+
 function patchedEstimateLines(estimate, builderProductId, patch) {
   return (estimate.line_items || []).map((line) => {
     if (line.builder_product_id !== builderProductId) return line;
