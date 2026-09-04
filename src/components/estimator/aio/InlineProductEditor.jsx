@@ -23,7 +23,7 @@ const EDITORS = {
   painting: PaintingEstimator,
 };
 
-export default function InlineProductEditor({ line, estimateId, onClose, onSaved }) {
+export default function InlineProductEditor({ line, estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved }) {
   const Editor = EDITORS[line?.module_key];
   const [checkingDetached, setCheckingDetached] = useState(!!line?.builder_product_id);
   const [detachedParts, setDetachedParts] = useState([]);
@@ -68,6 +68,8 @@ export default function InlineProductEditor({ line, estimateId, onClose, onSaved
     const result = await reattachBuilderParts({
       builderProductId: line.builder_product_id,
       partIds,
+      expectedEstimateUpdatedAt,
+      expectedPartVersions: Object.fromEntries(detachedParts.map((part) => [part.id, part.updated_date || ""])),
     });
     setDetachedParts(result.remainingDetached || []);
     setReattachOpen(false);

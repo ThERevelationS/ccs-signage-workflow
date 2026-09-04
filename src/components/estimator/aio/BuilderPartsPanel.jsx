@@ -211,7 +211,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           onEditBuilder?.();
         }}
         onDetach={async () => {
-          await detachBuilderPartOverride(part.id);
+          await detachBuilderPartOverride(part.id, undefined, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
           setWarningOpen(false);
           setOverrideOpen(true);
           await onChanged?.();
@@ -224,7 +224,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         onClose={() => setOverrideOpen(false)}
         onSave={async (changes) => {
           if (isDirectlyEditable) await updateManualProductPart(part.id, changes, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
-          else await updateDetachedPartOverride(part.id, changes);
+          else await updateDetachedPartOverride(part.id, changes, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
           setOverrideOpen(false);
           await onChanged?.();
         }}

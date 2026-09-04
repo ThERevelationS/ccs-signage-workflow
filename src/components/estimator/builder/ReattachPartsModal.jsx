@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Link2, LockKeyhole, RefreshCw, Unlink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
@@ -17,12 +17,14 @@ export default function ReattachPartsModal({
   const [selected, setSelected] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const actionRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
     setSelected(new Set(selectableIds));
     setSaving(false);
     setError("");
+    actionRef.current = false;
   }, [open, selectableIds.join("|")]);
 
   const toggle = (id) => {
@@ -38,12 +40,14 @@ export default function ReattachPartsModal({
   const selectNone = () => setSelected(new Set());
 
   const handleReattach = async () => {
-    if (!selected.size || saving) return;
+    if (!selected.size || saving || actionRef.current) return;
+    actionRef.current = true;
     setSaving(true);
     setError("");
     try {
       await onReattach?.([...selected]);
     } catch (err) {
+      actionRef.current = false;
       setError(err?.message || "The selected Parts could not be reattached.");
       setSaving(false);
     }

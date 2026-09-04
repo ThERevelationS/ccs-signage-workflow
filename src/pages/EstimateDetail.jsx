@@ -961,6 +961,7 @@ export default function EstimateDetail() {
               <InlineProductEditor
                 line={activeProduct}
                 estimateId={estimate.id}
+                expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
                 onClose={async () => {
                   await refreshProducts();
                   setActiveProduct(null);
