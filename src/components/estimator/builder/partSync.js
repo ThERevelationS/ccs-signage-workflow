@@ -3585,18 +3585,40 @@ async function markBuilderMutationPending({ estimate, builder, line, pending }) 
 
 export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.", options = {}) {
   if (!partId) return null;
-  const { part, builder, estimate } = await loadEstimatorPartMutationContext(partId, options);
-  if (part.builder_sync_state === "detached_override") return part;
+  const context = await loadPendingAwarePartMutationContext(
+    partId,
+    {
+      ...options,
+      isAlreadyComplete: ({ part }) => part.builder_sync_state === "detached_override",
+    },
+    ["builder_detach_override"]
+  );
+  const { part, builder, estimate, line, pending, alreadyComplete } = context;
+
+  if (pending) {
+    const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    await resumeBuilderMutation({
+      estimateId: estimate.id,
+      estimate,
+      builder,
+      parts: allParts,
+      line,
+      pending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+    });
+    const step = (pending.part_acceptance_plan?.part_updates || []).find((item) => item.part_id === part.id);
+    return { ...part, ...(step?.patch || {}) };
+  }
+  if (alreadyComplete) return part;
   if (["manual", "manual_addon"].includes(part.builder_sync_state)) {
     throw new Error("Independent manual Parts do not need to be detached from a Builder.");
   }
 
-  const [allParts, revisions] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id }),
-  ]);
-  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
-  const detachedCount = (allParts || []).filter((row) =>
+  const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified before detaching this Part.");
+  }
+  const detachedCount = allParts.filter((row) =>
     row.id === part.id ? row.is_active !== false : requiresBuilderReattach(row)
   ).length;
   const timestamp = nowIso();
@@ -3627,53 +3649,81 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     last_price_check_at: timestamp,
     notes: `${part.notes ? `${part.notes}\n` : ""}Detached from Builder for independent override. Frozen pricing retained.`,
   };
-
-  await base44.entities.BuilderPart.update(part.id, partPatch);
-  await base44.entities.BuilderProduct.update(builder.id, {
+  const changedParts = [{
+    part_id: part.id,
+    part_key: part.part_key,
+    part_name: part.part_name,
+    action: "detach_override",
+    frozen_unit_cost: num(part.frozen_unit_cost),
+    frozen_extended_cost: num(part.frozen_extended_cost),
+    inventory_item_id: part.inventory_item_id || "",
+    source_path: part.source_path || "",
+  }];
+  const builderPatch = {
     detached_part_count: detachedCount,
     needs_reattach_review: true,
     price_state: "detached_parts",
     last_price_check_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
-  await base44.entities.BuilderPriceRevision.create({
+  };
+  const linePatch = {
+    detached_part_count: detachedCount,
+    needs_reattach_review: true,
+    price_state: "detached_parts",
+    last_price_check_at: timestamp,
+  };
+  const revision = {
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
     reason: "manual_adjustment",
     previous_total_cost: num(builder.frozen_cost),
     new_total_cost: num(builder.frozen_cost),
     previous_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
     new_customer_price: num(builder.frozen_customer_price, num(builder.frozen_cost)),
-    changed_parts: [{
-      part_id: part.id,
-      part_key: part.part_key,
-      part_name: part.part_name,
-      action: "detach_override",
-      frozen_unit_cost: num(part.frozen_unit_cost),
-      frozen_extended_cost: num(part.frozen_extended_cost),
-      inventory_item_id: part.inventory_item_id || "",
-      source_path: part.source_path || "",
-    }],
+    changed_parts: changedParts,
     builder_snapshot_before: builder.builder_snapshot || {},
     builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: num(builder.frozen_cost), pricing_accepted: false },
     price_snapshot_after: { total: num(builder.frozen_cost), pricing_accepted: false },
     notes: reason,
-  });
+  };
+  const operationKey = `builder_detach_override:${builder.id}:${part.id}:${num(builder.builder_version, 1)}:${builderMutationHash({
+    estimate_updated_date: estimate.updated_date || "",
+    part_updated_date: part.updated_date || "",
+    reason,
+    part_patch: partPatch,
+  })}`;
+  const recoveryMarker = {
+    key: operationKey,
+    kind: "builder_detach_override",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: line.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    target_part_id: part.id,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: [{ part_id: part.id, expected_updated_date: part.updated_date || "", patch: partPatch }],
+      changed_parts: changedParts,
+      active_part_count: allParts.filter((row) => row.is_active !== false).length,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision,
+  };
 
-  const lineItems = (estimate.line_items || []).map((line) =>
-    line.builder_product_id === builder.id
-      ? {
-          ...line,
-          detached_part_count: detachedCount,
-          needs_reattach_review: true,
-          price_state: "detached_parts",
-          last_price_check_at: timestamp,
-        }
-      : line
-  );
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  const marked = await markBuilderMutationPending({ estimate, builder, line, pending: recoveryMarker });
+  await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
   return { ...part, ...partPatch };
 }
 
