@@ -733,6 +733,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         open={partLibraryOpen}
         estimateId={estimateId}
         builderProductId={builderProductId}
+        expectedEstimateUpdatedAt={expectedEstimateUpdatedAt}
         onClose={() => setPartLibraryOpen(false)}
         onAdded={async () => {
           setRefreshNonce((value) => value + 1);
