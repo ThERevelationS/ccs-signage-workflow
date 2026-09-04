@@ -5,7 +5,7 @@ import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance/maintenanceCalculator";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
-import { builderMutationHash, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
+import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -3570,38 +3570,6 @@ async function loadPendingAwarePartMutationContext(partId, options = {}, allowed
   assertEstimatorPartVersion(part, options.expectedPartUpdatedAt || "");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: options.expectedEstimateUpdatedAt || "" });
   return { part, builder, estimate, line, pending: null, alreadyComplete: false };
-}
-
-async function markBuilderMutationPending({ estimate, builder, pending }) {
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
-  if (!latestEstimate) throw new Error("Estimate could not be verified before starting this Builder mutation.");
-  if (
-    estimate.updated_date &&
-    latestEstimate.updated_date &&
-    estimate.updated_date !== latestEstimate.updated_date
-  ) {
-    throw new Error("This estimate changed in another session before the Builder mutation could start. No Part pricing was changed.");
-  }
-  const latestLine = estimateBuilderLine(latestEstimate, builder.id);
-  if (!latestLine) throw new Error("This Product is no longer part of the estimate. No Part pricing was changed.");
-  const lineItems = (latestEstimate.line_items || []).map((item) =>
-    item.builder_product_id === builder.id
-      ? { ...item, price_acceptance_pending: pending }
-      : item
-  );
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-
-  const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimate.id),
-    base44.entities.BuilderProduct.get(builder.id),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-  ]);
-  const markedLine = estimateBuilderLine(markedEstimate, builder.id);
-  const canonicalPending = pendingBuilderMutation(markedLine);
-  if (!canonicalPending || canonicalPending.key !== pending.key) {
-    throw new Error("Another Builder mutation won the recovery marker race. Reload before continuing.");
-  }
-  return { markedEstimate, currentBuilder, currentParts, markedLine, canonicalPending };
 }
 
 export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.", options = {}) {
