@@ -146,7 +146,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                 </button>
               )}
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
+                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id, { builderProductId: part.builder_product_id, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
               )}
             </div>
           </div>
