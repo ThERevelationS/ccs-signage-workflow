@@ -3220,10 +3220,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           };
           if (changed) changedCount += 1;
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
-            const writePatch = { ...patch, last_price_check_at: nowIso() };
-            await base44.entities.BuilderPart.update(old.id, writePatch);
-            writesPerformed += 1;
-            refreshed = { ...old, ...writePatch };
+            const writePatch = { ...patch, last_price_check_at: syncNow() };
+            refreshed = await writePartUpdate(old, writePatch);
           }
         } else {
           const patch = {
@@ -3235,10 +3233,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           // Keep the Part visibly detached and let Update Price block until the
           // user uses Switch Part, but do not trigger the Builder reattach modal.
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
-            const writePatch = { ...patch, last_price_check_at: nowIso() };
-            await base44.entities.BuilderPart.update(old.id, writePatch);
-            writesPerformed += 1;
-            refreshed = { ...old, ...writePatch };
+            const writePatch = { ...patch, last_price_check_at: syncNow() };
+            refreshed = await writePartUpdate(old, writePatch);
           }
         }
       }
@@ -3247,17 +3243,16 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     }
     const frozenRemovedCost = num(old.frozen_extended_cost);
     if (Math.abs(frozenRemovedCost) <= 0.005) {
-      await base44.entities.BuilderPart.update(old.id, {
+      await writePartUpdate(old, {
         is_active: false,
         current_unit_cost: 0,
         current_extended_cost: 0,
         price_state: "current",
         price_delta: 0,
         price_delta_percent: 0,
-        last_price_check_at: nowIso(),
+        last_price_check_at: syncNow(),
         notes: `${old.notes ? `${old.notes}\n` : ""}Part removed from Builder before it carried a frozen cost; historical row retained inactive.`,
       });
-      writesPerformed += 1;
       continue;
     }
 
@@ -3276,10 +3271,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         : `${old.notes ? `${old.notes}\n` : ""}${removalNote}`,
     };
     if (!skipUnchangedWrites || patchDiffers(old, pendingRemoval)) {
-      const writePatch = { ...pendingRemoval, last_price_check_at: nowIso() };
-      await base44.entities.BuilderPart.update(old.id, writePatch);
-      writesPerformed += 1;
-      synced.push({ ...old, ...writePatch });
+      const writePatch = { ...pendingRemoval, last_price_check_at: syncNow() };
+      synced.push(await writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
@@ -3326,6 +3319,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     manualAddonFrozenTotal,
     manualAddonCurrentTotal,
     parts: synced,
+    partWritePlan,
   };
 }
 
