@@ -150,15 +150,8 @@ export async function createCustomProduct({ estimate, name = "Custom Product", e
 
 export async function addCatalogPartToProduct({ builderProductId, catalogItem, quantity = 1, expectedEstimateUpdatedAt = "" }) {
   if (!builderProductId || !catalogItem?.inventoryId) throw new Error("Select a Master Inventory Part.");
-  const [context, liveCatalogItem, existingParts] = await Promise.all([
-    loadRawManualMutationContext(builderProductId),
-    verifyCatalogItem(catalogItem),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-  ]);
+  const context = await loadRawManualMutationContext(builderProductId);
   const { builder, estimate, line, pending } = context;
-  if (!Array.isArray(existingParts) || existingParts.some((part) => part?.builder_product_id !== builder.id)) {
-    throw new Error("Builder Parts could not be verified before adding this Part.");
-  }
   if (pending) {
     if (pending.kind !== "builder_manual_part_add") {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before adding a Part.");
@@ -175,14 +168,19 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
   const requestHash = builderMutationHash({
     builder_product_id: builder.id,
     expected_estimate_updated_at: requestVersion,
-    inventory_entity: liveCatalogItem.entity,
-    inventory_item_id: liveCatalogItem.inventoryId,
+    inventory_entity: catalogItem.entity,
+    inventory_item_id: catalogItem.inventoryId,
     quantity: qty,
   });
   const partKey = `manual-${requestHash}`;
+  const existingParts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  if (!Array.isArray(existingParts) || existingParts.some((part) => part?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified before adding this Part.");
+  }
   const alreadyCreated = existingParts.find((part) => part.part_key === partKey);
   if (alreadyCreated) return alreadyCreated;
 
+  const liveCatalogItem = await verifyCatalogItem(catalogItem);
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const unitCost = num(liveCatalogItem.unitCost);
   const extended = qty * unitCost;
