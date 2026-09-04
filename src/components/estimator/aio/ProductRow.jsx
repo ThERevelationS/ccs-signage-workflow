@@ -121,7 +121,11 @@ export default function ProductRow({
   const productQuantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
   const amount = customerPrice * productQuantity * (1 + Number(line.adjustment_percent || 0) / 100);
   const meta = priceMeta(line);
-  const priceAcceptancePending = !!line.price_acceptance_pending?.key;
+  const pendingPriceAcceptance = line.price_acceptance_pending?.key ? line.price_acceptance_pending : null;
+  const priceAcceptancePending = !!pendingPriceAcceptance;
+  const pendingPriceLabel = pendingPriceAcceptance?.kind === "builder_initial_freeze"
+    ? "Resume Initial Price"
+    : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -209,10 +213,12 @@ export default function ProductRow({
               onClick={handleUpdatePrice}
               disabled={updatingPrice || readOnly}
               className="h-[28px] px-3 border border-orange-300 bg-orange-50 rounded flex items-center gap-1 text-[12px] font-semibold text-orange-800 hover:bg-orange-100 disabled:opacity-50"
-              title="Resume the previously started Update Price operation from its saved recovery marker."
+              title={pendingPriceAcceptance?.kind === "builder_initial_freeze"
+                ? "Resume the previously started initial Builder price freeze from its saved recovery marker."
+                : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
-              {updatingPrice ? "Recovering…" : "Resume Price Update"}
+              {updatingPrice ? "Recovering…" : pendingPriceLabel}
             </button>
           ) : line.needs_reattach_review || line.price_state === "detached_parts" ? (
             <button
