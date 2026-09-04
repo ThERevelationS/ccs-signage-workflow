@@ -125,7 +125,11 @@ export default function ProductRow({
   const priceAcceptancePending = !!pendingPriceAcceptance;
   const pendingPriceLabel = pendingPriceAcceptance?.kind === "builder_initial_freeze"
     ? "Resume Initial Price"
-    : "Resume Price Update";
+    : pendingPriceAcceptance?.kind === "builder_detach_override"
+      ? "Resume Part Detach"
+      : pendingPriceAcceptance?.kind === "builder_detached_override_update"
+        ? "Resume Part Change"
+        : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -215,7 +219,11 @@ export default function ProductRow({
               className="h-[28px] px-3 border border-orange-300 bg-orange-50 rounded flex items-center gap-1 text-[12px] font-semibold text-orange-800 hover:bg-orange-100 disabled:opacity-50"
               title={pendingPriceAcceptance?.kind === "builder_initial_freeze"
                 ? "Resume the previously started initial Builder price freeze from its saved recovery marker."
-                : "Resume the previously started Update Price operation from its saved recovery marker."}
+                : pendingPriceAcceptance?.kind === "builder_detach_override"
+                  ? "Resume the previously started detached-Part operation from its saved recovery marker."
+                  : pendingPriceAcceptance?.kind === "builder_detached_override_update"
+                    ? "Resume the previously started detached-Part override change from its saved recovery marker."
+                    : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
               {updatingPrice ? "Recovering…" : pendingPriceLabel}
