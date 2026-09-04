@@ -3327,21 +3327,41 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
   const parts = partsOverride !== undefined
     ? partsOverride
     : await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
-  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while recovering pricing acceptance.");
+  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while recovering a Builder mutation.");
   const byId = new Map(parts.map((part) => [part.id, part]));
+  const byKey = new Map(parts.map((part) => [part.part_key, part]));
   let writesPerformed = 0;
 
   for (const step of plan?.part_updates || []) {
+    if (step.operation === "create") {
+      const data = step.data || {};
+      const existing = byKey.get(step.part_key || data.part_key);
+      if (existing) {
+        if (existing.builder_product_id !== builderProductId) {
+          throw new Error("A planned Builder Part key is now owned by a different Product. Reload before continuing.");
+        }
+        if (patchDiffers(existing, data)) {
+          throw new Error(`Part “${existing.part_name || "Part"}” appeared while the Builder mutation was pending with different data. No unrelated Part was overwritten.`);
+        }
+        continue;
+      }
+      const created = await base44.entities.BuilderPart.create(data);
+      writesPerformed += 1;
+      if (created?.id) byId.set(created.id, created);
+      if (created?.part_key) byKey.set(created.part_key, created);
+      continue;
+    }
+
     const part = byId.get(step.part_id);
     if (!part || part.builder_product_id !== builderProductId) {
-      throw new Error("A Builder Part changed ownership while pricing acceptance was pending. Reload before continuing.");
+      throw new Error("A Builder Part changed ownership while a Builder mutation was pending. Reload before continuing.");
     }
     const targetPatch = step.patch || {};
     if (!patchDiffers(part, targetPatch)) continue;
     const expected = String(step.expected_updated_date || "").trim();
     const current = String(part.updated_date || "").trim();
     if (expected && current && current !== expected) {
-      throw new Error(`Part “${part.part_name || "Part"}” changed while Update Price was pending. No unrelated Part edit was overwritten.`);
+      throw new Error(`Part “${part.part_name || "Part"}” changed while a Builder mutation was pending. No unrelated Part edit was overwritten.`);
     }
     await base44.entities.BuilderPart.update(part.id, targetPatch);
     writesPerformed += 1;
