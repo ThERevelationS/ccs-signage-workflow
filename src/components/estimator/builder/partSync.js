@@ -3968,29 +3968,81 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     return { reattached: [], remainingDetached: await getDetachedBuilderParts(builderProductId) };
   }
 
-  const { builder, estimate } = await loadEstimatorBuilderMutationContext(builderProductId, expectedEstimateUpdatedAt);
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const line = estimateBuilderLine(estimate, builder.id);
+  if (!line) throw new Error("This Product is no longer part of the estimate. Reload before reattaching Parts.");
+
+  const existingPending = pendingBuilderMutation(line);
+  if (existingPending) {
+    if (existingPending.kind !== "builder_reattach_parts" || String(existingPending.builder_product_id || "") !== String(builder.id)) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before reattaching Parts.");
+    }
+    const currentParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    await resumeBuilderMutation({
+      estimateId: estimate.id,
+      estimate,
+      builder,
+      parts: currentParts,
+      line,
+      pending: existingPending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+    });
+    return {
+      reattached: existingPending.revision?.changed_parts || [],
+      remainingDetached: await getDetachedBuilderParts(builder.id),
+      builderProject: existingPending.patched_source || null,
+      recovered: true,
+    };
+  }
+
+  const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  if (!Array.isArray(allParts) || allParts.some((part) => part?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified before reattachment.");
+  }
+  const requestedIds = new Set(partIds);
+  const requestedParts = allParts.filter((part) => requestedIds.has(part.id));
+  if (requestedParts.length !== requestedIds.size) {
+    throw new Error("One or more selected Parts no longer belong to this Product. Reload before reattaching.");
+  }
+
+  // A lost final response leaves the browser with stale Part versions even though
+  // the server already completed the requested reattachment. Treat that verified
+  // server state as a no-op rather than creating another reattach revision.
+  if (requestedParts.every((part) => !requiresBuilderReattach(part))) {
+    return {
+      reattached: requestedParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name })),
+      remainingDetached: await getDetachedBuilderParts(builder.id),
+      builderProject: builder.source_entity && builder.source_project_id
+        ? await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null)
+        : null,
+      alreadyCompleted: true,
+    };
+  }
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  requestedParts.forEach((part) => assertEstimatorPartVersion(part, expectedPartVersions?.[part.id] || ""));
+
   if (!builder.source_entity || !builder.source_project_id) {
     throw new Error("This Builder no longer has an editable source project to reattach Parts to.");
   }
 
-  const [source, allParts, revisions, catalogs] = await Promise.all([
+  const [source, catalogs] = await Promise.all([
     base44.entities[builder.source_entity].get(builder.source_project_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
     loadBuilderCatalogs(builder.module_key, { strict: true }),
   ]);
   if (!source) throw new Error("The Builder source project could not be loaded.");
-  const detached = (allParts || [])
+
+  const detached = allParts
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
     .map((part) => ({ ...part, can_reattach: part.builder_sync_state === "detached_override" || !!part.reattach_candidate_id }));
-  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
-  const selectedIds = new Set(partIds);
-  const selected = detached.filter((part) => selectedIds.has(part.id));
-  if (selected.length !== selectedIds.size) {
+  const selected = detached.filter((part) => requestedIds.has(part.id));
+  if (selected.length !== requestedIds.size) {
     throw new Error("One or more selected Parts changed or are no longer detached. Reload the Product before reattaching.");
   }
-  selected.forEach((part) => assertEstimatorPartVersion(part, expectedPartVersions?.[part.id] || ""));
 
   const beforeSnapshot = builder.builder_snapshot || source;
   const patchedSource = JSON.parse(JSON.stringify(source));
@@ -4041,23 +4093,18 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   changedRoots.forEach((root) => { sourcePatch[root] = patchedSource[root]; });
 
   const inventoryRowsOverride = new Map();
-  for (const part of allParts || []) {
+  for (const part of allParts) {
     if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
     const row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
     if (!row) throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”.`);
     inventoryRowsOverride.set(`${part.inventory_entity}:${part.inventory_item_id}`, row);
   }
-  const existingPartsForSync = (allParts || []).map((part) =>
+  const existingPartsForSync = allParts.map((part) =>
     selectedPatches.has(part.id) ? { ...part, ...selectedPatches.get(part.id) } : part
   );
 
-  // All prerequisite lifecycle, version, Part, source, catalog, candidate,
-  // add-on inventory, and revision-number reads are resolved before this write.
-  if (Object.keys(sourcePatch).length > 0) {
-    await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
-  }
-
-  const summary = await syncBuilderParts({
+  const timestamp = nowIso();
+  const plannedSummary = await syncBuilderParts({
     builderProduct: builder,
     sourceProject: patchedSource,
     acceptPrices: false,
@@ -4066,20 +4113,37 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     strictCatalogs: true,
     existingPartsOverride: existingPartsForSync,
     inventoryRowsOverride,
+    planOnly: true,
+    planTimestamp: timestamp,
   });
-  const remainingDetached = (summary.parts || [])
+  const remainingDetached = (plannedSummary.parts || [])
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
     .map((part) => ({
       ...part,
       can_reattach: part.builder_sync_state === "detached_override" || !!part.reattach_candidate_id,
     }));
-  const timestamp = nowIso();
 
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builderProductId,
+  const builderPatch = {
+    builder_snapshot: patchedSource,
+    builder_snapshot_at: timestamp,
+    builder_snapshot_source_updated_date: timestamp,
+    part_count: plannedSummary.partCount,
+    detached_part_count: remainingDetached.length,
+    needs_reattach_review: remainingDetached.length > 0,
+    price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
+    last_price_check_at: timestamp,
+    builder_version: num(builder.builder_version, 1) + 1,
+  };
+  const linePatch = {
+    detached_part_count: remainingDetached.length,
+    needs_reattach_review: remainingDetached.length > 0,
+    price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
+    last_price_check_at: timestamp,
+  };
+  const revision = {
+    builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
     reason: "reattach",
     previous_total_cost: num(builder.frozen_cost),
     new_total_cost: num(builder.frozen_cost),
@@ -4091,31 +4155,58 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     price_snapshot_before: { total: num(builder.frozen_cost), pricing_accepted: false },
     price_snapshot_after: { total: num(builder.frozen_cost), pricing_accepted: false },
     notes: `Reattached ${reattached.length} Part${reattached.length === 1 ? "" : "s"}. Frozen pricing was preserved; a separate Update Price action is required to accept recalculated pricing.`,
-  });
-  await base44.entities.BuilderProduct.update(builderProductId, {
-    builder_snapshot: patchedSource,
-    builder_snapshot_at: timestamp,
-    builder_snapshot_source_updated_date: timestamp,
-    part_count: summary.partCount,
-    detached_part_count: remainingDetached.length,
-    needs_reattach_review: remainingDetached.length > 0,
-    price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
-    last_price_check_at: timestamp,
-    builder_version: num(builder.builder_version, 1) + 1,
-  });
+  };
+  const operationKey = `builder_reattach_parts:${builder.id}:${num(builder.builder_version, 1)}:${builderMutationHash({
+    estimate_updated_date: estimate.updated_date || "",
+    source_updated_date: source.updated_date || "",
+    selected_parts: selected.map((part) => ({ id: part.id, updated_date: part.updated_date || "", candidate: part.reattach_candidate_id || "", state: part.builder_sync_state })),
+    source_patch: sourcePatch,
+    part_updates: plannedSummary.partWritePlan || [],
+  })}`;
+  const recoveryMarker = {
+    key: operationKey,
+    kind: "builder_reattach_parts",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: line.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    target_part_ids: selected.map((part) => part.id),
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    source_entity: builder.source_entity,
+    source_project_id: builder.source_project_id,
+    source_updated_date_before: source.updated_date || "",
+    source_patch: sourcePatch,
+    patched_source: patchedSource,
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: plannedSummary.partWritePlan || [],
+      changed_parts: reattached,
+      active_part_count: plannedSummary.partCount,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision,
+  };
 
-  const lineItems = (estimate.line_items || []).map((line) =>
-    line.builder_product_id === builderProductId
-      ? {
-          ...line,
-          detached_part_count: remainingDetached.length,
-          needs_reattach_review: remainingDetached.length > 0,
-          price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
-          last_price_check_at: timestamp,
-        }
-      : line
-  );
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  // Re-read the source immediately before taking the durable Estimate marker so
+  // a pre-existing concurrent source edit aborts before any recovery state exists.
+  const latestSource = await base44.entities[builder.source_entity].get(builder.source_project_id);
+  if (!latestSource) throw new Error("The Builder source project could not be verified before starting reattachment.");
+  if (source.updated_date && latestSource.updated_date && source.updated_date !== latestSource.updated_date) {
+    throw new Error("The Builder source project changed in another session before reattachment started. No source or Part changes were written.");
+  }
+
+  const marked = await markBuilderMutationPending({ estimate, builder, pending: recoveryMarker });
+  await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
 
   return {
     reattached,
