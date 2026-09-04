@@ -115,6 +115,18 @@ function productIdentity(line) {
 const sameText = (a, b) => String(a ?? "") === String(b ?? "");
 const sameNumber = (a, b) => Math.abs(num(a) - num(b)) <= 0.005;
 
+function sameSubstantiveValue(a, b) {
+  const bothPresent = a !== null && a !== undefined && a !== "" && b !== null && b !== undefined && b !== "";
+  if (bothPresent && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+    return sameNumber(a, b);
+  }
+  return stableStringify(a) === stableStringify(b);
+}
+
+function patchDiffers(record, patch) {
+  return Object.entries(patch || {}).some(([key, value]) => !sameSubstantiveValue(record?.[key], value));
+}
+
 /**
  * Fully reconciled legacy Products are immutable at their frozen pricing layer.
  * Re-opening an estimate should not rewrite BuilderProduct/BuilderPart/Estimate
@@ -171,7 +183,7 @@ export function canReuseReconciledLegacyBuilder({
   );
 }
 
-export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, strictPartSync = false, sourceProjectOverride = undefined }) {
+export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, strictPartSync = false, skipUnchangedWrites = false, sourceProjectOverride = undefined }) {
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
 
@@ -264,7 +276,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
           : Math.abs(liveTotal - frozen) > 0.005 || Math.abs(liveCustomerPrice - frozenCustomer) > 0.005
             ? "changed"
             : "current";
-    await base44.entities.BuilderProduct.update(builderProduct.id, {
+    const productPatch = {
       estimate_line_id: lineId,
       module_key: line.module_key,
       source_entity: sourceEntity,
@@ -283,9 +295,12 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_delta_percent: frozen ? ((liveTotal - frozen) / frozen) * 100 : 0,
       price_recalc_required: builderProduct.price_recalc_required || false,
       price_recalc_reason: builderProduct.price_recalc_reason || "",
-      last_price_check_at: timestamp,
-    });
-    builderProduct = { ...builderProduct, current_recalculated_cost: liveTotal, price_state: nextState };
+    };
+    if (!skipUnchangedWrites || patchDiffers(builderProduct, productPatch)) {
+      const writePatch = { ...productPatch, last_price_check_at: timestamp };
+      await base44.entities.BuilderProduct.update(builderProduct.id, writePatch);
+      builderProduct = { ...builderProduct, ...writePatch };
+    }
   }
 
   let partSummary = {
@@ -294,6 +309,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     changedCount: 0,
     newPartCount: 0,
     removedPartCount: 0,
+    writesPerformed: 0,
     recalcRequired: !!builderProduct.price_recalc_required,
     recalcReason: builderProduct.price_recalc_reason || "",
     usesDirectLiveReprice: false,
@@ -318,6 +334,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       catalogsOverride: strictPartSync ? partSyncInputs?.catalogs || null : null,
       existingPartsOverride: strictPartSync ? partSyncInputs?.existingParts || [] : null,
       inventoryRowsOverride: strictPartSync ? partSyncInputs?.inventoryRowsOverride || new Map() : null,
+      skipUnchangedWrites,
     });
     if (partSummary.usesDirectLiveReprice) {
       const manualAddonCurrent = num(partSummary.manualAddonCurrentTotal);
@@ -349,19 +366,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
                 Math.abs(effectiveLiveCustomerPrice - frozenCustomerAfterSync) > 0.005
               ? "changed"
               : "current";
-    await base44.entities.BuilderProduct.update(builderProduct.id, {
-      part_count: partSummary.partCount,
-      detached_part_count: partSummary.detachedCount,
-      needs_reattach_review: partSummary.detachedCount > 0,
-      current_recalculated_cost: effectiveLiveTotal,
-      price_state: productPriceState,
-      price_delta: effectiveLiveTotal - frozenAfterSync,
-      price_delta_percent: frozenAfterSync ? ((effectiveLiveTotal - frozenAfterSync) / frozenAfterSync) * 100 : 0,
-      price_recalc_required: !!partSummary.recalcRequired,
-      price_recalc_reason: partSummary.recalcReason || "",
-    });
-    builderProduct = {
-      ...builderProduct,
+    const partProductPatch = {
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
@@ -372,14 +377,20 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_recalc_required: !!partSummary.recalcRequired,
       price_recalc_reason: partSummary.recalcReason || "",
     };
+    if (!skipUnchangedWrites || patchDiffers(builderProduct, partProductPatch)) {
+      const writePatch = skipUnchangedWrites
+        ? { ...partProductPatch, last_price_check_at: timestamp }
+        : partProductPatch;
+      await base44.entities.BuilderProduct.update(builderProduct.id, writePatch);
+      builderProduct = { ...builderProduct, ...writePatch };
+    }
   }
 
   const frozenCost = isNew ? num(builderProduct.frozen_cost) : acceptedTotal;
   const frozenCustomerPrice = hasNumericValue(builderProduct.frozen_customer_price)
     ? num(builderProduct.frozen_customer_price)
     : acceptedCustomerPrice;
-  const nextLine = {
-    ...line,
+  const linePatch = {
     line_id: lineId,
     builder_product_id: builderProduct.id,
     builder_name: builderName,
@@ -396,14 +407,21 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     price_recalc_reason: builderProduct.price_recalc_reason || "",
     detached_part_count: num(builderProduct.detached_part_count),
     needs_reattach_review: !!builderProduct.needs_reattach_review,
-    last_price_check_at: timestamp,
-    updated_date_snapshot: source?.updated_date || line.updated_date_snapshot,
   };
+  const lineChanged = patchDiffers(line, linePatch);
+  const nextLine = skipUnchangedWrites && !lineChanged
+    ? line
+    : {
+        ...line,
+        ...linePatch,
+        last_price_check_at: timestamp,
+        updated_date_snapshot: source?.updated_date || line.updated_date_snapshot,
+      };
 
   return {
     line: nextLine,
     builderProduct,
-    changed: stableStringify(nextLine) !== stableStringify(line),
+    changed: skipUnchangedWrites ? lineChanged : stableStringify(nextLine) !== stableStringify(line),
     partSyncInputs,
   };
 }
@@ -435,6 +453,7 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
         line,
         isNew: false,
         strictPartSync: strictReconciliation,
+        skipUnchangedWrites: strictReconciliation,
         sourceProjectOverride,
       });
       lineItems.push(result.line);
