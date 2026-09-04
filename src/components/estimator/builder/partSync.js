@@ -4,6 +4,7 @@ import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingC
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance/maintenanceCalculator";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -166,18 +167,20 @@ function independentPartUnitCost(part, row) {
   return num(row.cost_per_unit ?? row.default_rate ?? row.cost_flat ?? row.cost_per_sheet, genericUnitCost(row));
 }
 
-async function loadCatalog(entity, sort = null) {
+async function loadCatalog(entity, sort = null, { strict = false } = {}) {
   try {
     const rows = sort
       ? await base44.entities[entity].list(sort, 500)
       : await base44.entities[entity].list();
-    return rows || [];
-  } catch {
+    if (!Array.isArray(rows)) throw new Error(`${entity} catalog returned an invalid result.`);
+    return rows;
+  } catch (error) {
+    if (strict) throw new Error(`${entity} catalog could not be verified: ${error?.message || "read failed"}`);
     return [];
   }
 }
 
-export async function loadBuilderCatalogs(moduleKey) {
+export async function loadBuilderCatalogs(moduleKey, { strict = false } = {}) {
   const specs = {
     foundation: [
       ["FoundationInventory", "material_name"],
@@ -219,7 +222,7 @@ export async function loadBuilderCatalogs(moduleKey) {
 
   const requested = specs[moduleKey] || [];
   const loaded = await Promise.all(
-    requested.map(async ([entity, sort]) => [entity, await loadCatalog(entity, sort)])
+    requested.map(async ([entity, sort]) => [entity, await loadCatalog(entity, sort, { strict })])
   );
   const catalogs = {};
   loaded.forEach(([entity, rows]) => {
@@ -2881,7 +2884,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
   return genericUnitCost(row);
 }
 
-export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false }) {
+export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false }) {
   if (!builderProduct?.id || !sourceProject) {
     return {
       partCount: 0,
@@ -2902,7 +2905,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
   }
 
-  const catalogs = await loadBuilderCatalogs(builderProduct.module_key);
+  const catalogs = catalogsOverride || await loadBuilderCatalogs(builderProduct.module_key, { strict: strictCatalogs });
   const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
   const existing = await base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
@@ -3123,7 +3126,14 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       // comparison and remain part of the Product economics on every Builder save.
       let refreshed = old;
       if (old.inventory_entity && old.inventory_item_id && !old.manual_cost_override) {
-        const currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id).catch(() => null);
+        let currentRow = null;
+        try {
+          currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id);
+        } catch (error) {
+          if (strictCatalogs) {
+            throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
+          }
+        }
         if (currentRow) {
           const currentUnit = independentPartUnitCost(old, currentRow);
           const currentExtended = currentUnit * num(old.quantity, 1);
@@ -3365,15 +3375,53 @@ export async function getDetachedBuilderParts(builderProductId) {
     }));
 }
 
-export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.") {
+function assertEstimatorPartVersion(part, expectedUpdatedAt = "") {
+  const expected = String(expectedUpdatedAt || "").trim();
+  const current = String(part?.updated_date || "").trim();
+  if (expected && current !== expected) {
+    throw new Error(`Part “${part?.part_name || "Part"}” changed in another session. Reload the Product before continuing.`);
+  }
+}
+
+function estimateBuilderLine(estimate, builderProductId) {
+  return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
+}
+
+async function loadEstimatorBuilderMutationContext(builderProductId, expectedEstimateUpdatedAt = "") {
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const line = estimateBuilderLine(estimate, builder.id);
+  if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
+  return { builder, estimate, line };
+}
+
+async function loadEstimatorPartMutationContext(partId, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
+  const part = await base44.entities.BuilderPart.get(partId);
+  if (!part?.id) throw new Error("The Part could not be loaded.");
+  assertEstimatorPartVersion(part, expectedPartUpdatedAt);
+  const context = await loadEstimatorBuilderMutationContext(part.builder_product_id, expectedEstimateUpdatedAt);
+  return { ...context, part };
+}
+
+export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.", options = {}) {
   if (!partId) return null;
-  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
-  if (!part) throw new Error("The Part could not be loaded.");
+  const { part, builder, estimate } = await loadEstimatorPartMutationContext(partId, options);
   if (part.builder_sync_state === "detached_override") return part;
+  if (["manual", "manual_addon"].includes(part.builder_sync_state)) {
+    throw new Error("Independent manual Parts do not need to be detached from a Builder.");
+  }
 
-  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id).catch(() => null);
-  if (!builder) throw new Error("The Builder Product could not be loaded.");
-
+  const [allParts, revisions] = await Promise.all([
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id }),
+  ]);
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
+  const detachedCount = (allParts || []).filter((row) =>
+    row.id === part.id ? row.is_active !== false : requiresBuilderReattach(row)
+  ).length;
   const timestamp = nowIso();
   const detachedSnapshot = {
     part_name: part.part_name,
@@ -3391,8 +3439,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     detail_overrides: part.detail_overrides || {},
     source_path: part.source_path,
   };
-
-  await base44.entities.BuilderPart.update(part.id, {
+  const partPatch = {
     builder_sync_state: "detached_override",
     builder_detached_at: timestamp,
     builder_detached_reason: reason,
@@ -3402,19 +3449,16 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     price_state: "detached",
     last_price_check_at: timestamp,
     notes: `${part.notes ? `${part.notes}\n` : ""}Detached from Builder for independent override. Frozen pricing retained.`,
-  });
+  };
 
-  const detachedParts = await getDetachedBuilderParts(builder.id);
+  await base44.entities.BuilderPart.update(part.id, partPatch);
   await base44.entities.BuilderProduct.update(builder.id, {
-    detached_part_count: detachedParts.length,
+    detached_part_count: detachedCount,
     needs_reattach_review: true,
     price_state: "detached_parts",
     last_price_check_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
-  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
@@ -3441,35 +3485,28 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     notes: reason,
   });
 
-  if (builder.estimate_id) {
-    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
-    if (estimate) {
-      const lineItems = (estimate.line_items || []).map((line) =>
-        line.builder_product_id === builder.id
-          ? {
-              ...line,
-              detached_part_count: detachedParts.length,
-              needs_reattach_review: true,
-              price_state: "detached_parts",
-              last_price_check_at: timestamp,
-            }
-          : line
-      );
-      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-    }
-  }
-
-  return base44.entities.BuilderPart.get(part.id).catch(() => ({ ...part, builder_sync_state: "detached_override" }));
+  const lineItems = (estimate.line_items || []).map((line) =>
+    line.builder_product_id === builder.id
+      ? {
+          ...line,
+          detached_part_count: detachedCount,
+          needs_reattach_review: true,
+          price_state: "detached_parts",
+          last_price_check_at: timestamp,
+        }
+      : line
+  );
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  return { ...part, ...partPatch };
 }
 
-export async function updateDetachedPartOverride(partId, changes = {}) {
-  const part = await base44.entities.BuilderPart.get(partId).catch(() => null);
-  if (!part) throw new Error("The Part could not be loaded.");
+export async function updateDetachedPartOverride(partId, changes = {}, options = {}) {
+  const { part, builder, estimate, line } = await loadEstimatorPartMutationContext(partId, options);
   if (part.builder_sync_state !== "detached_override") {
     throw new Error("This Part must be detached from its Builder before it can be overridden independently.");
   }
-  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id).catch(() => null);
-  if (!builder) throw new Error("The Builder Product could not be loaded.");
+  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
 
   const previousExtended = num(part.frozen_extended_cost);
   const quantity = changes.quantity !== undefined ? Math.max(0, num(changes.quantity)) : num(part.quantity, 1);
@@ -3479,7 +3516,6 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
   const timestamp = nowIso();
   const previousDetailOverrides = part.detail_overrides || {};
   const nextDetailOverrides = changes.detail_overrides !== undefined ? { ...(changes.detail_overrides || {}) } : previousDetailOverrides;
-
   const patch = {
     part_name: changes.part_name !== undefined ? String(changes.part_name || "Part") : part.part_name,
     client_label: changes.client_label !== undefined ? String(changes.client_label || "") : part.client_label,
@@ -3499,12 +3535,13 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
     last_price_update_at: timestamp,
     last_price_check_at: timestamp,
   };
-  await base44.entities.BuilderPart.update(part.id, patch);
 
   const previousProductCost = num(builder.frozen_cost);
   const nextProductCost = previousProductCost + delta;
   const previousCustomerPrice = num(builder.frozen_customer_price, previousProductCost);
   const nextCustomerPrice = previousCustomerPrice + delta;
+
+  await base44.entities.BuilderPart.update(part.id, patch);
   await base44.entities.BuilderProduct.update(builder.id, {
     frozen_cost: nextProductCost,
     frozen_customer_price: nextCustomerPrice,
@@ -3514,9 +3551,6 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
     last_price_update_note: `Independent override updated for ${patch.part_name}.`,
     builder_version: num(builder.builder_version, 1) + 1,
   });
-
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
-  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
     estimate_id: builder.estimate_id || "",
@@ -3547,31 +3581,25 @@ export async function updateDetachedPartOverride(partId, changes = {}) {
     builder_snapshot_after: builder.builder_snapshot || {},
     price_snapshot_before: { total: previousProductCost, detached_override: true },
     price_snapshot_after: { total: nextProductCost, detached_override: true },
-    notes: `Independent detached Part override updated. Builder synchronization remains disabled for this Part.`,
+    notes: "Independent detached Part override updated. Builder synchronization remains disabled for this Part.",
   });
 
-  if (builder.estimate_id) {
-    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
-    if (estimate) {
-      const lineItems = (estimate.line_items || []).map((line) =>
-        line.builder_product_id === builder.id
-          ? {
-              ...line,
-              total_snapshot: num(line.total_snapshot, previousProductCost) + delta,
-              customer_price_snapshot: acceptedCustomerUnitPrice(line) + delta,
-              live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta,
-              price_state: "detached_parts",
-              needs_reattach_review: true,
-              last_price_update_at: timestamp,
-              last_price_check_at: timestamp,
-            }
-          : line
-      );
-      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-    }
-  }
-
-  return base44.entities.BuilderPart.get(part.id).catch(() => ({ ...part, ...patch }));
+  const lineItems = (estimate.line_items || []).map((item) =>
+    item.builder_product_id === builder.id
+      ? {
+          ...item,
+          total_snapshot: num(line.total_snapshot, previousProductCost) + delta,
+          customer_price_snapshot: acceptedCustomerUnitPrice(line) + delta,
+          live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta,
+          price_state: "detached_parts",
+          needs_reattach_review: true,
+          last_price_update_at: timestamp,
+          last_price_check_at: timestamp,
+        }
+      : item
+  );
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  return { ...part, ...patch };
 }
 
 function pathTokens(path) {
@@ -3610,38 +3638,41 @@ function topLevelField(path) {
   return pathTokens(path)[0] || "";
 }
 
-export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
+export async function reattachBuilderParts({ builderProductId, partIds = [], expectedEstimateUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || !partIds.length) {
     return { reattached: [], remainingDetached: await getDetachedBuilderParts(builderProductId) };
   }
 
-  const builder = await base44.entities.BuilderProduct.get(builderProductId).catch(() => null);
-  if (!builder?.source_entity || !builder?.source_project_id) {
+  const { builder, estimate } = await loadEstimatorBuilderMutationContext(builderProductId, expectedEstimateUpdatedAt);
+  if (!builder.source_entity || !builder.source_project_id) {
     throw new Error("This Builder no longer has an editable source project to reattach Parts to.");
   }
 
-  const source = await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null);
+  const [source, detached, revisions, catalogs] = await Promise.all([
+    base44.entities[builder.source_entity].get(builder.source_project_id),
+    getDetachedBuilderParts(builderProductId),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
+    loadBuilderCatalogs(builder.module_key, { strict: true }),
+  ]);
   if (!source) throw new Error("The Builder source project could not be loaded.");
-
-  const detached = await getDetachedBuilderParts(builderProductId);
+  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
   const selectedIds = new Set(partIds);
-  const selected = detached.filter((part) =>
-    selectedIds.has(part.id) &&
-    (part.builder_sync_state === "detached_override" || part.reattach_candidate_id)
-  );
-  if (!selected.length) {
-    return { reattached: [], remainingDetached: detached };
+  const selected = detached.filter((part) => selectedIds.has(part.id));
+  if (selected.length !== selectedIds.size) {
+    throw new Error("One or more selected Parts changed or are no longer detached. Reload the Product before reattaching.");
   }
+  selected.forEach((part) => assertEstimatorPartVersion(part, expectedPartVersions?.[part.id] || ""));
 
   const beforeSnapshot = builder.builder_snapshot || source;
   const patchedSource = JSON.parse(JSON.stringify(source));
   const changedRoots = new Set();
   const reattached = [];
+  const selectedPatches = new Map();
 
   for (const part of selected) {
     const builderOverride = part.builder_sync_state === "detached_override";
     if (builderOverride) {
-      await base44.entities.BuilderPart.update(part.id, {
+      selectedPatches.set(part.id, {
         builder_sync_state: "linked",
         builder_detached_at: "",
         builder_detached_reason: "",
@@ -3649,11 +3680,17 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
         price_state: "changed",
       });
     } else {
+      if (!part.reattach_candidate_id) throw new Error(`Part “${part.part_name || "Part"}” no longer has a verified reattach candidate.`);
+      const candidateEntity = findEntity(catalogs, part.reattach_candidate_id, part.inventory_entity || "");
+      const candidateRow = findRow(catalogs, candidateEntity, part.reattach_candidate_id);
+      if (!candidateEntity || !candidateRow) {
+        throw new Error(`The replacement Master Inventory record for Part “${part.part_name || "Part"}” could not be verified.`);
+      }
       const changed = setAtPath(patchedSource, part.source_path, part.reattach_candidate_id);
-      if (!changed) continue;
+      if (!changed) throw new Error(`Part “${part.part_name || "Part"}” could not be mapped back into the current Builder source record.`);
       const root = topLevelField(part.source_path);
       if (root) changedRoots.add(root);
-      await base44.entities.BuilderPart.update(part.id, { detail_overrides: {} });
+      selectedPatches.set(part.id, { detail_overrides: {} });
     }
     reattached.push({
       part_id: part.id,
@@ -3671,31 +3708,35 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
     });
   }
 
-  if (!reattached.length) {
-    throw new Error("The selected Parts could not be mapped back into the Builder record.");
-  }
-
   const sourcePatch = {};
-  changedRoots.forEach((root) => {
-    sourcePatch[root] = patchedSource[root];
-  });
+  changedRoots.forEach((root) => { sourcePatch[root] = patchedSource[root]; });
+
+  // All reads, lifecycle checks, Part versions, source mappings, candidate rows,
+  // catalogs, and revision numbering are resolved above before this first write.
   if (Object.keys(sourcePatch).length > 0) {
     await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
   }
+  for (const part of selected) {
+    const patch = selectedPatches.get(part.id);
+    if (patch) await base44.entities.BuilderPart.update(part.id, patch);
+  }
 
-  // Refresh Part linkage/current snapshots only. This intentionally does NOT
-  // accept the new pricing; frozen costs remain exactly as quoted.
   const summary = await syncBuilderParts({
     builderProduct: builder,
     sourceProject: patchedSource,
     acceptPrices: false,
     legacyMode: false,
+    catalogsOverride: catalogs,
+    strictCatalogs: true,
   });
-
-  const remainingDetached = await getDetachedBuilderParts(builderProductId);
+  const remainingDetached = (summary.parts || [])
+    .filter(requiresBuilderReattach)
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+    .map((part) => ({
+      ...part,
+      can_reattach: part.builder_sync_state === "detached_override" || !!part.reattach_candidate_id,
+    }));
   const timestamp = nowIso();
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
-  const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
 
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builderProductId,
@@ -3713,7 +3754,6 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
     price_snapshot_after: { total: num(builder.frozen_cost), pricing_accepted: false },
     notes: `Reattached ${reattached.length} Part${reattached.length === 1 ? "" : "s"}. Frozen pricing was preserved; a separate Update Price action is required to accept recalculated pricing.`,
   });
-
   await base44.entities.BuilderProduct.update(builderProductId, {
     builder_snapshot: patchedSource,
     builder_snapshot_at: timestamp,
@@ -3726,23 +3766,18 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
     builder_version: num(builder.builder_version, 1) + 1,
   });
 
-  if (builder.estimate_id) {
-    const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id).catch(() => null);
-    if (estimate) {
-      const lineItems = (estimate.line_items || []).map((line) =>
-        line.builder_product_id === builderProductId
-          ? {
-              ...line,
-              detached_part_count: remainingDetached.length,
-              needs_reattach_review: remainingDetached.length > 0,
-              price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
-              last_price_check_at: timestamp,
-            }
-          : line
-      );
-      await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-    }
-  }
+  const lineItems = (estimate.line_items || []).map((line) =>
+    line.builder_product_id === builderProductId
+      ? {
+          ...line,
+          detached_part_count: remainingDetached.length,
+          needs_reattach_review: remainingDetached.length > 0,
+          price_state: remainingDetached.length > 0 ? "detached_parts" : "changed",
+          last_price_check_at: timestamp,
+        }
+      : line
+  );
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
 
   return {
     reattached,
@@ -3750,3 +3785,4 @@ export async function reattachBuilderParts({ builderProductId, partIds = [] }) {
     builderProject: patchedSource,
   };
 }
+
