@@ -129,7 +129,9 @@ export default function ProductRow({
       ? "Resume Part Detach"
       : pendingPriceAcceptance?.kind === "builder_detached_override_update"
         ? "Resume Part Change"
-        : "Resume Price Update";
+        : pendingPriceAcceptance?.kind === "builder_reattach_parts"
+          ? "Resume Reattach"
+          : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -223,7 +225,9 @@ export default function ProductRow({
                   ? "Resume the previously started detached-Part operation from its saved recovery marker."
                   : pendingPriceAcceptance?.kind === "builder_detached_override_update"
                     ? "Resume the previously started detached-Part override change from its saved recovery marker."
-                    : "Resume the previously started Update Price operation from its saved recovery marker."}
+                    : pendingPriceAcceptance?.kind === "builder_reattach_parts"
+                      ? "Resume the previously started Part reattachment from its saved recovery marker."
+                      : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
               {updatingPrice ? "Recovering…" : pendingPriceLabel}
