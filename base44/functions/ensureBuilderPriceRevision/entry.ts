@@ -12,13 +12,14 @@ const canonicalRevision = (rows: any[] = []) => rows
   })[0] || null;
 
 const sameMoney = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) <= 0.005;
+const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze']);
 
 function assertSameOperation(existing: any, revision: any) {
   if (!existing) return;
   if (
     String(existing?.estimate_id || '') !== String(revision?.estimate_id || '') ||
     String(existing?.builder_product_id || '') !== String(revision?.builder_product_id || '') ||
-    existing?.reason !== 'update_price' ||
+    existing?.reason !== revision?.reason ||
     !sameMoney(existing?.previous_total_cost, revision?.previous_total_cost) ||
     !sameMoney(existing?.new_total_cost, revision?.new_total_cost) ||
     !sameMoney(existing?.previous_customer_price, revision?.previous_customer_price) ||
@@ -43,8 +44,8 @@ Deno.serve(async (req) => {
     if (!idempotencyKey || !builderProductId || !estimateId) {
       return Response.json({ error: 'Builder Product, estimate, and idempotency key are required.' }, { status: 400 });
     }
-    if (revision?.reason !== 'update_price') {
-      return Response.json({ error: 'This function only records Update Price revisions.' }, { status: 400 });
+    if (!ALLOWED_REASONS.has(String(revision?.reason || ''))) {
+      return Response.json({ error: 'This function only records Update Price or initial freeze revisions.' }, { status: 400 });
     }
 
     const RevisionUser = base44.entities.BuilderPriceRevision;
@@ -68,11 +69,11 @@ Deno.serve(async (req) => {
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
       revision_number: revisionNumber,
-      reason: 'update_price',
+      reason: revision.reason,
     });
 
     // Base44 does not expose a unique database constraint here. Re-read after
-    // create so simultaneous Update Price retries converge on one immutable row.
+    // create so simultaneous Builder price-acceptance retries converge on one immutable row.
     await new Promise((resolve) => setTimeout(resolve, 50));
     matches = await RevisionService.filter({
       builder_product_id: builderProductId,
