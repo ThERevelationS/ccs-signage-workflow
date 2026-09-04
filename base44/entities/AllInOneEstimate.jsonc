@@ -393,6 +393,11 @@
             "type": "string",
             "description": "Human-readable reason this Product requires Builder recalculation before Update Price."
           },
+          "price_acceptance_pending": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Durable retry marker for an explicitly started Builder Update Price action. Stores the exact target and Part acceptance plan until the final Estimate line write completes."
+          },
           "detached_part_count": {
             "type": "number",
             "default": 0
