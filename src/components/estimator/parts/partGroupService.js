@@ -51,7 +51,7 @@ async function updateVerifiedEstimateLines(estimate, patchesByBuilderId) {
 
 export async function createPartGroupInProduct({ builderProductId, partIds = [], groupName = "Part Group", expectedEstimateUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || partIds.length < 2) throw new Error("Select at least two Parts to create a Part Group.");
-  const [{ builder }, allParts, allGroups] = await Promise.all([
+  const [, allParts, allGroups] = await Promise.all([
     loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt),
     base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
     base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
