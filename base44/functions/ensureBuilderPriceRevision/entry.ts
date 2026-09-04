@@ -12,7 +12,7 @@ const canonicalRevision = (rows: any[] = []) => rows
   })[0] || null;
 
 const sameMoney = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) <= 0.005;
-const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze', 'manual_adjustment']);
+const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze', 'manual_adjustment', 'reattach']);
 
 function assertSameOperation(existing: any, revision: any) {
   if (!existing) return;
