@@ -12,7 +12,7 @@ const canonicalRevision = (rows: any[] = []) => rows
   })[0] || null;
 
 const sameMoney = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) <= 0.005;
-const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze']);
+const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze', 'manual_adjustment']);
 
 function assertSameOperation(existing: any, revision: any) {
   if (!existing) return;
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Builder Product, estimate, and idempotency key are required.' }, { status: 400 });
     }
     if (!ALLOWED_REASONS.has(String(revision?.reason || ''))) {
-      return Response.json({ error: 'This function only records Update Price or initial freeze revisions.' }, { status: 400 });
+      return Response.json({ error: 'This function only records supported Builder pricing revisions.' }, { status: 400 });
     }
 
     const RevisionUser = base44.entities.BuilderPriceRevision;
