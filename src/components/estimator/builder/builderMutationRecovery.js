@@ -119,6 +119,45 @@ async function applyPendingSourcePatch(pending) {
   return entity.update(sourceProjectId, sourcePatch);
 }
 
+async function applyPendingDeletePlan(pending, builderProductId) {
+  const plan = pending?.delete_plan;
+  if (!plan || typeof plan !== "object") return { partDeletes: 0, groupDeletes: 0 };
+  let partDeletes = 0;
+  let groupDeletes = 0;
+
+  for (const step of plan.parts || []) {
+    const part = await base44.entities.BuilderPart.get(step.id);
+    if (!part) continue;
+    if (String(part.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error("A Part scheduled for deletion changed ownership while the Builder mutation was pending.");
+    }
+    const expected = String(step.expected_updated_date || "").trim();
+    const current = String(part.updated_date || "").trim();
+    if (expected && current && expected !== current) {
+      throw new Error(`Part “${part.part_name || "Part"}” changed while removal was pending. No unrelated Part edit was deleted.`);
+    }
+    await base44.entities.BuilderPart.delete(part.id);
+    partDeletes += 1;
+  }
+
+  for (const step of plan.groups || []) {
+    const group = await base44.entities.BuilderPartGroup.get(step.id);
+    if (!group) continue;
+    if (String(group.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error("A Part Group scheduled for deletion changed ownership while the Builder mutation was pending.");
+    }
+    const expected = String(step.expected_updated_date || "").trim();
+    const current = String(group.updated_date || "").trim();
+    if (expected && current && expected !== current) {
+      throw new Error(`Part Group “${group.group_name || "Part Group"}” changed while removal was pending. No unrelated group edit was deleted.`);
+    }
+    await base44.entities.BuilderPartGroup.delete(group.id);
+    groupDeletes += 1;
+  }
+
+  return { partDeletes, groupDeletes };
+}
+
 export async function resumeBuilderMutation({
   estimateId,
   estimate,
