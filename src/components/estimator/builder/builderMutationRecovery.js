@@ -176,6 +176,7 @@ export async function resumeBuilderMutation({
   }
   const plan = pending.part_acceptance_plan || {};
   await applyPendingSourcePatch(pending);
+  await applyPendingDeletePlan(pending, builder.id);
   // Re-read Parts inside the applier instead of trusting the post-marker snapshot.
   // This closes the race where another session edits a Part after marker verification
   // but before the exact stored Part patch is written.
