@@ -59,6 +59,9 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
   const selectedIds = new Set(partIds);
   const selected = (allParts || []).filter((part) => part.is_active !== false && selectedIds.has(part.id));
   if (selected.length !== selectedIds.size) throw new Error("One or more selected Parts no longer belong to this Product. Reload before grouping them.");
+  if (selected.some((part) => part.part_group_id)) {
+    throw new Error("One or more selected Parts already belong to a Part Group. Dissolve or remove them from the existing group before creating a new group.");
+  }
   assertMemberVersions(selected, expectedPartVersions);
   const group = await base44.entities.BuilderPartGroup.create({
     builder_product_id: builderProductId,

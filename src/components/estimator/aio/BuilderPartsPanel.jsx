@@ -264,6 +264,10 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const [moveOpen, setMoveOpen] = useState(false);
   const [saveLibraryOpen, setSaveLibraryOpen] = useState(false);
   const structuralActionRef = useRef(false);
+  const groupVersionRef = useRef(group.updated_date || "");
+  useEffect(() => {
+    groupVersionRef.current = group.updated_date || groupVersionRef.current;
+  }, [group.updated_date]);
   const frozen = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   const canMove = parts.length > 0 && parts.every((part) => ["manual", "manual_addon"].includes(part.builder_sync_state));
   const moveTargets = (availableProducts || []).filter((line) => line.builder_product_id && line.builder_product_id !== builderProductId);
@@ -271,7 +275,14 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   const toggleOpen = async () => {
     const next = !open;
     setOpen(next);
-    if (!readOnly) await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
+    if (!readOnly) {
+      const updated = await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
+      if (updated?.updated_date) groupVersionRef.current = updated.updated_date;
+      else {
+        const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+        if (current?.updated_date) groupVersionRef.current = current.updated_date;
+      }
+    }
   };
 
   const saveName = async () => {
@@ -286,7 +297,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
         groupId: group.id,
         groupName: nextName,
         expectedEstimateUpdatedAt,
-        expectedGroupUpdatedAt: group.updated_date || "",
+        expectedGroupUpdatedAt: groupVersionRef.current,
       });
       await onChanged?.();
     } catch (error) {
@@ -305,7 +316,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
         builderProductId,
         groupId: group.id,
         expectedEstimateUpdatedAt,
-        expectedGroupUpdatedAt: group.updated_date || "",
+        expectedGroupUpdatedAt: groupVersionRef.current,
         expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
       });
       await onChanged?.();
@@ -390,7 +401,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                       builderProductId,
                       groupId: group.id,
                       expectedEstimateUpdatedAt,
-                      expectedGroupUpdatedAt: group.updated_date || "",
+                      expectedGroupUpdatedAt: groupVersionRef.current,
                       expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
                     });
                     await onChanged?.();
@@ -465,7 +476,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               targetBuilderProductId,
               groupId: group.id,
               expectedEstimateUpdatedAt,
-              expectedGroupUpdatedAt: group.updated_date || "",
+              expectedGroupUpdatedAt: groupVersionRef.current,
               expectedPartVersions: Object.fromEntries(parts.map((part) => [part.id, part.updated_date || ""])),
             });
             setMoveOpen(false);
