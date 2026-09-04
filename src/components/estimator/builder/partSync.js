@@ -3539,12 +3539,16 @@ async function loadPendingAwarePartMutationContext(partId, options = {}, allowed
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before changing this Part.");
     }
     await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
-    return { part, builder, estimate, line, pending };
+    return { part, builder, estimate, line, pending, alreadyComplete: false };
+  }
+
+  if (typeof options.isAlreadyComplete === "function" && options.isAlreadyComplete({ part, builder, estimate, line })) {
+    return { part, builder, estimate, line, pending: null, alreadyComplete: true };
   }
 
   assertEstimatorPartVersion(part, options.expectedPartUpdatedAt || "");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: options.expectedEstimateUpdatedAt || "" });
-  return { part, builder, estimate, line, pending: null };
+  return { part, builder, estimate, line, pending: null, alreadyComplete: false };
 }
 
 async function markBuilderMutationPending({ estimate, builder, line, pending }) {
