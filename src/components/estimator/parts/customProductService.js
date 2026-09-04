@@ -307,11 +307,19 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
   const part = await base44.entities.BuilderPart.get(partId);
   if (!part) throw new Error("Part not found.");
   if (!["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be edited directly here.");
+  const context = await loadRawManualMutationContext(part.builder_product_id);
+  const { builder, estimate, line, pending } = context;
+  if (pending) {
+    if (pending.kind !== "builder_manual_part_edit" || String(pending.target_part_id || "") !== String(part.id)) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before editing this Part.");
+    }
+    await resumeStoredManualPartMutation(context);
+    return base44.entities.BuilderPart.get(part.id);
+  }
+  if (manualPartChangesAlreadyApplied(part, changes)) return part;
   assertLoadedPartVersion(part, expectedPartUpdatedAt);
-  const [{ builder, estimate }, revisionNumber] = await Promise.all([
-    loadManualMutationContext(part.builder_product_id, expectedEstimateUpdatedAt),
-    nextRevisionNumber(part.builder_product_id),
-  ]);
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+
   const previousExtended = num(part.frozen_extended_cost);
   const quantity = changes.quantity !== undefined ? Math.max(0, num(changes.quantity)) : num(part.quantity, 1);
   const unitCost = changes.frozen_unit_cost !== undefined ? num(changes.frozen_unit_cost) : num(part.frozen_unit_cost);
@@ -321,7 +329,7 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
   const previousDetailOverrides = part.detail_overrides || {};
   const nextDetailOverrides = changes.detail_overrides !== undefined ? { ...(changes.detail_overrides || {}) } : previousDetailOverrides;
   const costWasManuallyChanged = changes.frozen_unit_cost !== undefined && Math.abs(unitCost - num(part.frozen_unit_cost)) > 0.000001;
-  await base44.entities.BuilderPart.update(partId, {
+  const partPatch = {
     part_name: changes.part_name !== undefined ? String(changes.part_name || "Part") : part.part_name,
     client_label: changes.client_label !== undefined ? String(changes.client_label || "") : part.client_label,
     quantity,
@@ -336,47 +344,83 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
     price_state: costWasManuallyChanged ? "manual" : part.price_state,
     notes: changes.notes !== undefined ? String(changes.notes || "") : part.notes,
     last_price_update_at: timestamp,
-  });
+  };
   const previousTotal = num(builder.frozen_cost);
   const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = previousTotal + delta;
   const nextCustomerPrice = previousCustomerPrice + delta;
   const currentTotal = num(builder.current_recalculated_cost, previousTotal) + delta;
-  await base44.entities.BuilderProduct.update(builder.id, {
+  const priceState = Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current";
+  const builderPatch = {
     frozen_cost: nextTotal,
     frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: currentTotal,
-    price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
+    price_state: priceState,
     price_delta: currentTotal - nextTotal,
     price_delta_percent: nextTotal ? ((currentTotal - nextTotal) / nextTotal) * 100 : 0,
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
-  await patchVerifiedEstimateLine(estimate, builder, (line) => ({
+  };
+  const linePatch = {
     total_snapshot: nextTotal,
     live_total_snapshot: currentTotal,
     customer_price_snapshot: nextCustomerPrice,
     live_customer_price_snapshot: liveCustomerUnitPrice(line) + delta,
-    price_state: Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current",
+    price_state: priceState,
     last_price_update_at: timestamp,
-  }));
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builder.id,
-    estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
-    reason: "manual_adjustment",
-    previous_total_cost: previousTotal,
-    new_total_cost: nextTotal,
-    previous_customer_price: previousCustomerPrice,
-    new_customer_price: nextCustomerPrice,
-    changed_parts: [{ part_id: part.id, part_name: changes.part_name || part.part_name, action: "edit_manual_part", previous_extended_cost: previousExtended, new_extended_cost: extended, delta, previous_detail_overrides: previousDetailOverrides, new_detail_overrides: nextDetailOverrides }],
-    builder_snapshot_before: builder.builder_snapshot || {},
-    builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousTotal },
-    price_snapshot_after: { total: nextTotal },
-    notes: "Manual / Custom Product Part edited.",
+  };
+  const changedParts = [{ part_id: part.id, part_name: partPatch.part_name, action: "edit_manual_part", previous_extended_cost: previousExtended, new_extended_cost: extended, delta, previous_detail_overrides: previousDetailOverrides, new_detail_overrides: nextDetailOverrides }];
+  const requestHash = builderMutationHash({
+    estimate_updated_date: expectedEstimateUpdatedAt || estimate.updated_date || "",
+    part_id: part.id,
+    part_updated_date: expectedPartUpdatedAt || part.updated_date || "",
+    changes,
+    part_patch: partPatch,
   });
-  return base44.entities.BuilderPart.get(partId);
+  const recoveryMarker = {
+    key: `builder_manual_part_edit:${builder.id}:${part.id}:${requestHash}`,
+    kind: "builder_manual_part_edit",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: line.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    target_part_id: part.id,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: [{ operation: "update", part_id: part.id, part_key: part.part_key, expected_updated_date: part.updated_date || "", patch: partPatch }],
+      changed_parts: changedParts,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision: {
+      builder_product_id: builder.id,
+      estimate_id: builder.estimate_id || "",
+      reason: "manual_adjustment",
+      previous_total_cost: previousTotal,
+      new_total_cost: nextTotal,
+      previous_customer_price: previousCustomerPrice,
+      new_customer_price: nextCustomerPrice,
+      changed_parts: changedParts,
+      builder_snapshot_before: builder.builder_snapshot || {},
+      builder_snapshot_after: builder.builder_snapshot || {},
+      price_snapshot_before: { total: previousTotal },
+      price_snapshot_after: { total: nextTotal },
+      notes: "Manual / Custom Product Part edited.",
+    },
+  };
+  const marked = await markBuilderMutationPending({ estimate, builder, pending: recoveryMarker });
+  await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
+  return base44.entities.BuilderPart.get(part.id);
 }
 
 export async function switchManualProductPart(partId, catalogItem, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
