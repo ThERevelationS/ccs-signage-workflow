@@ -56,6 +56,10 @@ function same(a, b) {
   return JSON.stringify(stableObject(a ?? null)) === JSON.stringify(stableObject(b ?? null));
 }
 
+function patchDiffers(record, patch) {
+  return Object.entries(patch || {}).some(([key, value]) => !same(record?.[key], value));
+}
+
 export function pricingSnapshot(row) {
   if (!row || typeof row !== "object") return {};
   const out = {};
@@ -2905,7 +2909,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
   return genericUnitCost(row);
 }
 
-export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false, existingPartsOverride = null, inventoryRowsOverride = null }) {
+export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false, existingPartsOverride = null, inventoryRowsOverride = null, skipUnchangedWrites = false }) {
   if (!builderProduct?.id || !sourceProject) {
     return {
       partCount: 0,
@@ -2936,6 +2940,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   let changedCount = 0;
   let newPartCount = 0;
   let removedPartCount = 0;
+  let writesPerformed = 0;
   let recalcRequired = false;
   const recalcPartNames = [];
   const directLiveReprice = DIRECT_LIVE_REPRICE_MODULES.has(builderProduct.module_key);
@@ -2953,18 +2958,23 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       const candidateId = descriptor.inventory_item_id || old.inventory_item_id || old.original_inventory_item_id || "";
       const candidateEntity = findEntity(catalogs, candidateId, old.inventory_entity || resolvedEntity);
       const candidateRow = findRow(catalogs, candidateEntity, candidateId);
-      const patch = {
+      const corePatch = {
         inventory_link_state: currentRow ? "attached" : old.inventory_link_state,
         current_inventory_snapshot: currentRow || old.current_inventory_snapshot || {},
         reattach_candidate_id: candidateId,
         reattach_candidate_name: rowName(candidateEntity, candidateRow) || old.inventory_item_name || descriptor.part_name,
         price_state: "detached",
-        last_price_check_at: nowIso(),
         is_active: true,
       };
-      await base44.entities.BuilderPart.update(old.id, patch);
+      if (!skipUnchangedWrites || patchDiffers(old, corePatch)) {
+        const patch = { ...corePatch, last_price_check_at: nowIso() };
+        await base44.entities.BuilderPart.update(old.id, patch);
+        writesPerformed += 1;
+        synced.push({ ...old, ...patch });
+      } else {
+        synced.push(old);
+      }
       detachedCount += 1;
-      synced.push({ ...old, ...patch });
       continue;
     }
     const currentRow = findRow(catalogs, resolvedEntity, descriptor.inventory_item_id);
@@ -3073,6 +3083,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
             ? ""
             : "New Builder Part added after the Product price was frozen. Frozen cost remains $0 until Update Price is explicitly accepted.",
       });
+      writesPerformed += 1;
       synced.push(created);
       continue;
     }
@@ -3118,7 +3129,6 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       price_state: shouldAccept ? "current" : state,
       price_delta: currentExtended - frozenExtended,
       price_delta_percent: frozenExtended ? ((currentExtended - frozenExtended) / frozenExtended) * 100 : 0,
-      last_price_check_at: timestamp,
       is_active: true,
     };
 
@@ -3130,8 +3140,14 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       patch.last_price_update_at = timestamp;
     }
 
-    await base44.entities.BuilderPart.update(old.id, patch);
-    synced.push({ ...old, ...patch });
+    if (!skipUnchangedWrites || patchDiffers(old, patch)) {
+      const writePatch = { ...patch, last_price_check_at: timestamp };
+      await base44.entities.BuilderPart.update(old.id, writePatch);
+      writesPerformed += 1;
+      synced.push({ ...old, ...writePatch });
+    } else {
+      synced.push(old);
+    }
   }
 
   for (const old of existing || []) {
@@ -3173,24 +3189,30 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
             price_state: changed ? "changed" : "current",
             price_delta: currentExtended - num(old.frozen_extended_cost),
             price_delta_percent: num(old.frozen_extended_cost) ? ((currentExtended - num(old.frozen_extended_cost)) / num(old.frozen_extended_cost)) * 100 : 0,
-            last_price_check_at: nowIso(),
             is_active: true,
           };
           if (changed) changedCount += 1;
-          await base44.entities.BuilderPart.update(old.id, patch);
-          refreshed = { ...old, ...patch };
+          if (!skipUnchangedWrites || patchDiffers(old, patch)) {
+            const writePatch = { ...patch, last_price_check_at: nowIso() };
+            await base44.entities.BuilderPart.update(old.id, writePatch);
+            writesPerformed += 1;
+            refreshed = { ...old, ...writePatch };
+          }
         } else {
           const patch = {
             inventory_link_state: "detached",
             price_state: "detached",
-            last_price_check_at: nowIso(),
             is_active: true,
           };
           // This is an independent add-on, not a broken Builder-produced Part.
           // Keep the Part visibly detached and let Update Price block until the
           // user uses Switch Part, but do not trigger the Builder reattach modal.
-          await base44.entities.BuilderPart.update(old.id, patch);
-          refreshed = { ...old, ...patch };
+          if (!skipUnchangedWrites || patchDiffers(old, patch)) {
+            const writePatch = { ...patch, last_price_check_at: nowIso() };
+            await base44.entities.BuilderPart.update(old.id, writePatch);
+            writesPerformed += 1;
+            refreshed = { ...old, ...writePatch };
+          }
         }
       }
       synced.push(refreshed);
@@ -3208,6 +3230,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         last_price_check_at: nowIso(),
         notes: `${old.notes ? `${old.notes}\n` : ""}Part removed from Builder before it carried a frozen cost; historical row retained inactive.`,
       });
+      writesPerformed += 1;
       continue;
     }
 
@@ -3221,15 +3244,20 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       price_delta_percent: -100,
       builder_data: { ...(old.builder_data || {}), [PENDING_REMOVAL_KEY]: true },
       is_active: true,
-      last_price_check_at: nowIso(),
       notes: alreadyPendingRemoval
         ? (old.notes || removalNote)
         : `${old.notes ? `${old.notes}\n` : ""}${removalNote}`,
     };
-    await base44.entities.BuilderPart.update(old.id, pendingRemoval);
+    if (!skipUnchangedWrites || patchDiffers(old, pendingRemoval)) {
+      const writePatch = { ...pendingRemoval, last_price_check_at: nowIso() };
+      await base44.entities.BuilderPart.update(old.id, writePatch);
+      writesPerformed += 1;
+      synced.push({ ...old, ...writePatch });
+    } else {
+      synced.push(old);
+    }
     changedCount += 1;
     removedPartCount += 1;
-    synced.push({ ...old, ...pendingRemoval });
   }
 
   const activeEconomicParts = synced.filter((part) => part.is_active !== false);
@@ -3258,6 +3286,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     changedCount,
     newPartCount,
     removedPartCount,
+    writesPerformed,
     recalcRequired,
     recalcReason: recalcRequired
       ? `Master Inventory changed after this ${builderProduct.builder_name || "Builder"} was last calculated${uniqueRecalcNames.length ? `: ${uniqueRecalcNames.slice(0, 4).join(", ")}${uniqueRecalcNames.length > 4 ? "…" : ""}` : ""}. Reopen and save the Builder before accepting Update Price.`
