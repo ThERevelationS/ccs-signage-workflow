@@ -4116,6 +4116,11 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     planOnly: true,
     planTimestamp: timestamp,
   });
+  const plannedPartUpdates = (plannedSummary.partWritePlan || []).map((step) =>
+    step.operation !== "create" && selectedPatches.has(step.part_id)
+      ? { ...step, patch: { ...selectedPatches.get(step.part_id), ...(step.patch || {}) } }
+      : step
+  );
   const remainingDetached = (plannedSummary.parts || [])
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
@@ -4161,7 +4166,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     source_updated_date: source.updated_date || "",
     selected_parts: selected.map((part) => ({ id: part.id, updated_date: part.updated_date || "", candidate: part.reattach_candidate_id || "", state: part.builder_sync_state })),
     source_patch: sourcePatch,
-    part_updates: plannedSummary.partWritePlan || [],
+    part_updates: plannedPartUpdates,
   })}`;
   const recoveryMarker = {
     key: operationKey,
@@ -4180,7 +4185,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     patched_source: patchedSource,
     part_acceptance_plan: {
       timestamp,
-      part_updates: plannedSummary.partWritePlan || [],
+      part_updates: plannedPartUpdates,
       changed_parts: reattached,
       active_part_count: plannedSummary.partCount,
     },
