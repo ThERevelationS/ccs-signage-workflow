@@ -2917,6 +2917,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       changedCount: 0,
       newPartCount: 0,
       removedPartCount: 0,
+      writesPerformed: 0,
       recalcRequired: false,
       recalcReason: "",
       usesDirectLiveReprice: false,
