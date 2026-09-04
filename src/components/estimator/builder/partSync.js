@@ -3303,12 +3303,25 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   };
 }
 
-export async function acceptBuilderPartPrices(builderProductId) {
+export async function acceptBuilderPartPrices(builderProductId, { builderOverride = undefined, partsOverride = undefined } = {}) {
   const [parts, builder] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderProduct.get(builderProductId).catch(() => null),
+    partsOverride !== undefined
+      ? Promise.resolve(partsOverride)
+      : base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
+    builderOverride !== undefined
+      ? Promise.resolve(builderOverride)
+      : base44.entities.BuilderProduct.get(builderProductId),
   ]);
-  const activeParts = (parts || []).filter((row) => row.is_active !== false);
+  if (!builder?.id || builder.id !== builderProductId) {
+    throw new Error("Builder Product could not be verified before accepting Part prices.");
+  }
+  if (!Array.isArray(parts)) {
+    throw new Error("Builder Parts could not be verified before accepting pricing.");
+  }
+  if (parts.some((part) => part?.builder_product_id !== builderProductId)) {
+    throw new Error("Builder Part ownership changed before pricing could be accepted. Reload the estimate and try again.");
+  }
+  const activeParts = parts.filter((row) => row.is_active !== false);
   const detachedParts = activeParts.filter((part) =>
     part.builder_sync_state === "detached_override" ||
     ["detached", "reattach_available"].includes(part.inventory_link_state)
