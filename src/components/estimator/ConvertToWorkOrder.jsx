@@ -34,7 +34,8 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       const pendingPrice = getPendingEstimatePriceAcceptance(estimateBefore);
       if (pendingPrice) {
         const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || "Product";
-        throw new Error(`“${name}” has an Update Price recovery pending. Resume Price Update before converting this estimate to a Work Order.`);
+        const resumeLabel = pendingPrice.pending?.kind === "builder_initial_freeze" ? "Resume Initial Price" : "Resume Price Update";
+        throw new Error(`“${name}” has a Builder price-acceptance recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
       }
       if (estimateBefore.status !== "approved") {
         throw new Error("Only an Approved estimate can be converted to a Work Order. Record customer acceptance or approve the estimate first.");
