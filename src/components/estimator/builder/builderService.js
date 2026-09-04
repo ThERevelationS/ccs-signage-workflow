@@ -506,9 +506,33 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
   }
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be verified before synchronizing this Builder save.");
   const currentLine = (estimate.line_items || []).find(
     (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
   ) || line;
+
+  const existingPending = pendingPriceAcceptance(currentLine);
+  if (existingPending) {
+    const pendingBuilderId = currentLine.builder_product_id || existingPending.builder_product_id || "";
+    const [pendingBuilder, pendingParts] = await Promise.all([
+      pendingBuilderId ? base44.entities.BuilderProduct.get(pendingBuilderId) : Promise.resolve(null),
+      pendingBuilderId ? base44.entities.BuilderPart.filter({ builder_product_id: pendingBuilderId }) : Promise.resolve([]),
+    ]);
+    if (!pendingBuilder?.id || !Array.isArray(pendingParts)) {
+      throw new Error("The pending initial price acceptance could not verify its Builder Product or Parts. The recovery marker was retained.");
+    }
+    const recovered = await resumeBuilderPriceAcceptance({
+      estimateId,
+      estimate,
+      builder: pendingBuilder,
+      parts: pendingParts,
+      line: currentLine,
+      pending: existingPending,
+    });
+    return recovered?.line || currentLine;
+  }
+
+  await assertEstimateProductMutationAllowed(estimate);
 
   const ensured = await ensureBuilderProductForLine({
     estimate,
