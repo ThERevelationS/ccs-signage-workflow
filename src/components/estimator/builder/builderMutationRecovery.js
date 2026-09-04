@@ -41,6 +41,41 @@ export function pendingBuilderMutation(line) {
   return pending && typeof pending === "object" && String(pending.key || "").trim() ? pending : null;
 }
 
+export async function markBuilderMutationPending({ estimate, builder, pending }) {
+  if (!estimate?.id || !builder?.id || !pending?.key) {
+    throw new Error("Builder mutation recovery could not be initialized.");
+  }
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  if (!latestEstimate) throw new Error("Estimate could not be verified before starting this Builder mutation.");
+  if (
+    estimate.updated_date &&
+    latestEstimate.updated_date &&
+    estimate.updated_date !== latestEstimate.updated_date
+  ) {
+    throw new Error("This estimate changed in another session before the Builder mutation could start. No Product or Part pricing was changed.");
+  }
+  const latestLine = (latestEstimate.line_items || []).find((item) => item.builder_product_id === builder.id);
+  if (!latestLine) throw new Error("This Product is no longer part of the estimate. No Product or Part pricing was changed.");
+  const lineItems = (latestEstimate.line_items || []).map((item) =>
+    item.builder_product_id === builder.id
+      ? { ...item, price_acceptance_pending: pending }
+      : item
+  );
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+
+  const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
+    base44.entities.AllInOneEstimate.get(estimate.id),
+    base44.entities.BuilderProduct.get(builder.id),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+  ]);
+  const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
+  const canonicalPending = pendingBuilderMutation(markedLine);
+  if (!canonicalPending || canonicalPending.key !== pending.key) {
+    throw new Error("Another Builder mutation won the recovery marker race. Reload before continuing.");
+  }
+  return { markedEstimate, currentBuilder, currentParts, markedLine, canonicalPending };
+}
+
 function validatePendingBuilderMutation(pending, { estimateId, builder, line }) {
   if (!pending || !String(pending.kind || "").startsWith("builder_")) {
     throw new Error("The pending Builder recovery marker is invalid. No pricing or Part change was continued.");
