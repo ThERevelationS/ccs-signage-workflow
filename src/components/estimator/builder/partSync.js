@@ -2884,7 +2884,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
   return genericUnitCost(row);
 }
 
-export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false }) {
+export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false, existingPartsOverride = null, inventoryRowsOverride = null }) {
   if (!builderProduct?.id || !sourceProject) {
     return {
       partCount: 0,
@@ -2907,7 +2907,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
   const catalogs = catalogsOverride || await loadBuilderCatalogs(builderProduct.module_key, { strict: strictCatalogs });
   const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
-  const existing = await base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id });
+  const existing = existingPartsOverride || await base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
   const seen = new Set();
   const synced = [];
@@ -3127,11 +3127,16 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       let refreshed = old;
       if (old.inventory_entity && old.inventory_item_id && !old.manual_cost_override) {
         let currentRow = null;
-        try {
-          currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id);
-        } catch (error) {
-          if (strictCatalogs) {
-            throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
+        const inventoryKey = `${old.inventory_entity}:${old.inventory_item_id}`;
+        if (inventoryRowsOverride?.has(inventoryKey)) {
+          currentRow = inventoryRowsOverride.get(inventoryKey);
+        } else {
+          try {
+            currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id);
+          } catch (error) {
+            if (strictCatalogs) {
+              throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
+            }
           }
         }
         if (currentRow) {
@@ -3648,13 +3653,17 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     throw new Error("This Builder no longer has an editable source project to reattach Parts to.");
   }
 
-  const [source, detached, revisions, catalogs] = await Promise.all([
+  const [source, allParts, revisions, catalogs] = await Promise.all([
     base44.entities[builder.source_entity].get(builder.source_project_id),
-    getDetachedBuilderParts(builderProductId),
+    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
     base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
     loadBuilderCatalogs(builder.module_key, { strict: true }),
   ]);
   if (!source) throw new Error("The Builder source project could not be loaded.");
+  const detached = (allParts || [])
+    .filter(requiresBuilderReattach)
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order))
+    .map((part) => ({ ...part, can_reattach: part.builder_sync_state === "detached_override" || !!part.reattach_candidate_id }));
   const revisionNumber = Math.max(0, ...(revisions || []).map((revision) => num(revision.revision_number))) + 1;
   const selectedIds = new Set(partIds);
   const selected = detached.filter((part) => selectedIds.has(part.id));
@@ -3711,14 +3720,21 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   const sourcePatch = {};
   changedRoots.forEach((root) => { sourcePatch[root] = patchedSource[root]; });
 
-  // All reads, lifecycle checks, Part versions, source mappings, candidate rows,
-  // catalogs, and revision numbering are resolved above before this first write.
+  const inventoryRowsOverride = new Map();
+  for (const part of allParts || []) {
+    if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
+    const row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+    if (!row) throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”.`);
+    inventoryRowsOverride.set(`${part.inventory_entity}:${part.inventory_item_id}`, row);
+  }
+  const existingPartsForSync = (allParts || []).map((part) =>
+    selectedPatches.has(part.id) ? { ...part, ...selectedPatches.get(part.id) } : part
+  );
+
+  // All prerequisite lifecycle, version, Part, source, catalog, candidate,
+  // add-on inventory, and revision-number reads are resolved before this write.
   if (Object.keys(sourcePatch).length > 0) {
     await base44.entities[builder.source_entity].update(builder.source_project_id, sourcePatch);
-  }
-  for (const part of selected) {
-    const patch = selectedPatches.get(part.id);
-    if (patch) await base44.entities.BuilderPart.update(part.id, patch);
   }
 
   const summary = await syncBuilderParts({
@@ -3728,6 +3744,8 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     legacyMode: false,
     catalogsOverride: catalogs,
     strictCatalogs: true,
+    existingPartsOverride: existingPartsForSync,
+    inventoryRowsOverride,
   });
   const remainingDetached = (summary.parts || [])
     .filter(requiresBuilderReattach)
