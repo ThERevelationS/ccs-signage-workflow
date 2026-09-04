@@ -276,7 +276,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
           : Math.abs(liveTotal - frozen) > 0.005 || Math.abs(liveCustomerPrice - frozenCustomer) > 0.005
             ? "changed"
             : "current";
-    const productPatch = {
+    const identityPatch = {
       estimate_line_id: lineId,
       module_key: line.module_key,
       source_entity: sourceEntity,
@@ -289,6 +289,8 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       product_notes: line.product_notes ?? builderProduct.product_notes ?? "",
       quantity: num(line.customer_quantity, 1),
       status: line.section_status === "complete" ? "complete" : "in_progress",
+    };
+    const pricingPatch = {
       current_recalculated_cost: liveTotal,
       price_state: nextState,
       price_delta: liveTotal - frozen,
@@ -296,6 +298,16 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       price_recalc_required: builderProduct.price_recalc_required || false,
       price_recalc_reason: builderProduct.price_recalc_reason || "",
     };
+    const willRunPartSync = !!source && !deferPartSync && !(
+      builderProduct.price_state === "legacy_frozen" && builderProduct.legacy_bom_reconciled === true
+    );
+    // During strict page reconciliation, Part synchronization is authoritative for
+    // the final live Product economics (including manual add-ons). Avoid a
+    // transient pre-Part pricing write that would be immediately overwritten by
+    // the post-Part summary and churn the BuilderProduct timestamp on page open.
+    const productPatch = skipUnchangedWrites && willRunPartSync
+      ? identityPatch
+      : { ...identityPatch, ...pricingPatch };
     if (!skipUnchangedWrites || patchDiffers(builderProduct, productPatch)) {
       const writePatch = { ...productPatch, last_price_check_at: timestamp };
       await base44.entities.BuilderProduct.update(builderProduct.id, writePatch);
