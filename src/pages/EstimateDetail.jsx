@@ -51,7 +51,9 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
       ? "Resume Part Detach"
       : entry.pending?.kind === "builder_detached_override_update"
         ? "Resume Part Change"
-        : "Resume Price Update";
+        : entry.pending?.kind === "builder_reattach_parts"
+          ? "Resume Reattach"
+          : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
