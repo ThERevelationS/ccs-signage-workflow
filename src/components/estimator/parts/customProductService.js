@@ -10,11 +10,6 @@ const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(val
 const nowIso = () => new Date().toISOString();
 const stable = (value) => JSON.stringify(value || {});
 
-async function nextRevisionNumber(builderProductId) {
-  const rows = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
-  return Math.max(0, ...(rows || []).map((row) => num(row.revision_number))) + 1;
-}
-
 function estimateLineForBuilder(estimate, builderProductId) {
   return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
 }
