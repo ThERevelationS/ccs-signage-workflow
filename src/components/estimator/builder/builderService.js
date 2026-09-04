@@ -424,6 +424,9 @@ export async function ensureEstimateBuilderProducts(estimate) {
 
 export async function recordBuilderSave({ estimateId, line, sourceProject, liveTotal, internalCost, customerPrice }) {
   if (!estimateId || !line) return line;
+  if (!sourceProject || typeof sourceProject !== "object") {
+    throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
+  }
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   const currentLine = (estimate.line_items || []).find(
     (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
@@ -437,6 +440,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     sourceProjectOverride: sourceProject ?? undefined,
   });
   const builder = ensured.builderProduct;
+  if (builder && !ensured.partSyncInputs) {
+    throw new Error("Builder catalogs could not be preverified. Product pricing and Parts were not synchronized.");
+  }
   const timestamp = nowIso();
   const sourceTotal = num(liveTotal, sourceProjectTotal(currentLine, sourceProject));
   const economics = sourceProjectEconomics(currentLine.module_key, sourceProject, sourceTotal);
@@ -478,9 +484,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       // pricing used by that calculation so Update Price can safely accept it.
       builderRecalculated: true,
       strictCatalogs: true,
-      catalogsOverride: ensured.partSyncInputs?.catalogs || null,
-      existingPartsOverride: ensured.partSyncInputs?.existingParts || [],
-      inventoryRowsOverride: ensured.partSyncInputs?.inventoryRowsOverride || new Map(),
+      catalogsOverride: ensured.partSyncInputs.catalogs,
+      existingPartsOverride: ensured.partSyncInputs.existingParts,
+      inventoryRowsOverride: ensured.partSyncInputs.inventoryRowsOverride,
     });
   }
 
