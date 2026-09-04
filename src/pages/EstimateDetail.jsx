@@ -56,6 +56,7 @@ export default function EstimateDetail() {
   const [showCancel, setShowCancel] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
+  const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   // Tracks the exact server version this browser session last read or wrote.
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
@@ -71,13 +72,21 @@ export default function EstimateDetail() {
       return;
     }
     base44.entities.AllInOneEstimate.get(id).then(async (res) => {
-      const withBuilders = await ensureEstimateBuilderProducts(res);
+      const warnings = [];
+      const withBuilders = await ensureEstimateBuilderProducts(res, {
+        strictReconciliation: true,
+        onWarning: (warning) => warnings.push(warning),
+      });
       for (const line of withBuilders.line_items || []) {
         if (line.module_key === "custom" && line.builder_product_id) {
           try {
             await refreshManualProductPricing(line.builder_product_id);
           } catch (error) {
-            console.warn("Custom Product live pricing refresh skipped because its Master Inventory catalog could not be fully verified:", error);
+            warnings.push({
+              builder_product_id: line.builder_product_id,
+              product_name: line.client_product_name || line.project_name || "Custom Product",
+              message: error?.message || "Custom Product live pricing could not be verified. The saved Product snapshot was retained.",
+            });
           }
         }
       }
@@ -89,6 +98,7 @@ export default function EstimateDetail() {
       setEstimate(loaded);
       setPersistedEstimate(loaded);
       setOpenRevision(revision);
+      setReconciliationWarnings(warnings);
       setLoading(false);
     });
   }, [id]);
@@ -130,16 +140,29 @@ export default function EstimateDetail() {
 
   const refreshProducts = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
-    const withBuilders = await ensureEstimateBuilderProducts(current);
+    const warnings = [];
+    const withBuilders = await ensureEstimateBuilderProducts(current, {
+      strictReconciliation: true,
+      onWarning: (warning) => warnings.push(warning),
+    });
     for (const line of withBuilders.line_items || []) {
       if (line.module_key === "custom" && line.builder_product_id) {
-        await refreshManualProductPricing(line.builder_product_id);
+        try {
+          await refreshManualProductPricing(line.builder_product_id);
+        } catch (error) {
+          warnings.push({
+            builder_product_id: line.builder_product_id,
+            product_name: line.client_product_name || line.project_name || "Custom Product",
+            message: error?.message || "Custom Product live pricing could not be verified. The saved Product snapshot was retained.",
+          });
+        }
       }
     }
     const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id);
     const line_items = await refreshSectionSnapshots(refreshed.line_items);
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
+    setReconciliationWarnings(warnings);
   };
 
   const removeLine = async (index) => {
@@ -946,6 +969,16 @@ export default function EstimateDetail() {
 
         <div className="flex-1 min-w-0 space-y-3">
           <StepNav />
+
+          {reconciliationWarnings.length > 0 && (
+            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] text-amber-900">
+              <div className="font-bold">Live Product pricing could not be fully verified.</div>
+              <div className="mt-0.5">Saved estimate pricing was retained for {reconciliationWarnings.length} Product{reconciliationWarnings.length === 1 ? "" : "s"}. Reload to retry before accepting new pricing.</div>
+              <div className="mt-1 text-[9px] text-amber-700 truncate" title={reconciliationWarnings.map((item) => `${item.product_name}: ${item.message}`).join("\n")}>
+                {reconciliationWarnings.map((item) => item.product_name).join(" · ")}
+              </div>
+            </div>
+          )}
 
           {readOnly && (
             <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between gap-3">

@@ -171,7 +171,7 @@ export function canReuseReconciledLegacyBuilder({
   );
 }
 
-export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, sourceProjectOverride = undefined }) {
+export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, strictPartSync = false, sourceProjectOverride = undefined }) {
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
 
@@ -204,7 +204,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     : sourceProjectEconomics(line.module_key, source, sourceTotal);
   const liveTotal = economics.internalCost;
   const liveCustomerPrice = economics.customerPrice;
-  const partSyncInputs = deferPartSync && source
+  const partSyncInputs = (deferPartSync || strictPartSync) && source
     ? await loadVerifiedBuilderPartSyncInputs({ builderProduct, moduleKey: line.module_key })
     : null;
 
@@ -314,6 +314,10 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       sourceProject: source,
       acceptPrices: false,
       legacyMode: builderProduct.price_state === "legacy_frozen",
+      strictCatalogs: strictPartSync,
+      catalogsOverride: strictPartSync ? partSyncInputs?.catalogs || null : null,
+      existingPartsOverride: strictPartSync ? partSyncInputs?.existingParts || [] : null,
+      inventoryRowsOverride: strictPartSync ? partSyncInputs?.inventoryRowsOverride || new Map() : null,
     });
     if (partSummary.usesDirectLiveReprice) {
       const manualAddonCurrent = num(partSummary.manualAddonCurrentTotal);
@@ -404,16 +408,48 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   };
 }
 
-export async function ensureEstimateBuilderProducts(estimate) {
+export async function ensureEstimateBuilderProducts(estimate, { strictReconciliation = false, onWarning = null } = {}) {
   if (!estimate?.id) return estimate;
   const original = estimate.line_items || [];
   const lineItems = [];
   let changed = false;
 
   for (const line of original) {
-    const result = await ensureBuilderProductForLine({ estimate, line, isNew: false });
-    lineItems.push(result.line);
-    changed = changed || result.changed;
+    try {
+      let sourceProjectOverride;
+      if (strictReconciliation) {
+        const mod = getModule(line?.module_key);
+        if (mod && line?.project_id) {
+          try {
+            sourceProjectOverride = await base44.entities[mod.entity].get(line.project_id);
+          } catch (error) {
+            throw new Error(`${getModuleLabel(line.module_key) || "Builder"} source could not be verified: ${error?.message || "read failed"}`);
+          }
+          if (!sourceProjectOverride) {
+            throw new Error(`${getModuleLabel(line.module_key) || "Builder"} source could not be verified. The saved Product snapshot was retained.`);
+          }
+        }
+      }
+      const result = await ensureBuilderProductForLine({
+        estimate,
+        line,
+        isNew: false,
+        strictPartSync: strictReconciliation,
+        sourceProjectOverride,
+      });
+      lineItems.push(result.line);
+      changed = changed || result.changed;
+    } catch (error) {
+      if (!strictReconciliation) throw error;
+      const warning = {
+        line_id: line.line_id || "",
+        builder_product_id: line.builder_product_id || "",
+        product_name: line.client_product_name || line.project_name || getModuleLabel(line.module_key) || "Product",
+        message: error?.message || "This Product could not be verified against its Builder catalogs. The saved Product snapshot was retained.",
+      };
+      onWarning?.(warning);
+      lineItems.push(line);
+    }
   }
 
   if (changed) {
