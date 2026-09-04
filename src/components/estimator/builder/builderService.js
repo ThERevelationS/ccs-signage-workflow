@@ -529,6 +529,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       parts: pendingParts,
       line: currentLine,
       pending: existingPending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
     return recovered?.line || currentLine;
   }
@@ -749,6 +750,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         parts: currentParts,
         line: markedLine,
         pending: canonicalPending,
+        applyPartPlan: applyBuilderPartPriceAcceptancePlan,
       });
       return recovered?.line || markedLine || currentLine;
     }
@@ -863,6 +865,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
       parts,
       line: verifiedEstimateLine,
       pending: existingPending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
   }
 
@@ -1062,5 +1065,6 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     parts: currentParts,
     line: markedLine,
     pending: canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
 }
