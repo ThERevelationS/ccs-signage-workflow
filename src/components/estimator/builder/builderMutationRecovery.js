@@ -97,15 +97,23 @@ export async function resumeBuilderMutation({
   if (typeof applyPartPlan !== "function") throw new Error("Builder recovery could not apply its stored Part plan.");
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
+  if (!Array.isArray(parts) || parts.some((part) => part?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified while recovering the pending Builder mutation.");
+  }
   const plan = pending.part_acceptance_plan || {};
   await applyPendingSourcePatch(pending);
-  await applyPartPlan(builder.id, plan, { partsOverride: parts });
+  // Re-read Parts inside the applier instead of trusting the post-marker snapshot.
+  // This closes the race where another session edits a Part after marker verification
+  // but before the exact stored Part patch is written.
+  await applyPartPlan(builder.id, plan);
   await ensureBuilderPriceRevision(pending.key, pending.revision || {});
 
   const builderPatch = pending.builder_patch || {};
-  if (recoveryPatchDiffers(builder, builderPatch)) {
+  const currentBuilder = await base44.entities.BuilderProduct.get(builder.id);
+  if (!currentBuilder?.id) throw new Error("Builder Product could not be verified while completing the pending mutation.");
+  if (recoveryPatchDiffers(currentBuilder, builderPatch)) {
     const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
-    const currentBuilderUpdatedAt = String(builder.updated_date || "").trim();
+    const currentBuilderUpdatedAt = String(currentBuilder.updated_date || "").trim();
     if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
       throw new Error("This Builder Product changed while a Builder mutation was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
     }
