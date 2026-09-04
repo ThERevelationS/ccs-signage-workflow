@@ -622,8 +622,11 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   const timestamp = nowIso();
   const otherActiveParts = allParts.filter((row) => row.id !== part.id && row.is_active !== false);
   const activeGroups = allGroups.filter((row) => row.is_active !== false);
-  const emptiedGroup = part.part_group_id
-    ? activeGroups.find((group) => group.id === part.part_group_id) && !otherActiveParts.some((row) => row.part_group_id === part.part_group_id)
+  const containingGroup = part.part_group_id
+    ? activeGroups.find((group) => group.id === part.part_group_id) || null
+    : null;
+  const emptiedGroup = containingGroup && !otherActiveParts.some((row) => row.part_group_id === part.part_group_id)
+    ? containingGroup
     : null;
   const groupCount = Math.max(0, activeGroups.length - (emptiedGroup ? 1 : 0));
   const priceState = Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current";
