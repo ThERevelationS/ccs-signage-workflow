@@ -609,25 +609,139 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       ? "legacy_frozen"
       : calculatedState;
 
-  let initialPartChanges = [];
   if (builder && canInitialFreeze) {
-    // Reuse the exact Parts produced by the authoritative sync above. Do not
-    // introduce a post-sync Builder/Part read that could fail after Part state
-    // has already started changing during the initial freeze.
+    // Build the complete frozen Part plan without applying it. The Estimate line
+    // recovery marker below must become durable before the first accepted-price
+    // write so an interrupted initial freeze can always resume deterministically.
     const partAcceptance = await acceptBuilderPartPrices(builder.id, {
       builderOverride: builder,
       partsOverride: partSummary.parts || [],
+      apply: false,
+      timestamp,
     });
     if (partAcceptance.detachedCount > 0) {
-      // Defensive second guard in case the inventory changed between detection
-      // and acceptance. Keep the product unfrozen rather than accepting partial data.
+      // Defensive guard: keep the Product unfrozen until every Part is resolved.
       partSummary.detachedCount = partAcceptance.detachedCount;
     } else {
-      initialPartChanges = partAcceptance.changedParts || [];
+      const initialAcceptedTotal = effectiveLiveTotal;
+      const initialAcceptedCustomerPrice = effectiveLiveCustomerPrice;
+      const operationKey = `builder_initial_freeze:${builder.id}:${num(builder.builder_version, 1)}:${snapshotHash({
+        estimate_updated_date: estimate.updated_date || "",
+        estimate_line_id: currentLine.line_id || ensured.line.line_id || "",
+        source_updated_date: sourceProject?.updated_date || "",
+        source_hash: snapshotHash(sourceProject || {}),
+        total: initialAcceptedTotal,
+        customer_price: initialAcceptedCustomerPrice,
+        part_updates: partAcceptance.acceptancePlan?.part_updates || [],
+      })}`;
+      const builderPatch = {
+        builder_snapshot: sourceProject || {},
+        builder_snapshot_at: timestamp,
+        builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
+        builder_snapshot_hash: snapshotHash(sourceProject || {}),
+        frozen_cost: initialAcceptedTotal,
+        frozen_customer_price: initialAcceptedCustomerPrice,
+        current_recalculated_cost: effectiveLiveTotal,
+        price_state: "current",
+        price_delta: 0,
+        price_delta_percent: 0,
+        price_recalc_required: false,
+        price_recalc_reason: "",
+        last_price_check_at: timestamp,
+        last_price_update_at: timestamp,
+        builder_version: num(builder.builder_version, 1) + 1,
+        part_count: partSummary.partCount,
+        detached_part_count: 0,
+        needs_reattach_review: false,
+      };
+      const linePatch = {
+        line_id: currentLine.line_id || ensured.line.line_id,
+        builder_product_id: builder.id,
+        builder_name: currentLine.builder_name || ensured.line.builder_name,
+        client_product_name: currentLine.client_product_name || ensured.line.client_product_name,
+        total_snapshot: initialAcceptedTotal,
+        live_total_snapshot: effectiveLiveTotal,
+        customer_price_snapshot: initialAcceptedCustomerPrice,
+        live_customer_price_snapshot: effectiveLiveCustomerPrice,
+        price_state: "current",
+        price_recalc_required: false,
+        price_recalc_reason: "",
+        detached_part_count: 0,
+        needs_reattach_review: false,
+        last_price_check_at: timestamp,
+        last_price_update_at: timestamp,
+        updated_date_snapshot: sourceProject?.updated_date || timestamp,
+      };
+      const revision = {
+        builder_product_id: builder.id,
+        estimate_id: estimateId,
+        reason: "initial_freeze",
+        previous_total_cost: 0,
+        new_total_cost: initialAcceptedTotal,
+        previous_customer_price: 0,
+        new_customer_price: initialAcceptedCustomerPrice,
+        changed_parts: partAcceptance.changedParts || [],
+        builder_snapshot_before: builder.builder_snapshot || {},
+        builder_snapshot_after: sourceProject || {},
+        price_snapshot_before: { total: 0, customer_price: 0 },
+        price_snapshot_after: { total: initialAcceptedTotal, customer_price: initialAcceptedCustomerPrice },
+        notes: "Initial accepted/frozen product price.",
+      };
+      const pending = {
+        key: operationKey,
+        kind: "builder_initial_freeze",
+        started_at: timestamp,
+        estimate_id: estimateId,
+        estimate_line_id: linePatch.line_id || builder.estimate_line_id || "",
+        builder_product_id: builder.id,
+        builder_updated_date_before: builder.updated_date || "",
+        builder_version_before: num(builder.builder_version, 1),
+        part_acceptance_plan: partAcceptance.acceptancePlan || {},
+        builder_patch: builderPatch,
+        line_patch: linePatch,
+        revision,
+      };
+
+      const markedLines = (estimate.line_items || []).map((item) =>
+        item.builder_product_id === builder.id || (currentLine.project_id && item.project_id === currentLine.project_id)
+          ? {
+              ...item,
+              line_id: linePatch.line_id,
+              builder_product_id: builder.id,
+              builder_name: linePatch.builder_name,
+              client_product_name: linePatch.client_product_name,
+              price_acceptance_pending: pending,
+            }
+          : item
+      );
+      await base44.entities.AllInOneEstimate.update(estimateId, { line_items: markedLines });
+
+      const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
+        base44.entities.AllInOneEstimate.get(estimateId),
+        base44.entities.BuilderProduct.get(builder.id),
+        base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+      ]);
+      const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
+      const canonicalPending = pendingPriceAcceptance(markedLine);
+      if (!canonicalPending || canonicalPending.key !== operationKey) {
+        throw new Error("Another Builder price-acceptance operation won the recovery marker race. Reload before continuing.");
+      }
+      const recovered = await resumeBuilderPriceAcceptance({
+        estimateId,
+        estimate: markedEstimate,
+        builder: currentBuilder,
+        parts: currentParts,
+        line: markedLine,
+        pending: canonicalPending,
+      });
+      return recovered?.line || markedLine || currentLine;
     }
   }
 
-  const initialFreezeCompleted = canInitialFreeze && partSummary.detachedCount === 0;
+  // A successful initial freeze returns through the recovery path above. Reaching
+  // this point means this was a normal recalculation/save or the first freeze was
+  // blocked by detached Parts, so no accepted-price revision is completed here.
+  const initialFreezeCompleted = false;
   const finalAcceptedTotal = initialFreezeCompleted ? effectiveLiveTotal : previousFrozenTotal;
   const finalAcceptedCustomerPrice = initialFreezeCompleted ? effectiveLiveCustomerPrice : previousFrozenCustomerPrice;
   const finalProductState = partSummary.detachedCount > 0
