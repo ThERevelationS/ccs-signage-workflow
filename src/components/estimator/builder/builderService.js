@@ -696,25 +696,106 @@ export async function deleteBuilderProductCascade(builderProductId) {
   await base44.entities.BuilderProduct.delete(builderProductId).catch(() => null);
 }
 
+async function ensureBuilderPriceRevision(idempotencyKey, revision) {
+  const response = await base44.functions.invoke("ensureBuilderPriceRevision", {
+    idempotency_key: idempotencyKey,
+    revision,
+  });
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.revision?.id) throw new Error("Builder price revision could not be verified after recording.");
+  return result.revision;
+}
+
+function pendingPriceAcceptance(line) {
+  const pending = line?.price_acceptance_pending;
+  return pending && typeof pending === "object" && String(pending.key || "").trim() ? pending : null;
+}
+
+function validatePendingPriceAcceptance(pending, { estimateId, builder, line }) {
+  if (!pending || pending.kind !== "builder_update_price") {
+    throw new Error("The pending Product price recovery marker is invalid. No pricing was changed.");
+  }
+  if (
+    String(pending.estimate_id || "") !== String(estimateId || "") ||
+    String(pending.builder_product_id || "") !== String(builder?.id || "") ||
+    (pending.estimate_line_id && line?.line_id && pending.estimate_line_id !== line.line_id)
+  ) {
+    throw new Error("The pending Product price recovery marker no longer matches this Estimate Product.");
+  }
+}
+
+async function resumeBuilderPriceAcceptance({ estimateId, estimate, builder, parts, line, pending }) {
+  validatePendingPriceAcceptance(pending, { estimateId, builder, line });
+  await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
+
+  const plan = pending.part_acceptance_plan || {};
+  await applyBuilderPartPriceAcceptancePlan(builder.id, plan, { partsOverride: parts });
+  await ensureBuilderPriceRevision(pending.key, pending.revision || {});
+
+  const builderPatch = pending.builder_patch || {};
+  if (patchDiffers(builder, builderPatch)) {
+    const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
+    const currentBuilderUpdatedAt = String(builder.updated_date || "").trim();
+    if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
+      throw new Error("This Builder Product changed while Update Price was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
+    }
+    await base44.entities.BuilderProduct.update(builder.id, builderPatch);
+  }
+
+  // Re-read the Estimate before the final line write. The durable marker makes
+  // this safe after partial success and lets us preserve unrelated fresh fields.
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!latestEstimate) throw new Error("Estimate could not be verified while completing Update Price.");
+  const latestLine = (latestEstimate.line_items || []).find((item) => item.builder_product_id === builder.id);
+  if (!latestLine) throw new Error("This Product is no longer part of the estimate. The pending price recovery marker could not be completed.");
+  const latestPending = pendingPriceAcceptance(latestLine);
+  const linePatch = pending.line_patch || {};
+
+  if (!latestPending) {
+    if (!patchDiffers(latestLine, linePatch)) {
+      return {
+        blocked: false,
+        recovered: true,
+        alreadyCompleted: true,
+        changedParts: plan.changed_parts || [],
+        line: latestLine,
+      };
+    }
+    throw new Error("The Update Price recovery marker disappeared before the accepted Estimate line was verified. Reload before continuing.");
+  }
+  if (latestPending.key !== pending.key) {
+    throw new Error("A different Update Price recovery operation is now active for this Product. Reload before continuing.");
+  }
+  await assertEstimateProductMutationAllowed(latestEstimate, { allowPriceAcceptanceKey: pending.key });
+
+  const lineItems = (latestEstimate.line_items || []).map((item) =>
+    item.builder_product_id === builder.id
+      ? { ...item, ...linePatch, price_acceptance_pending: {} }
+      : item
+  );
+  const updateResult = await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const completedLine = (updateResult?.line_items || lineItems).find((item) => item.builder_product_id === builder.id) || null;
+  return {
+    blocked: false,
+    recovered: true,
+    changedParts: plan.changed_parts || [],
+    line: completedLine,
+  };
+}
+
 export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation.", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) return null;
-  // Preload every read needed by a successful Update Price before the first Part
-  // acceptance write. A revision-sequence read failure must never happen after
-  // Parts have already been frozen to new pricing.
-  const [estimate, builder, parts, revisions] = await Promise.all([
+  const [estimate, builder, parts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(line.builder_product_id),
     base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: line.builder_product_id }),
   ]);
   if (!estimate || !builder) throw new Error("Estimate pricing could not be verified. Reload before updating this Product price.");
-  if (!Array.isArray(parts) || !Array.isArray(revisions)) {
-    throw new Error("Product pricing history or Parts could not be verified. No price was accepted.");
-  }
+  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified. No price was accepted.");
   if (builder.estimate_id && builder.estimate_id !== estimateId) {
     throw new Error("This Builder Product no longer belongs to the current estimate. Reload before updating its price.");
   }
-  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const verifiedEstimateLine = (estimate.line_items || []).find((item) => item.builder_product_id === builder.id);
   if (!verifiedEstimateLine) throw new Error("This Product is no longer part of the estimate. Reload before updating its price.");
   if (builder.estimate_line_id && verifiedEstimateLine.line_id && builder.estimate_line_id !== verifiedEstimateLine.line_id) {
@@ -723,20 +804,34 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   if (parts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("One or more Builder Parts no longer belong to this Product. Reload before updating its price.");
   }
-  const revisionNumber = Math.max(0, ...(revisions || []).map((r) => num(r.revision_number))) + 1;
 
-  // The acceptance helper receives the exact verified snapshots above, so it
-  // performs no additional Builder/Part reads after this preflight boundary.
+  const existingPending = pendingPriceAcceptance(verifiedEstimateLine);
+  if (existingPending) {
+    return resumeBuilderPriceAcceptance({
+      estimateId,
+      estimate,
+      builder,
+      parts,
+      line: verifiedEstimateLine,
+      pending: existingPending,
+    });
+  }
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const timestamp = nowIso();
   const partAcceptance = await acceptBuilderPartPrices(builder.id, {
     builderOverride: builder,
     partsOverride: parts,
+    apply: false,
+    timestamp,
   });
   if (partAcceptance.detachedCount > 0) {
+    const blockedTimestamp = nowIso();
     await base44.entities.BuilderProduct.update(builder.id, {
       price_state: "detached_parts",
       detached_part_count: partAcceptance.detachedCount,
       needs_reattach_review: true,
-      last_price_check_at: nowIso(),
+      last_price_check_at: blockedTimestamp,
     });
     const blockedLines = (estimate.line_items || []).map((item) =>
       item.builder_product_id === builder.id
@@ -745,7 +840,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
             price_state: "detached_parts",
             detached_part_count: partAcceptance.detachedCount,
             needs_reattach_review: true,
-            last_price_check_at: nowIso(),
+            last_price_check_at: blockedTimestamp,
           }
         : item
     );
@@ -760,13 +855,13 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   }
 
   if (partAcceptance.recalcRequired) {
-    const timestamp = nowIso();
+    const blockedTimestamp = nowIso();
     const reason = partAcceptance.recalcReason || "Master Inventory changed after this Builder was last calculated. Reopen and save the Builder before accepting Update Price.";
     await base44.entities.BuilderProduct.update(builder.id, {
       price_state: "changed",
       price_recalc_required: true,
       price_recalc_reason: reason,
-      last_price_check_at: timestamp,
+      last_price_check_at: blockedTimestamp,
     });
     const blockedLines = (estimate.line_items || []).map((item) =>
       item.builder_product_id === builder.id
@@ -775,7 +870,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
             price_state: "changed",
             price_recalc_required: true,
             price_recalc_reason: reason,
-            last_price_check_at: timestamp,
+            last_price_check_at: blockedTimestamp,
           }
         : item
     );
@@ -789,7 +884,6 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     };
   }
 
-  const timestamp = nowIso();
   const currentEstimateLine = verifiedEstimateLine;
   const previousTotal = num(builder.frozen_cost, num(currentEstimateLine.total_snapshot));
   const nextTotal = num(builder.current_recalculated_cost, num(currentEstimateLine.live_total_snapshot, previousTotal));
@@ -797,25 +891,26 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     ? num(builder.frozen_customer_price)
     : acceptedCustomerUnitPrice(currentEstimateLine);
   const nextCustomerPrice = liveCustomerUnitPrice(currentEstimateLine);
+  const noServerChange =
+    sameNumber(previousTotal, nextTotal) &&
+    sameNumber(previousCustomerPrice, nextCustomerPrice) &&
+    (partAcceptance.changedParts || []).length === 0 &&
+    builder.price_state === "current" &&
+    currentEstimateLine.price_state === "current";
+  if (noServerChange) {
+    return { blocked: false, alreadyCompleted: true, changedParts: [], line: currentEstimateLine };
+  }
 
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builder.id,
-    estimate_id: estimateId,
-    revision_number: revisionNumber,
-    reason: "update_price",
-    previous_total_cost: previousTotal,
-    new_total_cost: nextTotal,
+  const operationKey = `builder_update_price:${builder.id}:${num(builder.builder_version, 1)}:${snapshotHash({
+    estimate_updated_date: estimate.updated_date || "",
+    estimate_line_id: currentEstimateLine.line_id || "",
+    previous_total: previousTotal,
+    next_total: nextTotal,
     previous_customer_price: previousCustomerPrice,
-    new_customer_price: nextCustomerPrice,
-    changed_parts: partAcceptance.changedParts || [],
-    builder_snapshot_before: builder.builder_snapshot || {},
-    builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousTotal, customer_price: previousCustomerPrice },
-    price_snapshot_after: { total: nextTotal, customer_price: nextCustomerPrice },
-    notes: note,
-  });
-
-  await base44.entities.BuilderProduct.update(builder.id, {
+    next_customer_price: nextCustomerPrice,
+    part_updates: partAcceptance.acceptancePlan?.part_updates || [],
+  })}`;
+  const builderPatch = {
     frozen_cost: nextTotal,
     frozen_customer_price: nextCustomerPrice,
     price_state: "current",
@@ -830,30 +925,79 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     last_price_update_note: note,
     last_price_check_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
+  };
+  const linePatch = {
+    total_snapshot: nextTotal,
+    live_total_snapshot: nextTotal,
+    customer_price_snapshot: nextCustomerPrice,
+    live_customer_price_snapshot: nextCustomerPrice,
+    price_state: "current",
+    price_recalc_required: false,
+    price_recalc_reason: "",
+    detached_part_count: 0,
+    needs_reattach_review: false,
+    last_price_update_at: timestamp,
+    last_price_check_at: timestamp,
+  };
+  const revision = {
+    builder_product_id: builder.id,
+    estimate_id: estimateId,
+    reason: "update_price",
+    previous_total_cost: previousTotal,
+    new_total_cost: nextTotal,
+    previous_customer_price: previousCustomerPrice,
+    new_customer_price: nextCustomerPrice,
+    changed_parts: partAcceptance.changedParts || [],
+    builder_snapshot_before: builder.builder_snapshot || {},
+    builder_snapshot_after: builder.builder_snapshot || {},
+    price_snapshot_before: { total: previousTotal, customer_price: previousCustomerPrice },
+    price_snapshot_after: { total: nextTotal, customer_price: nextCustomerPrice },
+    notes: note,
+  };
+  const pending = {
+    key: operationKey,
+    kind: "builder_update_price",
+    started_at: timestamp,
+    estimate_id: estimateId,
+    estimate_line_id: currentEstimateLine.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    part_acceptance_plan: partAcceptance.acceptancePlan || {},
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision,
+  };
 
-  const lineItems = (estimate.line_items || []).map((item) =>
+  // The Estimate line marker is the first write. It survives any later network or
+  // multi-record failure and is removed only by the final accepted line write.
+  const markedLines = (estimate.line_items || []).map((item) =>
     item.builder_product_id === builder.id
-      ? {
-          ...item,
-          total_snapshot: nextTotal,
-          live_total_snapshot: nextTotal,
-          customer_price_snapshot: nextCustomerPrice,
-          live_customer_price_snapshot: nextCustomerPrice,
-          price_state: "current",
-          price_recalc_required: false,
-          price_recalc_reason: "",
-          detached_part_count: 0,
-          needs_reattach_review: false,
-          last_price_update_at: timestamp,
-          last_price_check_at: timestamp,
-        }
+      ? { ...item, price_acceptance_pending: pending }
       : item
   );
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-  return {
-    blocked: false,
-    changedParts: partAcceptance.changedParts || [],
-    line: lineItems.find((item) => item.builder_product_id === builder.id) || null,
-  };
+  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: markedLines });
+
+  // Re-read all mutable inputs after the marker is durable. If a concurrent edit
+  // won the race, the stored expected versions make recovery fail closed rather
+  // than mixing two Product states.
+  const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
+    base44.entities.AllInOneEstimate.get(estimateId),
+    base44.entities.BuilderProduct.get(builder.id),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+  ]);
+  const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
+  const canonicalPending = pendingPriceAcceptance(markedLine);
+  if (!canonicalPending || canonicalPending.key !== operationKey) {
+    throw new Error("Another Update Price operation won the recovery marker race. Reload before continuing.");
+  }
+
+  return resumeBuilderPriceAcceptance({
+    estimateId,
+    estimate: markedEstimate,
+    builder: currentBuilder,
+    parts: currentParts,
+    line: markedLine,
+    pending: canonicalPending,
+  });
 }
