@@ -48,7 +48,9 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
                     ? "Resume Part Edit"
                     : pendingPrice.pending?.kind === "builder_manual_part_switch"
                       ? "Resume Part Switch"
-                      : "Resume Price Update";
+                      : pendingPrice.pending?.kind === "builder_manual_part_remove"
+                        ? "Resume Part Remove"
+                        : "Resume Price Update";
         throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
       }
       if (estimateBefore.status !== "approved") {
