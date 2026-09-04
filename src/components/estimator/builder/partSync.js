@@ -237,6 +237,27 @@ export async function loadBuilderCatalogs(moduleKey, { strict = false } = {}) {
   return catalogs;
 }
 
+export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null, moduleKey = "" } = {}) {
+  const [catalogs, existingParts] = await Promise.all([
+    loadBuilderCatalogs(moduleKey || builderProduct?.module_key || "", { strict: true }),
+    builderProduct?.id
+      ? base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id })
+      : Promise.resolve([]),
+  ]);
+  const inventoryRowsOverride = new Map();
+  for (const part of existingParts || []) {
+    if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
+    let row;
+    try {
+      row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+    } catch (error) {
+      throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”: ${error?.message || "read failed"}`);
+    }
+    inventoryRowsOverride.set(`${part.inventory_entity}:${part.inventory_item_id}`, row || null);
+  }
+  return { catalogs, existingParts: existingParts || [], inventoryRowsOverride };
+}
+
 function findRow(catalogs, entity, id) {
   if (!id) return null;
   if (entity && catalogs[entity]?.byId.has(id)) return catalogs[entity].byId.get(id);

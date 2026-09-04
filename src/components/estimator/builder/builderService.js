@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
-import { acceptBuilderPartPrices, syncBuilderParts } from "./partSync";
+import { acceptBuilderPartPrices, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
@@ -171,12 +171,12 @@ export function canReuseReconciledLegacyBuilder({
   );
 }
 
-export async function ensureBuilderProductForLine({ estimate, line, isNew = false }) {
+export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, sourceProjectOverride = undefined }) {
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
 
   const lineId = line.line_id || makeStableId("line");
-  const source = await getSourceProject(line);
+  const source = sourceProjectOverride !== undefined ? sourceProjectOverride : await getSourceProject(line);
   const sourceTotal = sourceProjectTotal(line, source);
   const acceptedTotal = num(line.total_snapshot);
   const acceptedCustomerPrice = acceptedCustomerUnitPrice(line);
@@ -193,7 +193,10 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     builderName,
     clientName,
   })) {
-    return { line, builderProduct, changed: false };
+    const partSyncInputs = deferPartSync && source
+      ? await loadVerifiedBuilderPartSyncInputs({ builderProduct, moduleKey: line.module_key })
+      : null;
+    return { line, builderProduct, changed: false, partSyncInputs };
   }
   const preserveLegacyEconomics = !isNew && (!builderProduct || builderProduct.price_state === "legacy_frozen");
   const economics = preserveLegacyEconomics
@@ -201,6 +204,9 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     : sourceProjectEconomics(line.module_key, source, sourceTotal);
   const liveTotal = economics.internalCost;
   const liveCustomerPrice = economics.customerPrice;
+  const partSyncInputs = deferPartSync && source
+    ? await loadVerifiedBuilderPartSyncInputs({ builderProduct, moduleKey: line.module_key })
+    : null;
 
   if (!builderProduct) {
     builderProduct = await base44.entities.BuilderProduct.create({
@@ -302,7 +308,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   let effectiveLiveCustomerPrice = preserveLegacyEconomics ? liveCustomerPrice : economics.customerPrice;
   const preserveReconciledLegacyBom =
     builderProduct?.price_state === "legacy_frozen" && builderProduct?.legacy_bom_reconciled === true;
-  if (source && builderProduct?.id && !preserveReconciledLegacyBom) {
+  if (source && builderProduct?.id && !preserveReconciledLegacyBom && !deferPartSync) {
     partSummary = await syncBuilderParts({
       builderProduct,
       sourceProject: source,
@@ -394,6 +400,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     line: nextLine,
     builderProduct,
     changed: stableStringify(nextLine) !== stableStringify(line),
+    partSyncInputs,
   };
 }
 
@@ -422,7 +429,13 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
   ) || line;
 
-  const ensured = await ensureBuilderProductForLine({ estimate, line: currentLine, isNew: !currentLine.builder_product_id });
+  const ensured = await ensureBuilderProductForLine({
+    estimate,
+    line: currentLine,
+    isNew: !currentLine.builder_product_id,
+    deferPartSync: true,
+    sourceProjectOverride: sourceProject ?? undefined,
+  });
   const builder = ensured.builderProduct;
   const timestamp = nowIso();
   const sourceTotal = num(liveTotal, sourceProjectTotal(currentLine, sourceProject));
@@ -464,6 +477,10 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       // produced and saved sourceProject/liveTotal. Mark the current inventory
       // pricing used by that calculation so Update Price can safely accept it.
       builderRecalculated: true,
+      strictCatalogs: true,
+      catalogsOverride: ensured.partSyncInputs?.catalogs || null,
+      existingPartsOverride: ensured.partSyncInputs?.existingParts || [],
+      inventoryRowsOverride: ensured.partSyncInputs?.inventoryRowsOverride || new Map(),
     });
   }
 
