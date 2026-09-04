@@ -396,7 +396,7 @@
           "price_acceptance_pending": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Durable retry marker for an explicitly started Builder Update Price action. Stores the exact target and Part acceptance plan until the final Estimate line write completes."
+            "description": "Durable retry marker for an explicitly started Builder price acceptance, including initial freeze and Update Price. Stores the exact target and Part acceptance plan until the final Estimate line write completes."
           },
           "detached_part_count": {
             "type": "number",
