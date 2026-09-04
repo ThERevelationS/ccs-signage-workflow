@@ -3543,17 +3543,6 @@ function estimateBuilderLine(estimate, builderProductId) {
   return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
 }
 
-async function loadEstimatorBuilderMutationContext(builderProductId, expectedEstimateUpdatedAt = "") {
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
-  if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
-  if (!estimate) throw new Error("Estimate could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
-  const line = estimateBuilderLine(estimate, builder.id);
-  if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
-  return { builder, estimate, line };
-}
-
 async function loadPendingAwarePartMutationContext(partId, options = {}, allowedKinds = []) {
   const part = await base44.entities.BuilderPart.get(partId);
   if (!part?.id) throw new Error("The Part could not be loaded.");
