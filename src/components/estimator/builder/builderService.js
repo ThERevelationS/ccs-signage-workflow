@@ -702,8 +702,23 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         revision,
       };
 
-      const markedLines = (estimate.line_items || []).map((item) =>
+      const preMarkerEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+      if (!preMarkerEstimate) throw new Error("Estimate could not be verified before starting the initial price freeze.");
+      if (
+        estimate.updated_date &&
+        preMarkerEstimate.updated_date &&
+        estimate.updated_date !== preMarkerEstimate.updated_date
+      ) {
+        throw new Error("This estimate changed in another session while the Builder was being saved. Initial pricing was not frozen; reload the Estimate before retrying.");
+      }
+      const preMarkerLine = (preMarkerEstimate.line_items || []).find((item) =>
         item.builder_product_id === builder.id || (currentLine.project_id && item.project_id === currentLine.project_id)
+      );
+      if (!preMarkerLine) {
+        throw new Error("This Product is no longer part of the estimate. Initial pricing was not frozen.");
+      }
+      const markedLines = (preMarkerEstimate.line_items || []).map((item) =>
+        item === preMarkerLine
           ? {
               ...item,
               line_id: linePatch.line_id,
