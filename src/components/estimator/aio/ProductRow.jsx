@@ -137,7 +137,9 @@ export default function ProductRow({
               ? "Resume Part Edit"
               : pendingPriceAcceptance?.kind === "builder_manual_part_switch"
                 ? "Resume Part Switch"
-                : "Resume Price Update";
+                : pendingPriceAcceptance?.kind === "builder_manual_part_remove"
+                  ? "Resume Part Remove"
+                  : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -239,7 +241,9 @@ export default function ProductRow({
                           ? "Resume the previously started manual Part edit from its saved recovery marker."
                           : pendingPriceAcceptance?.kind === "builder_manual_part_switch"
                             ? "Resume the previously started manual Part switch from its saved recovery marker."
-                            : "Resume the previously started Update Price operation from its saved recovery marker."}
+                            : pendingPriceAcceptance?.kind === "builder_manual_part_remove"
+                              ? "Resume the previously started manual Part removal from its saved recovery marker."
+                              : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
               {updatingPrice ? "Recovering…" : pendingPriceLabel}
