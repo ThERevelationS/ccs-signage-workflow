@@ -6,6 +6,7 @@ import { Briefcase, CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "./moduleRegistry";
 import { acceptedInternalEstimateCost } from "./customerPricing";
 import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
+import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
 import { resolveCustomerForEstimate } from "./customerSync";
 import {
@@ -30,6 +31,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         .join("\n");
 
       const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const pendingPrice = getPendingEstimatePriceAcceptance(estimateBefore);
+      if (pendingPrice) {
+        const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || "Product";
+        throw new Error(`“${name}” has an Update Price recovery pending. Resume Price Update before converting this estimate to a Work Order.`);
+      }
       if (estimateBefore.status !== "approved") {
         throw new Error("Only an Approved estimate can be converted to a Work Order. Record customer acceptance or approve the estimate first.");
       }
