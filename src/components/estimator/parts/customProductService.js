@@ -150,22 +150,49 @@ export async function createCustomProduct({ estimate, name = "Custom Product", e
 
 export async function addCatalogPartToProduct({ builderProductId, catalogItem, quantity = 1, expectedEstimateUpdatedAt = "" }) {
   if (!builderProductId || !catalogItem?.inventoryId) throw new Error("Select a Master Inventory Part.");
-  const [{ builder, estimate }, liveCatalogItem, existingParts, revisionNumber] = await Promise.all([
-    loadManualMutationContext(builderProductId, expectedEstimateUpdatedAt),
+  const [context, liveCatalogItem, existingParts] = await Promise.all([
+    loadRawManualMutationContext(builderProductId),
     verifyCatalogItem(catalogItem),
     base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    nextRevisionNumber(builderProductId),
   ]);
+  const { builder, estimate, line, pending } = context;
+  if (!Array.isArray(existingParts) || existingParts.some((part) => part?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified before adding this Part.");
+  }
+  if (pending) {
+    if (pending.kind !== "builder_manual_part_add") {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before adding a Part.");
+    }
+    await resumeStoredManualPartMutation(context);
+    const completedParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const completed = (completedParts || []).find((part) => part.part_key === pending.target_part_key);
+    if (!completed) throw new Error("The recovered manual Part could not be verified after completion.");
+    return completed;
+  }
+
   const qty = Math.max(0, num(quantity, 1));
+  const requestVersion = String(expectedEstimateUpdatedAt || estimate.updated_date || "");
+  const requestHash = builderMutationHash({
+    builder_product_id: builder.id,
+    expected_estimate_updated_at: requestVersion,
+    inventory_entity: liveCatalogItem.entity,
+    inventory_item_id: liveCatalogItem.inventoryId,
+    quantity: qty,
+  });
+  const partKey = `manual-${requestHash}`;
+  const alreadyCreated = existingParts.find((part) => part.part_key === partKey);
+  if (alreadyCreated) return alreadyCreated;
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const unitCost = num(liveCatalogItem.unitCost);
   const extended = qty * unitCost;
   const timestamp = nowIso();
-  const activeParts = (existingParts || []).filter((part) => part.is_active !== false);
+  const activeParts = existingParts.filter((part) => part.is_active !== false);
   const isCustomProduct = builder.module_key === "custom";
   const syncState = isCustomProduct ? "manual" : "manual_addon";
-  const created = await base44.entities.BuilderPart.create({
-    builder_product_id: builderProductId,
-    part_key: `manual-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
+  const partData = {
+    builder_product_id: builder.id,
+    part_key: partKey,
     sort_order: activeParts.length,
     part_name: liveCatalogItem.name,
     part_type: liveCatalogItem.categoryKey,
@@ -198,13 +225,12 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     last_price_update_at: timestamp,
     manual_cost_override: false,
     is_active: true,
-  });
-
+  };
   const previousTotal = num(builder.frozen_cost);
   const previousCustomerPrice = num(builder.frozen_customer_price, previousTotal);
   const nextTotal = previousTotal + extended;
   const nextCustomerPrice = previousCustomerPrice + extended;
-  await base44.entities.BuilderProduct.update(builderProductId, {
+  const builderPatch = {
     frozen_cost: nextTotal,
     frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: num(builder.current_recalculated_cost, previousTotal) + extended,
@@ -215,8 +241,8 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
-  await patchVerifiedEstimateLine(estimate, builder, (line) => ({
+  };
+  const linePatch = {
     total_snapshot: nextTotal,
     live_total_snapshot: nextTotal,
     customer_price_snapshot: nextCustomerPrice,
@@ -224,25 +250,57 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     price_state: "current",
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
-  }));
+  };
+  const changedParts = [{ part_key: partKey, part_name: liveCatalogItem.name, action: "add_part", unit_cost: unitCost, quantity: qty, extended_cost: extended, inventory_entity: liveCatalogItem.entity, inventory_item_id: liveCatalogItem.inventoryId }];
+  const recoveryMarker = {
+    key: `builder_manual_part_add:${builder.id}:${requestHash}`,
+    kind: "builder_manual_part_add",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: line.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    target_part_key: partKey,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: [{ operation: "create", part_key: partKey, data: partData }],
+      changed_parts: changedParts,
+      active_part_count: activeParts.length + 1,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision: {
+      builder_product_id: builder.id,
+      estimate_id: builder.estimate_id || "",
+      reason: previousTotal === 0 && activeParts.length === 0 ? "initial_freeze" : "manual_adjustment",
+      previous_total_cost: previousTotal,
+      new_total_cost: nextTotal,
+      previous_customer_price: previousCustomerPrice,
+      new_customer_price: nextCustomerPrice,
+      changed_parts: changedParts,
+      builder_snapshot_before: builder.builder_snapshot || {},
+      builder_snapshot_after: builder.builder_snapshot || {},
+      price_snapshot_before: { total: previousTotal },
+      price_snapshot_after: { total: nextTotal },
+      notes: `${isCustomProduct ? "Added" : "Added independent add-on"} ${liveCatalogItem.name} from Master Inventory.`,
+    },
+  };
 
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builderProductId,
-    estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
-    reason: previousTotal === 0 && activeParts.length === 0 ? "initial_freeze" : "manual_adjustment",
-    previous_total_cost: previousTotal,
-    new_total_cost: nextTotal,
-    previous_customer_price: previousCustomerPrice,
-    new_customer_price: nextCustomerPrice,
-    changed_parts: [{ part_id: created.id, part_name: created.part_name, action: "add_part", unit_cost: unitCost, quantity: qty, extended_cost: extended, inventory_entity: liveCatalogItem.entity, inventory_item_id: liveCatalogItem.inventoryId }],
-    builder_snapshot_before: builder.builder_snapshot || {},
-    builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousTotal },
-    price_snapshot_after: { total: nextTotal },
-    notes: `${isCustomProduct ? "Added" : "Added independent add-on"} ${liveCatalogItem.name} from Master Inventory.`,
+  const marked = await markBuilderMutationPending({ estimate, builder, pending: recoveryMarker });
+  await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  return created;
+  const completedParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const completed = (completedParts || []).find((part) => part.part_key === partKey);
+  if (!completed) throw new Error("The added manual Part could not be verified after completion.");
+  return completed;
 }
 
 export async function updateManualProductPart(partId, changes = {}, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
