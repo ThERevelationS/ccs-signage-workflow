@@ -45,8 +45,14 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
   const entry = getPendingEstimatePriceAcceptance(record);
   if (!entry) return;
   const name = entry.line?.client_product_name || entry.line?.project_name || "Product";
-  const resumeLabel = entry.pending?.kind === "builder_initial_freeze" ? "Resume Initial Price" : "Resume Price Update";
-  throw new Error(`“${name}” has a Builder price-acceptance recovery pending. Use ${resumeLabel} before ${action}.`);
+  const resumeLabel = entry.pending?.kind === "builder_initial_freeze"
+    ? "Resume Initial Price"
+    : entry.pending?.kind === "builder_detach_override"
+      ? "Resume Part Detach"
+      : entry.pending?.kind === "builder_detached_override_update"
+        ? "Resume Part Change"
+        : "Resume Price Update";
+  throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
 export default function EstimateDetail() {
