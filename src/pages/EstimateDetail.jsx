@@ -33,13 +33,20 @@ import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/componen
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
-import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
   2: "Step 2: Edit Products",
   3: "Step 3: Finalize Estimate",
 };
+
+function assertNoPendingPriceAcceptance(record, action = "continuing") {
+  const entry = getPendingEstimatePriceAcceptance(record);
+  if (!entry) return;
+  const name = entry.line?.client_product_name || entry.line?.project_name || "Product";
+  throw new Error(`“${name}” has an Update Price recovery pending. Resume Price Update before ${action}.`);
+}
 
 export default function EstimateDetail() {
   const navigate = useNavigate();
@@ -331,6 +338,7 @@ export default function EstimateDetail() {
 
   const handleStartRevision = async (reason) => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(current, "starting an Estimate Revision");
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
     }
@@ -367,6 +375,7 @@ export default function EstimateDetail() {
     setSaving(true);
     try {
       const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+      assertNoPendingPriceAcceptance(before, "saving the estimate");
       if (hasServerConflict(before)) {
         window.alert("This estimate changed in another session after this page last read or saved it. Your local changes were not written. Reload the estimate and reconcile the newer server changes before saving.");
         return;
@@ -590,6 +599,7 @@ export default function EstimateDetail() {
     // Re-read after Gmail accepts the message so a concurrent lifecycle change
     // cannot silently be overwritten by the delivery finalization.
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(before, "finalizing quote delivery");
     const sourceStatus = before.status || "draft";
     const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
     if (!issuingNewQuote) {
@@ -720,6 +730,7 @@ export default function EstimateDetail() {
     deliveryId,
   }) => {
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(before, "recording customer acceptance");
     if (hasServerConflict(before)) {
       throw new Error("This estimate changed in another session. Reload before recording customer acceptance.");
     }
@@ -833,6 +844,7 @@ export default function EstimateDetail() {
       return;
     }
     const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(before, "cancelling the estimate");
     if (hasServerConflict(before)) {
       window.alert("This estimate changed in another session. Reload before cancelling so newer work is not cancelled from a stale page.");
       return;
