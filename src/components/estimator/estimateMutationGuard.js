@@ -10,6 +10,11 @@ import { getOpenEstimateRevision } from "@/components/estimator/estimateRevision
  * sent/approved/archived: editable only while an EstimateRevision is open
  * cancelled: permanently locked
  */
+export function getPendingEstimatePriceAcceptance(estimate) {
+  const line = (estimate?.line_items || []).find((item) => String(item?.price_acceptance_pending?.key || "").trim());
+  return line ? { line, pending: line.price_acceptance_pending } : null;
+}
+
 export async function assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt = "", allowPriceAcceptanceKey = "" } = {}) {
   if (!estimate?.id) throw new Error("Estimate could not be verified for this change.");
   const expected = String(expectedUpdatedAt || "").trim();
@@ -18,8 +23,8 @@ export async function assertEstimateProductMutationAllowed(estimate, { expectedU
     throw new Error("This estimate changed in another session. Reload it before changing Products or Parts.");
   }
   const allowedKey = String(allowPriceAcceptanceKey || "").trim();
-  const pendingLine = (estimate.line_items || []).find((line) => String(line?.price_acceptance_pending?.key || "").trim());
-  const pendingKey = String(pendingLine?.price_acceptance_pending?.key || "").trim();
+  const pendingEntry = getPendingEstimatePriceAcceptance(estimate);
+  const pendingKey = String(pendingEntry?.pending?.key || "").trim();
   if (pendingKey && pendingKey !== allowedKey) {
     throw new Error("A Product Update Price action is still being recovered. Resume that price update before changing Products or Parts.");
   }
