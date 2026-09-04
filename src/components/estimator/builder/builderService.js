@@ -1,6 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { getModule, getModuleLabel, MODULE_TOTAL_FIELD } from "@/components/estimator/moduleRegistry";
-import { acceptBuilderPartPrices, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
+import { acceptBuilderPartPrices, applyBuilderPartPriceAcceptancePlan, loadVerifiedBuilderPartSyncInputs, syncBuilderParts } from "./partSync";
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
@@ -186,6 +186,17 @@ export function canReuseReconciledLegacyBuilder({
 export async function ensureBuilderProductForLine({ estimate, line, isNew = false, deferPartSync = false, strictPartSync = false, skipUnchangedWrites = false, sourceProjectOverride = undefined }) {
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
+
+  // A user-started Update Price may be between durable steps. Preserve the exact
+  // saved line and Builder state until that operation is explicitly resumed;
+  // page-open reconciliation must never rewrite its recovery inputs.
+  if (line?.price_acceptance_pending?.key && line?.builder_product_id) {
+    const pendingBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
+    if (!pendingBuilder?.id || (pendingBuilder.estimate_id && pendingBuilder.estimate_id !== estimateId)) {
+      throw new Error("A pending Product Update Price could not verify its Builder Product. The saved recovery marker was retained.");
+    }
+    return { line, builderProduct: pendingBuilder, changed: false, partSyncInputs: null };
+  }
 
   const lineId = line.line_id || makeStableId("line");
   const source = sourceProjectOverride !== undefined ? sourceProjectOverride : await getSourceProject(line);
