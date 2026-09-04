@@ -2999,10 +2999,8 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         is_active: true,
       };
       if (!skipUnchangedWrites || patchDiffers(old, corePatch)) {
-        const patch = { ...corePatch, last_price_check_at: nowIso() };
-        await base44.entities.BuilderPart.update(old.id, patch);
-        writesPerformed += 1;
-        synced.push({ ...old, ...patch });
+        const patch = { ...corePatch, last_price_check_at: syncNow() };
+        synced.push(await writePartUpdate(old, patch));
       } else {
         synced.push(old);
       }
@@ -3024,7 +3022,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     const changed = linkChanged || pricingChanged;
     const currentUnitCost = effectiveCurrentUnitCost(descriptor, currentRow);
     const currentExtended = num(descriptor.extended_cost);
-    const timestamp = nowIso();
+    const timestamp = syncNow();
 
     const lastBuilderCalculatedPricing = old?.pricing_basis_snapshot?.builder_calculated_inventory_pricing || {};
     const builderAlreadyCalculatedCurrentPricing = !!old && same(currentPricing, lastBuilderCalculatedPricing);
@@ -3062,7 +3060,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         changedCount += 1;
         newPartCount += 1;
       }
-      const created = await base44.entities.BuilderPart.create({
+      const created = await writePartCreate({
         builder_product_id: builderProduct.id,
         part_key: descriptor.part_key,
         sort_order: index,
@@ -3115,7 +3113,6 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
             ? ""
             : "New Builder Part added after the Product price was frozen. Frozen cost remains $0 until Update Price is explicitly accepted.",
       });
-      writesPerformed += 1;
       synced.push(created);
       continue;
     }
@@ -3174,9 +3171,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
     if (!skipUnchangedWrites || patchDiffers(old, patch)) {
       const writePatch = { ...patch, last_price_check_at: timestamp };
-      await base44.entities.BuilderPart.update(old.id, writePatch);
-      writesPerformed += 1;
-      synced.push({ ...old, ...writePatch });
+      synced.push(await writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
