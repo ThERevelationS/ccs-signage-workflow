@@ -45,7 +45,8 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
   const entry = getPendingEstimatePriceAcceptance(record);
   if (!entry) return;
   const name = entry.line?.client_product_name || entry.line?.project_name || "Product";
-  throw new Error(`“${name}” has an Update Price recovery pending. Resume Price Update before ${action}.`);
+  const resumeLabel = entry.pending?.kind === "builder_initial_freeze" ? "Resume Initial Price" : "Resume Price Update";
+  throw new Error(`“${name}” has a Builder price-acceptance recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
 export default function EstimateDetail() {
