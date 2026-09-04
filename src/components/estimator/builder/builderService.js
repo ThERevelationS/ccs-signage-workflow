@@ -775,24 +775,6 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       needs_reattach_review: partSummary.detachedCount > 0,
     });
 
-    if (initialFreezeCompleted) {
-      await base44.entities.BuilderPriceRevision.create({
-        builder_product_id: builder.id,
-        estimate_id: estimateId,
-        revision_number: 1,
-        reason: "initial_freeze",
-        previous_total_cost: 0,
-        new_total_cost: finalAcceptedTotal,
-        previous_customer_price: 0,
-        new_customer_price: finalAcceptedCustomerPrice,
-        changed_parts: initialPartChanges,
-        builder_snapshot_before: builder.builder_snapshot || {},
-        builder_snapshot_after: sourceProject || {},
-        price_snapshot_before: { total: 0 },
-        price_snapshot_after: { total: finalAcceptedTotal, customer_price: finalAcceptedCustomerPrice },
-        notes: "Initial accepted/frozen product price.",
-      });
-    }
   }
 
   const nextLines = (estimate.line_items || []).map((item) => {
