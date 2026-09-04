@@ -423,7 +423,7 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
 
 export async function switchManualProductPart(partId, catalogItem, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
   if (!partId || !catalogItem?.inventoryId) throw new Error("Select a replacement Master Inventory Part.");
-  const [part, liveCatalogItem] = await Promise.all([base44.entities.BuilderPart.get(partId), verifyCatalogItem(catalogItem)]);
+  const part = await base44.entities.BuilderPart.get(partId);
   if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be switched directly.");
   const context = await loadRawManualMutationContext(part.builder_product_id);
   const { builder, estimate, line, pending } = context;
@@ -434,12 +434,16 @@ export async function switchManualProductPart(partId, catalogItem, { expectedEst
     await resumeStoredManualPartMutation(context);
     return base44.entities.BuilderPart.get(part.id);
   }
-  const unitCost = num(liveCatalogItem.unitCost);
-  const alreadySwitched =
-    String(part.inventory_entity || "") === String(liveCatalogItem.entity || "") &&
-    String(part.inventory_item_id || "") === String(liveCatalogItem.inventoryId || "") &&
-    Math.abs(num(part.frozen_unit_cost) - unitCost) <= 0.000001 &&
+  const targetInventoryMatches =
+    String(part.inventory_entity || "") === String(catalogItem.entity || "") &&
+    String(part.inventory_item_id || "") === String(catalogItem.inventoryId || "") &&
     part.manual_cost_override !== true;
+  if (expectedPartUpdatedAt && String(part.updated_date || "") !== String(expectedPartUpdatedAt) && targetInventoryMatches) {
+    return part;
+  }
+  const liveCatalogItem = await verifyCatalogItem(catalogItem);
+  const unitCost = num(liveCatalogItem.unitCost);
+  const alreadySwitched = targetInventoryMatches && Math.abs(num(part.frozen_unit_cost) - unitCost) <= 0.000001;
   if (alreadySwitched) return part;
   assertLoadedPartVersion(part, expectedPartUpdatedAt);
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
