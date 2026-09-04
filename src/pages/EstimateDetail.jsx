@@ -306,20 +306,27 @@ export default function EstimateDetail() {
 
   const updateProductPrice = async (line) => {
     if (readOnly) return;
-    const result = await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
-    if (result?.blocked && result.reason === "detached_parts") {
-      const names = (result.detachedParts || [])
-        .map((part) => part.part_name || part.inventory_item_name)
-        .filter(Boolean);
-      window.alert(
-        `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
-      );
-    } else if (result?.blocked && result.reason === "recalc_required") {
-      window.alert(
-        `${result.recalcReason || "This Builder must be recalculated with current Master Inventory before its price can be updated."}\n\nOpen the Builder, review the current pricing, and save it. The frozen Product price has not changed.`
-      );
+    try {
+      const result = await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+      if (result?.blocked && result.reason === "detached_parts") {
+        const names = (result.detachedParts || [])
+          .map((part) => part.part_name || part.inventory_item_name)
+          .filter(Boolean);
+        window.alert(
+          `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
+        );
+      } else if (result?.blocked && result.reason === "recalc_required") {
+        window.alert(
+          `${result.recalcReason || "This Builder must be recalculated with current Master Inventory before its price can be updated."}\n\nOpen the Builder, review the current pricing, and save it. The frozen Product price has not changed.`
+        );
+      }
+      await refreshProducts();
+    } catch (error) {
+      // A mid-write failure may have persisted the durable recovery marker. Reload
+      // immediately so the row exposes Resume Price Update instead of stale state.
+      await refreshProducts().catch(() => null);
+      window.alert(`${error?.message || "Product price could not be updated."}\n\nThe estimate was refreshed. If this Update Price had already started, use Resume Price Update to safely continue it.`);
     }
-    await refreshProducts();
   };
 
   const handleStartRevision = async (reason) => {
