@@ -564,16 +564,59 @@ export async function switchManualProductPart(partId, catalogItem, { expectedEst
   return base44.entities.BuilderPart.get(part.id);
 }
 
-export async function removeManualProductPart(partId, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
+export async function removeManualProductPart(partId, { builderProductId = "", expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
+  if (!partId) throw new Error("Part is required.");
   const part = await base44.entities.BuilderPart.get(partId);
-  if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be removed directly.");
+  const resolvedBuilderProductId = builderProductId || part?.builder_product_id || "";
+  if (!resolvedBuilderProductId) {
+    throw new Error("The Product for this Part could not be verified. Reload before removing it.");
+  }
+  const context = await loadRawManualMutationContext(resolvedBuilderProductId);
+  const { builder, estimate, line, pending } = context;
+  const requestEstimateVersion = String(expectedEstimateUpdatedAt || estimate.updated_date || "");
+  const requestPartVersion = String(expectedPartUpdatedAt || part?.updated_date || "");
+  const requestHash = builderMutationHash({
+    builder_product_id: builder.id,
+    part_id: partId,
+    expected_estimate_updated_at: requestEstimateVersion,
+    expected_part_updated_at: requestPartVersion,
+  });
+  const operationKey = `builder_manual_part_remove:${builder.id}:${partId}:${requestHash}`;
+
+  if (pending) {
+    if (pending.kind !== "builder_manual_part_remove" || String(pending.target_part_id || "") !== String(partId)) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before removing this Part.");
+    }
+    await resumeStoredManualPartMutation(context);
+    return { removed: true, recovered: true };
+  }
+
+  if (!part) {
+    const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+    const completed = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
+    if (completed) return { removed: true, alreadyCompleted: true };
+    throw new Error("This Part is already missing. Reload the Product before continuing so its totals can be verified.");
+  }
+  if (String(part.builder_product_id || "") !== String(builder.id)) {
+    throw new Error("This Part no longer belongs to the expected Product. Reload before removing it.");
+  }
+  if (!["manual", "manual_addon"].includes(part.builder_sync_state)) {
+    throw new Error("Only independent manual Parts can be removed directly.");
+  }
   assertLoadedPartVersion(part, expectedPartUpdatedAt);
-  const [{ builder, estimate }, allParts, allGroups, revisionNumber] = await Promise.all([
-    loadManualMutationContext(part.builder_product_id, expectedEstimateUpdatedAt),
-    base44.entities.BuilderPart.filter({ builder_product_id: part.builder_product_id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: part.builder_product_id }),
-    nextRevisionNumber(part.builder_product_id),
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+
+  const [allParts, allGroups] = await Promise.all([
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
   ]);
+  if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
+    throw new Error("Builder Parts could not be verified before removing this Part.");
+  }
+  if (!Array.isArray(allGroups) || allGroups.some((row) => row?.builder_product_id !== builder.id)) {
+    throw new Error("Part Groups could not be verified before removing this Part.");
+  }
+
   const previousExtended = num(part.frozen_extended_cost);
   const previousCurrent = num(part.current_extended_cost, previousExtended);
   const previousTotal = num(builder.frozen_cost);
@@ -582,17 +625,14 @@ export async function removeManualProductPart(partId, { expectedEstimateUpdatedA
   const nextCustomerPrice = Math.max(0, previousCustomerPrice - previousExtended);
   const currentTotal = Math.max(0, num(builder.current_recalculated_cost, previousTotal) - previousCurrent);
   const timestamp = nowIso();
-  const otherActiveParts = (allParts || []).filter((row) => row.id !== part.id && row.is_active !== false);
-  const activeGroups = (allGroups || []).filter((row) => row.is_active !== false);
+  const otherActiveParts = allParts.filter((row) => row.id !== part.id && row.is_active !== false);
+  const activeGroups = allGroups.filter((row) => row.is_active !== false);
   const emptiedGroup = part.part_group_id
     ? activeGroups.find((group) => group.id === part.part_group_id) && !otherActiveParts.some((row) => row.part_group_id === part.part_group_id)
-    : false;
+    : null;
   const groupCount = Math.max(0, activeGroups.length - (emptiedGroup ? 1 : 0));
   const priceState = Math.abs(currentTotal - nextTotal) > 0.005 ? "changed" : "current";
-
-  await base44.entities.BuilderPart.delete(part.id);
-  if (emptiedGroup) await base44.entities.BuilderPartGroup.delete(part.part_group_id);
-  await base44.entities.BuilderProduct.update(builder.id, {
+  const builderPatch = {
     frozen_cost: nextTotal,
     frozen_customer_price: nextCustomerPrice,
     current_recalculated_cost: currentTotal,
@@ -603,22 +643,60 @@ export async function removeManualProductPart(partId, { expectedEstimateUpdatedA
     price_delta_percent: nextTotal ? ((currentTotal - nextTotal) / nextTotal) * 100 : 0,
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
-  await patchVerifiedEstimateLine(estimate, builder, (line) => ({ total_snapshot: nextTotal, live_total_snapshot: currentTotal, customer_price_snapshot: nextCustomerPrice, live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(line) - previousCurrent), price_state: priceState, last_price_update_at: timestamp }));
-  await base44.entities.BuilderPriceRevision.create({
+  };
+  const linePatch = {
+    total_snapshot: nextTotal,
+    live_total_snapshot: currentTotal,
+    customer_price_snapshot: nextCustomerPrice,
+    live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(line) - previousCurrent),
+    price_state: priceState,
+    last_price_update_at: timestamp,
+  };
+  const changedParts = [{ part_id: part.id, part_name: part.part_name, action: "remove_part", previous_extended_cost: previousExtended }];
+  const recoveryMarker = {
+    key: operationKey,
+    kind: "builder_manual_part_remove",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: line.line_id || builder.estimate_line_id || "",
     builder_product_id: builder.id,
-    estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
-    reason: "manual_adjustment",
-    previous_total_cost: previousTotal,
-    new_total_cost: nextTotal,
-    previous_customer_price: previousCustomerPrice,
-    new_customer_price: nextCustomerPrice,
-    changed_parts: [{ part_id: part.id, part_name: part.part_name, action: "remove_part", previous_extended_cost: previousExtended }],
-    builder_snapshot_before: builder.builder_snapshot || {}, builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousTotal }, price_snapshot_after: { total: nextTotal },
-    notes: `Removed independent Product Part ${part.part_name}.`,
+    target_part_id: part.id,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    delete_plan: {
+      parts: [{ id: part.id, expected_updated_date: part.updated_date || "" }],
+      groups: emptiedGroup ? [{ id: emptiedGroup.id, expected_updated_date: emptiedGroup.updated_date || "" }] : [],
+    },
+    part_acceptance_plan: { timestamp, part_updates: [], changed_parts: changedParts },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision: {
+      builder_product_id: builder.id,
+      estimate_id: builder.estimate_id || "",
+      reason: "manual_adjustment",
+      previous_total_cost: previousTotal,
+      new_total_cost: nextTotal,
+      previous_customer_price: previousCustomerPrice,
+      new_customer_price: nextCustomerPrice,
+      changed_parts: changedParts,
+      builder_snapshot_before: builder.builder_snapshot || {},
+      builder_snapshot_after: builder.builder_snapshot || {},
+      price_snapshot_before: { total: previousTotal },
+      price_snapshot_after: { total: nextTotal },
+      notes: `Removed independent Product Part ${part.part_name}.`,
+    },
+  };
+  const marked = await markBuilderMutationPending({ estimate, builder, pending: recoveryMarker });
+  await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
+  return { removed: true };
 }
 
 export async function refreshManualProductPricing(builderProductId) {
