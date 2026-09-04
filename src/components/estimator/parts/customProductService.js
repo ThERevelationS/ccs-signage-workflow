@@ -1,9 +1,10 @@
 import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
-import { pricingSnapshot } from "@/components/estimator/builder/partSync";
+import { applyBuilderPartPriceAcceptancePlan, pricingSnapshot } from "@/components/estimator/builder/partSync";
 import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./partCatalog";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
