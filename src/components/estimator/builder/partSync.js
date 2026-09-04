@@ -3523,6 +3523,62 @@ async function loadEstimatorPartMutationContext(partId, { expectedEstimateUpdate
   return { ...context, part };
 }
 
+async function loadPendingAwarePartMutationContext(partId, options = {}, allowedKinds = []) {
+  const part = await base44.entities.BuilderPart.get(partId);
+  if (!part?.id) throw new Error("The Part could not be loaded.");
+  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const line = estimateBuilderLine(estimate, builder.id);
+  if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
+
+  const pending = pendingBuilderMutation(line);
+  if (pending) {
+    if (!allowedKinds.includes(pending.kind) || String(pending.target_part_id || "") !== String(part.id)) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before changing this Part.");
+    }
+    await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
+    return { part, builder, estimate, line, pending };
+  }
+
+  assertEstimatorPartVersion(part, options.expectedPartUpdatedAt || "");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: options.expectedEstimateUpdatedAt || "" });
+  return { part, builder, estimate, line, pending: null };
+}
+
+async function markBuilderMutationPending({ estimate, builder, line, pending }) {
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  if (!latestEstimate) throw new Error("Estimate could not be verified before starting this Builder mutation.");
+  if (
+    estimate.updated_date &&
+    latestEstimate.updated_date &&
+    estimate.updated_date !== latestEstimate.updated_date
+  ) {
+    throw new Error("This estimate changed in another session before the Builder mutation could start. No Part pricing was changed.");
+  }
+  const latestLine = estimateBuilderLine(latestEstimate, builder.id);
+  if (!latestLine) throw new Error("This Product is no longer part of the estimate. No Part pricing was changed.");
+  const lineItems = (latestEstimate.line_items || []).map((item) =>
+    item.builder_product_id === builder.id
+      ? { ...item, price_acceptance_pending: pending }
+      : item
+  );
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+
+  const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
+    base44.entities.AllInOneEstimate.get(estimate.id),
+    base44.entities.BuilderProduct.get(builder.id),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+  ]);
+  const markedLine = estimateBuilderLine(markedEstimate, builder.id);
+  const canonicalPending = pendingBuilderMutation(markedLine);
+  if (!canonicalPending || canonicalPending.key !== pending.key) {
+    throw new Error("Another Builder mutation won the recovery marker race. Reload before continuing.");
+  }
+  return { markedEstimate, currentBuilder, currentParts, markedLine, canonicalPending };
+}
+
 export async function detachBuilderPartOverride(partId, reason = "Detached for independent Part override.", options = {}) {
   if (!partId) return null;
   const { part, builder, estimate } = await loadEstimatorPartMutationContext(partId, options);
