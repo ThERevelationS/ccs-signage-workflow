@@ -576,7 +576,13 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 
   let initialPartChanges = [];
   if (builder && canInitialFreeze) {
-    const partAcceptance = await acceptBuilderPartPrices(builder.id);
+    // Reuse the exact Parts produced by the authoritative sync above. Do not
+    // introduce a post-sync Builder/Part read that could fail after Part state
+    // has already started changing during the initial freeze.
+    const partAcceptance = await acceptBuilderPartPrices(builder.id, {
+      builderOverride: builder,
+      partsOverride: partSummary.parts || [],
+    });
     if (partAcceptance.detachedCount > 0) {
       // Defensive second guard in case the inventory changed between detection
       // and acceptance. Keep the product unfrozen rather than accepting partial data.
@@ -681,18 +687,39 @@ export async function deleteBuilderProductCascade(builderProductId) {
 
 export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation.", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) return null;
-  const [estimate, builder] = await Promise.all([
+  // Preload every read needed by a successful Update Price before the first Part
+  // acceptance write. A revision-sequence read failure must never happen after
+  // Parts have already been frozen to new pricing.
+  const [estimate, builder, parts, revisions] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(line.builder_product_id),
+    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: line.builder_product_id }),
   ]);
-  if (!estimate || !builder) return null;
+  if (!estimate || !builder) throw new Error("Estimate pricing could not be verified. Reload before updating this Product price.");
+  if (!Array.isArray(parts) || !Array.isArray(revisions)) {
+    throw new Error("Product pricing history or Parts could not be verified. No price was accepted.");
+  }
+  if (builder.estimate_id && builder.estimate_id !== estimateId) {
+    throw new Error("This Builder Product no longer belongs to the current estimate. Reload before updating its price.");
+  }
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const verifiedEstimateLine = (estimate.line_items || []).find((item) => item.builder_product_id === builder.id);
   if (!verifiedEstimateLine) throw new Error("This Product is no longer part of the estimate. Reload before updating its price.");
+  if (builder.estimate_line_id && verifiedEstimateLine.line_id && builder.estimate_line_id !== verifiedEstimateLine.line_id) {
+    throw new Error("This Product line changed since its Builder was linked. Reload before updating its price.");
+  }
+  if (parts.some((part) => part?.builder_product_id !== builder.id)) {
+    throw new Error("One or more Builder Parts no longer belong to this Product. Reload before updating its price.");
+  }
+  const revisionNumber = Math.max(0, ...(revisions || []).map((r) => num(r.revision_number))) + 1;
 
-  // Part prices are accepted first because this call performs the all-or-nothing
-  // detached-link guard. If anything is detached, product pricing remains frozen.
-  const partAcceptance = await acceptBuilderPartPrices(builder.id);
+  // The acceptance helper receives the exact verified snapshots above, so it
+  // performs no additional Builder/Part reads after this preflight boundary.
+  const partAcceptance = await acceptBuilderPartPrices(builder.id, {
+    builderOverride: builder,
+    partsOverride: parts,
+  });
   if (partAcceptance.detachedCount > 0) {
     await base44.entities.BuilderProduct.update(builder.id, {
       price_state: "detached_parts",
@@ -759,8 +786,6 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
     ? num(builder.frozen_customer_price)
     : acceptedCustomerUnitPrice(currentEstimateLine);
   const nextCustomerPrice = liveCustomerUnitPrice(currentEstimateLine);
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
-  const revisionNumber = Math.max(0, ...(revisions || []).map((r) => num(r.revision_number))) + 1;
 
   await base44.entities.BuilderPriceRevision.create({
     builder_product_id: builder.id,
