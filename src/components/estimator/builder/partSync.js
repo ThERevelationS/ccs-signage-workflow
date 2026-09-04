@@ -2910,7 +2910,7 @@ function effectiveCurrentUnitCost(descriptor, row) {
   return genericUnitCost(row);
 }
 
-export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false, existingPartsOverride = null, inventoryRowsOverride = null, skipUnchangedWrites = false }) {
+export async function syncBuilderParts({ builderProduct, sourceProject, acceptPrices = false, legacyMode = false, builderRecalculated = false, catalogsOverride = null, strictCatalogs = false, existingPartsOverride = null, inventoryRowsOverride = null, skipUnchangedWrites = false, planOnly = false, planTimestamp = "" }) {
   if (!builderProduct?.id || !sourceProject) {
     return {
       partCount: 0,
@@ -2945,7 +2945,37 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   let writesPerformed = 0;
   let recalcRequired = false;
   const recalcPartNames = [];
+  const partWritePlan = [];
+  const syncNow = () => planTimestamp || nowIso();
   const directLiveReprice = DIRECT_LIVE_REPRICE_MODULES.has(builderProduct.module_key);
+
+  const writePartUpdate = async (old, patch) => {
+    const step = {
+      operation: "update",
+      part_id: old.id,
+      part_key: old.part_key,
+      expected_updated_date: old.updated_date || "",
+      patch,
+    };
+    partWritePlan.push(step);
+    if (planOnly) return { ...old, ...patch };
+    await base44.entities.BuilderPart.update(old.id, patch);
+    writesPerformed += 1;
+    return { ...old, ...patch };
+  };
+
+  const writePartCreate = async (data) => {
+    const step = {
+      operation: "create",
+      part_key: data.part_key,
+      data,
+    };
+    partWritePlan.push(step);
+    if (planOnly) return { ...data, id: `planned:${data.part_key}`, updated_date: "" };
+    const created = await base44.entities.BuilderPart.create(data);
+    writesPerformed += 1;
+    return created;
+  };
 
   for (let index = 0; index < descriptors.length; index += 1) {
     const descriptor = descriptors[index];
