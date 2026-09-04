@@ -713,7 +713,7 @@ function pendingPriceAcceptance(line) {
 }
 
 function validatePendingPriceAcceptance(pending, { estimateId, builder, line }) {
-  if (!pending || pending.kind !== "builder_update_price") {
+  if (!pending || !["builder_update_price", "builder_initial_freeze"].includes(pending.kind)) {
     throw new Error("The pending Product price recovery marker is invalid. No pricing was changed.");
   }
   if (
@@ -738,7 +738,7 @@ async function resumeBuilderPriceAcceptance({ estimateId, estimate, builder, par
     const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
     const currentBuilderUpdatedAt = String(builder.updated_date || "").trim();
     if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
-      throw new Error("This Builder Product changed while Update Price was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
+      throw new Error("This Builder Product changed while price acceptance was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
     }
     await base44.entities.BuilderProduct.update(builder.id, builderPatch);
   }
@@ -746,7 +746,7 @@ async function resumeBuilderPriceAcceptance({ estimateId, estimate, builder, par
   // Re-read the Estimate before the final line write. The durable marker makes
   // this safe after partial success and lets us preserve unrelated fresh fields.
   const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
-  if (!latestEstimate) throw new Error("Estimate could not be verified while completing Update Price.");
+  if (!latestEstimate) throw new Error("Estimate could not be verified while completing Builder price acceptance.");
   const latestLine = (latestEstimate.line_items || []).find((item) => item.builder_product_id === builder.id);
   if (!latestLine) throw new Error("This Product is no longer part of the estimate. The pending price recovery marker could not be completed.");
   const latestPending = pendingPriceAcceptance(latestLine);
@@ -762,10 +762,10 @@ async function resumeBuilderPriceAcceptance({ estimateId, estimate, builder, par
         line: latestLine,
       };
     }
-    throw new Error("The Update Price recovery marker disappeared before the accepted Estimate line was verified. Reload before continuing.");
+    throw new Error("The price-acceptance recovery marker disappeared before the accepted Estimate line was verified. Reload before continuing.");
   }
   if (latestPending.key !== pending.key) {
-    throw new Error("A different Update Price recovery operation is now active for this Product. Reload before continuing.");
+    throw new Error("A different price-acceptance recovery operation is now active for this Product. Reload before continuing.");
   }
   await assertEstimateProductMutationAllowed(latestEstimate, { allowPriceAcceptanceKey: pending.key });
 
