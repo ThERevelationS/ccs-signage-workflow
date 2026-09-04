@@ -2929,6 +2929,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       manualAddonFrozenTotal: 0,
       manualAddonCurrentTotal: 0,
       parts: [],
+      partWritePlan: [],
     };
   }
 
