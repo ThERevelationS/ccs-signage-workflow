@@ -121,6 +121,7 @@ export default function ProductRow({
   const productQuantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
   const amount = customerPrice * productQuantity * (1 + Number(line.adjustment_percent || 0) / 100);
   const meta = priceMeta(line);
+  const priceAcceptancePending = !!line.price_acceptance_pending?.key;
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -201,8 +202,19 @@ export default function ProductRow({
           )}
         </div>
 
-        {meta.differs && line.builder_product_id && (
-          line.needs_reattach_review || line.price_state === "detached_parts" ? (
+        {(meta.differs || priceAcceptancePending) && line.builder_product_id && (
+          priceAcceptancePending ? (
+            <button
+              type="button"
+              onClick={handleUpdatePrice}
+              disabled={updatingPrice || readOnly}
+              className="h-[28px] px-3 border border-orange-300 bg-orange-50 rounded flex items-center gap-1 text-[12px] font-semibold text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+              title="Resume the previously started Update Price operation from its saved recovery marker."
+            >
+              <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
+              {updatingPrice ? "Recovering…" : "Resume Price Update"}
+            </button>
+          ) : line.needs_reattach_review || line.price_state === "detached_parts" ? (
             <button
               type="button"
               disabled
