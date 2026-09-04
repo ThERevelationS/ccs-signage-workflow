@@ -9,6 +9,10 @@
     "estimate_id": {
       "type": "string"
     },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable operation key used to make retryable Builder price acceptance create exactly one immutable audit revision."
+    },
     "revision_number": {
       "type": "number",
       "default": 1
