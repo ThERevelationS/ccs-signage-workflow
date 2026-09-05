@@ -1,6 +1,8 @@
 import { base44 } from "@/api/base44Client";
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
+import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
+import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const detached = (part) => part?.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part?.inventory_link_state) || part?.price_state === "detached";
@@ -29,7 +31,19 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
     throw new Error("This Part changed in another session. Reload the Product and review the latest Part before saving it to the Part Library.");
   }
   const meta = normalizeOptions({ template_name: livePart.client_label || livePart.part_name || "Saved Part", ...options });
-  return base44.entities.PartTemplate.create({
+  const idempotencyKey = `part_template_save:${builderMutationHash({
+    template_type: "part",
+    part_id: livePart.id,
+    part_updated_date: livePart.updated_date || "",
+    estimate_id: estimateId || "",
+    builder_product_id: builderProductId || livePart.builder_product_id || "",
+    meta,
+  })}`;
+  return ensureReusableRecord({
+    entity: base44.entities.PartTemplate,
+    idempotencyKey,
+    label: "Saved Part",
+    data: {
     ...meta,
     template_version: 1,
     template_type: "part",
@@ -49,6 +63,7 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
     contains_detached_parts: detached(livePart),
     search_text: searchText([meta.template_name, meta.category, meta.tags, livePart.part_name, livePart.client_label, livePart.part_type, livePart.part_subtype, livePart.inventory_item_name, livePart.source_module_key]),
     is_active: true,
+    },
   });
 }
 
@@ -78,7 +93,20 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 
   const meta = normalizeOptions({ template_name: liveGroup.client_label || liveGroup.group_name || "Saved Part Group", ...options });
   const first = activeParts[0] || {};
-  return base44.entities.PartTemplate.create({
+  const idempotencyKey = `part_group_template_save:${builderMutationHash({
+    template_type: "part_group",
+    group_id: liveGroup.id,
+    group_updated_date: liveGroup.updated_date || "",
+    parts: activeParts.map((part) => [part.id, part.updated_date || ""]),
+    estimate_id: estimateId || "",
+    builder_product_id: builderProductId || liveGroup.builder_product_id || "",
+    meta,
+  })}`;
+  return ensureReusableRecord({
+    entity: base44.entities.PartTemplate,
+    idempotencyKey,
+    label: "Saved Part Group",
+    data: {
     ...meta,
     template_version: 1,
     template_type: "part_group",
@@ -98,6 +126,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
     contains_detached_parts: activeParts.some(detached),
     search_text: searchText([meta.template_name, meta.category, meta.tags, liveGroup.group_name, liveGroup.client_label, liveGroup.description, first.source_module_key, activeParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name])]),
     is_active: true,
+    },
   });
 }
 
