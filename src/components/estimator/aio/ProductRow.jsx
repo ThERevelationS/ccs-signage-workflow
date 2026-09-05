@@ -151,7 +151,9 @@ export default function ProductRow({
                             ? "Resume Group Create"
                             : pendingPriceAcceptance?.kind === "builder_part_group_dissolve"
                               ? "Resume Group Dissolve"
-                              : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                              : pendingPriceAcceptance?.kind === "builder_blank_product_insert"
+                                ? "Resume Product Add"
+                                : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                         ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   const isCustom = line.module_key === "custom";
@@ -234,7 +236,7 @@ export default function ProductRow({
           )}
         </div>
 
-        {(meta.differs || priceAcceptancePending) && (line.builder_product_id || pendingPriceAcceptance?.kind === "builder_quick_product_insert") && (
+        {(meta.differs || priceAcceptancePending) && (line.builder_product_id || ["builder_quick_product_insert", "builder_blank_product_insert"].includes(pendingPriceAcceptance?.kind)) && (
           priceAcceptancePending ? (
             <button
               type="button"
@@ -269,7 +271,9 @@ export default function ProductRow({
                                         ? "Resume the previously started Part Group creation from its saved recovery marker."
                                         : pendingPriceAcceptance?.kind === "builder_part_group_dissolve"
                                           ? "Resume the previously started Part Group dissolve from its saved recovery marker."
-                                          : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                                          : pendingPriceAcceptance?.kind === "builder_blank_product_insert"
+                                            ? "Resume the previously started blank Product creation from its saved recovery marker."
+                                            : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                                     ? pendingPriceAcceptance?.source_type === "product_clone"
                                       ? "Resume the previously started Product clone from its saved recovery marker."
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
