@@ -409,9 +409,9 @@ export default function ProductRow({
         </button>
         <button
           onClick={() => onRemove(index)}
-          disabled={readOnly}
-          title="Remove product"
-          className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50"
+          disabled={readOnly || priceAcceptancePending}
+          title={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : "Remove product"}
+          className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50 disabled:opacity-50"
         >
           <Trash2 className="w-3 h-3" />
         </button>
