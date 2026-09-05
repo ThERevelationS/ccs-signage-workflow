@@ -3,9 +3,33 @@ import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
+import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
+
+function productSettingsBuilderPatch(patch = {}) {
+  const builderPatch = {};
+  if (patch.client_product_name !== undefined) builderPatch.client_product_name = patch.client_product_name;
+  if (patch.product_category !== undefined) builderPatch.product_category = patch.product_category;
+  if (patch.production_product_type !== undefined) builderPatch.production_product_type = patch.production_product_type;
+  if (patch.customer_description !== undefined) builderPatch.client_description = patch.customer_description;
+  if (patch.customer_quantity !== undefined) builderPatch.quantity = num(patch.customer_quantity, 1);
+  if (patch.section_status !== undefined) builderPatch.status = patch.section_status === "complete" ? "complete" : "in_progress";
+  if (patch.product_notes !== undefined) builderPatch.product_notes = patch.product_notes;
+  return builderPatch;
+}
+
+function manualProductPriceOperationKey({ estimateId, builderProductId, lineId, expectedEstimateUpdatedAt, patch }) {
+  return `builder_manual_product_price:${builderMutationHash({
+    estimate_id: estimateId,
+    builder_product_id: builderProductId,
+    line_id: lineId || "",
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    patch: patch || {},
+  })}`;
+}
 
 export async function cloneProductInEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record to clone.");
