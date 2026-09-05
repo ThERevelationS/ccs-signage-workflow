@@ -512,6 +512,18 @@
     "pipeline_sync_error": {
       "type": "string",
       "description": "Last downstream Customer/Sales Pipeline synchronization error for a pending retry. Internal recovery metadata; never shown on the customer quote."
+    },
+    "last_product_removal_key": {
+      "type": "string",
+      "description": "Idempotency receipt for the most recently completed Estimate Product removal."
+    },
+    "last_product_removal_line_id": {
+      "type": "string",
+      "description": "Estimate line id removed by the most recently completed Product removal."
+    },
+    "last_product_removal_at": {
+      "type": "string",
+      "description": "Timestamp of the most recently completed Product removal."
     }
   },
   "required": [
