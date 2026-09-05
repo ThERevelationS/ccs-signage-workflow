@@ -64,7 +64,7 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                   : entry.pending?.kind === "builder_part_package_add"
                     ? "Resume Part Insert"
                     : entry.pending?.kind === "builder_quick_product_insert"
-                      ? "Resume Quick Product"
+                      ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                       : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
@@ -289,8 +289,13 @@ export default function EstimateDetail() {
 
   const cloneProduct = async (line) => {
     if (readOnly) return;
-    await cloneProductInEstimate({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
-    await refreshProducts();
+    try {
+      await cloneProductInEstimate({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+      await refreshProducts();
+    } catch (error) {
+      await refreshProducts().catch(() => null);
+      window.alert(`${error?.message || "Product could not be cloned."}\n\nThe estimate was refreshed. If the clone had already started, use Resume Product Clone to safely continue it.`);
+    }
   };
 
   const updateProductNotes = async (line, notes) => {
@@ -360,7 +365,9 @@ export default function EstimateDetail() {
       // A mid-write failure may have persisted the durable recovery marker. Reload
       // immediately so the row exposes Resume Price Update instead of stale state.
       await refreshProducts().catch(() => null);
-      const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_quick_product_insert" ? "Resume Quick Product" : "Resume Price Update";
+      const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+        ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+        : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
     }
   };
