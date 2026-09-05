@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { LaserProject, Settings } from "@/entities/all";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -16,6 +16,7 @@ import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { TrendingUp } from "lucide-react";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
@@ -74,8 +75,12 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
@@ -377,13 +382,29 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       };
 
       let saved;
-      if (isEditing && editId) {
-        saved = await LaserProject.update(editId, dataToSave);
+      const activeProjectId = persistedProjectIdRef.current || editId || "";
+      if (activeProjectId) {
+        saved = await LaserProject.update(activeProjectId, dataToSave);
       } else {
-        saved = await LaserProject.create(dataToSave);
+        const signature = JSON.stringify(dataToSave);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("laser_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: LaserProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: dataToSave,
+          label: "Laser project",
+        });
+        if (!saved?.id) throw new Error("Laser project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
         setIsEditing(true);
       }
-      const savedId = saved?.id || editId;
+      const savedId = saved?.id || activeProjectId;
 
       if (estimateId && savedId) {
         const refreshed = await LaserProject.get(savedId).catch(() => ({ ...dataToSave, id: savedId }));
