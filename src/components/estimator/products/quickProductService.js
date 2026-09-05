@@ -6,6 +6,7 @@ import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/e
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -29,17 +30,43 @@ export async function saveProductAsQuickProduct({
     base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
   ]);
   if (!builder) throw new Error("The Product could not be loaded.");
+  if (!Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product Parts / Part Groups could not be fully verified before saving this Quick Product.");
 
-  const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  const activeGroups = (groups || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const activeParts = parts.filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const activeGroups = groups.filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   const builderSnapshot = builder.builder_snapshot || {};
   const frozenTotal = num(builder.frozen_cost, num(line.total_snapshot));
   const currentTotal = num(builder.current_recalculated_cost, num(line.live_total_snapshot, frozenTotal));
   const frozenCustomerPrice = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(line));
   const currentCustomerPrice = liveCustomerUnitPrice(line);
   const quickName = String(name || line.client_product_name || builder.client_product_name || "Quick Product").trim() || "Quick Product";
+  const normalizedGroup = productGroup === "global" ? "global" : "my";
+  const normalizedCategories = (categories || []).map((item) => String(item).trim()).filter(Boolean);
+  const idempotencyKey = `quick_product_save:${builderMutationHash({
+    estimate_id: estimateId,
+    builder_product_id: builder.id,
+    builder_updated_date: builder.updated_date || "",
+    line_id: line.line_id || builder.estimate_line_id || "",
+    line_state: {
+      client_product_name: line.client_product_name || "",
+      product_category: line.product_category || "",
+      production_product_type: line.production_product_type || "",
+      customer_quantity: num(line.customer_quantity, 1),
+      product_notes: line.product_notes || "",
+      customer_description: line.customer_description || "",
+    },
+    parts: activeParts.map((part) => [part.id, part.updated_date || ""]),
+    groups: activeGroups.map((group) => [group.id, group.updated_date || ""]),
+    quick_name: quickName,
+    product_group: normalizedGroup,
+    categories: normalizedCategories,
+  })}`;
 
-  return base44.entities.QuickProduct.create({
+  return ensureReusableRecord({
+    entity: base44.entities.QuickProduct,
+    idempotencyKey,
+    label: "Quick Product",
+    data: {
     product_name: quickName,
     template_version: 2,
     source_product_class: line.module_key === "custom" ? "custom" : "builder",
@@ -50,8 +77,8 @@ export async function saveProductAsQuickProduct({
     production_product_type: line.production_product_type ?? builder.production_product_type ?? "",
     created_from_product_id: builder.id,
     created_from_estimate_id: estimateId,
-    product_group: productGroup === "global" ? "global" : "my",
-    categories: (categories || []).map((item) => String(item).trim()).filter(Boolean),
+    product_group: normalizedGroup,
+    categories: normalizedCategories,
     product_quantity: num(line.customer_quantity, num(builder.quantity, 1)),
     is_active: true,
     product_notes: line.product_notes ?? builder.product_notes ?? "",
@@ -95,6 +122,7 @@ export async function saveProductAsQuickProduct({
       notes: part.notes || "",
     })),
     total_price: frozenCustomerPrice * num(line.customer_quantity, num(builder.quantity, 1)),
+    },
   });
 }
 
