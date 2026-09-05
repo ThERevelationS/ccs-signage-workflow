@@ -25,6 +25,7 @@ import { refreshManualProductPricing } from "@/components/estimator/parts/custom
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, resumeQuickProductInsertion, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { addBlankProduct, resumeBlankProductInsertion } from "@/components/estimator/products/blankProductService";
+import { removeProductFromEstimate, resumeProductRemoval } from "@/components/estimator/products/productRemovalService";
 import { resumeIndependentPartGroupMove } from "@/components/estimator/parts/partGroupService";
 import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
@@ -76,7 +77,9 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                               ? "Resume Group Dissolve"
                               : entry.pending?.kind === "builder_blank_product_insert"
                                 ? "Resume Product Add"
-                                : entry.pending?.kind === "builder_quick_product_insert"
+                                : entry.pending?.kind === "builder_product_remove"
+                                  ? "Resume Product Remove"
+                                  : entry.pending?.kind === "builder_quick_product_insert"
                         ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
@@ -210,19 +213,17 @@ export default function EstimateDetail() {
     if (readOnly) return;
     const loadedLine = estimate.line_items[index];
     if (!loadedLine) return;
-    const current = await loadCurrentProductMutationEstimate();
-    const matches = (line) =>
-      (loadedLine.line_id && line.line_id === loadedLine.line_id) ||
-      (loadedLine.builder_product_id && line.builder_product_id === loadedLine.builder_product_id) ||
-      (loadedLine.project_id && line.project_id === loadedLine.project_id);
-    const line = (current.line_items || []).find(matches);
-    if (!line) throw new Error("This Product is no longer part of the estimate. Reload before removing it.");
-    const line_items = (current.line_items || []).filter((item) => !matches(item));
-    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
-    await rememberServerVersion(updateResult);
-    setEstimate((prev) => ({ ...prev, line_items }));
-    await deleteOwnedSection(line);
-    if (line.builder_product_id) await deleteBuilderProductCascade(line.builder_product_id);
+    try {
+      await removeProductFromEstimate({
+        estimateId: estimate.id,
+        line: loadedLine,
+        expectedEstimateUpdatedAt: serverUpdatedAtRef.current,
+      });
+      await refreshProducts();
+    } catch (error) {
+      await refreshProducts().catch(() => null);
+      window.alert(`${error?.message || "Product could not be removed."}\n\nThe estimate was refreshed. If removal had already started, use Resume Product Remove to safely continue it.`);
+    }
   };
 
   const addSection = async (mod) => {
@@ -337,7 +338,9 @@ export default function EstimateDetail() {
         ? await resumeQuickProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
         : line?.price_acceptance_pending?.kind === "builder_blank_product_insert"
           ? await resumeBlankProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
-          : line?.price_acceptance_pending?.kind === "builder_part_group_move"
+          : line?.price_acceptance_pending?.kind === "builder_product_remove"
+            ? await resumeProductRemoval({ estimateId: estimate.id, lineId: line.line_id || "" })
+            : line?.price_acceptance_pending?.kind === "builder_part_group_move"
             ? await resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: line.line_id || "" })
             : await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
       if (result?.blocked && result.reason === "detached_parts") {
@@ -369,7 +372,9 @@ export default function EstimateDetail() {
                 ? "Resume Group Dissolve"
                 : line?.price_acceptance_pending?.kind === "builder_blank_product_insert"
                   ? "Resume Product Add"
-                  : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+                  : line?.price_acceptance_pending?.kind === "builder_product_remove"
+                    ? "Resume Product Remove"
+                    : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
           ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
           : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
