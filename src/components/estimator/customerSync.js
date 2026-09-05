@@ -5,6 +5,28 @@ import { localDateStamp } from "./quoteLifecycle";
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
 const CUSTOMER_SYNC_KEYS = ["client_name", "office_phone", "order_contact", "contact_email", "office_phone_ext", "salesperson", "sales_center", "tax_group", "terms", "site_address"];
+const CUSTOMER_PAGE_SIZE = 500;
+const CUSTOMER_CATALOG_LIMIT = 50000;
+
+export const loadAllCustomers = async ({ pageSize = CUSTOMER_PAGE_SIZE, maxRows = CUSTOMER_CATALOG_LIMIT } = {}) => {
+  const rows = [];
+  const seen = new Set();
+  let skip = 0;
+  while (skip < maxRows) {
+    const page = await base44.entities.Customer.list("created_date", pageSize, skip);
+    if (!Array.isArray(page)) throw new Error("The Customer catalog could not be loaded safely.");
+    for (const customer of page) {
+      if (!customer?.id || seen.has(customer.id)) continue;
+      seen.add(customer.id);
+      rows.push(customer);
+    }
+    if (page.length < pageSize) {
+      return rows.sort((a, b) => String(a.company_name || "").localeCompare(String(b.company_name || "")));
+    }
+    skip += pageSize;
+  }
+  throw new Error(`The Customer catalog has reached the ${maxRows.toLocaleString()}-record safety limit.`);
+};
 
 export const estimateCustomerChangedKeys = (before = {}, after = {}) =>
   CUSTOMER_SYNC_KEYS.filter((key) => String(before?.[key] ?? "") !== String(after?.[key] ?? ""));
@@ -170,7 +192,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
  * Sales Pipeline lead in step with the estimate.
  */
 export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false, customerChangedKeys = null } = {}) => {
-  const customers = await base44.entities.Customer.list("company_name", 1000);
+  const customers = await loadAllCustomers();
   const customer = syncCustomer
     ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys })
     : await resolveCustomerForEstimate(estimate, customers || []);
