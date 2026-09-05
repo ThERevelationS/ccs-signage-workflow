@@ -228,74 +228,43 @@ export default function EstimateDetail() {
     if (readOnly) return;
     const current = await loadCurrentProductMutationEstimate();
     const sectionName = `${current.project_name} — ${mod.label}`;
-    let created = null;
-    let builderResult = null;
-    let linked = false;
     try {
-      created = await base44.entities[mod.entity].create({
-        project_name: sectionName,
-        client_name: current.client_name,
-        customer_id: current.customer_id,
-        estimate_number: current.estimate_number,
+      const result = await addBlankProduct({
+        estimateId: estimate.id,
+        moduleKey: mod.key,
+        sourceEntity: mod.entity,
+        productName: sectionName,
+        builderName: mod.label,
+        isCustom: false,
+        expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
       });
-      const provisionalLine = {
-        module_key: mod.key,
-        project_id: created.id,
-        project_name: sectionName,
-        builder_name: mod.label,
-        client_product_name: sectionName,
-        client_name: current.client_name,
-        total_snapshot: 0,
-        live_total_snapshot: 0,
-        customer_price_snapshot: 0,
-        live_customer_price_snapshot: 0,
-        price_state: "unchecked",
-        adjustment_percent: 0,
-        section_status: "in_progress",
-        customer_quantity: 1,
-        include_in_customer: true,
-        owned: true,
-        linked_date: new Date().toISOString(),
-      };
-      builderResult = await ensureBuilderProductForLine({
-        estimate: current,
-        line: provisionalLine,
-        isNew: true,
-      });
-      const line_items = [...(current.line_items || []), builderResult.line];
-      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
-      linked = true;
-      await rememberServerVersion(updateResult);
-      setEstimate((prev) => ({ ...prev, line_items }));
-      setActiveProduct({ ...builderResult.line, estimate_id: estimate.id });
+      await refreshProducts();
+      if (result?.line) setActiveProduct({ ...result.line, estimate_id: estimate.id });
+      return result;
     } catch (error) {
-      if (!linked) {
-        if (builderResult?.builderProduct?.id) await deleteBuilderProductCascade(builderResult.builderProduct.id);
-        if (created?.id) await base44.entities[mod.entity].delete(created.id).catch(() => null);
-      }
-      throw error;
+      await refreshProducts().catch(() => null);
+      throw new Error(`${error?.message || "Product could not be added."}\n\nThe estimate was refreshed. If Product creation had already started, use Resume Product Add to safely continue it.`);
     }
   };
 
   const addCustomSection = async (name = "Custom Product") => {
     if (readOnly) return;
     const current = await loadCurrentProductMutationEstimate();
-    let result = null;
-    let linked = false;
     try {
-      result = await createCustomProduct({
-        estimate: current,
-        name,
+      const result = await addBlankProduct({
+        estimateId: estimate.id,
+        moduleKey: "custom",
+        sourceEntity: "",
+        productName: name,
+        builderName: "Custom Product",
+        isCustom: true,
         expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
       });
-      const line_items = [...(current.line_items || []), result.line];
-      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, { line_items });
-      linked = true;
-      await rememberServerVersion(updateResult);
-      setEstimate((prev) => ({ ...prev, line_items }));
+      await refreshProducts();
+      return result;
     } catch (error) {
-      if (!linked && result?.builderProduct?.id) await deleteBuilderProductCascade(result.builderProduct.id);
-      throw error;
+      await refreshProducts().catch(() => null);
+      throw new Error(`${error?.message || "Custom Product could not be created."}\n\nThe estimate was refreshed. If Product creation had already started, use Resume Product Add to safely continue it.`);
     }
   };
 
