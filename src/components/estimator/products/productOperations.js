@@ -16,7 +16,6 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
     base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
   ]);
   if (!estimate || !builder || !Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product could not be fully loaded for cloning.");
-  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const currentLine = (estimate.line_items || []).find((item) =>
     item.builder_product_id === builder.id || (line.line_id && item.line_id === line.line_id)
   );
