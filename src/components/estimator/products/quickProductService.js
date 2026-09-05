@@ -1,9 +1,11 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
+import { snapshotHash } from "@/components/estimator/builder/builderService";
 import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
+import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
