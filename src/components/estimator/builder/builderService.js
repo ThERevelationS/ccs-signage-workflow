@@ -188,15 +188,21 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   const estimateId = estimate?.id;
   if (!estimateId || !line) return { line, builderProduct: null, changed: false };
 
-  // A user-started Update Price may be between durable steps. Preserve the exact
-  // saved line and Builder state until that operation is explicitly resumed;
-  // page-open reconciliation must never rewrite its recovery inputs.
-  if (line?.price_acceptance_pending?.key && line?.builder_product_id) {
-    const pendingBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
-    if (!pendingBuilder?.id || (pendingBuilder.estimate_id && pendingBuilder.estimate_id !== estimateId)) {
-      throw new Error("A pending Product Update Price could not verify its Builder Product. The saved recovery marker was retained.");
+  // A Builder mutation may be between durable steps. Preserve the exact saved
+  // line and Builder state until that operation is explicitly resumed; page-open
+  // reconciliation must never rewrite its recovery inputs. Quick Product insertion
+  // has an initial provisional stage before its BuilderProduct exists.
+  if (line?.price_acceptance_pending?.key) {
+    if (!line.builder_product_id && line.price_acceptance_pending.kind === "builder_quick_product_insert") {
+      return { line, builderProduct: null, changed: false, partSyncInputs: null };
     }
-    return { line, builderProduct: pendingBuilder, changed: false, partSyncInputs: null };
+    if (line.builder_product_id) {
+      const pendingBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
+      if (!pendingBuilder?.id || (pendingBuilder.estimate_id && pendingBuilder.estimate_id !== estimateId)) {
+        throw new Error("A pending Builder mutation could not verify its Builder Product. The saved recovery marker was retained.");
+      }
+      return { line, builderProduct: pendingBuilder, changed: false, partSyncInputs: null };
+    }
   }
 
   const lineId = line.line_id || makeStableId("line");
