@@ -54,6 +54,8 @@ export function intendedQuoteIssueMetadata({
   pendingTransition = null,
   today,
 } = {}) {
+  if (pendingTransition?.quoteIssueMetadata) return { ...pendingTransition.quoteIssueMetadata };
+
   const baseline = estimateSaveLifecycleBaseline({ serverRecord, openRevision, pendingTransition });
   const baselineStatus = String(baseline?.status || serverRecord?.status || "");
   const baselineVersion = Math.max(0, Math.floor(Number(baseline?.quote_version ?? serverRecord?.quote_version ?? 0)));
