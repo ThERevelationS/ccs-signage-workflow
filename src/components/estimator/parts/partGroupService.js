@@ -9,11 +9,6 @@ import { builderMutationHash, ensureBuilderPriceRevision, markBuilderMutationPen
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
 
-async function nextRevisionNumber(builderProductId) {
-  const rows = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
-  return Math.max(0, ...(rows || []).map((row) => num(row.revision_number))) + 1;
-}
-
 function estimateLine(estimate, builderProductId) {
   return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
 }
@@ -39,16 +34,6 @@ function assertMemberVersions(parts, expectedPartVersions = {}) {
     const expected = expectedPartVersions?.[part.id] || "";
     assertVersion(part, expected, `Part “${part.part_name || "Part"}”`);
   }
-}
-
-async function updateVerifiedEstimateLines(estimate, patchesByBuilderId) {
-  const lineItems = (estimate.line_items || []).map((line) => {
-    const patch = patchesByBuilderId[line.builder_product_id];
-    if (!patch) return line;
-    return { ...line, ...(typeof patch === "function" ? patch(line) : patch) };
-  });
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-  return lineItems;
 }
 
 export async function createPartGroupInProduct({ builderProductId, partIds = [], groupName = "Part Group", expectedEstimateUpdatedAt = "", expectedPartVersions = {} }) {
