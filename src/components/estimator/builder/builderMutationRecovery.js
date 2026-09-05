@@ -171,6 +171,41 @@ function resolvePendingPartGroupRefs(plan, groupIds) {
   };
 }
 
+async function verifyPendingPreconditions(pending, builderProductId) {
+  const plan = pending?.precondition_plan;
+  if (!plan || typeof plan !== "object") return;
+
+  for (const step of plan.groups || []) {
+    const group = await base44.entities.BuilderPartGroup.get(step.id);
+    if (!group || String(group.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error("A source Part Group changed ownership or disappeared while the Builder mutation was pending.");
+    }
+    const expected = String(step.expected_updated_date || "").trim();
+    const current = String(group.updated_date || "").trim();
+    if (expected && current && expected !== current) {
+      throw new Error(`Part Group “${group.group_name || "Part Group"}” changed while the Builder mutation was pending. No clone/write was applied.`);
+    }
+    if (step.expected_patch && recoveryPatchDiffers(group, step.expected_patch)) {
+      throw new Error(`Part Group “${group.group_name || "Part Group"}” no longer matches the stored mutation source. No clone/write was applied.`);
+    }
+  }
+
+  for (const step of plan.parts || []) {
+    const part = await base44.entities.BuilderPart.get(step.id);
+    if (!part || String(part.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error("A source Part changed ownership or disappeared while the Builder mutation was pending.");
+    }
+    const expected = String(step.expected_updated_date || "").trim();
+    const current = String(part.updated_date || "").trim();
+    if (expected && current && expected !== current) {
+      throw new Error(`Part “${part.part_name || "Part"}” changed while the Builder mutation was pending. No clone/write was applied.`);
+    }
+    if (step.expected_patch && recoveryPatchDiffers(part, step.expected_patch)) {
+      throw new Error(`Part “${part.part_name || "Part"}” no longer matches the stored mutation source. No clone/write was applied.`);
+    }
+  }
+}
+
 async function applyPendingDeletePlan(pending, builderProductId) {
   const plan = pending?.delete_plan;
   if (!plan || typeof plan !== "object") return { partDeletes: 0, groupDeletes: 0 };
@@ -237,6 +272,7 @@ export async function resumeBuilderMutation({
     throw new Error("Builder Parts could not be verified while recovering the pending Builder mutation.");
   }
   const plan = pending.part_acceptance_plan || {};
+  await verifyPendingPreconditions(pending, builder.id);
   await applyPendingSourcePatch(pending);
   await applyPendingDeletePlan(pending, builder.id);
   const groupIds = await applyPendingGroupCreatePlan(pending, builder.id);
@@ -245,7 +281,35 @@ export async function resumeBuilderMutation({
   // This closes the race where another session edits a Part after marker verification
   // but before the exact stored Part patch is written.
   await applyPartPlan(builder.id, resolvedPlan);
-  await ensureBuilderPriceRevision(pending.key, pending.revision || {});
+
+  let revision = pending.revision || {};
+  const changedParts = Array.isArray(revision.changed_parts) ? revision.changed_parts : [];
+  if (changedParts.some((part) => part?.part_key_ref || part?.new_group_key_ref)) {
+    const currentParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    if (!Array.isArray(currentParts)) throw new Error("Created Parts could not be verified before recording the Builder revision.");
+    const partsByKey = new Map(currentParts.map((part) => [part.part_key, part]));
+    revision = {
+      ...revision,
+      changed_parts: changedParts.map((part) => {
+        const hydrated = { ...part };
+        if (hydrated.part_key_ref) {
+          const createdPart = partsByKey.get(hydrated.part_key_ref);
+          if (!createdPart?.id) throw new Error("A created Part could not be resolved for the Builder revision audit.");
+          hydrated.part_id = createdPart.id;
+          hydrated.part_key = createdPart.part_key;
+          delete hydrated.part_key_ref;
+        }
+        if (hydrated.new_group_key_ref) {
+          const createdGroupId = groupIds.get(hydrated.new_group_key_ref);
+          if (!createdGroupId) throw new Error("A created Part Group could not be resolved for the Builder revision audit.");
+          hydrated.new_group_id = createdGroupId;
+          delete hydrated.new_group_key_ref;
+        }
+        return hydrated;
+      }),
+    };
+  }
+  await ensureBuilderPriceRevision(pending.key, revision);
 
   const builderPatch = pending.builder_patch || {};
   const currentBuilder = await base44.entities.BuilderProduct.get(builder.id);
