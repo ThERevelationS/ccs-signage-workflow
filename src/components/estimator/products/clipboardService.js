@@ -175,8 +175,14 @@ export async function listClipboardItems() {
 }
 
 export async function removeClipboardItem(id) {
-  if (!id) return;
-  await base44.entities.EstimateClipboardItem.delete(id);
+  const itemId = String(id || "").trim();
+  if (!itemId) return;
+  try {
+    await base44.entities.EstimateClipboardItem.delete(itemId);
+  } catch (error) {
+    const remaining = await base44.entities.EstimateClipboardItem.filter({ id: itemId }).catch(() => null);
+    if (!Array.isArray(remaining) || remaining.some((row) => row.id === itemId)) throw error;
+  }
 }
 
 export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "", expectedEstimateUpdatedAt = "" }) {
