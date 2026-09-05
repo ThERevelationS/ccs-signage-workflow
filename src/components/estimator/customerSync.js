@@ -211,6 +211,30 @@ export const backfillCustomersFromWorkOrders = async (customers) => {
   });
 
   if (!toCreate.length) return customers;
-  const created = await base44.entities.Customer.bulkCreate(toCreate);
-  return [...customers, ...(created || [])];
+
+  // Use the same server-side Customer convergence path as Estimate creation,
+  // but never update an existing match from this maintenance backfill. This
+  // keeps the UI promise that existing Customers are not merged/overwritten,
+  // while simultaneous admin syncs or lost create responses cannot duplicate a
+  // missing workflow Customer.
+  const merged = [...customers];
+  const knownIds = new Set(merged.map((customer) => customer.id).filter(Boolean));
+  for (const candidate of toCreate) {
+    const { company_name, customer_status: _customerStatus, ...fields } = candidate;
+    const response = await base44.functions.invoke("ensureEstimateCustomer", {
+      company_name,
+      fields,
+      update_existing: false,
+    });
+    const result = response?.data || response;
+    if (result?.error) throw new Error(result.error);
+    if (!result?.customer?.id) {
+      throw new Error(`Workflow Customer “${company_name}” could not be verified after creation.`);
+    }
+    if (!knownIds.has(result.customer.id)) {
+      knownIds.add(result.customer.id);
+      merged.push(result.customer);
+    }
+  }
+  return merged;
 };
