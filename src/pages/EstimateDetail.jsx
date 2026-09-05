@@ -74,7 +74,9 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                             ? "Resume Group Create"
                             : entry.pending?.kind === "builder_part_group_dissolve"
                               ? "Resume Group Dissolve"
-                              : entry.pending?.kind === "builder_quick_product_insert"
+                              : entry.pending?.kind === "builder_blank_product_insert"
+                                ? "Resume Product Add"
+                                : entry.pending?.kind === "builder_quick_product_insert"
                         ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
@@ -333,9 +335,11 @@ export default function EstimateDetail() {
     try {
       const result = line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
         ? await resumeQuickProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
-        : line?.price_acceptance_pending?.kind === "builder_part_group_move"
-          ? await resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: line.line_id || "" })
-          : await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+        : line?.price_acceptance_pending?.kind === "builder_blank_product_insert"
+          ? await resumeBlankProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
+          : line?.price_acceptance_pending?.kind === "builder_part_group_move"
+            ? await resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: line.line_id || "" })
+            : await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
       if (result?.blocked && result.reason === "detached_parts") {
         const names = (result.detachedParts || [])
           .map((part) => part.part_name || part.inventory_item_name)
@@ -363,7 +367,9 @@ export default function EstimateDetail() {
               ? "Resume Group Create"
               : line?.price_acceptance_pending?.kind === "builder_part_group_dissolve"
                 ? "Resume Group Dissolve"
-                : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+                : line?.price_acceptance_pending?.kind === "builder_blank_product_insert"
+                  ? "Resume Product Add"
+                  : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
           ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
           : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
