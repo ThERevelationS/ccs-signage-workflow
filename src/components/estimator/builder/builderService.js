@@ -476,6 +476,13 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
 
   for (const line of original) {
     try {
+      if (line?.price_acceptance_pending?.kind === "builder_product_remove") {
+        // Product removal may already have deleted its owned source and/or Builder.
+        // Preserve the exact durable line without reconciliation warnings or writes
+        // until the specialized Remove recovery action finishes the operation.
+        lineItems.push(line);
+        continue;
+      }
       let sourceProjectOverride;
       if (strictReconciliation) {
         const mod = getModule(line?.module_key);
@@ -532,6 +539,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 
   const existingPending = pendingBuilderMutation(currentLine);
   if (existingPending) {
+    if (existingPending.kind === "builder_product_remove") {
+      throw new Error("This Product is being removed. Use Resume Product Remove before opening or saving its Builder again.");
+    }
     const pendingBuilderId = currentLine.builder_product_id || existingPending.builder_product_id || "";
     const [pendingBuilder, pendingParts] = await Promise.all([
       pendingBuilderId ? base44.entities.BuilderProduct.get(pendingBuilderId) : Promise.resolve(null),
