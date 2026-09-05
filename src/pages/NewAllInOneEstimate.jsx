@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
-import { upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
+import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 
@@ -41,7 +41,7 @@ export default function NewAllInOneEstimate() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    base44.entities.Customer.list("company_name", 500).then((r) => setCustomers(r || []));
+    loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
     base44.entities.TaxGroup.list().then((r) => setTaxGroups(r || []));
     base44.entities.User.list().then((r) => setUsers(r || []));
     base44.auth.me().then(setMe).catch(() => {});
