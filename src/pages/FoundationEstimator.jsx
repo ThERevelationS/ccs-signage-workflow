@@ -39,6 +39,7 @@ import { landscapeSummary } from "@/components/estimator/foundation/landscapeMat
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const blankItem = (type) => ({
   // Defaults mirror SignEstimate Pro `newItem()` exactly. CCS still lets the
@@ -98,6 +99,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const [templateMode, setTemplateMode] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
   const saveRef = useRef(null);
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+
+  useEffect(() => {
+    copyAttemptRef.current = { signature: "", key: "" };
+  }, [id]);
 
   useEffect(() => {
     if (!id) {
@@ -330,12 +336,27 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const handleSaveAsCopy = async () => {
     setSaving(true);
     try {
-      const copy = await base44.entities.FoundationProject.create({
+      const copyData = {
         ...payload(),
         project_name: `${project.project_name || "Foundation"} (Copy)`,
         client_name: project.client_name,
         customer_id: project.customer_id,
+      };
+      const signature = JSON.stringify(copyData);
+      if (copyAttemptRef.current.signature !== signature) {
+        copyAttemptRef.current = {
+          signature,
+          key: newCreationRequestKey("foundation_project_copy"),
+        };
+      }
+      const copy = await ensureIdempotentEntityCreate({
+        entity: base44.entities.FoundationProject,
+        keyField: "creation_request_key",
+        key: copyAttemptRef.current.key,
+        data: copyData,
+        label: "Foundation project copy",
       });
+      if (!copy?.id) throw new Error("Foundation project copy could not be verified.");
       navigate(`/FoundationEstimator?id=${copy.id}`);
     } finally {
       setSaving(false);
