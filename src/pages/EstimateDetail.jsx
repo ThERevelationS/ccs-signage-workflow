@@ -456,6 +456,7 @@ export default function EstimateDetail() {
           estimateBefore: before,
           nextStatus: estimate.status,
           reason: lifecycleReason,
+          quoteIssueMetadata: { ...quoteIssueMetadata },
           key: `status_transition:${estimate.id}:${before.updated_date || "unknown"}:${before.status || "draft"}:${estimate.status}:${Number(quoteIssueMetadata.quote_version ?? before.quote_version ?? 0)}`,
         };
       }
