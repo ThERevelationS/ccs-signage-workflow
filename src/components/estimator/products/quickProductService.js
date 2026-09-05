@@ -503,16 +503,15 @@ function provisionalQuickLine(blueprint, pending) {
 }
 
 function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
-  return {
+  const expected = {
+    ...blueprint.builderCreateData,
     estimate_id: estimateId,
     estimate_line_id: lineId,
-    module_key: blueprint.moduleKey,
-    builder_name: blueprint.builderName,
-    client_product_name: blueprint.productName,
-    frozen_cost: blueprint.frozenTotal,
-    frozen_customer_price: blueprint.frozenCustomerPrice,
-    current_recalculated_cost: blueprint.currentTotal,
   };
+  // Recovery itself may have linked the source project before the caller received
+  // a response. Every other create-time Builder field must still match exactly.
+  delete expected.source_project_id;
+  return expected;
 }
 
 async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
