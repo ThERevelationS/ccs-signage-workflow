@@ -53,6 +53,45 @@ export async function archiveQuoteAttachment(attachment) {
   return { fileUrl, sha256, sizeBytes: bytes.byteLength };
 }
 
+function quoteDeliveryAuditMatches(row = {}, data = {}) {
+  const sameRecipient = String(row.recipient_email || "").trim().toLowerCase() === String(data.recipient_email || "").trim().toLowerCase();
+  return String(row.estimate_id || "") === String(data.estimate_id || "") &&
+    Number(row.quote_version || 0) === Number(data.quote_version || 0) &&
+    sameRecipient &&
+    String(row.gmail_message_id || "") === String(data.gmail_message_id || "") &&
+    String(row.attachment_sha256 || "") === String(data.attachment_sha256 || "");
+}
+
+export async function ensureQuoteDeliveryAudit(data = {}) {
+  const messageId = String(data.gmail_message_id || "").trim();
+  const idempotencyKey = messageId ? `quote_delivery:gmail:${messageId}` : "";
+  const withKey = idempotencyKey ? { ...data, idempotency_key: idempotencyKey } : data;
+
+  const findExisting = async () => {
+    if (!messageId) return null;
+    let rows = await base44.entities.EstimateQuoteDelivery.filter({ idempotency_key: idempotencyKey });
+    if (!(rows || []).length) rows = await base44.entities.EstimateQuoteDelivery.filter({ gmail_message_id: messageId });
+    const exact = (rows || []).find((row) => quoteDeliveryAuditMatches(row, withKey)) || null;
+    if (!exact && (rows || []).length) {
+      throw new Error("A delivery audit with this Gmail message ID already exists but does not match this Estimate/version/PDF fingerprint.");
+    }
+    return exact;
+  };
+
+  const existing = await findExisting();
+  if (existing) return existing;
+
+  try {
+    return await base44.entities.EstimateQuoteDelivery.create(withKey);
+  } catch (error) {
+    if (messageId) {
+      const recovered = await findExisting().catch(() => null);
+      if (recovered) return recovered;
+    }
+    throw error;
+  }
+}
+
 export async function deliverEstimateQuote({
   estimate,
   recipientEmail,
@@ -85,29 +124,30 @@ export async function deliverEstimateQuote({
   const normalizedQuoteVersion = Math.max(0, Math.floor(Number(quoteVersion || 0)));
   let deliveryLogWarning = "";
   let delivery = null;
+  const deliveryData = {
+    estimate_id: estimate.id,
+    work_order_id: estimate.work_order_id || "",
+    quote_issue_key: quoteIssueKey(estimate.id, normalizedQuoteVersion),
+    quote_version: normalizedQuoteVersion,
+    quote_issue_date: quoteIssueDate || "",
+    quote_valid_days: Math.max(0, Math.floor(Number(quoteValidDays || 0))),
+    quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
+    quote_total: Number(quoteTotal || 0),
+    recipient_email: recipientEmail,
+    subject,
+    delivery_method: "email",
+    delivery_status: "sent",
+    sent_at: sentAt,
+    gmail_message_id: messageId,
+    attachment_filename: attachment.filename,
+    attachment_file_url: archive.fileUrl,
+    attachment_sha256: archive.sha256,
+    attachment_size_bytes: archive.sizeBytes,
+    is_resend: !!isResend,
+    source_status: sourceStatus || estimate.status || "",
+  };
   try {
-    delivery = await base44.entities.EstimateQuoteDelivery.create({
-      estimate_id: estimate.id,
-      work_order_id: estimate.work_order_id || "",
-      quote_issue_key: quoteIssueKey(estimate.id, normalizedQuoteVersion),
-      quote_version: normalizedQuoteVersion,
-      quote_issue_date: quoteIssueDate || "",
-      quote_valid_days: Math.max(0, Math.floor(Number(quoteValidDays || 0))),
-      quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
-      quote_total: Number(quoteTotal || 0),
-      recipient_email: recipientEmail,
-      subject,
-      delivery_method: "email",
-      delivery_status: "sent",
-      sent_at: sentAt,
-      gmail_message_id: messageId,
-      attachment_filename: attachment.filename,
-      attachment_file_url: archive.fileUrl,
-      attachment_sha256: archive.sha256,
-      attachment_size_bytes: archive.sizeBytes,
-      is_resend: !!isResend,
-      source_status: sourceStatus || estimate.status || "",
-    });
+    delivery = await ensureQuoteDeliveryAudit(deliveryData);
   } catch (error) {
     deliveryLogWarning = `Email sent, but the delivery audit record could not be saved: ${error?.message || "unknown error"}`;
   }
