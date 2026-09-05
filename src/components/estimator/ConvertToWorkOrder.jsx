@@ -52,9 +52,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
                         ? "Resume Part Remove"
                         : pendingPrice.pending?.kind === "builder_part_package_add"
                           ? "Resume Part Insert"
-                          : pendingPrice.pending?.kind === "builder_quick_product_insert"
-                            ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
-                            : "Resume Price Update";
+                          : pendingPrice.pending?.kind === "builder_manual_product_price"
+                            ? "Resume Product Price"
+                            : pendingPrice.pending?.kind === "builder_quick_product_insert"
+                              ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                              : "Resume Price Update";
         throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
       }
       if (estimateBefore.status !== "approved") {
