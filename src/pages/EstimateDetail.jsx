@@ -70,7 +70,11 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                         ? "Resume Group Clone"
                         : entry.pending?.kind === "builder_part_group_move"
                           ? "Resume Group Move"
-                          : entry.pending?.kind === "builder_quick_product_insert"
+                          : entry.pending?.kind === "builder_part_group_create"
+                            ? "Resume Group Create"
+                            : entry.pending?.kind === "builder_part_group_dissolve"
+                              ? "Resume Group Dissolve"
+                              : entry.pending?.kind === "builder_quick_product_insert"
                         ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
@@ -386,7 +390,11 @@ export default function EstimateDetail() {
           ? "Resume Group Clone"
           : line?.price_acceptance_pending?.kind === "builder_part_group_move"
             ? "Resume Group Move"
-            : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+            : line?.price_acceptance_pending?.kind === "builder_part_group_create"
+              ? "Resume Group Create"
+              : line?.price_acceptance_pending?.kind === "builder_part_group_dissolve"
+                ? "Resume Group Dissolve"
+                : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
           ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
           : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
