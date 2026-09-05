@@ -22,9 +22,10 @@ import {
   ensureBuilderProductForLine,
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
-import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
+import { refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
 import { instantiateQuickProduct, resumeQuickProductInsertion, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
+import { addBlankProduct, resumeBlankProductInsertion } from "@/components/estimator/products/blankProductService";
 import { resumeIndependentPartGroupMove } from "@/components/estimator/parts/partGroupService";
 import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
