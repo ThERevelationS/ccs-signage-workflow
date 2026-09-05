@@ -94,11 +94,14 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
     if (Object.keys(fields).length) await base44.entities.Customer.update(existing.id, fields);
     return { ...existing, ...fields };
   }
-  return base44.entities.Customer.create({
+  const response = await base44.functions.invoke("ensureEstimateCustomer", {
     company_name: name,
-    customer_status: "prospect",
-    ...fields,
+    fields,
   });
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.customer?.id) throw new Error("The new Customer could not be verified after creation.");
+  return result.customer;
 };
 
 /**
