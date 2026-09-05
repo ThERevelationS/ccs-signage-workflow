@@ -176,19 +176,29 @@ async function verifyPendingPreconditions(pending, builderProductId) {
   const plan = pending?.precondition_plan;
   if (!plan || typeof plan !== "object") return;
 
+  const createGroups = Array.isArray(pending?.group_create_plan?.groups) ? pending.group_create_plan.groups : [];
+  let createdGroupsByKey = new Map();
+  if (createGroups.length) {
+    const currentGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId });
+    if (!Array.isArray(currentGroups)) throw new Error("Part Groups could not be verified while checking Builder mutation preconditions.");
+    createdGroupsByKey = new Map(currentGroups.map((group) => [group.group_key, group]));
+  }
+
   for (const step of plan.groups || []) {
     const group = await base44.entities.BuilderPartGroup.get(step.id);
-    if (!group || String(group.builder_product_id || "") !== String(builderProductId || "")) {
-      throw new Error("A source Part Group changed ownership or disappeared while the Builder mutation was pending.");
+    if (!group) {
+      if (step.allow_missing_if_applied) continue;
+      throw new Error("A source Part Group disappeared while the Builder mutation was pending.");
     }
-    const expected = String(step.expected_updated_date || "").trim();
-    const current = String(group.updated_date || "").trim();
-    if (expected && current && expected !== current) {
-      throw new Error(`Part Group “${group.group_name || "Part Group"}” changed while the Builder mutation was pending. No clone/write was applied.`);
+    if (String(group.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error("A source Part Group changed ownership while the Builder mutation was pending.");
     }
-    if (step.expected_patch && recoveryPatchDiffers(group, step.expected_patch)) {
-      throw new Error(`Part Group “${group.group_name || "Part Group"}” no longer matches the stored mutation source. No clone/write was applied.`);
-    }
+    const sourceMatches =
+      (!step.expected_patch || !recoveryPatchDiffers(group, step.expected_patch)) &&
+      (!step.expected_updated_date || !group.updated_date || String(step.expected_updated_date) === String(group.updated_date));
+    if (sourceMatches) continue;
+    if (step.target_patch && !recoveryPatchDiffers(group, step.target_patch)) continue;
+    throw new Error(`Part Group “${group.group_name || "Part Group"}” changed while the Builder mutation was pending. No unrelated Group edit was overwritten.`);
   }
 
   for (const step of plan.parts || []) {
@@ -196,14 +206,16 @@ async function verifyPendingPreconditions(pending, builderProductId) {
     if (!part || String(part.builder_product_id || "") !== String(builderProductId || "")) {
       throw new Error("A source Part changed ownership or disappeared while the Builder mutation was pending.");
     }
-    const expected = String(step.expected_updated_date || "").trim();
-    const current = String(part.updated_date || "").trim();
-    if (expected && current && expected !== current) {
-      throw new Error(`Part “${part.part_name || "Part"}” changed while the Builder mutation was pending. No clone/write was applied.`);
+    const sourceMatches =
+      (!step.expected_patch || !recoveryPatchDiffers(part, step.expected_patch)) &&
+      (!step.expected_updated_date || !part.updated_date || String(step.expected_updated_date) === String(part.updated_date));
+    if (sourceMatches) continue;
+    if (step.target_patch && !recoveryPatchDiffers(part, step.target_patch)) continue;
+    if (step.target_group_key_ref) {
+      const targetGroup = createdGroupsByKey.get(step.target_group_key_ref);
+      if (targetGroup?.id && String(part.part_group_id || "") === String(targetGroup.id)) continue;
     }
-    if (step.expected_patch && recoveryPatchDiffers(part, step.expected_patch)) {
-      throw new Error(`Part “${part.part_name || "Part"}” no longer matches the stored mutation source. No clone/write was applied.`);
-    }
+    throw new Error(`Part “${part.part_name || "Part"}” changed while the Builder mutation was pending. No unrelated Part edit was overwritten.`);
   }
 }
 
