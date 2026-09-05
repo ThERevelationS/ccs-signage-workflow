@@ -1,16 +1,12 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
+import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
-
-async function nextRevisionNumber(builderProductId) {
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId });
-  return Math.max(0, ...(revisions || []).map((row) => num(row.revision_number))) + 1;
-}
 
 function getEstimateLine(estimate, builderProductId) {
   return (estimate?.line_items || []).find((line) => line.builder_product_id === builderProductId) || null;
