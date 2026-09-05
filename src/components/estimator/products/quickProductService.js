@@ -300,7 +300,6 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     updated_date_snapshot: timestamp,
-    quick_product_insert_key: operationKey,
   };
 
   return {
@@ -456,7 +455,6 @@ function buildLegacyQuickBlueprint({ estimate, productPayload, lineId, timestamp
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     updated_date_snapshot: timestamp,
-    quick_product_insert_key: operationKey,
   };
 
   return {
@@ -642,6 +640,7 @@ function buildPromotedQuickPending({ pending, blueprint, builder, sourceProject 
     builder_product_id: builder.id,
     project_id: sourceProject?.id || "",
     updated_date_snapshot: sourceUpdatedAt,
+    quick_product_insert_key: pending.key,
     quick_product_source_id: pending.source_id || "",
     quick_product_source_type: pending.source_type || "",
   };
