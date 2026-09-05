@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CNCProject, Settings } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
@@ -18,6 +18,7 @@ import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomer
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -45,8 +46,12 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
     loadPrerequisites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId, estimateId]);
@@ -254,13 +259,29 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       };
 
       let saved;
-      if (isEditing && editId) {
-        saved = await CNCProject.update(editId, finalProject);
+      const activeProjectId = persistedProjectIdRef.current || editId || "";
+      if (activeProjectId) {
+        saved = await CNCProject.update(activeProjectId, finalProject);
       } else {
-        saved = await CNCProject.create(finalProject);
+        const signature = JSON.stringify(finalProject);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("cnc_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: CNCProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: finalProject,
+          label: "CNC project",
+        });
+        if (!saved?.id) throw new Error("CNC project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
         setIsEditing(true);
       }
-      const savedId = saved?.id || editId;
+      const savedId = saved?.id || activeProjectId;
 
       if (estimateId && savedId) {
         const refreshed = await CNCProject.get(savedId).catch(() => ({ ...finalProject, id: savedId }));
