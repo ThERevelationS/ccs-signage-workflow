@@ -6,6 +6,10 @@
     "company_name": {
       "type": "string"
     },
+    "estimator_creation_key": {
+      "type": "string",
+      "description": "Internal receipt used only to converge simultaneous creation of the same new Customer from Estimate Step 1. Historical Customers are never assigned or merged by this field."
+    },
     "company_phone": {
       "type": "string"
     },
