@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
 
 const FIELDS = [
   { key: "company_name", label: "Company name *" },
@@ -28,10 +29,12 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const savingRef = useRef(false);
+  const createAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
     if (!open) return;
     let active = true;
+    createAttemptRef.current = { signature: "", key: "" };
     setTierLoading(true);
     setTierLoadError("");
     base44.entities.MarkupTier.list("sort_order")
@@ -74,14 +77,24 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     savingRef.current = true;
     setSaving(true);
     try {
-      const created = await base44.entities.Customer.create({
+      const customerData = {
         ...data,
         company_name: data.company_name.trim(),
-        customer_status: "prospect",
-        is_active: true,
+      };
+      const signature = JSON.stringify(customerData);
+      if (createAttemptRef.current.signature !== signature) {
+        createAttemptRef.current = {
+          signature,
+          key: newCustomerCreationKey(),
+        };
+      }
+      const created = await ensureNewCustomer({
+        creationKey: createAttemptRef.current.key,
+        customer: customerData,
       });
       onCreated(created);
       setData(newCustomerState());
+      createAttemptRef.current = { signature: "", key: "" };
       onClose();
     } catch (e) {
       setError(e.message || "Could not create the customer.");
