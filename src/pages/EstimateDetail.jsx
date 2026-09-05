@@ -63,9 +63,11 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                   ? "Resume Part Remove"
                   : entry.pending?.kind === "builder_part_package_add"
                     ? "Resume Part Insert"
-                    : entry.pending?.kind === "builder_quick_product_insert"
-                      ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
-                      : "Resume Price Update";
+                    : entry.pending?.kind === "builder_manual_product_price"
+                      ? "Resume Product Price"
+                      : entry.pending?.kind === "builder_quick_product_insert"
+                        ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
@@ -306,14 +308,20 @@ export default function EstimateDetail() {
 
   const persistProductSettings = async (line, index, patch) => {
     if (readOnly) return;
-    const savedLine = await saveProductSettings({
-      estimateId: estimate.id,
-      line,
-      patch,
-      expectedEstimateUpdatedAt: serverUpdatedAtRef.current,
-    });
-    await rememberServerVersion();
-    if (savedLine) patchLine(index, savedLine);
+    try {
+      const savedLine = await saveProductSettings({
+        estimateId: estimate.id,
+        line,
+        patch,
+        expectedEstimateUpdatedAt: serverUpdatedAtRef.current,
+      });
+      await rememberServerVersion();
+      if (savedLine) patchLine(index, savedLine);
+    } catch (error) {
+      await refreshProducts().catch(() => null);
+      const isPriceAdjustment = patch?.customer_price_snapshot !== undefined;
+      window.alert(`${error?.message || "Product settings could not be saved."}${isPriceAdjustment ? "\n\nThe estimate was refreshed. If the price adjustment had already started, use Resume Product Price to safely continue it." : ""}`);
+    }
   };
 
   const createQuickProduct = async (line, options) => {
@@ -365,9 +373,11 @@ export default function EstimateDetail() {
       // A mid-write failure may have persisted the durable recovery marker. Reload
       // immediately so the row exposes Resume Price Update instead of stale state.
       await refreshProducts().catch(() => null);
-      const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
-        ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
-        : "Resume Price Update";
+      const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_manual_product_price"
+        ? "Resume Product Price"
+        : line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+          ? line?.price_acceptance_pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+          : "Resume Price Update";
       window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
     }
   };
