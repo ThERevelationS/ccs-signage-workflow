@@ -573,16 +573,11 @@ async function ensureQuickInsertSource({ builder, blueprint, pending }) {
       if (sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
         throw new Error("The recovered Quick Product source record no longer matches the saved Quick Product snapshot.");
       }
-    } else {
-      const startedAt = new Date(pending.started_at || 0).getTime();
-      const plausible = candidates.filter((row) => {
-        const createdAt = new Date(row?.created_date || 0).getTime();
-        const notesOkay = String(row?.notes || "") === String(blueprint.sourceExpectedData.notes || "");
-        return createdAt >= startedAt && notesOkay && !sourceCoreDiffers(row, blueprint.sourceExpectedData);
-      });
-      if (plausible.length > 1) throw new Error("Quick Product source recovery found multiple plausible source records. Recovery stopped to avoid linking the wrong project.");
-      sourceProject = plausible[0] || null;
     }
+    // Do not infer recovery from an untagged lookalike. A completed prior Quick
+    // Product can legitimately have an identical source snapshot. The temporary
+    // token is the only safe create-response-loss anchor before source_project_id
+    // is linked onto the new BuilderProduct.
     if (!sourceProject) sourceProject = await entity.create(blueprint.sourceTaggedData);
     if (!sourceProject?.id) throw new Error("Quick Product source project could not be verified after creation.");
 
