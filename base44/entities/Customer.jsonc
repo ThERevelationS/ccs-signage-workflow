@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Internal receipt used only to converge simultaneous creation of the same new Customer from Estimate Step 1. Historical Customers are never assigned or merged by this field."
     },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal random receipt for retry-safe explicit New Customer creation. It is not derived from company name, so separate intentional Customer records remain possible."
+    },
     "company_phone": {
       "type": "string"
     },
