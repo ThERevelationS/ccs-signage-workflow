@@ -15,10 +15,9 @@ import CancelEstimateModal from "@/components/estimator/aio/CancelEstimateModal"
 import ClipboardManagerModal from "@/components/estimator/aio/ClipboardManagerModal";
 import { computePricing } from "@/components/estimator/aioPricing";
 import { acceptedInternalEstimateCost } from "@/components/estimator/customerPricing";
-import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estimator/useSectionSync";
+import { refreshSectionSnapshots } from "@/components/estimator/useSectionSync";
 import {
   acceptBuilderPrice,
-  deleteBuilderProductCascade,
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
 import { refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
