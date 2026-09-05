@@ -3,6 +3,8 @@ import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
+import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
