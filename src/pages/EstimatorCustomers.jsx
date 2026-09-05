@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw } from "lucide-react";
-import { backfillCustomersFromWorkOrders } from "@/components/estimator/customerSync";
+import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -28,7 +28,7 @@ export default function EstimatorCustomers() {
   useEffect(() => {
     const load = async () => {
       const [res, tierRows, user] = await Promise.all([
-        base44.entities.Customer.list("company_name", 1000),
+        loadAllCustomers(),
         base44.entities.MarkupTier.list("sort_order").catch(() => []),
         base44.auth.me().catch(() => null),
       ]);
@@ -46,7 +46,7 @@ export default function EstimatorCustomers() {
     workflowSyncRef.current = true;
     setSyncingWorkflowCustomers(true);
     try {
-      const current = await base44.entities.Customer.list("company_name", 1000);
+      const current = await loadAllCustomers();
       const merged = await backfillCustomersFromWorkOrders(current || []);
       const createdCount = Math.max(0, merged.length - (current || []).length);
       setCustomers(
