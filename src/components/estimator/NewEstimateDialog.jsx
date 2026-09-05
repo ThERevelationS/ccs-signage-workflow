@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { generateDocNumber } from "@/functions/generateDocNumber";
+import { ensureNewEstimate, newEstimateCreationKey } from "./estimateCreationService";
+import { upsertCustomerFromEstimate } from "./customerSync";
 
 export default function NewEstimateDialog({ open, onClose, onCreated }) {
   const [customers, setCustomers] = useState([]);
@@ -13,10 +15,12 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
   const [projectName, setProjectName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const createAttemptRef = useRef({ signature: "", key: "", estimateNumber: "" });
 
   useEffect(() => {
     if (!open) return;
     setError("");
+    createAttemptRef.current = { signature: "", key: "", estimateNumber: "" };
     base44.entities.Customer.list("company_name", 500).then((res) => setCustomers(res || []));
   }, [open]);
 
@@ -30,22 +34,39 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
     }
     setSaving(true);
     try {
-      let finalCustomerId = customerId;
-      if (!selected) {
-        const created = await base44.entities.Customer.create({ company_name: clientName });
-        finalCustomerId = created.id;
+      const signature = JSON.stringify([projectName.trim(), selected?.id || "", clientName]);
+      if (createAttemptRef.current.signature !== signature) {
+        createAttemptRef.current = {
+          signature,
+          key: newEstimateCreationKey(),
+          estimateNumber: "",
+        };
       }
-      const res = await generateDocNumber({ doc_type: "estimate" });
-      const estimate = await base44.entities.AllInOneEstimate.create({
-        project_name: projectName.trim(),
-        client_name: clientName,
-        customer_id: finalCustomerId,
-        estimate_number: res?.data?.number,
-        status: "draft",
+
+      const customer = await upsertCustomerFromEstimate(
+        { client_name: clientName, customer_id: selected?.id || "" },
+        customers
+      );
+
+      if (!createAttemptRef.current.estimateNumber) {
+        const res = await generateDocNumber({ doc_type: "estimate" });
+        createAttemptRef.current.estimateNumber = String(res?.data?.number || "").trim();
+      }
+
+      const estimate = await ensureNewEstimate({
+        creationKey: createAttemptRef.current.key,
+        estimate: {
+          project_name: projectName.trim(),
+          client_name: clientName,
+          customer_id: customer?.id || null,
+          estimate_number: createAttemptRef.current.estimateNumber,
+          status: "draft",
+        },
       });
       setProjectName("");
       setNewClientName("");
       setCustomerId("");
+      createAttemptRef.current = { signature: "", key: "", estimateNumber: "" };
       onCreated(estimate);
     } catch (e) {
       setError(e.message || "Could not create the estimate.");
