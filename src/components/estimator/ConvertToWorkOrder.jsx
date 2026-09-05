@@ -62,7 +62,9 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
                                   ? "Resume Group Create"
                                   : pendingPrice.pending?.kind === "builder_part_group_dissolve"
                                     ? "Resume Group Dissolve"
-                                    : pendingPrice.pending?.kind === "builder_quick_product_insert"
+                                    : pendingPrice.pending?.kind === "builder_blank_product_insert"
+                                      ? "Resume Product Add"
+                                      : pendingPrice.pending?.kind === "builder_quick_product_insert"
                               ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                               : "Resume Price Update";
         throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
