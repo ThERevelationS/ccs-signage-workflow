@@ -24,7 +24,7 @@ import {
 } from "@/components/estimator/builder/builderService";
 import { createCustomProduct, refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
 import { cloneProductInEstimate, saveProductNotes, saveProductSettings } from "@/components/estimator/products/productOperations";
-import { instantiateQuickProduct, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
+import { instantiateQuickProduct, resumeQuickProductInsertion, saveProductAsQuickProduct } from "@/components/estimator/products/quickProductService";
 import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
@@ -63,7 +63,9 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                   ? "Resume Part Remove"
                   : entry.pending?.kind === "builder_part_package_add"
                     ? "Resume Part Insert"
-                    : "Resume Price Update";
+                    : entry.pending?.kind === "builder_quick_product_insert"
+                      ? "Resume Quick Product"
+                      : "Resume Price Update";
   throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
@@ -326,14 +328,21 @@ export default function EstimateDetail() {
 
   const addQuickProduct = async (quickProduct) => {
     if (readOnly) return;
-    await instantiateQuickProduct({ estimateId: estimate.id, quickProduct, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
-    await refreshProducts();
+    try {
+      await instantiateQuickProduct({ estimateId: estimate.id, quickProduct, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+      await refreshProducts();
+    } catch (error) {
+      await refreshProducts().catch(() => null);
+      window.alert(`${error?.message || "Quick Product could not be added."}\n\nThe estimate was refreshed. If insertion had already started, use Resume Quick Product to safely continue it.`);
+    }
   };
 
   const updateProductPrice = async (line) => {
     if (readOnly) return;
     try {
-      const result = await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
+      const result = line?.price_acceptance_pending?.kind === "builder_quick_product_insert"
+        ? await resumeQuickProductInsertion({ estimateId: estimate.id, lineId: line.line_id || "" })
+        : await acceptBuilderPrice({ estimateId: estimate.id, line, expectedEstimateUpdatedAt: serverUpdatedAtRef.current });
       if (result?.blocked && result.reason === "detached_parts") {
         const names = (result.detachedParts || [])
           .map((part) => part.part_name || part.inventory_item_name)
@@ -351,7 +360,8 @@ export default function EstimateDetail() {
       // A mid-write failure may have persisted the durable recovery marker. Reload
       // immediately so the row exposes Resume Price Update instead of stale state.
       await refreshProducts().catch(() => null);
-      window.alert(`${error?.message || "Product price could not be updated."}\n\nThe estimate was refreshed. If this Update Price had already started, use Resume Price Update to safely continue it.`);
+      const recoveryLabel = line?.price_acceptance_pending?.kind === "builder_quick_product_insert" ? "Resume Quick Product" : "Resume Price Update";
+      window.alert(`${error?.message || "Product pricing/recovery could not be completed."}\n\nThe estimate was refreshed. If this operation had already started, use ${recoveryLabel} to safely continue it.`);
     }
   };
 
