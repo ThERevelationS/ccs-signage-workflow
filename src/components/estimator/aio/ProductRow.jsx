@@ -238,7 +238,7 @@ export default function ProductRow({
           )}
         </div>
 
-        {(meta.differs || priceAcceptancePending) && (line.builder_product_id || ["builder_quick_product_insert", "builder_blank_product_insert"].includes(pendingPriceAcceptance?.kind)) && (
+        {(meta.differs || priceAcceptancePending) && (line.builder_product_id || ["builder_quick_product_insert", "builder_blank_product_insert", "builder_product_remove"].includes(pendingPriceAcceptance?.kind)) && (
           priceAcceptancePending ? (
             <button
               type="button"
