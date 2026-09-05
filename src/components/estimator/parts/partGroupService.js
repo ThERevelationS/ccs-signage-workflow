@@ -114,17 +114,81 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
 
 export async function clonePartGroupInProduct({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || !groupId) throw new Error("Part Group is required.");
-  const [{ builder, estimate }, group, allParts, allGroups, revisionNumber] = await Promise.all([
-    loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt),
+
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const currentLine = estimateLine(estimate, builder.id);
+  if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before cloning its Part Group.");
+
+  const operationKey = `builder_part_group_clone:${builderMutationHash({
+    estimate_id: estimate.id,
+    builder_product_id: builder.id,
+    source_group_id: groupId,
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    expected_group_updated_at: expectedGroupUpdatedAt || "",
+    expected_part_versions: expectedPartVersions || {},
+  })}`;
+
+  const [group, allParts, allGroups, revisions] = await Promise.all([
     base44.entities.BuilderPartGroup.get(groupId),
     base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
     base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
-    nextRevisionNumber(builderProductId),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
   ]);
-  if (!builder || !group || group.builder_product_id !== builderProductId) throw new Error("Part Group could not be loaded.");
+  if (!Array.isArray(allParts) || !Array.isArray(allGroups) || !Array.isArray(revisions)) {
+    throw new Error("Part Group clone prerequisites could not be fully verified.");
+  }
+
+  const existingPending = pendingBuilderMutation(currentLine);
+  if (existingPending) {
+    if (existingPending.kind !== "builder_part_group_clone" || existingPending.key !== operationKey) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume it before cloning a Part Group.");
+    }
+    const recovered = await resumeBuilderMutation({
+      estimateId: estimate.id,
+      estimate,
+      builder,
+      parts: allParts,
+      line: currentLine,
+      pending: existingPending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+    });
+    const [groupsAfter, partsAfter] = await Promise.all([
+      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    ]);
+    const recoveredGroup = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
+    const targetPartKeys = new Set(existingPending.target_part_keys || []);
+    return { group: recoveredGroup, parts: (partsAfter || []).filter((part) => targetPartKeys.has(part.part_key)), recovered: true, line: recovered?.line || currentLine };
+  }
+
+  const completedRevision = revisions.find((row) => String(row.idempotency_key || "") === operationKey);
+  if (completedRevision) {
+    const targetGroupKey = `clone-group-${builderMutationHash({ operation_key: operationKey, source_group_id: groupId })}`;
+    const completedGroup = allGroups.find((row) => row.group_key === targetGroupKey) || null;
+    const completedPartKeys = new Set((completedRevision.changed_parts || []).map((part) => part.part_key).filter(Boolean));
+    const completedParts = allParts.filter((part) => completedPartKeys.has(part.part_key));
+    const targetMatches = completedGroup &&
+      completedParts.length === completedPartKeys.size &&
+      !recoveryPatchDiffers(builder, {
+        frozen_cost: completedRevision.new_total_cost,
+        frozen_customer_price: completedRevision.new_customer_price,
+      }) &&
+      !recoveryPatchDiffers(currentLine, {
+        total_snapshot: completedRevision.new_total_cost,
+        customer_price_snapshot: completedRevision.new_customer_price,
+      });
+    if (targetMatches) return { group: completedGroup, parts: completedParts, alreadyCompleted: true };
+    throw new Error("The Part Group clone audit exists, but the Product no longer matches that completed clone. Reload and review the Product before continuing.");
+  }
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  if (!group || group.builder_product_id !== builderProductId) throw new Error("Part Group could not be loaded.");
   assertVersion(group, expectedGroupUpdatedAt, "Part Group");
 
-  const sourceParts = (allParts || [])
+  const sourceParts = allParts
     .filter((part) => part.is_active !== false && part.part_group_id === groupId)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order));
   if (!sourceParts.length) throw new Error("This Part Group does not contain any active Parts.");
@@ -132,102 +196,153 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
 
   const timestamp = nowIso();
   const isCustom = builder.module_key === "custom";
-  const newGroup = await base44.entities.BuilderPartGroup.create({
+  const activeGroupCount = allGroups.filter((row) => row.is_active !== false).length;
+  const activePartCount = allParts.filter((part) => part.is_active !== false).length;
+  const targetGroupKey = `clone-group-${builderMutationHash({ operation_key: operationKey, source_group_id: group.id })}`;
+  const groupData = {
     ...stripEntitySystemFields(group),
     builder_product_id: builder.id,
-    group_key: makeStableId("group"),
+    group_key: targetGroupKey,
     group_name: `${group.group_name || "Part Group"} Copy`,
-    sort_order: (allGroups || []).filter((row) => row.is_active !== false).length,
+    sort_order: activeGroupCount,
     is_collapsed: false,
     is_active: true,
+  };
+
+  const partSteps = sourceParts.map((sourcePart, index) => {
+    const partKey = `clone-part-${builderMutationHash({ operation_key: operationKey, source_part_id: sourcePart.id, index })}`;
+    return {
+      operation: "create",
+      part_key: partKey,
+      part_group_key_ref: targetGroupKey,
+      data: {
+        ...stripEntitySystemFields(sourcePart),
+        builder_product_id: builder.id,
+        part_group_id: "",
+        part_key: partKey,
+        sort_order: activePartCount + index,
+        builder_sync_state: isCustom ? "manual" : "manual_addon",
+        source_path: "",
+        builder_detached_at: "",
+        builder_detached_reason: isCustom ? "" : "Independent Part created by cloning a Part Group.",
+        builder_detached_snapshot: {},
+        reattach_candidate_id: "",
+        reattach_candidate_name: "",
+        last_price_check_at: timestamp,
+        last_price_update_at: timestamp,
+        is_active: true,
+        notes: `${sourcePart.notes ? `${sourcePart.notes}\n` : ""}Cloned with Part Group “${group.group_name || "Part Group"}”.`,
+      },
+    };
   });
 
-  const activePartCount = (allParts || []).filter((part) => part.is_active !== false).length;
-  const clonedParts = [];
-  for (let index = 0; index < sourceParts.length; index += 1) {
-    const sourcePart = sourceParts[index];
-    const cloned = await base44.entities.BuilderPart.create({
-      ...stripEntitySystemFields(sourcePart),
-      builder_product_id: builder.id,
-      part_group_id: newGroup.id,
-      part_key: makeStableId("part"),
-      sort_order: activePartCount + index,
-      builder_sync_state: isCustom ? "manual" : "manual_addon",
-      source_path: "",
-      builder_detached_at: "",
-      builder_detached_reason: isCustom ? "" : "Independent Part created by cloning a Part Group.",
-      builder_detached_snapshot: {},
-      reattach_candidate_id: "",
-      reattach_candidate_name: "",
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-      is_active: true,
-      notes: `${sourcePart.notes ? `${sourcePart.notes}\n` : ""}Cloned with Part Group “${group.group_name || "Part Group"}”.`,
-    });
-    clonedParts.push(cloned);
-  }
-
-  const addedFrozen = clonedParts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
-  const addedCurrent = clonedParts.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
+  const addedFrozen = sourceParts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const addedCurrent = sourceParts.reduce((sum, part) => sum + num(part.current_extended_cost, num(part.frozen_extended_cost)), 0);
   const previousFrozen = num(builder.frozen_cost);
   const previousCurrent = num(builder.current_recalculated_cost, previousFrozen);
   const nextFrozen = previousFrozen + addedFrozen;
   const nextCurrent = previousCurrent + addedCurrent;
   const nextState = Math.abs(nextCurrent - nextFrozen) > 0.005 ? "changed" : "current";
   const previousCustomer = num(builder.frozen_customer_price, previousFrozen);
-
-  await base44.entities.BuilderProduct.update(builder.id, {
+  const nextCustomer = previousCustomer + addedFrozen;
+  const builderPatch = {
     frozen_cost: nextFrozen,
-    frozen_customer_price: previousCustomer + addedFrozen,
+    frozen_customer_price: nextCustomer,
     current_recalculated_cost: nextCurrent,
     price_state: nextState,
     price_delta: nextCurrent - nextFrozen,
     price_delta_percent: nextFrozen ? ((nextCurrent - nextFrozen) / nextFrozen) * 100 : 0,
-    part_count: activePartCount + clonedParts.length,
-    group_count: (allGroups || []).filter((row) => row.is_active !== false).length + 1,
+    part_count: activePartCount + sourceParts.length,
+    group_count: activeGroupCount + 1,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
     builder_version: num(builder.builder_version, 1) + 1,
-  });
-
-  const nextCustomer = previousCustomer + addedFrozen;
-  await updateVerifiedEstimateLines(estimate, {
-    [builder.id]: (line) => ({
-      total_snapshot: nextFrozen,
-      live_total_snapshot: nextCurrent,
-      customer_price_snapshot: nextCustomer,
-      live_customer_price_snapshot: liveCustomerUnitPrice(line) + addedCurrent,
-      price_state: nextState,
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-    }),
-  });
-
-  await base44.entities.BuilderPriceRevision.create({
+  };
+  const linePatch = {
+    total_snapshot: nextFrozen,
+    live_total_snapshot: nextCurrent,
+    customer_price_snapshot: nextCustomer,
+    live_customer_price_snapshot: liveCustomerUnitPrice(currentLine) + addedCurrent,
+    price_state: nextState,
+    last_price_check_at: timestamp,
+    last_price_update_at: timestamp,
+  };
+  const changedParts = sourceParts.map((part, index) => ({
+    source_part_id: part.id,
+    part_key_ref: partSteps[index].part_key,
+    part_name: part.part_name,
+    action: "clone_part_group",
+    source_group_id: group.id,
+    new_group_key_ref: targetGroupKey,
+    frozen_extended_cost: num(part.frozen_extended_cost),
+  }));
+  const pending = {
+    key: operationKey,
+    kind: "builder_part_group_clone",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: currentLine.line_id || builder.estimate_line_id || "",
     builder_product_id: builder.id,
-    estimate_id: builder.estimate_id || "",
-    revision_number: revisionNumber,
-    reason: "manual_adjustment",
-    previous_total_cost: previousFrozen,
-    new_total_cost: nextFrozen,
-    previous_customer_price: previousCustomer,
-    new_customer_price: previousCustomer + addedFrozen,
-    changed_parts: clonedParts.map((part) => ({
-      part_id: part.id,
-      part_name: part.part_name,
-      action: "clone_part_group",
-      source_group_id: group.id,
-      new_group_id: newGroup.id,
-      frozen_extended_cost: num(part.frozen_extended_cost),
-    })),
-    builder_snapshot_before: builder.builder_snapshot || {},
-    builder_snapshot_after: builder.builder_snapshot || {},
-    price_snapshot_before: { total: previousFrozen },
-    price_snapshot_after: { total: nextFrozen },
-    notes: `Cloned Part Group “${group.group_name || "Part Group"}” with ${clonedParts.length} Part${clonedParts.length === 1 ? "" : "s"}. Builder-linked source Parts were copied as independent add-ons so future Builder saves cannot overwrite the clone.`,
-  });
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    source_group_id: group.id,
+    target_group_key: targetGroupKey,
+    target_part_keys: partSteps.map((step) => step.part_key),
+    precondition_plan: {
+      groups: [{
+        id: group.id,
+        expected_updated_date: group.updated_date || "",
+        expected_patch: { builder_product_id: builder.id, group_key: group.group_key || "" },
+      }],
+      parts: sourceParts.map((part) => ({
+        id: part.id,
+        expected_updated_date: part.updated_date || "",
+        expected_patch: { builder_product_id: builder.id, part_group_id: group.id, part_key: part.part_key || "" },
+      })),
+    },
+    group_create_plan: { groups: [{ group_key: targetGroupKey, data: groupData }] },
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: partSteps,
+      changed_parts: changedParts,
+      active_part_count: activePartCount + sourceParts.length,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision: {
+      builder_product_id: builder.id,
+      estimate_id: builder.estimate_id || "",
+      reason: "manual_adjustment",
+      previous_total_cost: previousFrozen,
+      new_total_cost: nextFrozen,
+      previous_customer_price: previousCustomer,
+      new_customer_price: nextCustomer,
+      changed_parts: changedParts,
+      builder_snapshot_before: builder.builder_snapshot || {},
+      builder_snapshot_after: builder.builder_snapshot || {},
+      price_snapshot_before: { total: previousFrozen },
+      price_snapshot_after: { total: nextFrozen },
+      notes: `Cloned Part Group “${group.group_name || "Part Group"}” with ${sourceParts.length} Part${sourceParts.length === 1 ? "" : "s"}. Builder-linked source Parts were copied as independent add-ons so future Builder saves cannot overwrite the clone.`,
+    },
+  };
 
-  return { group: newGroup, parts: clonedParts };
+  const marked = await markBuilderMutationPending({ estimate, builder, pending });
+  const recovered = await resumeBuilderMutation({
+    estimateId: estimate.id,
+    estimate: marked.markedEstimate,
+    builder: marked.currentBuilder,
+    parts: marked.currentParts,
+    line: marked.markedLine,
+    pending: marked.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
+  const [groupsAfter, partsAfter] = await Promise.all([
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+  ]);
+  const clonedGroup = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
+  const targetPartKeys = new Set(partSteps.map((step) => step.part_key));
+  return { group: clonedGroup, parts: (partsAfter || []).filter((part) => targetPartKeys.has(part.part_key)), recovered: true, line: recovered?.line || currentLine };
 }
 
 export async function moveIndependentPartGroup({ sourceBuilderProductId, targetBuilderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
