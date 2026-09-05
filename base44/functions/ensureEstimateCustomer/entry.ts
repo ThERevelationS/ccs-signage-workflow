@@ -17,6 +17,9 @@ const CUSTOMER_FIELDS = new Set([
   'legacy_client_names',
 ]);
 
+const CUSTOMER_PAGE_SIZE = 500;
+const CUSTOMER_VERIFY_LIMIT = 50000;
+
 const CUSTOMER_REFERENCE_ENTITIES = [
   'VinylProject',
   'Order',
@@ -53,16 +56,25 @@ const matchesCustomerName = (row: any, normalizedName: string) => {
 };
 
 async function findHistoricalMatch(CustomerService: any, normalizedName: string) {
-  // The estimator currently resolves Customers from a 1,000-row company-name
-  // list. Keep that behavior server-side, but fail closed if the catalog reaches
-  // the verification ceiling rather than silently creating a duplicate.
-  const rows = await CustomerService.list('company_name', 1000);
-  const matches = (rows || []).filter((row: any) => matchesCustomerName(row, normalizedName));
-  if (matches.length) return canonicalRow(matches);
-  if ((rows || []).length >= 1000) {
-    throw new Error('The Customer catalog is too large to safely verify this new company name. No Customer was created; search/link the Customer manually and retry.');
+  // Legacy aliases live inside each Customer record, so an exact company-name
+  // filter alone is insufficient. Page through the full catalog with the same
+  // Base44 list(sort, limit, skip) contract already used by other backends.
+  // New rows sort to the end by created_date, which also keeps this scan stable
+  // if another Customer is added while verification is in progress.
+  const matches: any[] = [];
+  let skip = 0;
+  while (skip < CUSTOMER_VERIFY_LIMIT) {
+    const page = await CustomerService.list('created_date', CUSTOMER_PAGE_SIZE, skip);
+    if (!Array.isArray(page)) {
+      throw new Error('The Customer catalog could not be verified safely. No Customer was created.');
+    }
+    for (const row of page) {
+      if (matchesCustomerName(row, normalizedName)) matches.push(row);
+    }
+    if (page.length < CUSTOMER_PAGE_SIZE) return canonicalRow(matches);
+    skip += CUSTOMER_PAGE_SIZE;
   }
-  return null;
+  throw new Error(`The Customer catalog exceeds the ${CUSTOMER_VERIFY_LIMIT.toLocaleString()}-record verification safety limit. No Customer was created.`);
 }
 
 async function hasAnyCustomerReference(base44: any, customerId: string) {
