@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MetalProject, Settings, Inventory as InventoryEntity } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
@@ -43,8 +44,12 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
@@ -277,13 +282,29 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       };
 
       let saved;
-      if (isEditing && editId) {
-        saved = await MetalProject.update(editId, finalProject);
+      const activeProjectId = persistedProjectIdRef.current || editId || "";
+      if (activeProjectId) {
+        saved = await MetalProject.update(activeProjectId, finalProject);
       } else {
-        saved = await MetalProject.create(finalProject);
+        const signature = JSON.stringify(finalProject);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("metal_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: MetalProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: finalProject,
+          label: "Metal project",
+        });
+        if (!saved?.id) throw new Error("Metal project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
         setIsEditing(true);
       }
-      const savedId = saved?.id || editId;
+      const savedId = saved?.id || activeProjectId;
 
       if (estimateId && savedId) {
         const refreshed = await MetalProject.get(savedId).catch(() => ({ ...finalProject, id: savedId }));
