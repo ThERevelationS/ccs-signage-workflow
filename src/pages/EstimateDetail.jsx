@@ -34,6 +34,7 @@ import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/componen
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
+import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 
 const STEP_TITLES = {
@@ -420,37 +421,22 @@ export default function EstimateDetail() {
     try {
       const before = await base44.entities.AllInOneEstimate.get(estimate.id);
       assertNoPendingPriceAcceptance(before, "saving the estimate");
-      if (hasServerConflict(before)) {
-        window.alert("This estimate changed in another session after this page last read or saved it. Your local changes were not written. Reload the estimate and reconcile the newer server changes before saving.");
-        return;
-      }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
-      const revisionBaseVersion = Math.max(0, Math.floor(Number(
-        openRevision?.estimate_snapshot_before?.quote_version ?? before.quote_version ?? 0
-      )));
-      const completingSentRevision = !!openRevision &&
-        before.status === "sent" &&
-        estimate.status === "sent" &&
-        Math.max(0, Math.floor(Number(before.quote_version || 0))) === revisionBaseVersion;
-      const quoteIssueMetadata = resolveQuoteIssueMetadata({
-        previousStatus: before.status || "",
-        nextStatus: estimate.status || "",
-        currentVersion: before.quote_version || 0,
+      const pendingTransition = pendingLifecycleBaselineRef.current;
+      const matchingPendingTransition = lifecycleReasonRequired &&
+        pendingTransition?.nextStatus === estimate.status &&
+        pendingTransition?.reason === lifecycleReason
+        ? pendingTransition
+        : null;
+      const quoteIssueMetadata = intendedQuoteIssueMetadata({
+        resolveQuoteIssueMetadata,
+        serverRecord: before,
+        localEstimate: estimate,
+        openRevision,
+        pendingTransition: matchingPendingTransition,
         today: localDateStamp(),
-        completingSentRevision,
       });
-      if (lifecycleReasonRequired) {
-        const pending = pendingLifecycleBaselineRef.current;
-        if (!pending || pending.nextStatus !== estimate.status || pending.reason !== lifecycleReason) {
-          pendingLifecycleBaselineRef.current = {
-            estimateBefore: before,
-            nextStatus: estimate.status,
-            reason: lifecycleReason,
-            key: `status_transition:${estimate.id}:${before.updated_date || "unknown"}:${before.status || "draft"}:${estimate.status}:${Number(quoteIssueMetadata.quote_version ?? before.quote_version ?? 0)}`,
-          };
-        }
-      }
       const persistedData = {
         ...data,
         ...quoteIssueMetadata,
@@ -458,9 +444,30 @@ export default function EstimateDetail() {
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
-      const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
-      let saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+      const intendedSavedState = { ...estimate, ...persistedData, id: estimate.id };
+      const serverConflict = hasServerConflict(before);
+      const priorEstimateWriteAlreadyApplied = serverConflict && estimateServerMatchesIntendedSave(before, intendedSavedState);
+      if (serverConflict && !priorEstimateWriteAlreadyApplied) {
+        window.alert("This estimate changed in another session after this page last read or saved it. Your local changes were not written. Reload the estimate and reconcile the newer server changes before saving.");
+        return;
+      }
+      if (lifecycleReasonRequired && !matchingPendingTransition) {
+        pendingLifecycleBaselineRef.current = {
+          estimateBefore: before,
+          nextStatus: estimate.status,
+          reason: lifecycleReason,
+          key: `status_transition:${estimate.id}:${before.updated_date || "unknown"}:${before.status || "draft"}:${estimate.status}:${Number(quoteIssueMetadata.quote_version ?? before.quote_version ?? 0)}`,
+        };
+      }
+
+      let saved;
+      if (priorEstimateWriteAlreadyApplied) {
+        saved = before;
+      } else {
+        const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
+        const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+        saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
+      }
       await rememberServerVersion(saved);
 
       let syncPreviousStatus = before.status || "";
