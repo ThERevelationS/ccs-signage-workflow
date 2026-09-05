@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { MaintenanceProject, MaintenanceActionRate, Settings } from "@/entities/all";
 import { useSearchParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
@@ -18,6 +18,7 @@ import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutoco
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
 import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMaintenanceProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -58,6 +59,13 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
+
+  useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+  }, [editId]);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -182,13 +190,29 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
         status: "calculated",
       };
       let saved;
-      if (isEditing && editId) {
-        saved = await MaintenanceProject.update(editId, dataToSave);
+      const activeProjectId = persistedProjectIdRef.current || editId || "";
+      if (activeProjectId) {
+        saved = await MaintenanceProject.update(activeProjectId, dataToSave);
       } else {
-        saved = await MaintenanceProject.create(dataToSave);
+        const signature = JSON.stringify(dataToSave);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("maintenance_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: MaintenanceProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: dataToSave,
+          label: "Maintenance project",
+        });
+        if (!saved?.id) throw new Error("Maintenance project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
         setIsEditing(true);
       }
-      const savedId = saved?.id || editId;
+      const savedId = saved?.id || activeProjectId;
 
       if (estimateId && savedId) {
         const refreshed = await MaintenanceProject.get(savedId).catch(() => ({ ...dataToSave, id: savedId }));
