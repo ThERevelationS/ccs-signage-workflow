@@ -189,7 +189,7 @@ export default function EstimateDetail() {
       onWarning: (warning) => warnings.push(warning),
     });
     for (const line of withBuilders.line_items || []) {
-      if (line.module_key === "custom" && line.builder_product_id) {
+      if (line.module_key === "custom" && line.builder_product_id && line.price_acceptance_pending?.kind !== "builder_product_remove") {
         try {
           await refreshManualProductPricing(line.builder_product_id);
         } catch (error) {
