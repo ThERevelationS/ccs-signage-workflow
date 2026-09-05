@@ -153,7 +153,9 @@ export default function ProductRow({
                               ? "Resume Group Dissolve"
                               : pendingPriceAcceptance?.kind === "builder_blank_product_insert"
                                 ? "Resume Product Add"
-                                : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                                : pendingPriceAcceptance?.kind === "builder_product_remove"
+                                  ? "Resume Product Remove"
+                                  : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                         ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   const isCustom = line.module_key === "custom";
@@ -273,7 +275,9 @@ export default function ProductRow({
                                           ? "Resume the previously started Part Group dissolve from its saved recovery marker."
                                           : pendingPriceAcceptance?.kind === "builder_blank_product_insert"
                                             ? "Resume the previously started blank Product creation from its saved recovery marker."
-                                            : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                                            : pendingPriceAcceptance?.kind === "builder_product_remove"
+                                              ? "Resume the previously started Product removal from its saved recovery marker."
+                                              : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                                     ? pendingPriceAcceptance?.source_type === "product_clone"
                                       ? "Resume the previously started Product clone from its saved recovery marker."
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
