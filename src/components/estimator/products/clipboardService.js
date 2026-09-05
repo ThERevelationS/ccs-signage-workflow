@@ -4,6 +4,8 @@ import { instantiateProductSnapshot } from "@/components/estimator/products/quic
 import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
+import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -77,13 +79,38 @@ async function captureProductPayload({ line }) {
 }
 
 async function createClipboardRecord(data) {
-  return base44.entities.EstimateClipboardItem.create({
-    ...data,
-    copied_at: nowIso(),
-    expires_at: expiryIso(),
+  const idempotencyKey = `estimate_clipboard_copy:${builderMutationHash({
+    item_type: data.item_type || "",
+    item_name: data.item_name || "",
+    source_estimate_id: data.source_estimate_id || "",
+    source_product_id: data.source_product_id || "",
+    source_part_group_id: data.source_part_group_id || "",
+    source_part_id: data.source_part_id || "",
+    payload: data.payload || {},
+    notes: data.notes || "",
+  })}`;
+  const copiedAt = nowIso();
+  const expiresAt = expiryIso();
+  const searchText = [data.item_name, data.source_estimate_number, data.source_order, data.source_company, data.source_product_name, data.source_module_key]
+    .filter(Boolean).join(" ").toLowerCase();
+  const record = await ensureReusableRecord({
+    entity: base44.entities.EstimateClipboardItem,
+    idempotencyKey,
+    label: "Estimator clipboard item",
+    data: {
+      ...data,
+      copied_at: copiedAt,
+      expires_at: expiresAt,
+      is_active: true,
+      search_text: searchText,
+    },
+  });
+  if (!record?.id) return record;
+  return base44.entities.EstimateClipboardItem.update(record.id, {
+    copied_at: copiedAt,
+    expires_at: expiresAt,
     is_active: true,
-    search_text: [data.item_name, data.source_estimate_number, data.source_order, data.source_company, data.source_product_name, data.source_module_key]
-      .filter(Boolean).join(" ").toLowerCase(),
+    search_text: searchText,
   });
 }
 
