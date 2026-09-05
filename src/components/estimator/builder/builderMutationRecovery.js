@@ -281,6 +281,9 @@ export async function resumeBuilderMutation({
   if (pending.kind === "builder_part_group_move") {
     throw new Error("This pending Part Group move must be resumed with its two-Product recovery action.");
   }
+  if (pending.kind === "builder_product_remove") {
+    throw new Error("This pending Product removal must be resumed with Resume Product Remove.");
+  }
   if (typeof applyPartPlan !== "function") throw new Error("Builder recovery could not apply its stored Part plan.");
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
