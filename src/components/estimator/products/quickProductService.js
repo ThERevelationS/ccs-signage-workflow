@@ -741,6 +741,7 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
     lineId: line.line_id,
     timestamp: pending.started_at,
     operationKey: pending.key,
+    sourceType: pending.source_type || "quick_product",
   });
 
   if (pending.builder_product_id && pending.part_acceptance_plan) {
@@ -804,6 +805,7 @@ async function startQuickProductInsertion({ estimate, productPayload, sourceType
     lineId,
     timestamp,
     operationKey,
+    sourceType,
   });
   const pending = {
     key: operationKey,
@@ -885,7 +887,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
   });
 }
 
-export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "", sourceId = "" }) {
+export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "", sourceId = "", sourceType = "clipboard_product" }) {
   if (!estimateId || !productSnapshot) throw new Error("Estimate and Product snapshot are required.");
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
@@ -893,7 +895,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
   const pendingLine = findPendingQuickInsertLine(estimate);
   if (pendingLine) {
     const pending = pendingBuilderMutation(pendingLine);
-    if (pending?.source_type === "clipboard_product" && pending?.payload_hash === payloadHash && (!sourceId || !pending.source_id || pending.source_id === sourceId)) {
+    if (pending?.source_type === sourceType && pending?.payload_hash === payloadHash && (!sourceId || !pending.source_id || pending.source_id === sourceId)) {
       return resumeQuickProductInsertion({ estimateId, lineId: pendingLine.line_id });
     }
     throw new Error("Another Quick Product or Builder mutation is still being recovered. Resume it before pasting another Product.");
@@ -901,7 +903,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
   const operationKey = quickInsertOperationKey({
     estimateId,
     expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "",
-    sourceType: "clipboard_product",
+    sourceType,
     sourceId,
     sourceUpdatedAt: "",
     productPayload: productSnapshot,
@@ -912,7 +914,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
   return startQuickProductInsertion({
     estimate,
     productPayload: productSnapshot,
-    sourceType: "clipboard_product",
+    sourceType,
     sourceId,
     sourceUpdatedAt: "",
     expectedEstimateUpdatedAt,
