@@ -8,7 +8,7 @@ import { acceptedInternalEstimateCost } from "./customerPricing";
 import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
-import { convergeCreatedEstimateWorkOrder, resolveCustomerForEstimate } from "./customerSync";
+import { convergeCreatedEstimateWorkOrder, loadAllCustomers, resolveCustomerForEstimate } from "./customerSync";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -86,7 +86,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       }
       const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
       const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
-      const customers = await base44.entities.Customer.list("company_name", 1000);
+      const customers = await loadAllCustomers();
       const resolvedCustomer = await resolveCustomerForEstimate(
         { ...estimateBefore, customer_id: existing?.customer_id || estimateBefore.customer_id || "" },
         customers || []
