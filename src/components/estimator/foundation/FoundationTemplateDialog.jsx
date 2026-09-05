@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
-import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
+import { deleteFoundationTemplate, saveFoundationTemplate } from "./foundationTemplateService";
 
 export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply }) {
   const [templates, setTemplates] = useState([]);
@@ -44,11 +44,9 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
           key: `foundation_template_save:${crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`}`,
         };
       }
-      await ensureReusableRecord({
-        entity: base44.entities.ProjectTemplate,
+      await saveFoundationTemplate({
         idempotencyKey: saveAttemptRef.current.key,
         data,
-        label: "Foundation template",
       });
       setName("");
       saveAttemptRef.current = { signature: "", key: "" };
@@ -59,12 +57,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
   };
 
   const remove = async (t) => {
-    try {
-      await base44.entities.ProjectTemplate.delete(t.id);
-    } catch (error) {
-      const stillThere = await base44.entities.ProjectTemplate.filter({ id: t.id }).catch(() => null);
-      if (!Array.isArray(stillThere) || stillThere.some((row) => row.id === t.id)) throw error;
-    }
+    await deleteFoundationTemplate(t.id);
     setTemplates((prev) => prev.filter((x) => x.id !== t.id));
   };
 
