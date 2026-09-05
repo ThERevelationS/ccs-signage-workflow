@@ -14,6 +14,10 @@
     "item_name": {
       "type": "string"
     },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable copy receipt used to converge retries of the same clipboard copy without creating duplicates."
+    },
     "source_estimate_id": {
       "type": "string"
     },
