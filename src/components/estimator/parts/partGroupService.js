@@ -110,6 +110,14 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
     builder_updated_date_before: builder.updated_date || "",
     target_group_key: targetGroupKey,
     target_part_ids: selected.map((part) => part.id),
+    precondition_plan: {
+      parts: selected.map((part) => ({
+        id: part.id,
+        expected_updated_date: part.updated_date || "",
+        expected_patch: { builder_product_id: builder.id, part_group_id: "", part_key: part.part_key || "" },
+      })),
+      groups: [],
+    },
     group_create_plan: { groups: [{ group_key: targetGroupKey, data: groupData }] },
     part_acceptance_plan: { timestamp, part_updates: partUpdates, changed_parts: [] },
     builder_patch: { group_count: activeGroupCount + 1 },
@@ -198,6 +206,18 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
     builder_updated_date_before: builder.updated_date || "",
     target_group_id: group.id,
     target_part_ids: members.map((part) => part.id),
+    precondition_plan: {
+      groups: [{
+        id: group.id,
+        expected_updated_date: group.updated_date || "",
+        expected_patch: { builder_product_id: builder.id, group_key: group.group_key || "" },
+      }],
+      parts: members.map((part) => ({
+        id: part.id,
+        expected_updated_date: part.updated_date || "",
+        expected_patch: { builder_product_id: builder.id, part_group_id: group.id, part_key: part.part_key || "" },
+      })),
+    },
     part_acceptance_plan: {
       timestamp,
       part_updates: members.map((part) => ({ operation: "update", part_id: part.id, part_key: part.part_key, expected_updated_date: part.updated_date || "", patch: { part_group_id: "" } })),
