@@ -13,10 +13,22 @@ function findMatchingLine(estimate, line) {
   ) || null;
 }
 
+function removalLineId(estimateId, line) {
+  if (line?.line_id) return String(line.line_id);
+  return `line-remove-${builderMutationHash({
+    estimate_id: estimateId,
+    builder_product_id: line?.builder_product_id || "",
+    project_id: line?.project_id || "",
+    module_key: line?.module_key || "",
+    project_name: line?.project_name || "",
+    client_product_name: line?.client_product_name || "",
+  })}`;
+}
+
 function operationKeyFor({ estimateId, line, expectedEstimateUpdatedAt }) {
   return `builder_product_remove:${builderMutationHash({
     estimate_id: estimateId,
-    line_id: line?.line_id || "",
+    line_id: removalLineId(estimateId, line),
     builder_product_id: line?.builder_product_id || "",
     project_id: line?.project_id || "",
     expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
@@ -201,11 +213,14 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
   if (!estimateId || !line) throw new Error("Estimate and Product are required for removal.");
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
-  const key = operationKeyFor({ estimateId, line, expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "" });
   const currentLine = findMatchingLine(estimate, line);
+  const identityLine = currentLine || line;
+  const effectiveLineId = removalLineId(estimateId, identityLine);
+  const normalizedLine = { ...identityLine, line_id: effectiveLineId };
+  const key = operationKeyFor({ estimateId, line: normalizedLine, expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "" });
   if (!currentLine) {
-    if (estimate.last_product_removal_key === key && estimate.last_product_removal_line_id === line.line_id) {
-      return { removed: true, alreadyCompleted: true, lineId: line.line_id };
+    if (estimate.last_product_removal_key === key && estimate.last_product_removal_line_id === effectiveLineId) {
+      return { removed: true, alreadyCompleted: true, lineId: effectiveLineId };
     }
     throw new Error("This Product is no longer part of the estimate. Reload before removing it.");
   }
@@ -225,7 +240,7 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
     kind: "builder_product_remove",
     started_at: nowIso(),
     estimate_id: estimateId,
-    estimate_line_id: currentLine.line_id,
+    estimate_line_id: effectiveLineId,
     builder_product_id: currentLine.builder_product_id || "",
     project_id: currentLine.project_id || "",
     product_name: currentLine.client_product_name || currentLine.project_name || "Product",
@@ -241,7 +256,11 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
   }
   const latestLine = findMatchingLine(latestEstimate, currentLine);
   if (!latestLine) throw new Error("This Product disappeared before removal could start.");
-  const lineItems = (latestEstimate.line_items || []).map((item) => item.line_id === latestLine.line_id ? { ...item, price_acceptance_pending: pending } : item);
+  const targetIndex = (latestEstimate.line_items || []).indexOf(latestLine);
+  if (targetIndex < 0) throw new Error("The Product line could not be identified exactly before removal started.");
+  const lineItems = (latestEstimate.line_items || []).map((item, index) => index === targetIndex
+    ? { ...item, line_id: effectiveLineId, price_acceptance_pending: pending }
+    : item);
   await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-  return resumeProductRemoval({ estimateId, lineId: latestLine.line_id });
+  return resumeProductRemoval({ estimateId, lineId: effectiveLineId });
 }
