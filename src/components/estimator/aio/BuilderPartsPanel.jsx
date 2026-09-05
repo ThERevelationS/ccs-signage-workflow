@@ -406,7 +406,8 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                     });
                     await onChanged?.();
                   } catch (error) {
-                    window.alert(error?.message || "Part Group could not be cloned.");
+                    await onChanged?.().catch(() => null);
+                    window.alert(`${error?.message || "Part Group could not be cloned."}\n\nThe Product was refreshed. If the clone had already started, use Resume Group Clone to safely continue it.`);
                   } finally {
                     structuralActionRef.current = false;
                     setCloning(false);
