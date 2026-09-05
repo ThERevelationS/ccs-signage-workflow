@@ -38,32 +38,91 @@ function assertMemberVersions(parts, expectedPartVersions = {}) {
 
 export async function createPartGroupInProduct({ builderProductId, partIds = [], groupName = "Part Group", expectedEstimateUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || partIds.length < 2) throw new Error("Select at least two Parts to create a Part Group.");
-  const [, allParts, allGroups] = await Promise.all([
-    loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const currentLine = estimateLine(estimate, builder.id);
+  if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before creating a Part Group.");
+
+  const normalizedPartIds = [...new Set(partIds.map(String))].sort();
+  const normalizedName = String(groupName || "Part Group").trim() || "Part Group";
+  const operationKey = `builder_part_group_create:${builderMutationHash({
+    estimate_id: estimate.id,
+    builder_product_id: builder.id,
+    part_ids: normalizedPartIds,
+    group_name: normalizedName,
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    expected_part_versions: expectedPartVersions || {},
+  })}`;
+  const targetGroupKey = `create-group-${builderMutationHash({ operation_key: operationKey })}`;
+
+  const [allParts, allGroups] = await Promise.all([
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
   ]);
-  const selectedIds = new Set(partIds);
-  const selected = (allParts || []).filter((part) => part.is_active !== false && selectedIds.has(part.id));
-  if (selected.length !== selectedIds.size) throw new Error("One or more selected Parts no longer belong to this Product. Reload before grouping them.");
-  if (selected.some((part) => part.part_group_id)) {
-    throw new Error("One or more selected Parts already belong to a Part Group. Dissolve or remove them from the existing group before creating a new group.");
+  if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group prerequisites could not be fully verified.");
+
+  const existingPending = pendingBuilderMutation(currentLine);
+  if (existingPending) {
+    if (existingPending.kind !== "builder_part_group_create" || existingPending.key !== operationKey) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume it before creating a Part Group.");
+    }
+    const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts: allParts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
+    const [groupsAfter, partsAfter] = await Promise.all([
+      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    ]);
+    const group = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
+    if (!group) throw new Error("The recovered Part Group could not be verified after creation.");
+    const selectedSet = new Set(existingPending.target_part_ids || []);
+    if ((partsAfter || []).filter((part) => selectedSet.has(part.id) && part.part_group_id === group.id).length !== selectedSet.size) {
+      throw new Error("The recovered Part Group membership could not be fully verified.");
+    }
+    return { ...group, recovered: true, line: recovered?.line || currentLine };
   }
+
+  if (currentLine.last_part_group_mutation_key === operationKey && currentLine.last_part_group_mutation_kind === "create") {
+    const completedGroup = allGroups.find((row) => row.group_key === targetGroupKey) || null;
+    const selectedSet = new Set(normalizedPartIds);
+    const complete = completedGroup && allParts.filter((part) => selectedSet.has(part.id) && part.part_group_id === completedGroup.id).length === selectedSet.size;
+    if (complete) return { ...completedGroup, alreadyCompleted: true };
+    throw new Error("The Part Group create receipt exists, but its completed membership no longer matches. Reload and review the Product.");
+  }
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const selectedIds = new Set(normalizedPartIds);
+  const selected = allParts.filter((part) => part.is_active !== false && selectedIds.has(String(part.id)));
+  if (selected.length !== selectedIds.size) throw new Error("One or more selected Parts no longer belong to this Product. Reload before grouping them.");
+  if (selected.some((part) => part.part_group_id)) throw new Error("One or more selected Parts already belong to a Part Group. Dissolve or remove them from the existing group before creating a new group.");
   assertMemberVersions(selected, expectedPartVersions);
-  const group = await base44.entities.BuilderPartGroup.create({
-    builder_product_id: builderProductId,
-    group_key: makeStableId("group"),
-    group_name: String(groupName || "Part Group").trim() || "Part Group",
-    sort_order: (allGroups || []).filter((row) => row.is_active !== false).length,
-    copy_as_unit: true,
-    is_collapsed: false,
-    is_active: true,
-  });
-  for (const part of selected) await base44.entities.BuilderPart.update(part.id, { part_group_id: group.id });
-  await base44.entities.BuilderProduct.update(builderProductId, {
-    group_count: (allGroups || []).filter((row) => row.is_active !== false).length + 1,
-  });
-  return group;
+
+  const activeGroupCount = allGroups.filter((row) => row.is_active !== false).length;
+  const timestamp = nowIso();
+  const groupData = { builder_product_id: builder.id, group_key: targetGroupKey, group_name: normalizedName, sort_order: activeGroupCount, copy_as_unit: true, is_collapsed: false, is_active: true };
+  const partUpdates = selected.map((part) => ({ operation: "update", part_id: part.id, part_key: part.part_key, part_group_key_ref: targetGroupKey, expected_updated_date: part.updated_date || "", patch: { part_group_id: "" } }));
+  const pending = {
+    key: operationKey,
+    kind: "builder_part_group_create",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: currentLine.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    builder_updated_date_before: builder.updated_date || "",
+    target_group_key: targetGroupKey,
+    target_part_ids: selected.map((part) => part.id),
+    group_create_plan: { groups: [{ group_key: targetGroupKey, data: groupData }] },
+    part_acceptance_plan: { timestamp, part_updates: partUpdates, changed_parts: [] },
+    builder_patch: { group_count: activeGroupCount + 1 },
+    line_patch: { last_part_group_mutation_key: operationKey, last_part_group_mutation_kind: "create" },
+    skip_revision: true,
+  };
+  const marked = await markBuilderMutationPending({ estimate, builder, pending });
+  const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate: marked.markedEstimate, builder: marked.currentBuilder, parts: marked.currentParts, line: marked.markedLine, pending: marked.canonicalPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
+  const groupsAfter = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id });
+  const group = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
+  if (!group) throw new Error("The new Part Group could not be verified after recovery completed.");
+  return { ...group, recovered: true, line: recovered?.line || currentLine };
 }
 
 export async function renamePartGroup({ builderProductId, groupId, groupName, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "" }) {
@@ -79,22 +138,80 @@ export async function renamePartGroup({ builderProductId, groupId, groupName, ex
 
 export async function dissolvePartGroup({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
   if (!builderProductId || !groupId) throw new Error("Part Group is required.");
-  const [{ builder }, group, allParts, allGroups] = await Promise.all([
-    loadGroupMutationContext(builderProductId, expectedEstimateUpdatedAt),
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
+  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const currentLine = estimateLine(estimate, builder.id);
+  if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before dissolving its Part Group.");
+
+  const operationKey = `builder_part_group_dissolve:${builderMutationHash({
+    estimate_id: estimate.id,
+    builder_product_id: builder.id,
+    group_id: groupId,
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    expected_group_updated_at: expectedGroupUpdatedAt || "",
+    expected_part_versions: expectedPartVersions || {},
+  })}`;
+  const existingPending = pendingBuilderMutation(currentLine);
+  if (existingPending) {
+    if (existingPending.kind !== "builder_part_group_dissolve" || existingPending.key !== operationKey) {
+      throw new Error("Another Builder mutation is still being recovered for this Product. Resume it before dissolving a Part Group.");
+    }
+    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    if (!Array.isArray(parts)) throw new Error("Part Group members could not be verified during dissolve recovery.");
+    const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
+    return { dissolved: groupId, partCount: (existingPending.target_part_ids || []).length, recovered: true, line: recovered?.line || currentLine };
+  }
+
+  if (currentLine.last_part_group_mutation_key === operationKey && currentLine.last_part_group_mutation_kind === "dissolve") {
+    const [groupAfter, partsAfter] = await Promise.all([
+      base44.entities.BuilderPartGroup.get(groupId),
+      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    ]);
+    const targetIds = new Set(Object.keys(expectedPartVersions || {}));
+    const complete = !groupAfter && Array.isArray(partsAfter) && partsAfter.filter((part) => targetIds.has(String(part.id)) && !part.part_group_id).length === targetIds.size;
+    if (complete) return { dissolved: groupId, partCount: targetIds.size, alreadyCompleted: true };
+    throw new Error("The Part Group dissolve receipt exists, but the completed membership no longer matches. Reload and review the Product.");
+  }
+
+  const [group, allParts, allGroups] = await Promise.all([
     base44.entities.BuilderPartGroup.get(groupId),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
   ]);
+  if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group dissolve prerequisites could not be fully verified.");
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   if (!group || group.builder_product_id !== builder.id) throw new Error("Part Group could not be loaded.");
   assertVersion(group, expectedGroupUpdatedAt, "Part Group");
-  const members = (allParts || []).filter((part) => part.is_active !== false && part.part_group_id === group.id);
+  const members = allParts.filter((part) => part.is_active !== false && part.part_group_id === group.id);
   assertMemberVersions(members, expectedPartVersions);
-  for (const part of members) await base44.entities.BuilderPart.update(part.id, { part_group_id: "" });
-  await base44.entities.BuilderPartGroup.delete(group.id);
-  await base44.entities.BuilderProduct.update(builder.id, {
-    group_count: Math.max(0, (allGroups || []).filter((row) => row.is_active !== false).length - 1),
-  });
-  return { dissolved: group.id, partCount: members.length };
+
+  const timestamp = nowIso();
+  const activeGroupCount = allGroups.filter((row) => row.is_active !== false).length;
+  const pending = {
+    key: operationKey,
+    kind: "builder_part_group_dissolve",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: currentLine.line_id || builder.estimate_line_id || "",
+    builder_product_id: builder.id,
+    builder_updated_date_before: builder.updated_date || "",
+    target_group_id: group.id,
+    target_part_ids: members.map((part) => part.id),
+    part_acceptance_plan: {
+      timestamp,
+      part_updates: members.map((part) => ({ operation: "update", part_id: part.id, part_key: part.part_key, expected_updated_date: part.updated_date || "", patch: { part_group_id: "" } })),
+      changed_parts: [],
+    },
+    post_part_delete_plan: { groups: [{ id: group.id, expected_updated_date: group.updated_date || "" }], parts: [] },
+    builder_patch: { group_count: Math.max(0, activeGroupCount - 1) },
+    line_patch: { last_part_group_mutation_key: operationKey, last_part_group_mutation_kind: "dissolve" },
+    skip_revision: true,
+  };
+  const marked = await markBuilderMutationPending({ estimate, builder, pending });
+  const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate: marked.markedEstimate, builder: marked.currentBuilder, parts: marked.currentParts, line: marked.markedLine, pending: marked.canonicalPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
+  return { dissolved: group.id, partCount: members.length, recovered: true, line: recovered?.line || currentLine };
 }
 
 export async function clonePartGroupInProduct({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
