@@ -3,7 +3,7 @@
 // Each workflow has its own vinyl + machines + parts + roll layout, so different
 // materials never get nested onto the same physical roll.
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
@@ -21,6 +21,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
 import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
@@ -55,6 +56,13 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("project");
+  const persistedProjectIdRef = useRef(projectId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
+
+  useEffect(() => {
+    persistedProjectIdRef.current = projectId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+  }, [projectId]);
 
   // Workflow tab UI state
   const [allOpen, setAllOpen] = useState(true);
@@ -294,10 +302,26 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
       };
 
       let saved;
-      if (projectId) {
-        saved = await VinylProject.update(projectId, payload);
+      const activeProjectId = persistedProjectIdRef.current || projectId || "";
+      if (activeProjectId) {
+        saved = await VinylProject.update(activeProjectId, payload);
       } else {
-        saved = await VinylProject.create(payload);
+        const signature = JSON.stringify(payload);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("vinyl_project"),
+          };
+        }
+        saved = await ensureIdempotentEntityCreate({
+          entity: VinylProject,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: payload,
+          label: "Vinyl project",
+        });
+        if (!saved?.id) throw new Error("Vinyl project create could not be verified.");
+        persistedProjectIdRef.current = saved.id;
         if (!embedded) navigate(`/VinylEstimator?id=${saved.id}`, { replace: true });
       }
 
