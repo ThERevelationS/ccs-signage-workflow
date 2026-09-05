@@ -345,42 +345,177 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
   return { group: clonedGroup, parts: (partsAfter || []).filter((part) => targetPartKeys.has(part.part_key)), recovered: true, line: recovered?.line || currentLine };
 }
 
+function assertMoveBuilderState(builder, targetPatch, expectedUpdatedAt, label) {
+  if (!builder?.id) throw new Error(`${label} could not be verified while recovering the Part Group move.`);
+  if (!recoveryPatchDiffers(builder, targetPatch)) return false;
+  const expected = String(expectedUpdatedAt || "").trim();
+  const current = String(builder.updated_date || "").trim();
+  if (expected && current && expected !== current) {
+    throw new Error(`${label} changed while the Part Group move was pending. Recovery stopped before overwriting unrelated Product state.`);
+  }
+  return true;
+}
+
+function assertMoveRecordState(record, step, sourceBuilderProductId, label) {
+  if (!record?.id) throw new Error(`${label} disappeared while the Part Group move was pending.`);
+  if (!recoveryPatchDiffers(record, step.target_patch || {})) return false;
+  if (String(record.builder_product_id || "") !== String(sourceBuilderProductId || "")) {
+    throw new Error(`${label} changed ownership while the Part Group move was pending.`);
+  }
+  const expected = String(step.expected_updated_date || "").trim();
+  const current = String(record.updated_date || "").trim();
+  if (expected && current && expected !== current) {
+    throw new Error(`${label} changed while the Part Group move was pending. No unrelated edit was overwritten.`);
+  }
+  if (step.expected_patch && recoveryPatchDiffers(record, step.expected_patch)) {
+    throw new Error(`${label} no longer matches the stored move source. Recovery was stopped.`);
+  }
+  return true;
+}
+
+export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }) {
+  if (!estimateId) throw new Error("Estimate is required to resume a Part Group move.");
+  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const sourceLine = lineId
+    ? (estimate.line_items || []).find((line) => line.line_id === lineId)
+    : (estimate.line_items || []).find((line) => line?.price_acceptance_pending?.kind === "builder_part_group_move");
+  const pending = pendingBuilderMutation(sourceLine);
+  if (!sourceLine || !pending || pending.kind !== "builder_part_group_move") {
+    throw new Error("The pending Part Group move could not be found.");
+  }
+  if (pending.estimate_id !== estimateId || pending.builder_product_id !== sourceLine.builder_product_id) {
+    throw new Error("The Part Group move recovery marker no longer matches its source Product.");
+  }
+  await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
+
+  const [sourceBuilder, targetBuilder, group, movingParts] = await Promise.all([
+    base44.entities.BuilderProduct.get(pending.builder_product_id),
+    base44.entities.BuilderProduct.get(pending.target_builder_product_id),
+    base44.entities.BuilderPartGroup.get(pending.group_move_step?.id),
+    Promise.all((pending.part_move_steps || []).map((step) => base44.entities.BuilderPart.get(step.id))),
+  ]);
+  if (!sourceBuilder?.id || !targetBuilder?.id || sourceBuilder.estimate_id !== estimateId || targetBuilder.estimate_id !== estimateId) {
+    throw new Error("Both Products could not be verified in this estimate while recovering the Part Group move.");
+  }
+
+  let sourceBuilderNeedsWrite = assertMoveBuilderState(sourceBuilder, pending.source_builder_patch || {}, pending.source_builder_updated_date_before, "Source Product");
+  let targetBuilderNeedsWrite = assertMoveBuilderState(targetBuilder, pending.target_builder_patch || {}, pending.target_builder_updated_date_before, "Target Product");
+  const groupNeedsWrite = assertMoveRecordState(group, pending.group_move_step || {}, sourceBuilder.id, `Part Group “${group?.group_name || "Part Group"}”`);
+  const partNeedsWrite = movingParts.map((part, index) => assertMoveRecordState(part, pending.part_move_steps[index], sourceBuilder.id, `Part “${part?.part_name || "Part"}”`));
+
+  if (groupNeedsWrite) await base44.entities.BuilderPartGroup.update(group.id, pending.group_move_step.target_patch);
+  for (let index = 0; index < movingParts.length; index += 1) {
+    if (partNeedsWrite[index]) await base44.entities.BuilderPart.update(movingParts[index].id, pending.part_move_steps[index].target_patch);
+  }
+
+  const [sourceBeforePriceWrite, targetBeforePriceWrite] = await Promise.all([
+    base44.entities.BuilderProduct.get(sourceBuilder.id),
+    base44.entities.BuilderProduct.get(targetBuilder.id),
+  ]);
+  sourceBuilderNeedsWrite = assertMoveBuilderState(sourceBeforePriceWrite, pending.source_builder_patch || {}, pending.source_builder_updated_date_before, "Source Product");
+  targetBuilderNeedsWrite = assertMoveBuilderState(targetBeforePriceWrite, pending.target_builder_patch || {}, pending.target_builder_updated_date_before, "Target Product");
+  if (sourceBuilderNeedsWrite) await base44.entities.BuilderProduct.update(sourceBuilder.id, pending.source_builder_patch);
+  if (targetBuilderNeedsWrite) await base44.entities.BuilderProduct.update(targetBuilder.id, pending.target_builder_patch);
+
+  await ensureBuilderPriceRevision(pending.source_revision_key || `${pending.key}:source`, pending.source_revision || {});
+  await ensureBuilderPriceRevision(pending.target_revision_key || `${pending.key}:target`, pending.target_revision || {});
+
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!latestEstimate) throw new Error("Estimate could not be verified while completing the Part Group move.");
+  const latestSourceLine = (latestEstimate.line_items || []).find((line) => line.builder_product_id === sourceBuilder.id);
+  const latestTargetLine = (latestEstimate.line_items || []).find((line) => line.builder_product_id === targetBuilder.id);
+  if (!latestSourceLine || !latestTargetLine) throw new Error("Both Product lines must remain on the estimate while completing the Part Group move.");
+  const latestPending = pendingBuilderMutation(latestSourceLine);
+  if (!latestPending) {
+    if (!recoveryPatchDiffers(latestSourceLine, pending.source_line_patch || {}) && !recoveryPatchDiffers(latestTargetLine, pending.target_line_patch || {})) {
+      return { recovered: true, alreadyCompleted: true, groupId: pending.group_move_step?.id, movedParts: (pending.part_move_steps || []).length };
+    }
+    throw new Error("The Part Group move marker disappeared before both Product line targets could be verified.");
+  }
+  if (latestPending.key !== pending.key) throw new Error("A different Builder mutation is now active on the source Product.");
+  await assertEstimateProductMutationAllowed(latestEstimate, { allowPriceAcceptanceKey: pending.key });
+  const lineItems = (latestEstimate.line_items || []).map((line) => {
+    if (line.builder_product_id === sourceBuilder.id) return { ...line, ...(pending.source_line_patch || {}), price_acceptance_pending: {} };
+    if (line.builder_product_id === targetBuilder.id) return { ...line, ...(pending.target_line_patch || {}) };
+    return line;
+  });
+  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  return { recovered: true, groupId: pending.group_move_step?.id, movedParts: (pending.part_move_steps || []).length, sourceBuilderProductId: sourceBuilder.id, targetBuilderProductId: targetBuilder.id };
+}
+
 export async function moveIndependentPartGroup({ sourceBuilderProductId, targetBuilderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
   if (!sourceBuilderProductId || !targetBuilderProductId || !groupId) throw new Error("Source Product, target Product and Part Group are required.");
   if (sourceBuilderProductId === targetBuilderProductId) throw new Error("Choose a different target Product.");
 
-  const [sourceBuilder, targetBuilder, group, sourceParts, sourceGroups, targetParts, targetGroups, sourceRevision, targetRevision] = await Promise.all([
+  const [sourceBuilder, targetBuilder] = await Promise.all([
     base44.entities.BuilderProduct.get(sourceBuilderProductId),
     base44.entities.BuilderProduct.get(targetBuilderProductId),
-    base44.entities.BuilderPartGroup.get(groupId),
-    base44.entities.BuilderPart.filter({ builder_product_id: sourceBuilderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: sourceBuilderProductId }),
-    base44.entities.BuilderPart.filter({ builder_product_id: targetBuilderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: targetBuilderProductId }),
-    nextRevisionNumber(sourceBuilderProductId),
-    nextRevisionNumber(targetBuilderProductId),
   ]);
-
-  if (!sourceBuilder || !targetBuilder || !group || group.builder_product_id !== sourceBuilderProductId) throw new Error("Part Group could not be loaded.");
-  if (sourceBuilder.estimate_id && targetBuilder.estimate_id && sourceBuilder.estimate_id !== targetBuilder.estimate_id) {
+  if (!sourceBuilder?.id || !targetBuilder?.id || !sourceBuilder.estimate_id || sourceBuilder.estimate_id !== targetBuilder.estimate_id) {
     throw new Error("Direct Move is only available between Products in the same estimate. Use Copy/Paste for another estimate.");
   }
-
-  if (!sourceBuilder.estimate_id || sourceBuilder.estimate_id !== targetBuilder.estimate_id) throw new Error("Both Products must belong to the same estimate.");
   const estimate = await base44.entities.AllInOneEstimate.get(sourceBuilder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
-  if (!estimateLine(estimate, sourceBuilder.id) || !estimateLine(estimate, targetBuilder.id)) throw new Error("Both Products must still belong to this estimate. Reload before moving the Part Group.");
-  assertVersion(group, expectedGroupUpdatedAt, "Part Group");
+  const sourceLine = estimateLine(estimate, sourceBuilder.id);
+  const targetLine = estimateLine(estimate, targetBuilder.id);
+  if (!sourceLine || !targetLine) throw new Error("Both Products must still belong to this estimate. Reload before moving the Part Group.");
 
-  const movingParts = (sourceParts || [])
-    .filter((part) => part.is_active !== false && part.part_group_id === groupId)
-    .sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const operationKey = `builder_part_group_move:${builderMutationHash({
+    estimate_id: estimate.id,
+    source_builder_product_id: sourceBuilder.id,
+    target_builder_product_id: targetBuilder.id,
+    group_id: groupId,
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    expected_group_updated_at: expectedGroupUpdatedAt || "",
+    expected_part_versions: expectedPartVersions || {},
+  })}`;
+  const existingPending = pendingBuilderMutation(sourceLine);
+  if (existingPending) {
+    if (existingPending.kind !== "builder_part_group_move" || existingPending.key !== operationKey || existingPending.target_builder_product_id !== targetBuilder.id) {
+      throw new Error("Another Builder mutation is still being recovered for the source Product. Resume it before moving this Part Group.");
+    }
+    return resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: sourceLine.line_id || "" });
+  }
+
+  const [group, sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions] = await Promise.all([
+    base44.entities.BuilderPartGroup.get(groupId),
+    base44.entities.BuilderPart.filter({ builder_product_id: sourceBuilder.id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: sourceBuilder.id }),
+    base44.entities.BuilderPart.filter({ builder_product_id: targetBuilder.id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: targetBuilder.id }),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: sourceBuilder.id }),
+    base44.entities.BuilderPriceRevision.filter({ builder_product_id: targetBuilder.id }),
+  ]);
+  if (![sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions].every(Array.isArray)) {
+    throw new Error("Part Group move prerequisites could not be fully verified.");
+  }
+
+  const sourceRevisionKey = `${operationKey}:source`;
+  const targetRevisionKey = `${operationKey}:target`;
+  const completedSource = sourceRevisions.find((row) => row.idempotency_key === sourceRevisionKey);
+  const completedTarget = targetRevisions.find((row) => row.idempotency_key === targetRevisionKey);
+  if (completedSource || completedTarget) {
+    if (!completedSource || !completedTarget) throw new Error("Only one side of the Part Group move audit exists. Recovery cannot be inferred without its durable marker.");
+    const targetGroupKey = `move-group-${builderMutationHash({ operation_key: operationKey, group_id: groupId })}`;
+    const movedIds = new Set((completedSource.changed_parts || []).map((part) => part.part_id));
+    const movedParts = targetParts.filter((part) => movedIds.has(part.id));
+    const complete = group?.builder_product_id === targetBuilder.id && group?.group_key === targetGroupKey && movedParts.length === movedIds.size &&
+      !recoveryPatchDiffers(sourceBuilder, { frozen_cost: completedSource.new_total_cost, frozen_customer_price: completedSource.new_customer_price }) &&
+      !recoveryPatchDiffers(targetBuilder, { frozen_cost: completedTarget.new_total_cost, frozen_customer_price: completedTarget.new_customer_price }) &&
+      !recoveryPatchDiffers(sourceLine, { total_snapshot: completedSource.new_total_cost, customer_price_snapshot: completedSource.new_customer_price }) &&
+      !recoveryPatchDiffers(targetLine, { total_snapshot: completedTarget.new_total_cost, customer_price_snapshot: completedTarget.new_customer_price });
+    if (complete) return { groupId, movedParts: movedParts.length, sourceBuilderProductId, targetBuilderProductId, alreadyCompleted: true };
+    throw new Error("The Part Group move audits exist, but the two Products no longer match the completed move target. Reload and review both Products.");
+  }
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  if (!group || group.builder_product_id !== sourceBuilder.id) throw new Error("Part Group could not be loaded from the source Product.");
+  assertVersion(group, expectedGroupUpdatedAt, "Part Group");
+  const movingParts = sourceParts.filter((part) => part.is_active !== false && part.part_group_id === groupId).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   if (!movingParts.length) throw new Error("This Part Group does not contain any active Parts.");
   assertMemberVersions(movingParts, expectedPartVersions);
-
-  const blocked = movingParts.filter((part) => !["manual", "manual_addon"].includes(part.builder_sync_state));
-  if (blocked.length) {
+  if (movingParts.some((part) => !["manual", "manual_addon"].includes(part.builder_sync_state))) {
     throw new Error("This Part Group contains Builder-owned Parts and cannot be moved directly. Use Clone or Copy instead so the source Builder remains internally consistent.");
   }
 
@@ -397,22 +532,20 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
   const targetNextCurrent = targetPreviousCurrent + movedCurrent;
   const sourcePreviousCustomer = num(sourceBuilder.frozen_customer_price, sourcePreviousFrozen);
   const targetPreviousCustomer = num(targetBuilder.frozen_customer_price, targetPreviousFrozen);
+  const sourceNextCustomer = Math.max(0, sourcePreviousCustomer - movedFrozen);
+  const targetNextCustomer = targetPreviousCustomer + movedFrozen;
   const targetSyncState = targetBuilder.module_key === "custom" ? "manual" : "manual_addon";
-  const targetActivePartCount = (targetParts || []).filter((part) => part.is_active !== false).length;
-  const sourceActivePartCount = (sourceParts || []).filter((part) => part.is_active !== false).length;
-  const sourceActiveGroupCount = (sourceGroups || []).filter((row) => row.is_active !== false).length;
-  const targetActiveGroupCount = (targetGroups || []).filter((row) => row.is_active !== false).length;
-
-  await base44.entities.BuilderPartGroup.update(group.id, {
-    builder_product_id: targetBuilder.id,
-    group_key: makeStableId("group"),
-    sort_order: targetActiveGroupCount,
-    is_collapsed: false,
-  });
-
-  for (let index = 0; index < movingParts.length; index += 1) {
-    const part = movingParts[index];
-    await base44.entities.BuilderPart.update(part.id, {
+  const targetActivePartCount = targetParts.filter((part) => part.is_active !== false).length;
+  const sourceActivePartCount = sourceParts.filter((part) => part.is_active !== false).length;
+  const sourceActiveGroupCount = sourceGroups.filter((row) => row.is_active !== false).length;
+  const targetActiveGroupCount = targetGroups.filter((row) => row.is_active !== false).length;
+  const targetGroupKey = `move-group-${builderMutationHash({ operation_key: operationKey, group_id: group.id })}`;
+  const groupTargetPatch = { builder_product_id: targetBuilder.id, group_key: targetGroupKey, sort_order: targetActiveGroupCount, is_collapsed: false };
+  const partMoveSteps = movingParts.map((part, index) => ({
+    id: part.id,
+    expected_updated_date: part.updated_date || "",
+    expected_patch: { builder_product_id: sourceBuilder.id, part_group_id: group.id, part_key: part.part_key || "" },
+    target_patch: {
       builder_product_id: targetBuilder.id,
       source_module_key: targetBuilder.module_key || "custom",
       source_path: "",
@@ -426,99 +559,37 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
       last_price_check_at: timestamp,
       last_price_update_at: timestamp,
       is_active: true,
-    });
-  }
-
-  const sourceState = sourceBuilder.needs_reattach_review
-    ? "detached_parts"
-    : Math.abs(sourceNextCurrent - sourceNextFrozen) > 0.005 ? "changed" : "current";
-  const targetState = targetBuilder.needs_reattach_review
-    ? "detached_parts"
-    : Math.abs(targetNextCurrent - targetNextFrozen) > 0.005 ? "changed" : "current";
-
-  await Promise.all([
-    base44.entities.BuilderProduct.update(sourceBuilder.id, {
-      frozen_cost: sourceNextFrozen,
-      frozen_customer_price: Math.max(0, sourcePreviousCustomer - movedFrozen),
-      current_recalculated_cost: sourceNextCurrent,
-      price_state: sourceState,
-      price_delta: sourceNextCurrent - sourceNextFrozen,
-      price_delta_percent: sourceNextFrozen ? ((sourceNextCurrent - sourceNextFrozen) / sourceNextFrozen) * 100 : 0,
-      part_count: Math.max(0, sourceActivePartCount - movingParts.length),
-      group_count: Math.max(0, sourceActiveGroupCount - 1),
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-      builder_version: num(sourceBuilder.builder_version, 1) + 1,
-    }),
-    base44.entities.BuilderProduct.update(targetBuilder.id, {
-      frozen_cost: targetNextFrozen,
-      frozen_customer_price: targetPreviousCustomer + movedFrozen,
-      current_recalculated_cost: targetNextCurrent,
-      price_state: targetState,
-      price_delta: targetNextCurrent - targetNextFrozen,
-      price_delta_percent: targetNextFrozen ? ((targetNextCurrent - targetNextFrozen) / targetNextFrozen) * 100 : 0,
-      part_count: targetActivePartCount + movingParts.length,
-      group_count: targetActiveGroupCount + 1,
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-      builder_version: num(targetBuilder.builder_version, 1) + 1,
-    }),
-  ]);
-
-  await updateVerifiedEstimateLines(estimate, {
-    [sourceBuilder.id]: (line) => ({
-      total_snapshot: sourceNextFrozen,
-      live_total_snapshot: sourceNextCurrent,
-      customer_price_snapshot: Math.max(0, sourcePreviousCustomer - movedFrozen),
-      live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(line) - movedCurrent),
-      price_state: sourceState,
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-    }),
-    [targetBuilder.id]: (line) => ({
-      total_snapshot: targetNextFrozen,
-      live_total_snapshot: targetNextCurrent,
-      customer_price_snapshot: targetPreviousCustomer + movedFrozen,
-      live_customer_price_snapshot: liveCustomerUnitPrice(line) + movedCurrent,
-      price_state: targetState,
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-    }),
-  });
-  await Promise.all([
-    base44.entities.BuilderPriceRevision.create({
-      builder_product_id: sourceBuilder.id,
-      estimate_id: sourceBuilder.estimate_id || "",
-      revision_number: sourceRevision,
-      reason: "manual_adjustment",
-      previous_total_cost: sourcePreviousFrozen,
-      new_total_cost: sourceNextFrozen,
-      previous_customer_price: sourcePreviousCustomer,
-      new_customer_price: Math.max(0, sourcePreviousCustomer - movedFrozen),
-      changed_parts: movingParts.map((part) => ({ part_id: part.id, part_name: part.part_name, action: "move_part_group_out", group_id: group.id, target_builder_product_id: targetBuilder.id, frozen_extended_cost: num(part.frozen_extended_cost) })),
-      builder_snapshot_before: sourceBuilder.builder_snapshot || {},
-      builder_snapshot_after: sourceBuilder.builder_snapshot || {},
-      price_snapshot_before: { total: sourcePreviousFrozen },
-      price_snapshot_after: { total: sourceNextFrozen },
-      notes: `Moved Part Group “${group.group_name || "Part Group"}” to Product “${targetBuilder.client_product_name || targetBuilder.builder_name || "Product"}”.`,
-    }),
-    base44.entities.BuilderPriceRevision.create({
-      builder_product_id: targetBuilder.id,
-      estimate_id: targetBuilder.estimate_id || "",
-      revision_number: targetRevision,
-      reason: "manual_adjustment",
-      previous_total_cost: targetPreviousFrozen,
-      new_total_cost: targetNextFrozen,
-      previous_customer_price: targetPreviousCustomer,
-      new_customer_price: targetPreviousCustomer + movedFrozen,
-      changed_parts: movingParts.map((part) => ({ part_id: part.id, part_name: part.part_name, action: "move_part_group_in", group_id: group.id, source_builder_product_id: sourceBuilder.id, frozen_extended_cost: num(part.frozen_extended_cost) })),
-      builder_snapshot_before: targetBuilder.builder_snapshot || {},
-      builder_snapshot_after: targetBuilder.builder_snapshot || {},
-      price_snapshot_before: { total: targetPreviousFrozen },
-      price_snapshot_after: { total: targetNextFrozen },
-      notes: `Received Part Group “${group.group_name || "Part Group"}” from Product “${sourceBuilder.client_product_name || sourceBuilder.builder_name || "Product"}”.`,
-    }),
-  ]);
-
-  return { groupId: group.id, movedParts: movingParts.length, sourceBuilderProductId, targetBuilderProductId };
+    },
+  }));
+  const sourceState = sourceBuilder.needs_reattach_review ? "detached_parts" : Math.abs(sourceNextCurrent - sourceNextFrozen) > 0.005 ? "changed" : "current";
+  const targetState = targetBuilder.needs_reattach_review ? "detached_parts" : Math.abs(targetNextCurrent - targetNextFrozen) > 0.005 ? "changed" : "current";
+  const sourceBuilderPatch = { frozen_cost: sourceNextFrozen, frozen_customer_price: sourceNextCustomer, current_recalculated_cost: sourceNextCurrent, price_state: sourceState, price_delta: sourceNextCurrent - sourceNextFrozen, price_delta_percent: sourceNextFrozen ? ((sourceNextCurrent - sourceNextFrozen) / sourceNextFrozen) * 100 : 0, part_count: Math.max(0, sourceActivePartCount - movingParts.length), group_count: Math.max(0, sourceActiveGroupCount - 1), last_price_check_at: timestamp, last_price_update_at: timestamp, builder_version: num(sourceBuilder.builder_version, 1) + 1 };
+  const targetBuilderPatch = { frozen_cost: targetNextFrozen, frozen_customer_price: targetNextCustomer, current_recalculated_cost: targetNextCurrent, price_state: targetState, price_delta: targetNextCurrent - targetNextFrozen, price_delta_percent: targetNextFrozen ? ((targetNextCurrent - targetNextFrozen) / targetNextFrozen) * 100 : 0, part_count: targetActivePartCount + movingParts.length, group_count: targetActiveGroupCount + 1, last_price_check_at: timestamp, last_price_update_at: timestamp, builder_version: num(targetBuilder.builder_version, 1) + 1 };
+  const sourceLinePatch = { total_snapshot: sourceNextFrozen, live_total_snapshot: sourceNextCurrent, customer_price_snapshot: sourceNextCustomer, live_customer_price_snapshot: Math.max(0, liveCustomerUnitPrice(sourceLine) - movedCurrent), price_state: sourceState, last_price_check_at: timestamp, last_price_update_at: timestamp };
+  const targetLinePatch = { total_snapshot: targetNextFrozen, live_total_snapshot: targetNextCurrent, customer_price_snapshot: targetNextCustomer, live_customer_price_snapshot: liveCustomerUnitPrice(targetLine) + movedCurrent, price_state: targetState, last_price_check_at: timestamp, last_price_update_at: timestamp };
+  const sourceChangedParts = movingParts.map((part) => ({ part_id: part.id, part_name: part.part_name, action: "move_part_group_out", group_id: group.id, target_builder_product_id: targetBuilder.id, frozen_extended_cost: num(part.frozen_extended_cost) }));
+  const targetChangedParts = movingParts.map((part) => ({ part_id: part.id, part_name: part.part_name, action: "move_part_group_in", group_id: group.id, source_builder_product_id: sourceBuilder.id, frozen_extended_cost: num(part.frozen_extended_cost) }));
+  const pending = {
+    key: operationKey,
+    kind: "builder_part_group_move",
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: sourceLine.line_id || sourceBuilder.estimate_line_id || "",
+    builder_product_id: sourceBuilder.id,
+    target_builder_product_id: targetBuilder.id,
+    source_builder_updated_date_before: sourceBuilder.updated_date || "",
+    target_builder_updated_date_before: targetBuilder.updated_date || "",
+    group_move_step: { id: group.id, expected_updated_date: group.updated_date || "", expected_patch: { builder_product_id: sourceBuilder.id, group_key: group.group_key || "" }, target_patch: groupTargetPatch },
+    part_move_steps: partMoveSteps,
+    source_builder_patch: sourceBuilderPatch,
+    target_builder_patch: targetBuilderPatch,
+    source_line_patch: sourceLinePatch,
+    target_line_patch: targetLinePatch,
+    source_revision_key: sourceRevisionKey,
+    target_revision_key: targetRevisionKey,
+    source_revision: { builder_product_id: sourceBuilder.id, estimate_id: estimate.id, reason: "manual_adjustment", previous_total_cost: sourcePreviousFrozen, new_total_cost: sourceNextFrozen, previous_customer_price: sourcePreviousCustomer, new_customer_price: sourceNextCustomer, changed_parts: sourceChangedParts, builder_snapshot_before: sourceBuilder.builder_snapshot || {}, builder_snapshot_after: sourceBuilder.builder_snapshot || {}, price_snapshot_before: { total: sourcePreviousFrozen }, price_snapshot_after: { total: sourceNextFrozen }, notes: `Moved Part Group “${group.group_name || "Part Group"}” to Product “${targetBuilder.client_product_name || targetBuilder.builder_name || "Product"}”.` },
+    target_revision: { builder_product_id: targetBuilder.id, estimate_id: estimate.id, reason: "manual_adjustment", previous_total_cost: targetPreviousFrozen, new_total_cost: targetNextFrozen, previous_customer_price: targetPreviousCustomer, new_customer_price: targetNextCustomer, changed_parts: targetChangedParts, builder_snapshot_before: targetBuilder.builder_snapshot || {}, builder_snapshot_after: targetBuilder.builder_snapshot || {}, price_snapshot_before: { total: targetPreviousFrozen }, price_snapshot_after: { total: targetNextFrozen }, notes: `Received Part Group “${group.group_name || "Part Group"}” from Product “${sourceBuilder.client_product_name || sourceBuilder.builder_name || "Product"}”.` },
+  };
+  await markBuilderMutationPending({ estimate, builder: sourceBuilder, pending });
+  return resumeIndependentPartGroupMove({ estimateId: estimate.id, lineId: sourceLine.line_id || "" });
 }
