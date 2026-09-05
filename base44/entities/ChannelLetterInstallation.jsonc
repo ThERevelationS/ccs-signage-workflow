@@ -19,6 +19,10 @@
     "hyperlink": {
       "type": "string"
     },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+    },
     "site_address": {
       "type": "string"
     },
