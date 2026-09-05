@@ -6,6 +6,10 @@
     "product_name": {
       "type": "string"
     },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable creation receipt used to converge retries of the same Quick Product save without creating duplicates."
+    },
     "template_version": {
       "type": "number",
       "default": 2,
