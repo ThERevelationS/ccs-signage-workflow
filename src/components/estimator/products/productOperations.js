@@ -263,11 +263,15 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
     }
   }
 
+  // The Estimate line is the authoritative Product metadata record. Commit it
+  // before the mirrored BuilderProduct fields so a lost/failing second write is
+  // self-healing on the next strict reconciliation instead of leaving Builder
+  // metadata ahead of an unchanged Estimate line.
+  const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...nextPatch } : item);
+  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
   if (builder && Object.keys(builderPatch).length) {
     await base44.entities.BuilderProduct.update(builder.id, builderPatch);
   }
-  const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...nextPatch } : item);
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
   return lineItems.find(matches) || { ...line, ...nextPatch };
 }
 
