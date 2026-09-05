@@ -543,7 +543,7 @@ function removeRecoveryToken(notes, token, expectedOriginal) {
   return current.replace(`\n${token}`, "").replace(token, "");
 }
 
-async function ensureQuickInsertSource({ builder, blueprint, pending }) {
+async function ensureQuickInsertSource({ builder, blueprint }) {
   if (!blueprint.sourceEntity || !blueprint.sourceExpectedData) return { builder, sourceProject: null };
   const entity = base44.entities[blueprint.sourceEntity];
   if (!entity?.get || !entity?.create || !entity?.update || !entity?.filter) {
@@ -762,7 +762,7 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
   }
 
   let builder = await ensureQuickInsertBuilder({ estimateId, lineId: line.line_id, blueprint });
-  const sourceResult = await ensureQuickInsertSource({ builder, blueprint, pending });
+  const sourceResult = await ensureQuickInsertSource({ builder, blueprint });
   builder = sourceResult.builder;
   const sourceProject = sourceResult.sourceProject;
   if (!builder?.id) throw new Error("Quick Product Builder could not be verified after source recovery.");
