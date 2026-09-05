@@ -7,6 +7,10 @@
       "type": "string",
       "description": "AllInOneEstimate id whose customer quote was delivered."
     },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Stable internal receipt for retry-safe persistence of a Gmail-confirmed delivery audit."
+    },
     "work_order_id": {
       "type": "string",
       "description": "Optional linked WorkOrder id at the time of delivery."
