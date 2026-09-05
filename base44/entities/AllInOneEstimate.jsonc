@@ -418,6 +418,14 @@
             "type": "string",
             "description": "Kind of the most recently completed structural Part Group action, such as create or dissolve."
           },
+          "blank_product_insert_key": {
+            "type": "string",
+            "description": "Idempotency receipt for a completed blank Builder-backed or Custom Product insertion."
+          },
+          "blank_product_insert_kind": {
+            "type": "string",
+            "description": "Completed blank Product insertion type: builder or custom."
+          },
           "detached_part_count": {
             "type": "number",
             "default": 0
