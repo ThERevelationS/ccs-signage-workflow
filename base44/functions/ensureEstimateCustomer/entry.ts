@@ -12,6 +12,9 @@ const CUSTOMER_FIELDS = new Set([
   'default_tax_group',
   'terms',
   'location_address_1',
+  'billing_address_1',
+  'notes',
+  'legacy_client_names',
 ]);
 
 const CUSTOMER_REFERENCE_ENTITIES = [
@@ -86,6 +89,7 @@ Deno.serve(async (req) => {
     }
 
     const fields = cleanFields(body?.fields || {});
+    const updateExisting = body?.update_existing !== false;
     const creationKey = `estimate_customer:${normalizedName}`;
     const CustomerUser = base44.entities.Customer;
     const CustomerService = base44.asServiceRole.entities.Customer;
@@ -95,8 +99,8 @@ Deno.serve(async (req) => {
     // apply the same estimator fields the old client path would have written.
     const historical = await findHistoricalMatch(CustomerService, normalizedName);
     if (historical?.id) {
-      if (Object.keys(fields).length) await CustomerUser.update(historical.id, fields);
-      return Response.json({ customer: { ...historical, ...fields }, reused: true, historical_match: true });
+      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(historical.id, fields);
+      return Response.json({ customer: updateExisting ? { ...historical, ...fields } : historical, reused: true, historical_match: true });
     }
 
     // A retry after a lost create response can find the estimator-created row by
@@ -108,8 +112,8 @@ Deno.serve(async (req) => {
     }
     const keyedExisting = canonicalRow(keyedRows || []);
     if (keyedExisting?.id) {
-      if (Object.keys(fields).length) await CustomerUser.update(keyedExisting.id, fields);
-      return Response.json({ customer: { ...keyedExisting, ...fields }, reused: true });
+      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(keyedExisting.id, fields);
+      return Response.json({ customer: updateExisting ? { ...keyedExisting, ...fields } : keyedExisting, reused: true });
     }
 
     const created = await CustomerUser.create({
@@ -135,8 +139,12 @@ Deno.serve(async (req) => {
         return Response.json({ error: `A simultaneous Customer duplicate was detected, but the losing row is already referenced by ${referencedBy}. No Customer was deleted.` }, { status: 409 });
       }
       await CustomerService.delete(created.id);
-      if (Object.keys(fields).length) await CustomerUser.update(canonical.id, fields);
-      return Response.json({ customer: { ...canonical, ...fields }, reused: true, concurrent_duplicate_discarded: true });
+      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(canonical.id, fields);
+      return Response.json({
+        customer: updateExisting ? { ...canonical, ...fields } : canonical,
+        reused: true,
+        concurrent_duplicate_discarded: true,
+      });
     }
 
     return Response.json({ customer: canonical, reused: false });
