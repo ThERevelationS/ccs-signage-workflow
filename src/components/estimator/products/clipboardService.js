@@ -160,7 +160,7 @@ export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuil
     throw new Error("This clipboard item changed after the clipboard opened. Reopen it before pasting.");
   }
   if (liveItem.item_type === "product") {
-    return instantiateProductSnapshot({ estimateId, productSnapshot: liveItem.payload, expectedEstimateUpdatedAt });
+    return instantiateProductSnapshot({ estimateId, productSnapshot: liveItem.payload, expectedEstimateUpdatedAt, sourceId: liveItem.id });
   }
   return addPartPackageToProduct({
     estimateId,
