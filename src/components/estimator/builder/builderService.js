@@ -193,7 +193,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   // reconciliation must never rewrite its recovery inputs. Quick Product insertion
   // has an initial provisional stage before its BuilderProduct exists.
   if (line?.price_acceptance_pending?.key) {
-    if (!line.builder_product_id && line.price_acceptance_pending.kind === "builder_quick_product_insert") {
+    if (!line.builder_product_id && ["builder_quick_product_insert", "builder_blank_product_insert"].includes(line.price_acceptance_pending.kind)) {
       return { line, builderProduct: null, changed: false, partSyncInputs: null };
     }
     if (line.builder_product_id) {
