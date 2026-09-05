@@ -1,0 +1,96 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const canonicalOpenRevision = (rows: any[] = []) => rows
+  .filter((row) => row?.revision_status === 'open')
+  .slice()
+  .sort((a, b) => {
+    const aNum = num(a?.revision_number, Number.MAX_SAFE_INTEGER);
+    const bNum = num(b?.revision_number, Number.MAX_SAFE_INTEGER);
+    if (aNum !== bNum) return aNum - bNum;
+    const aTime = Date.parse(a?.created_date || a?.started_at || '') || 0;
+    const bTime = Date.parse(b?.created_date || b?.started_at || '') || 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return String(a?.id || '').localeCompare(String(b?.id || ''));
+  })[0] || null;
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const estimateId = String(body?.estimate_id || '').trim();
+    const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
+    const reason = String(body?.reason || '').trim();
+    const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
+
+    if (!estimateId || !reason) {
+      return Response.json({ error: 'Estimate and revision reason are required.' }, { status: 400 });
+    }
+
+    const EstimateUser = base44.entities.AllInOneEstimate;
+    const RevisionUser = base44.entities.EstimateRevision;
+    const RevisionService = base44.asServiceRole.entities.EstimateRevision;
+
+    const estimate = await EstimateUser.get(estimateId).catch(() => null);
+    if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified before starting a revision.' }, { status: 404 });
+    if (expectedUpdatedDate && estimate.updated_date && expectedUpdatedDate !== estimate.updated_date) {
+      return Response.json({ error: 'This estimate changed in another session. Reload before starting a revision.' }, { status: 409 });
+    }
+    if (estimate.pipeline_sync_pending) {
+      return Response.json({ error: 'Sales Pipeline synchronization is still pending. Retry that synchronization before starting another estimate revision.' }, { status: 409 });
+    }
+    const pendingLine = (estimate.line_items || []).find((line: any) => {
+      const pending = line?.price_acceptance_pending;
+      return pending && typeof pending === 'object' && String(pending.key || '').trim();
+    });
+    if (pendingLine) {
+      return Response.json({ error: 'A Builder mutation recovery is still pending. Resume that Product operation before starting an Estimate Revision.' }, { status: 409 });
+    }
+
+    // One Estimate may have at most one active manual revision. Returning the
+    // canonical existing row makes retries naturally idempotent even when the
+    // browser lost the create response.
+    let openRows = await RevisionService.filter({ estimate_id: estimateId, revision_status: 'open' });
+    const existing = canonicalOpenRevision(openRows || []);
+    if (existing) return Response.json({ revision: existing, reused: true });
+
+    const allRows = await RevisionService.filter({ estimate_id: estimateId });
+    const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
+    const timestamp = new Date().toISOString();
+    const idempotencyKey = `open_revision:${estimateId}:${expectedUpdatedDate || estimate.updated_date || revisionNumber}`;
+
+    const created = await RevisionUser.create({
+      ...revision,
+      estimate_id: estimateId,
+      revision_number: revisionNumber,
+      revision_type: 'manual_revision',
+      revision_status: 'open',
+      reason,
+      idempotency_key: idempotencyKey,
+      started_at: revision?.started_at || timestamp,
+      completed_at: '',
+    });
+
+    // Base44 has no unique constraint for "one open revision per Estimate".
+    // Re-read after create so simultaneous staff sessions converge on the
+    // earliest canonical open row. Each losing request deletes only the row it
+    // created; unrelated lifecycle history is never modified.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    openRows = await RevisionService.filter({ estimate_id: estimateId, revision_status: 'open' });
+    const canonical = canonicalOpenRevision(openRows || []) || created;
+
+    if (canonical?.id && created?.id && canonical.id !== created.id) {
+      await RevisionService.delete(created.id).catch(() => null);
+      return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
+    }
+
+    return Response.json({ revision: canonical, reused: false });
+  } catch (error) {
+    console.error('ensureOpenEstimateRevision error:', error);
+    return Response.json({ error: error?.message || 'Estimate revision could not be started.' }, { status: 500 });
+  }
+});
