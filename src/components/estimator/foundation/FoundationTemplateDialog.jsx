@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
+import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 
 export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply }) {
   const [templates, setTemplates] = useState([]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const saveAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
-    if (!open || mode !== "load") return;
+    if (!open) return;
+    saveAttemptRef.current = { signature: "", key: "" };
+    if (mode !== "load") return;
     base44.entities.ProjectTemplate.filter({ module_key: "foundation" }).then((rows) =>
       setTemplates(rows || [])
     );
@@ -19,7 +23,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await base44.entities.ProjectTemplate.create({
+      const data = {
         template_name: name.trim(),
         module_key: "foundation",
         project_data: {
@@ -32,8 +36,22 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
           project_concrete_admixtures: project.project_concrete_admixtures || [],
           excavation_method: project.excavation_method,
         },
+      };
+      const signature = JSON.stringify(data);
+      if (saveAttemptRef.current.signature !== signature) {
+        saveAttemptRef.current = {
+          signature,
+          key: `foundation_template_save:${crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`}`,
+        };
+      }
+      await ensureReusableRecord({
+        entity: base44.entities.ProjectTemplate,
+        idempotencyKey: saveAttemptRef.current.key,
+        data,
+        label: "Foundation template",
       });
       setName("");
+      saveAttemptRef.current = { signature: "", key: "" };
       onClose();
     } finally {
       setBusy(false);
@@ -41,7 +59,12 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
   };
 
   const remove = async (t) => {
-    await base44.entities.ProjectTemplate.delete(t.id);
+    try {
+      await base44.entities.ProjectTemplate.delete(t.id);
+    } catch (error) {
+      const stillThere = await base44.entities.ProjectTemplate.filter({ id: t.id }).catch(() => null);
+      if (!Array.isArray(stillThere) || stillThere.some((row) => row.id === t.id)) throw error;
+    }
     setTemplates((prev) => prev.filter((x) => x.id !== t.id));
   };
 
