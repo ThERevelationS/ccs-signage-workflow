@@ -91,7 +91,6 @@ export async function addPartPackageToProduct({
   };
   const requestHash = builderMutationHash({
     builder_product_id: builder.id,
-    builder_version: num(builder.builder_version, 1),
     expected_estimate_updated_at: expectedEstimateUpdatedAt || estimate.updated_date || "",
     item_type: itemType,
     source_type: sourceType,
