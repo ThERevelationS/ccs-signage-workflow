@@ -19,6 +19,26 @@ export const canonicalEstimateWorkOrder = (rows = []) => (rows || []).slice().so
   return String(a?.id || "").localeCompare(String(b?.id || ""));
 })[0] || null;
 
+export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fields = {}, duplicateLabel = "Work Order" } = {}) => {
+  if (!estimateId || !created?.id) return created || null;
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const canonical = canonicalEstimateWorkOrder(
+    await base44.entities.WorkOrder.filter({ estimate_id: estimateId })
+  ) || created;
+
+  if (canonical?.id && canonical.id !== created.id) {
+    try {
+      await base44.entities.WorkOrder.delete(created.id);
+    } catch (error) {
+      throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed: ${error?.message || "unknown error"}`);
+    }
+    if (Object.keys(fields || {}).length) await base44.entities.WorkOrder.update(canonical.id, fields);
+    return { ...canonical, ...fields };
+  }
+
+  return canonical;
+};
+
 /** Find a Customer by company name (or legacy workflow client name). */
 export const findCustomerByName = (customers, name) => {
   const n = norm(name);
@@ -134,23 +154,12 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
   // Never delete/merge a WorkOrder that existed before this request. If another
   // session won, discard only this request's newly-created losing row and apply
   // the latest estimator fields to the canonical pipeline record.
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  const canonical = canonicalEstimateWorkOrder(
-    await base44.entities.WorkOrder.filter({ estimate_id: estimate.id })
-  ) || created;
-
-  if (canonical?.id && created?.id && canonical.id !== created.id) {
-    try {
-      await base44.entities.WorkOrder.delete(created.id);
-    } catch (error) {
-      console.error("Duplicate estimate-linked WorkOrder could not be discarded:", error);
-      throw new Error("A duplicate Sales Pipeline record was detected for this estimate and the losing duplicate could not be removed. Retry Pipeline Sync or contact an administrator.");
-    }
-    await base44.entities.WorkOrder.update(canonical.id, fields);
-    return { ...canonical, ...fields };
-  }
-
-  return canonical;
+  return convergeCreatedEstimateWorkOrder({
+    estimateId: estimate.id,
+    created,
+    fields,
+    duplicateLabel: "Sales Pipeline record",
+  });
 };
 
 /**
