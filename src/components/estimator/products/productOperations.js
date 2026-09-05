@@ -1,25 +1,11 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId, snapshotHash } from "@/components/estimator/builder/builderService";
-import { cloneSnapshot, stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
-import { countBuilderReattachParts } from "@/components/estimator/parts/partState";
+import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
+import { instantiateProductSnapshot } from "@/components/estimator/products/quickProductService";
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceState } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
-
-async function cloneSourceProject(builder, line, copyName) {
-  if (!builder?.source_entity || !builder?.source_project_id || line?.module_key === "custom") {
-    return { sourceProjectId: "", sourceProject: null };
-  }
-  const source = await base44.entities[builder.source_entity].get(builder.source_project_id);
-  if (!source) throw new Error("The source Builder record could not be verified for this Product clone.");
-  const data = stripEntitySystemFields(source);
-  if (Object.prototype.hasOwnProperty.call(data, "project_name")) data.project_name = copyName;
-  if (Object.prototype.hasOwnProperty.call(data, "estimate_number")) data.estimate_number = line?.estimate_number || data.estimate_number;
-  const created = await base44.entities[builder.source_entity].create(data);
-  return { sourceProjectId: created.id, sourceProject: created };
-}
 
 export async function cloneProductInEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record to clone.");
@@ -29,120 +15,76 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
     base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
     base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
   ]);
-  if (!estimate || !builder) throw new Error("The Product could not be loaded.");
+  if (!estimate || !builder || !Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product could not be fully loaded for cloning.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const currentLine = (estimate.line_items || []).find((item) =>
     item.builder_product_id === builder.id || (line.line_id && item.line_id === line.line_id)
   );
   if (!currentLine) throw new Error("This Product is no longer part of the estimate. Reload before cloning it.");
+  if (parts.some((part) => part?.builder_product_id !== builder.id) || groups.some((group) => group?.builder_product_id !== builder.id)) {
+    throw new Error("This Product's Parts or Part Groups changed ownership. Reload before cloning it.");
+  }
+
+  let sourceProject = null;
+  if (builder.source_entity && builder.source_project_id && currentLine.module_key !== "custom") {
+    sourceProject = await base44.entities[builder.source_entity].get(builder.source_project_id);
+    if (!sourceProject) throw new Error("The source Builder record could not be verified for this Product clone.");
+  }
 
   const originalName = currentLine.client_product_name || builder.client_product_name || currentLine.project_name || "Product";
   const copyName = `${originalName} — Copy`;
-  const { sourceProjectId, sourceProject } = await cloneSourceProject(builder, currentLine, copyName);
-  const newLineId = makeStableId("line");
-  const timestamp = nowIso();
-
-  const builderData = stripEntitySystemFields(builder);
-  const newBuilder = await base44.entities.BuilderProduct.create({
-    ...builderData,
-    estimate_id: estimateId,
-    estimate_line_id: newLineId,
-    source_project_id: sourceProjectId,
-    client_product_name: copyName,
-    builder_snapshot: sourceProject || builder.builder_snapshot || {},
-    builder_snapshot_at: timestamp,
-    builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
-    builder_snapshot_hash: snapshotHash(sourceProject || builder.builder_snapshot || {}),
-    builder_version: 1,
-    part_count: 0,
-    group_count: 0,
-    is_active: true,
-    notes: builder.notes || "",
-  });
-
-  const groupMap = new Map();
-  const activeGroups = (groups || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  for (const group of activeGroups) {
-    const created = await base44.entities.BuilderPartGroup.create({
-      ...stripEntitySystemFields(group),
-      builder_product_id: newBuilder.id,
-      group_key: makeStableId("group"),
-    });
-    groupMap.set(group.id, created.id);
-  }
-
-  const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  const clonedParts = [];
-  for (const part of activeParts) {
-    const created = await base44.entities.BuilderPart.create({
-      ...stripEntitySystemFields(part),
-      builder_product_id: newBuilder.id,
-      part_group_id: part.part_group_id ? (groupMap.get(part.part_group_id) || "") : "",
-      // part_key is the stable reconciliation identity inside a Product. It is
-      // safe (and required) to preserve it across a Product clone because the
-      // new Product has its own builder_product_id namespace.
-      part_key: part.part_key || makeStableId("part"),
-      last_price_check_at: timestamp,
-    });
-    clonedParts.push(created);
-  }
-
-  const reattachCount = countBuilderReattachParts(clonedParts);
-  await base44.entities.BuilderProduct.update(newBuilder.id, {
-    part_count: clonedParts.length,
-    group_count: activeGroups.length,
-    detached_part_count: reattachCount,
-    needs_reattach_review: reattachCount > 0,
-  });
-
+  const activeParts = parts.filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const activeGroups = groups.filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
   const frozenTotal = num(builder.frozen_cost, num(currentLine.total_snapshot));
+  const currentTotal = num(builder.current_recalculated_cost, num(currentLine.live_total_snapshot, frozenTotal));
   const frozenCustomer = num(builder.frozen_customer_price, acceptedCustomerUnitPrice(currentLine));
   const liveCustomer = liveCustomerUnitPrice(currentLine);
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: newBuilder.id,
-    estimate_id: estimateId,
-    revision_number: 1,
-    reason: "initial_freeze",
-    previous_total_cost: 0,
-    new_total_cost: frozenTotal,
-    previous_customer_price: 0,
-    new_customer_price: frozenCustomer,
-    changed_parts: clonedParts.map((part) => ({
-      part_id: part.id,
-      part_key: part.part_key,
-      part_name: part.part_name,
-      action: "cloned_with_product",
-      frozen_unit_cost: num(part.frozen_unit_cost),
-      frozen_extended_cost: num(part.frozen_extended_cost),
-    })),
-    builder_snapshot_before: {},
-    builder_snapshot_after: sourceProject || builder.builder_snapshot || {},
-    price_snapshot_before: { total: 0 },
-    price_snapshot_after: { total: frozenTotal, source: "product_clone" },
-    notes: `Cloned from Product ${originalName}. Frozen pricing and Part/Group snapshots were preserved.`,
-  });
+  const sourceSnapshot = cloneSnapshot(sourceProject || builder.builder_snapshot || {});
 
-  const newLine = {
-    ...cloneSnapshot(currentLine),
-    line_id: newLineId,
-    builder_product_id: newBuilder.id,
-    project_id: sourceProjectId,
-    project_name: sourceProjectId ? copyName : copyName,
-    client_product_name: copyName,
-    total_snapshot: frozenTotal,
-    live_total_snapshot: num(builder.current_recalculated_cost, num(currentLine.live_total_snapshot, frozenTotal)),
-    customer_price_snapshot: frozenCustomer,
-    live_customer_price_snapshot: liveCustomer,
-    price_state: builder.price_state || currentLine.price_state || "current",
-    detached_part_count: reattachCount,
-    needs_reattach_review: reattachCount > 0,
-    owned: true,
-    linked_date: timestamp,
-    updated_date_snapshot: sourceProject?.updated_date || timestamp,
+  const clonePayload = {
+    product_name: copyName,
+    template_version: 2,
+    source_product_class: currentLine.module_key === "custom" ? "custom" : "builder",
+    source_module_key: currentLine.module_key || builder.module_key || "custom",
+    source_entity: currentLine.module_key === "custom" ? "" : (builder.source_entity || ""),
+    source_builder_name: builder.builder_name || currentLine.builder_name || "Custom Product",
+    product_category: currentLine.product_category || builder.product_category || "",
+    production_product_type: currentLine.production_product_type ?? builder.production_product_type ?? "",
+    product_quantity: num(currentLine.customer_quantity, num(builder.quantity, 1)),
+    product_notes: currentLine.product_notes ?? builder.product_notes ?? "",
+    client_description: currentLine.customer_description ?? builder.client_description ?? "",
+    product_snapshot: {
+      line: cloneSnapshot(currentLine),
+      builder_product: cloneSnapshot(builder),
+    },
+    builder_snapshot: sourceSnapshot,
+    parts_snapshot: activeParts.map(cloneSnapshot),
+    part_groups_snapshot: activeGroups.map((group) => ({
+      ...cloneSnapshot(group),
+      snapshot_source_group_id: group.id,
+    })),
+    price_snapshot: {
+      frozen_cost: frozenTotal,
+      frozen_customer_price: frozenCustomer,
+      current_recalculated_cost: currentTotal,
+      current_recalculated_customer_price: liveCustomer,
+      price_state: builder.price_state || currentLine.price_state || "current",
+      price_delta: num(builder.price_delta, currentTotal - frozenTotal),
+      price_delta_percent: num(builder.price_delta_percent, frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0),
+      price_recalc_required: !!(builder.price_recalc_required || currentLine.price_recalc_required),
+      price_recalc_reason: builder.price_recalc_reason || currentLine.price_recalc_reason || "",
+    },
+    detached_part_count: num(builder.detached_part_count),
+    needs_reattach_review: !!builder.needs_reattach_review,
   };
-  const lineItems = [...(estimate.line_items || []), newLine];
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
-  return { line: newLine, builderProduct: newBuilder, parts: clonedParts, groups: activeGroups.length };
+
+  return instantiateProductSnapshot({
+    estimateId,
+    productSnapshot: clonePayload,
+    expectedEstimateUpdatedAt,
+    sourceId: builder.id,
+    sourceType: "product_clone",
+  });
 }
 
 export async function saveProductSettings({ estimateId, line, patch = {}, expectedEstimateUpdatedAt = "" }) {
