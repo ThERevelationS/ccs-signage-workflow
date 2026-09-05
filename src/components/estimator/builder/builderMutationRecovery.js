@@ -265,6 +265,9 @@ export async function resumeBuilderMutation({
   applyPartPlan,
 }) {
   validatePendingBuilderMutation(pending, { estimateId, builder, line });
+  if (pending.kind === "builder_part_group_move") {
+    throw new Error("This pending Part Group move must be resumed with its two-Product recovery action.");
+  }
   if (typeof applyPartPlan !== "function") throw new Error("Builder recovery could not apply its stored Part plan.");
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
