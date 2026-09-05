@@ -36,9 +36,8 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
 
   const before = estimateAuditSnapshot(estimate, { quoteTotal, internalCost });
   const quoteVersion = Math.max(0, Math.floor(num(before.quote_version)));
-  return base44.entities.EstimateRevision.create({
+  const revisionPayload = {
     estimate_id: estimate.id,
-    revision_number: await nextRevisionNumber(estimate.id),
     quote_version: quoteVersion,
     quote_issue_key: quoteIssueKey(estimate.id, quoteVersion),
     revision_type: "manual_revision",
@@ -54,7 +53,17 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
     estimate_snapshot_before: before,
     estimate_snapshot_after: {},
     started_at: new Date().toISOString(),
+  };
+  const response = await base44.functions.invoke("ensureOpenEstimateRevision", {
+    estimate_id: estimate.id,
+    expected_estimate_updated_date: estimate.updated_date || "",
+    reason: cleanReason,
+    revision: revisionPayload,
   });
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.revision?.id) throw new Error("Estimate revision could not be verified after starting.");
+  return result.revision;
 }
 
 export async function completeEstimateRevision({ revision, estimate, quoteTotal, internalCost, workOrderId = "" }) {
