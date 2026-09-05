@@ -150,7 +150,7 @@ async function completedQuickInsertResult(estimate, line, flags = {}) {
   return { line, builderProduct: builder, parts, groups, ...flags };
 }
 
-function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey }) {
+function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey, sourceType = "quick_product" }) {
   const productName = productPayload.product_name || "Quick Product";
   const templateLine = cloneSnapshot(productPayload.product_snapshot?.line || {});
   const templateBuilder = stripEntitySystemFields(productPayload.product_snapshot?.builder_product || {});
@@ -325,13 +325,15 @@ function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, op
     finalPriceState,
     builderCreateData,
     finalLineBase,
-    revisionAction: "created_from_quick_product",
-    revisionNotes: `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
-    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: "quick_product" },
+    revisionAction: sourceType === "product_clone" ? "cloned_with_product" : "created_from_quick_product",
+    revisionNotes: sourceType === "product_clone"
+      ? `Cloned Product “${productName}”. Frozen pricing and Part/Group snapshots were preserved.`
+      : `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
+    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: sourceType === "product_clone" ? "product_clone" : "quick_product" },
   };
 }
 
-function buildLegacyQuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey }) {
+function buildLegacyQuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey, sourceType = "quick_product" }) {
   const name = productPayload.product_name || "Legacy Quick Product";
   const legacyParts = productPayload.parts || [];
   const calculatedPartsTotal = legacyParts.reduce((sum, part) => sum + legacyPartExtended(part), 0);
@@ -482,7 +484,7 @@ function buildLegacyQuickBlueprint({ estimate, productPayload, lineId, timestamp
     finalLineBase,
     revisionAction: "legacy_quick_product_import",
     revisionNotes: `Created from legacy Quick Product “${name}”.`,
-    revisionPriceSnapshotAfter: { total: frozenTotal, source: "legacy_quick_product" },
+    revisionPriceSnapshotAfter: { total: frozenTotal, source: sourceType === "product_clone" ? "product_clone" : "legacy_quick_product" },
   };
 }
 
