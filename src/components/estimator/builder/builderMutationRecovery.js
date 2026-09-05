@@ -119,6 +119,58 @@ async function applyPendingSourcePatch(pending) {
   return entity.update(sourceProjectId, sourcePatch);
 }
 
+async function applyPendingGroupCreatePlan(pending, builderProductId) {
+  const plan = pending?.group_create_plan;
+  const groups = Array.isArray(plan?.groups) ? plan.groups : [];
+  if (!groups.length) return new Map();
+
+  const currentGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId });
+  if (!Array.isArray(currentGroups) || currentGroups.some((group) => String(group?.builder_product_id || "") !== String(builderProductId || ""))) {
+    throw new Error("Part Groups could not be verified while recovering the pending Builder mutation.");
+  }
+  const byKey = new Map(currentGroups.map((group) => [group.group_key, group]));
+  const resolvedIds = new Map();
+
+  for (const step of groups) {
+    const groupKey = String(step?.group_key || step?.data?.group_key || "").trim();
+    const data = step?.data && typeof step.data === "object" ? step.data : null;
+    if (!groupKey || !data) throw new Error("A stored Part Group create step is invalid. Recovery was stopped before creating anything else.");
+    const existing = byKey.get(groupKey);
+    if (existing) {
+      if (String(existing.builder_product_id || "") !== String(builderProductId || "")) {
+        throw new Error("A planned Part Group key is now owned by a different Product. Reload before continuing.");
+      }
+      if (recoveryPatchDiffers(existing, data)) {
+        throw new Error(`Part Group “${existing.group_name || "Part Group"}” appeared while the Builder mutation was pending with different data. No unrelated group was overwritten.`);
+      }
+      resolvedIds.set(groupKey, existing.id);
+      continue;
+    }
+    const created = await base44.entities.BuilderPartGroup.create(data);
+    if (!created?.id) throw new Error("A Part Group could not be verified after creation while recovering the Builder mutation.");
+    byKey.set(groupKey, created);
+    resolvedIds.set(groupKey, created.id);
+  }
+  return resolvedIds;
+}
+
+function resolvePendingPartGroupRefs(plan, groupIds) {
+  if (!Array.isArray(plan?.part_updates) || !groupIds?.size) return plan;
+  return {
+    ...plan,
+    part_updates: plan.part_updates.map((step) => {
+      const groupKey = String(step?.part_group_key_ref || "").trim();
+      if (!groupKey) return step;
+      const groupId = groupIds.get(groupKey);
+      if (!groupId) throw new Error("A stored Part could not resolve its pending Part Group during recovery.");
+      return {
+        ...step,
+        data: step?.data ? { ...step.data, part_group_id: groupId } : step.data,
+      };
+    }),
+  };
+}
+
 async function applyPendingDeletePlan(pending, builderProductId) {
   const plan = pending?.delete_plan;
   if (!plan || typeof plan !== "object") return { partDeletes: 0, groupDeletes: 0 };
@@ -187,10 +239,12 @@ export async function resumeBuilderMutation({
   const plan = pending.part_acceptance_plan || {};
   await applyPendingSourcePatch(pending);
   await applyPendingDeletePlan(pending, builder.id);
+  const groupIds = await applyPendingGroupCreatePlan(pending, builder.id);
+  const resolvedPlan = resolvePendingPartGroupRefs(plan, groupIds);
   // Re-read Parts inside the applier instead of trusting the post-marker snapshot.
   // This closes the race where another session edits a Part after marker verification
   // but before the exact stored Part patch is written.
-  await applyPartPlan(builder.id, plan);
+  await applyPartPlan(builder.id, resolvedPlan);
   await ensureBuilderPriceRevision(pending.key, pending.revision || {});
 
   const builderPatch = pending.builder_patch || {};
@@ -218,7 +272,7 @@ export async function resumeBuilderMutation({
         blocked: false,
         recovered: true,
         alreadyCompleted: true,
-        changedParts: plan.changed_parts || [],
+        changedParts: resolvedPlan.changed_parts || [],
         line: latestLine,
       };
     }
@@ -239,7 +293,7 @@ export async function resumeBuilderMutation({
   return {
     blocked: false,
     recovered: true,
-    changedParts: plan.changed_parts || [],
+    changedParts: resolvedPlan.changed_parts || [],
     line: completedLine,
   };
 }
