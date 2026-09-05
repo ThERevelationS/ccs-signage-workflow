@@ -19,6 +19,10 @@
       "type": "object",
       "description": "Snapshot of the project to use as a template",
       "additionalProperties": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Internal random receipt used to make one Save Template action retry-safe without merging separate intentional templates."
     }
   },
   "required": [
