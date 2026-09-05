@@ -42,6 +42,7 @@ import { calcLettersTotals, syncInstallItemsFromPurchases } from "@/components/c
 import { buildSummaryText, downloadCSV } from "@/components/channelLetterInstall/installExport";
 import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
@@ -93,6 +94,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [aiInstallOpen, setAiInstallOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null); // { title, description, ... }
   const [helpTrigger, setHelpTrigger] = useState(false);
+  const persistedProjectIdRef = React.useRef(editId || "");
+  const createAttemptRef = React.useRef({ signature: "", key: "" });
+
+  useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+  }, [editId]);
 
   useEffect(() => { if (!isLoading && !loadError) setHasLoaded(true); }, [isLoading, loadError]);
   useEffect(() => { if (hasLoaded) setIsDirty(true); }, [project, hasLoaded, setIsDirty]);
@@ -446,12 +454,28 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         customer_pricing: customerPricing || project.customer_pricing,
         status: "calculated",
       };
-      let savedId = editId;
-      if (isEditing && editId) {
-        await ChannelLetterInstallation.update(editId, dataToSave);
+      let savedId = persistedProjectIdRef.current || editId || "";
+      if (savedId) {
+        await ChannelLetterInstallation.update(savedId, dataToSave);
       } else {
-        const created = await ChannelLetterInstallation.create(dataToSave);
-        savedId = created?.id;
+        const signature = JSON.stringify(dataToSave);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("channel_letter_project"),
+          };
+        }
+        const created = await ensureIdempotentEntityCreate({
+          entity: ChannelLetterInstallation,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: dataToSave,
+          label: "Channel Letter project",
+        });
+        if (!created?.id) throw new Error("Channel Letter project create could not be verified.");
+        savedId = created.id;
+        persistedProjectIdRef.current = created.id;
+        setIsEditing(true);
       }
       await upsertCustomerSummaryForEstimate({
         module: "channel_letter_installation",
