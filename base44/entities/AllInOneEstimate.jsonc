@@ -410,6 +410,14 @@
             "type": "string",
             "description": "Source QuickProduct or EstimateClipboardItem id for a completed reusable Product insertion when available."
           },
+          "last_part_group_mutation_key": {
+            "type": "string",
+            "description": "Idempotency receipt for the most recently completed structural Part Group create/dissolve action on this Product."
+          },
+          "last_part_group_mutation_kind": {
+            "type": "string",
+            "description": "Kind of the most recently completed structural Part Group action, such as create or dissolve."
+          },
           "detached_part_count": {
             "type": "number",
             "default": 0
