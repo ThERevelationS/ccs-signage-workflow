@@ -7,6 +7,10 @@
       "type": "string",
       "description": "Estimate description shown in Step 1."
     },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal random receipt used only to make one New Estimate create action retry-safe. It is not derived from client/project names, so legitimate separate estimates with identical names remain allowed."
+    },
     "client_name": {
       "type": "string",
       "description": "Customer company name."
