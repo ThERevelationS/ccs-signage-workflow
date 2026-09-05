@@ -141,9 +141,11 @@ export default function ProductRow({
                   ? "Resume Part Remove"
                   : pendingPriceAcceptance?.kind === "builder_part_package_add"
                     ? "Resume Part Insert"
-                    : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                      ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
-                      : "Resume Price Update";
+                    : pendingPriceAcceptance?.kind === "builder_manual_product_price"
+                      ? "Resume Product Price"
+                      : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                        ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
+                        : "Resume Price Update";
   const isCustom = line.module_key === "custom";
   const StatusIcon = meta.icon;
 
@@ -249,11 +251,13 @@ export default function ProductRow({
                               ? "Resume the previously started manual Part removal from its saved recovery marker."
                               : pendingPriceAcceptance?.kind === "builder_part_package_add"
                                 ? "Resume the previously started Saved Part / clipboard insertion from its saved recovery marker."
-                                : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
-                                  ? pendingPriceAcceptance?.source_type === "product_clone"
-                                    ? "Resume the previously started Product clone from its saved recovery marker."
-                                    : "Resume the previously started Quick Product insertion from its saved recovery marker."
-                                  : "Resume the previously started Update Price operation from its saved recovery marker."}
+                                : pendingPriceAcceptance?.kind === "builder_manual_product_price"
+                                  ? "Resume the previously started manual Product customer-price adjustment from its saved recovery marker."
+                                  : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                                    ? pendingPriceAcceptance?.source_type === "product_clone"
+                                      ? "Resume the previously started Product clone from its saved recovery marker."
+                                      : "Resume the previously started Quick Product insertion from its saved recovery marker."
+                                    : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
               {updatingPrice ? "Recovering…" : pendingPriceLabel}
