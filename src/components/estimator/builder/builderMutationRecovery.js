@@ -272,6 +272,16 @@ export async function resumeBuilderMutation({
     throw new Error("Builder Parts could not be verified while recovering the pending Builder mutation.");
   }
   const plan = pending.part_acceptance_plan || {};
+  const builderPatch = pending.builder_patch || {};
+  const preflightBuilder = await base44.entities.BuilderProduct.get(builder.id);
+  if (!preflightBuilder?.id) throw new Error("Builder Product could not be verified before recovering the pending mutation.");
+  if (recoveryPatchDiffers(preflightBuilder, builderPatch)) {
+    const expectedBuilderUpdatedAt = String(pending.builder_updated_date_before || "").trim();
+    const currentBuilderUpdatedAt = String(preflightBuilder.updated_date || "").trim();
+    if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
+      throw new Error("This Builder Product changed while a Builder mutation was pending. Recovery stopped before applying any stored Part/Group writes.");
+    }
+  }
   await verifyPendingPreconditions(pending, builder.id);
   await applyPendingSourcePatch(pending);
   await applyPendingDeletePlan(pending, builder.id);
@@ -311,7 +321,6 @@ export async function resumeBuilderMutation({
   }
   await ensureBuilderPriceRevision(pending.key, revision);
 
-  const builderPatch = pending.builder_patch || {};
   const currentBuilder = await base44.entities.BuilderProduct.get(builder.id);
   if (!currentBuilder?.id) throw new Error("Builder Product could not be verified while completing the pending mutation.");
   if (recoveryPatchDiffers(currentBuilder, builderPatch)) {
