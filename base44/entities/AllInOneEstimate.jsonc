@@ -396,7 +396,19 @@
           "price_acceptance_pending": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Durable retry marker for a Builder multi-record mutation such as initial freeze, Update Price, detached-Part changes, or related pricing actions. Stores the exact target and Part write plan until the final Estimate line write completes."
+            "description": "Durable retry marker for a Builder/Product multi-record mutation such as initial freeze, Update Price, detached-Part changes, Saved Part insertion, or whole Quick Product insertion. Stores the exact recovery target until the final Estimate line write completes."
+          },
+          "quick_product_insert_key": {
+            "type": "string",
+            "description": "Stable provenance/idempotency key retained only after a Quick Product or copied Product insertion completes successfully."
+          },
+          "quick_product_source_type": {
+            "type": "string",
+            "description": "Origin of a completed reusable Product insertion, such as quick_product or clipboard_product."
+          },
+          "quick_product_source_id": {
+            "type": "string",
+            "description": "Source QuickProduct or EstimateClipboardItem id for a completed reusable Product insertion when available."
           },
           "detached_part_count": {
             "type": "number",
