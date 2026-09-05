@@ -482,6 +482,9 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
             });
             setMoveOpen(false);
             await onChanged?.();
+          } catch (error) {
+            await Promise.resolve(onChanged?.()).catch(() => null);
+            throw new Error(`${error?.message || "Part Group could not be moved."}\n\nThe Products were refreshed. If the move had already started, use Resume Group Move to safely continue it.`);
           } finally {
             structuralActionRef.current = false;
           }
