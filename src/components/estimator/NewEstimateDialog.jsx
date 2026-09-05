@@ -3,10 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
 import { generateDocNumber } from "@/functions/generateDocNumber";
 import { ensureNewEstimate, newEstimateCreationKey } from "./estimateCreationService";
-import { upsertCustomerFromEstimate } from "./customerSync";
+import { loadAllCustomers, upsertCustomerFromEstimate } from "./customerSync";
 
 export default function NewEstimateDialog({ open, onClose, onCreated }) {
   const [customers, setCustomers] = useState([]);
@@ -21,7 +20,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
     if (!open) return;
     setError("");
     createAttemptRef.current = { signature: "", key: "", estimateNumber: "" };
-    base44.entities.Customer.list("company_name", 500).then((res) => setCustomers(res || []));
+    loadAllCustomers().then((res) => setCustomers(res || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
   }, [open]);
 
   const handleCreate = async () => {
