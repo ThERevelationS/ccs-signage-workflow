@@ -19,7 +19,6 @@ import { refreshSectionSnapshots, deleteOwnedSection } from "@/components/estima
 import {
   acceptBuilderPrice,
   deleteBuilderProductCascade,
-  ensureBuilderProductForLine,
   ensureEstimateBuilderProducts,
 } from "@/components/estimator/builder/builderService";
 import { refreshManualProductPricing } from "@/components/estimator/parts/customProductService";
