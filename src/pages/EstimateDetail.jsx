@@ -511,7 +511,8 @@ export default function EstimateDetail() {
 
       try {
         // Customer/WorkOrder sync resolves existing records and is safe to retry.
-        const customerChangedKeys = estimateCustomerChangedKeys(before, saved);
+        const customerSyncBaseline = priorEstimateWriteAlreadyApplied ? (persistedEstimate || before) : before;
+        const customerChangedKeys = estimateCustomerChangedKeys(customerSyncBaseline, saved);
         await syncEstimateEverywhere(saved, {
           previousEstimateStatus: syncPreviousStatus,
           syncCustomer: customerChangedKeys.length > 0,
