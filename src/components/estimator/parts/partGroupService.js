@@ -1,5 +1,4 @@
 import { base44 } from "@/api/base44Client";
-import { makeStableId } from "@/components/estimator/builder/builderService";
 import { stripEntitySystemFields } from "@/components/estimator/products/snapshotUtils";
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
