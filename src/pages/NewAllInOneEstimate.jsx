@@ -6,6 +6,7 @@ import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
 import { upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
+import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -35,6 +36,7 @@ export default function NewAllInOneEstimate() {
   const [me, setMe] = useState(null);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const createAttemptRef = useRef({ signature: "", key: "" });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,6 +71,18 @@ export default function NewAllInOneEstimate() {
     savingRef.current = true;
     setSaving(true);
     try {
+      const createSignature = JSON.stringify({
+        ...form,
+        client_name: clientName,
+        project_name: description,
+      });
+      if (createAttemptRef.current.signature !== createSignature) {
+        createAttemptRef.current = {
+          signature: createSignature,
+          key: newEstimateCreationKey(),
+        };
+      }
+
       let customer = null;
       if (clientName) {
         customer = await upsertCustomerFromEstimate(
@@ -78,13 +92,16 @@ export default function NewAllInOneEstimate() {
       }
 
       const quoteDefaults = await loadQuoteDefaults();
-      const estimate = await base44.entities.AllInOneEstimate.create({
-        ...quoteDefaultsPayload(quoteDefaults || {}),
-        ...form,
-        client_name: clientName,
-        project_name: description,
-        customer_id: customer?.id || null,
-        status: "draft",
+      const estimate = await ensureNewEstimate({
+        creationKey: createAttemptRef.current.key,
+        estimate: {
+          ...quoteDefaultsPayload(quoteDefaults || {}),
+          ...form,
+          client_name: clientName,
+          project_name: description,
+          customer_id: customer?.id || null,
+          status: "draft",
+        },
       });
       if (customer) {
         try {
