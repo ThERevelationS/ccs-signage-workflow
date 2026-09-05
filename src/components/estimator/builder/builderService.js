@@ -193,6 +193,18 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
   // reconciliation must never rewrite its recovery inputs. Quick Product insertion
   // has an initial provisional stage before its BuilderProduct exists.
   if (line?.price_acceptance_pending?.key) {
+    if (line.price_acceptance_pending.kind === "builder_product_remove") {
+      // Product removal intentionally deletes Builder/source records before the
+      // final Estimate-line removal. Preserve the durable marker even when those
+      // records are already gone so the user can safely resume cleanup.
+      const pendingBuilder = line.builder_product_id
+        ? await base44.entities.BuilderProduct.get(line.builder_product_id).catch(() => null)
+        : null;
+      if (pendingBuilder?.estimate_id && pendingBuilder.estimate_id !== estimateId) {
+        throw new Error("A pending Product removal found a Builder Product owned by another estimate. The saved recovery marker was retained.");
+      }
+      return { line, builderProduct: pendingBuilder, changed: false, partSyncInputs: null };
+    }
     if (!line.builder_product_id && ["builder_quick_product_insert", "builder_blank_product_insert"].includes(line.price_acceptance_pending.kind)) {
       return { line, builderProduct: null, changed: false, partSyncInputs: null };
     }
