@@ -8,7 +8,7 @@ import { acceptedInternalEstimateCost } from "./customerPricing";
 import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
-import { canonicalEstimateWorkOrder, resolveCustomerForEstimate } from "./customerSync";
+import { convergeCreatedEstimateWorkOrder, resolveCustomerForEstimate } from "./customerSync";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -111,25 +111,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         workOrder = { ...existing, ...workOrderFields };
       } else {
         const created = await base44.entities.WorkOrder.create(workOrderFields);
-
-        // Two approved-estimate sessions can pass the initial "no Work Order"
-        // read at the same time. Re-read after create and converge on the same
-        // earliest Work Order for this Estimate. Only this request's newly-created
-        // losing row may be deleted; pre-existing jobs are never collapsed here.
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        const afterCreateRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-        const canonical = canonicalEstimateWorkOrder(afterCreateRows || []) || created;
-        if (canonical?.id && created?.id && canonical.id !== created.id) {
-          try {
-            await base44.entities.WorkOrder.delete(created.id);
-          } catch (error) {
-            throw new Error(`A duplicate Work Order was detected during simultaneous conversion, but the losing duplicate could not be removed: ${error?.message || "unknown error"}`);
-          }
-          await base44.entities.WorkOrder.update(canonical.id, workOrderFields);
-          workOrder = { ...canonical, ...workOrderFields };
-        } else {
-          workOrder = canonical;
-        }
+        workOrder = await convergeCreatedEstimateWorkOrder({
+          estimateId: estimate.id,
+          created,
+          fields: workOrderFields,
+          duplicateLabel: "Work Order during simultaneous conversion",
+        });
       }
 
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
