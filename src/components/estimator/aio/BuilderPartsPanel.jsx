@@ -321,7 +321,8 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
       });
       await onChanged?.();
     } catch (error) {
-      window.alert(error?.message || "Part Group could not be dissolved.");
+      await Promise.resolve(onChanged?.()).catch(() => null);
+      window.alert(`${error?.message || "Part Group could not be dissolved."}\n\nThe Product was refreshed. If the dissolve had already started, use Resume Group Dissolve to safely continue it.`);
     } finally {
       structuralActionRef.current = false;
     }
@@ -583,6 +584,10 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       setSelectedIds(new Set());
       setRefreshNonce((value) => value + 1);
       await onProductRefresh?.();
+    } catch (error) {
+      setRefreshNonce((value) => value + 1);
+      await Promise.resolve(onProductRefresh?.()).catch(() => null);
+      window.alert(`${error?.message || "Part Group could not be created."}\n\nThe Product was refreshed. If creation had already started, use Resume Group Create to safely continue it.`);
     } finally {
       groupCreateRef.current = false;
     }
