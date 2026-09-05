@@ -98,60 +98,164 @@ export async function saveProductAsQuickProduct({
   });
 }
 
-async function createSourceProjectFromQuickProduct(quickProduct, estimate, productName) {
-  const sourceEntity = quickProduct.source_entity || quickProduct.product_snapshot?.builder_product?.source_entity || "";
-  const sourceClass = quickProduct.source_product_class || "legacy";
-  if (sourceClass !== "builder" || !sourceEntity) return { sourceEntity: "", sourceProject: null };
-  const snapshot = stripEntitySystemFields(quickProduct.builder_snapshot || {});
-  if (Object.prototype.hasOwnProperty.call(snapshot, "project_name")) snapshot.project_name = productName;
-  if (Object.prototype.hasOwnProperty.call(snapshot, "client_name")) snapshot.client_name = estimate.client_name || snapshot.client_name;
-  if (Object.prototype.hasOwnProperty.call(snapshot, "customer_id")) snapshot.customer_id = estimate.customer_id || snapshot.customer_id;
-  if (Object.prototype.hasOwnProperty.call(snapshot, "estimate_number")) snapshot.estimate_number = estimate.estimate_number || snapshot.estimate_number;
-  const sourceProject = await base44.entities[sourceEntity].create(snapshot);
-  return { sourceEntity, sourceProject };
+const QUICK_INSERT_KIND = "builder_quick_product_insert";
+
+function isV2QuickProduct(productPayload) {
+  return num(productPayload?.template_version) >= 2 && !!productPayload?.product_snapshot;
 }
 
-async function instantiateV2QuickProduct({ estimate, quickProduct }) {
-  const timestamp = nowIso();
-  const productName = quickProduct.product_name || "Quick Product";
-  const templateLine = cloneSnapshot(quickProduct.product_snapshot?.line || {});
-  const templateBuilder = stripEntitySystemFields(quickProduct.product_snapshot?.builder_product || {});
-  const { sourceEntity, sourceProject } = await createSourceProjectFromQuickProduct(quickProduct, estimate, productName);
-  const lineId = makeStableId("line");
-  const moduleKey = quickProduct.source_module_key || templateBuilder.module_key || templateLine.module_key || "custom";
-  const builderName = quickProduct.source_builder_name || templateBuilder.builder_name || templateLine.builder_name || (moduleKey === "custom" ? "Custom Product" : "Builder Product");
-  const priceSnapshot = quickProduct.price_snapshot || {};
-  const frozenTotal = num(priceSnapshot.frozen_cost, num(quickProduct.total_price));
+function quickEstimateContext(estimate) {
+  return {
+    id: estimate.id,
+    client_name: estimate.client_name || "",
+    customer_id: estimate.customer_id || "",
+    estimate_number: estimate.estimate_number || "",
+  };
+}
+
+function quickPayloadFingerprint(productPayload) {
+  const copy = stripEntitySystemFields(productPayload || {});
+  return builderMutationHash(copy);
+}
+
+function quickInsertOperationKey({ estimateId, expectedEstimateUpdatedAt, sourceType, sourceId, sourceUpdatedAt, productPayload }) {
+  return `builder_quick_product_insert:${builderMutationHash({
+    estimate_id: estimateId,
+    expected_estimate_updated_at: expectedEstimateUpdatedAt || "",
+    source_type: sourceType || "snapshot",
+    source_id: sourceId || "",
+    source_updated_at: sourceUpdatedAt || "",
+    payload_hash: quickPayloadFingerprint(productPayload),
+  })}`;
+}
+
+function findPendingQuickInsertLine(estimate) {
+  return (estimate?.line_items || []).find((line) => line?.price_acceptance_pending?.kind === QUICK_INSERT_KIND && line.price_acceptance_pending?.key) || null;
+}
+
+function findCompletedQuickInsertLine(estimate, operationKey) {
+  return (estimate?.line_items || []).find((line) => line?.quick_product_insert_key === operationKey) || null;
+}
+
+async function completedQuickInsertResult(estimate, line, flags = {}) {
+  if (!line?.builder_product_id) throw new Error("The completed Quick Product line is missing its Builder Product link.");
+  const [builder, parts, groups] = await Promise.all([
+    base44.entities.BuilderProduct.get(line.builder_product_id),
+    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
+    base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
+  ]);
+  if (!builder?.id || !Array.isArray(parts) || !Array.isArray(groups)) {
+    throw new Error("The completed Quick Product could not be fully verified. Reload before continuing.");
+  }
+  return { line, builderProduct: builder, parts, groups, ...flags };
+}
+
+function buildV2QuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey }) {
+  const productName = productPayload.product_name || "Quick Product";
+  const templateLine = cloneSnapshot(productPayload.product_snapshot?.line || {});
+  const templateBuilder = stripEntitySystemFields(productPayload.product_snapshot?.builder_product || {});
+  const sourceClass = productPayload.source_product_class || "legacy";
+  const sourceEntity = sourceClass === "builder"
+    ? (productPayload.source_entity || productPayload.product_snapshot?.builder_product?.source_entity || "")
+    : "";
+  const moduleKey = productPayload.source_module_key || templateBuilder.module_key || templateLine.module_key || "custom";
+  const builderName = productPayload.source_builder_name || templateBuilder.builder_name || templateLine.builder_name || (moduleKey === "custom" ? "Custom Product" : "Builder Product");
+  const priceSnapshot = productPayload.price_snapshot || {};
+  const frozenTotal = num(priceSnapshot.frozen_cost, num(productPayload.total_price));
   const currentTotal = num(priceSnapshot.current_recalculated_cost, frozenTotal);
   const frozenCustomerPrice = num(priceSnapshot.frozen_customer_price, frozenTotal);
   const currentCustomerPrice = num(priceSnapshot.current_recalculated_customer_price, frozenCustomerPrice);
   const recalcRequired = !!(priceSnapshot.price_recalc_required ?? templateBuilder.price_recalc_required ?? templateLine.price_recalc_required);
   const recalcReason = priceSnapshot.price_recalc_reason || templateBuilder.price_recalc_reason || templateLine.price_recalc_reason || "";
-  const sourceSnapshot = cloneSnapshot(quickProduct.builder_snapshot || templateBuilder.builder_snapshot || {});
+  const sourceSnapshot = cloneSnapshot(productPayload.builder_snapshot || templateBuilder.builder_snapshot || {});
 
-  const newBuilder = await base44.entities.BuilderProduct.create({
+  let sourceExpectedData = null;
+  let sourceTaggedData = null;
+  let sourceRecoveryToken = "";
+  if (sourceEntity) {
+    sourceExpectedData = stripEntitySystemFields(productPayload.builder_snapshot || {});
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "project_name")) sourceExpectedData.project_name = productName;
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "client_name")) sourceExpectedData.client_name = estimate.client_name || sourceExpectedData.client_name;
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "customer_id")) sourceExpectedData.customer_id = estimate.customer_id || sourceExpectedData.customer_id;
+    if (Object.prototype.hasOwnProperty.call(sourceExpectedData, "estimate_number")) sourceExpectedData.estimate_number = estimate.estimate_number || sourceExpectedData.estimate_number;
+    sourceExpectedData.notes = String(sourceExpectedData.notes || "");
+    sourceRecoveryToken = `[SEP-QUICK-RECOVERY:${operationKey}]`;
+    sourceTaggedData = {
+      ...sourceExpectedData,
+      notes: sourceExpectedData.notes ? `${sourceExpectedData.notes}\n${sourceRecoveryToken}` : sourceRecoveryToken,
+    };
+  }
+
+  const groups = (productPayload.part_groups_snapshot || [])
+    .filter((group) => group.is_active !== false)
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const originalGroupToRecoveryKey = new Map();
+  const groupBlueprints = groups.map((group, index) => {
+    const groupKey = `quick-group-${builderMutationHash({ operation_key: operationKey, index })}`;
+    const originalId = group.snapshot_source_group_id || group.id || group.group_key || `group-${index}`;
+    originalGroupToRecoveryKey.set(originalId, groupKey);
+    if (group.group_key) originalGroupToRecoveryKey.set(group.group_key, groupKey);
+    const data = stripEntitySystemFields(group);
+    delete data.snapshot_source_group_id;
+    return {
+      groupKey,
+      data: {
+        ...data,
+        builder_product_id: "",
+        group_key: groupKey,
+        is_active: true,
+      },
+    };
+  });
+
+  const parts = (productPayload.parts_snapshot || [])
+    .filter((part) => part.is_active !== false)
+    .sort((a, b) => num(a.sort_order) - num(b.sort_order));
+  const seenPartKeys = new Set();
+  const partBlueprints = parts.map((part, index) => {
+    const partKey = part.part_key || `quick-part-${builderMutationHash({ operation_key: operationKey, index })}`;
+    if (seenPartKeys.has(partKey)) throw new Error(`Quick Product “${productName}” contains duplicate Part keys and cannot be inserted safely.`);
+    seenPartKeys.add(partKey);
+    const originalGroupRef = part.part_group_id || "";
+    return {
+      partKey,
+      partGroupKeyRef: originalGroupRef ? (originalGroupToRecoveryKey.get(originalGroupRef) || "") : "",
+      data: {
+        ...stripEntitySystemFields(part),
+        builder_product_id: "",
+        part_group_id: "",
+        part_key: partKey,
+        last_price_check_at: timestamp,
+        is_active: true,
+      },
+    };
+  });
+  const detachedCount = countBuilderReattachParts(partBlueprints.map((part) => part.data));
+  const finalPriceState = detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current");
+
+  const builderCreateData = {
     ...templateBuilder,
     estimate_id: estimate.id,
     estimate_line_id: lineId,
     module_key: moduleKey,
     source_entity: sourceEntity || templateBuilder.source_entity || "",
-    source_project_id: sourceProject?.id || "",
+    source_project_id: "",
     builder_name: builderName,
     client_product_name: productName,
-    client_description: quickProduct.client_description ?? templateBuilder.client_description ?? "",
-    product_category: quickProduct.product_category ?? templateBuilder.product_category ?? "",
-    production_product_type: quickProduct.production_product_type ?? templateBuilder.production_product_type ?? templateLine.production_product_type ?? "",
-    product_notes: quickProduct.product_notes ?? templateBuilder.product_notes ?? "",
-    quantity: num(quickProduct.product_quantity, num(templateBuilder.quantity, 1)),
+    client_description: productPayload.client_description ?? templateBuilder.client_description ?? "",
+    product_category: productPayload.product_category ?? templateBuilder.product_category ?? "",
+    production_product_type: productPayload.production_product_type ?? templateBuilder.production_product_type ?? templateLine.production_product_type ?? "",
+    product_notes: productPayload.product_notes ?? templateBuilder.product_notes ?? "",
+    quantity: num(productPayload.product_quantity, num(templateBuilder.quantity, 1)),
     builder_version: 1,
-    builder_snapshot: sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot,
+    builder_snapshot: sourceSnapshot,
     builder_snapshot_at: timestamp,
-    builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
-    builder_snapshot_hash: snapshotHash(sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot),
+    builder_snapshot_source_updated_date: timestamp,
+    builder_snapshot_hash: snapshotHash(sourceSnapshot),
     frozen_cost: frozenTotal,
     frozen_customer_price: frozenCustomerPrice,
     current_recalculated_cost: currentTotal,
-    price_state: priceSnapshot.price_state || "current",
+    price_state: finalPriceState,
     price_delta: num(priceSnapshot.price_delta, currentTotal - frozenTotal),
     price_delta_percent: num(priceSnapshot.price_delta_percent, frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0),
     price_recalc_required: recalcRequired,
@@ -160,124 +264,132 @@ async function instantiateV2QuickProduct({ estimate, quickProduct }) {
     last_price_update_at: timestamp,
     part_count: 0,
     group_count: 0,
-    detached_part_count: num(quickProduct.detached_part_count),
-    needs_reattach_review: !!quickProduct.needs_reattach_review,
-    is_active: true,
-    notes: `Created from Quick Product “${productName}”.`,
-  });
-
-  const groupMap = new Map();
-  const groups = (quickProduct.part_groups_snapshot || []).filter((group) => group.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  for (const group of groups) {
-    const originalId = group.snapshot_source_group_id || group.group_key || makeStableId("source-group");
-    const groupData = stripEntitySystemFields(group);
-    delete groupData.snapshot_source_group_id;
-    const created = await base44.entities.BuilderPartGroup.create({
-      ...groupData,
-      builder_product_id: newBuilder.id,
-      group_key: makeStableId("group"),
-      is_active: true,
-    });
-    groupMap.set(originalId, created.id);
-    if (group.group_key) groupMap.set(group.group_key, created.id);
-  }
-
-  const parts = (quickProduct.parts_snapshot || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
-  const createdParts = [];
-  for (const part of parts) {
-    const originalGroupRef = part.part_group_id || "";
-    const created = await base44.entities.BuilderPart.create({
-      ...stripEntitySystemFields(part),
-      builder_product_id: newBuilder.id,
-      part_group_id: originalGroupRef ? (groupMap.get(originalGroupRef) || "") : "",
-      // Builder reconciliation keys must stay stable within the new Product.
-      part_key: part.part_key || makeStableId("part"),
-      last_price_check_at: timestamp,
-      is_active: true,
-    });
-    createdParts.push(created);
-  }
-
-  const detachedCount = countBuilderReattachParts(createdParts);
-  await base44.entities.BuilderProduct.update(newBuilder.id, {
-    part_count: createdParts.length,
-    group_count: groups.length,
     detached_part_count: detachedCount,
     needs_reattach_review: detachedCount > 0,
-    price_state: detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current"),
-    price_recalc_required: recalcRequired,
-    price_recalc_reason: recalcReason,
-  });
+    is_active: true,
+    notes: `Created from Quick Product “${productName}”.`,
+  };
 
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: newBuilder.id,
-    estimate_id: estimate.id,
-    revision_number: 1,
-    reason: "initial_freeze",
-    previous_total_cost: 0,
-    new_total_cost: frozenTotal,
-    previous_customer_price: 0,
-    new_customer_price: frozenCustomerPrice,
-    changed_parts: createdParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name, action: "created_from_quick_product", frozen_extended_cost: num(part.frozen_extended_cost) })),
-    builder_snapshot_before: {},
-    builder_snapshot_after: sourceProject ? cloneSnapshot(sourceProject) : sourceSnapshot,
-    price_snapshot_before: { total: 0 },
-    price_snapshot_after: { ...priceSnapshot, total: frozenTotal, source: "quick_product" },
-    notes: `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
-  });
-
-  const newLine = {
+  const finalLineBase = {
     ...templateLine,
     line_id: lineId,
-    builder_product_id: newBuilder.id,
+    builder_product_id: "",
     module_key: moduleKey,
-    project_id: sourceProject?.id || "",
+    project_id: "",
     project_name: productName,
     builder_name: builderName,
     client_product_name: productName,
-    product_category: quickProduct.product_category ?? templateLine.product_category ?? "",
-    production_product_type: quickProduct.production_product_type ?? templateLine.production_product_type ?? templateBuilder.production_product_type ?? "",
-    product_notes: quickProduct.product_notes ?? templateLine.product_notes ?? "",
-    customer_description: quickProduct.client_description ?? templateLine.customer_description ?? "",
+    product_category: productPayload.product_category ?? templateLine.product_category ?? "",
+    production_product_type: productPayload.production_product_type ?? templateLine.production_product_type ?? templateBuilder.production_product_type ?? "",
+    product_notes: productPayload.product_notes ?? templateLine.product_notes ?? "",
+    customer_description: productPayload.client_description ?? templateLine.customer_description ?? "",
     client_name: estimate.client_name || templateLine.client_name || "",
     total_snapshot: frozenTotal,
     live_total_snapshot: currentTotal,
     customer_price_snapshot: frozenCustomerPrice,
     live_customer_price_snapshot: currentCustomerPrice,
-    price_state: detachedCount > 0 ? "detached_parts" : (priceSnapshot.price_state || "current"),
+    price_state: finalPriceState,
     price_recalc_required: recalcRequired,
     price_recalc_reason: recalcReason,
     detached_part_count: detachedCount,
     needs_reattach_review: detachedCount > 0,
-    customer_quantity: num(quickProduct.product_quantity, num(templateLine.customer_quantity, 1)),
+    customer_quantity: num(productPayload.product_quantity, num(templateLine.customer_quantity, 1)),
     include_in_customer: templateLine.include_in_customer !== false,
     owned: true,
     linked_date: timestamp,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
-    updated_date_snapshot: sourceProject?.updated_date || timestamp,
+    updated_date_snapshot: timestamp,
+    quick_product_insert_key: operationKey,
   };
 
-  const lineItems = [...(estimate.line_items || []), newLine];
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-  return { line: newLine, builderProduct: newBuilder, parts: createdParts, groups };
+  return {
+    version: 2,
+    productName,
+    moduleKey,
+    builderName,
+    priceSnapshot,
+    frozenTotal,
+    currentTotal,
+    frozenCustomerPrice,
+    currentCustomerPrice,
+    recalcRequired,
+    recalcReason,
+    sourceEntity,
+    sourceExpectedData,
+    sourceTaggedData,
+    sourceRecoveryToken,
+    sourceSnapshot,
+    groupBlueprints,
+    partBlueprints,
+    detachedCount,
+    finalPriceState,
+    builderCreateData,
+    finalLineBase,
+    revisionAction: "created_from_quick_product",
+    revisionNotes: `Created from Quick Product “${productName}”. Frozen Product/Part pricing was preserved.`,
+    revisionPriceSnapshotAfter: { ...priceSnapshot, total: frozenTotal, source: "quick_product" },
+  };
 }
 
-async function instantiateLegacyQuickProduct({ estimate, quickProduct }) {
-  const timestamp = nowIso();
-  const lineId = makeStableId("line");
-  const name = quickProduct.product_name || "Legacy Quick Product";
-  const legacyParts = quickProduct.parts || [];
+function buildLegacyQuickBlueprint({ estimate, productPayload, lineId, timestamp, operationKey }) {
+  const name = productPayload.product_name || "Legacy Quick Product";
+  const legacyParts = productPayload.parts || [];
   const calculatedPartsTotal = legacyParts.reduce((sum, part) => sum + legacyPartExtended(part), 0);
-  const calculatedProduct = Math.max(0, calculatedPartsTotal + num(quickProduct.setup_fee) - num(quickProduct.discount));
-  const legacyQuantity = Math.max(0, num(quickProduct.product_quantity, 1)) || 1;
-  const frozenTotal = quickProduct.price_override !== undefined && quickProduct.price_override !== null && quickProduct.price_override !== ""
-    ? num(quickProduct.price_override)
-    : quickProduct.total_price !== undefined && quickProduct.total_price !== null && quickProduct.total_price !== ""
-      ? num(quickProduct.total_price) / legacyQuantity
+  const calculatedProduct = Math.max(0, calculatedPartsTotal + num(productPayload.setup_fee) - num(productPayload.discount));
+  const legacyQuantity = Math.max(0, num(productPayload.product_quantity, 1)) || 1;
+  const frozenTotal = productPayload.price_override !== undefined && productPayload.price_override !== null && productPayload.price_override !== ""
+    ? num(productPayload.price_override)
+    : productPayload.total_price !== undefined && productPayload.total_price !== null && productPayload.total_price !== ""
+      ? num(productPayload.total_price) / legacyQuantity
       : calculatedProduct;
 
-  const builder = await base44.entities.BuilderProduct.create({
+  const partBlueprints = legacyParts.map((part, index) => {
+    const extended = legacyPartExtended(part);
+    const qty = num(part.part_qty, 1);
+    const unitCost = qty ? extended / qty : extended;
+    const partKey = `quick-part-${builderMutationHash({ operation_key: operationKey, index })}`;
+    return {
+      partKey,
+      partGroupKeyRef: "",
+      data: {
+        builder_product_id: "",
+        part_key: partKey,
+        sort_order: index,
+        part_name: part.part_name || part.part_label || `Part ${index + 1}`,
+        client_label: part.part_label || part.part_name || "",
+        part_type: part.part_type || "other",
+        source_module_key: "custom",
+        source_path: "",
+        inventory_entity: "",
+        inventory_item_id: "",
+        original_inventory_item_id: "",
+        inventory_item_name: "",
+        inventory_link_state: "manual",
+        builder_sync_state: "manual",
+        frozen_inventory_snapshot: {},
+        current_inventory_snapshot: {},
+        builder_data: { legacy_quick_product: true, modifiers: part.modifiers || [] },
+        calculation_snapshot: {},
+        pricing_basis_snapshot: { legacy_part_price: part.part_price, legacy_modifier_price: part.modifier_price, legacy_override: part.price_override },
+        quantity: qty,
+        unit: "unit",
+        frozen_unit_cost: unitCost,
+        frozen_extended_cost: extended,
+        current_unit_cost: unitCost,
+        current_extended_cost: extended,
+        price_state: "current",
+        manual_cost_override: true,
+        manual_cost: unitCost,
+        last_price_check_at: timestamp,
+        last_price_update_at: timestamp,
+        is_active: true,
+        notes: part.notes || "",
+      },
+    };
+  });
+
+  const builderCreateData = {
     estimate_id: estimate.id,
     estimate_line_id: lineId,
     module_key: "custom",
@@ -286,133 +398,480 @@ async function instantiateLegacyQuickProduct({ estimate, quickProduct }) {
     builder_name: "Legacy Quick Product",
     client_product_name: name,
     client_description: "",
-    product_category: (quickProduct.categories || [])[0] || "",
-    production_product_type: quickProduct.production_product_type || "",
-    product_notes: quickProduct.product_notes || "",
-    quantity: num(quickProduct.product_quantity, 1),
+    product_category: (productPayload.categories || [])[0] || "",
+    production_product_type: productPayload.production_product_type || "",
+    product_notes: productPayload.product_notes || "",
+    quantity: num(productPayload.product_quantity, 1),
     status: "in_progress",
     builder_version: 1,
     builder_snapshot: {},
     builder_snapshot_at: timestamp,
+    builder_snapshot_source_updated_date: timestamp,
     builder_snapshot_hash: snapshotHash({}),
     frozen_cost: frozenTotal,
     frozen_customer_price: frozenTotal,
     current_recalculated_cost: frozenTotal,
     price_state: "current",
+    price_delta: 0,
+    price_delta_percent: 0,
+    price_recalc_required: false,
+    price_recalc_reason: "",
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
-    part_count: legacyParts.length,
+    part_count: 0,
     group_count: 0,
     detached_part_count: 0,
     needs_reattach_review: false,
     is_active: true,
     notes: "Imported from legacy Quick Product format.",
-  });
+  };
 
-  const createdParts = [];
-  for (let index = 0; index < legacyParts.length; index += 1) {
-    const part = legacyParts[index];
-    const extended = legacyPartExtended(part);
-    const qty = num(part.part_qty, 1);
-    const unitCost = qty ? extended / qty : extended;
-    createdParts.push(await base44.entities.BuilderPart.create({
-      builder_product_id: builder.id,
-      part_key: makeStableId("part"),
-      sort_order: index,
-      part_name: part.part_name || part.part_label || `Part ${index + 1}`,
-      client_label: part.part_label || part.part_name || "",
-      part_type: part.part_type || "other",
-      source_module_key: "custom",
-      source_path: "",
-      inventory_entity: "",
-      inventory_item_id: "",
-      original_inventory_item_id: "",
-      inventory_item_name: "",
-      inventory_link_state: "manual",
-      builder_sync_state: "manual",
-      frozen_inventory_snapshot: {},
-      current_inventory_snapshot: {},
-      builder_data: { legacy_quick_product: true, modifiers: part.modifiers || [] },
-      calculation_snapshot: {},
-      pricing_basis_snapshot: { legacy_part_price: part.part_price, legacy_modifier_price: part.modifier_price, legacy_override: part.price_override },
-      quantity: qty,
-      unit: "unit",
-      frozen_unit_cost: unitCost,
-      frozen_extended_cost: extended,
-      current_unit_cost: unitCost,
-      current_extended_cost: extended,
-      price_state: "current",
-      manual_cost_override: true,
-      manual_cost: unitCost,
-      last_price_check_at: timestamp,
-      last_price_update_at: timestamp,
-      is_active: true,
-      notes: part.notes || "",
-    }));
-  }
-
-  const line = {
+  const finalLineBase = {
     line_id: lineId,
-    builder_product_id: builder.id,
+    builder_product_id: "",
     module_key: "custom",
     project_id: "",
     project_name: name,
     builder_name: "Custom Product",
     client_product_name: name,
-    product_category: (quickProduct.categories || [])[0] || "",
-    production_product_type: quickProduct.production_product_type || "",
-    product_notes: quickProduct.product_notes || "",
+    product_category: (productPayload.categories || [])[0] || "",
+    production_product_type: productPayload.production_product_type || "",
+    product_notes: productPayload.product_notes || "",
     client_name: estimate.client_name || "",
     total_snapshot: frozenTotal,
     live_total_snapshot: frozenTotal,
     customer_price_snapshot: frozenTotal,
     live_customer_price_snapshot: frozenTotal,
     price_state: "current",
+    price_recalc_required: false,
+    price_recalc_reason: "",
+    detached_part_count: 0,
+    needs_reattach_review: false,
     adjustment_percent: 0,
     section_status: "in_progress",
-    customer_quantity: num(quickProduct.product_quantity, 1),
+    customer_quantity: num(productPayload.product_quantity, 1),
     include_in_customer: true,
     owned: true,
     linked_date: timestamp,
     last_price_check_at: timestamp,
     last_price_update_at: timestamp,
+    updated_date_snapshot: timestamp,
+    quick_product_insert_key: operationKey,
   };
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: [...(estimate.line_items || []), line] });
-  await base44.entities.BuilderPriceRevision.create({
-    builder_product_id: builder.id,
-    estimate_id: estimate.id,
-    revision_number: 1,
-    reason: "initial_freeze",
-    previous_total_cost: 0,
-    new_total_cost: frozenTotal,
-    previous_customer_price: 0,
-    new_customer_price: frozenTotal,
-    changed_parts: createdParts.map((part) => ({ part_id: part.id, part_name: part.part_name, action: "legacy_quick_product_import", frozen_extended_cost: num(part.frozen_extended_cost) })),
-    builder_snapshot_before: {},
-    builder_snapshot_after: {},
-    price_snapshot_before: { total: 0 },
-    price_snapshot_after: { total: frozenTotal, source: "legacy_quick_product" },
-    notes: `Created from legacy Quick Product “${name}”.`,
-  });
-  return { line, builderProduct: builder, parts: createdParts, groups: [] };
+
+  return {
+    version: 1,
+    productName: name,
+    moduleKey: "custom",
+    builderName: "Legacy Quick Product",
+    priceSnapshot: {},
+    frozenTotal,
+    currentTotal: frozenTotal,
+    frozenCustomerPrice: frozenTotal,
+    currentCustomerPrice: frozenTotal,
+    recalcRequired: false,
+    recalcReason: "",
+    sourceEntity: "",
+    sourceExpectedData: null,
+    sourceTaggedData: null,
+    sourceRecoveryToken: "",
+    sourceSnapshot: {},
+    groupBlueprints: [],
+    partBlueprints,
+    detachedCount: 0,
+    finalPriceState: "current",
+    builderCreateData,
+    finalLineBase,
+    revisionAction: "legacy_quick_product_import",
+    revisionNotes: `Created from legacy Quick Product “${name}”.`,
+    revisionPriceSnapshotAfter: { total: frozenTotal, source: "legacy_quick_product" },
+  };
 }
 
-async function instantiateProductPayload({ estimate, productPayload }) {
-  if (num(productPayload?.template_version) >= 2 && productPayload?.product_snapshot) {
-    return instantiateV2QuickProduct({ estimate, quickProduct: productPayload });
+function buildQuickBlueprint(args) {
+  return isV2QuickProduct(args.productPayload)
+    ? buildV2QuickBlueprint(args)
+    : buildLegacyQuickBlueprint(args);
+}
+
+function provisionalQuickLine(blueprint, pending) {
+  return {
+    ...blueprint.finalLineBase,
+    builder_product_id: "",
+    project_id: "",
+    section_status: "in_progress",
+    price_acceptance_pending: pending,
+  };
+}
+
+function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
+  return {
+    estimate_id: estimateId,
+    estimate_line_id: lineId,
+    module_key: blueprint.moduleKey,
+    builder_name: blueprint.builderName,
+    client_product_name: blueprint.productName,
+    frozen_cost: blueprint.frozenTotal,
+    frozen_customer_price: blueprint.frozenCustomerPrice,
+    current_recalculated_cost: blueprint.currentTotal,
+  };
+}
+
+async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
+  const matches = await base44.entities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+  if (!Array.isArray(matches)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
+  if (matches.length > 1) throw new Error("More than one Builder Product is linked to the pending Quick Product line. Recovery stopped before creating anything else.");
+  if (matches.length === 1) {
+    const existing = matches[0];
+    if (recoveryPatchDiffers(existing, quickBuilderOwnershipPatch(blueprint, estimateId, lineId))) {
+      throw new Error("The pending Quick Product line is now linked to a different Builder Product state. No unrelated Product was overwritten.");
+    }
+    return existing;
   }
-  return instantiateLegacyQuickProduct({ estimate, quickProduct: productPayload });
+  return base44.entities.BuilderProduct.create(blueprint.builderCreateData);
+}
+
+function sourceCoreDiffers(source, expected) {
+  if (!expected) return false;
+  const patch = { ...expected };
+  delete patch.notes;
+  return recoveryPatchDiffers(source, patch);
+}
+
+function removeRecoveryToken(notes, token, expectedOriginal) {
+  const current = String(notes || "");
+  if (!token || !current.includes(token)) return current;
+  const tagged = expectedOriginal ? `${expectedOriginal}\n${token}` : token;
+  if (current === tagged) return expectedOriginal;
+  return current.replace(`\n${token}`, "").replace(token, "");
+}
+
+async function ensureQuickInsertSource({ builder, blueprint, pending }) {
+  if (!blueprint.sourceEntity || !blueprint.sourceExpectedData) return { builder, sourceProject: null };
+  const entity = base44.entities[blueprint.sourceEntity];
+  if (!entity?.get || !entity?.create || !entity?.update || !entity?.filter) {
+    throw new Error("The Quick Product Builder source entity is unavailable for recovery.");
+  }
+
+  let sourceProject = null;
+  if (builder.source_project_id) {
+    sourceProject = await entity.get(builder.source_project_id);
+    if (!sourceProject) throw new Error("The Quick Product source project link exists, but the source record could not be verified.");
+    if (sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
+      throw new Error("The pending Quick Product source project changed before insertion completed. No source fields were overwritten.");
+    }
+  } else {
+    const filter = {};
+    if (blueprint.sourceTaggedData?.estimate_number) filter.estimate_number = blueprint.sourceTaggedData.estimate_number;
+    if (blueprint.sourceTaggedData?.project_name) filter.project_name = blueprint.sourceTaggedData.project_name;
+    const candidates = await entity.filter(filter);
+    if (!Array.isArray(candidates)) throw new Error("Quick Product source projects could not be verified during recovery.");
+    const tagged = candidates.filter((row) => String(row?.notes || "").includes(blueprint.sourceRecoveryToken));
+    if (tagged.length > 1) throw new Error("Multiple Quick Product source records carry the same recovery token. Recovery stopped without linking either record.");
+    if (tagged.length === 1) {
+      sourceProject = tagged[0];
+      if (sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
+        throw new Error("The recovered Quick Product source record no longer matches the saved Quick Product snapshot.");
+      }
+    } else {
+      const startedAt = new Date(pending.started_at || 0).getTime();
+      const plausible = candidates.filter((row) => {
+        const createdAt = new Date(row?.created_date || 0).getTime();
+        const notesOkay = String(row?.notes || "") === String(blueprint.sourceExpectedData.notes || "");
+        return createdAt >= startedAt && notesOkay && !sourceCoreDiffers(row, blueprint.sourceExpectedData);
+      });
+      if (plausible.length > 1) throw new Error("Quick Product source recovery found multiple plausible source records. Recovery stopped to avoid linking the wrong project.");
+      sourceProject = plausible[0] || null;
+    }
+    if (!sourceProject) sourceProject = await entity.create(blueprint.sourceTaggedData);
+    if (!sourceProject?.id) throw new Error("Quick Product source project could not be verified after creation.");
+
+    const latestBuilder = await base44.entities.BuilderProduct.get(builder.id);
+    if (!latestBuilder?.id) throw new Error("Quick Product Builder could not be reloaded before linking its source project.");
+    if (latestBuilder.source_project_id && latestBuilder.source_project_id !== sourceProject.id) {
+      throw new Error("The pending Quick Product Builder is already linked to a different source project.");
+    }
+    if (!latestBuilder.source_project_id) {
+      await base44.entities.BuilderProduct.update(builder.id, {
+        source_entity: blueprint.sourceEntity,
+        source_project_id: sourceProject.id,
+      });
+    }
+    builder = await base44.entities.BuilderProduct.get(builder.id);
+  }
+
+  const currentNotes = String(sourceProject.notes || "");
+  if (blueprint.sourceRecoveryToken && currentNotes.includes(blueprint.sourceRecoveryToken)) {
+    const restoredNotes = removeRecoveryToken(currentNotes, blueprint.sourceRecoveryToken, String(blueprint.sourceExpectedData.notes || ""));
+    await entity.update(sourceProject.id, { notes: restoredNotes });
+    sourceProject = await entity.get(sourceProject.id);
+  }
+  if (!sourceProject || sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
+    throw new Error("Quick Product source project could not be verified after removing its recovery token.");
+  }
+  return { builder: await base44.entities.BuilderProduct.get(builder.id), sourceProject };
+}
+
+function buildPromotedQuickPending({ pending, blueprint, builder, sourceProject }) {
+  const groupCreatePlan = {
+    groups: blueprint.groupBlueprints.map((group) => ({
+      group_key: group.groupKey,
+      data: { ...group.data, builder_product_id: builder.id },
+    })),
+  };
+  const partUpdates = blueprint.partBlueprints.map((part) => ({
+    operation: "create",
+    part_key: part.partKey,
+    part_group_key_ref: part.partGroupKeyRef,
+    data: { ...part.data, builder_product_id: builder.id },
+  }));
+  const sourceSnapshot = sourceProject ? cloneSnapshot(sourceProject) : blueprint.sourceSnapshot;
+  const sourceUpdatedAt = sourceProject?.updated_date || pending.started_at;
+  const builderPatch = {
+    source_entity: blueprint.sourceEntity || blueprint.builderCreateData.source_entity || "",
+    source_project_id: sourceProject?.id || "",
+    builder_snapshot: sourceSnapshot,
+    builder_snapshot_at: pending.started_at,
+    builder_snapshot_source_updated_date: sourceUpdatedAt,
+    builder_snapshot_hash: snapshotHash(sourceSnapshot),
+    part_count: blueprint.partBlueprints.length,
+    group_count: blueprint.groupBlueprints.length,
+    detached_part_count: blueprint.detachedCount,
+    needs_reattach_review: blueprint.detachedCount > 0,
+    price_state: blueprint.finalPriceState,
+    price_recalc_required: blueprint.recalcRequired,
+    price_recalc_reason: blueprint.recalcReason,
+  };
+  const linePatch = {
+    ...blueprint.finalLineBase,
+    builder_product_id: builder.id,
+    project_id: sourceProject?.id || "",
+    updated_date_snapshot: sourceUpdatedAt,
+    quick_product_source_id: pending.source_id || "",
+    quick_product_source_type: pending.source_type || "",
+  };
+  const changedParts = blueprint.partBlueprints.map((part) => ({
+    part_key: part.partKey,
+    part_name: part.data.part_name,
+    action: blueprint.revisionAction,
+    frozen_extended_cost: num(part.data.frozen_extended_cost),
+  }));
+  return {
+    ...pending,
+    builder_product_id: builder.id,
+    builder_updated_date_before: builder.updated_date || "",
+    builder_version_before: num(builder.builder_version, 1),
+    source_project_id: sourceProject?.id || "",
+    group_create_plan: groupCreatePlan,
+    part_acceptance_plan: {
+      timestamp: pending.started_at,
+      part_updates: partUpdates,
+      changed_parts: changedParts,
+      active_part_count: blueprint.partBlueprints.length,
+    },
+    builder_patch: builderPatch,
+    line_patch: linePatch,
+    revision: {
+      builder_product_id: builder.id,
+      estimate_id: pending.estimate_id,
+      reason: "initial_freeze",
+      previous_total_cost: 0,
+      new_total_cost: blueprint.frozenTotal,
+      previous_customer_price: 0,
+      new_customer_price: blueprint.frozenCustomerPrice,
+      changed_parts: changedParts,
+      builder_snapshot_before: {},
+      builder_snapshot_after: sourceSnapshot,
+      price_snapshot_before: { total: 0 },
+      price_snapshot_after: blueprint.revisionPriceSnapshotAfter,
+      notes: blueprint.revisionNotes,
+    },
+  };
+}
+
+async function promoteQuickInsertMarker({ estimate, line, pending, builder, sourceProject, blueprint }) {
+  const promoted = buildPromotedQuickPending({ pending, blueprint, builder, sourceProject });
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  if (!latestEstimate) throw new Error("Estimate could not be verified before promoting Quick Product recovery.");
+  const latestLine = (latestEstimate.line_items || []).find((item) => item.line_id === line.line_id);
+  const latestPending = pendingBuilderMutation(latestLine);
+  if (!latestLine || !latestPending || latestPending.key !== pending.key) {
+    throw new Error("The pending Quick Product line changed before its recovery plan could be promoted.");
+  }
+  await assertEstimateProductMutationAllowed(latestEstimate, { allowPriceAcceptanceKey: pending.key });
+  const lineItems = (latestEstimate.line_items || []).map((item) => item.line_id === line.line_id
+    ? {
+        ...item,
+        builder_product_id: builder.id,
+        project_id: sourceProject?.id || "",
+        price_acceptance_pending: promoted,
+      }
+    : item);
+  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+
+  const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
+    base44.entities.AllInOneEstimate.get(estimate.id),
+    base44.entities.BuilderProduct.get(builder.id),
+    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+  ]);
+  const markedLine = (markedEstimate?.line_items || []).find((item) => item.line_id === line.line_id);
+  const canonicalPending = pendingBuilderMutation(markedLine);
+  if (!canonicalPending || canonicalPending.key !== pending.key || canonicalPending.builder_product_id !== builder.id) {
+    throw new Error("Quick Product recovery plan could not be verified after promotion.");
+  }
+  return { markedEstimate, currentBuilder, currentParts, markedLine, canonicalPending };
+}
+
+export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
+  if (!estimateId) throw new Error("Estimate is required to resume Quick Product insertion.");
+  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+  const line = lineId
+    ? (estimate.line_items || []).find((item) => item.line_id === lineId)
+    : findPendingQuickInsertLine(estimate);
+  if (!line) throw new Error("The pending Quick Product line could not be found.");
+  const pending = pendingBuilderMutation(line);
+  if (!pending || pending.kind !== QUICK_INSERT_KIND) {
+    if (line.quick_product_insert_key) return completedQuickInsertResult(estimate, line, { alreadyCompleted: true });
+    throw new Error("This Product line does not contain a recoverable Quick Product insertion.");
+  }
+  if (pending.estimate_id !== estimateId || pending.estimate_line_id !== line.line_id) {
+    throw new Error("The Quick Product recovery marker no longer matches this estimate line.");
+  }
+  await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
+
+  const blueprint = buildQuickBlueprint({
+    estimate: pending.estimate_context || quickEstimateContext(estimate),
+    productPayload: pending.product_payload,
+    lineId: line.line_id,
+    timestamp: pending.started_at,
+    operationKey: pending.key,
+  });
+
+  if (pending.builder_product_id && pending.part_acceptance_plan) {
+    const [builder, parts] = await Promise.all([
+      base44.entities.BuilderProduct.get(pending.builder_product_id),
+      base44.entities.BuilderPart.filter({ builder_product_id: pending.builder_product_id }),
+    ]);
+    if (!builder?.id || !Array.isArray(parts)) throw new Error("Quick Product recovery could not verify its promoted Builder Product or Parts.");
+    const result = await resumeBuilderMutation({
+      estimateId,
+      estimate,
+      builder,
+      parts,
+      line,
+      pending,
+      applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+    });
+    const completedEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+    const completedLine = (completedEstimate?.line_items || []).find((item) => item.line_id === line.line_id) || result.line;
+    return completedQuickInsertResult(completedEstimate, completedLine, { recovered: true });
+  }
+
+  let builder = await ensureQuickInsertBuilder({ estimateId, lineId: line.line_id, blueprint });
+  const sourceResult = await ensureQuickInsertSource({ builder, blueprint, pending });
+  builder = sourceResult.builder;
+  const sourceProject = sourceResult.sourceProject;
+  if (!builder?.id) throw new Error("Quick Product Builder could not be verified after source recovery.");
+
+  const promoted = await promoteQuickInsertMarker({ estimate, line, pending, builder, sourceProject, blueprint });
+  const result = await resumeBuilderMutation({
+    estimateId,
+    estimate: promoted.markedEstimate,
+    builder: promoted.currentBuilder,
+    parts: promoted.currentParts,
+    line: promoted.markedLine,
+    pending: promoted.canonicalPending,
+    applyPartPlan: applyBuilderPartPriceAcceptancePlan,
+  });
+  const completedEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const completedLine = (completedEstimate?.line_items || []).find((item) => item.line_id === line.line_id) || result.line;
+  return completedQuickInsertResult(completedEstimate, completedLine, { recovered: true });
+}
+
+async function startQuickProductInsertion({ estimate, productPayload, sourceType, sourceId, sourceUpdatedAt, expectedEstimateUpdatedAt }) {
+  const operationKey = quickInsertOperationKey({
+    estimateId: estimate.id,
+    expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "",
+    sourceType,
+    sourceId,
+    sourceUpdatedAt,
+    productPayload,
+  });
+  const completedLine = findCompletedQuickInsertLine(estimate, operationKey);
+  if (completedLine) return completedQuickInsertResult(estimate, completedLine, { alreadyCompleted: true });
+
+  const lineId = `quick-line-${builderMutationHash({ operation_key: operationKey })}`;
+  const timestamp = nowIso();
+  const blueprint = buildQuickBlueprint({
+    estimate: quickEstimateContext(estimate),
+    productPayload,
+    lineId,
+    timestamp,
+    operationKey,
+  });
+  const pending = {
+    key: operationKey,
+    kind: QUICK_INSERT_KIND,
+    started_at: timestamp,
+    estimate_id: estimate.id,
+    estimate_line_id: lineId,
+    builder_product_id: "",
+    source_type: sourceType || "snapshot",
+    source_id: sourceId || "",
+    source_updated_at: sourceUpdatedAt || "",
+    payload_hash: quickPayloadFingerprint(productPayload),
+    estimate_context: quickEstimateContext(estimate),
+    product_payload: cloneSnapshot(productPayload),
+  };
+
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  if (!latestEstimate) throw new Error("Estimate could not be verified before adding the Quick Product recovery marker.");
+  if (estimate.updated_date && latestEstimate.updated_date && estimate.updated_date !== latestEstimate.updated_date) {
+    throw new Error("This estimate changed in another session before Quick Product insertion started. No Product records were created.");
+  }
+  const existingLine = (latestEstimate.line_items || []).find((item) => item.line_id === lineId);
+  if (existingLine) {
+    const existingPending = pendingBuilderMutation(existingLine);
+    if (existingPending?.key !== operationKey) throw new Error("A Product line ID collision occurred while starting Quick Product insertion.");
+  } else {
+    const lineItems = [...(latestEstimate.line_items || []), provisionalQuickLine(blueprint, pending)];
+    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  }
+
+  return resumeQuickProductInsertion({ estimateId: estimate.id, lineId });
 }
 
 export async function instantiateQuickProduct({ estimateId, quickProduct, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !quickProduct?.id) throw new Error("Estimate and Quick Product are required.");
-  const [estimate, liveQuickProduct, me] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimateId),
+  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  if (!estimate) throw new Error("Estimate could not be loaded.");
+
+  const pendingLine = findPendingQuickInsertLine(estimate);
+  if (pendingLine) {
+    const pending = pendingBuilderMutation(pendingLine);
+    if (pending?.source_type === "quick_product" && pending?.source_id === quickProduct.id) {
+      return resumeQuickProductInsertion({ estimateId, lineId: pendingLine.line_id });
+    }
+    throw new Error("Another Quick Product or Builder mutation is still being recovered. Resume it before adding another Product.");
+  }
+
+  const candidateKey = quickInsertOperationKey({
+    estimateId,
+    expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "",
+    sourceType: "quick_product",
+    sourceId: quickProduct.id,
+    sourceUpdatedAt: quickProduct.updated_date || "",
+    productPayload: quickProduct,
+  });
+  const alreadyCompleted = findCompletedQuickInsertLine(estimate, candidateKey);
+  if (alreadyCompleted) return completedQuickInsertResult(estimate, alreadyCompleted, { alreadyCompleted: true });
+
+  const [liveQuickProduct, me] = await Promise.all([
     base44.entities.QuickProduct.get(quickProduct.id),
     base44.auth.me().catch(() => null),
   ]);
-  if (!estimate) throw new Error("Estimate could not be loaded.");
-  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
   if (liveQuickProduct.is_active === false) throw new Error("This Quick Product is now inactive and cannot be added. Reopen Add Product to refresh the library.");
   const accessible = liveQuickProduct.product_group === "global" || !liveQuickProduct.created_by_id || (!!me?.id && liveQuickProduct.created_by_id === me.id);
@@ -420,16 +879,51 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
   if (quickProduct.updated_date && liveQuickProduct.updated_date && quickProduct.updated_date !== liveQuickProduct.updated_date) {
     throw new Error("This Quick Product changed after the Add Product window loaded. Reopen Add Product and review the latest reusable Product before adding it.");
   }
-  return instantiateProductPayload({ estimate, productPayload: liveQuickProduct });
+  await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
+  return startQuickProductInsertion({
+    estimate,
+    productPayload: liveQuickProduct,
+    sourceType: "quick_product",
+    sourceId: liveQuickProduct.id,
+    sourceUpdatedAt: liveQuickProduct.updated_date || "",
+    expectedEstimateUpdatedAt,
+  });
 }
 
-export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "" }) {
+export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "", sourceId = "" }) {
   if (!estimateId || !productSnapshot) throw new Error("Estimate and Product snapshot are required.");
   const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
+  const payloadHash = quickPayloadFingerprint(productSnapshot);
+  const pendingLine = findPendingQuickInsertLine(estimate);
+  if (pendingLine) {
+    const pending = pendingBuilderMutation(pendingLine);
+    if (pending?.source_type === "clipboard_product" && pending?.payload_hash === payloadHash && (!sourceId || !pending.source_id || pending.source_id === sourceId)) {
+      return resumeQuickProductInsertion({ estimateId, lineId: pendingLine.line_id });
+    }
+    throw new Error("Another Quick Product or Builder mutation is still being recovered. Resume it before pasting another Product.");
+  }
+  const operationKey = quickInsertOperationKey({
+    estimateId,
+    expectedEstimateUpdatedAt: expectedEstimateUpdatedAt || estimate.updated_date || "",
+    sourceType: "clipboard_product",
+    sourceId,
+    sourceUpdatedAt: "",
+    productPayload: productSnapshot,
+  });
+  const alreadyCompleted = findCompletedQuickInsertLine(estimate, operationKey);
+  if (alreadyCompleted) return completedQuickInsertResult(estimate, alreadyCompleted, { alreadyCompleted: true });
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
-  return instantiateProductPayload({ estimate, productPayload: productSnapshot });
+  return startQuickProductInsertion({
+    estimate,
+    productPayload: productSnapshot,
+    sourceType: "clipboard_product",
+    sourceId,
+    sourceUpdatedAt: "",
+    expectedEstimateUpdatedAt,
+  });
 }
+
 
 export async function listQuickProducts() {
   const [rows, me] = await Promise.all([
