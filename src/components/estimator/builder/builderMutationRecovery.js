@@ -166,6 +166,7 @@ function resolvePendingPartGroupRefs(plan, groupIds) {
       return {
         ...step,
         data: step?.data ? { ...step.data, part_group_id: groupId } : step.data,
+        patch: step?.patch ? { ...step.patch, part_group_id: groupId } : step.patch,
       };
     }),
   };
@@ -294,6 +295,9 @@ export async function resumeBuilderMutation({
   // This closes the race where another session edits a Part after marker verification
   // but before the exact stored Part patch is written.
   await applyPartPlan(builder.id, resolvedPlan);
+  if (pending.post_part_delete_plan) {
+    await applyPendingDeletePlan({ delete_plan: pending.post_part_delete_plan }, builder.id);
+  }
 
   let revision = pending.revision || {};
   const changedParts = Array.isArray(revision.changed_parts) ? revision.changed_parts : [];
@@ -322,7 +326,9 @@ export async function resumeBuilderMutation({
       }),
     };
   }
-  await ensureBuilderPriceRevision(pending.key, revision);
+  if (!pending.skip_revision) {
+    await ensureBuilderPriceRevision(pending.key, revision);
+  }
 
   const currentBuilder = await base44.entities.BuilderProduct.get(builder.id);
   if (!currentBuilder?.id) throw new Error("Builder Product could not be verified while completing the pending mutation.");
