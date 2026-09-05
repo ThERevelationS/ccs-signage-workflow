@@ -59,12 +59,28 @@ export function intendedQuoteIssueMetadata({
   const baselineVersion = Math.max(0, Math.floor(Number(baseline?.quote_version ?? serverRecord?.quote_version ?? 0)));
   const nextStatus = String(localEstimate?.status || "");
   const completingSentRevision = !!openRevision && baselineStatus === "sent" && nextStatus === "sent";
-
-  return resolveQuoteIssueMetadata({
+  const metadata = resolveQuoteIssueMetadata({
     previousStatus: baselineStatus,
     nextStatus,
     currentVersion: baselineVersion,
     today,
     completingSentRevision,
   });
+
+  // An open revision is durable across reloads. If its Estimate write already
+  // landed at exactly the one expected next quote version, keep the persisted
+  // issue date while finishing that same revision instead of changing it merely
+  // because recovery happens on a later calendar day.
+  const expectedVersion = Number(metadata?.quote_version || 0);
+  if (
+    openRevision &&
+    expectedVersion > 0 &&
+    Number(serverRecord?.quote_version || 0) === expectedVersion &&
+    String(serverRecord?.status || "") === nextStatus &&
+    serverRecord?.quote_issue_date
+  ) {
+    return { ...metadata, quote_issue_date: serverRecord.quote_issue_date };
+  }
+
+  return metadata;
 }
