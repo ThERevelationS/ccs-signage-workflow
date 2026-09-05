@@ -9,6 +9,10 @@
     "client_name": {
       "type": "string"
     },
+    "summary_key": {
+      "type": "string",
+      "description": "Internal deterministic key used only for concurrency-safe Customer Summary creation. Historical summary rows are not required to have it."
+    },
     "customer_id": {
       "type": "string",
       "description": "Linked shared Customer record id."
