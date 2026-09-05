@@ -143,7 +143,9 @@ export default function ProductRow({
                     ? "Resume Part Insert"
                     : pendingPriceAcceptance?.kind === "builder_manual_product_price"
                       ? "Resume Product Price"
-                      : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                      : pendingPriceAcceptance?.kind === "builder_part_group_clone"
+                        ? "Resume Group Clone"
+                        : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                         ? pendingPriceAcceptance?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
   const isCustom = line.module_key === "custom";
@@ -253,7 +255,9 @@ export default function ProductRow({
                                 ? "Resume the previously started Saved Part / clipboard insertion from its saved recovery marker."
                                 : pendingPriceAcceptance?.kind === "builder_manual_product_price"
                                   ? "Resume the previously started manual Product customer-price adjustment from its saved recovery marker."
-                                  : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
+                                  : pendingPriceAcceptance?.kind === "builder_part_group_clone"
+                                    ? "Resume the previously started Part Group clone from its saved recovery marker."
+                                    : pendingPriceAcceptance?.kind === "builder_quick_product_insert"
                                     ? pendingPriceAcceptance?.source_type === "product_clone"
                                       ? "Resume the previously started Product clone from its saved recovery marker."
                                       : "Resume the previously started Quick Product insertion from its saved recovery marker."
