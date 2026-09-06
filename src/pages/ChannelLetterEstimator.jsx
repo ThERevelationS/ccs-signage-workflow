@@ -42,6 +42,7 @@ import { calcLettersTotals, syncInstallItemsFromPurchases } from "@/components/c
 import { buildSummaryText, downloadCSV } from "@/components/channelLetterInstall/installExport";
 import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
@@ -455,9 +456,18 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         status: "calculated",
       };
       let savedId = persistedProjectIdRef.current || editId || "";
+      let persistedSource = null;
       if (savedId) {
-        await ChannelLetterInstallation.update(savedId, dataToSave);
+        persistedSource = await updateBuilderSourceProject({
+          entity: ChannelLetterInstallation,
+          sourceId: savedId,
+          expectedUpdatedAt: project.updated_date,
+          data: dataToSave,
+          estimateId,
+          label: "Channel Letter project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(dataToSave);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
@@ -474,8 +484,12 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         });
         if (!created?.id) throw new Error("Channel Letter project create could not be verified.");
         savedId = created.id;
+        persistedSource = created;
         persistedProjectIdRef.current = created.id;
         setIsEditing(true);
+      }
+      if (persistedSource?.updated_date) {
+        setProject((prev) => ({ ...prev, updated_date: persistedSource.updated_date }));
       }
       await upsertCustomerSummaryForEstimate({
         module: "channel_letter_installation",
