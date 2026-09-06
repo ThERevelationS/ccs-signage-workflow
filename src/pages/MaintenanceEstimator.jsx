@@ -18,6 +18,7 @@ import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutoco
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
 import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
@@ -73,10 +74,10 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     setLoadError("");
     try {
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
-        Settings.list(),
+        loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         loadMaintenanceMaterialRules({ includeInactive: true }).then((data) => data.rules),
-        base44.entities.ChannelLetterInstallEquipment.list("sort_order", 500),
-        MaintenanceActionRate.list(),
+        loadAllEntityRows({ entity: base44.entities.ChannelLetterInstallEquipment, sort: "sort_order", label: "Maintenance equipment" }),
+        loadAllEntityRows({ entity: MaintenanceActionRate, sort: "created_date", label: "Maintenance action rates" }),
         editId ? MaintenanceProject.get(editId) : Promise.resolve(null),
         estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
