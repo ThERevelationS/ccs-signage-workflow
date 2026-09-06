@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ChannelLetterInstallEquipment } from "@/entities/all";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,7 +7,6 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Area,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
