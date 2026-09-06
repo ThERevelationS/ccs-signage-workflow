@@ -316,6 +316,12 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
         });
       }
 
+      setProject((prev) => ({
+        ...prev,
+        ...finalProject,
+        id: savedId || prev.id,
+        updated_date: saved?.updated_date || prev.updated_date,
+      }));
       onSaved?.();
       if (!embedded) navigate('/Estimator');
     } catch (error) {
