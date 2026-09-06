@@ -8,6 +8,7 @@ import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel"
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
@@ -33,8 +34,8 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
           // Legacy entity is optional compatibility data; the modern Foundation
           // inventory below is the authoritative masonry catalog and is strict.
-          base44.entities.BrickStoneInventory.list("material_name", 500).catch(() => []),
-          base44.entities.FoundationInventory.list("material_name", 500),
+          loadAllEntityRows({ entity: base44.entities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
+          loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
         ]);
 
       // The committed SignEstimate Pro repo defined BrickStoneInventory but never
