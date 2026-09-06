@@ -8,6 +8,7 @@ import BrickGeometryPanel from "@/components/estimator/brick/BrickGeometryPanel"
 import BrickTotals from "@/components/estimator/brick/BrickTotals";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -104,7 +105,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             tierNumber: project.customer_pricing?.tier_number,
           })
         : project.customer_pricing;
-      await base44.entities.BrickStoneProject.update(project.id, {
+      const dataToSave = {
         project_name: project.project_name,
         notes: project.notes,
         status: "calculated",
@@ -135,10 +136,20 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         markup_amount: totals.markup_amount,
         total_cost: totals.total_cost,
         customer_pricing: customerPricing,
+      };
+      const savedProject = await updateBuilderSourceProject({
+        entity: base44.entities.BrickStoneProject,
+        sourceId: project.id,
+        expectedUpdatedAt: project.updated_date,
+        data: dataToSave,
+        estimateId,
+        label: "Brick & Stone project",
       });
+      if (savedProject?.updated_date) {
+        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));
+      }
 
       if (estimateId) {
-        const savedProject = await base44.entities.BrickStoneProject.get(project.id);
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "brick_stone" },
