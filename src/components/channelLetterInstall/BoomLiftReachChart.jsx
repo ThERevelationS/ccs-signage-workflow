@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { ChannelLetterInstallEquipment } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
@@ -55,7 +56,7 @@ export default function BoomLiftReachChart({ installationHeightFeet }) {
     (async () => {
       setLoading(true);
       try {
-        const list = await ChannelLetterInstallEquipment.list("sort_order");
+        const list = await loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Boom lift equipment" });
         const booms = list.filter(
           (e) => (e.equipment_type === "boom_lift" || e.equipment_type === "boom_truck") && e.is_active !== false
         );
