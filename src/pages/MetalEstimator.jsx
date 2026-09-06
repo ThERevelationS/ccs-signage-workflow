@@ -15,6 +15,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -57,8 +58,8 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       setLoadError("");
       try {
         const [settingsData, inventoryData, existing, estimate] = await Promise.all([
-          Settings.list(),
-          InventoryEntity.list(),
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
+          loadAllEntityRows({ entity: InventoryEntity, sort: "created_date", label: "Metal inventory" }),
           editId ? MetalProject.get(editId) : Promise.resolve(null),
           estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
