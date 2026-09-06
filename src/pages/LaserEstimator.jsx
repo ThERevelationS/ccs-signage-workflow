@@ -15,6 +15,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -88,7 +89,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       setLoadError("");
       try {
         const [settingsData, existing, estimate] = await Promise.all([
-          Settings.list(),
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? LaserProject.get(editId) : Promise.resolve(null),
           estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
