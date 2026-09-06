@@ -14,6 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -110,8 +111,8 @@ export default function MasterEquipmentTab({ isAdmin }) {
     setLoadError("");
     try {
       const [fnd, chn] = await Promise.all([
-        FoundationInventoryEntity.list(),
-        ChannelLetterInstallEquipmentEntity.list(),
+        loadAllEntityRows({ entity: FoundationInventoryEntity, sort: "material_name", label: "Foundation equipment inventory" }),
+        loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
       ]);
       setFoundationRows(fnd.filter((r) => FOUNDATION_EQUIPMENT_TYPES.includes(r.material_type)));
       setChannelRows(chn);
@@ -207,7 +208,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
     if (row._source !== "channel_letter_equipment" || actionRef.current.has(lockKey)) return;
     actionRef.current.add(lockKey);
     try {
-      const liveRows = await ChannelLetterInstallEquipmentEntity.list();
+      const liveRows = await loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" });
       const liveTarget = liveRows.find((item) => item.id === row.id);
       if (!liveTarget || liveTarget.is_primary_owned !== row.raw?.is_primary_owned) {
         alert("This owned-lift primary setting changed in another session. The latest equipment inventory will be reloaded first.");
@@ -617,7 +618,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       // Primary-owned updates may clear other channel-equipment rows. Verify the
       // primary flags we intend to rely on before the target write happens.
       if (source === "channel_letter_equipment" && payload.is_primary_owned) {
-        liveChannelRows = await ChannelLetterInstallEquipmentEntity.list();
+        liveChannelRows = await loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" });
         const loadedById = new Map((allChannelEquipment || []).map((row) => [row.id, row]));
         const primaryConflicts = liveChannelRows.filter((live) => {
           if (live.id === normalized.id) return false;
