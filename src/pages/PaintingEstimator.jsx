@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
@@ -53,7 +54,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
       setLoading(true);
       try {
         const [settingsRows, existing, estimate] = await Promise.all([
-          Settings.list(),
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? Project.get(editId) : Promise.resolve(null),
           estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
