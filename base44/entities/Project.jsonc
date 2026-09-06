@@ -23,6 +23,10 @@
       "type": "string",
       "description": "Optional hyperlink related to the project"
     },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first Painting Builder source create idempotent."
+    },
     "status": {
       "type": "string",
       "enum": [
