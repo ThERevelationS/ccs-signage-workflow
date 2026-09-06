@@ -15,6 +15,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMetalProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
@@ -284,8 +285,16 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       let saved;
       const activeProjectId = persistedProjectIdRef.current || editId || "";
       if (activeProjectId) {
-        saved = await MetalProject.update(activeProjectId, finalProject);
+        saved = await updateBuilderSourceProject({
+          entity: MetalProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: finalProject,
+          estimateId,
+          label: "Metal project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(finalProject);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
