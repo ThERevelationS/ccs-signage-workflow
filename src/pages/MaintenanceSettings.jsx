@@ -11,6 +11,7 @@ import MinimumsTab from "@/components/signMaintenance/MinimumsTab";
 import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
 import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
 import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -26,6 +27,8 @@ const RATE_FIELDS = [
 
 const comparableRate = (row = {}) => Object.fromEntries(RATE_FIELDS.map((field) => [field, row[field] ?? null]));
 const sameRate = (a, b) => JSON.stringify(comparableRate(a)) === JSON.stringify(comparableRate(b));
+const loadAllSettings = () => loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
+const loadAllMaintenanceRates = () => loadAllEntityRows({ entity: MaintenanceActionRate, sort: "created_date", label: "Maintenance action rates" });
 
 export default function MaintenanceSettings() {
   const [settingsRows, setSettingsRows] = useState([]);
@@ -45,8 +48,8 @@ export default function MaintenanceSettings() {
       setError("");
       try {
         const [allSettings, allRates] = await Promise.all([
-          SettingsEntity.list(),
-          MaintenanceActionRate.list(),
+          loadAllSettings(),
+          loadAllMaintenanceRates(),
         ]);
         const maintenanceRows = (allSettings || []).filter((row) => String(row.setting_name || "").startsWith("maintenance_"));
         const settingsMap = Object.fromEntries(maintenanceRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
@@ -117,7 +120,7 @@ export default function MaintenanceSettings() {
         changedRows: changedSettingRows,
       });
 
-      const liveRates = await MaintenanceActionRate.list();
+      const liveRates = await loadAllMaintenanceRates();
       const liveById = new Map((liveRates || []).filter((row) => row.id).map((row) => [row.id, row]));
       const liveByKey = new Map((liveRates || []).map((row) => [`${row.sign_type}|${row.action}`, row]));
       const existingRateConflicts = changedRateRows.filter((row) => {
@@ -140,7 +143,7 @@ export default function MaintenanceSettings() {
       for (const row of changedRateRows.filter((item) => !item.id)) {
         const payload = { sign_type: row.sign_type, action: row.action, ...comparableRate(row) };
         const created = await MaintenanceActionRate.create(payload);
-        const sameKey = (await MaintenanceActionRate.list())
+        const sameKey = (await loadAllMaintenanceRates())
           .filter((item) => item.sign_type === row.sign_type && item.action === row.action)
           .sort((a, b) => {
             const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
@@ -163,7 +166,7 @@ export default function MaintenanceSettings() {
         });
       }
 
-      const [freshSettings, freshRates] = await Promise.all([SettingsEntity.list(), MaintenanceActionRate.list()]);
+      const [freshSettings, freshRates] = await Promise.all([loadAllSettings(), loadAllMaintenanceRates()]);
       const maintenanceRows = (freshSettings || []).filter((row) => String(row.setting_name || "").startsWith("maintenance_"));
       const settingsMap = Object.fromEntries(maintenanceRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
       setSettingsRows(maintenanceRows);
@@ -176,7 +179,7 @@ export default function MaintenanceSettings() {
       // Reload both stores after any failure so a retry never starts from a
       // partially stale browser snapshot.
       try {
-        const [freshSettings, freshRates] = await Promise.all([SettingsEntity.list(), MaintenanceActionRate.list()]);
+        const [freshSettings, freshRates] = await Promise.all([loadAllSettings(), loadAllMaintenanceRates()]);
         const maintenanceRows = (freshSettings || []).filter((row) => String(row.setting_name || "").startsWith("maintenance_"));
         const settingsMap = Object.fromEntries(maintenanceRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
         setSettingsRows(maintenanceRows);
