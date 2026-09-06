@@ -14,6 +14,7 @@ import {
   Plus,
   SkipForward,
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   routeRow,
   validateColumns,
@@ -93,7 +94,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       await Promise.all(
         Object.entries(TARGETS).map(async ([key, conf]) => {
           try {
-            const list = await conf.entity.list();
+            const list = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory` });
             existing[key] = new Map(list.map((it) => [nameKey(it[conf.nameField]), it]));
           } catch (e) {
             console.error(`Failed to verify existing ${key}:`, e);
@@ -180,7 +181,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       const liveCatalogs = {};
       try {
         await Promise.all(Object.entries(TARGETS).map(async ([key, conf]) => {
-          const list = await conf.entity.list();
+          const list = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory` });
           liveCatalogs[key] = {
             byId: new Map((list || []).filter((item) => item.id).map((item) => [item.id, item])),
             byName: new Map((list || []).map((item) => [nameKey(item[conf.nameField]), item])),
