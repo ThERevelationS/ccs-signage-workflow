@@ -7,6 +7,7 @@
 // missing, we fall back to DEFAULT_ROLE_RATE so the dropdown still works.
 
 import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 // Full, non-abbreviated role names. NOTE: no "Installer".
 export const VINYL_ROLE_NAMES = [
@@ -40,7 +41,12 @@ const num = (v, d = 0) => {
 // Load vinyl labor roles from the labor inventory, keyed by role name.
 // Returns [{ role, hourly_rate }] in VINYL_ROLE_NAMES order.
 export async function loadVinylLaborRoles() {
-  const rows = await base44.entities.LaborServiceInventory.filter({ service_category: "shop_labor" });
+  const rows = await loadAllEntityRows({
+    entity: base44.entities.LaborServiceInventory,
+    query: { service_category: "shop_labor" },
+    sort: "service_name",
+    label: "Vinyl labor roles",
+  });
   const byName = {};
   rows.forEach((r) => {
     if (VINYL_ROLE_NAMES.includes(r.service_name)) {
