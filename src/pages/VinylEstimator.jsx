@@ -21,6 +21,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
@@ -304,8 +305,16 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
       let saved;
       const activeProjectId = persistedProjectIdRef.current || projectId || "";
       if (activeProjectId) {
-        saved = await VinylProject.update(activeProjectId, payload);
+        saved = await updateBuilderSourceProject({
+          entity: VinylProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: payload,
+          estimateId,
+          label: "Vinyl project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(payload);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
