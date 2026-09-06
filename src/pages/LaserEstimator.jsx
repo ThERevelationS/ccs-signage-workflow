@@ -437,7 +437,12 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         });
       }
 
-      setProject((prev) => ({ ...prev, ...dataToSave, id: savedId || prev.id }));
+      setProject((prev) => ({
+        ...prev,
+        ...dataToSave,
+        id: savedId || prev.id,
+        updated_date: saved?.updated_date || prev.updated_date,
+      }));
       onSaved?.();
       if (!embedded) alert(isEditing ? 'Project updated successfully!' : 'Project saved successfully!');
     } catch (error) {
