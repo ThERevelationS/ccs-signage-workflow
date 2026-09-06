@@ -5,7 +5,9 @@ function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
   if (!value || typeof value !== "object") return value;
   return Object.keys(value).sort().reduce((out, key) => {
-    if (["created_date", "updated_date", "created_by", "created_by_id", "id"].includes(key)) return out;
+    // Values compared here are individual patch fields, not whole entity rows.
+    // Preserve nested ids and metadata because they can be substantive Builder
+    // item identity inside arrays/objects.
     out[key] = normalize(value[key]);
     return out;
   }, {});
