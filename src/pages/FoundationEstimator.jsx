@@ -39,6 +39,7 @@ import { landscapeSummary } from "@/components/estimator/foundation/landscapeMat
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
 const blankItem = (type) => ({
@@ -292,10 +293,19 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           })
         : project.customer_pricing;
       const dataToSave = { ...basePayload, customer_pricing: customerPricing };
-      await base44.entities.FoundationProject.update(project.id, dataToSave);
+      const savedProject = await updateBuilderSourceProject({
+        entity: base44.entities.FoundationProject,
+        sourceId: project.id,
+        expectedUpdatedAt: project.updated_date,
+        data: dataToSave,
+        estimateId,
+        label: "Foundation project",
+      });
+      if (savedProject?.updated_date) {
+        setProject((prev) => ({ ...prev, updated_date: savedProject.updated_date }));
+      }
 
       if (estimateId) {
-        const savedProject = await base44.entities.FoundationProject.get(project.id);
         await recordBuilderSave({
           estimateId,
           line: { project_id: project.id, module_key: "foundation" },
