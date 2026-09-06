@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { pricingSnapshot } from "@/components/estimator/builder/partSync";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const human = (value) => String(value || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -178,9 +179,11 @@ const SOURCES = [
 ];
 
 async function list(entity) {
-  const rows = await base44.entities[entity].list();
-  if (!Array.isArray(rows)) throw new Error(`${entity} inventory could not be verified.`);
-  return rows;
+  return loadAllEntityRows({
+    entity: base44.entities[entity],
+    sort: "created_date",
+    label: `${entity} inventory`,
+  });
 }
 
 export async function loadMasterPartCatalog() {
