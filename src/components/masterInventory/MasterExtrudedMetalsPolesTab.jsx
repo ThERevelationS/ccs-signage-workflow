@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Inventory, FoundationInventory } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,8 +158,8 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
     setLoadError("");
     try {
       const [metals, foundation] = await Promise.all([
-        Inventory.list(),
-        FoundationInventory.list(),
+        loadAllEntityRows({ entity: Inventory, sort: "created_date", label: "Extruded metals inventory" }),
+        loadAllEntityRows({ entity: FoundationInventory, sort: "material_name", label: "Foundation pole inventory" }),
       ]);
       setAllMetalsRaw(metals);
       // Filter out legacy junk rows — sheet/plate, permits, labor, trim cap, etc.
