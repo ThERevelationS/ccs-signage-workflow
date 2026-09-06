@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { User } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,9 +60,9 @@ export default function MaterialsInventoryTab() {
   const load = useCallback(async () => {
     setLoading(true);
     const [data, user, projects] = await Promise.all([
-      ChannelLetterInstallInventory.list("sort_order"),
+      loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
       User.me().catch(() => null),
-      ChannelLetterInstallation.list().catch(() => []),
+      loadAllEntityRows({ entity: ChannelLetterInstallation, sort: "created_date", label: "Channel Letter projects" }).catch(() => []),
     ]);
     setItems(data);
     setCurrentUser(user);
