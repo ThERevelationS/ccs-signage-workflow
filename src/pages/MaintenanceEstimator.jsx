@@ -18,6 +18,7 @@ import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutoco
 import { calcServiceItem, calcProjectTotals, defaultMaterialsForItem, emptyServiceItem } from "@/components/signMaintenance/maintenanceCalculator";
 import { loadMaintenanceMaterialRules } from "@/components/signMaintenance/maintenanceMaterialRules";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMaintenanceProject } from "@/components/markup/projectCategorizer";
@@ -192,8 +193,16 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       let saved;
       const activeProjectId = persistedProjectIdRef.current || editId || "";
       if (activeProjectId) {
-        saved = await MaintenanceProject.update(activeProjectId, dataToSave);
+        saved = await updateBuilderSourceProject({
+          entity: MaintenanceProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: dataToSave,
+          estimateId,
+          label: "Maintenance project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(dataToSave);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
