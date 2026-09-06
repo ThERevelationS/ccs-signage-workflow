@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { requiresBuilderReattach } from "@/components/estimator/parts/partState";
 import { calculateVinylProject } from "@/components/vinylEstimator/vinylNestingCalculator";
 import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
@@ -174,11 +175,11 @@ function independentPartUnitCost(part, row) {
 
 async function loadCatalog(entity, sort = null, { strict = false } = {}) {
   try {
-    const rows = sort
-      ? await base44.entities[entity].list(sort, 500)
-      : await base44.entities[entity].list();
-    if (!Array.isArray(rows)) throw new Error(`${entity} catalog returned an invalid result.`);
-    return rows;
+    return await loadAllEntityRows({
+      entity: base44.entities[entity],
+      sort: sort || "created_date",
+      label: `${entity} catalog`,
+    });
   } catch (error) {
     if (strict) throw new Error(`${entity} catalog could not be verified: ${error?.message || "read failed"}`);
     return [];
