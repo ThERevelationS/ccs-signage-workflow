@@ -11,6 +11,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { VinylInventory, User } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,7 @@ export default function VinylInventoryTab({ scope = "master" }) {
     setLoading(true);
     setLoadError("");
     try {
-      const all = await VinylInventory.list("sort_order");
+      const all = await loadAllEntityRows({ entity: VinylInventory, sort: "sort_order", label: "Vinyl inventory" });
       setItems(all);
     } catch (e) {
       console.error("Failed to load VinylInventory:", e);
