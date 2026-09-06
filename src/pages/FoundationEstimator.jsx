@@ -39,6 +39,7 @@ import { landscapeSummary } from "@/components/estimator/foundation/landscapeMat
 import { calcProject, money } from "@/components/estimator/foundation/foundationCalc";
 import { normalizeConcreteSupplier } from "@/components/estimator/foundation/legacyFoundationCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
@@ -116,9 +117,9 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     setLoadError("");
     Promise.all([
       base44.entities.FoundationProject.get(id),
-      base44.entities.FoundationInventory.filter({ show_in_foundation: true }),
-      base44.entities.LaborServiceInventory.filter({ service_category: "concrete_service", is_active: true }),
-      base44.entities.Settings.list(),
+      loadAllEntityRows({ entity: base44.entities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
+      loadAllEntityRows({ entity: base44.entities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
+      loadAllEntityRows({ entity: base44.entities.Settings, sort: "created_date", label: "Estimator Settings" }),
     ])
       .then(([proj, inv, concreteServices, settingRows]) => {
         if (!active) return;
