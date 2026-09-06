@@ -21,6 +21,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeVinylProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
@@ -81,10 +82,10 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
       setLoadError("");
       try {
         const [vList, mList, sList, eList, p, estimate] = await Promise.all([
-          VinylInventory.list("sort_order"),
-          VinylMachine.list("sort_order"),
-          Settings.list(),
-          ChannelLetterInstallEquipment.list("sort_order"),
+          loadAllEntityRows({ entity: VinylInventory, sort: "sort_order", label: "Vinyl inventory" }),
+          loadAllEntityRows({ entity: VinylMachine, sort: "sort_order", label: "Vinyl machines" }),
+          loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
+          loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Installation equipment" }),
           projectId ? VinylProject.get(projectId) : Promise.resolve(null),
           estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
