@@ -17,6 +17,7 @@ import { categorizeCNCProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
@@ -62,7 +63,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     setLoadError("");
     try {
       const [settingsData, existing, estimate] = await Promise.all([
-        Settings.list(),
+        loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         editId ? CNCProject.get(editId) : Promise.resolve(null),
         estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
