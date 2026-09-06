@@ -17,6 +17,7 @@ import { categorizeCNCProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import HoldDownAdvisor from "@/components/cnc/HoldDownAdvisor";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
@@ -261,8 +262,16 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       let saved;
       const activeProjectId = persistedProjectIdRef.current || editId || "";
       if (activeProjectId) {
-        saved = await CNCProject.update(activeProjectId, finalProject);
+        saved = await updateBuilderSourceProject({
+          entity: CNCProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: finalProject,
+          estimateId,
+          label: "CNC project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(finalProject);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
