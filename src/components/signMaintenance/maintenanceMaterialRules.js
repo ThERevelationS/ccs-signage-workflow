@@ -1,5 +1,6 @@
 import { MaintenanceInventory } from "@/entities/all";
 import { loadMasterPartCatalog } from "@/components/estimator/parts/partCatalog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -97,7 +98,7 @@ export function enrichMaintenanceRule(rule, catalogByKey) {
 
 export async function loadMaintenanceMaterialRules({ includeInactive = false } = {}) {
   const [rules, catalog] = await Promise.all([
-    MaintenanceInventory.list("sort_order").catch(() => []),
+    loadAllEntityRows({ entity: MaintenanceInventory, sort: "sort_order", label: "Maintenance material rules" }),
     loadMasterPartCatalog(),
   ]);
   const maintenanceCatalog = (catalog || []).filter(isMaintenanceMaterialCatalogItem);
