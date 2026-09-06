@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Layers, X, AlertCircle } from "lucide-react";
 import { ChannelLetterInstallInventory } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import BackerFabPanel from "./BackerFabPanel";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
@@ -24,7 +25,7 @@ export default function BackerSection({ purchase, onUpdate, onDisable }) {
   useEffect(() => {
     (async () => {
       try {
-        const inv = await ChannelLetterInstallInventory.list("sort_order");
+        const inv = await loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Backer standoff inventory" });
         const filtered = (inv || []).filter(i => {
           const list = Array.isArray(i.applies_to_list) ? i.applies_to_list : [];
           return list.includes("backer");
