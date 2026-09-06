@@ -15,6 +15,7 @@ import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeLaserProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { TrendingUp } from "lucide-react";
@@ -384,8 +385,16 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       let saved;
       const activeProjectId = persistedProjectIdRef.current || editId || "";
       if (activeProjectId) {
-        saved = await LaserProject.update(activeProjectId, dataToSave);
+        saved = await updateBuilderSourceProject({
+          entity: LaserProject,
+          sourceId: activeProjectId,
+          expectedUpdatedAt: project.updated_date,
+          data: dataToSave,
+          estimateId,
+          label: "Laser project",
+        });
       } else {
+        await preflightBuilderSourceMutation({ estimateId });
         const signature = JSON.stringify(dataToSave);
         if (createAttemptRef.current.signature !== signature) {
           createAttemptRef.current = {
