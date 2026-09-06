@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ChannelLetterInstallEquipment } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,7 +100,7 @@ export default function EquipmentInventoryTab({ scope = "construction" }) {
 
   const load = async () => {
     setLoading(true);
-    const data = await ChannelLetterInstallEquipment.list("sort_order");
+    const data = await loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Channel Letter equipment inventory" });
     setItems(data);
     setLoading(false);
   };
