@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Project, Settings } from "@/entities/all";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizePaintProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -37,6 +39,13 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const persistedProjectIdRef = useRef(editId || "");
+  const createAttemptRef = useRef({ signature: "", key: "" });
+
+  useEffect(() => {
+    persistedProjectIdRef.current = editId || "";
+    createAttemptRef.current = { signature: "", key: "" };
+  }, [editId]);
 
   useEffect(() => {
     let active = true;
@@ -168,11 +177,39 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         notes: project.notes || "",
       };
 
-      let projectId = editId;
-      if (projectId) await Project.update(projectId, payload);
-      else projectId = (await Project.create(payload)).id;
+      let projectId = persistedProjectIdRef.current || editId || "";
+      let savedProject;
+      if (projectId) {
+        savedProject = await updateBuilderSourceProject({
+          entity: Project,
+          sourceId: projectId,
+          expectedUpdatedAt: project.updated_date,
+          data: payload,
+          estimateId,
+          label: "Painting project",
+        });
+      } else {
+        await preflightBuilderSourceMutation({ estimateId });
+        const signature = JSON.stringify(payload);
+        if (createAttemptRef.current.signature !== signature) {
+          createAttemptRef.current = {
+            signature,
+            key: newCreationRequestKey("painting_project"),
+          };
+        }
+        savedProject = await ensureIdempotentEntityCreate({
+          entity: Project,
+          keyField: "creation_request_key",
+          key: createAttemptRef.current.key,
+          data: payload,
+          label: "Painting project",
+        });
+        if (!savedProject?.id) throw new Error("Painting project create could not be verified.");
+        projectId = savedProject.id;
+        persistedProjectIdRef.current = projectId;
+      }
 
-      const savedProject = await Project.get(projectId);
+      if (!savedProject?.id) savedProject = await Project.get(projectId);
       if (estimateId) {
         await recordBuilderSave({
           estimateId,
