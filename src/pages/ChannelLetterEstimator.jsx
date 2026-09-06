@@ -42,6 +42,7 @@ import { calcLettersTotals, syncInstallItemsFromPurchases } from "@/components/c
 import { buildSummaryText, downloadCSV } from "@/components/channelLetterInstall/installExport";
 import { upsertCustomerSummaryForEstimate } from "@/components/customerSummary/upsertCustomerSummary";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
@@ -112,9 +113,9 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     setLoadError("");
     try {
       const [settingsList, inv, equipInv] = await Promise.all([
-        Settings.list(),
-        ChannelLetterInstallInventory.list("sort_order"),
-        ChannelLetterInstallEquipment.list("sort_order"),
+        loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
+        loadAllEntityRows({ entity: ChannelLetterInstallInventory, sort: "sort_order", label: "Channel Letter installation inventory" }),
+        loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Channel Letter equipment" }),
       ]);
       const settingsObj = {};
       settingsList.forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
