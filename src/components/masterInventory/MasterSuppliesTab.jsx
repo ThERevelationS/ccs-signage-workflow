@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,8 +82,8 @@ export default function MasterSuppliesTab({ isAdmin }) {
     setLoadError("");
     try {
       const [chn, fnd] = await Promise.all([
-        ChannelLetterInstallInventoryEntity.list(),
-        FoundationInventoryEntity.list(),
+        loadAllEntityRows({ entity: ChannelLetterInstallInventoryEntity, sort: "sort_order", label: "Installation supplies" }),
+        loadAllEntityRows({ entity: FoundationInventoryEntity, sort: "material_name", label: "Foundation supplies" }),
       ]);
       setChannelRows(chn);
       setFoundationRows(fnd.filter((r) => FOUNDATION_SUPPLY_TYPES.includes(r.material_type)));
