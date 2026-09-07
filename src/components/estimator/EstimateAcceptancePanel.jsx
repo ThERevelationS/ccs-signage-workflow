@@ -55,7 +55,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
           query: { estimate_id: estimate.id },
           sort: "sent_at",
           label: "Estimate quote deliveries",
-        }).catch(() => []),
+        }),
       ]);
       setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
       setRevisionRows(revisions || []);
