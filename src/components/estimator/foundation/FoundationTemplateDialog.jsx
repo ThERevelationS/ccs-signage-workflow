@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
 import { deleteFoundationTemplate, saveFoundationTemplate } from "./foundationTemplateService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function FoundationTemplateDialog({ open, mode, onClose, project, onApply }) {
   const [templates, setTemplates] = useState([]);
@@ -14,9 +15,12 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
     if (!open) return;
     saveAttemptRef.current = { signature: "", key: "" };
     if (mode !== "load") return;
-    base44.entities.ProjectTemplate.filter({ module_key: "foundation" }).then((rows) =>
-      setTemplates(rows || [])
-    );
+    loadAllEntityRows({
+      entity: base44.entities.ProjectTemplate,
+      query: { module_key: "foundation" },
+      sort: "created_date",
+      label: "Foundation templates",
+    }).then((rows) => setTemplates(rows || []));
   }, [open, mode]);
 
   const save = async () => {
