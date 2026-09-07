@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   calcDimensionalUnitCost,
   materialCostPerSqin,
@@ -46,7 +47,7 @@ export default function DimensionalFabPanel({ purchase, onUpdate, onReset }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const loadSettings = useCallback(async () => {
-    const list = await SettingsEntity.list();
+    const list = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
     const map = {};
     list.forEach((s) => { map[s.setting_name] = s.setting_value; });
     setSettings(map);
@@ -58,7 +59,7 @@ export default function DimensionalFabPanel({ purchase, onUpdate, onReset }) {
       setLoading(true);
       try {
         const [mats] = await Promise.all([
-          DimensionalLetterMaterial.filter({ is_active: true }, "sort_order"),
+          loadAllEntityRows({ entity: DimensionalLetterMaterial, query: { is_active: true }, sort: "sort_order", label: "Dimensional Letter materials" }),
           loadSettings(),
         ]);
         setMaterials(mats);
