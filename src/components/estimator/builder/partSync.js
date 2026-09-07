@@ -247,7 +247,7 @@ export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null,
   const [catalogs, existingParts] = await Promise.all([
     loadBuilderCatalogs(moduleKey || builderProduct?.module_key || "", { strict: true }),
     builderProduct?.id
-      ? base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id })
+      ? loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" })
       : Promise.resolve([]),
   ]);
   const inventoryRowsOverride = new Map();
@@ -2936,7 +2936,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
   const catalogs = catalogsOverride || await loadBuilderCatalogs(builderProduct.module_key, { strict: strictCatalogs });
   const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
-  const existing = existingPartsOverride || await base44.entities.BuilderPart.filter({ builder_product_id: builderProduct.id });
+  const existing = existingPartsOverride || await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
   const seen = new Set();
   const synced = [];
@@ -3328,7 +3328,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan, { partsOverride = undefined } = {}) {
   const parts = partsOverride !== undefined
     ? partsOverride
-    : await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+    : await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while recovering a Builder mutation.");
   const byId = new Map(parts.map((part) => [part.id, part]));
   const byKey = new Map(parts.map((part) => [part.part_key, part]));
@@ -3381,7 +3381,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
   const [parts, builder] = await Promise.all([
     partsOverride !== undefined
       ? Promise.resolve(partsOverride)
-      : base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
+      : loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     builderOverride !== undefined
       ? Promise.resolve(builderOverride)
       : base44.entities.BuilderProduct.get(builderProductId),
@@ -3523,7 +3523,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
 
 export async function getDetachedBuilderParts(builderProductId) {
   if (!builderProductId) return [];
-  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   return (parts || [])
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
@@ -3586,7 +3586,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3604,7 +3604,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     throw new Error("Independent manual Parts do not need to be detached from a Builder.");
   }
 
-  const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before detaching this Part.");
   }
@@ -3741,7 +3741,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3759,7 +3759,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
     throw new Error("This Part must be detached from its Builder before it can be overridden independently.");
   }
 
-  const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before updating this detached override.");
   }
@@ -3939,7 +3939,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     if (existingPending.kind !== "builder_reattach_parts" || String(existingPending.builder_product_id || "") !== String(builder.id)) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before reattaching Parts.");
     }
-    const currentParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const currentParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3957,7 +3957,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     };
   }
 
-  const allParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before reattachment.");
   }
