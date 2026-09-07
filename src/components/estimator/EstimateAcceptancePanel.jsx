@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
+import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const METHOD_LABELS = {
   signed_quote: "Signed quote",
@@ -42,9 +43,19 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     setAuditReadError("");
     try {
       const [result, revisions, deliveries] = await Promise.all([
-        base44.entities.EstimateAcceptance.filter({ estimate_id: estimate.id }),
+        loadAllEntityRows({
+          entity: base44.entities.EstimateAcceptance,
+          query: { estimate_id: estimate.id },
+          sort: "accepted_at",
+          label: "Estimate acceptances",
+        }),
         listEstimateRevisions(estimate.id, { strict: true }),
-        base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }).catch(() => []),
+        loadAllEntityRows({
+          entity: base44.entities.EstimateQuoteDelivery,
+          query: { estimate_id: estimate.id },
+          sort: "sent_at",
+          label: "Estimate quote deliveries",
+        }).catch(() => []),
       ]);
       setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
       setRevisionRows(revisions || []);
