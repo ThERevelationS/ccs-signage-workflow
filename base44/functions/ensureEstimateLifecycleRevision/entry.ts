@@ -21,15 +21,44 @@ async function loadRevisionRows(RevisionService: any, query: Record<string, unkn
   throw new Error(`Estimate revision history exceeds the ${REVISION_VERIFY_LIMIT.toLocaleString()}-record verification safety limit.`);
 }
 
+const revisionOrder = (a: any, b: any) => {
+  const aTime = Date.parse(a?.created_date || a?.completed_at || '') || 0;
+  const bTime = Date.parse(b?.created_date || b?.completed_at || '') || 0;
+  if (aTime !== bTime) return aTime - bTime;
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+};
+
 const canonicalRevision = (rows: any[] = []) => rows
   .filter((row) => row?.revision_status === 'completed')
   .slice()
-  .sort((a, b) => {
-    const aTime = Date.parse(a?.created_date || a?.completed_at || '') || 0;
-    const bTime = Date.parse(b?.created_date || b?.completed_at || '') || 0;
-    if (aTime !== bTime) return aTime - bTime;
-    return String(a?.id || '').localeCompare(String(b?.id || ''));
-  })[0] || null;
+  .sort(revisionOrder)[0] || null;
+
+async function settleCreatedRevisionNumber(RevisionService: any, estimateId: string, created: any) {
+  let current = created;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const rows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
+    const serverCurrent = rows.find((row) => String(row?.id || '') === String(current?.id || ''));
+    if (!serverCurrent) throw new Error('The newly created lifecycle revision disappeared before its sequence number could be verified.');
+    current = { ...current, ...serverCurrent };
+    const currentNumber = num(current.revision_number);
+    const collisions = rows.filter((row) => row?.id !== current.id && num(row?.revision_number) === currentNumber);
+    if (!collisions.length) return current;
+
+    const winner = [current, ...collisions].slice().sort(revisionOrder)[0];
+    if (winner?.id !== current.id || attempt === 4) {
+      const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
+      const updated = await RevisionService.update(current.id, { revision_number: nextNumber });
+      current = { ...current, revision_number: nextNumber, ...(updated || {}) };
+    }
+  }
+
+  const finalRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
+  const finalCurrent = finalRows.find((row) => String(row?.id || '') === String(current?.id || '')) || current;
+  const collision = finalRows.some((row) => row?.id !== finalCurrent.id && num(row?.revision_number) === num(finalCurrent.revision_number));
+  if (collision) throw new Error('Concurrent lifecycle revisions could not settle on unique revision numbers. No duplicate number was accepted silently.');
+  return finalCurrent;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -94,7 +123,7 @@ Deno.serve(async (req) => {
       idempotency_key: idempotencyKey,
     });
     if (!(afterCreate || []).length) {
-      afterCreate = await RevisionService.filter({
+      afterCreate = await loadRevisionRows(RevisionService, {
         estimate_id: estimateId,
         notes: idempotencyKey,
       });
@@ -106,7 +135,8 @@ Deno.serve(async (req) => {
       return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
-    return Response.json({ revision: canonical, reused: false });
+    const settled = await settleCreatedRevisionNumber(RevisionService, estimateId, canonical || created);
+    return Response.json({ revision: settled, reused: false });
   } catch (error) {
     console.error('ensureEstimateLifecycleRevision error:', error);
     return Response.json({ error: error?.message || 'Estimate lifecycle revision could not be recorded.' }, { status: 500 });
