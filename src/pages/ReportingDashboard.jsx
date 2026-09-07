@@ -119,6 +119,18 @@ export default function ReportingDashboard() {
     );
   }
 
+  if (readError) {
+    return (
+      <div className="p-6 min-h-full flex items-center justify-center">
+        <div className="clay-card p-6 text-center max-w-xl">
+          <div className="text-sm font-bold text-red-700">Reporting data could not be verified.</div>
+          <div className="mt-1 text-xs text-red-600">{readError}</div>
+          <button type="button" onClick={loadData} className="mt-3 h-8 px-3 rounded border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50">Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 min-h-full" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
       <div className="max-w-7xl mx-auto">
