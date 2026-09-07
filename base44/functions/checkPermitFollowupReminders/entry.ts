@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Scheduled: scans PermitLineItems for follow-up dates that are due today or overdue,
 // fires `permit_followup_due` and `permit_followup_overdue` automation triggers.
@@ -14,8 +15,18 @@ Deno.serve(async (req) => {
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const allLines = await base44.asServiceRole.entities.PermitLineItem.filter({ status: 'active' });
-    const workOrders = await base44.asServiceRole.entities.WorkOrder.filter({ completed: false, deleted: { $ne: true } });
+    const allLines = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.PermitLineItem,
+      query: { status: 'active' },
+      sort: 'next_followup_date',
+      label: 'Active permit follow-up lines',
+    });
+    const workOrders = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      query: { completed: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'Permit reminder Work Orders',
+    });
     const woById = new Map(workOrders.map(w => [w.id, w]));
 
     let dueFired = 0;
