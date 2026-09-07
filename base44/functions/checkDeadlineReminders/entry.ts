@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Check for approaching and overdue deadlines and trigger notifications
 Deno.serve(async (req) => {
@@ -19,14 +20,21 @@ Deno.serve(async (req) => {
     const sevenDaysOut = new Date(now);
     sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
     
-    // Get all active work orders with due dates
-    const workOrders = await base44.asServiceRole.entities.WorkOrder.filter({ 
-      completed: false,
-      deleted: false
+    // Get all active work orders with due dates.
+    const workOrders = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      query: { completed: false, deleted: false },
+      sort: 'due_date',
+      label: 'Deadline reminder Work Orders',
     });
     
-    // Get automation rules for deadline triggers
-    const automations = await base44.asServiceRole.entities.AutomationRule.filter({ enabled: true });
+    // Get all enabled automation rules for deadline triggers.
+    const automations = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.AutomationRule,
+      query: { enabled: true },
+      sort: 'created_date',
+      label: 'Deadline automation rules',
+    });
     const deadlineRules = automations.filter(a => 
       a.triggers?.some(t => 
         t.trigger_type === 'due_date_approaching' || 
