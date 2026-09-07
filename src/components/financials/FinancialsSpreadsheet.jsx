@@ -11,6 +11,7 @@ import { Loader2, Download, Link as LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import * as XLSX from "xlsx";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -35,6 +36,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [pendingChanges, setPendingChanges] = useState({});
@@ -46,9 +48,15 @@ const FinancialsSpreadsheet = React.forwardRef(({
 
   const loadWorkOrders = async () => {
     setIsLoading(true);
+    setReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { is_rider: false, completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Financial spreadsheet Work Orders",
+        }),
         AuthorizedEmail.list()
       ]);
       setWorkOrders(orders.sort((a, b) => {
@@ -63,6 +71,8 @@ const FinancialsSpreadsheet = React.forwardRef(({
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading work orders:", error);
+      setWorkOrders([]);
+      setReadError(error?.message || "Financial spreadsheet Work Orders could not be verified completely.");
     }
     setIsLoading(false);
   };
