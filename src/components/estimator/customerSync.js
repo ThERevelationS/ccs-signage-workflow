@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
 import { localDateStamp } from "./quoteLifecycle";
+import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -206,7 +207,11 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
  * Returns the (possibly extended) customer list.
  */
 export const backfillCustomersFromWorkOrders = async (customers) => {
-  const workOrders = await base44.entities.WorkOrder.list("-created_date", 1000);
+  const workOrders = await loadAllEntityRows({
+    entity: base44.entities.WorkOrder,
+    sort: "-created_date",
+    label: "Workflow Work Orders",
+  });
   const known = new Set();
   customers.forEach((c) => {
     known.add(norm(c.company_name));
