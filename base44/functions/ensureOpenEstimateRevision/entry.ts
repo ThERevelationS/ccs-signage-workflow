@@ -1,6 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const REVISION_PAGE_SIZE = 500;
+const REVISION_VERIFY_LIMIT = 50000;
+
+async function loadRevisionRows(RevisionService: any, query: Record<string, unknown>) {
+  const rows: any[] = [];
+  let skip = 0;
+  while (skip < REVISION_VERIFY_LIMIT) {
+    const page = await RevisionService.filter(query, 'revision_number', REVISION_PAGE_SIZE, skip);
+    if (!Array.isArray(page)) {
+      throw new Error('Estimate revision history could not be verified completely.');
+    }
+    rows.push(...page);
+    if (page.length < REVISION_PAGE_SIZE) return rows;
+    skip += REVISION_PAGE_SIZE;
+  }
+  throw new Error(`Estimate revision history exceeds the ${REVISION_VERIFY_LIMIT.toLocaleString()}-record verification safety limit.`);
+}
 
 const canonicalOpenRevision = (rows: any[] = []) => rows
   .filter((row) => row?.revision_status === 'open')
@@ -54,11 +71,11 @@ Deno.serve(async (req) => {
     // One Estimate may have at most one active manual revision. Returning the
     // canonical existing row makes retries naturally idempotent even when the
     // browser lost the create response.
-    let openRows = await RevisionService.filter({ estimate_id: estimateId, revision_status: 'open' });
+    let openRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId, revision_status: 'open' });
     const existing = canonicalOpenRevision(openRows || []);
     if (existing) return Response.json({ revision: existing, reused: true });
 
-    const allRows = await RevisionService.filter({ estimate_id: estimateId });
+    const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
     const idempotencyKey = `open_revision:${estimateId}:${expectedUpdatedDate || estimate.updated_date || revisionNumber}`;
@@ -80,7 +97,7 @@ Deno.serve(async (req) => {
     // earliest canonical open row. Each losing request deletes only the row it
     // created; unrelated lifecycle history is never modified.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    openRows = await RevisionService.filter({ estimate_id: estimateId, revision_status: 'open' });
+    openRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId, revision_status: 'open' });
     const canonical = canonicalOpenRevision(openRows || []) || created;
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
