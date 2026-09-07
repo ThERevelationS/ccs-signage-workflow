@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format, subDays, parseISO } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
 const STAGE_COLORS = {
@@ -24,6 +25,7 @@ export default function ReportingDashboard() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState("");
 
   useEffect(() => {
     document.title = "Reporting Dashboard - Workflow Manager";
@@ -32,13 +34,27 @@ export default function ReportingDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const [wos, us] = await Promise.all([
-      base44.entities.WorkOrder.filter({ deleted: false }),
-      base44.entities.AuthorizedEmail.list()
-    ]);
-    setWorkOrders(wos || []);
-    setUsers(us || []);
-    setLoading(false);
+    setReadError("");
+    try {
+      const [wos, us] = await Promise.all([
+        loadAllEntityRows({
+          entity: base44.entities.WorkOrder,
+          query: { deleted: false },
+          sort: "created_date",
+          label: "Reporting Dashboard Work Orders",
+        }),
+        base44.entities.AuthorizedEmail.list()
+      ]);
+      setWorkOrders(wos || []);
+      setUsers(us || []);
+    } catch (error) {
+      console.error("Error loading reporting dashboard data:", error);
+      setWorkOrders([]);
+      setUsers([]);
+      setReadError(error?.message || "Reporting Dashboard Work Orders could not be verified completely.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Derived stats
