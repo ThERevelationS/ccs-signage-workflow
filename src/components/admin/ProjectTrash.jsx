@@ -107,6 +107,16 @@ export default function ProjectTrash() {
     );
   }
 
+  if (readError) {
+    return (
+      <div className="py-8 text-center">
+        <div className="text-sm font-bold text-red-700">Project trash could not be verified.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadDeletedProjects}>Retry</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Bulk Delete Progress */}
