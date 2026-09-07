@@ -5,6 +5,7 @@ import { acceptedCustomerUnitPrice, liveCustomerUnitPrice, manualCustomerPriceSt
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -36,8 +37,8 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
   const [estimate, builder, parts, groups] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(line.builder_product_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Part Groups" }),
   ]);
   if (!estimate || !builder || !Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product could not be fully loaded for cloning.");
   const currentLine = (estimate.line_items || []).find((item) =>
@@ -138,7 +139,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
     }
     const [builder, parts] = await Promise.all([
       base44.entities.BuilderProduct.get(builderProductId),
-      base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product price Builder Parts" }),
     ]);
     if (!builder?.id || !Array.isArray(parts)) throw new Error("The pending Product price adjustment could not verify its Builder Product or Parts.");
     const recovered = await resumeBuilderMutation({
@@ -166,7 +167,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   // exact browser request, so verify the requested line/Builder targets before
   // treating a stale retry as already completed.
   if (builder && patch.customer_price_snapshot !== undefined && operationKey) {
-    const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Product price revisions" });
     if (!Array.isArray(revisions)) throw new Error("Product price history could not be verified before changing Product settings.");
     const completedRevision = revisions.find((row) => String(row.idempotency_key || "") === operationKey);
     if (completedRevision) {
