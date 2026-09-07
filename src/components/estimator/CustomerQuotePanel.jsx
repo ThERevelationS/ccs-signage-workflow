@@ -8,6 +8,7 @@ import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuote
 import { generateCustomerQuotePdf } from "./quotePdf";
 import { defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "./quoteDefaults";
+import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -85,7 +86,12 @@ export default function CustomerQuotePanel({
       setCurrentVersionDelivered(false);
       return () => { active = false; };
     }
-    base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id })
+    loadAllEntityRows({
+      entity: base44.entities.EstimateQuoteDelivery,
+      query: { estimate_id: estimate.id },
+      sort: "sent_at",
+      label: "Estimate quote deliveries",
+    })
       .then((rows) => {
         if (!active) return;
         setCurrentVersionDelivered((rows || []).some((row) => Number(row.quote_version || 0) === quoteVersion));
@@ -164,7 +170,12 @@ export default function CustomerQuotePanel({
       if (!issuingNewQuote && deliveryVersion > 0) {
         // Audit semantics must be version-specific. Fail before Gmail sends if
         // we cannot determine whether this exact quote version was delivered.
-        const previousDeliveries = await base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id });
+        const previousDeliveries = await loadAllEntityRows({
+          entity: base44.entities.EstimateQuoteDelivery,
+          query: { estimate_id: estimate.id },
+          sort: "sent_at",
+          label: "Estimate quote deliveries",
+        });
         isResend = (previousDeliveries || []).some((row) => Number(row.quote_version || 0) === deliveryVersion);
       }
       const attachment = await generateCustomerQuotePdf({
