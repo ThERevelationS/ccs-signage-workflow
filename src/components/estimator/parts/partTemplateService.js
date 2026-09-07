@@ -3,6 +3,7 @@ import { cloneSnapshot } from "@/components/estimator/products/snapshotUtils";
 import { addPartPackageToProduct } from "@/components/estimator/parts/partPackageService";
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const detached = (part) => part?.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part?.inventory_link_state) || part?.price_state === "detached";
@@ -74,7 +75,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 
   const [liveGroup, liveRows] = await Promise.all([
     base44.entities.BuilderPartGroup.get(group.id),
-    base44.entities.BuilderPart.filter({ part_group_id: group.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { part_group_id: group.id }, sort: "sort_order", label: "Saved Part Group members" }),
   ]);
   if (!liveGroup) throw new Error("This Part Group no longer exists. Reload the Product before saving it to the Part Library.");
   if (group.updated_date && liveGroup.updated_date && group.updated_date !== liveGroup.updated_date) {
@@ -132,7 +133,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 
 export async function listPartTemplates({ includeInactive = false } = {}) {
   const [rows, me] = await Promise.all([
-    base44.entities.PartTemplate.list(),
+    loadAllEntityRows({ entity: base44.entities.PartTemplate, sort: "template_name", label: "Part Library" }),
     base44.auth.me().catch(() => null),
   ]);
   return (rows || [])
