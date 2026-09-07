@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Trash2, Plus, Edit, Package, Building2, Layers, Wrench, Square } from 'lucide-react';
 import EquipmentInventoryTab from '@/components/foundation/EquipmentInventoryTab';
 import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
+import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 
@@ -373,7 +374,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
     setLoading(true);
     setLoadError('');
     try {
-      const data = await FoundationInventoryEntity.list('-created_date', 200);
+      const data = await loadAllEntityRows({ entity: FoundationInventoryEntity, sort: '-created_date', label: 'Foundation inventory' });
       setItems(data);
     } catch (error) {
       console.error('Foundation inventory load failed:', error);
