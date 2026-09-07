@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
@@ -24,6 +25,7 @@ const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
 export default function ProjectTrash() {
   const [deletedProjects, setDeletedProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -37,11 +39,19 @@ export default function ProjectTrash() {
 
   const loadDeletedProjects = async () => {
     setIsLoading(true);
+    setReadError("");
     try {
-      const deleted = await WorkOrder.filter({ deleted: true });
+      const deleted = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { deleted: true },
+        sort: "deleted_at",
+        label: "Deleted Work Orders",
+      });
       setDeletedProjects(deleted.sort((a, b) => (b.deleted_at || "").localeCompare(a.deleted_at || "")));
     } catch (error) {
       console.error("Error loading deleted projects:", error);
+      setDeletedProjects([]);
+      setReadError(error?.message || "Deleted Work Orders could not be verified completely.");
     }
     setIsLoading(false);
   };
