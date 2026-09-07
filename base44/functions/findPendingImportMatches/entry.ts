@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -75,9 +76,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing pending_import_id or extracted_data' }, { status: 400 });
     }
 
-    // Load all active work orders
-    const allWOs = await base44.asServiceRole.entities.WorkOrder.filter({ deleted: { $ne: true }, completed: { $ne: true } });
-    const wos = Array.isArray(allWOs) ? allWOs : [];
+    // Load the complete active Work Order set before fuzzy matching so an
+    // older valid candidate cannot disappear behind the entity default limit.
+    const wos = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      query: { deleted: { $ne: true }, completed: { $ne: true } },
+      sort: 'created_date',
+      label: 'Pending import candidate Work Orders',
+    });
 
     // Compute fuzzy scores
     const fuzzyMatches = wos
