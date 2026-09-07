@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -69,11 +70,20 @@ Deno.serve(async (req) => {
     return Response.json({ created: 0, updated: 0, failed: 0, total: 0 });
   }
 
-  // Load existing work orders for deduplication
+  // Load the complete existing Work Order set for deduplication. If this
+  // verification fails, abort before any import writes rather than treating
+  // an unreadable catalog as empty and creating duplicates.
   let existingOrders = [];
   try {
-    existingOrders = await base44.asServiceRole.entities.WorkOrder.filter({ is_rider: false, deleted: { $ne: true } });
-  } catch {}
+    existingOrders = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      query: { is_rider: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'Sales Pipeline import Work Orders',
+    });
+  } catch (error) {
+    return Response.json({ error: error?.message || 'Existing Work Orders could not be verified before import.' }, { status: 500 });
+  }
 
   const byEstInv = new Map();
   // Map from normalized client_name to array of work orders (same client can have multiple jobs)
