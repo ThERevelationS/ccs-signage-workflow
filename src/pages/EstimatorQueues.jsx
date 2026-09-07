@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -23,8 +24,12 @@ export default function EstimatorQueues() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await base44.entities.AllInOneEstimate.list("-created_date", 300);
-      setEstimates(res || []);
+      const rows = await loadAllEntityRows({
+        entity: base44.entities.AllInOneEstimate,
+        sort: "-created_date",
+        label: "Estimate queues",
+      });
+      setEstimates(rows);
       setLoading(false);
     };
     load();
