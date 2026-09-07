@@ -8,6 +8,7 @@ import EstimateCard from "@/components/estimator/EstimateCard";
 import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
 import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function Estimator() {
   const navigate = useNavigate();
@@ -20,8 +21,11 @@ export default function Estimator() {
   const backfillStartedRef = useRef(false);
 
   const load = async () => {
-    const res = await base44.entities.AllInOneEstimate.list("-created_date", 200);
-    const rows = res || [];
+    const rows = await loadAllEntityRows({
+      entity: base44.entities.AllInOneEstimate,
+      sort: "-created_date",
+      label: "Estimates",
+    });
     setEstimates(rows);
     setLoading(false);
 
