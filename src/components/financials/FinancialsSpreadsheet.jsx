@@ -286,6 +286,16 @@ const FinancialsSpreadsheet = React.forwardRef(({
     );
   }
 
+  if (readError) {
+    return (
+      <div className="p-6 text-center">
+        <div className="text-sm font-bold text-red-700">Financial spreadsheet data could not be verified.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadWorkOrders}>Retry</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-visible">
       <div className="overflow-x-auto">
