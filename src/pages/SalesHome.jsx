@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Bell } from "lucide-react";
 import StatCards from "@/components/estimator/home/StatCards";
 import RecentActivity from "@/components/estimator/home/RecentActivity";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function SalesHome() {
   const [estimates, setEstimates] = useState([]);
@@ -10,8 +11,12 @@ export default function SalesHome() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await base44.entities.AllInOneEstimate.list("-created_date", 200);
-      setEstimates(res || []);
+      const rows = await loadAllEntityRows({
+        entity: base44.entities.AllInOneEstimate,
+        sort: "-created_date",
+        label: "Sales Home estimates",
+      });
+      setEstimates(rows);
       setLoading(false);
     };
     load();
