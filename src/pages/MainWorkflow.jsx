@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
 
@@ -9,12 +9,14 @@ import MobileSelect from "@/components/mobile/MobileSelect";
 import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
 export default function MainWorkflow() {
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [sortBy, setSortBy] = useState("due_date");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,9 +46,16 @@ export default function MainWorkflow() {
 
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
+    setReadError("");
     try {
-      // Use list with limit instead of filter to avoid timeout
-      const allWorkOrders = await WorkOrder.list("-updated_date", 200);
+      // Preserve the existing list-based read (rather than a broad filter) to
+      // avoid the historical filter timeout, but page it completely so older
+      // active Work Orders are not silently omitted from the workflow board.
+      const allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "-updated_date",
+        label: "Main Workflow Work Orders",
+      });
       const activeOrders = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
       // Show work orders with at least a due_date (start_date is optional - will default to created_date)
       const withDates = activeOrders.filter(wo => wo.due_date);
@@ -66,6 +75,7 @@ export default function MainWorkflow() {
       setWorkOrders(groupedWorkOrders);
     } catch (error) {
       console.error("Error loading work orders:", error);
+      setReadError(error?.message || "Main Workflow Work Orders could not be verified completely.");
     } finally {
       if (showLoading) setIsLoading(false);
     }
@@ -110,10 +120,21 @@ export default function MainWorkflow() {
             </div>
           </div>
         </div>
+        {readError && workOrders.length > 0 && (
+          <div className="mb-2 px-3 py-2 rounded border border-amber-200 bg-amber-50 text-xs text-amber-800">
+            Workflow refresh could not be verified completely. Showing the last verified timeline until the next successful refresh.
+          </div>
+        )}
         <div className="clay-card p-4">
           {isLoading ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">Loading timeline...</p>
+            </div>
+          ) : readError && workOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-red-700 font-semibold">Workflow data could not be verified.</p>
+              <p className="text-red-600 text-sm mt-2">{readError}</p>
+              <Button variant="outline" className="mt-3" onClick={() => loadWorkOrders(true)}>Retry</Button>
             </div>
           ) : workOrders.length === 0 ? (
             <div className="text-center py-12">
