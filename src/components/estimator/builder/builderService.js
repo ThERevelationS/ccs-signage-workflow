@@ -4,6 +4,7 @@ import { acceptBuilderPartPrices, applyBuilderPartPriceAcceptancePlan, loadVerif
 import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manualCustomerPriceState, sourceProjectEconomics } from "../customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -545,7 +546,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     const pendingBuilderId = currentLine.builder_product_id || existingPending.builder_product_id || "";
     const [pendingBuilder, pendingParts] = await Promise.all([
       pendingBuilderId ? base44.entities.BuilderProduct.get(pendingBuilderId) : Promise.resolve(null),
-      pendingBuilderId ? base44.entities.BuilderPart.filter({ builder_product_id: pendingBuilderId }) : Promise.resolve([]),
+      pendingBuilderId ? loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: pendingBuilderId }, sort: "sort_order", label: "Builder Parts" }) : Promise.resolve([]),
     ]);
     if (!pendingBuilder?.id || !Array.isArray(pendingParts)) {
       throw new Error("The pending initial price acceptance could not verify its Builder Product or Parts. The recovery marker was retained.");
@@ -764,7 +765,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
         base44.entities.AllInOneEstimate.get(estimateId),
         base44.entities.BuilderProduct.get(builder.id),
-        base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+        loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
       ]);
       const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
       const canonicalPending = pendingBuilderMutation(markedLine);
@@ -852,9 +853,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 export async function deleteBuilderProductCascade(builderProductId) {
   if (!builderProductId) return;
   const [parts, groups, revisions] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }).catch(() => []),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }).catch(() => []),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }).catch(() => []),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }).catch(() => []),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }).catch(() => []),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }).catch(() => []),
   ]);
   await Promise.all((parts || []).map((row) => base44.entities.BuilderPart.delete(row.id).catch(() => null)));
   await Promise.all((groups || []).map((row) => base44.entities.BuilderPartGroup.delete(row.id).catch(() => null)));
@@ -868,7 +869,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   const [estimate, builder, parts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(line.builder_product_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   if (!estimate || !builder) throw new Error("Estimate pricing could not be verified. Reload before updating this Product price.");
   if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified. No price was accepted.");
@@ -1078,7 +1079,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimateId),
     base44.entities.BuilderProduct.get(builder.id),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
   const canonicalPending = pendingBuilderMutation(markedLine);
