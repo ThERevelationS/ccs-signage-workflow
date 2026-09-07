@@ -7,6 +7,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -26,8 +27,8 @@ export async function saveProductAsQuickProduct({
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record yet.");
   const [builder, parts, groups] = await Promise.all([
     base44.entities.BuilderProduct.get(line.builder_product_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
   ]);
   if (!builder) throw new Error("The Product could not be loaded.");
   if (!Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product Parts / Part Groups could not be fully verified before saving this Quick Product.");
@@ -169,8 +170,8 @@ async function completedQuickInsertResult(estimate, line, flags = {}) {
   if (!line?.builder_product_id) throw new Error("The completed Quick Product line is missing its Builder Product link.");
   const [builder, parts, groups] = await Promise.all([
     base44.entities.BuilderProduct.get(line.builder_product_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
   ]);
   if (!builder?.id || !Array.isArray(parts) || !Array.isArray(groups)) {
     throw new Error("The completed Quick Product could not be fully verified. Reload before continuing.");
@@ -735,7 +736,7 @@ async function promoteQuickInsertMarker({ estimate, line, pending, builder, sour
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimate.id),
     base44.entities.BuilderProduct.get(builder.id),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.line_id === line.line_id);
   const canonicalPending = pendingBuilderMutation(markedLine);
@@ -775,7 +776,7 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
   if (pending.builder_product_id && pending.part_acceptance_plan) {
     const [builder, parts] = await Promise.all([
       base44.entities.BuilderProduct.get(pending.builder_product_id),
-      base44.entities.BuilderPart.filter({ builder_product_id: pending.builder_product_id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: pending.builder_product_id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
     ]);
     if (!builder?.id || !Array.isArray(parts)) throw new Error("Quick Product recovery could not verify its promoted Builder Product or Parts.");
     const result = await resumeBuilderMutation({
@@ -952,7 +953,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
 
 export async function listQuickProducts() {
   const [rows, me] = await Promise.all([
-    base44.entities.QuickProduct.list(),
+    loadAllEntityRows({ entity: base44.entities.QuickProduct, sort: "product_name", label: "Quick Product library" }),
     base44.auth.me().catch(() => null),
   ]);
   return (rows || [])
