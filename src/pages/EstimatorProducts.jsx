@@ -17,6 +17,7 @@ import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
@@ -141,7 +142,11 @@ export default function EstimatorProducts() {
     setLoading(true);
     setLibraryError("");
     Promise.all([
-      base44.entities.QuickProduct.list(),
+      loadAllEntityRows({
+        entity: base44.entities.QuickProduct,
+        sort: "created_date",
+        label: "Quick Product Library",
+      }),
       base44.auth.me().catch(() => null),
       loadProductionProductTypes(),
     ]).then(([rows, me, productionTypes]) => {
