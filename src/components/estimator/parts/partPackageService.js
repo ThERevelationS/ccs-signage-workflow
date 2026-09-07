@@ -4,6 +4,7 @@ import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -56,7 +57,7 @@ export async function addPartPackageToProduct({
     ) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before adding saved Parts.");
     }
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Parts" });
     if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while resuming the saved Part insertion.");
     const result = await resumeBuilderMutation({
       estimateId,
@@ -68,8 +69,8 @@ export async function addPartPackageToProduct({
       applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
     const [completedParts, completedGroups] = await Promise.all([
-      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Parts" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Part Groups" }),
     ]);
     return packageResult({
       parts: completedParts,
@@ -104,12 +105,12 @@ export async function addPartPackageToProduct({
   // If the final Estimate write succeeded but its response was lost, the durable
   // marker is already gone. Reuse the idempotent revision + deterministic keys
   // so the same browser action resolves as completed instead of inserting again.
-  const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+  const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Saved Part insertion price revisions" });
   const completedRevision = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
   if (completedRevision) {
     const [completedParts, completedGroups] = await Promise.all([
-      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Parts" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Part Groups" }),
     ]);
     const completePartCount = (completedParts || []).filter((part) => partKeys.includes(part.part_key)).length;
     const completeGroup = !groupKey || (completedGroups || []).some((group) => group.group_key === groupKey);
@@ -130,8 +131,8 @@ export async function addPartPackageToProduct({
 
   const timestamp = nowIso();
   const [activeParts, activeGroups] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Part Groups" }),
   ]);
   if (!Array.isArray(activeParts) || activeParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before adding the saved package.");
@@ -305,8 +306,8 @@ export async function addPartPackageToProduct({
   });
 
   const [completedParts, completedGroups] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Saved Part insertion Part Groups" }),
   ]);
   return packageResult({
     parts: completedParts,
