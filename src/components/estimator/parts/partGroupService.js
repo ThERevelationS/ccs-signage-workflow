@@ -4,6 +4,7 @@ import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, ensureBuilderPriceRevision, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -57,8 +58,8 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
   const targetGroupKey = `create-group-${builderMutationHash({ operation_key: operationKey })}`;
 
   const [allParts, allGroups] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group prerequisites could not be fully verified.");
 
@@ -69,8 +70,8 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
     }
     const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts: allParts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
     const [groupsAfter, partsAfter] = await Promise.all([
-      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
-      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const group = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
     if (!group) throw new Error("The recovered Part Group could not be verified after creation.");
@@ -127,7 +128,7 @@ export async function createPartGroupInProduct({ builderProductId, partIds = [],
   };
   const marked = await markBuilderMutationPending({ estimate, builder, pending });
   const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate: marked.markedEstimate, builder: marked.currentBuilder, parts: marked.currentParts, line: marked.markedLine, pending: marked.canonicalPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
-  const groupsAfter = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id });
+  const groupsAfter = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" });
   const group = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
   if (!group) throw new Error("The new Part Group could not be verified after recovery completed.");
   return { ...group, recovered: true, line: recovered?.line || currentLine };
@@ -166,7 +167,7 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
     if (existingPending.kind !== "builder_part_group_dissolve" || existingPending.key !== operationKey) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume it before dissolving a Part Group.");
     }
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     if (!Array.isArray(parts)) throw new Error("Part Group members could not be verified during dissolve recovery.");
     const recovered = await resumeBuilderMutation({ estimateId: estimate.id, estimate, builder, parts, line: currentLine, pending: existingPending, applyPartPlan: applyBuilderPartPriceAcceptancePlan });
     return { dissolved: groupId, partCount: (existingPending.target_part_ids || []).length, recovered: true, line: recovered?.line || currentLine };
@@ -175,7 +176,7 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
   if (currentLine.last_part_group_mutation_key === operationKey && currentLine.last_part_group_mutation_kind === "dissolve") {
     const [groupAfter, partsAfter] = await Promise.all([
       base44.entities.BuilderPartGroup.get(groupId),
-      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const targetIds = new Set(Object.keys(expectedPartVersions || {}));
     const complete = !groupAfter && Array.isArray(partsAfter) && partsAfter.filter((part) => targetIds.has(String(part.id)) && !part.part_group_id).length === targetIds.size;
@@ -185,8 +186,8 @@ export async function dissolvePartGroup({ builderProductId, groupId, expectedEst
 
   const [group, allParts, allGroups] = await Promise.all([
     base44.entities.BuilderPartGroup.get(groupId),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups)) throw new Error("Part Group dissolve prerequisites could not be fully verified.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
@@ -257,9 +258,9 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
 
   const [group, allParts, allGroups, revisions] = await Promise.all([
     base44.entities.BuilderPartGroup.get(groupId),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
   if (!Array.isArray(allParts) || !Array.isArray(allGroups) || !Array.isArray(revisions)) {
     throw new Error("Part Group clone prerequisites could not be fully verified.");
@@ -280,8 +281,8 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
       applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
     const [groupsAfter, partsAfter] = await Promise.all([
-      base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
-      base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
     ]);
     const recoveredGroup = (groupsAfter || []).find((row) => row.group_key === existingPending.target_group_key) || null;
     const targetPartKeys = new Set(existingPending.target_part_keys || []);
@@ -461,8 +462,8 @@ export async function clonePartGroupInProduct({ builderProductId, groupId, expec
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
   const [groupsAfter, partsAfter] = await Promise.all([
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   const clonedGroup = (groupsAfter || []).find((row) => row.group_key === targetGroupKey) || null;
   const targetPartKeys = new Set(partSteps.map((step) => step.part_key));
@@ -604,12 +605,12 @@ export async function moveIndependentPartGroup({ sourceBuilderProductId, targetB
 
   const [group, sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions] = await Promise.all([
     base44.entities.BuilderPartGroup.get(groupId),
-    base44.entities.BuilderPart.filter({ builder_product_id: sourceBuilder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: sourceBuilder.id }),
-    base44.entities.BuilderPart.filter({ builder_product_id: targetBuilder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: targetBuilder.id }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: sourceBuilder.id }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: targetBuilder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: sourceBuilder.id }, sort: "sort_order", label: "Source Builder Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: targetBuilder.id }, sort: "sort_order", label: "Target Builder Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: sourceBuilder.id }, sort: "revision_number", label: "Source Builder price revisions" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: targetBuilder.id }, sort: "revision_number", label: "Target Builder price revisions" }),
   ]);
   if (![sourceParts, sourceGroups, targetParts, targetGroups, sourceRevisions, targetRevisions].every(Array.isArray)) {
     throw new Error("Part Group move prerequisites could not be fully verified.");
