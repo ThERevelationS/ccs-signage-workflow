@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { DollarSign, Filter, Search, Download, Settings, ChevronLeft, ChevronRig
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format as dateFnsFormat } from "date-fns";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 // Workflow reporting constants
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
@@ -29,12 +30,26 @@ const STAGE_COLORS = {
 function WorkflowReportingTab() {
   const [allWorkOrders, setAllWorkOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState("");
 
   useEffect(() => {
-    base44.entities.WorkOrder.filter({ deleted: false }).then(wos => {
+    let active = true;
+    setLoading(true);
+    setReadError("");
+    loadAllEntityRows({
+      entity: base44.entities.WorkOrder,
+      query: { deleted: false },
+      sort: "created_date",
+      label: "Workflow reporting Work Orders",
+    }).then((wos) => {
+      if (!active) return;
       setAllWorkOrders(wos || []);
-      setLoading(false);
-    });
+    }).catch((error) => {
+      if (!active) return;
+      setAllWorkOrders([]);
+      setReadError(error?.message || "Workflow reporting Work Orders could not be verified completely.");
+    }).finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, []);
 
   const active = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
@@ -75,6 +90,7 @@ function WorkflowReportingTab() {
     .sort((a, b) => b.count - a.count).slice(0, 10);
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
+  if (readError) return <div className="clay-card p-6 text-center"><div className="text-sm font-bold text-red-700">Workflow reporting data could not be verified.</div><div className="mt-1 text-xs text-red-600">{readError}</div></div>;
 
   return (
     <div className="space-y-6">
@@ -219,6 +235,7 @@ export default function Financials() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataReadError, setDataReadError] = useState("");
   const [isFullScreen, setIsFullScreen] = useState(false);
   
   const spreadsheetRef = useRef(null);
@@ -242,15 +259,23 @@ export default function Financials() {
 
   const loadData = async () => {
     setIsLoading(true);
+    setDataReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { is_rider: false, completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Financial Work Orders",
+        }),
         AuthorizedEmail.list()
       ]);
       setWorkOrders(orders);
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading data:", error);
+      setWorkOrders([]);
+      setDataReadError(error?.message || "Financial Work Orders could not be verified completely.");
     }
     setIsLoading(false);
   };
