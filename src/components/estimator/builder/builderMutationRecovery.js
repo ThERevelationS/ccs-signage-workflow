@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -66,7 +67,7 @@ export async function markBuilderMutationPending({ estimate, builder, pending })
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimate.id),
     base44.entities.BuilderProduct.get(builder.id),
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
   const canonicalPending = pendingBuilderMutation(markedLine);
@@ -124,7 +125,7 @@ async function applyPendingGroupCreatePlan(pending, builderProductId) {
   const groups = Array.isArray(plan?.groups) ? plan.groups : [];
   if (!groups.length) return new Map();
 
-  const currentGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId });
+  const currentGroups = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
   if (!Array.isArray(currentGroups) || currentGroups.some((group) => String(group?.builder_product_id || "") !== String(builderProductId || ""))) {
     throw new Error("Part Groups could not be verified while recovering the pending Builder mutation.");
   }
@@ -179,7 +180,7 @@ async function verifyPendingPreconditions(pending, builderProductId) {
   const createGroups = Array.isArray(pending?.group_create_plan?.groups) ? pending.group_create_plan.groups : [];
   let createdGroupsByKey = new Map();
   if (createGroups.length) {
-    const currentGroups = await base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId });
+    const currentGroups = await loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder recovery Part Groups" });
     if (!Array.isArray(currentGroups)) throw new Error("Part Groups could not be verified while checking Builder mutation preconditions.");
     createdGroupsByKey = new Map(currentGroups.map((group) => [group.group_key, group]));
   }
@@ -317,7 +318,7 @@ export async function resumeBuilderMutation({
   let revision = pending.revision || {};
   const changedParts = Array.isArray(revision.changed_parts) ? revision.changed_parts : [];
   if (changedParts.some((part) => part?.part_key_ref || part?.new_group_key_ref)) {
-    const currentParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const currentParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder recovery Parts" });
     if (!Array.isArray(currentParts)) throw new Error("Created Parts could not be verified before recording the Builder revision.");
     const partsByKey = new Map(currentParts.map((part) => [part.part_key, part]));
     revision = {
