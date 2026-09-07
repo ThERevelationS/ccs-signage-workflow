@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
@@ -34,9 +35,12 @@ Deno.serve(async (req) => {
     isScheduled = true;
   }
 
-  // Limit to 300 most-recent to prevent timeout on large datasets
-  const workOrders = await base44.asServiceRole.entities.WorkOrder.list('-created_date', 300)
-    .then(all => all.filter(wo => !wo.deleted && !wo.completed && !wo.is_rider));
+  const workOrders = (await loadAllEntityRows({
+    entity: base44.asServiceRole.entities.WorkOrder,
+    sort: '-created_date',
+    maxRows: 10000,
+    label: 'Sales duplicate Work Orders',
+  })).filter(wo => !wo.deleted && !wo.completed && !wo.is_rider);
 
   const groups = [];
   const flagged = new Set();
@@ -82,7 +86,12 @@ Deno.serve(async (req) => {
   }
 
   // Fetch existing flags in parallel with nothing (already done), build dedup set
-  const existing = await base44.asServiceRole.entities.PendingImport.filter({ doc_type: 'duplicate', status: 'pending' });
+  const existing = await loadAllEntityRows({
+    entity: base44.asServiceRole.entities.PendingImport,
+    query: { doc_type: 'duplicate', status: 'pending' },
+    sort: 'created_date',
+    label: 'Pending duplicate flags',
+  });
   const existingPairs = new Set(existing.map(e => e.doc_number));
 
   const toCreate = [];
