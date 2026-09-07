@@ -6,6 +6,7 @@ import { addPartPackageToProduct } from "@/components/estimator/parts/partPackag
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -30,8 +31,8 @@ function sourceMeta(estimate, line) {
 async function captureProductPayload({ line }) {
   const [builder, parts, groups] = await Promise.all([
     base44.entities.BuilderProduct.get(line.builder_product_id),
-    base44.entities.BuilderPart.filter({ builder_product_id: line.builder_product_id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: line.builder_product_id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Part Groups" }),
   ]);
   if (!builder) throw new Error("Product could not be loaded for clipboard copy.");
   const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
@@ -163,7 +164,7 @@ export async function copyPartGroupToClipboard({ estimateId, builderProductId, g
 }
 
 export async function listClipboardItems() {
-  const rows = await base44.entities.EstimateClipboardItem.list();
+  const rows = await loadAllEntityRows({ entity: base44.entities.EstimateClipboardItem, sort: "-copied_at", label: "Estimator Clipboard" });
   const now = Date.now();
   const expired = (rows || []).filter((row) => row.expires_at && new Date(row.expires_at).getTime() <= now);
   if (expired.length) {
