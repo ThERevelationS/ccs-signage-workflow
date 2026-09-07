@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function CreateQuickProductModal({ open, line, partCount = 0, onClose, onSave }) {
   const [name, setName] = useState("");
@@ -24,7 +25,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
     setSaving(false);
     setError("");
     Promise.all([
-      base44.entities.QuickProductCategory.list().catch(() => []),
+      loadAllEntityRows({ entity: base44.entities.QuickProductCategory, sort: "category_name", label: "Quick Product categories" }).catch(() => []),
       base44.auth.me().catch(() => null),
     ]).then(([rows, me]) => setAvailableCategories((rows || [])
       .filter((row) => row.product_group === "global" || !row.created_by_id || (!!me?.id && row.created_by_id === me.id))
