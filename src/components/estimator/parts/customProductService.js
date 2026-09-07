@@ -5,6 +5,7 @@ import { inventoryRowName, inventoryUnitCost, loadMasterPartCatalog } from "./pa
 import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -38,7 +39,7 @@ async function loadRawManualMutationContext(builderProductId) {
 }
 
 async function resumeStoredManualPartMutation({ builder, estimate, line, pending }) {
-  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while resuming the manual Part mutation.");
   return resumeBuilderMutation({
     estimateId: estimate.id,
@@ -152,7 +153,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before adding a Part.");
     }
     await resumeStoredManualPartMutation(context);
-    const completedParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const completedParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     const completed = (completedParts || []).find((part) => part.part_key === pending.target_part_key);
     if (!completed) throw new Error("The recovered manual Part could not be verified after completion.");
     return completed;
@@ -168,7 +169,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     quantity: qty,
   });
   const partKey = `manual-${requestHash}`;
-  const existingParts = await base44.entities.BuilderPart.filter({ builder_product_id: builderProductId });
+  const existingParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(existingParts) || existingParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before adding this Part.");
   }
@@ -290,7 +291,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     pending: marked.canonicalPending,
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  const completedParts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const completedParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   const completed = (completedParts || []).find((part) => part.part_key === partKey);
   if (!completed) throw new Error("The added manual Part could not be verified after completion.");
   return completed;
@@ -587,7 +588,7 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   }
 
   if (!part) {
-    const revisions = await base44.entities.BuilderPriceRevision.filter({ builder_product_id: builder.id });
+    const revisions = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builder.id }, sort: "revision_number", label: "Builder price revisions" });
     const completed = (revisions || []).find((revision) => String(revision.idempotency_key || "") === operationKey);
     if (completed) return { removed: true, alreadyCompleted: true };
     throw new Error("This Part is already missing. Reload the Product before continuing so its totals can be verified.");
@@ -602,8 +603,8 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
 
   const [allParts, allGroups] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builder.id }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builder.id }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before removing this Part.");
@@ -701,7 +702,7 @@ export async function refreshManualProductPricing(builderProductId) {
   if (!builderProductId) return null;
   const [{ builder, estimate }, parts, catalog] = await Promise.all([
     loadManualMutationContext(builderProductId),
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     loadMasterPartCatalog(),
   ]);
   const active = (parts || []).filter((part) => part.is_active !== false);
