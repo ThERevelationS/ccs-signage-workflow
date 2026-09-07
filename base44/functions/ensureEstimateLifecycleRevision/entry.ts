@@ -3,6 +3,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const REVISION_TYPES = new Set(['manual_revision', 'status_transition', 'cancel', 'conversion']);
 
 const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+const REVISION_PAGE_SIZE = 500;
+const REVISION_VERIFY_LIMIT = 50000;
+
+async function loadRevisionRows(RevisionService: any, query: Record<string, unknown>) {
+  const rows: any[] = [];
+  let skip = 0;
+  while (skip < REVISION_VERIFY_LIMIT) {
+    const page = await RevisionService.filter(query, 'revision_number', REVISION_PAGE_SIZE, skip);
+    if (!Array.isArray(page)) {
+      throw new Error('Estimate revision history could not be verified completely.');
+    }
+    rows.push(...page);
+    if (page.length < REVISION_PAGE_SIZE) return rows;
+    skip += REVISION_PAGE_SIZE;
+  }
+  throw new Error(`Estimate revision history exceeds the ${REVISION_VERIFY_LIMIT.toLocaleString()}-record verification safety limit.`);
+}
 
 const canonicalRevision = (rows: any[] = []) => rows
   .filter((row) => row?.revision_status === 'completed')
@@ -37,12 +54,12 @@ Deno.serve(async (req) => {
     const RevisionUser = base44.entities.EstimateRevision;
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
 
-    let matches = await RevisionService.filter({
+    let matches = await loadRevisionRows(RevisionService, {
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
     });
     if (!(matches || []).length) {
-      matches = await RevisionService.filter({
+      matches = await loadRevisionRows(RevisionService, {
         estimate_id: estimateId,
         notes: idempotencyKey,
       });
@@ -50,7 +67,7 @@ Deno.serve(async (req) => {
     const existing = canonicalRevision(matches || []);
     if (existing) return Response.json({ revision: existing, reused: true });
 
-    const allRows = await RevisionService.filter({ estimate_id: estimateId });
+    const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
 
@@ -72,7 +89,7 @@ Deno.serve(async (req) => {
     // completed row for this exact lifecycle key. Only this request's losing row
     // is removed; unrelated history and open manual revisions are never touched.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    let afterCreate = await RevisionService.filter({
+    let afterCreate = await loadRevisionRows(RevisionService, {
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
     });
