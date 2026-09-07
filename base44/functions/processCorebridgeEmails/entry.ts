@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -151,14 +152,23 @@ Deno.serve(async (req) => {
     const RUN_START = Date.now();
     const MAX_RUN_MS = 55_000; // leave ~5s buffer before 60s timeout
 
-    // Pre-load ALL existing work orders once (not inside the loop)
-    const existingOrdersRaw = await WorkOrder.filter({ deleted: { $ne: true } });
-    const allExistingOrders = Array.isArray(existingOrdersRaw) ? existingOrdersRaw : (existingOrdersRaw?.data || existingOrdersRaw?.results || []);
+    // Pre-load the complete existing Work Order and pending-import sets once
+    // (not inside the loop). Fail closed before processing any email if either
+    // catalog cannot be verified completely.
+    const allExistingOrders = await loadAllEntityRows({
+      entity: WorkOrder,
+      query: { deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'CoreBridge existing Work Orders',
+    });
 
-    // Pre-load ALL pending imports once (avoid per-email DB queries)
-    const pendingImportsRaw = await PendingImport.list();
+    const pendingImports = await loadAllEntityRows({
+      entity: PendingImport,
+      sort: 'created_date',
+      label: 'CoreBridge pending imports',
+    });
     const pendingImportDocNumbers = new Set(
-      (Array.isArray(pendingImportsRaw) ? pendingImportsRaw : []).map(p => p.doc_number).filter(Boolean)
+      pendingImports.map(p => p.doc_number).filter(Boolean)
     );
 
     // Build a Set of already-linked doc numbers from existing work orders (for O(1) lookup)
