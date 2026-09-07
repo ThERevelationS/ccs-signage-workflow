@@ -3,6 +3,7 @@ import { History, ArrowRight, PackageSearch } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { money } from "@/components/estimator/aioPricing";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -30,7 +31,12 @@ export default function ProductPriceHistoryModal({ open, line, onClose }) {
     let active = true;
     setLoading(true);
     setError("");
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: line.builder_product_id })
+    loadAllEntityRows({
+      entity: base44.entities.BuilderPriceRevision,
+      query: { builder_product_id: line.builder_product_id },
+      sort: "revision_number",
+      label: "Product price history",
+    })
       .then((result) => {
         if (!active) return;
         setRows((result || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number)));
