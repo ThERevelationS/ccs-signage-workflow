@@ -688,6 +688,16 @@ export default function Financials() {
               filterEstimator={filterEstimator}
             />
           </div>
+        ) : activeTab === "workflow" ? (
+          <WorkflowReportingTab />
+        ) : isLoading ? (
+          <div className="clay-card p-8 text-center text-sm text-gray-500">Loading verified financial data…</div>
+        ) : dataReadError ? (
+          <div className="clay-card p-6 text-center">
+            <div className="text-sm font-bold text-red-700">Financial data could not be verified.</div>
+            <div className="mt-1 text-xs text-red-600">{dataReadError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={loadData}>Retry</Button>
+          </div>
         ) : activeTab === "dashboard" ? (
           <FinancialsDashboard 
             workOrders={filteredWorkOrders}
@@ -706,8 +716,6 @@ export default function Financials() {
           <div className="clay-card p-4">
             <PerformanceSummaryReport workOrders={filteredWorkOrders} />
           </div>
-        ) : activeTab === "workflow" ? (
-          <WorkflowReportingTab />
         ) : (
           <SalesPipelineDashboard workOrders={filteredWorkOrders} />
         )}
