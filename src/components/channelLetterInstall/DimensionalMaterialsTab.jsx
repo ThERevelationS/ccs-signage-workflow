@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { DimensionalLetterMaterial } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,7 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
     setLoading(true);
     setLoadError("");
     try {
-      const data = await DimensionalLetterMaterial.list("sort_order");
+      const data = await loadAllEntityRows({ entity: DimensionalLetterMaterial, sort: "sort_order", label: "Dimensional Letter materials" });
       setMaterials(data || []);
       setOriginalById(Object.fromEntries((data || []).filter((row) => row.id).map((row) => [row.id, materialSnapshot(row)])));
       setDirty(false);
