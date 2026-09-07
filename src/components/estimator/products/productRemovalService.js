@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { getModule } from "@/components/estimator/moduleRegistry";
 import { builderMutationHash, pendingBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const nowIso = () => new Date().toISOString();
 
@@ -58,9 +59,9 @@ async function loadRemovalPlan(line) {
   if (builderProductId) {
     [builder, parts, groups, revisions] = await Promise.all([
       base44.entities.BuilderProduct.get(builderProductId),
-      base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-      base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
-      base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
+      loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
     ]);
     if (![parts, groups, revisions].every(Array.isArray)) {
       throw new Error("Product removal could not verify all Builder child records before starting.");
