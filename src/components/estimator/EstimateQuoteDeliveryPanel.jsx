@@ -3,6 +3,7 @@ import { MailCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
+import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const formatBytes = (value) => {
   const bytes = Number(value || 0);
@@ -31,7 +32,12 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
     setAuditLoading(true);
     setAuditReadError("");
     Promise.all([
-      base44.entities.EstimateQuoteDelivery.filter({ estimate_id: estimate.id }),
+      loadAllEntityRows({
+        entity: base44.entities.EstimateQuoteDelivery,
+        query: { estimate_id: estimate.id },
+        sort: "sent_at",
+        label: "Estimate quote deliveries",
+      }),
       listEstimateRevisions(estimate.id, { strict: true }),
     ])
       .then(([deliveries, revisions]) => {
