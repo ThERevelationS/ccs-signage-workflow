@@ -13,6 +13,7 @@ import {
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/entities/all";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   calcDimensionalUnitCost,
   materialCostPerSqin,
@@ -35,7 +36,7 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
 
   // Pull settings as a flat name→value map (matches what CNC/Laser/Paint settings pages write)
   const loadSettings = useCallback(async () => {
-    const settingsList = await SettingsEntity.list();
+    const settingsList = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
     const map = {};
     settingsList.forEach(s => { map[s.setting_name] = s.setting_value; });
     setSettings(map);
@@ -49,7 +50,7 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
       setLoading(true);
       try {
         const [mats] = await Promise.all([
-          DimensionalLetterMaterial.filter({ is_active: true }, "sort_order"),
+          loadAllEntityRows({ entity: DimensionalLetterMaterial, query: { is_active: true }, sort: "sort_order", label: "Dimensional Letter materials" }),
           loadSettings(),
         ]);
         setMaterials(mats);
