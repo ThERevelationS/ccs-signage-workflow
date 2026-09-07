@@ -1,24 +1,25 @@
 import { base44 } from "@/api/base44Client";
 import { estimateAuditSnapshot, summarizeEstimateChanges } from "./estimateLifecycle";
 import { quoteIssueKey } from "./quoteLifecycle";
+import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 async function nextRevisionNumber(estimateId) {
-  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId });
+  const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "revision_number", label: "Estimate revisions" });
   return Math.max(0, ...(rows || []).map((row) => num(row.revision_number))) + 1;
 }
 
 export async function getOpenEstimateRevision(estimateId) {
   if (!estimateId) return null;
-  const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId, revision_status: "open" });
+  const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId, revision_status: "open" }, sort: "revision_number", label: "Open Estimate revisions" });
   return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number))[0] || null;
 }
 
 export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
   if (!estimateId) return [];
   try {
-    const rows = await base44.entities.EstimateRevision.filter({ estimate_id: estimateId });
+    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "revision_number", label: "Estimate revisions" });
     return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
   } catch (error) {
     if (strict) throw error;
@@ -199,9 +200,11 @@ export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId
   if (!estimateId || version <= 0 || !evidence) return { revision: null, warning: "" };
 
   const issueKey = quoteIssueKey(estimateId, version);
-  const rows = await base44.entities.EstimateRevision.filter({
-    estimate_id: estimateId,
-    quote_issue_key: issueKey,
+  const rows = await loadAllEntityRows({
+    entity: base44.entities.EstimateRevision,
+    query: { estimate_id: estimateId, quote_issue_key: issueKey },
+    sort: "revision_number",
+    label: "Quote issuance revisions",
   });
   const issuanceRevision = (rows || []).find((row) => {
     const beforeVersion = Math.max(0, Math.floor(num(row.estimate_snapshot_before?.quote_version)));
