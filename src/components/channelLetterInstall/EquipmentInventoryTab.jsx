@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChannelLetterInstallEquipment } from "@/entities/all";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Button } from "@/components/ui/button";
