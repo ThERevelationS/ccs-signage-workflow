@@ -103,9 +103,9 @@ function assertExpectedRecord(record, step, label, builderProductId = "") {
 async function preflightChildren(plan, builderProductId) {
   if (!builderProductId) return;
   const [parts, groups, revisions] = await Promise.all([
-    base44.entities.BuilderPart.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPartGroup.filter({ builder_product_id: builderProductId }),
-    base44.entities.BuilderPriceRevision.filter({ builder_product_id: builderProductId }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product removal Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Product removal price revisions" }),
   ]);
   if (![parts, groups, revisions].every(Array.isArray)) throw new Error("Builder child records could not be verified while Product removal was pending.");
 
