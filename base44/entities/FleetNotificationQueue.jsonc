@@ -1,0 +1,93 @@
+{
+  "name": "FleetNotificationQueue",
+  "type": "object",
+  "description": "Durable Fleet email notification queue. Replaces browser timers; server worker sends/retries through CCS Gmail. Admin-readable and server-written.",
+  "properties": {
+    "notification_key": {
+      "type": "string",
+      "description": "Deterministic idempotency key for one event/recipient notification."
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "target_entity": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "source_operation_key": {
+      "type": "string"
+    },
+    "recipient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "body_html": {
+      "type": "string"
+    },
+    "send_after": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sending",
+        "sent",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "last_attempt_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "notification_key",
+    "event_type",
+    "recipient_email",
+    "subject",
+    "body_html",
+    "send_after",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
