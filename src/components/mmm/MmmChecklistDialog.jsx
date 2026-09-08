@@ -12,6 +12,7 @@ import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeader as OtherDialogHeader, DialogTitle as OtherDialogTitle, DialogFooter as OtherDialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MmmTemplateBuilder from "./MmmTemplateBuilder";
+import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -46,6 +47,8 @@ export default function MmmChecklistDialog({
   const [newItemText, setNewItemText] = useState("");
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
   const [newGeneralChecklistText, setNewGeneralChecklistText] = useState("");
+  const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState([]);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) loadData();
@@ -67,6 +70,8 @@ export default function MmmChecklistDialog({
 
       // MMM uses its own checklist field: mmm_sip_checklist
       const rawChecklist = currentWO.mmm_sip_checklist || [];
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(rawChecklist)));
+      setSaveError("");
       const reconstructedChecklist = rawChecklist.map(item => {
         if (item.type) return item;
         const id = item.id || '';
@@ -216,12 +221,23 @@ export default function MmmChecklistDialog({
           product_id: item.product_id || null, sub_items: item.sub_items || []
         };
       });
-      await WorkOrder.update(workOrder.id, { mmm_sip_checklist: resolvedChecklist });
+      const saved = await replaceWorkOrderArrayFieldIfUnchanged({
+        workOrderId: workOrder.id,
+        field: "mmm_sip_checklist",
+        expectedArray: loadedChecklistSnapshot,
+        nextArray: resolvedChecklist,
+        label: "Monday Morning Meeting checklist",
+      });
+      const savedChecklist = saved.mmm_sip_checklist || [];
+      Object.assign(workOrder, { mmm_sip_checklist: savedChecklist, updated_date: saved.updated_date });
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(savedChecklist)));
+      setChecklist(savedChecklist);
+      setSaveError("");
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving MMM checklist:", error);
-      alert("Failed to save: " + error.message);
+      setSaveError(error?.message || "Monday Morning Meeting checklist could not be saved. Reload the latest Work Order and try again.");
     } finally {
       setIsSaving(false);
     }
