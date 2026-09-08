@@ -23,11 +23,9 @@ import {
   ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
-import { base44 } from "@/api/base44Client";
 import { UploadFile } from "@/integrations/Core";
 import { useAuth } from "@/components/auth/EmailGate";
-
-const WorkOrder = base44.entities.WorkOrder;
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 const getFileIcon = (type) => {
   if (type?.startsWith('image/')) return FileImage;
@@ -55,43 +53,62 @@ export default function WorkOrderFiles({ workOrder, onUpdate }) {
     if (selectedFiles.length === 0) return;
 
     setUploading(true);
-    
-    const newFiles = [];
-    for (const file of selectedFiles) {
-      const result = await UploadFile({ file });
-      newFiles.push({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        url: result.file_url,
-        type: file.type,
-        size: file.size,
-        uploaded_by: currentUser?.full_name || currentUser?.email || "Unknown",
-        uploaded_at: new Date().toISOString()
-      });
-    }
+    try {
+      const newFiles = [];
+      for (const file of selectedFiles) {
+        const result = await UploadFile({ file });
+        newFiles.push({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          url: result.file_url,
+          type: file.type,
+          size: file.size,
+          uploaded_by: currentUser?.full_name || currentUser?.email || "Unknown",
+          uploaded_at: new Date().toISOString()
+        });
+      }
 
-    const updatedFiles = [...files, ...newFiles];
-    await WorkOrder.update(workOrder.id, { files: updatedFiles });
-    Object.assign(workOrder, { files: updatedFiles });
-    
-    setUploading(false);
-    if (onUpdate) onUpdate();
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      const saved = await mutateWorkOrderArrayField({
+        workOrderId: workOrder.id,
+        field: "files",
+        label: "Work Order files",
+        mutate: (currentFiles) => {
+          const existingIds = new Set(currentFiles.map((file) => file?.id).filter(Boolean));
+          return [...currentFiles, ...newFiles.filter((file) => !existingIds.has(file.id))];
+        },
+      });
+      Object.assign(workOrder, { files: saved.files || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error uploading Work Order files:", error);
+      alert(error?.message || "Files could not be attached to this Work Order.");
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   const handleDeleteFile = async () => {
     if (!deleteConfirm) return;
-    
-    const updatedFiles = files.filter(f => f.id !== deleteConfirm.id);
-    await WorkOrder.update(workOrder.id, { files: updatedFiles });
-    Object.assign(workOrder, { files: updatedFiles });
-    
-    setDeleteConfirm(null);
-    if (onUpdate) onUpdate();
+
+    try {
+      const fileId = deleteConfirm.id;
+      const saved = await mutateWorkOrderArrayField({
+        workOrderId: workOrder.id,
+        field: "files",
+        label: "Work Order files",
+        mutate: (currentFiles) => currentFiles.filter((file) => file.id !== fileId),
+      });
+      Object.assign(workOrder, { files: saved.files || [], updated_date: saved.updated_date });
+      setDeleteConfirm(null);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error deleting Work Order file:", error);
+      alert(error?.message || "The file could not be removed from this Work Order.");
+    }
   };
 
   return (
