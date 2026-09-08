@@ -12,7 +12,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -713,11 +713,17 @@ export default function SIPs() {
             loadWorkOrders();
           }}
           onDelete={async (wo) => {
-            await WorkOrder.update(wo.id, {
-              deleted: true,
-              deleted_at: new Date().toISOString(),
-              deleted_by: "user"
-            });
+            try {
+              const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                deletedBy: currentUser?.email || "unknown",
+                label: "SIPs details Work Order delete",
+              });
+              Object.assign(wo, deleted);
+            } catch (error) {
+              console.error("Error deleting SIPs Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+            }
             loadWorkOrders();
           }}
         />
