@@ -246,12 +246,26 @@ export default function WorkOrderDetailsDialog({
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const expectedImageUrl = workOrder.image_url;
     setUploading(true);
-    const result = await UploadFile({ file });
-    await WorkOrder.update(workOrder.id, { image_url: result.file_url });
-    await ActivityActions.imageUploaded(workOrder);
-    setUploading(false);
-    if (onUpdate) onUpdate();
+    try {
+      const result = await UploadFile({ file });
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { image_url: expectedImageUrl },
+        nextFields: { image_url: result.file_url },
+        label: "Work Order details image replacement",
+      });
+      Object.assign(workOrder, { image_url: saved.image_url, updated_date: saved.updated_date });
+      await ActivityActions.imageUploaded(workOrder);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Error uploading Work Order image:", error);
+      alert(error?.message || "This Work Order image changed in another session. Reload and try the upload again.");
+      if (onUpdate) onUpdate();
+    } finally {
+      setUploading(false);
+    }
   };
 
   const startEdit = (field) => {
