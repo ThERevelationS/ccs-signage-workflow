@@ -57,7 +57,12 @@ import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
-import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
+import {
+  createWorkOrderArrayItemLocator,
+  findWorkOrderArrayItemIndex,
+  mutateLocatedWorkOrderArrayItem,
+  mutateWorkOrderArrayField,
+} from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -232,11 +237,7 @@ export default function WorkOrderCard({
     setUploading(true);
     try {
       const result = await UploadFile({ file });
-      const updateData = {
-        image_url: result.file_url,
-        notes: notes
-      };
-      await WorkOrder.update(workOrder.id, updateData);
+      await WorkOrder.update(workOrder.id, { image_url: result.file_url });
       await ActivityActions.imageUploaded(workOrder);
       if (onUpdate) onUpdate();
     } catch (error) {
