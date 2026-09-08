@@ -41,27 +41,37 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
 
   const cloneValue = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
+  const initializeProductsFromRecord = (record) => {
+    loadedProductsSnapshotRef.current = cloneValue(record?.products);
+    if (record?.products && Array.isArray(record.products)) {
+      setProducts(record.products);
+      setProductsNeedMigration(false);
+    } else {
+      const migratedProducts = [];
+      for (let i = 1; i <= 6; i++) {
+        const desc = record?.[`product_${i}`];
+        if (desc && desc.trim()) {
+          migratedProducts.push({
+            id: `prod_${i}`,
+            description: desc,
+            product_type: ""
+          });
+        }
+      }
+      setProducts(migratedProducts);
+      setProductsNeedMigration(migratedProducts.length > 0);
+    }
+    setProductsChanged(false);
+  };
+
   // Load product types and initialize products
   useEffect(() => {
     loadProductTypes();
     if (workOrder) {
-      // Load products from new structure or migrate old
-      if (workOrder.products && Array.isArray(workOrder.products)) {
-        setProducts(workOrder.products);
-      } else {
-        const migratedProducts = [];
-        for (let i = 1; i <= 6; i++) {
-          const desc = workOrder[`product_${i}`];
-          if (desc && desc.trim()) {
-            migratedProducts.push({
-              id: `prod_${i}`,
-              description: desc,
-              product_type: ""
-            });
-          }
-        }
-        setProducts(migratedProducts);
-      }
+      fieldBaselinesRef.current = {};
+      setLocalData({});
+      setSaveError("");
+      initializeProductsFromRecord(workOrder);
     }
   }, [workOrder?.id]);
 
@@ -86,11 +96,19 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
     return localData[field] !== undefined ? localData[field] : (workOrder?.[field] || false);
   };
 
+  const captureFieldBaseline = (field) => {
+    if (!Object.prototype.hasOwnProperty.call(fieldBaselinesRef.current, field)) {
+      fieldBaselinesRef.current[field] = cloneValue(workOrder?.[field]);
+    }
+  };
+
   const handleChange = (field, value) => {
+    captureFieldBaseline(field);
     setLocalData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleCheckboxChange = (field) => {
+    captureFieldBaseline(field);
     const currentValue = getBoolValue(field);
     setLocalData(prev => ({ ...prev, [field]: !currentValue }));
   };
