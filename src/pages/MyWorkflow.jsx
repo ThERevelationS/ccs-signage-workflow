@@ -351,80 +351,75 @@ export default function MyWorkflow() {
   const handleEditTask = async (workOrderId, taskIndex, newText) => {
     if (!newText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        return { ...task, text: newText };
-      }
-      return task;
-    });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
+    const task = wo?.notes?.[taskIndex];
+    if (!wo || !task) return;
+    await persistTaskMutation(wo, task, (currentTask) => ({ ...currentTask, text: newText }));
     setEditingTask(null);
     setEditTaskText("");
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
     if (!newText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
-          if (stIdx === subTaskIndex) {
-            return { ...st, text: newText };
-          }
-          return st;
-        });
-        return { ...task, sub_tasks: updatedSubTasks };
-      }
-      return task;
+    const task = wo?.notes?.[taskIndex];
+    const subTask = task?.sub_tasks?.[subTaskIndex];
+    if (!wo || !task || !subTask) return;
+    const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
+    await persistTaskMutation(wo, task, (currentTask) => {
+      const currentSubTasks = currentTask.sub_tasks || [];
+      const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "My Workflow subtask");
+      return {
+        ...currentTask,
+        sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
+          ? { ...currentSubTask, text: newText }
+          : currentSubTask),
+      };
     });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
     setEditingTask(null);
     setEditTaskText("");
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const toggleSipTaskComplete = async (workOrderId, itemId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-    
-    const updatedChecklist = (wo.sip_checklist || []).map(item =>
-      item.id === itemId ? {
-        ...item,
-        approved_by: item.approved_by ? "" : (currentUser?.full_name || currentUser?.email || "Done")
-      } : item
-    );
-    
-    setWorkOrders(prev => prev.map(w => 
-      w.id === workOrderId ? { ...w, sip_checklist: updatedChecklist } : w
-    ));
-    
-    await WorkOrder.update(workOrderId, { sip_checklist: updatedChecklist });
+    const item = wo?.sip_checklist?.find((candidate) => candidate.id === itemId);
+    if (!wo || !item) return;
+    const targetApprovedBy = item.approved_by ? "" : (currentUser?.full_name || currentUser?.email || "Done");
+    const itemLocator = createWorkOrderArrayItemLocator(item);
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId,
+      field: "sip_checklist",
+      label: "My Workflow SIP checklist",
+      mutate: (currentChecklist) => {
+        const itemIndex = findWorkOrderArrayItemIndex(currentChecklist, itemLocator, "SIP checklist item");
+        return currentChecklist.map((currentItem, index) => index === itemIndex
+          ? { ...currentItem, approved_by: targetApprovedBy }
+          : currentItem);
+      },
+    });
+    setWorkOrders(prev => prev.map(w => w.id === workOrderId
+      ? { ...w, sip_checklist: saved.sip_checklist || [], updated_date: saved.updated_date }
+      : w));
   };
 
   const updateSipChecklistItem = async (workOrderId, itemId, updates) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-    
-    const updatedChecklist = (wo.sip_checklist || []).map(item =>
-      item.id === itemId ? { ...item, ...updates } : item
-    );
-    
-    setWorkOrders(prev => prev.map(w => 
-      w.id === workOrderId ? { ...w, sip_checklist: updatedChecklist } : w
-    ));
-    
-    await WorkOrder.update(workOrderId, { sip_checklist: updatedChecklist });
+    const item = wo?.sip_checklist?.find((candidate) => candidate.id === itemId);
+    if (!wo || !item) return;
+    const itemLocator = createWorkOrderArrayItemLocator(item);
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId,
+      field: "sip_checklist",
+      label: "My Workflow SIP checklist",
+      mutate: (currentChecklist) => {
+        const itemIndex = findWorkOrderArrayItemIndex(currentChecklist, itemLocator, "SIP checklist item");
+        return currentChecklist.map((currentItem, index) => index === itemIndex
+          ? { ...currentItem, ...updates }
+          : currentItem);
+      },
+    });
+    setWorkOrders(prev => prev.map(w => w.id === workOrderId
+      ? { ...w, sip_checklist: saved.sip_checklist || [], updated_date: saved.updated_date }
+      : w));
   };
 
   const getMyTasksForWorkOrder = (wo) => {
