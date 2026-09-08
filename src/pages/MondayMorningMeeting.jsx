@@ -11,6 +11,7 @@ import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -34,6 +35,7 @@ export default function MondayMorningMeeting() {
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
+  const [quickEditError, setQuickEditError] = useState("");
   const parentRef = useRef(null);
 
   useEffect(() => {
@@ -89,11 +91,23 @@ export default function MondayMorningMeeting() {
   };
 
   const updateWorkOrder = async (orderId, field, value) => {
+    const currentWo = workOrders.find((wo) => wo.id === orderId);
+    if (!currentWo) return;
+    const expectedValue = currentWo[field];
+    setQuickEditError("");
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
     try {
-      await WorkOrder.update(orderId, { [field]: value });
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: orderId,
+        expectedFields: { [field]: expectedValue },
+        nextFields: { [field]: value },
+        label: `Monday Morning Meeting ${field}`,
+      });
+      setWorkOrders((prev) => prev.map((wo) => wo.id === orderId ? { ...wo, ...saved } : wo));
     } catch (error) {
-      console.error("Error updating work order:", error);
+      console.error("Error updating Monday Morning Meeting Work Order field:", error);
+      setQuickEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
+      await loadWorkOrders(false);
     }
   };
 
@@ -102,13 +116,7 @@ export default function MondayMorningMeeting() {
   };
 
   const toggleSipCompleted = async (wo) => {
-    const newValue = !wo.sip_completed;
-    setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, sip_completed: newValue } : w));
-    try {
-      await WorkOrder.update(wo.id, { sip_completed: newValue });
-    } catch (error) {
-      console.error("Error updating work order:", error);
-    }
+    await updateWorkOrder(wo.id, "sip_completed", !wo.sip_completed);
   };
 
   const activeWorkOrders = workOrders.filter(wo => !isWipItem(wo) || !wo.sip_completed);
