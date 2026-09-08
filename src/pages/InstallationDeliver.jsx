@@ -133,6 +133,7 @@ export default function InstallationDeliver() {
       loadWorkOrders();
     } catch (error) {
       console.error("Error moving:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
       loadWorkOrders();
     }
   };
@@ -165,10 +166,10 @@ export default function InstallationDeliver() {
       loadWorkOrders();
     } catch (error) {
       console.error("Error completing work order:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
       loadWorkOrders();
     }
   };
-
   const handleDelete = async (workOrder) => {
     if (!isRegistered) { promptForEmail(); return; }
     try {
