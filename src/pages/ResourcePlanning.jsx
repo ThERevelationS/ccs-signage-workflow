@@ -36,6 +36,7 @@ import {
   Settings,
   Save
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -89,7 +90,12 @@ export default function ResourcePlanning() {
       const [usersData, capacitiesData, ordersData] = await Promise.all([
         AuthorizedEmail.list(),
         UserCapacity.list(),
-        WorkOrder.filter({ completed: false, deleted: { $ne: true } })
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Resource Planning Work Orders",
+        })
       ]);
       setUsers(usersData);
       setUserCapacities(capacitiesData);
