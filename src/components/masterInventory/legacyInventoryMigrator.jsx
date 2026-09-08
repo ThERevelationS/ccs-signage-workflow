@@ -188,9 +188,35 @@ async function createMigrationReceipt({ source, target, targetName }) {
   });
 }
 
+async function rollbackCreatedMigration({ targetEntity, targetRow, receipt, sourceId }) {
+  if (targetRow?.id) {
+    try {
+      await deleteEntityIfUnchanged({
+        entity: targetEntity,
+        record: targetRow,
+        label: `Legacy migration target rollback for source ${sourceId}`,
+      });
+    } catch (error) {
+      return { ok: false, message: `Target rollback failed for ${targetRow.id}: ${error?.message || "unknown error"}. The migration receipt was retained so this partial state remains traceable.` };
+    }
+  }
+  if (receipt?.id) {
+    try {
+      await deleteEntityIfUnchanged({
+        entity: LegacyMigrationMap,
+        record: receipt,
+        label: `Legacy migration receipt rollback for source ${sourceId}`,
+      });
+    } catch (error) {
+      return { ok: false, message: `Target rollback succeeded, but receipt ${receipt.id} could not be removed: ${error?.message || "unknown error"}. Manual review is required before retrying.` };
+    }
+  }
+  return { ok: true, message: "" };
+}
+
 // Run the migration. Returns counts by target.
 export async function migrateLegacyInventoryRows(allInventoryRows, { onProgress } = {}) {
-  const summary = { labor_service: 0, sign_parts_supplies: 0, substrate: 0, kept: 0, errors: 0 };
+  const summary = { labor_service: 0, sign_parts_supplies: 0, substrate: 0, kept: 0, recovered: 0, errors: 0, error_details: [] };
   const rowsToMigrate = allInventoryRows
     .map((r) => ({ row: r, target: classifyLegacyRow(r) }))
     .filter((x) => x.target !== "keep");
@@ -203,29 +229,78 @@ export async function migrateLegacyInventoryRows(allInventoryRows, { onProgress 
       if (row.updated_date && live.updated_date && row.updated_date !== live.updated_date) {
         throw new Error(`Legacy Inventory row ${row.id} changed after this cleanup preview was loaded.`);
       }
+
+      const targetEntity = TARGET_ENTITY[target];
+      const targetName = TARGET_ENTITY_NAME[target];
+      if (!targetEntity || !targetName) throw new Error(`No migration target is configured for ${target}.`);
+
+      const existingReceipts = await migrationReceipts(row.id);
+      if (existingReceipts.length > 1) {
+        throw new Error(`Legacy Inventory row ${row.id} has multiple ${LEGACY_INVENTORY_CLEANUP_BATCH} receipts. No source or target records were changed; resolve the duplicate receipts before retrying.`);
+      }
+      if (existingReceipts.length === 1) {
+        const receipt = existingReceipts[0];
+        if (receipt.target_entity !== targetName) {
+          throw new Error(`Legacy Inventory row ${row.id} is already mapped to ${receipt.target_entity}, but the current classifier resolves to ${targetName}. Review this row manually before retrying.`);
+        }
+        const existingTarget = await targetEntity.get(receipt.target_id);
+        if (!existingTarget?.id) {
+          throw new Error(`Legacy Inventory row ${row.id} has migration receipt ${receipt.id}, but target ${receipt.target_id} no longer exists. Manual review is required.`);
+        }
+        await deleteEntityIfUnchanged({
+          entity: Inventory,
+          record: live,
+          label: `Legacy Inventory source ${row.id} recovery delete`,
+        });
+        summary[target] += 1;
+        summary.recovered += 1;
+        onProgress?.({ done: i + 1, total: rowsToMigrate.length });
+        continue;
+      }
+
       const payload = buildPayload(live, target);
-      if (payload) {
-        const created = await TARGET_ENTITY[target].create(payload);
-        try {
-          await Inventory.delete(row.id);
-        } catch (deleteError) {
-          // The target row belongs only to this migration attempt. If the source
-          // could not be removed, roll back our new target so a retry cannot
-          // silently create duplicate inventory.
-          if (created?.id) {
-            try {
-              await TARGET_ENTITY[target].delete(created.id);
-            } catch (rollbackError) {
-              console.error("Migration rollback also failed for target row", created.id, rollbackError);
-            }
-          }
-          throw deleteError;
+      if (!payload) throw new Error(`Legacy Inventory row ${row.id} did not produce a target payload.`);
+
+      let created = null;
+      let receipt = null;
+      try {
+        created = await targetEntity.create(payload);
+        if (!created?.id) throw new Error(`Target ${targetName} create did not return a verifiable record.`);
+        receipt = await createMigrationReceipt({ source: live, target: created, targetName });
+        if (!receipt?.id) throw new Error(`Migration receipt could not be verified for source ${row.id}.`);
+
+        const receiptsAfterCreate = await migrationReceipts(row.id);
+        if (receiptsAfterCreate.length !== 1 || receiptsAfterCreate[0].id !== receipt.id) {
+          const rollback = await rollbackCreatedMigration({ targetEntity, targetRow: created, receipt, sourceId: row.id });
+          if (!rollback.ok) throw new Error(`Concurrent migration receipt conflict for source ${row.id}. ${rollback.message}`);
+          throw new Error(`Another migration attempt raced source ${row.id}. This attempt rolled back its own target and receipt; reload the cleanup preview before retrying.`);
+        }
+
+        await deleteEntityIfUnchanged({
+          entity: Inventory,
+          record: live,
+          label: `Legacy Inventory source ${row.id}`,
+        });
+        const sourceAfter = await Inventory.get(row.id).catch(() => null);
+        const targetAfter = await targetEntity.get(created.id).catch(() => null);
+        if (sourceAfter || !targetAfter?.id) {
+          throw new Error(`Final verification failed for legacy Inventory source ${row.id}; source absence and target presence could not both be confirmed.`);
         }
         summary[target] += 1;
+      } catch (operationError) {
+        const sourceStillExists = await Inventory.get(row.id).catch(() => null);
+        if (sourceStillExists && created?.id) {
+          const rollback = await rollbackCreatedMigration({ targetEntity, targetRow: created, receipt, sourceId: row.id });
+          if (!rollback.ok) {
+            throw new Error(`${operationError?.message || "Migration failed."} ${rollback.message}`.trim());
+          }
+        }
+        throw operationError;
       }
     } catch (err) {
       console.error("Migration failed for row", row.id, err);
       summary.errors += 1;
+      summary.error_details.push({ source_id: row.id, message: err?.message || "Migration failed." });
     }
     onProgress?.({ done: i + 1, total: rowsToMigrate.length });
   }
