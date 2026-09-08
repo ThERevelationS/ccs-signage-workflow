@@ -127,3 +127,9 @@ export async function deleteBuilderEntityIfUnchanged({
   if (!current) return { deleted: true, alreadyDeleted: true };
   throw new Error(`${label} changed in another session. It was not deleted.`);
 }
+
+// Generic aliases let other estimator records reuse the same proven conditional
+// persistence behavior without introducing a second concurrency implementation.
+export const expectedEntityFields = expectedBuilderEntityFields;
+export const replaceEntityFieldsIfUnchanged = replaceBuilderEntityFieldsIfUnchanged;
+export const deleteEntityIfUnchanged = deleteBuilderEntityIfUnchanged;
