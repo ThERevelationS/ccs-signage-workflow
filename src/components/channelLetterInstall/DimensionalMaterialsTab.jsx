@@ -46,6 +46,16 @@ const stripMaterialMeta = (row = {}) => {
 };
 
 const materialSnapshot = (row) => JSON.stringify(stripMaterialMeta(row));
+const sameStoredValue = (a, b) => {
+  const emptyA = a === undefined || a === null || a === "";
+  const emptyB = b === undefined || b === null || b === "";
+  if (emptyA && emptyB) return true;
+  if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+    return Math.abs(Number(a) - Number(b)) <= 0.000001;
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+const materialMatchesPayload = (row, payload) => !!row && Object.entries(payload || {}).every(([field, value]) => sameStoredValue(row[field], value));
 
 // Filters substrates by which pages they're enabled for in Master Inventory.
 // scope = "install"     → show items with show_in_dimensional_letters OR show_in_lobby_sign_backer
@@ -195,11 +205,41 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
         throw new Error(`These materials changed in another session: ${conflicts.map((m) => m.material_name).join(", ")}. Reload before saving.`);
       }
 
-      await Promise.all(changedMaterials.map((m) => {
+      const liveById = new Map(existingChanged.map((m, index) => [m.id, liveRows[index]]));
+      const completed = [];
+      let confirmed = 0;
+      for (const m of changedMaterials) {
         const data = stripMaterialMeta(m);
-        if (m.id && !m._isNew) return DimensionalLetterMaterial.update(m.id, data);
-        return DimensionalLetterMaterial.create(data);
-      }));
+        try {
+          let saved;
+          if (m.id && !m._isNew) {
+            const live = liveById.get(m.id);
+            saved = await replaceEntityFieldsIfUnchanged({
+              entity: DimensionalLetterMaterial,
+              id: m.id,
+              expectedUpdatedAt: live?.updated_date || "",
+              expectedFields: expectedEntityFields(live || {}, data),
+              nextFields: data,
+              label: `Dimensional material “${m.material_name || "Item"}”`,
+            });
+          } else {
+            saved = await DimensionalLetterMaterial.create(data);
+            if (!saved?.id) throw new Error(`Created material “${m.material_name || "Item"}” could not be verified.`);
+          }
+          confirmed += 1;
+          completed.push({ id: saved.id, data, name: m.material_name || "Material" });
+        } catch (error) {
+          throw new Error(`Save stopped after ${confirmed} of ${changedMaterials.length} changed materials were confirmed. Reloading the catalog; remaining materials were not skipped automatically. ${error?.message || ""}`.trim());
+        }
+      }
+
+      const finalRows = await loadAllEntityRows({ entity: DimensionalLetterMaterial, sort: "sort_order", label: "Dimensional Letter materials final verification" });
+      const finalById = new Map(finalRows.map((row) => [row.id, row]));
+      const failedVerification = completed.filter((entry) => !materialMatchesPayload(finalById.get(entry.id), entry.data));
+      if (failedVerification.length) {
+        throw new Error(`Final verification found ${failedVerification.length} saved material${failedVerification.length === 1 ? "" : "s"} whose live values no longer match this save: ${failedVerification.map((entry) => entry.name).join(", ")}. Reload and review before retrying.`);
+      }
+
       toast({ description: `Saved ${changedMaterials.length} material${changedMaterials.length === 1 ? "" : "s"}` });
       await load();
     } catch (e) {
