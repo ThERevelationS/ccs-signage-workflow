@@ -154,6 +154,11 @@ Deno.serve(async (req) => {
     if (action === 'receive') {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can receive Fleet inventory.' }, { status: 403 });
       if (existing.status === 'received' && existing.receipt_applied_at) {
+        if (!existing.migration_source_id && existing.receipt_key) {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'request_received', target_id: id, event_token: existing.receipt_key
+          }).catch(() => null);
+        }
         return Response.json({ success: true, reused: true, request: existing });
       }
       if (existing.status === 'received' && !existing.receipt_applied_at) {
@@ -206,6 +211,9 @@ Deno.serve(async (req) => {
           const currentQty = summary.item_type === 'part' ? num(item.quantity_on_hand) : num(item.quantity);
           if (sameNumber(currentQty, summary.after_quantity)) {
             const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
+            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+              event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
+            }).catch(() => null);
             return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
           }
         }
