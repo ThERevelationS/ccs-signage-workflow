@@ -1,0 +1,41 @@
+{
+  "name": "Fleet Scheduled Reminders",
+  "description": "Runs Fleet reminder digest checks every morning at 7am Eastern. Safe before cutover because FleetSettings.scheduled_reminders_enabled and notifications_enabled default to false.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fleet_scheduled_reminders",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "fleetScheduledReminders",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
