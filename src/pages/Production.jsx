@@ -7,6 +7,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function Production() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -60,10 +61,12 @@ export default function Production() {
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
-      const allWorkOrders = await WorkOrder.filter(
-        { completed: false, deleted: { $ne: true } },
-        "priority"
-      );
+      const allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { completed: false, deleted: { $ne: true } },
+        sort: "priority",
+        label: "Production Work Orders",
+      });
       const taskDescriptions = getProductionTaskDescriptions();
       // Filter to only show jobs with task descriptions assigned to Production page, or riders locked to production
       const filtered = allWorkOrders.filter(wo => 
