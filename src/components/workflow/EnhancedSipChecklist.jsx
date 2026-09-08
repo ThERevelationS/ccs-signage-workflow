@@ -802,33 +802,15 @@ export default function EnhancedSipChecklist({
       console.log("handleApplyTask - Saving task:", JSON.stringify(taskToSave));
       
       if (applyTo === "main") {
-        // Fetch the LATEST work order data first to avoid overwriting
-        const freshWorkOrders = await WorkOrder.filter({ id: workOrder.id });
-        const freshWorkOrder = freshWorkOrders[0];
-        const currentNotes = freshWorkOrder?.notes || [];
-        
-        // Add to main job tasks - ensure checklist_context is preserved
-        const updatedTasks = [...currentNotes, taskToSave];
-        
-        console.log("handleApplyTask - About to save notes:", JSON.stringify(updatedTasks));
-        
-        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-        setMainTasks(updatedTasks);
-        
-        console.log("handleApplyTask - Saved to main - total tasks now:", updatedTasks.length);
+        const saved = await appendSipTask(workOrder.id, taskToSave, "SIP main Work Order tasks");
+        setMainTasks(saved.notes || []);
+        console.log("handleApplyTask - Saved to main - total tasks now:", (saved.notes || []).length);
       } else if (applyTo.startsWith("rider-")) {
-        // Add to existing rider
         const riderId = applyTo.replace("rider-", "");
-        
-        // Fetch fresh rider data
-        const freshRiders = await WorkOrder.filter({ id: riderId });
-        const freshRider = freshRiders[0];
-        
-        if (freshRider) {
-          const updatedTasks = [...(freshRider.notes || []), taskToSave];
-          await WorkOrder.update(riderId, { notes: updatedTasks });
-          setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
-        }
+        const saved = await appendSipTask(riderId, taskToSave, "SIP rider Work Order tasks");
+        setRiders((current) => current.map((rider) => rider.id === riderId
+          ? { ...rider, notes: saved.notes || [], updated_date: saved.updated_date }
+          : rider));
       } else if (applyTo === "new-rider" && newRiderData) {
         // Create new rider with task
         const newRider = await WorkOrder.create({
@@ -857,33 +839,26 @@ export default function EnhancedSipChecklist({
   const handleMoveTask = async (task, moveTo, newRiderData, sourceType, sourceId) => {
     setIsSaving(true);
     try {
-      // Remove from source
-      if (sourceType === "main") {
-        const updatedTasks = mainTasks.filter(t => t.text !== task.text || t.timestamp !== task.timestamp);
-        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-        setMainTasks(updatedTasks);
-      } else if (sourceType === "rider") {
-        const rider = riders.find(r => r.id === sourceId);
-        if (rider) {
-          const updatedTasks = (rider.notes || []).filter(t => t.text !== task.text || t.timestamp !== task.timestamp);
-          await WorkOrder.update(sourceId, { notes: updatedTasks });
-          setRiders(riders.map(r => r.id === sourceId ? { ...r, notes: updatedTasks } : r));
-        }
+      const sourceWorkOrderId = sourceType === "main" ? workOrder.id : sourceId;
+      const destinationWorkOrderId = moveTo === "main"
+        ? workOrder.id
+        : (moveTo.startsWith("rider-") ? moveTo.replace("rider-", "") : null);
+
+      if (destinationWorkOrderId && destinationWorkOrderId === sourceWorkOrderId) {
+        return;
       }
 
-      // Add to destination
+      // Persist destination before source removal. A temporary duplicate after a
+      // partial failure is recoverable; removing first could permanently lose a task.
       if (moveTo === "main") {
-        const updatedTasks = [...mainTasks.filter(t => t.text !== task.text || t.timestamp !== task.timestamp), task];
-        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
-        setMainTasks(updatedTasks);
+        const savedDestination = await appendSipTask(workOrder.id, task, "SIP main move destination");
+        setMainTasks(savedDestination.notes || []);
       } else if (moveTo.startsWith("rider-")) {
         const riderId = moveTo.replace("rider-", "");
-        const rider = riders.find(r => r.id === riderId);
-        if (rider) {
-          const updatedTasks = [...(rider.notes || []), task];
-          await WorkOrder.update(riderId, { notes: updatedTasks });
-          setRiders(riders.map(r => r.id === riderId ? { ...r, notes: updatedTasks } : r));
-        }
+        const savedDestination = await appendSipTask(riderId, task, "SIP rider move destination");
+        setRiders((current) => current.map((rider) => rider.id === riderId
+          ? { ...rider, notes: savedDestination.notes || [], updated_date: savedDestination.updated_date }
+          : rider));
       } else if (moveTo === "new-rider" && newRiderData) {
         const newRider = await WorkOrder.create({
           title: newRiderData.title,
@@ -898,14 +873,28 @@ export default function EnhancedSipChecklist({
           notes: [task],
           in_pipeline: true
         });
-        setRiders([...riders, newRider]);
+        setRiders((current) => [...current, newRider]);
+      } else {
+        throw new Error("SIP task move destination could not be resolved.");
+      }
+
+      if (sourceWorkOrderId) {
+        const savedSource = await removeSipTask(sourceWorkOrderId, task, "SIP task move source");
+        if (sourceType === "main") {
+          setMainTasks(savedSource.notes || []);
+        } else {
+          setRiders((current) => current.map((rider) => rider.id === sourceId
+            ? { ...rider, notes: savedSource.notes || [], updated_date: savedSource.updated_date }
+            : rider));
+        }
       }
 
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error moving task:", error);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const toggleTaskComplete = async (taskIndex, sourceType, sourceId) => {
