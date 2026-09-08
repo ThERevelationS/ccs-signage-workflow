@@ -144,7 +144,16 @@ export async function renamePartGroup({ builderProductId, groupId, groupName, ex
   ]);
   if (!group || group.builder_product_id !== builder.id) throw new Error("Part Group could not be loaded.");
   assertVersion(group, expectedGroupUpdatedAt, "Part Group");
-  return base44.entities.BuilderPartGroup.update(group.id, { group_name: String(groupName || "Part Group").trim() || "Part Group" });
+  const groupPatch = { group_name: String(groupName || "Part Group").trim() || "Part Group" };
+  return replaceBuilderEntityFieldsIfUnchanged({
+    entity: base44.entities.BuilderPartGroup,
+    id: group.id,
+    expectedUpdatedAt: group.updated_date || "",
+    expectedFields: expectedBuilderEntityFields(group, groupPatch),
+    nextFields: groupPatch,
+    guardFields: { builder_product_id: builder.id },
+    label: "Part Group rename",
+  });
 }
 
 export async function dissolvePartGroup({ builderProductId, groupId, expectedEstimateUpdatedAt = "", expectedGroupUpdatedAt = "", expectedPartVersions = {} }) {
