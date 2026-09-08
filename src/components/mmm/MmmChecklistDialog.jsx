@@ -750,6 +750,20 @@ export default function MmmChecklistDialog({
             </div>
           )}
 
+          {saveError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">MMM checklist save blocked</div>
+              <div className="mt-1 text-xs">{saveError}</div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-xs text-red-700">Reloading discards unsaved checklist edits.</span>
+                <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || isSaving} className="shrink-0 border-red-300 bg-white text-red-800">
+                  {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                  Reload latest
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose} className="flex-1 h-10">Cancel</Button>
             {isRegistered && <Button variant="outline" onClick={() => setShowAddGeneralChecklist(true)} className="flex-1 h-10"><Plus className="w-4 h-4 mr-2" />Add Item</Button>}
