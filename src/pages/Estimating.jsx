@@ -6,6 +6,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -91,7 +92,7 @@ export default function Estimating() {
     if (!isRegistered) return;
 
     if (editingWorkOrder) {
-      await WorkOrder.update(editingWorkOrder.id, workOrderData);
+      await updateWorkOrderFromLoadedSnapshot({ workOrder: editingWorkOrder, formData: workOrderData, label: "Estimating Work Order" });
       await ActivityActions.logWorkOrderUpdate(editingWorkOrder, workOrderData);
     } else if (riderConfig) {
       const riderData = {
