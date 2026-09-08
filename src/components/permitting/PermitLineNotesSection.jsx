@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, Check } from "lucide-react";
 import { format } from "date-fns";
-
-const WorkOrder = base44.entities.WorkOrder;
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 /**
  * Notes section for a permit line — mirrors the work order's work_notes UI.
@@ -39,10 +37,16 @@ export default function PermitLineNotesSection({
     return Array.isArray(workOrder.work_notes) ? workOrder.work_notes : [];
   }, [workOrder?.work_notes]);
 
-  const persist = async (updated) => {
-    Object.assign(workOrder, { work_notes: updated });
-    await WorkOrder.update(workOrder.id, { work_notes: updated });
+  const persistMutation = async (mutate) => {
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Permit Work Order notes",
+      mutate,
+    });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     if (onUpdated) onUpdated();
+    return saved.work_notes || [];
   };
 
   const handleAdd = async () => {
@@ -56,44 +60,51 @@ export default function PermitLineNotesSection({
       created_by: currentUser?.full_name || currentUser?.email || "Unknown",
       sub_tasks: [],
     };
-    await persist([...(workNotes || []), newNote]);
+    await persistMutation((currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
+      ? currentNotes
+      : [...currentNotes, newNote]);
     setNoteText("");
     setNoteType("permitting");
     setAddOpen(false);
   };
 
   const handleDelete = async (noteId) => {
-    await persist(workNotes.filter(n => n.id !== noteId));
+    await persistMutation((currentNotes) => currentNotes.filter((note) => note.id !== noteId));
   };
 
   const handleAddSub = async (noteId) => {
     if (!newSubText.trim()) return;
-    const updated = workNotes.map(n =>
-      n.id === noteId
-        ? { ...n, sub_tasks: [...(n.sub_tasks || []), { id: Date.now(), text: newSubText.trim(), completed: false }] }
-        : n
-    );
-    await persist(updated);
+    const newSubTask = { id: Date.now(), text: newSubText.trim(), completed: false };
+    await persistMutation((currentNotes) => currentNotes.map((note) => note.id === noteId
+      ? {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).some((subTask) => subTask?.id === newSubTask.id)
+            ? (note.sub_tasks || [])
+            : [...(note.sub_tasks || []), newSubTask],
+        }
+      : note));
     setNewSubText("");
     setAddingSubFor(null);
   };
 
   const handleToggleSub = async (noteId, subId) => {
-    const updated = workNotes.map(n =>
-      n.id === noteId
-        ? { ...n, sub_tasks: (n.sub_tasks || []).map(s => s.id === subId ? { ...s, completed: !s.completed } : s) }
-        : n
-    );
-    await persist(updated);
+    const originalSubTask = workNotes.find((note) => note.id === noteId)?.sub_tasks?.find((subTask) => subTask.id === subId);
+    if (!originalSubTask) return;
+    const targetCompleted = !originalSubTask.completed;
+    await persistMutation((currentNotes) => currentNotes.map((note) => note.id === noteId
+      ? {
+          ...note,
+          sub_tasks: (note.sub_tasks || []).map((subTask) => subTask.id === subId
+            ? { ...subTask, completed: targetCompleted }
+            : subTask),
+        }
+      : note));
   };
 
   const handleDeleteSub = async (noteId, subId) => {
-    const updated = workNotes.map(n =>
-      n.id === noteId
-        ? { ...n, sub_tasks: (n.sub_tasks || []).filter(s => s.id !== subId) }
-        : n
-    );
-    await persist(updated);
+    await persistMutation((currentNotes) => currentNotes.map((note) => note.id === noteId
+      ? { ...note, sub_tasks: (note.sub_tasks || []).filter((subTask) => subTask.id !== subId) }
+      : note));
   };
 
   const typeLabel = (t) => ({
