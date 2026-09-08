@@ -8,6 +8,7 @@ import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/buil
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -731,7 +732,13 @@ async function promoteQuickInsertMarker({ estimate, line, pending, builder, sour
         price_acceptance_pending: promoted,
       }
     : item);
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId: estimate.id,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Quick Product recovery promotion",
+  });
 
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimate.id),
@@ -863,7 +870,13 @@ async function startQuickProductInsertion({ estimate, productPayload, sourceType
     if (existingPending?.key !== operationKey) throw new Error("A Product line ID collision occurred while starting Quick Product insertion.");
   } else {
     const lineItems = [...(latestEstimate.line_items || []), provisionalQuickLine(blueprint, pending)];
-    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+    await replaceEstimateFieldsIfUnchanged({
+      entity: base44.entities.AllInOneEstimate,
+      estimateId: estimate.id,
+      expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+      nextFields: { line_items: lineItems },
+      label: "Quick Product insertion recovery marker",
+    });
   }
 
   return resumeQuickProductInsertion({ estimateId: estimate.id, lineId });
