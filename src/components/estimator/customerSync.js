@@ -2,6 +2,8 @@ import { base44 } from "@/api/base44Client";
 import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pipelineStatus";
 import { localDateStamp } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -51,12 +53,23 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
 
   if (canonical?.id && canonical.id !== created.id) {
     try {
-      await base44.entities.WorkOrder.delete(created.id);
+      await deleteCreatedDuplicateWorkOrderIfUnchanged({
+        entity: base44.entities.WorkOrder,
+        created,
+        label: `Duplicate ${duplicateLabel}`,
+      });
     } catch (error) {
-      throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed: ${error?.message || "unknown error"}`);
+      throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed safely: ${error?.message || "unknown error"}`);
     }
-    if (Object.keys(fields || {}).length) await base44.entities.WorkOrder.update(canonical.id, fields);
-    return { ...canonical, ...fields };
+    if (Object.keys(fields || {}).length) {
+      return replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: canonical.id,
+        expectedFields: expectedWorkOrderFields(canonical, fields),
+        nextFields: fields,
+        label: `${duplicateLabel} convergence`,
+      });
+    }
+    return canonical;
   }
 
   return canonical;
@@ -166,8 +179,12 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
   };
 
   if (existing) {
-    await base44.entities.WorkOrder.update(existing.id, fields);
-    return { ...existing, ...fields };
+    return replaceWorkOrderFieldsIfUnchanged({
+      workOrderId: existing.id,
+      expectedFields: expectedWorkOrderFields(existing, fields),
+      nextFields: fields,
+      label: "Sales Pipeline estimate synchronization",
+    });
   }
 
   const created = await base44.entities.WorkOrder.create({
