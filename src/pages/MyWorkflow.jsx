@@ -18,6 +18,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -874,11 +875,30 @@ export default function MyWorkflow() {
           workOrder={selectedWorkOrder}
           onUpdate={() => loadMyWorkOrders()}
           onMove={async (wo, newStage) => {
-            await WorkOrder.update(wo.id, { current_stage: newStage });
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage,
+                label: "My Workflow details stage transition",
+              });
+            } catch (error) {
+              console.error("Error moving My Workflow Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+            }
             loadMyWorkOrders();
           }}
           onComplete={async (wo) => {
-            await WorkOrder.update(wo.id, { completed: true });
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage: wo.current_stage,
+                completed: true,
+                label: "My Workflow details completion",
+              });
+            } catch (error) {
+              console.error("Error completing My Workflow Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+            }
             loadMyWorkOrders();
           }}
           onDelete={async (wo) => {
