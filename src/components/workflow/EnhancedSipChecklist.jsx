@@ -899,20 +899,18 @@ export default function EnhancedSipChecklist({
 
   const toggleTaskComplete = async (taskIndex, sourceType, sourceId) => {
     if (sourceType === "main") {
-      const updatedTasks = mainTasks.map((t, i) => 
-        i === taskIndex ? { ...t, completed: !t.completed } : t
-      );
-      setMainTasks(updatedTasks);
-      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+      const task = mainTasks[taskIndex];
+      if (!task) return;
+      const saved = await setSipTaskCompleted(workOrder.id, task, !task.completed, "SIP main task completion");
+      setMainTasks(saved.notes || []);
     } else {
-      const rider = riders.find(r => r.id === sourceId);
-      if (rider) {
-        const updatedTasks = (rider.notes || []).map((t, i) => 
-          i === taskIndex ? { ...t, completed: !t.completed } : t
-        );
-        setRiders(riders.map(r => r.id === sourceId ? { ...r, notes: updatedTasks } : r));
-        await WorkOrder.update(sourceId, { notes: updatedTasks });
-      }
+      const rider = riders.find((candidate) => candidate.id === sourceId);
+      const task = rider?.notes?.[taskIndex];
+      if (!rider || !task) return;
+      const saved = await setSipTaskCompleted(sourceId, task, !task.completed, "SIP rider task completion");
+      setRiders((current) => current.map((candidate) => candidate.id === sourceId
+        ? { ...candidate, notes: saved.notes || [], updated_date: saved.updated_date }
+        : candidate));
     }
   };
 
@@ -1701,20 +1699,18 @@ function TasksPopup({ isOpen, onClose, workOrder, mainTasks, setMainTasks, rider
 
   const toggleTaskComplete = async (taskIndex, sourceType, sourceId) => {
     if (sourceType === "main") {
-      const updatedTasks = mainTasks.map((t, i) => 
-        i === taskIndex ? { ...t, completed: !t.completed } : t
-      );
-      setMainTasks(updatedTasks);
-      await WorkOrder.update(workOrder.id, { notes: updatedTasks });
+      const task = mainTasks[taskIndex];
+      if (!task) return;
+      const saved = await setSipTaskCompleted(workOrder.id, task, !task.completed, "SIP main task completion");
+      setMainTasks(saved.notes || []);
     } else {
-      const rider = riders.find(r => r.id === sourceId);
-      if (rider) {
-        const updatedTasks = (rider.notes || []).map((t, i) => 
-          i === taskIndex ? { ...t, completed: !t.completed } : t
-        );
-        setRiders(riders.map(r => r.id === sourceId ? { ...r, notes: updatedTasks } : r));
-        await WorkOrder.update(sourceId, { notes: updatedTasks });
-      }
+      const rider = riders.find((candidate) => candidate.id === sourceId);
+      const task = rider?.notes?.[taskIndex];
+      if (!rider || !task) return;
+      const saved = await setSipTaskCompleted(sourceId, task, !task.completed, "SIP rider task completion");
+      setRiders((current) => current.map((candidate) => candidate.id === sourceId
+        ? { ...candidate, notes: saved.notes || [], updated_date: saved.updated_date }
+        : candidate));
     }
   };
 
