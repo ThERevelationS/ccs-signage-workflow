@@ -479,13 +479,37 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const moveToWorkflow = async (workOrder) => {
-    await WorkOrder.update(workOrder.id, { 
-      in_pipeline: true,
-      current_stage: "permitting",
-      start_date: workOrder.start_date || format(new Date(), "yyyy-MM-dd"),
-      priority: 0
-    });
-    setWorkOrders(workOrders.filter(wo => wo.id !== workOrder.id));
+    setQuickEditError("");
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: {
+          in_pipeline: workOrder.in_pipeline,
+          current_stage: workOrder.current_stage,
+          start_date: workOrder.start_date,
+          priority: workOrder.priority,
+        },
+        nextFields: {
+          in_pipeline: true,
+          current_stage: "permitting",
+          start_date: workOrder.start_date || format(new Date(), "yyyy-MM-dd"),
+          priority: 0,
+        },
+        label: "Sales Pipeline move to workflow",
+      });
+      Object.assign(workOrder, {
+        in_pipeline: saved.in_pipeline,
+        current_stage: saved.current_stage,
+        start_date: saved.start_date,
+        priority: saved.priority,
+        updated_date: saved.updated_date,
+      });
+      setWorkOrders((current) => current.filter((wo) => wo.id !== workOrder.id));
+    } catch (error) {
+      console.error("Could not move Sales Pipeline Work Order safely:", error);
+      setQuickEditError(error?.message || "This Work Order changed in another session. Reload before moving it into workflow.");
+      await loadWorkOrders(false);
+    }
   };
 
   const openEditDialog = (field, items, storageKey) => {
