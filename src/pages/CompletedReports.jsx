@@ -15,6 +15,7 @@ import {
   RotateCcw,
   ChevronLeft
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ export default function CompletedReports() {
   const { currentUser } = useAuth();
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
@@ -46,9 +48,22 @@ export default function CompletedReports() {
 
   const loadReports = async () => {
     setIsLoading(true);
-    const completedReports = await FeatureReport.filter({ status: "completed" }, "-completed_date");
-    setReports(completedReports);
-    setIsLoading(false);
+    setReadError("");
+    try {
+      const completedReports = await loadAllEntityRows({
+        entity: FeatureReport,
+        query: { status: "completed" },
+        sort: "-completed_date",
+        label: "Completed Feature Reports",
+      });
+      setReports(completedReports);
+    } catch (error) {
+      console.error("Error loading completed reports:", error);
+      setReports([]);
+      setReadError(error?.message || "Completed reports could not be verified completely.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReopen = async (report) => {
@@ -89,6 +104,12 @@ export default function CompletedReports() {
         {isLoading ? (
           <div className="clay-card p-12 text-center">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
+          </div>
+        ) : readError ? (
+          <div className="clay-card p-8 text-center">
+            <div className="text-sm font-bold text-red-700">Completed reports could not be verified completely.</div>
+            <div className="mt-1 text-xs text-red-600">{readError}</div>
+            <Button variant="outline" size="sm" className="mt-3" onClick={loadReports}>Retry</Button>
           </div>
         ) : reports.length === 0 ? (
           <div className="clay-card p-12 text-center">
