@@ -530,6 +530,18 @@ export default function Permitting() {
           </div>
         </div>
 
+        {workOrderEditError && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">Permitting Work Order update blocked</div>
+              <div className="mt-1 text-xs">{workOrderEditError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={async () => { setWorkOrderEditError(""); await loadData(false); }} className="shrink-0 border-red-300 bg-white text-red-800">
+              Reload latest
+            </Button>
+          </div>
+        )}
+
         <StageTasksPanel stage="permitting" />
 
         {/* Active */}
