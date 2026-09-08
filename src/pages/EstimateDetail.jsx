@@ -956,12 +956,16 @@ export default function EstimateDetail() {
     if (before.work_order_id) {
       throw new Error("This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of cancelling the source estimate.");
     }
-    const cancellationResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-      status: "cancelled",
-      cancel_reason: reason,
-      edit_reason: "",
+    const cancelled = await saveEstimateFieldsSafely({
+      baseline: before,
+      nextFields: {
+        status: "cancelled",
+        cancel_reason: reason,
+        edit_reason: "",
+      },
+      label: "Estimate cancellation",
+      guardWholeVersion: true,
     });
-    const cancelled = cancellationResult?.updated_date ? cancellationResult : await base44.entities.AllInOneEstimate.get(estimate.id);
     let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, edit_reason: "" };
     await rememberServerVersion(after);
 
@@ -990,11 +994,14 @@ export default function EstimateDetail() {
       await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "", syncCustomer: false });
     } catch (syncError) {
       const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
-      const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-        pipeline_sync_pending: true,
-        pipeline_sync_error: message,
-      }).catch(() => null);
-      const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      const recovered = await saveEstimateFieldsSafely({
+        baseline: after,
+        nextFields: {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        },
+        label: "Estimate cancellation pipeline recovery marker",
+      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       setEstimate(after);
