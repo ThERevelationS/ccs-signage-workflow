@@ -262,12 +262,16 @@ export default function WorkOrderCard({
       promptForEmail();
       return;
     }
-    const updatedNotes = [...notes];
-    updatedNotes[index] = {
-      ...updatedNotes[index],
-      text: editedNoteText
-    };
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const task = notes[index];
+    if (!task) return;
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: workOrder.id,
+      field: "notes",
+      item: task,
+      label: "Work Order task",
+      mutateItem: (currentTask) => ({ ...currentTask, text: editedNoteText }),
+    });
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
     setEditingNoteIndex(null);
     if (onUpdate) onUpdate();
   };
@@ -298,16 +302,16 @@ export default function WorkOrderCard({
     }
     
     const taskText = task.text;
-    const updatedNotes = [...notes];
-    updatedNotes[actualIndex] = {
-      ...updatedNotes[actualIndex],
-      completed: !updatedNotes[actualIndex].completed
-    };
-    // Optimistic update - update UI immediately
-    Object.assign(workOrder, { notes: updatedNotes });
+    const targetCompleted = !task.completed;
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: workOrder.id,
+      field: "notes",
+      item: task,
+      label: "Work Order task",
+      mutateItem: (currentTask) => ({ ...currentTask, completed: targetCompleted }),
+    });
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
     if (onUpdate) onUpdate();
-    // Then persist to database
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
     if (isCompleted) {
       await ActivityActions.taskUncompleted(workOrder, taskText);
     } else {
@@ -316,56 +320,52 @@ export default function WorkOrderCard({
   };
 
   const handleMarkAllSubtasksComplete = async () => {
-    if (!incompleteSubtasksData) return;
-    
-    const { taskIndex } = incompleteSubtasksData;
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
-        return {
-          ...note,
-          sub_tasks: (note.sub_tasks || []).map(st => ({ ...st, completed: true })),
-          completed: true
-        };
-      }
-      return note;
+    if (!incompleteSubtasksData?.task) return;
+    const task = incompleteSubtasksData.task;
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: workOrder.id,
+      field: "notes",
+      item: task,
+      label: "Work Order task",
+      mutateItem: (currentTask) => ({
+        ...currentTask,
+        sub_tasks: (currentTask.sub_tasks || []).map((subTask) => ({ ...subTask, completed: true })),
+        completed: true,
+      }),
     });
-    
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-    if (refreshed[0]) Object.assign(workOrder, refreshed[0]);
-    
-    await ActivityActions.taskCompleted(workOrder, notes[taskIndex].text);
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+    await ActivityActions.taskCompleted(workOrder, task.text);
     setShowIncompleteSubtasksDialog(false);
     setIncompleteSubtasksData(null);
     if (onUpdate) onUpdate();
   };
 
   const handleToggleSubTaskInDialog = async (subTaskIndex) => {
-    if (!incompleteSubtasksData) return;
-    
-    const { taskIndex } = incompleteSubtasksData;
-    const updatedNotes = notes.map((note, idx) => {
-      if (idx === taskIndex) {
+    const task = incompleteSubtasksData?.task;
+    const subTask = task?.sub_tasks?.[subTaskIndex];
+    if (!task || !subTask) return;
+    const taskLocator = createWorkOrderArrayItemLocator(task);
+    const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
+    const targetCompleted = !subTask.completed;
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: workOrder.id,
+      field: "notes",
+      item: task,
+      label: "Work Order task",
+      mutateItem: (currentTask) => {
+        const currentSubTasks = currentTask.sub_tasks || [];
+        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
         return {
-          ...note,
-          sub_tasks: (note.sub_tasks || []).map((st, stIdx) => 
-            stIdx === subTaskIndex ? { ...st, completed: !st.completed } : st
-          )
+          ...currentTask,
+          sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
+            ? { ...currentSubTask, completed: targetCompleted }
+            : currentSubTask),
         };
-      }
-      return note;
+      },
     });
-    
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
-    const refreshed = await base44.entities.WorkOrder.filter({ id: workOrder.id });
-    if (refreshed[0]) {
-      Object.assign(workOrder, refreshed[0]);
-      // Update dialog data
-      setIncompleteSubtasksData({
-        taskIndex,
-        task: refreshed[0].notes[taskIndex]
-      });
-    }
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+    const savedTaskIndex = findWorkOrderArrayItemIndex(saved.notes || [], taskLocator, "Work Order task");
+    setIncompleteSubtasksData({ taskIndex: savedTaskIndex, task: saved.notes[savedTaskIndex] });
   };
 
   const handleAddNote = async () => {
