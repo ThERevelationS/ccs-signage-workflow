@@ -6,7 +6,7 @@ export async function setExclusiveBooleanSafely({
   field,
   next,
   expectedTargetUpdatedAt = "",
-  expectedRowVersions = {},
+  expectedRowVersions = null,
   readRows,
   label = "exclusive selection",
 } = {}) {
@@ -43,9 +43,14 @@ export async function setExclusiveBooleanSafely({
     const others = afterTarget.filter((row) => row.id !== targetId && row[field] === true);
     plannedWrites += others.length;
     for (const row of others) {
-      const expectedVersion = expectedRowVersions?.[row.id];
-      if (expectedVersion === null || (expectedVersion && String(row.updated_date || "") !== String(expectedVersion))) {
-        throw new Error(`${label} detected a concurrent change to another selected record before it could be cleared. Reload before retrying.`);
+      if (expectedRowVersions && typeof expectedRowVersions === "object") {
+        if (!Object.prototype.hasOwnProperty.call(expectedRowVersions, row.id)) {
+          throw new Error(`${label} detected a new concurrent selection before it could be cleared. Reload before retrying.`);
+        }
+        const expectedVersion = expectedRowVersions[row.id];
+        if (expectedVersion && String(row.updated_date || "") !== String(expectedVersion)) {
+          throw new Error(`${label} detected a concurrent change to another selected record before it could be cleared. Reload before retrying.`);
+        }
       }
       const clearPatch = { [field]: false };
       try {
