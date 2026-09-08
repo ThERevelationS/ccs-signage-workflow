@@ -321,6 +321,15 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
         </div>
 
         {/* Actions */}
+        {mergeError && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+            <div className="font-medium">Merge blocked</div>
+            <div className="mt-1">{mergeError}</div>
+            <button type="button" onClick={() => window.location.reload()} className="mt-1 underline hover:no-underline">
+              Refresh latest data
+            </button>
+          </div>
+        )}
         <div className="flex gap-2 flex-wrap">
           <Button size="sm" onClick={() => setShowCreateForm(true)}
             className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white">
@@ -412,7 +421,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
   const handleMerge = async (item, targetWoId) => {
     const target = allWorkOrders.find(w => w.id === targetWoId);
-    if (!target) return;
+    if (!target) throw new Error("The selected Work Order is no longer available. Refresh and try again.");
     const ed = item.extracted_data || {};
     const updateData = {
       est_inv_at: item.doc_number,
@@ -425,7 +434,17 @@ export default function PendingImportsPanel({ onCountChange }) {
     if (ed.billing_address && !target.billing_address) updateData.billing_address = ed.billing_address;
     if (ed.install_location && !target.install_location) updateData.install_location = ed.install_location;
     if (item.doc_type === 'invoice') updateData.sales_status = 'won';
-    await WorkOrder.update(targetWoId, updateData);
+
+    const expectedFields = Object.keys(updateData).reduce((out, field) => {
+      out[field] = target[field];
+      return out;
+    }, {});
+    await replaceWorkOrderFieldsIfUnchanged({
+      workOrderId: targetWoId,
+      expectedFields,
+      nextFields: updateData,
+      label: `Pending import ${item.doc_number || item.id}`,
+    });
     await PendingImport.update(item.id, { status: 'merged', merged_into_id: targetWoId });
     removeItem(item.id);
   };
