@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Copy, Save, Layers, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { materialCostPerSqin } from "./dimensionalFabCalculator";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const MATERIAL_TYPE_LABELS = {
   acrylic: "Acrylic",
@@ -157,7 +158,11 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
           await load();
           return;
         }
-        await DimensionalLetterMaterial.delete(m.id);
+        await deleteEntityIfUnchanged({
+          entity: DimensionalLetterMaterial,
+          record: live,
+          label: `Dimensional material “${m.material_name || "Item"}”`,
+        });
       }
       setMaterials(prev => prev.filter((_, i) => i !== idx));
       if (m.id) setOriginalById((prev) => { const next = { ...prev }; delete next[m.id]; return next; });
