@@ -101,16 +101,20 @@ export default function FleetTracking() {
       const s = await loadStatus();
       setStatusLoading(false);
       if (s?.connected) {
-        loadVehicles();
         loadNotifications();
-        syncNotifications();
+        if (!s?.needsReconnect) {
+          loadVehicles();
+          syncNotifications();
+        } else {
+          setVehiclesLoading(false);
+        }
       }
     })();
   }, []);
 
   // Auto-refresh vehicles + notifications
   useEffect(() => {
-    if (!status?.connected) return;
+    if (!status?.connected || status?.needsReconnect) return;
     refreshTimer.current = setInterval(() => {
       loadVehicles();
       syncNotifications();
@@ -235,6 +239,45 @@ export default function FleetTracking() {
           ) : (
             <p className="text-sm text-gray-500">An admin needs to connect the Bouncie account before fleet tracking is available.</p>
           )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status?.connected && status?.needsReconnect) {
+    const isAdmin = currentUser?.role === "admin";
+    return (
+      <div className="min-h-full bg-gray-50 dark:bg-slate-950">
+        <FleetModuleNav />
+        <div className="max-w-3xl mx-auto p-4 sm:p-6">
+          <div className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h1 className="text-lg font-bold text-amber-900 dark:text-amber-100">Bouncie REST reconnect required</h1>
+                <p className="text-sm text-amber-800 dark:text-amber-200 mt-2">
+                  Bouncie rejected the stored refresh credential, so vehicles and trip history cannot be refreshed through the REST API until an administrator reconnects the account.
+                </p>
+                <div className="mt-3 text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                  <div>Webhook: {status.webhookActive ? "active" : "not active"}{status.lastWebhookEvent ? ` · last event ${status.lastWebhookEvent}` : ""}</div>
+                  <div>Last webhook: {status.lastWebhookAt ? new Date(status.lastWebhookAt).toLocaleString() : "unknown"}</div>
+                  <div>Last REST sync: {status.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString() : "unknown"}</div>
+                </div>
+                {isAdmin ? (
+                  <button
+                    onClick={handleConnect}
+                    disabled={connecting}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-700 text-white font-semibold hover:bg-amber-800 disabled:opacity-50"
+                  >
+                    {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <LinkIcon className="w-4 h-4" />}
+                    {connecting ? "Opening Bouncie..." : "Reconnect Bouncie"}
+                  </button>
+                ) : (
+                  <p className="mt-4 text-sm font-medium text-amber-900 dark:text-amber-100">An administrator must reconnect Bouncie.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
