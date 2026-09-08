@@ -1,0 +1,41 @@
+{
+  "name": "Fleet Scheduled Maintenance Generation",
+  "description": "Checks due Fleet maintenance schedules every morning at 6:45am Eastern. Safe before cutover because FleetSettings.maintenance_generation_enabled defaults to false.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "45 6 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fleet_scheduled_maintenance_generation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "generate_due_fleet_work_orders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "fleetScheduledMaintenanceGeneration",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
