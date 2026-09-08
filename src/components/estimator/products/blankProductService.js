@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { ensureBuilderProductForLine } from "@/components/estimator/builder/builderService";
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const nowIso = () => new Date().toISOString();
 
@@ -47,7 +48,13 @@ async function persistSourceAnchor({ estimateId, lineId, pending, sourceId }) {
       ? { ...item, project_id: sourceId, price_acceptance_pending: promotedPending }
       : item
   );
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Blank Product source anchor",
+  });
   const anchored = await base44.entities.AllInOneEstimate.get(estimateId);
   const anchoredLine = findLine(anchored, lineId);
   const anchoredPending = pendingBuilderMutation(anchoredLine);
@@ -189,7 +196,13 @@ export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
     price_acceptance_pending: {},
   };
   const lineItems = (latestEstimate.line_items || []).map((item) => item.line_id === latestLine.line_id ? finalLine : item);
-  const updateResult = await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const updateResult = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Blank Product insertion completion",
+  });
   const persistedLine = (updateResult?.line_items || lineItems).find((item) => item.line_id === latestLine.line_id) || finalLine;
   return { line: persistedLine, builderProduct, sourceProject: source };
 }
@@ -277,6 +290,12 @@ export async function addBlankProduct({
     price_acceptance_pending: pending,
   };
   const lineItems = [...(current.line_items || []), provisionalLine];
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(current, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Blank Product insertion recovery marker",
+  });
   return resumeBlankProductInsertion({ estimateId, lineId: identity.lineId });
 }
