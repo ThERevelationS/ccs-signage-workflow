@@ -117,6 +117,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [editingCell, setEditingCell] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -216,11 +217,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const loadData = async (showLoading = true) => {
     if (showLoading && orders.length === 0) setIsLoading(true);
+    setReadError("");
     try {
       const [ordersData, workOrdersData, usersData] = await Promise.all([
-        workOrderFilter 
-          ? Order.filter({ work_order_id: workOrderFilter, deleted: { $ne: true } }, "row_number")
-          : Order.filter({ deleted: { $ne: true } }, "row_number"),
+        loadAllEntityRows({
+          entity: Order,
+          query: workOrderFilter
+            ? { work_order_id: workOrderFilter, deleted: { $ne: true } }
+            : { deleted: { $ne: true } },
+          sort: "row_number",
+          label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
+        }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: { $ne: true }, deleted: { $ne: true } },
@@ -238,6 +245,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       });
     } catch (error) {
       console.error("Error loading data:", error);
+      setReadError(error?.message || "Orders could not be verified completely.");
     }
     setIsLoading(false);
   };
@@ -675,6 +683,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="text-center p-8">
+        <div className="text-sm font-bold text-red-700">Orders could not be verified completely.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={() => loadData(true)}>Retry</Button>
       </div>
     );
   }
