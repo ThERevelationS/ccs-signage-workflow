@@ -7,6 +7,7 @@ import { calcServiceItem, calcProjectTotals } from "@/components/signMaintenance
 import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -2961,9 +2962,17 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
     partWritePlan.push(step);
     if (planOnly) return { ...old, ...patch };
-    await base44.entities.BuilderPart.update(old.id, patch);
+    const saved = await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      id: old.id,
+      expectedUpdatedAt: old.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(old, patch),
+      nextFields: patch,
+      guardFields: { builder_product_id: old.builder_product_id },
+      label: `Builder Part “${old.part_name || "Part"}” synchronization`,
+    });
     writesPerformed += 1;
-    return { ...old, ...patch };
+    return saved;
   };
 
   const writePartCreate = async (data) => {
@@ -3365,7 +3374,15 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
     if (expected && current && current !== expected) {
       throw new Error(`Part “${part.part_name || "Part"}” changed while a Builder mutation was pending. No unrelated Part edit was overwritten.`);
     }
-    await base44.entities.BuilderPart.update(part.id, targetPatch);
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      id: part.id,
+      expectedUpdatedAt: part.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(part, targetPatch),
+      nextFields: targetPatch,
+      guardFields: { builder_product_id: builderProductId },
+      label: `Builder Part “${part.part_name || "Part"}” recovery update`,
+    });
     writesPerformed += 1;
   }
 
