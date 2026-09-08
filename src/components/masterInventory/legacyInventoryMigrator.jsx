@@ -290,6 +290,11 @@ export async function migrateLegacyInventoryRows(allInventoryRows, { onProgress 
       } catch (operationError) {
         const sourceStillExists = await Inventory.get(row.id).catch(() => null);
         if (sourceStillExists && created?.id) {
+          if (!receipt?.id) {
+            const recoveredReceipts = await migrationReceipts(row.id).catch(() => []);
+            const matchingReceipt = recoveredReceipts.find((candidate) => candidate.target_id === created.id && candidate.target_entity === targetName) || null;
+            if (matchingReceipt) receipt = matchingReceipt;
+          }
           const rollback = await rollbackCreatedMigration({ targetEntity, targetRow: created, receipt, sourceId: row.id });
           if (!rollback.ok) {
             throw new Error(`${operationError?.message || "Migration failed."} ${rollback.message}`.trim());
