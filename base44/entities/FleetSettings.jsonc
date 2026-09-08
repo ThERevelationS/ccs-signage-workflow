@@ -1,0 +1,227 @@
+{
+  "name": "FleetSettings",
+  "type": "object",
+  "description": "Fleet-only administration and notification settings. Never used by estimator Settings. Admin-restricted; no migrated frontend password.",
+  "properties": {
+    "company_name": {
+      "type": "string"
+    },
+    "setting_type": {
+      "type": "string",
+      "default": "general"
+    },
+    "work_order_creation_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "work_order_completed_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "low_stock_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "invoice_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "request_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "parts_received_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "report_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "delay_minutes": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    },
+    "item_order_reminder_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      }
+    },
+    "item_order_reminder_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_work_order_reminder_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      }
+    },
+    "open_work_order_reminder_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "email_subject_template": {
+      "type": "string"
+    },
+    "email_body_template": {
+      "type": "string"
+    },
+    "email_completed_subject_template": {
+      "type": "string"
+    },
+    "email_completed_body_template": {
+      "type": "string"
+    },
+    "item_order_reminder_subject_template": {
+      "type": "string"
+    },
+    "item_order_reminder_body_template": {
+      "type": "string"
+    },
+    "open_work_order_reminder_subject_template": {
+      "type": "string"
+    },
+    "open_work_order_reminder_body_template": {
+      "type": "string"
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

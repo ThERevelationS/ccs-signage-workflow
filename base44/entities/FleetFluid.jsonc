@@ -1,0 +1,119 @@
+{
+  "name": "FleetFluid",
+  "type": "object",
+  "description": "Fleet-specific fluids inventory. Separate from all signage/master/estimator inventories.",
+  "properties": {
+    "fluid_name": {
+      "type": "string"
+    },
+    "fluid_type": {
+      "type": "string",
+      "enum": [
+        "engine_oil",
+        "transmission_fluid",
+        "brake_fluid",
+        "coolant",
+        "hydraulic_fluid",
+        "power_steering_fluid",
+        "differential_oil",
+        "other"
+      ]
+    },
+    "viscosity": {
+      "type": "string"
+    },
+    "brand": {
+      "type": "string"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Current stock quantity in unit."
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "quarts",
+        "gallons",
+        "pints",
+        "ounces"
+      ],
+      "default": "quarts"
+    },
+    "minimum_stock": {
+      "type": "number",
+      "default": 4,
+      "minimum": 0
+    },
+    "minimum_stock_unit": {
+      "type": "string",
+      "enum": [
+        "quarts",
+        "gallons",
+        "pints",
+        "ounces"
+      ],
+      "default": "quarts"
+    },
+    "cost_per_unit": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "enable_low_stock_alerts": {
+      "type": "boolean",
+      "default": true
+    },
+    "compatible_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Linked FleetEquipment ids."
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "fluid_name",
+    "fluid_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

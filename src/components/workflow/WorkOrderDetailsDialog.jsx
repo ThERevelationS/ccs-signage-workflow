@@ -81,6 +81,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  replaceWorkOrderArrayFieldIfUnchanged,
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
 
@@ -222,25 +223,57 @@ export default function WorkOrderDetailsDialog({
   const handleAddDependency = async () => {
     if (!newDependency.trigger_value || !newDependency.action_value) return;
 
-    const updatedDeps = [...dependencies, { ...newDependency, id: Date.now() }];
-    await WorkOrder.update(workOrder.id, { dependencies: updatedDeps });
-    setDependencies(updatedDeps);
-    setIsEditingDependency(false);
-    setNewDependency({
-      trigger_type: "stage_change",
-      trigger_value: "",
-      action_type: "move_stage",
-      action_value: "",
-      target_work_order_id: ""
-    });
-    if (onUpdate) onUpdate();
+    const dependencyToAdd = { ...newDependency, id: Date.now() };
+    setInlineEditError("");
+    try {
+      const saved = await mutateWorkOrderArrayField({
+        workOrderId: workOrder.id,
+        field: "dependencies",
+        label: "Work Order dependency",
+        mutate: (currentDependencies) => [...currentDependencies, dependencyToAdd],
+      });
+      const savedDependencies = saved.dependencies || [];
+      setDependencies(savedDependencies);
+      Object.assign(workOrder, { dependencies: savedDependencies, updated_date: saved.updated_date });
+      setIsEditingDependency(false);
+      setNewDependency({
+        trigger_type: "stage_change",
+        trigger_value: "",
+        action_type: "move_stage",
+        action_value: "",
+        target_work_order_id: ""
+      });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Could not add Work Order dependency safely:", error);
+      setInlineEditError(error?.message || "Dependencies changed in another session. Reload before adding this dependency.");
+    }
   };
 
   const handleDeleteDependency = async (depId) => {
-    const updatedDeps = dependencies.filter((d) => d.id !== depId);
-    await WorkOrder.update(workOrder.id, { dependencies: updatedDeps });
-    setDependencies(updatedDeps);
-    if (onUpdate) onUpdate();
+    const dependencyToDelete = dependencies.find((dependency) => dependency.id === depId);
+    if (!dependencyToDelete) {
+      setInlineEditError("The dependency could not be identified safely. Reload before deleting it.");
+      return;
+    }
+
+    setInlineEditError("");
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "dependencies",
+        item: dependencyToDelete,
+        remove: true,
+        label: "Work Order dependency",
+      });
+      const savedDependencies = saved.dependencies || [];
+      setDependencies(savedDependencies);
+      Object.assign(workOrder, { dependencies: savedDependencies, updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Could not delete Work Order dependency safely:", error);
+      setInlineEditError(error?.message || "Dependencies changed in another session. Reload before deleting this dependency.");
+    }
   };
 
   const handleImageUpload = async (e) => {
