@@ -77,6 +77,8 @@ export default function WorkOrderForm({
   const [scanningForm, setScanningForm] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [productTypes, setProductTypes] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   
   const todayDate = format(new Date(), "yyyy-MM-dd");
   
@@ -191,6 +193,12 @@ export default function WorkOrderForm({
   };
   
   const [formData, setFormData] = useState(getInitialFormData());
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsSubmitting(false);
+    setSubmitError("");
+  }, [isOpen, workOrder?.id, initialData]);
   
   // Reset form when dialog opens with new initialData (for duplicating)
   useEffect(() => {
@@ -650,8 +658,9 @@ export default function WorkOrderForm({
     return matches.length > 0 ? matches[0] : null;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     // Check for duplicates before saving
     const duplicate = checkForDuplicate();
@@ -663,8 +672,18 @@ export default function WorkOrderForm({
     const submitData = isRider && !workOrder 
       ? { ...formData, rider_stage: formData.current_stage }
       : formData;
-    onSave(submitData);
-    onClose();
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      await onSave?.(submitData);
+      onClose?.();
+    } catch (error) {
+      console.error("Work Order form save failed:", error);
+      setSubmitError(error?.message || "Work Order could not be saved. Reload the latest data and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const activeNotes = (formData.notes || []).filter(n => !n.completed);
@@ -1453,13 +1472,20 @@ export default function WorkOrderForm({
             </div>
           </div>
 
+          {submitError && (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="clay-button border-none">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="clay-button border-none">
               Cancel
             </Button>
-            <Button type="submit" className="clay-button border-none text-gray-800" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
-              {workOrder ? "Update" : "Create"} {isRider ? "Rider" : "Work Order"}
+            <Button type="submit" disabled={isSubmitting} className="clay-button border-none text-gray-800" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              {isSubmitting && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              {isSubmitting ? "Saving..." : `${workOrder ? "Update" : "Create"} ${isRider ? "Rider" : "Work Order"}`}
             </Button>
           </div>
         </form>
