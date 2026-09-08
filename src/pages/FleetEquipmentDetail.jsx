@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
-import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Bell, Loader2, Pencil, Save, X, MapPin, Gauge, Activity, ExternalLink } from "lucide-react";
+import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Bell, Loader2, Pencil, Save, X, MapPin, Gauge, Activity } from "lucide-react";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
