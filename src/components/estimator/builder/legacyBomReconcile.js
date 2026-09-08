@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 
 const APP_ID = "68dfcc5e57bbbc35387da97c";
 export const LEGACY_BOM_RECONCILE_BATCH = "legacy_bom_reconcile_v1";
@@ -180,10 +181,19 @@ function resolveExpected(moduleKey, project, frozenTotal) {
 async function deactivateParts(parts, reason) {
   const timestamp = nowIso();
   for (const part of parts) {
-    await base44.entities.BuilderPart.update(part.id, {
+    const deactivatePatch = {
       is_active: false,
       last_price_check_at: timestamp,
       notes: appendNote(part.notes, reason),
+    };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      id: part.id,
+      expectedUpdatedAt: part.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(part, deactivatePatch),
+      nextFields: deactivatePatch,
+      guardFields: { builder_product_id: part.builder_product_id },
+      label: `Legacy BOM Part “${part.part_name || "Part"}” deactivation`,
     });
   }
 }
@@ -333,12 +343,21 @@ async function markBuilderComplete(builder, result) {
     throw new Error(`Cannot mark Product ${builder.id} reconciled: active frozen BOM ${finalSum} != frozen Product ${builder.frozen_cost}.`);
   }
 
-  await base44.entities.BuilderProduct.update(builder.id, {
+  const reconcilePatch = {
     legacy_bom_reconciled: true,
     legacy_bom_reconcile_version: LEGACY_BOM_RECONCILE_BATCH,
     legacy_bom_reconciled_at: timestamp,
     part_count: active.length,
     notes: appendNote(builder.notes, `Historical BOM reconciled by ${LEGACY_BOM_RECONCILE_BATCH}; frozen Product price remained ${builder.frozen_cost}.`),
+  };
+  await replaceBuilderEntityFieldsIfUnchanged({
+    entity: base44.entities.BuilderProduct,
+    id: builder.id,
+    expectedUpdatedAt: builder.updated_date || "",
+    expectedFields: expectedBuilderEntityFields(builder, reconcilePatch),
+    nextFields: reconcilePatch,
+    guardFields: { estimate_id: builder.estimate_id },
+    label: "Legacy BOM Builder reconciliation receipt",
   });
 
   await base44.entities.LegacyMigrationMap.create({
