@@ -1578,6 +1578,26 @@ export default function EnhancedSipChecklist({
           </Tabs>
 
           {/* Actions */}
+          {saveError && (
+            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">Checklist save blocked</div>
+              <div className="mt-1 text-xs">{saveError}</div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-xs text-red-700">Reloading discards unsaved checklist edits and loads the latest saved version.</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={loadData}
+                  disabled={isLoading || isSaving}
+                  className="shrink-0 border-red-300 bg-white text-red-800 hover:bg-red-100"
+                >
+                  {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                  Reload latest
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-3 pt-4 border-t mt-4">
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancel
