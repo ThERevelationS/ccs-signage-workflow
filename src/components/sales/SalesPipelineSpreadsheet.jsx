@@ -435,7 +435,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     } catch (error) {
       console.error("Sales Pipeline bulk delete stopped:", error);
-      setDestructiveActionError(`${error?.message || "Bulk delete could not be completed."} No further Work Orders were deleted. If deletion had already started, earlier items may now be in Project Trash and can be recovered there.`);
+      const progressNote = deletedIds.length > 0
+        ? ` ${deletedIds.length} Work Order${deletedIds.length === 1 ? " was" : "s were"} already moved to Project Trash before the operation stopped.`
+        : " No Work Orders were deleted.";
+      setDestructiveActionError(`${error?.message || "Bulk delete could not be completed."}${progressNote} No further Work Orders were deleted; anything already in Project Trash can be recovered there.`);
     } finally {
       setSelectedRows(new Set());
       setBulkDeleteConfirm(false);
@@ -450,6 +453,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
     const orderId = deleteConfirm.id;
+    setDestructiveActionError("");
     
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
@@ -458,13 +462,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     delete pendingChangesRef.current[orderId];
     delete pendingBaselinesRef.current[orderId];
     
-    await WorkOrder.update(orderId, {
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: currentUser?.email || "unknown"
-    });
-    setWorkOrders(workOrders.filter(wo => wo.id !== orderId));
-    setDeleteConfirm(null);
+    try {
+      await softDeleteWorkOrderFromLoadedSnapshot({
+        workOrder: deleteConfirm,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Sales Pipeline Work Order delete",
+      });
+      setWorkOrders((current) => current.filter((workOrder) => workOrder.id !== orderId));
+    } catch (error) {
+      console.error("Sales Pipeline Work Order delete blocked:", error);
+      setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
+      await loadWorkOrders(false);
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   const moveToWorkflow = async (workOrder) => {
