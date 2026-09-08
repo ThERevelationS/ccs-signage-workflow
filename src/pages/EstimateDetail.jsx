@@ -36,6 +36,7 @@ import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/comp
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const STEP_TITLES = {
   1: "Step 1: Estimate Details",
@@ -174,6 +175,16 @@ export default function EstimateDetail() {
     serverUpdatedAtRef.current,
     current?.updated_date
   );
+
+  const saveEstimateFieldsSafely = ({ baseline, nextFields, label, guardWholeVersion = false }) =>
+    replaceEstimateFieldsIfUnchanged({
+      entity: base44.entities.AllInOneEstimate,
+      estimateId: estimate.id,
+      expectedFields: expectedEstimateFields(baseline, nextFields),
+      guardFields: guardWholeVersion ? { updated_date: baseline?.updated_date } : {},
+      nextFields,
+      label,
+    });
 
   const loadCurrentProductMutationEstimate = async () => {
     const current = await base44.entities.AllInOneEstimate.get(estimate.id);
