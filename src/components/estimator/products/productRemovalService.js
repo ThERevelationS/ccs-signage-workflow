@@ -3,6 +3,7 @@ import { getModule } from "@/components/estimator/moduleRegistry";
 import { builderMutationHash, pendingBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const nowIso = () => new Date().toISOString();
 
@@ -201,11 +202,18 @@ export async function resumeProductRemoval({ estimateId, lineId = "" }) {
   await assertEstimateProductMutationAllowed(estimate, { allowPriceAcceptanceKey: pending.key });
 
   const lineItems = (estimate.line_items || []).filter((item) => item.line_id !== pending.estimate_line_id);
-  await base44.entities.AllInOneEstimate.update(estimateId, {
+  const nextFields = {
     line_items: lineItems,
     last_product_removal_key: pending.key,
     last_product_removal_line_id: pending.estimate_line_id,
     last_product_removal_at: nowIso(),
+  };
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    nextFields,
+    label: "Product removal Estimate completion",
   });
   return { removed: true, lineId: pending.estimate_line_id };
 }
@@ -262,6 +270,12 @@ export async function removeProductFromEstimate({ estimateId, line, expectedEsti
   const lineItems = (latestEstimate.line_items || []).map((item, index) => index === targetIndex
     ? { ...item, line_id: effectiveLineId, price_acceptance_pending: pending }
     : item);
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Product removal recovery marker",
+  });
   return resumeProductRemoval({ estimateId, lineId: effectiveLineId });
 }
