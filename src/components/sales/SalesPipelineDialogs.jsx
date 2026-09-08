@@ -21,7 +21,7 @@ export default function SalesPipelineDialogs({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {selectedRows.size} rows?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {selectedRows.size} selected work order{selectedRows.size > 1 ? 's' : ''}. This action cannot be undone.
+              This will move {selectedRows.size} selected work order{selectedRows.size > 1 ? 's' : ''} to Project Trash. Admins can recover them there until they are permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
