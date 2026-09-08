@@ -43,6 +43,7 @@ import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
 import MasterInventory from './pages/MasterInventory';
 import QuoteSettings from './pages/QuoteSettings';
 import FleetTracking from './pages/FleetTracking';
+import FleetPublicReport from './pages/FleetPublicReport';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -89,6 +90,12 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+
+  // Tightly scoped login-free Fleet issue reporting. The backend independently
+  // enforces FleetSettings.public_reporting_enabled and exposes only id/name/type.
+  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase() === '/fleetreport') {
+    return <FleetPublicReport />;
+  }
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
