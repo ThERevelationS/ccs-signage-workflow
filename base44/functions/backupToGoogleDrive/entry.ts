@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const GlobalSettings = 'GlobalSettings';
 
@@ -353,7 +354,11 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('orders')) {
       try {
-        const orders = await base44.asServiceRole.entities.Order.list();
+        const orders = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Order,
+          sort: 'row_number',
+          label: 'Orders backup archive',
+        });
         const result = await uploadToGoogleDrive(orders, 'Orders_Backup', 'SignShop Orders Backup');
         results.push({ type: 'orders', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
@@ -364,32 +369,13 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('workorders')) {
       try {
         console.log('Starting Work Orders backup...');
-        // Use paginated fetching to get all records
-        let workOrders = [];
-        let skip = 0;
-        const limit = 200;
-        let hasMore = true;
-        
-        while (hasMore) {
-          try {
-            const batch = await base44.asServiceRole.entities.WorkOrder.list(null, limit, skip);
-            const batchArray = Array.isArray(batch) ? batch : (typeof batch === 'string' ? JSON.parse(batch) : []);
-            console.log(`Work Orders batch: skip=${skip}, got ${batchArray.length} records`);
-            
-            if (batchArray.length === 0) {
-              hasMore = false;
-            } else {
-              workOrders = workOrders.concat(batchArray);
-              skip += limit;
-              if (batchArray.length < limit) {
-                hasMore = false;
-              }
-            }
-          } catch (batchErr) {
-            console.error('Work Orders batch error:', batchErr.message);
-            hasMore = false;
-          }
-        }
+        // Verify the complete archive before uploading. A later-page failure
+        // must fail this backup branch instead of producing a partial file.
+        const workOrders = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          sort: 'created_date',
+          label: 'Work Orders backup archive',
+        });
         console.log(`Work Orders: fetched ${workOrders.length} records total`);
         const formattedWO = workOrders.map(wo => ({
           id: wo.id,
@@ -456,32 +442,13 @@ Deno.serve(async (req) => {
     if (typesToBackup.includes('salespipeline')) {
       try {
         console.log('Starting Sales Pipeline backup...');
-        // For sales pipeline, get ALL work orders using paginated fetching
-        let allWorkOrders = [];
-        let skip = 0;
-        const limit = 200;
-        let hasMore = true;
-        
-        while (hasMore) {
-          try {
-            const batch = await base44.asServiceRole.entities.WorkOrder.list(null, limit, skip);
-            const batchArray = Array.isArray(batch) ? batch : (typeof batch === 'string' ? JSON.parse(batch) : []);
-            console.log(`Sales Pipeline batch: skip=${skip}, got ${batchArray.length} records`);
-            
-            if (batchArray.length === 0) {
-              hasMore = false;
-            } else {
-              allWorkOrders = allWorkOrders.concat(batchArray);
-              skip += limit;
-              if (batchArray.length < limit) {
-                hasMore = false;
-              }
-            }
-          } catch (batchErr) {
-            console.error('Sales Pipeline batch error:', batchErr.message);
-            hasMore = false;
-          }
-        }
+        // Verify the complete Work Order archive before deriving the Sales
+        // Pipeline export so a later-page failure cannot create a partial file.
+        const allWorkOrders = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          sort: 'created_date',
+          label: 'Sales Pipeline backup Work Orders',
+        });
         
         const workOrdersRaw = allWorkOrders.filter(wo => !wo.is_rider && wo.deleted !== true);
         console.log(`Sales Pipeline: fetched ${workOrdersRaw.length} work orders (from ${allWorkOrders.length} total)`);
@@ -549,7 +516,12 @@ Deno.serve(async (req) => {
     // Order Form Export (same format as UI export)
     if (typesToBackup.includes('orderform')) {
       try {
-        const ordersForExport = await base44.asServiceRole.entities.Order.filter({ deleted: { $ne: true } });
+        const ordersForExport = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.Order,
+          query: { deleted: { $ne: true } },
+          sort: 'row_number',
+          label: 'Order Form backup archive',
+        });
         
         const exportData = ordersForExport.map(order => ({
           "Customer": order.customer_name || "",
