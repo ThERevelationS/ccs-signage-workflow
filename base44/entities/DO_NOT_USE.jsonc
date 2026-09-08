@@ -1,6 +1,29 @@
 {
   "name": "DO_NOT_USE",
   "type": "object",
+  "description": "Disabled empty schema created accidentally during MCP tool switching. Contains no records and is intentionally inaccessible pending removal through a Base44 schema-delete surface.",
   "properties": {},
-  "required": []
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    }
+  }
 }
