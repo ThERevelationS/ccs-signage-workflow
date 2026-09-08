@@ -57,6 +57,7 @@ import { base44 } from "@/api/base44Client";
 import TaskTemplateDialog from "./TaskTemplateDialog";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -374,6 +375,7 @@ export default function WorkOrderCard({
     if (!newNoteText.trim()) return;
 
     const newNote = {
+      id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       text: newNoteText,
       timestamp: new Date().toISOString(),
       created_by: currentUser?.email || "Unknown",
@@ -381,8 +383,15 @@ export default function WorkOrderCard({
       sub_tasks: []
     };
 
-    const updatedNotes = [...notes, newNote];
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "notes",
+      label: "Work Order tasks",
+      mutate: (currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
+        ? currentNotes
+        : [...currentNotes, newNote],
+    });
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
     await ActivityActions.taskAdded(workOrder, newNoteText);
     setNewNoteText("");
     setIsAddingNote(false);
@@ -390,7 +399,9 @@ export default function WorkOrderCard({
   };
 
   const handleUseTemplate = async (template) => {
-    const newTasks = template.tasks.map(t => ({
+    const templateBatchId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const newTasks = template.tasks.map((t, taskIndex) => ({
+      id: `template_${templateBatchId}_${taskIndex}`,
       text: t.text,
       timestamp: new Date().toISOString(),
       created_by: currentUser?.email || "Template",
@@ -408,8 +419,17 @@ export default function WorkOrderCard({
         };
       })
     }));
-    const updatedNotes = [...notes, ...newTasks];
-    await WorkOrder.update(workOrder.id, { notes: updatedNotes });
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "notes",
+      label: "Work Order template tasks",
+      mutate: (currentNotes) => {
+        const existingIds = new Set(currentNotes.map((note) => note?.id).filter(Boolean));
+        const missing = newTasks.filter((task) => !existingIds.has(task.id));
+        return missing.length > 0 ? [...currentNotes, ...missing] : currentNotes;
+      },
+    });
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
     if (onUpdate) onUpdate();
   };
 
