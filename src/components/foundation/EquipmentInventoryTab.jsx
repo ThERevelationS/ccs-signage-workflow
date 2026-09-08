@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -255,6 +255,7 @@ function EquipmentList({ items, equipment = [], attachments = [], subAttachments
 function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, onCancel }) {
     const [form, setForm] = useState(item);
     const [saving, setSaving] = useState(false);
+    const saveRef = useRef(false);
     
     // For bidirectional links. If this is an attachment, we can select which equipment it belongs to.
     const [linkedEquipmentIds, setLinkedEquipmentIds] = useState(
@@ -268,7 +269,8 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
     const update = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
 
     const handleSave = async () => {
-        if (saving) return;
+        if (saveRef.current) return;
+        saveRef.current = true;
         setSaving(true);
         let wroteAnything = false;
         try {
@@ -355,6 +357,7 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
             alert(error?.message || 'Foundation equipment item could not be saved.');
             if (wroteAnything) await onSave();
         } finally {
+            saveRef.current = false;
             setSaving(false);
         }
     };
@@ -463,7 +466,7 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
 
             <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
-                <Button size="sm" onClick={handleSave} disabled={!form.material_name}>Save Item</Button>
+                <Button size="sm" onClick={handleSave} disabled={!form.material_name || saving}>{saving ? 'Saving…' : 'Save Item'}</Button>
             </div>
         </div>
     );
