@@ -20,6 +20,12 @@ import {
   Link as LinkIcon, ExternalLink
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  createWorkOrderArrayItemLocator,
+  findOptionalWorkOrderArrayItemIndex,
+  findWorkOrderArrayItemIndex,
+  mutateWorkOrderArrayField,
+} from "@/components/workflow/workOrderPersistence";
 
 const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
 const WorkOrder = base44.entities.WorkOrder;
@@ -34,6 +40,46 @@ const STAGES = [
   { value: "fabrication", label: "Fabrication" },
   { value: "installation", label: "Installation" }
 ];
+
+async function appendSipTask(workOrderId, task, label = "SIP Work Order tasks") {
+  const locator = createWorkOrderArrayItemLocator(task);
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field: "notes",
+    label,
+    mutate: (currentTasks) => findOptionalWorkOrderArrayItemIndex(currentTasks, locator, "SIP task") >= 0
+      ? currentTasks
+      : [...currentTasks, task],
+  });
+}
+
+async function removeSipTask(workOrderId, task, label = "SIP Work Order tasks") {
+  const locator = createWorkOrderArrayItemLocator(task);
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field: "notes",
+    label,
+    mutate: (currentTasks) => {
+      const index = findOptionalWorkOrderArrayItemIndex(currentTasks, locator, "SIP task");
+      return index < 0 ? currentTasks : currentTasks.filter((_, currentIndex) => currentIndex !== index);
+    },
+  });
+}
+
+async function setSipTaskCompleted(workOrderId, task, targetCompleted, label = "SIP Work Order tasks") {
+  const locator = createWorkOrderArrayItemLocator(task);
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field: "notes",
+    label,
+    mutate: (currentTasks) => {
+      const index = findWorkOrderArrayItemIndex(currentTasks, locator, "SIP task");
+      return currentTasks.map((currentTask, currentIndex) => currentIndex === index
+        ? { ...currentTask, completed: targetCompleted }
+        : currentTask);
+    },
+  });
+}
 
 // Task creation popup
 function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users, taskTargetContext }) {
@@ -129,6 +175,7 @@ function TaskCreationPopup({ isOpen, onClose, onApply, workOrder, riders, users,
     console.log("TaskCreationPopup - taskTargetContext:", taskTargetContext, "checklistContext:", checklistContext);
     
     const task = {
+      id: `sip_task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       text: taskText.trim(),
       timestamp: new Date().toISOString(),
       created_by: "SIP Meeting",
