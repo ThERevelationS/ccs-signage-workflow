@@ -7,6 +7,7 @@ import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetail
 import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -110,9 +111,16 @@ export default function NewAllInOneEstimate() {
           const syncMessage = syncError?.message || "Sales Pipeline synchronization failed.";
           let recoveryFlagSaved = false;
           try {
-            await base44.entities.AllInOneEstimate.update(estimate.id, {
+            const recoveryPatch = {
               pipeline_sync_pending: true,
               pipeline_sync_error: syncMessage,
+            };
+            await replaceEstimateFieldsIfUnchanged({
+              entity: base44.entities.AllInOneEstimate,
+              estimateId: estimate.id,
+              expectedFields: expectedEstimateFields(estimate, recoveryPatch),
+              nextFields: recoveryPatch,
+              label: "New Estimate pipeline recovery marker",
             });
             recoveryFlagSaved = true;
           } catch (flagError) {
