@@ -9,6 +9,7 @@ import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resu
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -616,9 +617,18 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
       throw new Error("The pending Quick Product Builder is already linked to a different source project.");
     }
     if (!latestBuilder.source_project_id) {
-      await base44.entities.BuilderProduct.update(builder.id, {
+      const sourceLinkPatch = {
         source_entity: blueprint.sourceEntity,
         source_project_id: sourceProject.id,
+      };
+      await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderProduct,
+        id: builder.id,
+        expectedUpdatedAt: latestBuilder.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(latestBuilder, sourceLinkPatch),
+        nextFields: sourceLinkPatch,
+        guardFields: { estimate_id: estimate.id },
+        label: "Quick Product Builder source link",
       });
     }
     builder = await base44.entities.BuilderProduct.get(builder.id);
