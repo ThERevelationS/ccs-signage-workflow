@@ -11,6 +11,7 @@ import { localDateStamp } from "./quoteLifecycle";
 import { convergeCreatedEstimateWorkOrder, loadAllCustomers, resolveCustomerForEstimate } from "./customerSync";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -127,8 +128,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
 
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...estimateData } = estimate;
-      const estimateAfter = {
-        ...estimateBefore,
+      const conversionEstimateFields = {
         ...estimateData,
         work_order_id: workOrder.id,
         status: "approved",
@@ -136,13 +136,17 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         total_cost: internalCost,
         quote_total: pricing.quoteTotal,
       };
-      await base44.entities.AllInOneEstimate.update(estimate.id, {
-        ...estimateData,
-        work_order_id: workOrder.id,
-        status: "approved",
-        edit_reason: "",
-        total_cost: internalCost,
-        quote_total: pricing.quoteTotal,
+      const estimateAfter = {
+        ...estimateBefore,
+        ...conversionEstimateFields,
+      };
+      await replaceEstimateFieldsIfUnchanged({
+        entity: base44.entities.AllInOneEstimate,
+        estimateId: estimate.id,
+        expectedFields: expectedEstimateFields(estimateBefore, conversionEstimateFields),
+        guardFields: { updated_date: estimateBefore.updated_date },
+        nextFields: conversionEstimateFields,
+        label: "Approved Estimate Work Order conversion link",
       });
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `work_order_conversion:${workOrder.id}`,
