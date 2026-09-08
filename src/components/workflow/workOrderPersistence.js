@@ -156,6 +156,41 @@ export async function replaceWorkOrderFieldsIfUnchanged({
   throw new Error(`${label} Work Order changed repeatedly while saving. Reload and try again.`);
 }
 
+export async function transitionWorkOrderFromLoadedSnapshot({
+  workOrder,
+  newStage,
+  completed,
+  normalizeLegacyNotes = false,
+  label = "Work Order transition",
+}) {
+  const id = String(workOrder?.id || "").trim();
+  const stage = String(newStage || "").trim();
+  if (!id || !stage) throw new Error(`${label} is missing its Work Order or destination stage.`);
+
+  const expectedFields = { current_stage: workOrder.current_stage };
+  const nextFields = { current_stage: stage };
+  if (typeof completed === "boolean") {
+    expectedFields.completed = workOrder.completed;
+    nextFields.completed = completed;
+  }
+
+  if (normalizeLegacyNotes && typeof workOrder.notes === "string" && workOrder.notes.trim()) {
+    expectedFields.notes = workOrder.notes;
+    nextFields.notes = [{
+      text: workOrder.notes,
+      timestamp: workOrder.created_date || new Date().toISOString(),
+      created_by: workOrder.created_by || "Unknown",
+    }];
+  }
+
+  return replaceWorkOrderFieldsIfUnchanged({
+    workOrderId: id,
+    expectedFields,
+    nextFields,
+    label,
+  });
+}
+
 export async function replaceWorkOrderArrayFieldIfUnchanged({
   workOrderId,
   field,
