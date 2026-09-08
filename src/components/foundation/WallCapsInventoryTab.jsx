@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, Edit, Square } from 'lucide-react';
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 
 const PROFILES = [
   { value: 'flat', label: 'Flat' },
@@ -133,7 +134,14 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
           await loadItems();
           return;
         }
-        await FoundationInventoryEntity.update(editItem.id, form);
+        await replaceEntityFieldsIfUnchanged({
+          entity: FoundationInventoryEntity,
+          id: editItem.id,
+          expectedUpdatedAt: live.updated_date || '',
+          expectedFields: expectedEntityFields(live, form),
+          nextFields: form,
+          label: `Wall cap “${form.material_name || 'Item'}”`,
+        });
       } else {
         await FoundationInventoryEntity.create(form);
       }
@@ -159,7 +167,11 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
         await loadItems();
         return;
       }
-      await FoundationInventoryEntity.delete(cap.id);
+      await deleteEntityIfUnchanged({
+        entity: FoundationInventoryEntity,
+        record: live,
+        label: `Wall cap “${cap.material_name || 'Item'}”`,
+      });
       await loadItems();
     } catch (error) {
       console.error('Wall cap delete failed:', error);
