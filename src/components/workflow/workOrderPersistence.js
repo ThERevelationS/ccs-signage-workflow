@@ -294,6 +294,97 @@ export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, la
   throw new Error(`${label} changed repeatedly in another session. Reload it before saving.`);
 }
 
+export async function softDeleteWorkOrderFromLoadedSnapshot({
+  workOrder,
+  deletedBy = "unknown",
+  label = "Work Order delete",
+}) {
+  const entity = base44.entities.WorkOrder;
+  const id = String(workOrder?.id || "").trim();
+  const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
+  const actor = String(deletedBy || "unknown").trim() || "unknown";
+  if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} is missing its loaded Work Order version. Reload before deleting.`);
+  }
+
+  const current = await entity.get(id);
+  if (!current?.id) throw new Error(`${label} could not verify its Work Order before deleting.`);
+  if (current.deleted === true) return current;
+  if (String(current.updated_date || "").trim() !== expectedUpdatedAt) {
+    throw new Error(`${label} was blocked because the Work Order changed after it was loaded. Reload before deleting. Nothing was deleted.`);
+  }
+
+  const deletedAt = new Date().toISOString();
+  let result;
+  try {
+    result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt },
+      { $set: { deleted: true, deleted_at: deletedAt, deleted_by: actor } },
+    );
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (afterError?.deleted === true) return afterError;
+    throw error;
+  }
+
+  if (!result || typeof result.updated !== "number") {
+    throw new Error(`${label} result could not be verified.`);
+  }
+  if (result.updated === 1) {
+    const saved = await entity.get(id).catch(() => null);
+    if (!saved) throw new Error(`${label} succeeded but the deleted Work Order could not be re-read.`);
+    return saved;
+  }
+
+  const after = await entity.get(id).catch(() => null);
+  if (after?.deleted === true) return after;
+  throw new Error(`${label} was blocked because the Work Order changed while deletion was being confirmed. Reload before deleting. Nothing was deleted.`);
+}
+
+export async function restoreWorkOrderFromLoadedTrashSnapshot({
+  workOrder,
+  label = "Work Order recovery",
+}) {
+  const entity = base44.entities.WorkOrder;
+  const id = String(workOrder?.id || "").trim();
+  const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
+  if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} is missing its loaded Work Order version. Reload trash before recovering.`);
+  }
+
+  const current = await entity.get(id);
+  if (!current?.id) throw new Error(`${label} could not verify its Work Order before recovering.`);
+  if (current.deleted !== true) return current;
+  if (String(current.updated_date || "").trim() !== expectedUpdatedAt) {
+    throw new Error(`${label} was blocked because the deleted Work Order changed after trash was loaded. Reload trash before recovering.`);
+  }
+
+  let result;
+  try {
+    result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt },
+      { $set: { deleted: false, deleted_at: null, deleted_by: null } },
+    );
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (afterError && afterError.deleted !== true) return afterError;
+    throw error;
+  }
+
+  if (!result || typeof result.updated !== "number") {
+    throw new Error(`${label} result could not be verified.`);
+  }
+  if (result.updated === 1) {
+    const saved = await entity.get(id).catch(() => null);
+    if (!saved) throw new Error(`${label} succeeded but the recovered Work Order could not be re-read.`);
+    return saved;
+  }
+
+  const after = await entity.get(id).catch(() => null);
+  if (after && after.deleted !== true) return after;
+  throw new Error(`${label} was blocked because the deleted Work Order changed while recovery was being confirmed. Reload trash before recovering.`);
+}
+
 export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, label = "Work Order" }) {
   const entity = base44.entities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
