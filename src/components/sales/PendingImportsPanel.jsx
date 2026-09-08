@@ -356,7 +356,12 @@ export default function PendingImportsPanel({ onCountChange }) {
     setReadError("");
     try {
       const [pending, wos] = await Promise.all([
-        PendingImport.filter({ status: 'pending' }),
+        loadAllEntityRows({
+          entity: PendingImport,
+          query: { status: 'pending' },
+          sort: "created_date",
+          label: "Pending Imports",
+        }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { deleted: { $ne: true }, completed: { $ne: true } },
@@ -371,7 +376,7 @@ export default function PendingImportsPanel({ onCountChange }) {
     } catch (error) {
       console.error("Error loading pending import context:", error);
       setAllWorkOrders([]);
-      setReadError(error?.message || "Pending Import Work Orders could not be verified completely.");
+      setReadError(error?.message || "Pending import context could not be verified completely.");
     } finally {
       setLoading(false);
     }
@@ -508,8 +513,13 @@ export default function PendingImportsPanel({ onCountChange }) {
 // Exported hook for nav badge — fetches count only
 export async function fetchPendingImportCount() {
   try {
-    const pending = await base44.entities.PendingImport.filter({ status: 'pending' });
-    return Array.isArray(pending) ? pending.length : 0;
+    const pending = await loadAllEntityRows({
+      entity: PendingImport,
+      query: { status: 'pending' },
+      sort: "created_date",
+      label: "Pending Import count",
+    });
+    return pending.length;
   } catch {
     return 0;
   }
