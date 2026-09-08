@@ -30,7 +30,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -66,6 +66,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingBaselinesRef = useRef({});
   const debounceTimers = useRef({});
   const [quickEditError, setQuickEditError] = useState("");
+  const [destructiveActionError, setDestructiveActionError] = useState("");
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
   const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
@@ -398,22 +399,48 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const confirmBulkDelete = async () => {
     const ids = [...selectedRows];
-    for (const id of ids) {
-      if (debounceTimers.current[id]) {
-        clearTimeout(debounceTimers.current[id]);
-        delete debounceTimers.current[id];
-      }
-      delete pendingChangesRef.current[id];
-      delete pendingBaselinesRef.current[id];
-      await WorkOrder.update(id, {
-        deleted: true,
-        deleted_at: new Date().toISOString(),
-        deleted_by: currentUser?.email || "unknown"
-      });
+    const targets = ids.map((id) => workOrders.find((workOrder) => workOrder.id === id)).filter(Boolean);
+    if (targets.length !== ids.length) {
+      setDestructiveActionError("One or more selected Work Orders are no longer available in the loaded Sales Pipeline. Reload before deleting.");
+      setBulkDeleteConfirm(false);
+      return;
     }
-    setWorkOrders(prev => prev.filter(wo => !ids.includes(wo.id)));
-    setSelectedRows(new Set());
-    setBulkDeleteConfirm(false);
+
+    setDestructiveActionError("");
+    const deletedIds = [];
+    try {
+      // Preflight every selected record before deleting any of them. Base44 does not
+      // provide a multi-record transaction, so this minimizes partial bulk deletes.
+      for (const target of targets) {
+        const latest = await WorkOrder.get(target.id);
+        if (!latest?.id || latest.deleted === true || latest.updated_date !== target.updated_date) {
+          throw new Error(`Bulk delete was blocked because ${target.client_name || target.title || target.id} changed after the Sales Pipeline was loaded.`);
+        }
+      }
+
+      for (const target of targets) {
+        const id = target.id;
+        if (debounceTimers.current[id]) {
+          clearTimeout(debounceTimers.current[id]);
+          delete debounceTimers.current[id];
+        }
+        delete pendingChangesRef.current[id];
+        delete pendingBaselinesRef.current[id];
+        await softDeleteWorkOrderFromLoadedSnapshot({
+          workOrder: target,
+          deletedBy: currentUser?.email || "unknown",
+          label: "Sales Pipeline bulk delete",
+        });
+        deletedIds.push(id);
+      }
+    } catch (error) {
+      console.error("Sales Pipeline bulk delete stopped:", error);
+      setDestructiveActionError(`${error?.message || "Bulk delete could not be completed."} No further Work Orders were deleted. If deletion had already started, earlier items may now be in Project Trash and can be recovered there.`);
+    } finally {
+      setSelectedRows(new Set());
+      setBulkDeleteConfirm(false);
+      await loadWorkOrders(false);
+    }
   };
 
   const deleteWorkOrder = async (workOrder) => {
