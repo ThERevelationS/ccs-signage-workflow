@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, Briefcase, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { useAuth } from "@/components/auth/EmailGate";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
@@ -54,7 +55,12 @@ export default function AddTaskDialog({ isOpen, onClose }) {
     try {
       const [usersData, workOrdersData] = await Promise.all([
         AuthorizedEmail.list(),
-        WorkOrder.filter({ completed: false, deleted: { $ne: true } })
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Add Task Work Orders",
+        })
       ]);
       setUsers(usersData);
       setWorkOrders(workOrdersData.sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '')));
