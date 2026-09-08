@@ -144,13 +144,13 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
         </TabsList>
 
         <TabsContent value="excavation_equipment">
-            <EquipmentList items={equipment} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} onDragEnd={(res) => handleDragEnd(res, 'excavation_equipment')} isAdmin={isAdmin} />
+            <EquipmentList items={equipment} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} onDragEnd={(res) => handleDragEnd(res, 'excavation_equipment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
         </TabsContent>
         <TabsContent value="attachment">
-            <EquipmentList items={attachments} subAttachments={subAttachments} equipment={equipment} onEdit={openEdit} onDelete={handleDelete} isAttachment onDragEnd={(res) => handleDragEnd(res, 'attachment')} isAdmin={isAdmin} />
+            <EquipmentList items={attachments} subAttachments={subAttachments} equipment={equipment} onEdit={openEdit} onDelete={handleDelete} isAttachment onDragEnd={(res) => handleDragEnd(res, 'attachment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
         </TabsContent>
         <TabsContent value="sub_attachment">
-            <EquipmentList items={subAttachments} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} isSubAttachment onDragEnd={(res) => handleDragEnd(res, 'sub_attachment')} isAdmin={isAdmin} />
+            <EquipmentList items={subAttachments} attachments={attachments} onEdit={openEdit} onDelete={handleDelete} isSubAttachment onDragEnd={(res) => handleDragEnd(res, 'sub_attachment')} isAdmin={isAdmin} reorderDisabled={isReordering} />
         </TabsContent>
       </Tabs>
 
@@ -163,11 +163,9 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
                     equipment={equipment} 
                     attachments={attachments} 
                     subAttachments={subAttachments} 
-                    onSave={async (data) => {
-                        if (data.id) await FoundationInventoryEntity.update(data.id, data);
-                        else await FoundationInventoryEntity.create(data);
+                    onSave={async () => {
                         setShowForm(false);
-                        loadItems();
+                        await loadItems();
                     }}
                     onCancel={() => setShowForm(false)}
                 />
