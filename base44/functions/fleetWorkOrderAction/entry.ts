@@ -357,6 +357,9 @@ Deno.serve(async (req) => {
       if (patch.maintenance_task_id && ACTIVE_STATUSES.has(created.status)) {
         await Task.update(patch.maintenance_task_id, { status: 'in_progress' });
       }
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        event_type: 'work_order_created', target_id: created.id, event_token: `created:${created.id}`
+      }).catch(() => null);
       return Response.json({ success: true, work_order: created });
     }
 
@@ -494,11 +497,19 @@ Deno.serve(async (req) => {
 
       if (mainClaim.applied) {
         const current = await WorkOrder.get(id);
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          event_type: 'work_order_completed', target_id: id, event_token: current?.completion_receipt_key || completionKey
+        }).catch(() => null);
         return Response.json({ success: true, reused: true, work_order: current });
       }
       if (!mainClaim.owner) {
         const finalized = await finalizeStartedCompletion(base44, Receipt, mainClaim.receipt);
-        if (finalized) return Response.json({ success: true, reused: true, recovered: true, work_order: finalized });
+        if (finalized) {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'work_order_completed', target_id: id, event_token: finalized?.completion_receipt_key || completionKey
+          }).catch(() => null);
+          return Response.json({ success: true, reused: true, recovered: true, work_order: finalized });
+        }
         return Response.json({
           error: 'This completion is already in progress. It was not replayed because one or more side effects are not yet safely reconcilable. Review FleetOperationReceipt before retrying.',
           operation_key: completionKey,
@@ -529,15 +540,28 @@ Deno.serve(async (req) => {
             ...(mainClaim.receipt.result_summary || {}),
             inventory_operations_applied: inventoryPlans.length,
             schedule_result: schedule || null,
-            notifications_sent: 0,
           },
         });
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          event_type: 'work_order_completed', target_id: id, event_token: completionKey
+        }).catch(() => null);
+        for (const plan of inventoryPlans) {
+          const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
+          const item = await entity.get(plan.item_id).catch(() => null);
+          const minimum = num(item?.minimum_stock, NaN);
+          if (item && Number.isFinite(minimum) && plan.before_quantity > minimum && plan.after_quantity <= minimum) {
+            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+              event_type: plan.item_type === 'part' ? 'low_stock_part' : 'low_stock_fluid',
+              target_id: plan.item_id,
+              event_token: plan.operation_key,
+            }).catch(() => null);
+          }
+        }
         return Response.json({
           success: true,
           work_order: completed,
           inventory_operations_applied: inventoryPlans.length,
           schedule: schedule || null,
-          notifications_enabled: false,
         });
       } catch (error) {
         await Receipt.update(mainClaim.receipt.id, { error_message: error?.message || String(error) }).catch(() => null);
