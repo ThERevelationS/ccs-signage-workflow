@@ -275,12 +275,14 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
       const summary = await migrateLegacyInventoryRows(allMetalsRaw, {
         onProgress: setMigrationProgress,
       });
+      const issuePreview = (summary.error_details || []).slice(0, 3).map((issue) => `\n  • ${issue.source_id}: ${issue.message}`).join("");
       alert(
         `Migration complete.\n\n` +
         `  • ${summary.labor_service} → Labor & Services\n` +
         `  • ${summary.sign_parts_supplies} → Sign Parts | Supplies\n` +
         `  • ${summary.substrate} → Substrates\n` +
-        (summary.errors ? `  • ${summary.errors} errors (see console)\n` : "")
+        (summary.recovered ? `  • ${summary.recovered} resumed from existing migration receipts\n` : "") +
+        (summary.errors ? `  • ${summary.errors} errors${issuePreview}${summary.errors > 3 ? "\n  • Additional errors are in the console" : ""}\n` : "")
       );
       await load();
     } catch (e) {
