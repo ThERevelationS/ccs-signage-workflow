@@ -61,6 +61,14 @@
       },
       "description": "Linked FleetEquipment ids."
     },
+    "created_from_request_id": {
+      "type": "string",
+      "description": "FleetPartFluidRequest id that created this inventory row, when applicable."
+    },
+    "receive_receipt_key": {
+      "type": "string",
+      "description": "Deterministic receive receipt key used to prevent duplicate inventory creation on retries."
+    },
     "migration_source_app_id": {
       "type": "string"
     },
