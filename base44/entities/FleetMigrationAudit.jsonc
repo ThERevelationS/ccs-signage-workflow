@@ -1,0 +1,104 @@
+{
+  "name": "FleetMigrationAudit",
+  "type": "object",
+  "description": "Admin-only dry-run, migration, and verification audit snapshots for the FleetMaster to CCS Fleet migration.",
+  "properties": {
+    "run_key": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "dry_run",
+        "migration",
+        "verification"
+      ]
+    },
+    "source_app_id": {
+      "type": "string"
+    },
+    "destination_app_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "passed",
+        "passed_with_findings",
+        "failed"
+      ],
+      "default": "running"
+    },
+    "source_counts": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "destination_counts": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "relationship_checks": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "bouncie_link_checks": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "performed_by": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_key",
+    "mode",
+    "source_app_id",
+    "destination_app_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

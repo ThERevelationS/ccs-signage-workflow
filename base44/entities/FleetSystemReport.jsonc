@@ -1,0 +1,99 @@
+{
+  "name": "FleetSystemReport",
+  "type": "object",
+  "description": "Fleet-scoped bug/feature/change report history. Separate from CCS estimator/workflow report systems.",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "bug_report",
+        "feature_request",
+        "change_request"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "in_review",
+        "in_progress",
+        "completed",
+        "declined"
+      ],
+      "default": "new"
+    },
+    "submitted_by_email": {
+      "type": "string"
+    },
+    "submitted_by_name": {
+      "type": "string"
+    },
+    "attachment_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "type",
+    "submitted_by_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

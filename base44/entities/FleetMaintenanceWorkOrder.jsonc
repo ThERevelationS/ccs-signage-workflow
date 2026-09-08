@@ -1,0 +1,225 @@
+{
+  "name": "FleetMaintenanceWorkOrder",
+  "type": "object",
+  "description": "Fleet maintenance work order. Completely separate from customer/signage WorkOrder and never enters the signage production pipeline.",
+  "properties": {
+    "work_order_number": {
+      "type": "string"
+    },
+    "equipment_id": {
+      "type": "string",
+      "description": "Linked FleetEquipment id when resolvable. Optional so historical orphan work orders can be preserved."
+    },
+    "source_equipment_id": {
+      "type": "string",
+      "description": "Original FleetMaster Equipment id, retained even if the relationship cannot be resolved."
+    },
+    "maintenance_task_id": {
+      "type": "string",
+      "description": "Linked FleetMaintenanceTask id when resolvable."
+    },
+    "source_maintenance_task_id": {
+      "type": "string",
+      "description": "Original FleetMaster MaintenanceTask id."
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "emergency",
+        "inspection",
+        "repair"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "assigned",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "open"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "started_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "projected_completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "actual_hours": {
+      "type": "number"
+    },
+    "parts_used": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part_id": {
+            "type": "string",
+            "description": "Linked FleetPart id when resolvable."
+          },
+          "source_part_id": {
+            "type": "string",
+            "description": "Original FleetMaster Parts id or 'custom' value, retained even when no current inventory row exists."
+          },
+          "part_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "fluids_used": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fluid_id": {
+            "type": "string",
+            "description": "Linked FleetFluid id when resolvable."
+          },
+          "source_fluid_id": {
+            "type": "string",
+            "description": "Original FleetMaster Fluids id or 'custom' value, retained even when no current inventory row exists."
+          },
+          "fluid_name": {
+            "type": "string"
+          },
+          "quantity_quarts": {
+            "type": "number",
+            "description": "Historical FleetMaster field retained verbatim when present."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Normalized usage quantity for future CCS Fleet operations."
+          },
+          "unit": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "corrective_action": {
+      "type": "string"
+    },
+    "before_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "after_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "problem_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "total_cost": {
+      "type": "number"
+    },
+    "completion_receipt_key": {
+      "type": "string",
+      "description": "Idempotency receipt for a completion operation."
+    },
+    "inventory_applied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "schedule_applied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completion_notification_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generation_key": {
+      "type": "string",
+      "description": "Deterministic scheduled-generation key preventing duplicate Fleet work orders."
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_order_number",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

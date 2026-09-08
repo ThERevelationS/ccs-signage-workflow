@@ -7,9 +7,17 @@
       "type": "string",
       "description": "Linked FleetEquipment id."
     },
+    "source_equipment_id": {
+      "type": "string",
+      "description": "Original FleetMaster Equipment id retained for migration audit."
+    },
     "item_id": {
       "type": "string",
       "description": "Linked FleetPart or FleetFluid id when inventory-backed."
+    },
+    "source_item_id": {
+      "type": "string",
+      "description": "Original FleetMaster Parts/Fluids id retained even if that inventory row no longer exists."
     },
     "item_name": {
       "type": "string"
@@ -30,6 +38,10 @@
     "work_order_id": {
       "type": "string",
       "description": "Optional linked FleetMaintenanceWorkOrder id."
+    },
+    "source_work_order_id": {
+      "type": "string",
+      "description": "Original FleetMaster WorkOrder id retained even if no destination link is available."
     },
     "notes": {
       "type": "string"

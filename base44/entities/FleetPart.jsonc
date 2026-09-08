@@ -1,0 +1,89 @@
+{
+  "name": "FleetPart",
+  "type": "object",
+  "description": "Fleet-specific parts inventory. Separate from all signage/master/estimator inventories. Category is intentionally open-text so historical FleetMaster values are preserved exactly.",
+  "properties": {
+    "part_name": {
+      "type": "string"
+    },
+    "part_number": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "description": "Canonical or historical Fleet category. Historical values are preserved exactly during migration."
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "quantity_on_hand": {
+      "type": "number",
+      "default": 0
+    },
+    "minimum_stock": {
+      "type": "number",
+      "default": 1,
+      "minimum": 0
+    },
+    "unit_cost": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "enable_low_stock_alerts": {
+      "type": "boolean",
+      "default": true
+    },
+    "compatible_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Linked FleetEquipment ids."
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "part_name",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

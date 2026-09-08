@@ -1,0 +1,70 @@
+{
+  "name": "FleetSystemLog",
+  "type": "object",
+  "description": "Fleet-scoped system/automation audit log. Separate from CCS workflow/system logs.",
+  "properties": {
+    "source": {
+      "type": "string"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "info",
+        "error",
+        "warning"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "level",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

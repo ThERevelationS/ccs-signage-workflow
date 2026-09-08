@@ -1,0 +1,75 @@
+{
+  "name": "FleetMigrationMap",
+  "type": "object",
+  "description": "Idempotent source-to-destination mapping for FleetMaster migration into CCS Fleet. Separate from SignEstimate legacy migration history.",
+  "properties": {
+    "source_app_id": {
+      "type": "string"
+    },
+    "source_entity": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "target_entity": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "migrated",
+        "skipped",
+        "error"
+      ],
+      "default": "planned"
+    },
+    "source_created_date": {
+      "type": "string"
+    },
+    "source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_app_id",
+    "source_entity",
+    "source_id",
+    "target_entity"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
