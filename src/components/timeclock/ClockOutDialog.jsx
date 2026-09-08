@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -67,7 +68,12 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const searchWorkOrders = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await WorkOrder.filter({ completed: false, deleted: { $ne: true } });
+      const allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { completed: false, deleted: { $ne: true } },
+        sort: "created_date",
+        label: "Clock Out Work Orders",
+      });
       const search = searchTerm.toLowerCase();
       const filtered = allWorkOrders.filter(wo => {
         const searchable = [wo.title, wo.client_name, wo.description].filter(Boolean).join(' ').toLowerCase();
