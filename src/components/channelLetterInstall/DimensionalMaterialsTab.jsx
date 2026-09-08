@@ -191,6 +191,7 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
     if (saveRef.current || loadError || changedMaterials.length === 0) return;
     saveRef.current = true;
     setSaving(true);
+    let confirmed = 0;
     try {
       const existingChanged = changedMaterials.filter((m) => m.id && !m._isNew);
       const liveRows = await Promise.all(existingChanged.map((m) => DimensionalLetterMaterial.get(m.id)));
@@ -207,7 +208,6 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
 
       const liveById = new Map(existingChanged.map((m, index) => [m.id, liveRows[index]]));
       const completed = [];
-      let confirmed = 0;
       for (const m of changedMaterials) {
         const data = stripMaterialMeta(m);
         try {
@@ -244,6 +244,7 @@ export default function DimensionalMaterialsTab({ visibilityScope } = {}) {
       await load();
     } catch (e) {
       toast({ variant: "destructive", description: "Save failed: " + e.message });
+      if (confirmed > 0) await load();
     } finally {
       saveRef.current = false;
       setSaving(false);
