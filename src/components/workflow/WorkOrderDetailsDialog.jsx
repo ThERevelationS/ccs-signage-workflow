@@ -75,6 +75,7 @@ import ProjectHealthBadge, { calculateProjectHealth } from "./ProjectHealthBadge
 import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -114,6 +115,8 @@ export default function WorkOrderDetailsDialog({
 }) {
   const { currentUser } = useAuth();
   const [allWorkOrders, setAllWorkOrders] = useState([]);
+  const [relatedDataReadError, setRelatedDataReadError] = useState("");
+  const [relatedDataVerified, setRelatedDataVerified] = useState(false);
   const [riders, setRiders] = useState([]);
   const [parentWorkOrder, setParentWorkOrder] = useState(null);
   const [dependencies, setDependencies] = useState([]);
@@ -165,25 +168,46 @@ export default function WorkOrderDetailsDialog({
   };
 
   const loadRelatedData = async () => {
-    const all = await WorkOrder.filter({ completed: false });
-    setAllWorkOrders(all);
+    setRelatedDataReadError("");
+    setRelatedDataVerified(false);
+    try {
+      const all = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { completed: false },
+        sort: "created_date",
+        label: "Work Order Details related Work Orders"
+      });
+      setAllWorkOrders(all);
 
-    // Find riders
-    if (!workOrder.is_rider) {
-      const foundRiders = all.filter(
-        (wo) => wo.parent_work_order_id === workOrder.id && wo.is_rider
-      );
-      setRiders(foundRiders);
+      // Find riders
+      if (!workOrder.is_rider) {
+        const foundRiders = all.filter(
+          (wo) => wo.parent_work_order_id === workOrder.id && wo.is_rider
+        );
+        setRiders(foundRiders);
+      } else {
+        setRiders([]);
+      }
+
+      // Find parent
+      if (workOrder.is_rider && workOrder.parent_work_order_id) {
+        const parent = all.find((wo) => wo.id === workOrder.parent_work_order_id);
+        setParentWorkOrder(parent || null);
+      } else {
+        setParentWorkOrder(null);
+      }
+
+      // Load dependencies (from workOrder data)
+      setDependencies(workOrder.dependencies || []);
+      setRelatedDataVerified(true);
+    } catch (error) {
+      console.error("Could not verify related Work Orders:", error);
+      setAllWorkOrders([]);
+      setRiders([]);
+      setParentWorkOrder(null);
+      setDependencies(workOrder.dependencies || []);
+      setRelatedDataReadError(error?.message || "Related Work Orders could not be verified completely.");
     }
-
-    // Find parent
-    if (workOrder.is_rider && workOrder.parent_work_order_id) {
-      const parent = all.find((wo) => wo.id === workOrder.parent_work_order_id);
-      setParentWorkOrder(parent);
-    }
-
-    // Load dependencies (from workOrder data)
-    setDependencies(workOrder.dependencies || []);
   };
 
   const handleAddDependency = async () => {
@@ -601,9 +625,22 @@ export default function WorkOrderDetailsDialog({
   };
 
   const handleDeleteWorkOrder = async () => {
-    if (riders.length > 0) {
-      alert("Cannot delete: This work order has active riders. Delete riders first.");
-      return;
+    if (!workOrder.is_rider) {
+      try {
+        const attachedRiders = await WorkOrder.filter({
+          parent_work_order_id: workOrder.id,
+          is_rider: true,
+          completed: false
+        });
+        if (attachedRiders.length > 0) {
+          alert("Cannot delete: This work order has active riders. Delete riders first.");
+          return;
+        }
+      } catch (error) {
+        console.error("Could not verify attached riders before delete:", error);
+        alert("Attached riders could not be verified. Delete was not opened. Please retry.");
+        return;
+      }
     }
     setShowDeleteDialog(true);
   };
@@ -759,6 +796,13 @@ export default function WorkOrderDetailsDialog({
               </div>
             </div>
           </div>
+
+          {relatedDataReadError && (
+            <div className="mx-6 mt-3 px-3 py-2 border border-red-200 bg-red-50 rounded-lg flex items-center justify-between gap-3 text-xs text-red-800 flex-shrink-0">
+              <span>Related Work Orders could not be verified completely. Rider/parent context and duplicate checking are unavailable.</span>
+              <Button variant="outline" size="sm" className="h-7" onClick={loadRelatedData}>Retry</Button>
+            </div>
+          )}
 
           {/* Work Notes - Spreadsheet Style, Full Width */}
           <div className="px-6 py-3 border-b border-gray-200 flex-shrink-0">
@@ -1636,6 +1680,8 @@ export default function WorkOrderDetailsDialog({
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
+                      disabled={!relatedDataVerified}
+                      title={!relatedDataVerified ? "Related Work Orders must be verified before duplicate checking is available." : undefined}
                       onClick={() => {
                         // Copy all fields from current work order for duplicating
                         const { id, created_date, updated_date, created_by, notes, work_notes, follow_up, ...dataWithoutId } = workOrder;
