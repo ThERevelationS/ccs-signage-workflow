@@ -27,6 +27,7 @@ export default function ProjectTrash() {
   const [deletedProjects, setDeletedProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -41,6 +42,7 @@ export default function ProjectTrash() {
   const loadDeletedProjects = async () => {
     setIsLoading(true);
     setReadError("");
+    setActionError("");
     try {
       const deleted = await loadAllEntityRows({
         entity: WorkOrder,
@@ -68,7 +70,7 @@ export default function ProjectTrash() {
       setRecoverConfirm(null);
     } catch (error) {
       console.error("Could not recover deleted Work Order:", error);
-      setReadError(error?.message || "The deleted Work Order changed after trash was loaded. Reload trash before recovering it.");
+      setActionError(error?.message || "The deleted Work Order changed after trash was loaded. Reload trash before recovering it.");
       setRecoverConfirm(null);
     }
   };
@@ -138,6 +140,18 @@ export default function ProjectTrash() {
 
   return (
     <div className="space-y-4">
+      {actionError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+          <div>
+            <div className="font-medium">Project Trash action blocked</div>
+            <div className="mt-1 text-xs">{actionError}</div>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={loadDeletedProjects} className="shrink-0 border-red-300 bg-white text-red-800">
+            Reload trash
+          </Button>
+        </div>
+      )}
+
       {/* Bulk Delete Progress */}
       {bulkDeleteProgress.active && (
         <div className="clay-card p-4 mb-4">
