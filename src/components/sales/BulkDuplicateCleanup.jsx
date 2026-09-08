@@ -174,7 +174,6 @@ export default function BulkDuplicateCleanup() {
   const loadAndGroup = async () => {
     setLoading(true);
     setReadError("");
-    setActionError("");
     try {
       const all = await loadAllEntityRows({
         entity: WorkOrder,
@@ -346,7 +345,7 @@ export default function BulkDuplicateCleanup() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={loadAndGroup} className="h-8 text-xs">
+          <Button size="sm" variant="ghost" onClick={async () => { setActionError(""); await loadAndGroup(); }} className="h-8 text-xs">
             <RefreshCw className="w-3 h-3 mr-1" /> Refresh
           </Button>
           <Button size="sm" variant="destructive" onClick={handleDeleteAllExtras} disabled={deletingAll} className="h-8 text-xs">
