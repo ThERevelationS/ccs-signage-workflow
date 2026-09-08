@@ -113,6 +113,14 @@ function DuplicateGroup({ group, onResolved }) {
         </div>
       </div>
 
+      {actionError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+          <div className="font-medium">Duplicate cleanup action blocked or stopped</div>
+          <div className="mt-1">{actionError}</div>
+          <Button type="button" size="sm" variant="outline" className="mt-2 h-7 border-red-300 bg-white text-red-800" onClick={() => setActionError("")}>Dismiss</Button>
+        </div>
+      )}
+
       {expanded && (
         <div className="space-y-2 mt-2">
           {sorted.map((wo, idx) => {
@@ -160,11 +168,13 @@ export default function BulkDuplicateCleanup() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [readError, setReadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [deletingAll, setDeletingAll] = useState(false);
 
   const loadAndGroup = async () => {
     setLoading(true);
     setReadError("");
+    setActionError("");
     try {
       const all = await loadAllEntityRows({
         entity: WorkOrder,
@@ -252,29 +262,45 @@ export default function BulkDuplicateCleanup() {
   const handleDeleteAllExtras = async () => {
     if (readError) return;
     setDeletingAll(true);
+    setActionError("");
+    const allGroupedRecords = groups.flat();
     const toDeleteAll = [];
     for (const group of groups) {
       const sorted = [...group].sort((a, b) => scoreRecord(b) - scoreRecord(a));
       toDeleteAll.push(...sorted.slice(1));
     }
 
-    const BATCH_SIZE = 5;
-    const DELAY_MS = 600;
-    let count = 0;
-    for (let i = 0; i < toDeleteAll.length; i += BATCH_SIZE) {
-      const batch = toDeleteAll.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(wo =>
-        WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup_all' })
-      ));
-      count += batch.length;
-      if (i + BATCH_SIZE < toDeleteAll.length) {
-        await new Promise(r => setTimeout(r, DELAY_MS));
+    const deletedIds = [];
+    try {
+      // Preflight every loaded record, including each record chosen to keep. A change
+      // to a kept record could change duplicate scoring and therefore which row is safest to retain.
+      for (const wo of allGroupedRecords) {
+        const latest = await WorkOrder.get(wo.id);
+        if (!latest?.id || latest.deleted === true || latest.updated_date !== wo.updated_date) {
+          throw new Error(`Auto-clean was blocked because ${wo.client_name || wo.title || wo.id} changed after duplicate cleanup was loaded.`);
+        }
       }
-    }
 
-    setDeletingAll(false);
-    await loadAndGroup();
-    alert(`Done! Deleted ${count} duplicate records.`);
+      for (const wo of toDeleteAll) {
+        await softDeleteWorkOrderFromLoadedSnapshot({
+          workOrder: wo,
+          deletedBy: "bulk_dedup_all",
+          label: "Duplicate cleanup auto-clean",
+        });
+        deletedIds.push(wo.id);
+      }
+
+      alert(`Done! Moved ${deletedIds.length} duplicate record${deletedIds.length === 1 ? "" : "s"} to Project Trash.`);
+    } catch (error) {
+      console.error("Duplicate cleanup auto-clean stopped:", error);
+      const progress = deletedIds.length > 0
+        ? ` ${deletedIds.length} duplicate record${deletedIds.length === 1 ? " was" : "s were"} already moved to Project Trash before auto-clean stopped; they can be recovered there.`
+        : " No duplicate records were deleted.";
+      setActionError(`${error?.message || "Auto-clean could not be completed."}${progress}`);
+    } finally {
+      setDeletingAll(false);
+      await loadAndGroup();
+    }
   };
 
   if (loading) {
