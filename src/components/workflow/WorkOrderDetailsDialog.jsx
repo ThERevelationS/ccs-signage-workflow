@@ -1815,7 +1815,9 @@ export default function WorkOrderDetailsDialog({
         isOpen={showTemplateDialog}
         onClose={() => setShowTemplateDialog(false)}
         onUseTemplate={async (template) => {
-          const newTasks = template.tasks.map(t => ({
+          const templateBatchId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+          const newTasks = template.tasks.map((t, taskIndex) => ({
+            id: `template_${templateBatchId}_${taskIndex}`,
             text: t.text,
             timestamp: new Date().toISOString(),
             created_by: "Template",
@@ -1826,12 +1828,19 @@ export default function WorkOrderDetailsDialog({
               details: (typeof st === 'object' && st.details) ? st.details.map(d => ({ text: d, completed: false })) : []
             }))
           }));
-          const updatedTasks = [...tasks, ...newTasks];
-          // Optimistic update - update UI immediately without full refresh
-          Object.assign(workOrder, { notes: updatedTasks });
+          const newTaskIds = new Set(newTasks.map((task) => task.id));
+          const saved = await mutateWorkOrderArrayField({
+            workOrderId: workOrder.id,
+            field: "notes",
+            label: "Work Order template tasks",
+            mutate: (currentTasks) => {
+              const existingIds = new Set(currentTasks.map((task) => task?.id).filter(Boolean));
+              const missing = newTasks.filter((task) => newTaskIds.has(task.id) && !existingIds.has(task.id));
+              return missing.length > 0 ? [...currentTasks, ...missing] : currentTasks;
+            },
+          });
+          Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
           setShowTemplateDialog(false);
-          // Then persist to database (don't call onUpdate to avoid page refresh)
-          await WorkOrder.update(workOrder.id, { notes: updatedTasks });
         }}
       />
 
