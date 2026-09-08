@@ -10,6 +10,7 @@ import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -201,8 +202,20 @@ export default function Permitting() {
           created_by: currentUser?.full_name || currentUser?.email || "System",
           sub_tasks: []
         };
-        const existingNotes = wo.work_notes || [];
-        await WorkOrder.update(wo.id, { work_notes: [...existingNotes, newNote] });
+        const saved = await mutateWorkOrderArrayField({
+          workOrderId: wo.id,
+          field: "work_notes",
+          label: "Permitting Work Order notes",
+          mutate: (currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
+            ? currentNotes
+            : [...currentNotes, newNote],
+        });
+        setWorkOrders(prev => prev.map((row) => row.id === wo.id
+          ? { ...row, work_notes: saved.work_notes || [], updated_date: saved.updated_date }
+          : row));
+        setSelectedWorkOrder(prev => prev?.id === wo.id
+          ? { ...prev, work_notes: saved.work_notes || [], updated_date: saved.updated_date }
+          : prev);
       }
     }
   }, [lineItems, workOrders, currentUser]);
