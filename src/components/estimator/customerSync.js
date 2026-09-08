@@ -4,6 +4,7 @@ import { localDateStamp } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -127,8 +128,16 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
   const fields = customerFieldsFromEstimate(form, changedKeys);
   const existing = await resolveCustomerForEstimate(form, customers);
   if (existing) {
-    if (Object.keys(fields).length) await base44.entities.Customer.update(existing.id, fields);
-    return { ...existing, ...fields };
+    if (Object.keys(fields).length) {
+      return replaceCustomerFieldsIfUnchanged({
+        entity: base44.entities.Customer,
+        customerId: existing.id,
+        expectedFields: expectedCustomerFields(existing, fields),
+        nextFields: fields,
+        label: "Estimate Customer synchronization",
+      });
+    }
+    return existing;
   }
   const response = await base44.functions.invoke("ensureEstimateCustomer", {
     company_name: name,
