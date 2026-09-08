@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -121,11 +122,19 @@ function DuplicateGroup({ group, onResolved }) {
 export default function BulkDuplicateCleanup() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [deletingAll, setDeletingAll] = useState(false);
 
   const loadAndGroup = async () => {
     setLoading(true);
-    const all = await WorkOrder.filter({ deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } });
+    setReadError("");
+    try {
+      const all = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } },
+        sort: "created_date",
+        label: "Duplicate Cleanup Work Orders",
+      });
 
     // Normalize: strip punctuation, collapse whitespace
     const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
@@ -183,9 +192,15 @@ export default function BulkDuplicateCleanup() {
     }
 
     // Sort by most duplicates first
-    dupGroups.sort((a, b) => b.length - a.length);
-    setGroups(dupGroups);
-    setLoading(false);
+      dupGroups.sort((a, b) => b.length - a.length);
+      setGroups(dupGroups);
+    } catch (error) {
+      console.error("Error verifying duplicate cleanup data:", error);
+      setGroups([]);
+      setReadError(error?.message || "Duplicate Cleanup Work Orders could not be verified completely.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadAndGroup(); }, []);
@@ -198,6 +213,7 @@ export default function BulkDuplicateCleanup() {
   };
 
   const handleDeleteAllExtras = async () => {
+    if (readError) return;
     setDeletingAll(true);
     const toDeleteAll = [];
     for (const group of groups) {
@@ -229,6 +245,17 @@ export default function BulkDuplicateCleanup() {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-5 h-5 animate-spin text-orange-500 mr-2" />
         <span className="text-sm text-gray-500">Scanning for duplicates...</span>
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="text-center py-10">
+        <AlertTriangle className="w-9 h-9 mx-auto mb-2 text-red-500" />
+        <p className="text-sm font-bold text-red-700">Duplicate cleanup data could not be verified.</p>
+        <p className="text-xs text-red-600 mt-1">{readError}</p>
+        <Button size="sm" variant="outline" className="mt-3" onClick={loadAndGroup}>Retry</Button>
       </div>
     );
   }
