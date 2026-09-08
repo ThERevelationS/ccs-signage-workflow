@@ -604,11 +604,14 @@ export default function EstimateDetail() {
         await syncEstimateEverywhere(current, { previousEstimateStatus: "", syncCustomer: false });
       } catch (syncError) {
         const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
-        const errorResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-          pipeline_sync_pending: true,
-          pipeline_sync_error: message,
-        }).catch(() => null);
-        const failed = errorResult?.updated_date ? errorResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => current);
+        const failed = await saveEstimateFieldsSafely({
+          baseline: current,
+          nextFields: {
+            pipeline_sync_pending: true,
+            pipeline_sync_error: message,
+          },
+          label: "Estimate pipeline retry failure marker",
+        }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => current);
         const failedState = { ...current, ...(failed || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
         await rememberServerVersion(failedState);
         setEstimate(failedState);
@@ -617,11 +620,14 @@ export default function EstimateDetail() {
         return;
       }
 
-      const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-        pipeline_sync_pending: false,
-        pipeline_sync_error: "",
+      const cleared = await saveEstimateFieldsSafely({
+        baseline: current,
+        nextFields: {
+          pipeline_sync_pending: false,
+          pipeline_sync_error: "",
+        },
+        label: "Estimate pipeline retry success cleanup",
       });
-      const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
       const saved = { ...current, ...(cleared || {}), pipeline_sync_pending: false, pipeline_sync_error: "" };
       await rememberServerVersion(saved);
       setEstimate(saved);
