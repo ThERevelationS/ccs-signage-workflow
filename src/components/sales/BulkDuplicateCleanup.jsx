@@ -335,6 +335,18 @@ export default function BulkDuplicateCleanup() {
 
   return (
     <div className="space-y-4">
+      {actionError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+          <div>
+            <div className="font-medium">Duplicate auto-clean blocked or stopped</div>
+            <div className="mt-1 text-xs">{actionError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setActionError(""); await loadAndGroup(); }}>
+            Refresh duplicate list
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <p className="text-sm font-semibold text-orange-700">
