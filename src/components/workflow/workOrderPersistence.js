@@ -38,6 +38,58 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
+export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, label = "Work Order", maxAttempts = 3 }) {
+  const entity = base44.entities.WorkOrder;
+  const id = String(workOrderId || "").trim();
+  const fieldName = String(field || "").trim();
+  if (!id || !fieldName || typeof mutate !== "function" || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} could not initialize its concurrency-safe array update.`);
+  }
+
+  const attempts = Math.max(1, Math.min(5, Number(maxAttempts) || 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = await entity.get(id);
+    if (!current?.id) throw new Error(`${label} could not be verified before updating ${fieldName}.`);
+    const expectedUpdatedAt = String(current.updated_date || "").trim();
+    if (!expectedUpdatedAt) throw new Error(`${label} is missing its loaded version. Reload it before saving.`);
+
+    const currentArray = current[fieldName] == null ? [] : current[fieldName];
+    if (!Array.isArray(currentArray)) {
+      throw new Error(`${label} ${fieldName} data is not an array. No change was made.`);
+    }
+    const nextArray = mutate(currentArray, current);
+    if (!Array.isArray(nextArray)) {
+      throw new Error(`${label} ${fieldName} update did not produce a valid array.`);
+    }
+    if (sameValue(currentArray, nextArray)) return current;
+
+    let result;
+    try {
+      result = await entity.updateMany(
+        { id, updated_date: expectedUpdatedAt },
+        { $set: { [fieldName]: nextArray } },
+      );
+    } catch (error) {
+      const afterError = await entity.get(id).catch(() => null);
+      if (afterError && sameValue(afterError[fieldName] ?? [], nextArray)) return afterError;
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== "number") {
+      throw new Error(`${label} conditional array-update result could not be verified.`);
+    }
+    if (result.updated === 1) {
+      const saved = await entity.get(id).catch(() => null);
+      if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+      return saved;
+    }
+    // Another session changed the Work Order after our preflight read. Re-read
+    // and re-apply the caller's deterministic array mutation to the latest value.
+  }
+
+  throw new Error(`${label} changed repeatedly in another session. Reload it before saving.`);
+}
+
 export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, label = "Work Order" }) {
   const entity = base44.entities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
