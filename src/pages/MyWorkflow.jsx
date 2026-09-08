@@ -18,6 +18,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  softDeleteWorkOrderFromLoadedSnapshot,
   transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
 
@@ -902,11 +903,17 @@ export default function MyWorkflow() {
             loadMyWorkOrders();
           }}
           onDelete={async (wo) => {
-            await WorkOrder.update(wo.id, {
-              deleted: true,
-              deleted_at: new Date().toISOString(),
-              deleted_by: "user"
-            });
+            try {
+              const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                deletedBy: currentUser?.email || "unknown",
+                label: "My Workflow details Work Order delete",
+              });
+              Object.assign(wo, deleted);
+            } catch (error) {
+              console.error("Error deleting My Workflow Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+            }
             loadMyWorkOrders();
           }}
         />
