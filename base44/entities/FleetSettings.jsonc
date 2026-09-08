@@ -34,6 +34,35 @@
       "type": "string",
       "description": "Optional CCS Fleet base URL used in notification links after cutover."
     },
+    "source_freeze_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Cutover guard. True only after FleetMaster writes/automations have been intentionally frozen and a final source delta check is complete."
+    },
+    "source_freeze_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_freeze_confirmed_by": {
+      "type": "string"
+    },
+    "source_freeze_notes": {
+      "type": "string"
+    },
+    "cutover_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cutover_started_by": {
+      "type": "string"
+    },
+    "cutover_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cutover_completed_by": {
+      "type": "string"
+    },
     "work_order_creation_emails": {
       "type": "array",
       "items": {
