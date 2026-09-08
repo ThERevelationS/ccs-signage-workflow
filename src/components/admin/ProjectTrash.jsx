@@ -19,6 +19,11 @@ import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { restoreWorkOrderFromLoadedTrashSnapshot } from "@/components/workflow/workOrderPersistence";
+import {
+  assertSystemResetCatalogStable,
+  permanentlyDeleteTrashWorkOrderFromLoadedSnapshot,
+  permanentlyDeleteWorkOrderFromLoadedSnapshot,
+} from "@/components/admin/projectTrashPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
@@ -30,7 +35,9 @@ export default function ProjectTrash() {
   const [actionError, setActionError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
+  const [permanentDeleteBusy, setPermanentDeleteBusy] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
   const [bulkDeletePassword, setBulkDeletePassword] = useState("");
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState({ active: false, current: 0, total: 0 });
@@ -76,48 +83,133 @@ export default function ProjectTrash() {
   };
 
   const handlePermanentDelete = async () => {
-    await WorkOrder.delete(permanentDeleteConfirm.id);
-    setDeletedProjects(deletedProjects.filter(p => p.id !== permanentDeleteConfirm.id));
-    setPermanentDeleteConfirm(null);
+    const target = permanentDeleteConfirm;
+    if (!target || permanentDeleteBusy) return;
+
+    setActionError("");
+    setPermanentDeleteBusy(true);
+    try {
+      await permanentlyDeleteTrashWorkOrderFromLoadedSnapshot({
+        entity: WorkOrder,
+        workOrder: target,
+        label: "Project Trash permanent delete",
+      });
+      setDeletedProjects((current) => current.filter((project) => project.id !== target.id));
+      setPermanentDeleteConfirm(null);
+    } catch (error) {
+      console.error("Could not permanently delete Work Order:", error);
+      setActionError(error?.message || "Permanent deletion was blocked because the Work Order could not be verified safely. Reload trash before retrying.");
+      setPermanentDeleteConfirm(null);
+    } finally {
+      setPermanentDeleteBusy(false);
+    }
   };
 
   const handleBulkDeleteAllClients = async () => {
+    if (bulkDeleteBusy) return;
     if (bulkDeletePassword !== SYSTEM_RESET_PASSWORD) {
       setBulkDeleteError("Incorrect password");
       return;
     }
-    setBulkDeleteError("");
 
-    // Verify the COMPLETE Work Order catalog before any destructive system-reset delete.
-    let allWorkOrders;
+    setBulkDeleteError("");
+    setActionError("");
+    setBulkDeleteBusy(true);
+
+    // System Reset is intentionally irreversible. Build and verify the COMPLETE
+    // Work Order snapshot twice before deleting anything, then condition every
+    // individual hard delete on that row's exact verified updated_date.
+    let verifiedWorkOrders;
     try {
-      allWorkOrders = await loadAllEntityRows({
+      const loadedWorkOrders = await loadAllEntityRows({
         entity: WorkOrder,
         sort: "created_date",
         label: "System Reset Work Orders",
       });
+      verifiedWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "created_date",
+        label: "System Reset verification Work Orders",
+      });
+      assertSystemResetCatalogStable({
+        loaded: loadedWorkOrders,
+        verified: verifiedWorkOrders,
+        label: "System Reset preflight",
+      });
     } catch (error) {
       console.error("Could not verify all Work Orders for system reset:", error);
-      setBulkDeleteError(error?.message || "All Work Orders could not be verified. Nothing was deleted.");
+      setBulkDeleteError(error?.message || "All Work Orders could not be verified. Nothing was permanently deleted.");
+      setBulkDeleteBusy(false);
       return;
     }
 
     setBulkDeleteConfirm(false);
-    setBulkDeleteProgress({ active: true, current: 0, total: allWorkOrders.length });
-    
-    for (let i = 0; i < allWorkOrders.length; i++) {
-      try {
-        await WorkOrder.delete(allWorkOrders[i].id);
-      } catch (e) {
-        // skip already-deleted or not-found records
+    setBulkDeleteProgress({ active: true, current: 0, total: verifiedWorkOrders.length });
+
+    let confirmedAbsent = 0;
+    let deletedNow = 0;
+    let convergedAbsent = 0;
+    try {
+      for (let i = 0; i < verifiedWorkOrders.length; i += 1) {
+        const result = await permanentlyDeleteWorkOrderFromLoadedSnapshot({
+          entity: WorkOrder,
+          workOrder: verifiedWorkOrders[i],
+          label: `System Reset Work Order ${i + 1} of ${verifiedWorkOrders.length}`,
+        });
+        confirmedAbsent += 1;
+        if (result.status === "deleted_now") deletedNow += 1;
+        else convergedAbsent += 1;
+        setBulkDeleteProgress({ active: true, current: confirmedAbsent, total: verifiedWorkOrders.length });
+        if (i < verifiedWorkOrders.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
       }
-      setBulkDeleteProgress({ active: true, current: i + 1, total: allWorkOrders.length });
-      await new Promise(r => setTimeout(r, 300));
+    } catch (error) {
+      console.error("System Reset stopped before completing:", error);
+      setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
+      setBulkDeletePassword("");
+      setBulkDeleteBusy(false);
+      await loadDeletedProjects();
+      const notConfirmed = verifiedWorkOrders.length - confirmedAbsent;
+      setActionError(
+        `System Reset stopped safely after ${confirmedAbsent} of ${verifiedWorkOrders.length} Work Orders were confirmed absent. ` +
+        `${deletedNow} were permanently deleted by this run${convergedAbsent ? ` and ${convergedAbsent} were independently confirmed already absent` : ""}. ` +
+        `${notConfirmed} Work Order${notConfirmed === 1 ? " was" : "s were"} not confirmed deleted and will not be skipped automatically. ` +
+        `${error?.message || "A Work Order changed or the deletion outcome could not be verified."}`
+      );
+      return;
     }
-    
-    setBulkDeleteProgress({ active: false, current: 0, total: 0 });
+
+    let remainingWorkOrders;
+    try {
+      remainingWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "created_date",
+        label: "System Reset final Work Order verification",
+      });
+    } catch (error) {
+      console.error("Could not verify final Work Order catalog after system reset:", error);
+      setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
+      setBulkDeletePassword("");
+      setBulkDeleteBusy(false);
+      await loadDeletedProjects();
+      setActionError(
+        `All ${confirmedAbsent} preflight Work Orders were processed, but the final Work Order catalog could not be verified. ` +
+        `Do not assume System Reset is complete. ${error?.message || "Reload and verify the catalog before retrying."}`
+      );
+      return;
+    }
+
+    setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
     setBulkDeletePassword("");
-    loadDeletedProjects();
+    setBulkDeleteBusy(false);
+    await loadDeletedProjects();
+    if (remainingWorkOrders.length > 0) {
+      setActionError(
+        `System Reset did not delete Work Orders created or changed outside the verified reset snapshot. ` +
+        `${remainingWorkOrders.length} Work Order${remainingWorkOrders.length === 1 ? " remains" : "s remain"}. Review the current catalog and run a new confirmed reset only if those records should also be permanently deleted.`
+      );
+    }
   };
 
   if (isLoading) {
@@ -159,7 +251,7 @@ export default function ProjectTrash() {
             <span className="text-sm font-medium text-red-600">Deleting all clients...</span>
             <span className="text-xs text-gray-500">{bulkDeleteProgress.current} / {bulkDeleteProgress.total}</span>
           </div>
-          <Progress value={(bulkDeleteProgress.current / bulkDeleteProgress.total) * 100} className="h-2" />
+          <Progress value={bulkDeleteProgress.total ? (bulkDeleteProgress.current / bulkDeleteProgress.total) * 100 : 0} className="h-2" />
         </div>
       )}
 
@@ -174,7 +266,7 @@ export default function ProjectTrash() {
           variant="destructive"
           size="sm"
           onClick={() => setBulkDeleteConfirm(true)}
-          disabled={bulkDeleteProgress.active}
+          disabled={bulkDeleteBusy || bulkDeleteProgress.active}
           className="bg-red-600 hover:bg-red-700"
         >
           <Lock className="w-4 h-4 mr-2" />
@@ -210,6 +302,7 @@ export default function ProjectTrash() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setRecoverConfirm(project)}
+                  disabled={bulkDeleteBusy || permanentDeleteBusy}
                   className="text-green-600 hover:text-green-700"
                 >
                   <RotateCcw className="w-4 h-4 mr-1" />
@@ -219,6 +312,7 @@ export default function ProjectTrash() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setPermanentDeleteConfirm(project)}
+                  disabled={bulkDeleteBusy || permanentDeleteBusy}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
@@ -249,7 +343,7 @@ export default function ProjectTrash() {
       </AlertDialog>
 
       {/* Permanent Delete Confirmation */}
-      <AlertDialog open={!!permanentDeleteConfirm} onOpenChange={() => setPermanentDeleteConfirm(null)}>
+      <AlertDialog open={!!permanentDeleteConfirm} onOpenChange={(open) => { if (!open && !permanentDeleteBusy) setPermanentDeleteConfirm(null); }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">Permanently Delete?</AlertDialogTitle>
@@ -260,16 +354,21 @@ export default function ProjectTrash() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePermanentDelete} className="bg-red-600 text-white">
-              Permanently Delete
+            <AlertDialogCancel className="clay-button" disabled={permanentDeleteBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePermanentDelete} disabled={permanentDeleteBusy} className="bg-red-600 text-white">
+              {permanentDeleteBusy ? "Verifying..." : "Permanently Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Bulk Delete All Clients Confirmation */}
-      <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => { setBulkDeleteConfirm(open); setBulkDeletePassword(""); setBulkDeleteError(""); }}>
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => {
+        if (bulkDeleteBusy) return;
+        setBulkDeleteConfirm(open);
+        setBulkDeletePassword("");
+        setBulkDeleteError("");
+      }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600 flex items-center gap-2">
@@ -293,9 +392,9 @@ export default function ProjectTrash() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <Button onClick={handleBulkDeleteAllClients} className="bg-red-600 text-white hover:bg-red-700">
-              Delete All Clients
+            <AlertDialogCancel className="clay-button" disabled={bulkDeleteBusy}>Cancel</AlertDialogCancel>
+            <Button onClick={handleBulkDeleteAllClients} disabled={bulkDeleteBusy} className="bg-red-600 text-white hover:bg-red-700">
+              {bulkDeleteBusy ? "Verifying Complete Catalog..." : "Delete All Clients"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
