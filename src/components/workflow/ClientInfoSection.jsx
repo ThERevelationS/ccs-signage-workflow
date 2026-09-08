@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2, Loader2 } from "lucide-react";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
@@ -32,6 +33,13 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [products, setProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
   const [productsChanged, setProductsChanged] = useState(false);
+  const [productsNeedMigration, setProductsNeedMigration] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [reloading, setReloading] = useState(false);
+  const fieldBaselinesRef = useRef({});
+  const loadedProductsSnapshotRef = useRef(undefined);
+
+  const cloneValue = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
   // Load product types and initialize products
   useEffect(() => {
