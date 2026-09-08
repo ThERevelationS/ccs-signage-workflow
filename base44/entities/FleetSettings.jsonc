@@ -10,6 +10,30 @@
       "type": "string",
       "default": "general"
     },
+    "maintenance_generation_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master cutover switch for CCS automatic Fleet maintenance work-order generation."
+    },
+    "notifications_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master switch for Fleet operational notification emails."
+    },
+    "scheduled_reminders_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master switch for daily Fleet reminder digests."
+    },
+    "public_reporting_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master switch for anonymous Fleet issue reporting endpoint."
+    },
+    "fleet_app_base_url": {
+      "type": "string",
+      "description": "Optional CCS Fleet base URL used in notification links after cutover."
+    },
     "work_order_creation_emails": {
       "type": "array",
       "items": {
