@@ -352,6 +352,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         clearTimeout(debounceTimers.current[id]);
         delete debounceTimers.current[id];
       }
+      delete pendingChangesRef.current[id];
       await WorkOrder.update(id, {
         deleted: true,
         deleted_at: new Date().toISOString(),
@@ -375,11 +376,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       clearTimeout(debounceTimers.current[orderId]);
       delete debounceTimers.current[orderId];
     }
-    setPendingChanges(prev => {
-      const updated = { ...prev };
-      delete updated[orderId];
-      return updated;
-    });
+    delete pendingChangesRef.current[orderId];
     
     await WorkOrder.update(orderId, {
       deleted: true,
