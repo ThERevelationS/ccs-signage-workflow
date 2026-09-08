@@ -18,6 +18,7 @@ import {
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { restoreWorkOrderFromLoadedTrashSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
@@ -57,13 +58,19 @@ export default function ProjectTrash() {
   };
 
   const handleRecover = async () => {
-    await WorkOrder.update(recoverConfirm.id, {
-      deleted: false,
-      deleted_at: null,
-      deleted_by: null
-    });
-    setDeletedProjects(deletedProjects.filter(p => p.id !== recoverConfirm.id));
-    setRecoverConfirm(null);
+    if (!recoverConfirm) return;
+    try {
+      await restoreWorkOrderFromLoadedTrashSnapshot({
+        workOrder: recoverConfirm,
+        label: "Project Trash recovery",
+      });
+      setDeletedProjects((current) => current.filter((project) => project.id !== recoverConfirm.id));
+      setRecoverConfirm(null);
+    } catch (error) {
+      console.error("Could not recover deleted Work Order:", error);
+      setReadError(error?.message || "The deleted Work Order changed after trash was loaded. Reload trash before recovering it.");
+      setRecoverConfirm(null);
+    }
   };
 
   const handlePermanentDelete = async () => {
