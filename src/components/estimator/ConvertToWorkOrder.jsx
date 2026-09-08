@@ -9,6 +9,8 @@ import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
 import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
 import { convergeCreatedEstimateWorkOrder, loadAllCustomers, resolveCustomerForEstimate } from "./customerSync";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import {
   buildConvertedWorkOrderFields,
   buildEstimateWorkOrderProducts,
@@ -107,8 +109,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
 
       let workOrder;
       if (existing?.id) {
-        await base44.entities.WorkOrder.update(existing.id, workOrderFields);
-        workOrder = { ...existing, ...workOrderFields };
+        workOrder = await replaceWorkOrderFieldsIfUnchanged({
+          workOrderId: existing.id,
+          expectedFields: expectedWorkOrderFields(existing, workOrderFields),
+          nextFields: workOrderFields,
+          label: "Approved estimate Work Order conversion",
+        });
       } else {
         const created = await base44.entities.WorkOrder.create(workOrderFields);
         workOrder = await convergeCreatedEstimateWorkOrder({
