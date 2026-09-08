@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, Edit, Plus, Wrench } from "lucide-react";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const ChannelLetterInstallInventoryEntity = base44.entities.ChannelLetterInstallInventory;
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
@@ -126,7 +127,14 @@ export default function MasterSuppliesTab({ isAdmin }) {
         await load();
         return;
       }
-      await entity.update(row.id, { [field]: next });
+      const togglePatch = { [field]: next };
+      await replaceEntityFieldsIfUnchanged({
+        entity,
+        id: row.id,
+        expectedFields: expectedEntityFields(live, togglePatch),
+        nextFields: togglePatch,
+        label: "Supply visibility",
+      });
       if (row._source === "channel_letter") {
         setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
       } else {
@@ -157,7 +165,11 @@ export default function MasterSuppliesTab({ isAdmin }) {
         await load();
         return;
       }
-      await entity.delete(row.id);
+      await deleteEntityIfUnchanged({
+        entity,
+        record: live,
+        label: `Supply “${row.name || "Item"}”`,
+      });
       await load();
     } catch (error) {
       console.error("Supply delete failed:", error);
@@ -324,7 +336,14 @@ function SupplyForm({ row, onCancel, onSaved }) {
           onSaved?.();
           return;
         }
-        await entity.update(row.id, form);
+        await replaceEntityFieldsIfUnchanged({
+          entity,
+          id: row.id,
+          expectedUpdatedAt: live.updated_date || "",
+          expectedFields: expectedEntityFields(live, form),
+          nextFields: form,
+          label: "Supply item",
+        });
       }
       onSaved?.();
     } catch (error) {
