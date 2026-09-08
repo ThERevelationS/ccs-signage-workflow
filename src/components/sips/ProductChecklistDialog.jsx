@@ -463,20 +463,45 @@ export default function ProductChecklistDialog({
         };
       });
       
-      const updatePayload = { 
-        sip_checklist: resolvedChecklist,
-        products: products
+      const expectedFields = {
+        sip_checklist: loadedChecklistSnapshot,
+        products: loadedProductsSnapshot,
       };
-      // Only update revisit date if explicitly passed (null means "clear it")
+      const nextFields = {
+        sip_checklist: resolvedChecklist,
+        products,
+      };
+      // Only update revisit date if explicitly passed (null means "clear it").
       if (revisitDate !== undefined) {
-        updatePayload.sip_revisit_date = revisitDate || "";
+        expectedFields.sip_revisit_date = loadedRevisitDateSnapshot;
+        nextFields.sip_revisit_date = revisitDate || "";
       }
-      await WorkOrder.update(workOrder.id, updatePayload);
+
+      setSaveError("");
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields,
+        nextFields,
+        label: "SIP product checklist",
+      });
+      const savedChecklist = saved.sip_checklist || [];
+      const savedProducts = saved.products || [];
+      Object.assign(workOrder, {
+        sip_checklist: savedChecklist,
+        products: savedProducts,
+        sip_revisit_date: saved.sip_revisit_date,
+        updated_date: saved.updated_date,
+      });
+      setLoadedChecklistSnapshot(saved.sip_checklist === undefined ? undefined : JSON.parse(JSON.stringify(saved.sip_checklist)));
+      setLoadedProductsSnapshot(saved.products === undefined ? undefined : JSON.parse(JSON.stringify(saved.products)));
+      setLoadedRevisitDateSnapshot(saved.sip_revisit_date);
+      setChecklist(savedChecklist);
+      setProducts(savedProducts);
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
-      alert("Failed to save: " + error.message);
+      setSaveError(error?.message || "SIP product checklist could not be saved. Reload the latest Work Order and try again.");
     } finally {
       setIsSaving(false);
     }
