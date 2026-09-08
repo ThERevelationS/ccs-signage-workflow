@@ -181,6 +181,20 @@
       "type": "string",
       "description": "Deterministic scheduled-generation key preventing duplicate Fleet work orders."
     },
+    "public_submission_key": {
+      "type": "string",
+      "description": "Anonymous public-report idempotency key. Used only by the tightly scoped Fleet public issue endpoint."
+    },
+    "public_reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "public_reporter_name": {
+      "type": "string"
+    },
+    "public_reporter_contact": {
+      "type": "string"
+    },
     "migration_source_app_id": {
       "type": "string"
     },
