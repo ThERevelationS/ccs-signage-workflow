@@ -46,6 +46,7 @@ export default function ProductChecklistDialog({
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
   const [loadedProductsSnapshot, setLoadedProductsSnapshot] = useState(undefined);
   const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
+  const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function ProductChecklistDialog({
       const cloneLoadedValue = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
       setLoadedProductsSnapshot(cloneLoadedValue(currentWO.products));
       setLoadedRevisitDateSnapshot(currentWO.sip_revisit_date);
+      setLoadedSipCompletedSnapshot(currentWO.sip_completed);
       setSaveError("");
 
       // Load products from new structure or migrate old
@@ -384,17 +386,45 @@ export default function ProductChecklistDialog({
       return;
     }
 
-    // Mark as completed
-    await WorkOrder.update(workOrder.id, { sip_completed: true });
-    if (onUpdate) onUpdate();
-    onClose();
+    // Mark only the completion flag, and fail closed if that flag changed
+    // since this dialog loaded. Unrelated Work Order edits may continue safely.
+    try {
+      setSaveError("");
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
+        nextFields: { sip_completed: true },
+        label: "SIP checklist completion",
+      });
+      setLoadedSipCompletedSnapshot(saved.sip_completed);
+      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Could not complete SIP checklist safely:", error);
+      setSaveError(error?.message || "SIP completion changed in another session. Reload before checking it off.");
+    }
   };
 
   const proceedWithCheckOff = async () => {
-    await WorkOrder.update(workOrder.id, { sip_completed: true });
-    if (onUpdate) onUpdate();
-    setNoChecklistWarning(false);
-    onClose();
+    try {
+      setSaveError("");
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
+        nextFields: { sip_completed: true },
+        label: "SIP checklist completion",
+      });
+      setLoadedSipCompletedSnapshot(saved.sip_completed);
+      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      setNoChecklistWarning(false);
+      onClose();
+    } catch (error) {
+      console.error("Could not complete SIP checklist safely:", error);
+      setNoChecklistWarning(false);
+      setSaveError(error?.message || "SIP completion changed in another session. Reload before checking it off.");
+    }
   };
 
   // Called when Save button is clicked - first show revisit date popup
