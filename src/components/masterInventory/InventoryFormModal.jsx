@@ -13,6 +13,7 @@ import {
   LABOR_SERVICE_CATEGORY_FIELDS,
   LABOR_SERVICE_CATEGORY_FIELD_NAMES,
 } from "./laborServiceCategorySchema";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 /**
  * Generic inventory add/edit modal driven by a `source` config object.
@@ -113,7 +114,14 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
           onSaved?.();
           return;
         }
-        await source.entity.update(editingItem.id, payload);
+        await replaceEntityFieldsIfUnchanged({
+          entity: source.entity,
+          id: editingItem.id,
+          expectedUpdatedAt: live.updated_date || "",
+          expectedFields: expectedEntityFields(live, payload),
+          nextFields: payload,
+          label: `${source.label || "Inventory"} item`,
+        });
       } else {
         await source.entity.create(payload);
       }
