@@ -1,0 +1,173 @@
+{
+  "name": "FleetMaintenanceTask",
+  "type": "object",
+  "description": "Fleet maintenance schedule/task. Completely separate from the Sign Maintenance estimator.",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "equipment_id": {
+      "type": "string",
+      "description": "Linked FleetEquipment id."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "recurring",
+        "one_off"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "bi_weekly",
+        "monthly",
+        "bi_monthly",
+        "quarterly",
+        "every_6_months",
+        "annually",
+        "custom"
+      ]
+    },
+    "custom_frequency_value": {
+      "type": "number"
+    },
+    "custom_frequency_unit": {
+      "type": "string",
+      "enum": [
+        "days",
+        "weeks",
+        "months",
+        "years"
+      ]
+    },
+    "estimated_duration": {
+      "type": "number"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "overdue"
+      ],
+      "default": "pending"
+    },
+    "parts_needed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fluids_needed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fluid_type": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "quarts",
+              "gallons",
+              "pints",
+              "ounces"
+            ],
+            "default": "quarts"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "generation_key": {
+      "type": "string",
+      "description": "Deterministic key/receipt for retry-safe scheduled work-order generation."
+    },
+    "last_generated_for_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "migration_source_app_id": {
+      "type": "string"
+    },
+    "migration_source_entity": {
+      "type": "string"
+    },
+    "migration_source_id": {
+      "type": "string"
+    },
+    "migration_source_created_date": {
+      "type": "string"
+    },
+    "migration_source_updated_date": {
+      "type": "string"
+    },
+    "migration_batch": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "equipment_id",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

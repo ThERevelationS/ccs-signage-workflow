@@ -12,7 +12,7 @@ import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeader as OtherDialogHeader, DialogTitle as OtherDialogTitle, DialogFooter as OtherDialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MmmTemplateBuilder from "./MmmTemplateBuilder";
-import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderArrayFieldIfUnchanged, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -48,6 +48,7 @@ export default function MmmChecklistDialog({
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
   const [newGeneralChecklistText, setNewGeneralChecklistText] = useState("");
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState([]);
+  const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function MmmChecklistDialog({
       // MMM uses its own checklist field: mmm_sip_checklist
       const rawChecklist = currentWO.mmm_sip_checklist || [];
       setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(rawChecklist)));
+      setLoadedSipCompletedSnapshot(currentWO.sip_completed);
       setSaveError("");
       const reconstructedChecklist = rawChecklist.map(item => {
         if (item.type) return item;
@@ -179,16 +181,43 @@ export default function MmmChecklistDialog({
     const status = checkIfComplete();
     if (!status.hasChecklist) { setNoChecklistWarning(true); return; }
     if (!status.complete) { setIncompleteWarning(true); return; }
-    await WorkOrder.update(workOrder.id, { sip_completed: true });
-    if (onUpdate) onUpdate();
-    onClose();
+    try {
+      setSaveError("");
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
+        nextFields: { sip_completed: true },
+        label: "MMM checklist completion",
+      });
+      setLoadedSipCompletedSnapshot(saved.sip_completed);
+      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Could not complete MMM checklist safely:", error);
+      setSaveError(error?.message || "MMM completion changed in another session. Reload before checking it off.");
+    }
   };
 
   const proceedWithCheckOff = async () => {
-    await WorkOrder.update(workOrder.id, { sip_completed: true });
-    if (onUpdate) onUpdate();
-    setNoChecklistWarning(false);
-    onClose();
+    try {
+      setSaveError("");
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
+        nextFields: { sip_completed: true },
+        label: "MMM checklist completion",
+      });
+      setLoadedSipCompletedSnapshot(saved.sip_completed);
+      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      setNoChecklistWarning(false);
+      onClose();
+    } catch (error) {
+      console.error("Could not complete MMM checklist safely:", error);
+      setNoChecklistWarning(false);
+      setSaveError(error?.message || "MMM completion changed in another session. Reload before checking it off.");
+    }
   };
 
   const saveChecklist = async () => {
