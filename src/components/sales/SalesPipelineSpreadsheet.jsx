@@ -30,6 +30,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -62,7 +63,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editInput, setEditInput] = useState("");
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
   const pendingChangesRef = useRef({});
+  const pendingBaselinesRef = useRef({});
   const debounceTimers = useRef({});
+  const [quickEditError, setQuickEditError] = useState("");
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
   const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
