@@ -10,6 +10,7 @@ import {
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const PendingImport = base44.entities.PendingImport;
 const WorkOrder = base44.entities.WorkOrder;
@@ -126,6 +127,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
   const [expanded, setExpanded] = useState(false);
   const [selectedMergeId, setSelectedMergeId] = useState(item.match_candidates?.[0]?.work_order_id || "");
   const [mergeLoading, setMergeLoading] = useState(false);
+  const [mergeError, setMergeError] = useState("");
   const [rejectLoading, setRejectLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [aiRecs, setAiRecs] = useState(null);
@@ -161,8 +163,15 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
   const handleMerge = async () => {
     if (!selectedMergeId) return;
     setMergeLoading(true);
-    await onMerge(item, selectedMergeId);
-    setMergeLoading(false);
+    setMergeError("");
+    try {
+      await onMerge(item, selectedMergeId);
+    } catch (error) {
+      console.error("Pending import merge failed:", error);
+      setMergeError(error?.message || "The selected Work Order changed while this import was open. Refresh and try again.");
+    } finally {
+      setMergeLoading(false);
+    }
   };
 
   const handleReject = async () => {
