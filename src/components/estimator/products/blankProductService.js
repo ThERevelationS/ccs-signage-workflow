@@ -3,6 +3,7 @@ import { ensureBuilderProductForLine } from "@/components/estimator/builder/buil
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const nowIso = () => new Date().toISOString();
 
@@ -161,7 +162,15 @@ export async function resumeBlankProductInsertion({ estimateId, lineId = "" }) {
       throw new Error("The Custom Product Builder record changed ownership while creation was pending.");
     }
     if (recoveryPatchDiffers(currentBuilder, customPatch)) {
-      builderProduct = await base44.entities.BuilderProduct.update(builderProduct.id, customPatch);
+      builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderProduct,
+        id: builderProduct.id,
+        expectedUpdatedAt: currentBuilder.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(currentBuilder, customPatch),
+        nextFields: customPatch,
+        guardFields: { estimate_id: estimateId },
+        label: "Blank Product custom Builder setup",
+      });
     } else {
       builderProduct = currentBuilder;
     }
