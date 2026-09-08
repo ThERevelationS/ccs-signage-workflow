@@ -476,8 +476,12 @@ export default function EstimateDetail() {
       if (priorEstimateWriteAlreadyApplied) {
         saved = before;
       } else {
-        const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
-        const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+        const refreshed = await saveEstimateFieldsSafely({
+          baseline: before,
+          nextFields: persistedData,
+          label: "Estimate save",
+          guardWholeVersion: true,
+        });
         saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
       }
       await rememberServerVersion(saved);
@@ -534,8 +538,11 @@ export default function EstimateDetail() {
         if (saved.pipeline_sync_pending) cleanup.pipeline_sync_pending = false;
         if (saved.pipeline_sync_error) cleanup.pipeline_sync_error = "";
         if (Object.keys(cleanup).length) {
-          const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, cleanup);
-          const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+          const cleared = await saveEstimateFieldsSafely({
+            baseline: saved,
+            nextFields: cleanup,
+            label: "Estimate pipeline synchronization cleanup",
+          });
           saved = { ...saved, ...(cleared || {}), ...cleanup };
           await rememberServerVersion(saved);
         }
@@ -547,8 +554,11 @@ export default function EstimateDetail() {
           ...(lifecycleReasonRequired ? { edit_reason: "" } : {}),
         };
         try {
-          const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, recoveryPatch);
-          const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+          const recovered = await saveEstimateFieldsSafely({
+            baseline: saved,
+            nextFields: recoveryPatch,
+            label: "Estimate pipeline synchronization recovery marker",
+          });
           saved = { ...saved, ...(recovered || {}), ...recoveryPatch };
           await rememberServerVersion(saved);
         } catch (markerError) {
