@@ -6,6 +6,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -269,11 +270,18 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   // self-healing on the next strict reconciliation instead of leaving Builder
   // metadata ahead of an unchanged Estimate line.
   const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...nextPatch } : item);
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Product metadata Estimate line update",
+  });
   if (builder && Object.keys(builderPatch).length) {
     await base44.entities.BuilderProduct.update(builder.id, builderPatch);
   }
-  return lineItems.find(matches) || { ...line, ...nextPatch };
+  const savedLines = savedEstimate.line_items || lineItems;
+  return savedLines.find(matches) || { ...line, ...nextPatch };
 }
 
 export async function saveProductNotes({ estimateId, line, notes, expectedEstimateUpdatedAt = "" }) {
@@ -290,9 +298,16 @@ export async function saveProductNotes({ estimateId, line, notes, expectedEstima
       ? { ...item, product_notes: notes }
       : item
   );
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Product notes Estimate line update",
+  });
   if (line.builder_product_id) {
     await base44.entities.BuilderProduct.update(line.builder_product_id, { product_notes: notes });
   }
-  return lineItems.find((item) => item.builder_product_id === line.builder_product_id || item.line_id === line.line_id) || null;
+  const savedLines = savedEstimate.line_items || lineItems;
+  return savedLines.find((item) => item.builder_product_id === line.builder_product_id || item.line_id === line.line_id) || null;
 }
