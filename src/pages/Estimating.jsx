@@ -6,7 +6,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -168,12 +168,18 @@ export default function Estimating() {
 
   const handleDelete = async (workOrder) => {
     if (!isRegistered) return;
-    await WorkOrder.update(workOrder.id, { 
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: (await base44.auth.me())?.email || "unknown"
-    });
-    await ActivityActions.logWorkOrderDeleted(workOrder);
+    try {
+      const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
+        workOrder,
+        deletedBy: (await base44.auth.me())?.email || "unknown",
+        label: "Estimating Work Order delete",
+      });
+      Object.assign(workOrder, deleted);
+      await ActivityActions.logWorkOrderDeleted(workOrder);
+    } catch (error) {
+      console.error("Error deleting Estimating Work Order:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+    }
     loadWorkOrders();
   };
 
