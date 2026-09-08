@@ -110,20 +110,44 @@ const FinancialsSpreadsheet = React.forwardRef(({
         return;
       }
       try {
-        await WorkOrder.update(orderId, changes);
+        const baselineSource = pendingBaselinesRef.current[orderId] || {};
+        const expectedFields = Object.keys(changes).reduce((out, changedField) => {
+          if (!Object.prototype.hasOwnProperty.call(baselineSource, changedField)) {
+            throw new Error(`Financial spreadsheet quick edit is missing its baseline for ${changedField}. Reload before saving.`);
+          }
+          out[changedField] = baselineSource[changedField];
+          return out;
+        }, {});
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          workOrderId: orderId,
+          expectedFields,
+          nextFields: changes,
+          label: "Financial spreadsheet quick edit",
+        });
         const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
+        const remainingBaselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
         Object.entries(changes).forEach(([changedField, savedValue]) => {
           if (JSON.stringify(remaining[changedField]) === JSON.stringify(savedValue)) {
             delete remaining[changedField];
+            delete remainingBaselines[changedField];
+          } else if (Object.prototype.hasOwnProperty.call(remaining, changedField)) {
+            remainingBaselines[changedField] = saved[changedField];
           }
         });
-        if (Object.keys(remaining).length > 0) pendingChangesRef.current[orderId] = remaining;
-        else delete pendingChangesRef.current[orderId];
+        if (Object.keys(remaining).length > 0) {
+          pendingChangesRef.current[orderId] = remaining;
+          pendingBaselinesRef.current[orderId] = remainingBaselines;
+        } else {
+          delete pendingChangesRef.current[orderId];
+          delete pendingBaselinesRef.current[orderId];
+        }
+        setQuickEditError("");
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
-        // Preserve queued values so a later edit/retry cannot silently lose them.
+        setQuickEditError(error?.message || "A Financial spreadsheet quick edit could not be saved. Reload the latest data and try again.");
+        // Preserve queued values and original baselines so no stale value is silently written.
       } finally {
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
       }
