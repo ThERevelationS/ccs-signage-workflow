@@ -18,8 +18,7 @@
     },
     "quantity": {
       "type": "number",
-      "default": 0,
-      "description": "Current stock quantity in unit."
+      "description": "Current stock quantity in unit. Legacy missing values remain unset during migration."
     },
     "unit": {
       "type": "string",
@@ -28,12 +27,10 @@
         "gallons",
         "pints",
         "ounces"
-      ],
-      "default": "quarts"
+      ]
     },
     "minimum_stock": {
       "type": "number",
-      "default": 4,
       "minimum": 0
     },
     "minimum_stock_unit": {
@@ -43,8 +40,7 @@
         "gallons",
         "pints",
         "ounces"
-      ],
-      "default": "quarts"
+      ]
     },
     "cost_per_unit": {
       "type": "number"
@@ -56,8 +52,7 @@
       "type": "string"
     },
     "enable_low_stock_alerts": {
-      "type": "boolean",
-      "default": true
+      "type": "boolean"
     },
     "compatible_equipment_ids": {
       "type": "array",
