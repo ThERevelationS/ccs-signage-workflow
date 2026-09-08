@@ -34,6 +34,7 @@ import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCard
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -208,7 +209,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (showLoading) setIsLoading(true);
     try {
       const [orders, usersData] = await Promise.all([
-        WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { is_rider: false, completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Sales Pipeline Work Orders",
+        }),
         AuthorizedEmail.list()
       ]);
       setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
