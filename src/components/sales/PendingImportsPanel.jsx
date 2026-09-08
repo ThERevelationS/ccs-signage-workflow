@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const PendingImport = base44.entities.PendingImport;
 const WorkOrder = base44.entities.WorkOrder;
@@ -347,19 +348,33 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
 export default function PendingImportsPanel({ onCountChange }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [allWorkOrders, setAllWorkOrders] = useState([]);
 
   const load = async () => {
     setLoading(true);
-    const [pending, wos] = await Promise.all([
-      PendingImport.filter({ status: 'pending' }),
-      WorkOrder.filter({ deleted: { $ne: true }, completed: { $ne: true } })
-    ]);
-    const pendingArr = Array.isArray(pending) ? pending : [];
-    setItems(pendingArr);
-    setAllWorkOrders(Array.isArray(wos) ? wos : []);
-    if (onCountChange) onCountChange(pendingArr.length);
-    setLoading(false);
+    setReadError("");
+    try {
+      const [pending, wos] = await Promise.all([
+        PendingImport.filter({ status: 'pending' }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { deleted: { $ne: true }, completed: { $ne: true } },
+          sort: "created_date",
+          label: "Pending Import Work Orders",
+        })
+      ]);
+      const pendingArr = Array.isArray(pending) ? pending : [];
+      setItems(pendingArr);
+      setAllWorkOrders(Array.isArray(wos) ? wos : []);
+      if (onCountChange) onCountChange(pendingArr.length);
+    } catch (error) {
+      console.error("Error loading pending import context:", error);
+      setAllWorkOrders([]);
+      setReadError(error?.message || "Pending Import Work Orders could not be verified completely.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -411,6 +426,16 @@ export default function PendingImportsPanel({ onCountChange }) {
       <div className="flex items-center justify-center p-8">
         <Loader2 className="w-5 h-5 animate-spin text-amber-500 mr-2" />
         <span className="text-sm text-gray-500">Loading pending imports…</span>
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-sm font-bold text-red-700">Pending import match data could not be verified.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
       </div>
     );
   }
