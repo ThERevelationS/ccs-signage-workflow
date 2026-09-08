@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -61,10 +62,17 @@ Deno.serve(async (req) => {
     return null;
   };
 
-  // Load existing orders for deduplication
-  const existingOrders = await base44.asServiceRole.entities.Order.filter({
-    deleted: { $ne: true },
-    ...(workOrderFilter ? { work_order_id: workOrderFilter } : {})
+  // Load the complete existing Order set before deduplication. If a later page
+  // cannot be verified, fail before processing any import rows rather than
+  // creating duplicates from a partial archive.
+  const existingOrders = await loadAllEntityRows({
+    entity: base44.asServiceRole.entities.Order,
+    query: {
+      deleted: { $ne: true },
+      ...(workOrderFilter ? { work_order_id: workOrderFilter } : {})
+    },
+    sort: 'row_number',
+    label: workOrderFilter ? 'Work Order import existing Orders' : 'Order import existing Orders',
   });
 
   const existingMap = new Map();
