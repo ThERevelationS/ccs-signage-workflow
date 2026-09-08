@@ -23,6 +23,7 @@ import {
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, parseISO, isWithinInterval, differenceInDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import * as XLSX from "xlsx";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const WorkOrder = base44.entities.WorkOrder;
@@ -35,6 +36,7 @@ export default function TimeClockReportsDashboard() {
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   
   // Filters
   const [dateRange, setDateRange] = useState("month");
@@ -48,10 +50,11 @@ export default function TimeClockReportsDashboard() {
 
   const loadData = async () => {
     setIsLoading(true);
+    setReadError("");
     try {
       const [entries, orders, usersData] = await Promise.all([
-        TimeEntry.list("-clock_in"),
-        WorkOrder.filter({ deleted: false }),
+        loadAllEntityRows({ entity: TimeEntry, sort: "-clock_in", label: "Time Clock entries" }),
+        loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" }),
         AuthorizedEmail.list()
       ]);
       setTimeEntries(entries);
@@ -59,6 +62,9 @@ export default function TimeClockReportsDashboard() {
       setUsers(usersData);
     } catch (err) {
       console.error("Error loading data:", err);
+      setTimeEntries([]);
+      setWorkOrders([]);
+      setReadError(err?.message || "Time Clock reporting data could not be verified completely.");
     }
     setIsLoading(false);
   };
@@ -281,6 +287,16 @@ export default function TimeClockReportsDashboard() {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="p-6 text-center">
+        <div className="text-sm font-bold text-red-700">Time Clock reporting data could not be verified.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadData}>Retry</Button>
       </div>
     );
   }
