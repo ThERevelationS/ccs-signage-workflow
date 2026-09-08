@@ -11,6 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, GripVertical } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
+import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
+import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 
@@ -44,15 +48,36 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
   const [activeSubTab, setActiveSubTab] = useState('excavation_equipment');
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   const equipment = allItems.filter(i => i.material_type === 'excavation_equipment');
   const attachments = allItems.filter(i => i.material_type === 'attachment');
   const subAttachments = allItems.filter(i => i.material_type === 'sub_attachment');
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this item?')) return;
-    await FoundationInventoryEntity.delete(id);
-    loadItems();
+  const handleDelete = async (item) => {
+    if (!item?.id || !window.confirm('Delete this item?')) return;
+    try {
+      const live = await FoundationInventoryEntity.get(item.id);
+      if (!live) {
+        await loadItems();
+        return;
+      }
+      if (item.updated_date && live.updated_date && item.updated_date !== live.updated_date) {
+        alert('This Foundation inventory item changed in another session and was not deleted. The latest inventory will be reloaded first.');
+        await loadItems();
+        return;
+      }
+      await deleteEntityIfUnchanged({
+        entity: FoundationInventoryEntity,
+        record: live,
+        label: `Foundation inventory item “${item.material_name || 'Item'}”`,
+      });
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation inventory delete failed:', error);
+      alert(error?.message || 'Foundation inventory item could not be deleted.');
+      await loadItems();
+    }
   };
 
   const handleDragEnd = async (result, type) => {
