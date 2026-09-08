@@ -215,7 +215,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }),
         AuthorizedEmail.list()
       ]);
-      setWorkOrders(orders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
+      setWorkOrders(orders.map((order) => ({
+        ...order,
+        ...(pendingChangesRef.current[order.id] || {}),
+      })).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading work orders:", error);
