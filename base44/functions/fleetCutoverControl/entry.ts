@@ -18,18 +18,18 @@ async function latestVerification(base44:any) {
 
 async function currentCounts(base44:any) {
   const [equipment,tasks,workOrders,parts,fluids,logs,requests,settings,systemLogs,systemReports,queue,receipts] = await Promise.all([
-    base44.asServiceRole.entities.FleetEquipment.list(),
-    base44.asServiceRole.entities.FleetMaintenanceTask.list(),
-    base44.asServiceRole.entities.FleetMaintenanceWorkOrder.list(),
-    base44.asServiceRole.entities.FleetPart.list(),
-    base44.asServiceRole.entities.FleetFluid.list(),
-    base44.asServiceRole.entities.FleetEquipmentLog.list(),
-    base44.asServiceRole.entities.FleetPartFluidRequest.list(),
-    base44.asServiceRole.entities.FleetSettings.list(),
-    base44.asServiceRole.entities.FleetSystemLog.list(),
-    base44.asServiceRole.entities.FleetSystemReport.list(),
-    base44.asServiceRole.entities.FleetNotificationQueue.list(),
-    base44.asServiceRole.entities.FleetOperationReceipt.list(),
+    base44.asServiceRole.entities.FleetEquipment.list('-created_date',500),
+    base44.asServiceRole.entities.FleetMaintenanceTask.list('-created_date',500),
+    base44.asServiceRole.entities.FleetMaintenanceWorkOrder.list('-created_date',500),
+    base44.asServiceRole.entities.FleetPart.list('-created_date',500),
+    base44.asServiceRole.entities.FleetFluid.list('-created_date',500),
+    base44.asServiceRole.entities.FleetEquipmentLog.list('-created_date',500),
+    base44.asServiceRole.entities.FleetPartFluidRequest.list('-created_date',500),
+    base44.asServiceRole.entities.FleetSettings.list('-created_date',500),
+    base44.asServiceRole.entities.FleetSystemLog.list('-created_date',500),
+    base44.asServiceRole.entities.FleetSystemReport.list('-created_date',500),
+    base44.asServiceRole.entities.FleetNotificationQueue.list('-created_date',500),
+    base44.asServiceRole.entities.FleetOperationReceipt.list('-created_date',500),
   ]);
   return {
     FleetEquipment: equipment.length,
