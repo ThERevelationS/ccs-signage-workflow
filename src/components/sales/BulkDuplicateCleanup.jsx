@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -32,6 +33,7 @@ function DuplicateGroup({ group, onResolved }) {
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [keeping, setKeeping] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   // Sort by score descending - best record first
   const sorted = [...group].sort((a, b) => scoreRecord(b) - scoreRecord(a));
@@ -39,9 +41,20 @@ function DuplicateGroup({ group, onResolved }) {
 
   const handleDeleteOne = async (wo) => {
     setDeleting(wo.id);
-    await WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup' });
-    setDeleting(null);
-    onResolved(wo.id);
+    setActionError("");
+    try {
+      await softDeleteWorkOrderFromLoadedSnapshot({
+        workOrder: wo,
+        deletedBy: "bulk_dedup",
+        label: "Duplicate cleanup delete",
+      });
+      onResolved(wo.id);
+    } catch (error) {
+      console.error("Duplicate cleanup delete blocked:", error);
+      setActionError(error?.message || "This duplicate Work Order changed after the group was loaded. Refresh duplicate cleanup before deleting it.");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   const handleKeepOne = async (keepWo) => {
