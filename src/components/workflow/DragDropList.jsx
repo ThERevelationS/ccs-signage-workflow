@@ -12,9 +12,11 @@ export default function DragDropList({
   onRestore,
   onUpdate,
   onDelete,
-  showMoveOptions = true
+  showMoveOptions = true,
+  reorderDisabled = false
 }) {
   const handleDragEnd = (result) => {
+    if (reorderDisabled) return;
     if (!result.destination) return;
     if (result.source.index === result.destination.index) return;
     
@@ -64,6 +66,7 @@ export default function DragDropList({
                     key={workOrder.id} 
                     draggableId={workOrder.id} 
                     index={originalIndex}
+                    isDragDisabled={reorderDisabled}
                     
                   >
                     {(provided, snapshot) => (
@@ -111,6 +114,7 @@ export default function DragDropList({
                     key={workOrder.id} 
                     draggableId={workOrder.id} 
                     index={originalIndex}
+                    isDragDisabled={reorderDisabled}
                     
                   >
                     {(provided, snapshot) => (
