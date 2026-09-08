@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetSidebar from "@/components/fleet/FleetSidebar";
+import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMap from "@/components/fleet/FleetMap";
 import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
@@ -186,8 +187,11 @@ export default function FleetTracking() {
   // Loading state
   if (statusLoading) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ background: "#1b2029" }}>
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
+        <FleetModuleNav />
+        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: "#1b2029" }}>
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
+        </div>
       </div>
     );
   }
@@ -196,8 +200,10 @@ export default function FleetTracking() {
   if (!status?.connected) {
     const isAdmin = currentUser?.role === "admin";
     return (
-      <div className="h-full flex items-center justify-center" style={{ background: "#1b2029" }}>
-        <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md text-center">
+      <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
+        <FleetModuleNav />
+        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: "#1b2029" }}>
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md text-center">
           <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ background: "#a80000" }}>
             <span className="text-white font-bold text-2xl">B</span>
           </div>
@@ -229,6 +235,7 @@ export default function FleetTracking() {
           ) : (
             <p className="text-sm text-gray-500">An admin needs to connect the Bouncie account before fleet tracking is available.</p>
           )}
+          </div>
         </div>
       </div>
     );
@@ -236,7 +243,9 @@ export default function FleetTracking() {
 
   // Connected — main dashboard
   return (
-    <div className="h-full flex relative overflow-hidden" style={{ background: "#1b2029" }}>
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
+      <FleetModuleNav />
+      <div className="flex-1 min-h-0 flex relative overflow-hidden" style={{ background: "#1b2029" }}>
       {/* Sidebar */}
       <FleetSidebar
         vehicles={vehicles}
@@ -329,11 +338,12 @@ export default function FleetTracking() {
         )}
       </div>
 
-      <AlertSettingsModal
-        open={alertSettingsOpen}
-        onClose={() => setAlertSettingsOpen(false)}
-        vehicle={selectedVehicle}
-      />
+        <AlertSettingsModal
+          open={alertSettingsOpen}
+          onClose={() => setAlertSettingsOpen(false)}
+          vehicle={selectedVehicle}
+        />
+      </div>
     </div>
   );
 }
