@@ -21,7 +21,9 @@ import {
   SignPartsSuppliesInventory,
   DimensionalLetterMaterial,
   Inventory,
+  LegacyMigrationMap,
 } from "@/entities/all";
+import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const VALID_MATERIAL_TYPES = new Set([
   "Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel",
@@ -152,6 +154,39 @@ const TARGET_ENTITY = {
   sign_parts_supplies: SignPartsSuppliesInventory,
   substrate: DimensionalLetterMaterial,
 };
+
+const TARGET_ENTITY_NAME = {
+  labor_service: "LaborServiceInventory",
+  sign_parts_supplies: "SignPartsSuppliesInventory",
+  substrate: "DimensionalLetterMaterial",
+};
+
+const APP_ID = "68dfcc5e57bbbc35387da97c";
+export const LEGACY_INVENTORY_CLEANUP_BATCH = "legacy_inventory_cleanup_v2";
+
+async function migrationReceipts(sourceId) {
+  const rows = await LegacyMigrationMap.filter({
+    source_app_id: APP_ID,
+    source_entity: "Inventory",
+    source_id: sourceId,
+    migration_batch: LEGACY_INVENTORY_CLEANUP_BATCH,
+  });
+  return (rows || []).slice().sort((a, b) => String(a.created_date || a.id || "").localeCompare(String(b.created_date || b.id || "")));
+}
+
+async function createMigrationReceipt({ source, target, targetName }) {
+  return LegacyMigrationMap.create({
+    source_app_id: APP_ID,
+    source_entity: "Inventory",
+    source_id: source.id,
+    target_entity: targetName,
+    target_id: target.id,
+    source_created_date: source.created_date || "",
+    source_updated_date: source.updated_date || "",
+    migration_batch: LEGACY_INVENTORY_CLEANUP_BATCH,
+    notes: "Master Inventory legacy cleanup receipt. Source is deleted only after this target mapping is durable.",
+  });
+}
 
 // Run the migration. Returns counts by target.
 export async function migrateLegacyInventoryRows(allInventoryRows, { onProgress } = {}) {
