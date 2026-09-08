@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import TemplateBuilder from "./TemplateBuilder";
 import RevisitDatePopup from "./RevisitDatePopup";
 import ChecklistCompletedSection from "./ChecklistCompletedSection";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -42,6 +43,10 @@ export default function ProductChecklistDialog({
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
+  const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
+  const [loadedProductsSnapshot, setLoadedProductsSnapshot] = useState(undefined);
+  const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -63,6 +68,11 @@ export default function ProductChecklistDialog({
 
       setUsers(usersData);
 
+      const cloneLoadedValue = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+      setLoadedProductsSnapshot(cloneLoadedValue(currentWO.products));
+      setLoadedRevisitDateSnapshot(currentWO.sip_revisit_date);
+      setSaveError("");
+
       // Load products from new structure or migrate old
       if (currentWO.products && Array.isArray(currentWO.products)) {
         setProducts(currentWO.products);
@@ -83,6 +93,7 @@ export default function ProductChecklistDialog({
       }
 
       // Reconstruct hierarchy from IDs if type/parent_id fields are missing
+      setLoadedChecklistSnapshot(cloneLoadedValue(currentWO.sip_checklist));
       const rawChecklist = currentWO.sip_checklist || [];
       const reconstructedChecklist = rawChecklist.map(item => {
         // If item already has type, use it
