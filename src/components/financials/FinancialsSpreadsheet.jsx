@@ -83,12 +83,20 @@ const FinancialsSpreadsheet = React.forwardRef(({
   };
 
   const updateWorkOrder = (orderId, field, value) => {
+    const currentWo = workOrders.find((wo) => wo.id === orderId);
+    if (!currentWo) return;
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
     
+    const baselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
+    if (!Object.prototype.hasOwnProperty.call(baselines, field)) {
+      baselines[field] = currentWo[field];
+    }
+    pendingBaselinesRef.current[orderId] = baselines;
     pendingChangesRef.current[orderId] = {
       ...(pendingChangesRef.current[orderId] || {}),
       [field]: value,
     };
+    setQuickEditError("");
 
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
