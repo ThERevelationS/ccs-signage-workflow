@@ -30,11 +30,12 @@ function productPrice(product) {
   return { quantity, frozenUnit, extended };
 }
 
-function QuickProductEditDialog({ product, open, onClose, onSaved, productionProductTypes = [] }) {
+function QuickProductEditDialog({ product, user, open, onClose, onSaved, productionProductTypes = [] }) {
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const saveRef = useRef(false);
+  const canEdit = !!product && (user?.role === "admin" || !product.created_by_id || product.created_by_id === user?.id);
 
   const draftFromProduct = (row) => ({
     product_name: row?.product_name || "",
@@ -59,7 +60,7 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
 
   const save = async (event) => {
     event.preventDefault();
-    if (!draft.product_name.trim() || saveRef.current) return;
+    if (!canEdit || !draft.product_name.trim() || saveRef.current) return;
     saveRef.current = true;
     setSaving(true);
     setError("");
@@ -108,6 +109,8 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
           <p className="text-[10px] text-gray-300 mt-1">Metadata only. Builder configuration, Parts, Part Groups, frozen inventory snapshots and frozen pricing are not rewritten.</p>
         </DialogHeader>
         <form onSubmit={save} className="p-5 bg-white space-y-4">
+          {!canEdit && <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">This Global Quick Product was created by another user. You can use it, but only its creator or an admin can edit it.</div>}
+          <fieldset disabled={!canEdit} className="contents">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCT NAME<input autoFocus value={draft.product_name} onChange={(event) => patch({ product_name: event.target.value })} className="mt-1 w-full h-[34px] px-3 border border-gray-300 rounded text-[12px]" /></label>
             <label className="text-[10px] font-bold tracking-wide text-gray-500">LIBRARY<select value={draft.product_group} onChange={(event) => patch({ product_group: event.target.value })} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]"><option value="my">My Quick Products</option><option value="global">Global Quick Products</option></select></label>
@@ -118,8 +121,9 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
             <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">PRODUCT NOTES<textarea value={draft.product_notes} onChange={(event) => patch({ product_notes: event.target.value })} rows={3} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded text-[12px] resize-y" /></label>
           </div>
           <label className="flex items-center justify-between gap-4 rounded border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer"><div><div className="text-[11px] font-bold text-gray-800">Active Quick Product</div><div className="text-[9px] text-gray-500">Inactive templates stay preserved but are hidden from Add Product.</div></div><input type="checkbox" checked={draft.is_active} onChange={(event) => patch({ is_active: event.target.checked })} className="w-4 h-4 accent-lime-600" /></label>
+          </fieldset>
           {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
-          <div className="flex justify-end gap-2"><button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="submit" disabled={saving || !draft.product_name.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{saving ? "Saving…" : "Save Quick Product"}</button></div>
+          <div className="flex justify-end gap-2"><button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Close</button>{canEdit && <button type="submit" disabled={saving || !draft.product_name.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{saving ? "Saving…" : "Save Quick Product"}</button>}</div>
         </form>
       </DialogContent>
     </Dialog>
@@ -177,7 +181,7 @@ export default function EstimatorProducts() {
       const group = product.product_group === "global" ? "global" : "my";
       // "My" templates are personal by definition. Built-in created_by_id is the
       // ownership boundary; unowned rows remain visible for imported legacy compatibility.
-      if (group === "my" && product.created_by_id && product.created_by_id !== user?.id) return false;
+      if (group === "my" && product.created_by_id && product.created_by_id !== user?.id && user?.role !== "admin") return false;
       if (scope !== "all" && group !== scope) return false;
       if (status === "active" && product.is_active === false) return false;
       if (status === "inactive" && product.is_active !== false) return false;
@@ -188,7 +192,7 @@ export default function EstimatorProducts() {
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
   }, [quickProducts, query, scope, status, moduleFilter, user?.id, user?.role]);
 
-  const accessibleQuickProducts = quickProducts.filter((product) => product.product_group === "global" || !product.created_by_id || product.created_by_id === user?.id);
+  const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || product.product_group === "global" || !product.created_by_id || product.created_by_id === user?.id);
   const activeCount = accessibleQuickProducts.filter((product) => product.is_active !== false).length;
   const globalCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group === "global").length;
   const myCount = accessibleQuickProducts.filter((product) => product.is_active !== false && product.product_group !== "global").length;
@@ -203,6 +207,8 @@ export default function EstimatorProducts() {
   const updateLocal = (updated) => setQuickProducts((current) => current.map((row) => row.id === updated.id ? { ...row, ...updated } : row));
 
   const toggleActive = async (product) => {
+    const canEdit = user?.role === "admin" || !product?.created_by_id || product.created_by_id === user?.id;
+    if (!canEdit) return setEditing(product);
     if (!product?.id || libraryError || toggleRef.current.has(product.id)) return;
     toggleRef.current.add(product.id);
     setError("");
@@ -298,6 +304,7 @@ export default function EstimatorProducts() {
                       const price = productPrice(product);
                       const partCount = product.parts_snapshot?.length ?? product.parts?.length ?? 0;
                       const global = product.product_group === "global";
+                      const canEditProduct = user?.role === "admin" || !product.created_by_id || product.created_by_id === user?.id;
                       return <tr key={product.id} className="hover:bg-gray-50/70">
                         <td className="px-4 py-2.5 min-w-[230px]"><div className="text-[11px] font-bold text-gray-900">{product.product_name || "Quick Product"}</div><div className="mt-0.5 text-[9px] text-gray-400 truncate max-w-[320px]">{product.product_category || (product.categories || []).join(" · ") || "Uncategorized"}</div>{product.production_product_type && <div className="mt-0.5 text-[8px] text-cyan-700 truncate max-w-[320px]">Production: {product.production_product_type}</div>}</td>
                         <td className="px-3 py-2.5 text-[10px] text-gray-600 whitespace-nowrap">{moduleLabel(product.source_module_key || (product.source_product_class === "custom" ? "custom" : ""))}<div className="text-[8px] text-gray-400">Template v{num(product.template_version, 1)}</div></td>
@@ -305,7 +312,7 @@ export default function EstimatorProducts() {
                         <td className="px-3 py-2.5 text-right whitespace-nowrap"><div className="text-[11px] font-bold text-gray-900">{money(price.extended)}</div>{price.quantity !== 1 && <div className="text-[8px] text-gray-400">{price.quantity} × {money(price.frozenUnit)}</div>}</td>
                         <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 h-[22px] px-2 rounded border text-[9px] font-bold ${global ? "border-blue-200 bg-blue-50 text-blue-700" : "border-violet-200 bg-violet-50 text-violet-700"}`}>{global ? <ShieldCheck className="w-3 h-3" /> : <UserRound className="w-3 h-3" />}{global ? "GLOBAL" : "MY"}</span></td>
                         <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1 text-[9px] font-semibold ${product.is_active === false ? "text-gray-400" : "text-emerald-700"}`}>{product.is_active === false ? "Inactive" : <><CheckCircle2 className="w-3 h-3" /> Active</>}</span></td>
-                        <td className="px-4 py-2.5"><div className="flex justify-end gap-1"><button type="button" disabled={!!libraryError} onClick={() => setEditing(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-700 hover:bg-gray-50">Edit</button><button type="button" disabled={!!libraryError} onClick={() => toggleActive(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-600 hover:bg-gray-50">{product.is_active === false ? "Activate" : "Deactivate"}</button></div></td>
+                        <td className="px-4 py-2.5"><div className="flex justify-end gap-1"><button type="button" disabled={!!libraryError} onClick={() => setEditing(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-700 hover:bg-gray-50">{canEditProduct ? "Edit" : "View"}</button>{canEditProduct && <button type="button" disabled={!!libraryError} onClick={() => toggleActive(product)} className="h-[27px] px-2.5 rounded border border-gray-300 bg-white text-[9px] font-bold text-gray-600 hover:bg-gray-50">{product.is_active === false ? "Activate" : "Deactivate"}</button>}</div></td>
                       </tr>;
                     })}
                   </tbody>
@@ -316,7 +323,7 @@ export default function EstimatorProducts() {
         )}
       </div>
 
-      <QuickProductEditDialog product={editing} open={!!editing} onClose={() => setEditing(null)} onSaved={updateLocal} productionProductTypes={productionProductTypes} />
+      <QuickProductEditDialog product={editing} user={user} open={!!editing} onClose={() => setEditing(null)} onSaved={updateLocal} productionProductTypes={productionProductTypes} />
     </div>
   );
 }
