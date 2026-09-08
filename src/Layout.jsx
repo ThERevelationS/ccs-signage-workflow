@@ -46,6 +46,7 @@ import ResearchProgressBar from "@/components/permitting/ResearchProgressBar";
 import AnnouncementManager from "@/components/announcements/AnnouncementManager";
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -140,8 +141,13 @@ function LayoutContent({ children }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await base44.entities.PendingImport.filter({ status: 'pending' });
-        setPendingImportCount(Array.isArray(res) ? res.length : 0);
+        const rows = await loadAllEntityRows({
+          entity: base44.entities.PendingImport,
+          query: { status: 'pending' },
+          sort: "created_date",
+          label: "Pending Import nav count",
+        });
+        setPendingImportCount(rows.length);
       } catch {}
     };
     load();
