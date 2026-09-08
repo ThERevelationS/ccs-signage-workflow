@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundationFieldSchema";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
+import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
@@ -49,7 +50,11 @@ export default function FoundationCatalog() {
         await load();
         return;
       }
-      await base44.entities.FoundationInventory.delete(row.id);
+      await deleteEntityIfUnchanged({
+        entity: base44.entities.FoundationInventory,
+        record: live,
+        label: `Foundation Catalog item “${live.material_name || row.material_name || "Material"}”`,
+      });
       await load();
     } catch (error) {
       console.error("Foundation catalog delete failed:", error);
