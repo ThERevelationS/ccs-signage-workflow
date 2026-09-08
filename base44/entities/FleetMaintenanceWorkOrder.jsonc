@@ -196,6 +196,14 @@
     "migration_source_updated_date": {
       "type": "string"
     },
+    "migration_source_created_by_id": {
+      "type": "string",
+      "description": "Original FleetMaster creator user/service id retained for historical audit."
+    },
+    "migration_source_created_by": {
+      "type": "string",
+      "description": "Original FleetMaster creator email retained for historical audit."
+    },
     "migration_batch": {
       "type": "string"
     }
