@@ -99,6 +99,63 @@ export async function mutateLocatedWorkOrderArrayItem({
   });
 }
 
+export async function replaceWorkOrderFieldsIfUnchanged({
+  workOrderId,
+  expectedFields,
+  nextFields,
+  label = "Work Order fields",
+  maxAttempts = 3,
+}) {
+  const entity = base44.entities.WorkOrder;
+  const id = String(workOrderId || "").trim();
+  const expected = expectedFields && typeof expectedFields === "object" && !Array.isArray(expectedFields) ? expectedFields : null;
+  const desired = nextFields && typeof nextFields === "object" && !Array.isArray(nextFields) ? nextFields : null;
+  const fieldNames = desired ? Object.keys(desired) : [];
+  if (!id || !expected || !desired || fieldNames.length === 0 || !entity?.updateMany || !entity?.get) {
+    throw new Error(`${label} could not initialize its concurrency-safe replacement.`);
+  }
+  for (const fieldName of fieldNames) {
+    if (!Object.prototype.hasOwnProperty.call(expected, fieldName)) {
+      throw new Error(`${label} is missing the loaded baseline for ${fieldName}.`);
+    }
+  }
+
+  const attempts = Math.max(1, Math.min(5, Number(maxAttempts) || 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = await entity.get(id);
+    if (!current?.id) throw new Error(`${label} could not verify its Work Order before saving.`);
+
+    const alreadyDesired = fieldNames.every((fieldName) => sameValue(current[fieldName], desired[fieldName]));
+    if (alreadyDesired) return current;
+
+    for (const fieldName of fieldNames) {
+      const currentValue = current[fieldName];
+      if (!sameValue(currentValue, expected[fieldName]) && !sameValue(currentValue, desired[fieldName])) {
+        throw new Error(`${label} changed in another session (${fieldName}). Reload before saving. No Work Order fields were overwritten.`);
+      }
+    }
+
+    const expectedUpdatedAt = String(current.updated_date || "").trim();
+    if (!expectedUpdatedAt) throw new Error(`${label} is missing its current Work Order version. Reload before saving.`);
+    const result = await entity.updateMany(
+      { id, updated_date: expectedUpdatedAt },
+      { $set: desired },
+    );
+    if (!result || typeof result.updated !== "number") {
+      throw new Error(`${label} conditional replacement result could not be verified.`);
+    }
+    if (result.updated === 1) {
+      const saved = await entity.get(id).catch(() => null);
+      if (!saved) throw new Error(`${label} was saved but could not be re-read.`);
+      return saved;
+    }
+    // Another unrelated field may have changed after the preflight read. Re-read
+    // and retry only while every protected field still equals its loaded or desired value.
+  }
+
+  throw new Error(`${label} Work Order changed repeatedly while saving. Reload and try again.`);
+}
+
 export async function replaceWorkOrderArrayFieldIfUnchanged({
   workOrderId,
   field,
