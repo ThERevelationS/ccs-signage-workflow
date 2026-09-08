@@ -1345,7 +1345,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         />
       )}
 
-      <Dialog open={corbridgeDialog.open} onOpenChange={(open) => !open && setCorbridgeDialog({ open: false, workOrder: null })}>
+      <Dialog open={corbridgeDialog.open} onOpenChange={(open) => !open && closeCorbridgeDialog()}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
             <DialogTitle>Est/Inv # Link</DialogTitle>
@@ -1354,8 +1354,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             <div>
               <label className="text-sm font-medium mb-1 block">Invoice/Estimate Number</label>
               <Input
-                defaultValue={corbridgeDialog.workOrder?.corbridge_invoice_number || corbridgeDialog.workOrder?.est_inv_at || ""}
-                onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_invoice_number = e.target.value)}
+                value={corbridgeDraft.invoiceNumber}
+                onChange={(e) => setCorbridgeDraft((current) => ({ ...current, invoiceNumber: e.target.value }))}
                 placeholder="Enter number..."
                 className="w-full"
               />
@@ -1363,21 +1363,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             <div>
               <label className="text-sm font-medium mb-1 block">Link URL (optional)</label>
               <Input
-                defaultValue={corbridgeDialog.workOrder?.corbridge_link || ""}
-                onChange={(e) => corbridgeDialog.workOrder && (corbridgeDialog.workOrder.corbridge_link = e.target.value)}
+                value={corbridgeDraft.link}
+                onChange={(e) => setCorbridgeDraft((current) => ({ ...current, link: e.target.value }))}
                 placeholder="Paste the URL here (optional)..."
                 className="w-full"
               />
               <p className="text-xs text-gray-500 mt-1">Optional: Add a link to make the number clickable</p>
             </div>
+            {corbridgeSaveError && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+                <div className="font-medium">Corebridge field save blocked</div>
+                <div className="mt-1">{corbridgeSaveError}</div>
+                <Button type="button" size="sm" variant="outline" onClick={reloadCorbridgeLatest} className="mt-2 h-7 border-red-300 bg-white text-red-800">
+                  Reload latest
+                </Button>
+              </div>
+            )}
             <Button
-              onClick={() => {
-                if (corbridgeDialog.workOrder) {
-                  const invoiceNum = corbridgeDialog.workOrder.corbridge_invoice_number?.trim() || "";
-                  const link = corbridgeDialog.workOrder.corbridge_link?.trim() || "";
-                  saveCorbridgeData(invoiceNum, link);
-                }
-              }}
+              onClick={() => saveCorbridgeData(corbridgeDraft.invoiceNumber.trim(), corbridgeDraft.link.trim())}
               className="w-full"
             >
               Save
