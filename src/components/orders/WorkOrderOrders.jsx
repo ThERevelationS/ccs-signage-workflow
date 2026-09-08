@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +71,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [pendingChanges, setPendingChanges] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
@@ -98,15 +100,22 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
   const loadData = async () => {
     setIsLoading(true);
+    setReadError("");
     try {
       const [ordersData, usersData] = await Promise.all([
-        Order.filter({ work_order_id: workOrderId, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: Order,
+          query: { work_order_id: workOrderId, deleted: { $ne: true } },
+          sort: "row_number",
+          label: "Work Order orders",
+        }),
         AuthorizedEmail.list()
       ]);
-      setOrders(ordersData.sort((a, b) => (a.row_number || 0) - (b.row_number || 0)));
+      setOrders(ordersData);
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading orders:", error);
+      setReadError(error?.message || "Work Order orders could not be verified completely.");
     }
     setIsLoading(false);
   };
@@ -292,6 +301,16 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="text-center p-8">
+        <div className="text-sm font-bold text-red-700">Work Order orders could not be verified completely.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadData}>Retry</Button>
       </div>
     );
   }
