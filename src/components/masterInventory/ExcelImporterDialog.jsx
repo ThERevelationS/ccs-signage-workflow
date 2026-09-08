@@ -15,6 +15,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import {
   routeRow,
   validateColumns,
