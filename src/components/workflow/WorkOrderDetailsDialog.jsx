@@ -1132,11 +1132,15 @@ export default function WorkOrderDetailsDialog({
                                       currentTaskId={task.id}
                                       currentTaskIndex={actualIndex}
                                       onUpdateDependencies={async (newDeps) => {
-                                        const updatedTasks = [...tasks];
-                                        updatedTasks[actualIndex] = { ...updatedTasks[actualIndex], depends_on: newDeps };
-                                        Object.assign(workOrder, { notes: updatedTasks });
+                                        const saved = await mutateLocatedWorkOrderArrayItem({
+                                          workOrderId: workOrder.id,
+                                          field: "notes",
+                                          item: task,
+                                          label: "Work Order task",
+                                          mutateItem: (currentTask) => ({ ...currentTask, depends_on: newDeps }),
+                                        });
+                                        Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
                                         if (onUpdate) onUpdate();
-                                        await WorkOrder.update(workOrder.id, { notes: updatedTasks });
                                       }}
                                       compact
                                     />
