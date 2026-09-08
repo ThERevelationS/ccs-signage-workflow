@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { estimateAuditSnapshot, summarizeEstimateChanges } from "./estimateLifecycle";
 import { quoteIssueKey } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "./builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -87,7 +88,15 @@ export async function completeEstimateRevision({ revision, estimate, quoteTotal,
     completed_at: new Date().toISOString(),
     work_order_id: workOrderId || sourceRevision.work_order_id || "",
   };
-  const updated = await base44.entities.EstimateRevision.update(sourceRevision.id, payload);
+  const updated = await replaceEntityFieldsIfUnchanged({
+    entity: base44.entities.EstimateRevision,
+    id: sourceRevision.id,
+    expectedUpdatedAt: sourceRevision.updated_date || "",
+    expectedFields: expectedEntityFields(sourceRevision, payload),
+    nextFields: payload,
+    guardFields: { estimate_id: sourceRevision.estimate_id },
+    label: "Estimate revision completion",
+  });
   return { ...sourceRevision, ...payload, ...(updated || {}) };
 }
 
@@ -230,7 +239,16 @@ export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId
     attachment_sha256: evidence.archive?.sha256 || "",
     attachment_size_bytes: Number(evidence.archive?.sizeBytes || 0),
   };
-  const updated = await base44.entities.EstimateRevision.update(issuanceRevision.id, { delivery_evidence: deliveryEvidence });
+  const evidencePatch = { delivery_evidence: deliveryEvidence };
+  const updated = await replaceEntityFieldsIfUnchanged({
+    entity: base44.entities.EstimateRevision,
+    id: issuanceRevision.id,
+    expectedUpdatedAt: issuanceRevision.updated_date || "",
+    expectedFields: expectedEntityFields(issuanceRevision, evidencePatch),
+    nextFields: evidencePatch,
+    guardFields: { estimate_id: estimateId, quote_issue_key: issueKey },
+    label: `Quote Version ${version} delivery evidence`,
+  });
   return { revision: { ...issuanceRevision, delivery_evidence: deliveryEvidence, ...(updated || {}) }, warning: "" };
 }
 
