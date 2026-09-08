@@ -15,7 +15,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import {
   routeRow,
   validateColumns,
@@ -222,17 +222,59 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
         return;
       }
 
+      const sameImportedValue = (a, b) => {
+        const emptyA = a === undefined || a === null || a === "";
+        const emptyB = b === undefined || b === null || b === "";
+        if (emptyA && emptyB) return true;
+        if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+          return Math.abs(Number(a) - Number(b)) <= 0.000001;
+        }
+        return JSON.stringify(a) === JSON.stringify(b);
+      };
+      const payloadMatches = (record, payload) => !!record && Object.entries(payload || {}).every(([field, value]) => sameImportedValue(record[field], value));
+      const completedRows = [];
+
       const writeOne = async (r) => {
         const conf = TARGETS[r.target_key];
+        const catalog = liveCatalogs[r.target_key];
         let attempt = 0;
         while (true) {
           try {
             if (r.action === "update") {
-              await conf.entity.update(r.existingId, r.payload);
+              const live = catalog.byId.get(r.existingId);
+              if (!live) throw new Error("The matched inventory item disappeared after preflight. Refresh the import preview.");
+              await replaceEntityFieldsIfUnchanged({
+                entity: conf.entity,
+                id: r.existingId,
+                expectedUpdatedAt: live.updated_date || "",
+                expectedFields: expectedEntityFields(live, r.payload),
+                nextFields: r.payload,
+                label: `${conf.label} import update “${r.name}”`,
+              });
               res.updated += 1;
+              completedRows.push(r);
             } else {
-              await conf.entity.create(r.payload);
+              const beforeCreate = await conf.entity.filter({ [conf.nameField]: r.name });
+              const appeared = (beforeCreate || []).find((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
+              if (appeared) {
+                throw new Error("An item with this name appeared after import preflight. Refresh the preview so it can be treated as an update instead of creating a duplicate.");
+              }
+              const created = await conf.entity.create(r.payload);
+              await sleep(50);
+              const afterCreate = await conf.entity.filter({ [conf.nameField]: r.name });
+              const exactMatches = (afterCreate || []).filter((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
+              if (exactMatches.length !== 1 || exactMatches[0].id !== created?.id) {
+                if (created?.id) {
+                  await deleteEntityIfUnchanged({
+                    entity: conf.entity,
+                    record: created,
+                    label: `${conf.label} duplicate import rollback “${r.name}”`,
+                  });
+                }
+                throw new Error("Another same-name inventory item appeared while this row was being created. This import row was rolled back; refresh the preview before retrying.");
+              }
               res.created += 1;
+              completedRows.push(r);
             }
             return;
           } catch (err) {
@@ -241,6 +283,15 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
               await sleep(backoff);
               attempt += 1;
               continue;
+            }
+            if (r.action === "create") {
+              const recoveredRows = await conf.entity.filter({ [conf.nameField]: r.name }).catch(() => []);
+              const recovered = (recoveredRows || []).filter((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
+              if (recovered.length === 1 && payloadMatches(recovered[0], r.payload)) {
+                res.created += 1;
+                completedRows.push(r);
+                return;
+              }
             }
             console.error(`Import error for "${r.name}":`, err);
             res.errors.push({ name: r.name, message: err?.message || "Failed" });
@@ -253,6 +304,28 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
         await writeOne(rows[i]);
         setProgress({ done: i + 1, total: rows.length });
         if (i < rows.length - 1) await sleep(PER_REQUEST_DELAY_MS);
+      }
+
+      // Final full-catalog verification makes partial/concurrent outcomes visible.
+      const verificationCatalogs = {};
+      for (const targetKey of [...new Set(completedRows.map((row) => row.target_key))]) {
+        const conf = TARGETS[targetKey];
+        verificationCatalogs[targetKey] = await loadAllEntityRows({ entity: conf.entity, sort: "created_date", label: `${conf.label} inventory final verification` });
+      }
+      for (const row of completedRows) {
+        const conf = TARGETS[row.target_key];
+        const catalogRows = verificationCatalogs[row.target_key] || [];
+        if (row.action === "update") {
+          const current = catalogRows.find((item) => item.id === row.existingId);
+          if (!payloadMatches(current, row.payload)) {
+            res.errors.push({ name: row.name, message: "Final verification found that this updated inventory row no longer matches the imported values. Review the live row before retrying." });
+          }
+        } else {
+          const matches = catalogRows.filter((item) => nameKey(item[conf.nameField]) === nameKey(row.name));
+          if (matches.length !== 1 || !payloadMatches(matches[0], row.payload)) {
+            res.errors.push({ name: row.name, message: matches.length > 1 ? "Final verification found duplicate same-name inventory rows. Review them before retrying this import row." : "Final verification could not confirm the created inventory row." });
+          }
+        }
       }
 
       setResult(res);
