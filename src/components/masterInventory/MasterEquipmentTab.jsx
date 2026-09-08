@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, Star } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
