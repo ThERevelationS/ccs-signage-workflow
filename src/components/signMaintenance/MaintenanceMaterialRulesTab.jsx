@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Boxes, Edit3, Link2, Plus, Save, ShieldCheck } from "lucide-react";
 import { MaintenanceInventory } from "@/entities/all";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { money } from "@/components/estimator/aioPricing";
 import { SIGN_TYPES, ACTIONS } from "./constants";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import {
   isMaintenanceMaterialCatalogItem,
   legacyPricingModeForUsageBasis,
@@ -52,6 +53,7 @@ function RuleEditor({ open, rule, catalog, onClose, onSaved }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const saveRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +66,8 @@ function RuleEditor({ open, rule, catalog, onClose, onSaved }) {
   const patch = (changes) => setDraft((current) => ({ ...current, ...changes }));
 
   const save = async () => {
-    if (!draft.inventory_entity || !draft.inventory_item_id || !draft.item_name.trim() || saving) return;
+    if (!draft.inventory_entity || !draft.inventory_item_id || !draft.item_name.trim() || saveRef.current) return;
+    saveRef.current = true;
     setSaving(true);
     setError("");
     try {
@@ -85,12 +88,24 @@ function RuleEditor({ open, rule, catalog, onClose, onSaved }) {
         sort_order: Number(draft.sort_order || 0),
         notes: draft.notes || "",
       };
-      if (rule?.id) await MaintenanceInventory.update(rule.id, payload);
-      else await MaintenanceInventory.create(payload);
+      if (rule?.id) {
+        await replaceEntityFieldsIfUnchanged({
+          entity: MaintenanceInventory,
+          id: rule.id,
+          expectedUpdatedAt: rule.updated_date || "",
+          expectedFields: expectedEntityFields(rule, payload),
+          nextFields: payload,
+          label: `Maintenance material rule “${rule.item_name || payload.item_name || "Rule"}”`,
+        });
+      } else {
+        await MaintenanceInventory.create(payload);
+      }
       await onSaved?.();
       onClose?.();
     } catch (err) {
       setError(err?.message || "Maintenance material rule could not be saved.");
+    } finally {
+      saveRef.current = false;
       setSaving(false);
     }
   };
@@ -198,7 +213,13 @@ export default function MaintenanceMaterialRulesTab() {
   const sorted = useMemo(() => [...rules].sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || String(a._display_name || a.item_name || "").localeCompare(String(b._display_name || b.item_name || ""))), [rules]);
   const setActive = async (rule, next) => {
     try {
-      await MaintenanceInventory.update(rule.id, { is_active: next });
+      await replaceEntityFieldsIfUnchanged({
+        entity: MaintenanceInventory,
+        id: rule.id,
+        expectedFields: { is_active: rule.is_active },
+        nextFields: { is_active: next },
+        label: `Maintenance material rule status “${rule.item_name || "Rule"}”`,
+      });
       await load();
     } catch (err) { setError(err?.message || "Rule status could not be changed."); }
   };
