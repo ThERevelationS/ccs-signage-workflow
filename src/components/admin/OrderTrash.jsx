@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const Order = base44.entities.Order;
 const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
@@ -24,6 +25,7 @@ const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
 export default function OrderTrash() {
   const [deletedOrders, setDeletedOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [readError, setReadError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -37,11 +39,19 @@ export default function OrderTrash() {
 
   const loadDeletedOrders = async () => {
     setIsLoading(true);
+    setReadError("");
     try {
-      const deleted = await Order.filter({ deleted: true });
+      const deleted = await loadAllEntityRows({
+        entity: Order,
+        query: { deleted: true },
+        sort: "created_date",
+        label: "Order trash",
+      });
       setDeletedOrders(deleted.sort((a, b) => (b.deleted_at || "").localeCompare(a.deleted_at || "")));
     } catch (error) {
       console.error("Error loading deleted orders:", error);
+      setDeletedOrders([]);
+      setReadError(error?.message || "Order trash could not be verified completely.");
     }
     setIsLoading(false);
   };
@@ -68,26 +78,58 @@ export default function OrderTrash() {
       return;
     }
     setBulkDeleteError("");
-    setBulkDeleteConfirm(false);
-    
-    // Get ALL orders (not just deleted ones)
-    const allOrders = await Order.list();
-    setBulkDeleteProgress({ active: true, current: 0, total: allOrders.length });
-    
-    for (let i = 0; i < allOrders.length; i++) {
-      await Order.delete(allOrders[i].id);
-      setBulkDeleteProgress({ active: true, current: i + 1, total: allOrders.length });
+
+    let allOrders;
+    try {
+      // Verify the complete archive before deleting anything. A later-page read
+      // failure must abort the reset rather than silently deleting only a subset.
+      allOrders = await loadAllEntityRows({
+        entity: Order,
+        sort: "row_number",
+        label: "Order system reset archive",
+      });
+    } catch (error) {
+      console.error("Error verifying Orders for system reset:", error);
+      setBulkDeleteError(error?.message || "All Orders could not be verified. Nothing was deleted.");
+      return;
     }
-    
-    setBulkDeleteProgress({ active: false, current: 0, total: 0 });
-    setBulkDeletePassword("");
-    loadDeletedOrders();
+
+    setBulkDeleteConfirm(false);
+    setBulkDeleteProgress({ active: true, current: 0, total: allOrders.length });
+
+    let deletedCount = 0;
+    try {
+      for (let i = 0; i < allOrders.length; i++) {
+        await Order.delete(allOrders[i].id);
+        deletedCount = i + 1;
+        setBulkDeleteProgress({ active: true, current: deletedCount, total: allOrders.length });
+      }
+      setBulkDeletePassword("");
+      await loadDeletedOrders();
+    } catch (error) {
+      console.error("Error during Order system reset:", error);
+      setBulkDeletePassword("");
+      setBulkDeleteError(`System reset stopped after ${deletedCount} of ${allOrders.length} Orders. No further Orders were deleted.`);
+      setBulkDeleteConfirm(true);
+    } finally {
+      setBulkDeleteProgress({ active: false, current: 0, total: 0 });
+    }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (readError) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-sm font-bold text-red-700">Order trash could not be verified completely.</div>
+        <div className="mt-1 text-xs text-red-600">{readError}</div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadDeletedOrders}>Retry</Button>
       </div>
     );
   }
