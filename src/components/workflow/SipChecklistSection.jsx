@@ -310,6 +310,20 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
             </div>
           </div>
         </CollapsibleTrigger>
+
+        {saveError && (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+            <div className="font-medium">SIP checklist save blocked</div>
+            <div className="mt-1">{saveError}</div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span>Reloading discards unsaved checklist edits.</span>
+              <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || saving} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+                {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                Reload latest
+              </Button>
+            </div>
+          </div>
+        )}
         
         <CollapsibleContent className="mt-4">
           {isLoading ? (
