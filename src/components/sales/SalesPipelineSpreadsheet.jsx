@@ -1382,12 +1382,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             }
           }}
           onDelete={async (wo) => {
-            await WorkOrder.update(wo.id, {
-              deleted: true,
-              deleted_at: new Date().toISOString(),
-              deleted_by: currentUser?.email || "unknown"
-            });
-            setWorkOrders(workOrders.filter(w => w.id !== wo.id));
+            setDestructiveActionError("");
+            try {
+              await softDeleteWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                deletedBy: currentUser?.email || "unknown",
+                label: "Sales Pipeline details Work Order delete",
+              });
+              setWorkOrders((current) => current.filter((workOrder) => workOrder.id !== wo.id));
+            } catch (error) {
+              console.error("Sales Pipeline details Work Order delete blocked:", error);
+              setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
+              await loadWorkOrders(false);
+              throw error;
+            }
           }}
         />
       )}
