@@ -155,6 +155,15 @@ const FinancialsSpreadsheet = React.forwardRef(({
     debounceTimers.current[orderId] = timerId;
   };
 
+  const discardPendingQuickEdits = async () => {
+    Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
+    debounceTimers.current = {};
+    pendingChangesRef.current = {};
+    pendingBaselinesRef.current = {};
+    setQuickEditError("");
+    await loadWorkOrders();
+  };
+
   const applyCustomFilter = (wo, conditions) => {
     if (!conditions || conditions.length === 0) return true;
     
@@ -340,6 +349,18 @@ const FinancialsSpreadsheet = React.forwardRef(({
 
   return (
     <div className="overflow-visible">
+      {quickEditError && (
+        <div className="mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+          <div className="font-medium">Financial spreadsheet quick edit save blocked</div>
+          <div className="mt-1">{quickEditError}</div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span>Reloading discards unsaved quick edits and keeps the newer saved Work Order values.</span>
+            <Button type="button" size="sm" variant="outline" onClick={discardPendingQuickEdits} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+              Reload latest
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '10px', tableLayout: 'auto' }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
