@@ -78,10 +78,22 @@ export default function ProjectTrash() {
       return;
     }
     setBulkDeleteError("");
+
+    // Verify the COMPLETE Work Order catalog before any destructive system-reset delete.
+    let allWorkOrders;
+    try {
+      allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "created_date",
+        label: "System Reset Work Orders",
+      });
+    } catch (error) {
+      console.error("Could not verify all Work Orders for system reset:", error);
+      setBulkDeleteError(error?.message || "All Work Orders could not be verified. Nothing was deleted.");
+      return;
+    }
+
     setBulkDeleteConfirm(false);
-    
-    // Get ALL work orders (not just deleted ones)
-    const allWorkOrders = await WorkOrder.list();
     setBulkDeleteProgress({ active: true, current: 0, total: allWorkOrders.length });
     
     for (let i = 0; i < allWorkOrders.length; i++) {
