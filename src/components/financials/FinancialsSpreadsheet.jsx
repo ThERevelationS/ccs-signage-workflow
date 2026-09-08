@@ -11,6 +11,7 @@ import { Loader2, Link as LinkIcon } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -39,7 +40,9 @@ const FinancialsSpreadsheet = React.forwardRef(({
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const pendingChangesRef = useRef({});
+  const pendingBaselinesRef = useRef({});
   const debounceTimers = useRef({});
+  const [quickEditError, setQuickEditError] = useState("");
 
   useEffect(() => {
     loadWorkOrders();
@@ -58,7 +61,10 @@ const FinancialsSpreadsheet = React.forwardRef(({
         }),
         AuthorizedEmail.list()
       ]);
-      setWorkOrders(orders.sort((a, b) => {
+      setWorkOrders(orders.map((order) => ({
+        ...order,
+        ...(pendingChangesRef.current[order.id] || {}),
+      })).sort((a, b) => {
         // Sort by install date first
         if (a.project_install_date && b.project_install_date) {
           return a.project_install_date.localeCompare(b.project_install_date);
