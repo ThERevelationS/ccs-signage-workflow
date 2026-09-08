@@ -204,6 +204,12 @@ Deno.serve(async (req) => {
     if (action === 'enable_scheduled_reminders' && !settings.notifications_enabled) {
       return Response.json({ error:'Enable Fleet notifications before scheduled reminders.' }, { status:409 });
     }
+    if (action === 'enable_maintenance_generation' && (!settings.notifications_enabled || !settings.scheduled_reminders_enabled)) {
+      return Response.json({ error:'Enable Fleet notifications and scheduled reminders before maintenance generation.' }, { status:409 });
+    }
+    if (action === 'enable_public_reporting' && (!settings.notifications_enabled || !settings.scheduled_reminders_enabled || !settings.maintenance_generation_enabled)) {
+      return Response.json({ error:'Enable notifications, scheduled reminders, and maintenance generation before public reporting.' }, { status:409 });
+    }
 
     const stamp = nowIso();
     await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
