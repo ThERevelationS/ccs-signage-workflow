@@ -26,14 +26,17 @@ export async function replaceEstimateFieldsIfUnchanged({
   entity,
   estimateId,
   expectedFields,
+  guardFields = {},
   nextFields,
   label = "Estimate fields",
   maxAttempts = 3,
 } = {}) {
   const id = String(estimateId || "").trim();
   const expected = expectedFields && typeof expectedFields === "object" && !Array.isArray(expectedFields) ? expectedFields : null;
+  const guards = guardFields && typeof guardFields === "object" && !Array.isArray(guardFields) ? guardFields : {};
   const desired = nextFields && typeof nextFields === "object" && !Array.isArray(nextFields) ? nextFields : null;
   const fieldNames = desired ? Object.keys(desired) : [];
+  const guardNames = Object.keys(guards);
   if (!id || !expected || !desired || fieldNames.length === 0 || typeof entity?.get !== "function" || typeof entity?.updateMany !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe update.`);
   }
@@ -47,6 +50,12 @@ export async function replaceEstimateFieldsIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Estimate before saving.`);
+
+    for (const fieldName of guardNames) {
+      if (!sameValue(current[fieldName], guards[fieldName])) {
+        throw new Error(`${label} changed in another session (${fieldName}). Reload before saving. No Estimate fields were overwritten.`);
+      }
+    }
 
     const alreadyDesired = fieldNames.every((fieldName) => sameValue(current[fieldName], desired[fieldName]));
     if (alreadyDesired) return current;
