@@ -276,7 +276,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const updateWorkOrder = (orderId, field, value, skipHistory = false) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
-    const oldValue = currentWo ? currentWo[field] : "";
+    if (!currentWo) return;
+    const oldValue = currentWo[field];
     
     const updatedWo = { ...currentWo, [field]: value };
     // Apply task assignment rules
@@ -290,10 +291,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       trackChange(orderId, field, oldValue, value);
     }
     
+    const baselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
+    Object.keys(mergedUpdates).forEach((changedField) => {
+      if (!Object.prototype.hasOwnProperty.call(baselines, changedField)) {
+        baselines[changedField] = currentWo[changedField];
+      }
+    });
+    pendingBaselinesRef.current[orderId] = baselines;
     pendingChangesRef.current[orderId] = {
       ...(pendingChangesRef.current[orderId] || {}),
       ...mergedUpdates,
     };
+    setQuickEditError("");
 
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
@@ -306,21 +315,45 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
         return;
       }
+      const baselineSource = pendingBaselinesRef.current[orderId] || {};
+      const expectedFields = Object.keys(changes).reduce((out, changedField) => {
+        if (!Object.prototype.hasOwnProperty.call(baselineSource, changedField)) {
+          throw new Error(`Sales Pipeline quick edit is missing its baseline for ${changedField}. Reload before saving.`);
+        }
+        out[changedField] = baselineSource[changedField];
+        return out;
+      }, {});
       try {
-        await WorkOrder.update(orderId, changes);
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          workOrderId: orderId,
+          expectedFields,
+          nextFields: changes,
+          label: "Sales Pipeline quick edit",
+        });
         const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
+        const remainingBaselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
         Object.entries(changes).forEach(([changedField, savedValue]) => {
           if (JSON.stringify(remaining[changedField]) === JSON.stringify(savedValue)) {
             delete remaining[changedField];
+            delete remainingBaselines[changedField];
+          } else if (Object.prototype.hasOwnProperty.call(remaining, changedField)) {
+            remainingBaselines[changedField] = saved[changedField];
           }
         });
-        if (Object.keys(remaining).length > 0) pendingChangesRef.current[orderId] = remaining;
-        else delete pendingChangesRef.current[orderId];
+        if (Object.keys(remaining).length > 0) {
+          pendingChangesRef.current[orderId] = remaining;
+          pendingBaselinesRef.current[orderId] = remainingBaselines;
+        } else {
+          delete pendingChangesRef.current[orderId];
+          delete pendingBaselinesRef.current[orderId];
+        }
+        setQuickEditError("");
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
-        // Keep the queued values so a subsequent edit/retry cannot silently lose them.
+        setQuickEditError(error?.message || "A Sales Pipeline quick edit could not be saved. Reload the latest data and try again.");
+        // Keep the queued values and original baselines so no stale value is silently written.
       } finally {
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
       }
