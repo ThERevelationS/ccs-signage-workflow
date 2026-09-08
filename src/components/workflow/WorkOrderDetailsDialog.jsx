@@ -807,6 +807,18 @@ export default function WorkOrderDetailsDialog({
     <>
       <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent className="clay-card border-none max-w-[95vw] w-[1400px] max-h-[95vh] overflow-hidden flex flex-col p-0">
+          {inlineEditError && (
+            <div className="mx-6 mt-4 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-3 flex-shrink-0">
+              <div>
+                <div className="font-medium">Work Order field save blocked</div>
+                <div className="mt-0.5">{inlineEditError}</div>
+                <div className="mt-0.5 text-red-700">Reloading discards the unsaved inline value and keeps the latest saved Work Order value.</div>
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={reloadInlineEditLatest} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+                Reload latest
+              </Button>
+            </div>
+          )}
           {/* Header */}
           <div className="px-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-start justify-between">
