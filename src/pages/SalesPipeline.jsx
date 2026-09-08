@@ -8,7 +8,7 @@ import { DollarSign, Filter, Search, Plus, Upload, Download, Loader2, Settings, 
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
-import PendingImportsPanel from "@/components/sales/PendingImportsPanel";
+import PendingImportsPanel, { fetchPendingImportCount } from "@/components/sales/PendingImportsPanel";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -30,10 +30,7 @@ export default function SalesPipeline() {
 
   useEffect(() => {
     const loadCount = async () => {
-      try {
-        const res = await base44.entities.PendingImport.filter({ status: 'pending' });
-        setPendingCount(Array.isArray(res) ? res.length : 0);
-      } catch {}
+      setPendingCount(await fetchPendingImportCount());
     };
     loadCount();
   }, []);
