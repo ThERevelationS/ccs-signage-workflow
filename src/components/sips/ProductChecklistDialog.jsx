@@ -400,7 +400,7 @@ export default function ProductChecklistDialog({
   // Called when Save button is clicked - first show revisit date popup
   const handleSaveClick = () => {
     if (!isRegistered) return;
-    setPendingRevisitDate(workOrder.sip_revisit_date || null);
+    setPendingRevisitDate(loadedRevisitDateSnapshot || null);
     setShowRevisitPopup(true);
   };
 
@@ -1852,6 +1852,19 @@ export default function ProductChecklistDialog({
           )}
 
           {/* Actions */}
+          {saveError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">SIP product checklist save blocked</div>
+              <div className="mt-1 text-xs">{saveError}</div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-xs text-red-700">Reloading discards unsaved checklist and product edits.</span>
+                <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || isSaving} className="shrink-0 border-red-300 bg-white text-red-800">
+                  {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                  Reload latest
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose} className="flex-1 h-10">
               Cancel
