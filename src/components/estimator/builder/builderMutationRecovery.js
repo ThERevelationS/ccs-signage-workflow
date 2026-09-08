@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -266,11 +267,21 @@ async function applyPendingDeletePlan(pending, builderProductId) {
   let partDeletes = 0;
   let groupDeletes = 0;
   for (const part of verifiedParts) {
-    await base44.entities.BuilderPart.delete(part.id);
+    await deleteBuilderEntityIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      record: part,
+      guardFields: { builder_product_id: builderProductId },
+      label: `Builder Part “${part.part_name || "Part"}”`,
+    });
     partDeletes += 1;
   }
   for (const group of verifiedGroups) {
-    await base44.entities.BuilderPartGroup.delete(group.id);
+    await deleteBuilderEntityIfUnchanged({
+      entity: base44.entities.BuilderPartGroup,
+      record: group,
+      guardFields: { builder_product_id: builderProductId },
+      label: `Builder Part Group “${group.group_name || "Part Group"}”`,
+    });
     groupDeletes += 1;
   }
   return { partDeletes, groupDeletes };
@@ -361,7 +372,15 @@ export async function resumeBuilderMutation({
     if (expectedBuilderUpdatedAt && currentBuilderUpdatedAt && expectedBuilderUpdatedAt !== currentBuilderUpdatedAt) {
       throw new Error("This Builder Product changed while a Builder mutation was pending. The recovery marker was retained and no unrelated Builder edit was overwritten.");
     }
-    await base44.entities.BuilderProduct.update(builder.id, builderPatch);
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builder.id,
+      expectedUpdatedAt: currentBuilder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(currentBuilder, builderPatch),
+      nextFields: builderPatch,
+      guardFields: { estimate_id: currentBuilder.estimate_id },
+      label: "Builder Product recovery completion",
+    });
   }
 
   const latestEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
