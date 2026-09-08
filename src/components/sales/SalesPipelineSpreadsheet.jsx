@@ -61,7 +61,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
   const [editInput, setEditInput] = useState("");
   const [editingItem, setEditingItem] = useState({ index: null, value: "" });
-  const [pendingChanges, setPendingChanges] = useState({});
+  const pendingChangesRef = useRef({});
   const debounceTimers = useRef({});
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
   const importStateRef = useRef({ paused: false, cancelled: false });
@@ -284,37 +284,42 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       trackChange(orderId, field, oldValue, value);
     }
     
-    setPendingChanges(prev => ({
-      ...prev,
-      [orderId]: { ...prev[orderId], ...mergedUpdates }
-    }));
+    pendingChangesRef.current[orderId] = {
+      ...(pendingChangesRef.current[orderId] || {}),
+      ...mergedUpdates,
+    };
 
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
     }
 
-    debounceTimers.current[orderId] = setTimeout(async () => {
+    const timerId = setTimeout(async () => {
+      const queued = pendingChangesRef.current[orderId];
+      const changes = queued ? { ...queued } : null;
+      if (!changes || Object.keys(changes).length === 0) {
+        if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
+        return;
+      }
       try {
-        const changes = pendingChanges[orderId] || mergedUpdates;
         await WorkOrder.update(orderId, changes);
-        setPendingChanges(prev => {
-          const updated = { ...prev };
-          delete updated[orderId];
-          return updated;
+        const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
+        Object.entries(changes).forEach(([changedField, savedValue]) => {
+          if (JSON.stringify(remaining[changedField]) === JSON.stringify(savedValue)) {
+            delete remaining[changedField];
+          }
         });
-        delete debounceTimers.current[orderId];
+        if (Object.keys(remaining).length > 0) pendingChangesRef.current[orderId] = remaining;
+        else delete pendingChangesRef.current[orderId];
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
-        delete debounceTimers.current[orderId];
-        setPendingChanges(prev => {
-          const updated = { ...prev };
-          delete updated[orderId];
-          return updated;
-        });
+        // Keep the queued values so a subsequent edit/retry cannot silently lose them.
+      } finally {
+        if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
       }
     }, 1000);
+    debounceTimers.current[orderId] = timerId;
   };
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
