@@ -7,6 +7,7 @@ import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/e
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -111,11 +112,19 @@ async function createClipboardRecord(data) {
     },
   });
   if (!record?.id) return record;
-  return base44.entities.EstimateClipboardItem.update(record.id, {
+  const refreshPatch = {
     copied_at: copiedAt,
     expires_at: expiresAt,
     is_active: true,
     search_text: searchText,
+  };
+  return replaceEntityFieldsIfUnchanged({
+    entity: base44.entities.EstimateClipboardItem,
+    id: record.id,
+    expectedUpdatedAt: record.updated_date || "",
+    expectedFields: expectedEntityFields(record, refreshPatch),
+    nextFields: refreshPatch,
+    label: "Estimator clipboard refresh",
   });
 }
 
@@ -166,11 +175,27 @@ export async function copyPartGroupToClipboard({ estimateId, builderProductId, g
 export async function listClipboardItems() {
   const rows = await loadAllEntityRows({ entity: base44.entities.EstimateClipboardItem, sort: "-copied_at", label: "Estimator Clipboard" });
   const now = Date.now();
-  const expired = (rows || []).filter((row) => row.expires_at && new Date(row.expires_at).getTime() <= now);
-  if (expired.length) {
-    Promise.all(expired.map((row) => base44.entities.EstimateClipboardItem.delete(row.id).catch(() => null))).catch(() => null);
+  const currentRows = [];
+  for (const row of rows || []) {
+    const expired = row.expires_at && new Date(row.expires_at).getTime() <= now;
+    if (!expired) {
+      currentRows.push(row);
+      continue;
+    }
+    try {
+      await deleteEntityIfUnchanged({
+        entity: base44.entities.EstimateClipboardItem,
+        record: row,
+        label: "Expired estimator clipboard item",
+      });
+    } catch {
+      // A refreshed clipboard item must never be deleted using a stale expiry
+      // snapshot. Re-read it and keep the newer live row when it is still usable.
+      const current = await base44.entities.EstimateClipboardItem.get(row.id).catch(() => null);
+      if (current) currentRows.push(current);
+    }
   }
-  return (rows || [])
+  return currentRows
     .filter((row) => row.is_active !== false && (!row.expires_at || new Date(row.expires_at).getTime() > now))
     .sort((a, b) => new Date(b.copied_at || b.created_date || 0) - new Date(a.copied_at || a.created_date || 0));
 }
@@ -178,12 +203,13 @@ export async function listClipboardItems() {
 export async function removeClipboardItem(id) {
   const itemId = String(id || "").trim();
   if (!itemId) return;
-  try {
-    await base44.entities.EstimateClipboardItem.delete(itemId);
-  } catch (error) {
-    const remaining = await base44.entities.EstimateClipboardItem.filter({ id: itemId }).catch(() => null);
-    if (!Array.isArray(remaining) || remaining.some((row) => row.id === itemId)) throw error;
-  }
+  const current = await base44.entities.EstimateClipboardItem.get(itemId).catch(() => null);
+  if (!current) return;
+  await deleteEntityIfUnchanged({
+    entity: base44.entities.EstimateClipboardItem,
+    record: current,
+    label: "Estimator clipboard item",
+  });
 }
 
 export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "", expectedEstimateUpdatedAt = "" }) {
