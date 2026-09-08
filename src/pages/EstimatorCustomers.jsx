@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
+import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -65,29 +66,26 @@ export default function EstimatorCustomers() {
     if (pricingTierSaveRef.current) return;
     const nextTier = Number(tierNumber) || 1;
     const loadedCustomer = customers.find((customer) => customer.id === customerId) || null;
+    if (!loadedCustomer) {
+      window.alert("This Customer is no longer in the loaded list. Reload before changing its pricing tier.");
+      return;
+    }
+
     pricingTierSaveRef.current = true;
     setSavingTierId(customerId);
     try {
-      const current = await base44.entities.Customer.get(customerId);
-      if (
-        loadedCustomer?.updated_date &&
-        current?.updated_date &&
-        loadedCustomer.updated_date !== current.updated_date
-      ) {
-        setCustomers((rows) => rows.map((customer) => customer.id === customerId ? current : customer));
-        throw new Error("This Customer changed in another session. The latest Customer data has been reloaded; review it before changing the pricing tier again.");
-      }
-
-      const updateResult = await base44.entities.Customer.update(customerId, { pricing_tier: nextTier });
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.Customer.get(customerId);
-      const saved = { ...current, ...(refreshed || {}), pricing_tier: nextTier };
+      const saved = await replaceCustomerFieldsIfUnchanged({
+        entity: base44.entities.Customer,
+        customerId,
+        expectedFields: { pricing_tier: loadedCustomer.pricing_tier },
+        nextFields: { pricing_tier: nextTier },
+        label: "Customer pricing tier",
+      });
       setCustomers((rows) => rows.map((customer) => customer.id === customerId ? saved : customer));
     } catch (error) {
-      if (!String(error?.message || "").includes("changed in another session")) {
-        const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
-        if (refreshed) {
-          setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
-        }
+      const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
+      if (refreshed) {
+        setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
       }
       window.alert(error?.message || "Customer pricing tier could not be saved.");
     } finally {
