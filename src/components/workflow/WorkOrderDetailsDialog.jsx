@@ -1653,9 +1653,24 @@ export default function WorkOrderDetailsDialog({
                     milestones={workOrder.milestones || []}
                     tasks={tasks}
                     onUpdate={async (newMilestones) => {
-                      await WorkOrder.update(workOrder.id, { milestones: newMilestones });
-                      Object.assign(workOrder, { milestones: newMilestones });
-                      if (onUpdate) onUpdate();
+                      setInlineEditError("");
+                      try {
+                        const saved = await replaceWorkOrderArrayFieldIfUnchanged({
+                          workOrderId: workOrder.id,
+                          field: "milestones",
+                          expectedArray: workOrder.milestones || [],
+                          nextArray: newMilestones,
+                          label: "Work Order milestones",
+                        });
+                        Object.assign(workOrder, {
+                          milestones: saved.milestones || [],
+                          updated_date: saved.updated_date,
+                        });
+                        if (onUpdate) onUpdate();
+                      } catch (error) {
+                        console.error("Could not update Work Order milestones safely:", error);
+                        setInlineEditError(error?.message || "Milestones changed in another session. Reload before saving this milestone change.");
+                      }
                     }}
                     compact
                   />
@@ -1990,11 +2005,22 @@ export default function WorkOrderDetailsDialog({
         folderUrl={workOrder.google_drive_folder_url}
         workOrderTitle={workOrder.title}
         onFileIdsUpdate={async (fileId) => {
-          const currentIds = workOrder.google_drive_file_ids || [];
-          if (!currentIds.includes(fileId)) {
-            await WorkOrder.update(workOrder.id, {
-              google_drive_file_ids: [...currentIds, fileId]
+          setInlineEditError("");
+          try {
+            const saved = await mutateWorkOrderArrayField({
+              workOrderId: workOrder.id,
+              field: "google_drive_file_ids",
+              label: "Work Order Google Drive file links",
+              mutate: (currentIds) => currentIds.includes(fileId) ? currentIds : [...currentIds, fileId],
             });
+            Object.assign(workOrder, {
+              google_drive_file_ids: saved.google_drive_file_ids || [],
+              updated_date: saved.updated_date,
+            });
+            if (onUpdate) onUpdate();
+          } catch (error) {
+            console.error("Could not link Google Drive file safely:", error);
+            setInlineEditError(error?.message || "Google Drive file links changed in another session. Reload before linking this file.");
           }
         }}
       />
