@@ -219,6 +219,18 @@ export default function SIPs() {
           </div>
         </div>
 
+        {quickEditError && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">SIPs Work Order update blocked</div>
+              <div className="mt-1 text-xs">{quickEditError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={async () => { setQuickEditError(""); await loadWorkOrders(false); }} className="shrink-0 border-red-300 bg-white text-red-800">
+              Reload latest
+            </Button>
+          </div>
+        )}
+
         {/* Spreadsheet */}
         <div className="clay-card p-4 w-full overflow-x-auto">
           <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
