@@ -12,6 +12,8 @@
       "enum": [
         "work_order_complete",
         "work_order_reopen",
+        "inventory_usage",
+        "maintenance_reschedule",
         "request_receive",
         "scheduled_generation",
         "notification"
