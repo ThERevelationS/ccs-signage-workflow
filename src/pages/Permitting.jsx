@@ -10,7 +10,7 @@ import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
+import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -31,6 +31,7 @@ export default function Permitting() {
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [workOrderEditError, setWorkOrderEditError] = useState("");
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -322,9 +323,30 @@ export default function Permitting() {
 
   // Update a field on the underlying WorkOrder (used by the client group header)
   const updateWorkOrderField = useCallback(async (workOrderId, field, value) => {
+    const currentWo = workOrders.find((w) => w.id === workOrderId);
+    if (!currentWo) return;
+    const expectedValue = currentWo[field];
+    setWorkOrderEditError("");
     setWorkOrders(prev => prev.map(w => w.id === workOrderId ? { ...w, [field]: value } : w));
-    await WorkOrder.update(workOrderId, { [field]: value });
-  }, []);
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId,
+        expectedFields: { [field]: expectedValue },
+        nextFields: { [field]: value },
+        label: `Permitting ${field}`,
+      });
+      setWorkOrders(prev => prev.map(w => w.id === workOrderId ? { ...w, ...saved } : w));
+      setSelectedWorkOrder(prev => prev?.id === workOrderId ? { ...prev, ...saved } : prev);
+    } catch (error) {
+      console.error("Could not update Permitting Work Order field:", error);
+      setWorkOrderEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
+      await loadData(false);
+      if (selectedWorkOrder?.id === workOrderId) {
+        const latest = await WorkOrder.get(workOrderId).catch(() => null);
+        if (latest?.id) setSelectedWorkOrder(latest);
+      }
+    }
+  }, [workOrders, selectedWorkOrder]);
 
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
