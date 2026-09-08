@@ -176,7 +176,7 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
   );
 }
 
-function EquipmentList({ items, equipment = [], attachments = [], subAttachments = [], onEdit, onDelete, isAttachment, isSubAttachment, onDragEnd, isAdmin }) {
+function EquipmentList({ items, equipment = [], attachments = [], subAttachments = [], onEdit, onDelete, isAttachment, isSubAttachment, onDragEnd, isAdmin, reorderDisabled = false }) {
     if (items.length === 0) return <div className="text-center py-8 text-slate-400 text-sm italic border rounded bg-slate-50">No items found in this category.</div>;
     
     const sortedItems = [...items].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
@@ -187,7 +187,7 @@ function EquipmentList({ items, equipment = [], attachments = [], subAttachments
                 {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
                         {sortedItems.map((item, index) => (
-                            <Draggable key={item.id} draggableId={item.id} index={index}>
+                            <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={reorderDisabled || !isAdmin}>
                                 {(provided, snapshot) => (
                                     <div
                                         ref={provided.innerRef}
@@ -210,7 +210,7 @@ function EquipmentList({ items, equipment = [], attachments = [], subAttachments
                                                 {isAdmin && (
                                                   <div className="flex gap-1">
                                                       <Button size="icon" variant="ghost" onClick={() => onEdit(item)} className="h-6 w-6"><Edit className="w-3 h-3" /></Button>
-                                                      <Button size="icon" variant="ghost" onClick={() => onDelete(item.id)} className="h-6 w-6 text-red-500"><Trash2 className="w-3 h-3" /></Button>
+                                                      <Button size="icon" variant="ghost" onClick={() => onDelete(item)} className="h-6 w-6 text-red-500"><Trash2 className="w-3 h-3" /></Button>
                                                   </div>
                                                 )}
                                             </CardHeader>
