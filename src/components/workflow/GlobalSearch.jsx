@@ -16,6 +16,7 @@ import {
 import { Search, Filter, X, Loader2, ChevronDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import WorkOrderDetailsDialog from "./WorkOrderDetailsDialog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -58,7 +59,12 @@ export default function GlobalSearch({ className = "" }) {
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await WorkOrder.filter({ completed: false });
+      const allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { completed: false },
+        sort: "created_date",
+        label: "Global Search Work Orders",
+      });
       
       let filtered = allWorkOrders;
 
