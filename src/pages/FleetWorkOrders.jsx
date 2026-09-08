@@ -1,29 +1,46 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
+import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
+import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
 export default function FleetWorkOrders() {
   const [orders, setOrders] = useState([]);
   const [equipment, setEquipment] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [parts, setParts] = useState([]);
+  const [fluids, setFluids] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("active");
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dialog, setDialog] = useState(null);
+  const [actionError, setActionError] = useState("");
+  const [reopeningId, setReopeningId] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [w, e] = await Promise.all([
-          base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-          base44.entities.FleetEquipment.list("name", 500),
-        ]);
-        setOrders(w || []); setEquipment(e || []);
-      } finally { setLoading(false); }
-    })();
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [w, e, t, p, f] = await Promise.all([
+        base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
+        base44.entities.FleetEquipment.list("name", 500),
+        base44.entities.FleetMaintenanceTask.list("start_date", 500),
+        base44.entities.FleetPart.list("part_name", 500),
+        base44.entities.FleetFluid.list("fluid_name", 500),
+      ]);
+      setOrders(w || []);
+      setEquipment(e || []);
+      setTasks(t || []);
+      setParts(p || []);
+      setFluids(f || []);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const rows = useMemo(() => {
@@ -38,11 +55,46 @@ export default function FleetWorkOrders() {
     });
   }, [orders, search, status, equipmentNames]);
 
+  const submitDialog = async (workOrderData, equipmentStatus) => {
+    if (!dialog) return;
+    const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
+    const payload = action === "create"
+      ? { action, work_order: workOrderData }
+      : { action, id: dialog.workOrder.id, work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus } : {}) };
+    const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
+    if (response?.data?.error) throw new Error(response.data.error);
+    await loadData();
+    setDialog(null);
+    setActionError("");
+  };
+
+  const reopen = async (workOrder) => {
+    if (!window.confirm(`Reopen ${workOrder.work_order_number}? Inventory already consumed by prior completion will NOT be restored, matching FleetMaster behavior.`)) return;
+    setReopeningId(workOrder.id);
+    setActionError("");
+    try {
+      const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id });
+      if (response?.data?.error) throw new Error(response.data.error);
+      await loadData();
+    } catch (error) {
+      setActionError(error?.message || "Failed to reopen Fleet work order.");
+    } finally {
+      setReopeningId("");
+    }
+  };
+
   return (
     <div className="min-h-full bg-gray-50 dark:bg-slate-950">
       <FleetModuleNav />
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
-        <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Work Orders</h1><p className="text-sm text-gray-500 dark:text-slate-400">Fleet maintenance only. These records are separate from customer/signage WorkOrders.</p></div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Work Orders</h1><p className="text-sm text-gray-500 dark:text-slate-400">Fleet maintenance only. These records are separate from customer/signage WorkOrders.</p></div>
+          <button onClick={() => setDialog({ mode: "create", workOrder: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Fleet Work Order</button>
+        </div>
+
+        <div className="rounded-lg border border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-200 px-3 py-2 text-xs">Operational writes use the Fleet-only server endpoint and durable idempotency receipts. Email notifications remain disabled until the automation phase is separately validated.</div>
+        {actionError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search work orders..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
           <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
@@ -60,6 +112,12 @@ export default function FleetWorkOrders() {
                   {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {isOpen && <div className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 text-sm">
+                  <div className="flex flex-wrap gap-2">
+                    {w.status !== "completed" && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
+                    {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
+                    {w.status === "completed" && <button onClick={() => reopen(w)} disabled={reopeningId === w.id} className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 disabled:opacity-50">{reopeningId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}Reopen</button>}
+                    {w.status === "cancelled" && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit / Reactivate</button>}
+                  </div>
                   <div className="grid md:grid-cols-3 gap-4"><Info label="Type" value={pretty(w.type)} /><Info label="Started" value={w.started_date || "—"} /><Info label="Completed" value={w.completed_date || "—"} /><Info label="Actual hours" value={w.actual_hours ?? "—"} /><Info label="Total cost" value={w.total_cost != null ? `$${Number(w.total_cost).toFixed(2)}` : "—"} /><Info label="Projected completion" value={w.projected_completion_date || "—"} /></div>
                   {w.description && <Section title="Description" text={w.description} />}
                   {w.corrective_action && <Section title="Corrective Action" text={w.corrective_action} />}
@@ -73,6 +131,18 @@ export default function FleetWorkOrders() {
           </div>
         )}
       </div>
+
+      <FleetWorkOrderDialog
+        open={!!dialog}
+        mode={dialog?.mode}
+        workOrder={dialog?.workOrder}
+        equipment={equipment}
+        tasks={tasks}
+        parts={parts}
+        fluids={fluids}
+        onClose={() => setDialog(null)}
+        onSubmit={submitDialog}
+      />
     </div>
   );
 }
