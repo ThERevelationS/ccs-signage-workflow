@@ -315,15 +315,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
         return;
       }
-      const baselineSource = pendingBaselinesRef.current[orderId] || {};
-      const expectedFields = Object.keys(changes).reduce((out, changedField) => {
-        if (!Object.prototype.hasOwnProperty.call(baselineSource, changedField)) {
-          throw new Error(`Sales Pipeline quick edit is missing its baseline for ${changedField}. Reload before saving.`);
-        }
-        out[changedField] = baselineSource[changedField];
-        return out;
-      }, {});
       try {
+        const baselineSource = pendingBaselinesRef.current[orderId] || {};
+        const expectedFields = Object.keys(changes).reduce((out, changedField) => {
+          if (!Object.prototype.hasOwnProperty.call(baselineSource, changedField)) {
+            throw new Error(`Sales Pipeline quick edit is missing its baseline for ${changedField}. Reload before saving.`);
+          }
+          out[changedField] = baselineSource[changedField];
+          return out;
+        }, {});
         const saved = await replaceWorkOrderFieldsIfUnchanged({
           workOrderId: orderId,
           expectedFields,
@@ -392,6 +392,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         delete debounceTimers.current[id];
       }
       delete pendingChangesRef.current[id];
+      delete pendingBaselinesRef.current[id];
       await WorkOrder.update(id, {
         deleted: true,
         deleted_at: new Date().toISOString(),
@@ -416,6 +417,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       delete debounceTimers.current[orderId];
     }
     delete pendingChangesRef.current[orderId];
+    delete pendingBaselinesRef.current[orderId];
     
     await WorkOrder.update(orderId, {
       deleted: true,
