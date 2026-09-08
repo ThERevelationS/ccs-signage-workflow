@@ -625,6 +625,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       }
 
       let liveChannelRows = [];
+      let primaryExpectedVersions = null;
       let equipmentRelationshipRows = [];
       let attachmentRelationshipRows = [];
 
@@ -632,6 +633,7 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       // primary flags we intend to rely on before the target write happens.
       if (source === "channel_letter_equipment" && payload.is_primary_owned) {
         liveChannelRows = await loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" });
+        primaryExpectedVersions = Object.fromEntries(liveChannelRows.map((row) => [row.id, row.updated_date || ""]));
         const loadedById = new Map((allChannelEquipment || []).map((row) => [row.id, row]));
         const primaryConflicts = liveChannelRows.filter((live) => {
           if (live.id === normalized.id) return false;
