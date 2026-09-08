@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Calendar
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -41,7 +42,12 @@ export default function ResourceAllocationView({ compact = false }) {
       const [usersData, capacitiesData, ordersData] = await Promise.all([
         AuthorizedEmail.list(),
         UserCapacity.list(),
-        WorkOrder.filter({ completed: false, deleted: { $ne: true } })
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Resource Allocation Work Orders",
+        })
       ]);
       setUsers(usersData);
       setUserCapacities(capacitiesData);
