@@ -7,6 +7,7 @@ import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -63,10 +64,15 @@ export default function Estimating() {
   };
 
   const loadWorkOrders = async () => {
-    const orders = await WorkOrder.filter({ 
-      is_rider: false, 
-      completed: false,
-      deleted: { $ne: true }
+    const orders = await loadAllEntityRows({
+      entity: WorkOrder,
+      query: {
+        is_rider: false,
+        completed: false,
+        deleted: { $ne: true }
+      },
+      sort: "created_date",
+      label: "Estimating Work Orders",
     });
     const taskDescriptions = getEstimatingTaskDescriptions();
     // Filter to only show jobs with task descriptions assigned to Estimating page
