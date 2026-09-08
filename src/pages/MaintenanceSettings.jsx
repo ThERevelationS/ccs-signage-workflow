@@ -144,7 +144,18 @@ export default function MaintenanceSettings() {
       // session creates the same key after preflight, remove only our losing row.
       for (const row of changedRateRows.filter((item) => !item.id)) {
         const payload = { sign_type: row.sign_type, action: row.action, ...comparableRate(row) };
-        const created = await MaintenanceActionRate.create(payload);
+        let created;
+        try {
+          created = await MaintenanceActionRate.create(payload);
+        } catch (createError) {
+          const recovered = (await loadAllMaintenanceRates())
+            .filter((item) => item.sign_type === row.sign_type && item.action === row.action);
+          if (recovered.length === 1 && sameRate(recovered[0], payload)) {
+            created = recovered[0];
+          } else {
+            throw createError;
+          }
+        }
         const sameKey = (await loadAllMaintenanceRates())
           .filter((item) => item.sign_type === row.sign_type && item.action === row.action)
           .sort((a, b) => {
@@ -152,12 +163,15 @@ export default function MaintenanceSettings() {
             return dateCompare || String(a.id).localeCompare(String(b.id));
           });
         if (sameKey.length > 1) {
-          await deleteEntityIfUnchanged({
-            entity: MaintenanceActionRate,
-            record: created,
-            label: `Duplicate Maintenance action rate ${row.sign_type}/${row.action}`,
-          });
-          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's new row was discarded; reload before saving again.`);
+          const ownCreated = sameKey.find((item) => item.id === created?.id);
+          if (ownCreated) {
+            await deleteEntityIfUnchanged({
+              entity: MaintenanceActionRate,
+              record: ownCreated,
+              label: `Duplicate Maintenance action rate ${row.sign_type}/${row.action}`,
+            });
+          }
+          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's new row was discarded when identifiable; reload before saving again.`);
         }
       }
 
@@ -203,6 +217,27 @@ export default function MaintenanceSettings() {
       }
 
       const [freshSettings, freshRates] = await Promise.all([loadAllSettings(), loadAllMaintenanceRates()]);
+      const freshSettingsById = new Map((freshSettings || []).filter((row) => row.id).map((row) => [row.id, row]));
+      const freshRatesById = new Map((freshRates || []).filter((row) => row.id).map((row) => [row.id, row]));
+      const settingVerificationFailures = changedSettingRows.filter((row) => {
+        const current = freshSettingsById.get(row.id);
+        return !current || String(current.setting_value ?? "") !== String(globalSettings[row.setting_name] ?? "");
+      });
+      const rateVerificationFailures = changedRateRows.filter((row) => {
+        if (row.id) {
+          const current = freshRatesById.get(row.id);
+          return !current || current.sign_type !== row.sign_type || current.action !== row.action || !sameRate(current, row);
+        }
+        const matches = (freshRates || []).filter((item) => item.sign_type === row.sign_type && item.action === row.action);
+        return matches.length !== 1 || !sameRate(matches[0], row);
+      });
+      if (settingVerificationFailures.length || rateVerificationFailures.length) {
+        const names = [
+          ...settingVerificationFailures.map((row) => row.setting_name),
+          ...rateVerificationFailures.map((row) => `${row.sign_type}/${row.action}`),
+        ];
+        throw new Error(`Maintenance settings final verification found concurrent or incomplete changes: ${names.join(", ")}. Reload and review before saving again.`);
+      }
       const maintenanceRows = (freshSettings || []).filter((row) => String(row.setting_name || "").startsWith("maintenance_"));
       const settingsMap = Object.fromEntries(maintenanceRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
       setSettingsRows(maintenanceRows);
