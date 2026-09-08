@@ -151,21 +151,55 @@ export default function MaintenanceSettings() {
             const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
             return dateCompare || String(a.id).localeCompare(String(b.id));
           });
-        if (sameKey.length > 1 && sameKey[0]?.id !== created?.id) {
-          await MaintenanceActionRate.delete(created.id);
-          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's duplicate was discarded; reload before saving again.`);
+        if (sameKey.length > 1) {
+          await deleteEntityIfUnchanged({
+            entity: MaintenanceActionRate,
+            record: created,
+            label: `Duplicate Maintenance action rate ${row.sign_type}/${row.action}`,
+          });
+          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's new row was discarded; reload before saving again.`);
         }
       }
 
+      let confirmedWrites = changedRateRows.filter((item) => !item.id).length;
+      const totalWrites = changedSettingRows.length + changedRateRows.length;
       for (const row of changedSettingRows) {
-        await SettingsEntity.update(row.id, { setting_value: String(globalSettings[row.setting_name] ?? "") });
+        const live = liveSettingsById.get(row.id);
+        const desired = { setting_value: String(globalSettings[row.setting_name] ?? "") };
+        try {
+          await replaceEntityFieldsIfUnchanged({
+            entity: SettingsEntity,
+            id: row.id,
+            expectedUpdatedAt: live?.updated_date || "",
+            expectedFields: expectedEntityFields(live || {}, desired),
+            nextFields: desired,
+            label: `Maintenance setting ${row.setting_name}`,
+          });
+          confirmedWrites += 1;
+        } catch (error) {
+          throw new Error(`Maintenance settings save stopped after ${confirmedWrites} of ${totalWrites} required writes were confirmed. Reload before retrying; remaining rows were not skipped automatically. ${error?.message || ""}`.trim());
+        }
       }
       for (const row of changedRateRows.filter((item) => item.id)) {
-        await MaintenanceActionRate.update(row.id, {
+        const live = liveById.get(row.id);
+        const desired = {
           sign_type: row.sign_type,
           action: row.action,
           ...comparableRate(row),
-        });
+        };
+        try {
+          await replaceEntityFieldsIfUnchanged({
+            entity: MaintenanceActionRate,
+            id: row.id,
+            expectedUpdatedAt: live?.updated_date || "",
+            expectedFields: expectedEntityFields(live || {}, desired),
+            nextFields: desired,
+            label: `Maintenance action rate ${row.sign_type}/${row.action}`,
+          });
+          confirmedWrites += 1;
+        } catch (error) {
+          throw new Error(`Maintenance settings save stopped after ${confirmedWrites} of ${totalWrites} required writes were confirmed. Reload before retrying; remaining rows were not skipped automatically. ${error?.message || ""}`.trim());
+        }
       }
 
       const [freshSettings, freshRates] = await Promise.all([loadAllSettings(), loadAllMaintenanceRates()]);
