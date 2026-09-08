@@ -6,7 +6,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -123,8 +123,17 @@ export default function Estimating() {
   const handleMove = async (workOrder, toStage) => {
     if (!isRegistered) return;
     const fromStage = workOrder.current_stage;
-    await WorkOrder.update(workOrder.id, { current_stage: toStage });
-    await ActivityActions.logStageChange(workOrder, fromStage, toStage);
+    try {
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder,
+        newStage: toStage,
+        label: "Estimating stage transition",
+      });
+      await ActivityActions.logStageChange(workOrder, fromStage, toStage);
+    } catch (error) {
+      console.error("Error moving Estimating Work Order:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+    }
     loadWorkOrders();
   };
 
@@ -142,8 +151,18 @@ export default function Estimating() {
 
   const handleComplete = async (workOrder) => {
     if (!isRegistered) return;
-    await WorkOrder.update(workOrder.id, { completed: true });
-    await ActivityActions.logWorkOrderCompleted(workOrder);
+    try {
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder,
+        newStage: workOrder.current_stage,
+        completed: true,
+        label: "Estimating completion",
+      });
+      await ActivityActions.logWorkOrderCompleted(workOrder);
+    } catch (error) {
+      console.error("Error completing Estimating Work Order:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+    }
     loadWorkOrders();
   };
 
