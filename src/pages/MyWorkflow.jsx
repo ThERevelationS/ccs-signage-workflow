@@ -268,110 +268,84 @@ export default function MyWorkflow() {
   const handleAddSubTask = async (workOrderId, taskIndex) => {
     if (!newSubTaskText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        return {
-          ...task,
-          sub_tasks: [...(task.sub_tasks || []), {
-            text: newSubTaskText,
-            completed: false,
-            assigned_to: newSubTaskAssignedTo || "",
-            details: []
-          }]
-        };
-      }
-      return task;
-    });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
+    const task = wo?.notes?.[taskIndex];
+    if (!wo || !task) return;
+    const newSubTask = {
+      text: newSubTaskText,
+      completed: false,
+      assigned_to: newSubTaskAssignedTo || "",
+      details: []
+    };
+    await persistTaskMutation(wo, task, (currentTask) => ({
+      ...currentTask,
+      sub_tasks: [...(currentTask.sub_tasks || []), newSubTask],
+    }));
     setNewSubTaskText("");
     setNewSubTaskAssignedTo([]);
     setAddingSubTaskFor(null);
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleDeleteSubTask = async (workOrderId, taskIndex, subTaskIndex) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        return {
-          ...task,
-          sub_tasks: (task.sub_tasks || []).filter((_, stIdx) => stIdx !== subTaskIndex)
-        };
-      }
-      return task;
+    const task = wo?.notes?.[taskIndex];
+    const subTask = task?.sub_tasks?.[subTaskIndex];
+    if (!wo || !task || !subTask) return;
+    const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
+    await persistTaskMutation(wo, task, (currentTask) => {
+      const currentSubTasks = currentTask.sub_tasks || [];
+      const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "My Workflow subtask");
+      return { ...currentTask, sub_tasks: currentSubTasks.filter((_, index) => index !== currentSubTaskIndex) };
     });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleAddDetail = async (workOrderId, taskIndex, subTaskIndex) => {
     if (!newDetailText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
-          if (stIdx === subTaskIndex) {
-            return {
-              ...st,
-              details: [...(st.details || []), {
-                text: newDetailText,
-                completed: false,
-                assigned_to: newDetailAssignedTo || ""
-              }]
-            };
-          }
-          return st;
-        });
-        return { ...task, sub_tasks: updatedSubTasks };
-      }
-      return task;
+    const task = wo?.notes?.[taskIndex];
+    const subTask = task?.sub_tasks?.[subTaskIndex];
+    if (!wo || !task || !subTask) return;
+    const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
+    const newDetail = {
+      text: newDetailText,
+      completed: false,
+      assigned_to: newDetailAssignedTo || ""
+    };
+    await persistTaskMutation(wo, task, (currentTask) => {
+      const currentSubTasks = currentTask.sub_tasks || [];
+      const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "My Workflow subtask");
+      return {
+        ...currentTask,
+        sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
+          ? { ...currentSubTask, details: [...(currentSubTask.details || []), newDetail] }
+          : currentSubTask),
+      };
     });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
     setNewDetailText("");
     setNewDetailAssignedTo([]);
     setAddingDetailFor(null);
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleDeleteDetail = async (workOrderId, taskIndex, subTaskIndex, detailIndex) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (!wo) return;
-
-    const updatedTasks = (wo.notes || []).map((task, idx) => {
-      if (idx === taskIndex) {
-        const updatedSubTasks = (task.sub_tasks || []).map((st, stIdx) => {
-          if (stIdx === subTaskIndex) {
-            return {
-              ...st,
-              details: (st.details || []).filter((_, dIdx) => dIdx !== detailIndex)
-            };
-          }
-          return st;
-        });
-        return { ...task, sub_tasks: updatedSubTasks };
-      }
-      return task;
+    const task = wo?.notes?.[taskIndex];
+    const subTask = task?.sub_tasks?.[subTaskIndex];
+    const detail = subTask?.details?.[detailIndex];
+    if (!wo || !task || !subTask || !detail) return;
+    const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
+    const detailLocator = createWorkOrderArrayItemLocator(detail);
+    await persistTaskMutation(wo, task, (currentTask) => {
+      const currentSubTasks = currentTask.sub_tasks || [];
+      const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "My Workflow subtask");
+      return {
+        ...currentTask,
+        sub_tasks: currentSubTasks.map((currentSubTask, index) => {
+          if (index !== currentSubTaskIndex) return currentSubTask;
+          const currentDetails = currentSubTask.details || [];
+          const currentDetailIndex = findWorkOrderArrayItemIndex(currentDetails, detailLocator, "My Workflow detail");
+          return { ...currentSubTask, details: currentDetails.filter((_, currentIndex) => currentIndex !== currentDetailIndex) };
+        }),
+      };
     });
-
-    setWorkOrders(prev => prev.map(w =>
-      w.id === workOrderId ? { ...w, notes: updatedTasks } : w
-    ));
-    await persistNotes(workOrderId, updatedTasks);
   };
 
   const handleEditTask = async (workOrderId, taskIndex, newText) => {
