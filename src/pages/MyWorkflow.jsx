@@ -13,6 +13,12 @@ import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  createWorkOrderArrayItemLocator,
+  findWorkOrderArrayItemIndex,
+  mutateLocatedWorkOrderArrayItem,
+  mutateWorkOrderArrayField,
+} from "@/components/workflow/workOrderPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -172,21 +178,35 @@ export default function MyWorkflow() {
     setIsLoading(false);
   };
 
-  // Persist task changes back to the right entity: GeneralTask for general office
-  // tasks (stored as a single task per record), WorkOrder for client-based notes.
-  const persistNotes = async (workOrderId, updatedNotes) => {
-    const wo = workOrders.find(w => w.id === workOrderId);
-    if (wo?._isGeneral) {
-      const t = updatedNotes[0] || {};
-      await GeneralTask.update(workOrderId, {
-        text: t.text,
-        assigned_to: t.assigned_to || [],
-        sub_tasks: t.sub_tasks || [],
-        completed: !!t.completed
+  // Persist a targeted task change back to the right entity. Work Order tasks use
+  // identity-safe optimistic concurrency; GeneralTask keeps its one-task record model.
+  const persistTaskMutation = async (wo, task, mutateItem) => {
+    if (!wo || !task || typeof mutateItem !== "function") return null;
+    if (wo._isGeneral) {
+      const updatedTask = mutateItem(task);
+      await GeneralTask.update(wo.id, {
+        text: updatedTask.text,
+        assigned_to: updatedTask.assigned_to || [],
+        sub_tasks: updatedTask.sub_tasks || [],
+        completed: !!updatedTask.completed
       });
-    } else {
-      await WorkOrder.update(workOrderId, { notes: updatedNotes });
+      const updatedNotes = [updatedTask];
+      setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, notes: updatedNotes } : w));
+      return updatedNotes;
     }
+
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: wo.id,
+      field: "notes",
+      item: task,
+      label: "My Workflow task",
+      mutateItem,
+    });
+    const savedNotes = saved.notes || [];
+    setWorkOrders(prev => prev.map(w => w.id === wo.id
+      ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
+      : w));
+    return savedNotes;
   };
 
   const toggleTaskComplete = async (workOrderId, taskIndex) => {
