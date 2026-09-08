@@ -5,6 +5,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/builder/partSync";
 import { builderMutationHash, ensureBuilderPriceRevision, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -565,7 +566,13 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
     if (line.builder_product_id === targetBuilder.id) return { ...line, ...(pending.target_line_patch || {}) };
     return line;
   });
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Part Group move Estimate line completion",
+  });
   return { recovered: true, groupId: pending.group_move_step?.id, movedParts: (pending.part_move_steps || []).length, sourceBuilderProductId: sourceBuilder.id, targetBuilderProductId: targetBuilder.id };
 }
 
