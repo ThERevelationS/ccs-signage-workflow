@@ -19,6 +19,7 @@ import {
   Calendar as CalendarIcon, User, Loader2,
   Link as LinkIcon, ExternalLink
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
 const WorkOrder = base44.entities.WorkOrder;
@@ -705,26 +706,26 @@ export default function EnhancedSipChecklist({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Fetch fresh work order data directly by ID to ensure we get the latest
-      const [freshWorkOrders, usersData, templatesData] = await Promise.all([
-        WorkOrder.filter({ deleted: { $ne: true } }),
+      // Verify the exact current Work Order plus its complete rider set without scanning
+      // the entire Work Order archive every time the checklist opens.
+      const [currentRows, workOrderRiders, usersData, templatesData] = await Promise.all([
+        WorkOrder.filter({ id: workOrder.id }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { parent_work_order_id: workOrder.id, is_rider: true, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "SIP Checklist riders",
+        }),
         AuthorizedEmail.list(),
         SipChecklistTemplate.list()
       ]);
 
-      // Find the current work order from fresh data
-      const currentWorkOrder = freshWorkOrders.find(wo => wo.id === workOrder.id);
-      
+      const currentWorkOrder = currentRows[0];
       if (!currentWorkOrder) {
         console.error("Could not find work order:", workOrder.id);
         setIsLoading(false);
         return;
       }
-
-      // Find riders for this work order
-      const workOrderRiders = freshWorkOrders.filter(
-        wo => wo.parent_work_order_id === workOrder.id && wo.is_rider
-      );
       
       setRiders(workOrderRiders);
       setUsers(usersData);
