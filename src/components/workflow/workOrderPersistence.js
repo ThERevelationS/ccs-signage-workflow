@@ -49,7 +49,7 @@ export function createWorkOrderArrayItemLocator(item) {
   return { snapshot: normalize(item) };
 }
 
-export function findWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
+export function findOptionalWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
   if (!Array.isArray(items) || !locator) {
     throw new Error(`${label} could not be located safely.`);
   }
@@ -60,11 +60,16 @@ export function findWorkOrderArrayItemIndex(items, locator, label = "Work Order 
       : sameValue(item, locator.snapshot);
     if (matched) matches.push(index);
   });
-  if (matches.length === 1) return matches[0];
-  if (matches.length === 0) {
-    throw new Error(`${label} changed or disappeared in another session. Reload before saving.`);
+  if (matches.length > 1) {
+    throw new Error(`${label} is ambiguous in the latest Work Order data. Reload before saving.`);
   }
-  throw new Error(`${label} is ambiguous in the latest Work Order data. Reload before saving.`);
+  return matches.length === 1 ? matches[0] : -1;
+}
+
+export function findWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
+  const index = findOptionalWorkOrderArrayItemIndex(items, locator, label);
+  if (index >= 0) return index;
+  throw new Error(`${label} changed or disappeared in another session. Reload before saving.`);
 }
 
 export async function mutateLocatedWorkOrderArrayItem({
