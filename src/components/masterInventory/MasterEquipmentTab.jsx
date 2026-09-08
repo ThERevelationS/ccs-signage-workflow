@@ -679,20 +679,34 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       }
 
       if (source === "channel_letter_equipment") {
+        let savedTarget;
         if (isNew) {
-          const saved = await ChannelLetterInstallEquipmentEntity.create(payload);
+          savedTarget = await ChannelLetterInstallEquipmentEntity.create(payload);
           wroteAnything = true;
-          savedId = saved.id;
+          savedId = savedTarget.id;
         } else {
-          await ChannelLetterInstallEquipmentEntity.update(normalized.id, payload);
+          savedTarget = await replaceEntityFieldsIfUnchanged({
+            entity: ChannelLetterInstallEquipmentEntity,
+            id: normalized.id,
+            expectedUpdatedAt: verifiedTarget?.updated_date || "",
+            expectedFields: expectedEntityFields(verifiedTarget || normalized.raw || {}, payload),
+            nextFields: payload,
+            label: "Channel Letter equipment save",
+          });
           wroteAnything = true;
         }
         if (payload.is_primary_owned) {
-          const others = liveChannelRows.filter((row) => row.id !== savedId && row.is_primary_owned);
-          for (const row of others) {
-            await ChannelLetterInstallEquipmentEntity.update(row.id, { is_primary_owned: false });
-            wroteAnything = true;
-          }
+          await setExclusiveBooleanSafely({
+            entity: ChannelLetterInstallEquipmentEntity,
+            targetId: savedId,
+            field: "is_primary_owned",
+            next: true,
+            expectedTargetUpdatedAt: savedTarget?.updated_date || "",
+            expectedRowVersions: primaryExpectedVersions,
+            readRows: () => loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
+            label: "Primary owned lift selection",
+          });
+          wroteAnything = true;
         }
       } else {
         if (isNew) {
@@ -700,23 +714,71 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
           wroteAnything = true;
           savedId = saved.id;
         } else {
-          await FoundationInventoryEntity.update(normalized.id, payload);
+          await replaceEntityFieldsIfUnchanged({
+            entity: FoundationInventoryEntity,
+            id: normalized.id,
+            expectedUpdatedAt: verifiedTarget?.updated_date || "",
+            expectedFields: expectedEntityFields(verifiedTarget || normalized.raw || {}, payload),
+            nextFields: payload,
+            label: "Foundation equipment save",
+          });
           wroteAnything = true;
         }
 
+        const relationshipTotal = equipmentRelationshipRows.length + attachmentRelationshipRows.length;
+        let relationshipConfirmed = 0;
         for (const { live } of equipmentRelationshipRows) {
           const selected = linkedEquipmentIds.includes(live.id);
           const arr = live.compatible_attachment_ids || [];
           const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
-          await FoundationInventoryEntity.update(live.id, { compatible_attachment_ids: next });
-          wroteAnything = true;
+          try {
+            await replaceRelationshipIdsIfUnchanged({
+              entity: FoundationInventoryEntity,
+              row: live,
+              field: "compatible_attachment_ids",
+              nextIds: next,
+              label: `Equipment compatibility for ${live.material_name || "equipment"}`,
+            });
+            relationshipConfirmed += 1;
+            wroteAnything = true;
+          } catch (error) {
+            throw new Error(`Equipment compatibility updates stopped after ${relationshipConfirmed} of ${relationshipTotal} relationship changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ""}`.trim());
+          }
         }
         for (const { live } of attachmentRelationshipRows) {
           const selected = linkedAttachmentIdsForSub.includes(live.id);
           const arr = live.compatible_sub_attachment_ids || [];
           const next = selected ? [...arr.filter((id) => id !== savedId), savedId] : arr.filter((id) => id !== savedId);
-          await FoundationInventoryEntity.update(live.id, { compatible_sub_attachment_ids: next });
-          wroteAnything = true;
+          try {
+            await replaceRelationshipIdsIfUnchanged({
+              entity: FoundationInventoryEntity,
+              row: live,
+              field: "compatible_sub_attachment_ids",
+              nextIds: next,
+              label: `Sub-attachment compatibility for ${live.material_name || "attachment"}`,
+            });
+            relationshipConfirmed += 1;
+            wroteAnything = true;
+          } catch (error) {
+            throw new Error(`Equipment compatibility updates stopped after ${relationshipConfirmed} of ${relationshipTotal} relationship changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ""}`.trim());
+          }
+        }
+
+        for (const { live } of equipmentRelationshipRows) {
+          const current = await FoundationInventoryEntity.get(live.id);
+          const shouldContain = linkedEquipmentIds.includes(live.id);
+          const contains = !!current?.compatible_attachment_ids?.includes(savedId);
+          if (!current || contains !== shouldContain) {
+            throw new Error(`Final verification failed for compatibility links on ${live.material_name || "equipment"}. Reload Equipment before retrying.`);
+          }
+        }
+        for (const { live } of attachmentRelationshipRows) {
+          const current = await FoundationInventoryEntity.get(live.id);
+          const shouldContain = linkedAttachmentIdsForSub.includes(live.id);
+          const contains = !!current?.compatible_sub_attachment_ids?.includes(savedId);
+          if (!current || contains !== shouldContain) {
+            throw new Error(`Final verification failed for sub-attachment links on ${live.material_name || "attachment"}. Reload Equipment before retrying.`);
+          }
         }
       }
       onSaved?.();
