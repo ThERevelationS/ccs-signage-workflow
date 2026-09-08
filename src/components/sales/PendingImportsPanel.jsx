@@ -123,7 +123,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
   );
 }
 
-function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }) {
+function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allWorkOrders }) {
   const [expanded, setExpanded] = useState(false);
   const [selectedMergeId, setSelectedMergeId] = useState(item.match_candidates?.[0]?.work_order_id || "");
   const [mergeLoading, setMergeLoading] = useState(false);
@@ -325,7 +325,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, allWorkOrders }
           <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
             <div className="font-medium">Merge blocked</div>
             <div className="mt-1">{mergeError}</div>
-            <button type="button" onClick={() => window.location.reload()} className="mt-1 underline hover:no-underline">
+            <button type="button" onClick={async () => { await onRefresh?.(); setMergeError(""); }} className="mt-1 underline hover:no-underline">
               Refresh latest data
             </button>
           </div>
@@ -529,6 +529,7 @@ export default function PendingImportsPanel({ onCountChange }) {
               onApprove={handleApprove}
               onMerge={handleMerge}
               onReject={handleReject}
+              onRefresh={load}
               allWorkOrders={allWorkOrders}
             />
           ))}
