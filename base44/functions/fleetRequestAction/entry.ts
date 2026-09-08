@@ -108,7 +108,10 @@ Deno.serve(async (req) => {
         requester_email: user.email,
         requested_by_person: patch.requested_by_person || user.full_name || user.name || user.email,
       });
-      return Response.json({ success: true, request: created, notifications_enabled: false });
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        event_type: 'request_created', target_id: created.id, event_token: `created:${created.id}`
+      }).catch(() => null);
+      return Response.json({ success: true, request: created });
     }
 
     const id = String(body?.id || body?.request_id || '').trim();
@@ -194,6 +197,9 @@ Deno.serve(async (req) => {
         }
         if (item && summary.new_item === true) {
           const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
+          }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
         }
         if (item && summary.new_item === false) {
@@ -312,6 +318,9 @@ Deno.serve(async (req) => {
         unit: body?.unit || body?.received_unit || inventoryItem.unit || (existing.item_type === 'part' ? 'units' : ''),
         received_by: user.email,
       });
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        event_type: 'request_received', target_id: id, event_token: key
+      }).catch(() => null);
       return Response.json({
         success: true,
         request: updatedRequest,
@@ -319,7 +328,6 @@ Deno.serve(async (req) => {
         inventory_created: isNew,
         before_quantity: beforeQuantity,
         after_quantity: afterQuantity,
-        notifications_enabled: false,
       });
     }
 
