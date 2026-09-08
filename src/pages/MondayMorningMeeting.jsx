@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -50,7 +51,12 @@ export default function MondayMorningMeeting() {
     if (showLoading) setIsLoading(true);
     try {
       const [orders, usersData, settings] = await Promise.all([
-        WorkOrder.filter({ is_rider: false, completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { is_rider: false, completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Monday Morning Meeting Work Orders",
+        }),
         AuthorizedEmail.list(),
         GlobalSettings.list()
       ]);
