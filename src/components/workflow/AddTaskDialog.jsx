@@ -10,6 +10,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, B
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
@@ -184,8 +185,15 @@ export default function AddTaskDialog({ isOpen, onClose }) {
       } else {
         const wo = workOrders.find(w => w.id === selectedWorkOrder);
         if (!wo) return;
-        const updatedNotes = [...(wo.notes || []), newTask];
-        await WorkOrder.update(selectedWorkOrder, { notes: updatedNotes });
+        const saved = await mutateWorkOrderArrayField({
+          workOrderId: selectedWorkOrder,
+          field: "notes",
+          label: "Work Order task list",
+          mutate: (currentNotes) => currentNotes.some((task) => task?.id === newTask.id)
+            ? currentNotes
+            : [...currentNotes, newTask],
+        });
+        setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
       }
 
       setSaveSuccess(true);
