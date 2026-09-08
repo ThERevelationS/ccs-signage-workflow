@@ -967,11 +967,20 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   });
   if (partAcceptance.detachedCount > 0) {
     const blockedTimestamp = nowIso();
-    await base44.entities.BuilderProduct.update(builder.id, {
+    const detachedBuilderPatch = {
       price_state: "detached_parts",
       detached_part_count: partAcceptance.detachedCount,
       needs_reattach_review: true,
       last_price_check_at: blockedTimestamp,
+    };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builder.id,
+      expectedUpdatedAt: builder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(builder, detachedBuilderPatch),
+      nextFields: detachedBuilderPatch,
+      guardFields: { estimate_id: estimateId },
+      label: "Builder detached-parts status",
     });
     const blockedLines = (estimate.line_items || []).map((item) =>
       item.builder_product_id === builder.id
@@ -1004,11 +1013,20 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   if (partAcceptance.recalcRequired) {
     const blockedTimestamp = nowIso();
     const reason = partAcceptance.recalcReason || "Master Inventory changed after this Builder was last calculated. Reopen and save the Builder before accepting Update Price.";
-    await base44.entities.BuilderProduct.update(builder.id, {
+    const recalcBuilderPatch = {
       price_state: "changed",
       price_recalc_required: true,
       price_recalc_reason: reason,
       last_price_check_at: blockedTimestamp,
+    };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builder.id,
+      expectedUpdatedAt: builder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(builder, recalcBuilderPatch),
+      nextFields: recalcBuilderPatch,
+      guardFields: { estimate_id: estimateId },
+      label: "Builder recalc-required status",
     });
     const blockedLines = (estimate.line_items || []).map((item) =>
       item.builder_product_id === builder.id
