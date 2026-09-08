@@ -30,6 +30,7 @@ import {
   previewLegacyMigration,
   migrateLegacyInventoryRows,
 } from "./legacyInventoryMigrator";
+import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 // True if this Inventory row is a real extrusion (not legacy junk and not
 // sheet/plate). Sheet/Plate belong in Substrates.
@@ -233,7 +234,11 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
         await load();
         return;
       }
-      await src.entity.delete(item.id);
+      await deleteEntityIfUnchanged({
+        entity: src.entity,
+        record: live,
+        label: `${item._kind || "Inventory"} item “${name || "Item"}”`,
+      });
       await load();
     } catch (error) {
       console.error("Extruded/Poles delete failed:", error);
