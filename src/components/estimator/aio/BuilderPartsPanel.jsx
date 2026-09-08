@@ -28,6 +28,7 @@ import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
 import { copyPartGroupToClipboard, copyPartToClipboard } from "@/components/estimator/products/clipboardService";
 import { clonePartGroupInProduct, createPartGroupInProduct, dissolvePartGroup, moveIndependentPartGroup, renamePartGroup } from "@/components/estimator/parts/partGroupService";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
@@ -277,12 +278,20 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     const next = !open;
     setOpen(next);
     if (!readOnly) {
-      const updated = await base44.entities.BuilderPartGroup.update(group.id, { is_collapsed: !next }).catch(() => null);
+      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+      if (!current?.id || current.builder_product_id !== builderProductId) return;
+      const collapsePatch = { is_collapsed: !next };
+      const updated = await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderPartGroup,
+        id: group.id,
+        expectedUpdatedAt: current.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(current, collapsePatch),
+        nextFields: collapsePatch,
+        guardFields: { builder_product_id: builderProductId },
+        label: "Part Group collapsed state",
+      }).catch(() => null);
       if (updated?.updated_date) groupVersionRef.current = updated.updated_date;
-      else {
-        const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
-        if (current?.updated_date) groupVersionRef.current = current.updated_date;
-      }
+      else if (current?.updated_date) groupVersionRef.current = current.updated_date;
     }
   };
 
