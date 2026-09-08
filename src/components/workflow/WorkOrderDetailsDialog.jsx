@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -135,6 +136,8 @@ export default function WorkOrderDetailsDialog({
   // Edit states
   const [editingField, setEditingField] = useState(null);
   const [editValues, setEditValues] = useState({});
+  const inlineEditBaselineRef = useRef({});
+  const [inlineEditError, setInlineEditError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [newDependency, setNewDependency] = useState({
     trigger_type: "stage_change",
