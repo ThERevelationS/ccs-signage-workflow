@@ -192,12 +192,20 @@ export default function WorkOrderCard({
   React.useEffect(() => {
     if (workOrder._riders !== undefined || workOrder._parent !== undefined) return; // already provided
     const checkForRidersAndParent = async () => {
-      const allWorkOrders = await WorkOrder.filter({ completed: false });
       if (!workOrder.is_rider && workOrder.id) {
-        setRiders(allWorkOrders.filter(wo => wo.parent_work_order_id === workOrder.id && wo.is_rider));
+        const attachedRiders = await WorkOrder.filter({
+          parent_work_order_id: workOrder.id,
+          is_rider: true,
+          completed: false
+        });
+        setRiders(attachedRiders);
       }
       if (workOrder.is_rider && workOrder.parent_work_order_id) {
-        setParentWorkOrder(allWorkOrders.find(wo => wo.id === workOrder.parent_work_order_id) || null);
+        const parentMatches = await WorkOrder.filter({
+          id: workOrder.parent_work_order_id,
+          completed: false
+        });
+        setParentWorkOrder(parentMatches[0] || null);
       }
     };
     checkForRidersAndParent();
@@ -682,14 +690,22 @@ export default function WorkOrderCard({
   const handleDeleteClick = async () => {
     // Check if this work order has riders before deleting
     if (!workOrder.is_rider) {
-      // Re-fetch in case 'riders' state is not up-to-date or for safety
-      const allWorkOrders = await WorkOrder.filter({ completed: false });
-      const attachedRiders = allWorkOrders.filter(
-        (wo) => wo.parent_work_order_id === workOrder.id && wo.is_rider
-      );
+      // Re-fetch the exact relationship in case local rider state is stale.
+      // This intentionally avoids relying on a truncated broad Work Order read.
+      try {
+        const attachedRiders = await WorkOrder.filter({
+          parent_work_order_id: workOrder.id,
+          is_rider: true,
+          completed: false
+        });
 
-      if (attachedRiders.length > 0) {
-        setShowRiderDeleteWarning(true);
+        if (attachedRiders.length > 0) {
+          setShowRiderDeleteWarning(true);
+          return;
+        }
+      } catch (error) {
+        console.error("Could not verify attached riders before delete:", error);
+        window.alert("Attached riders could not be verified. Delete was not opened. Please retry.");
         return;
       }
     }
