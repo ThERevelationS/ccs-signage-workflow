@@ -38,6 +38,62 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
+export function createWorkOrderArrayItemLocator(item) {
+  if (!item || typeof item !== "object") {
+    throw new Error("Work Order array item could not be identified safely.");
+  }
+  const rawId = item.id;
+  if (rawId !== null && rawId !== undefined && String(rawId).trim()) {
+    return { id: String(rawId) };
+  }
+  return { snapshot: normalize(item) };
+}
+
+export function findWorkOrderArrayItemIndex(items, locator, label = "Work Order item") {
+  if (!Array.isArray(items) || !locator) {
+    throw new Error(`${label} could not be located safely.`);
+  }
+  const matches = [];
+  items.forEach((item, index) => {
+    const matched = locator.id
+      ? String(item?.id ?? "") === locator.id
+      : sameValue(item, locator.snapshot);
+    if (matched) matches.push(index);
+  });
+  if (matches.length === 1) return matches[0];
+  if (matches.length === 0) {
+    throw new Error(`${label} changed or disappeared in another session. Reload before saving.`);
+  }
+  throw new Error(`${label} is ambiguous in the latest Work Order data. Reload before saving.`);
+}
+
+export async function mutateLocatedWorkOrderArrayItem({
+  workOrderId,
+  field,
+  item,
+  mutateItem,
+  remove = false,
+  label = "Work Order item",
+  maxAttempts = 3,
+}) {
+  const locator = createWorkOrderArrayItemLocator(item);
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field,
+    label,
+    maxAttempts,
+    mutate: (currentItems) => {
+      const index = findWorkOrderArrayItemIndex(currentItems, locator, label);
+      if (remove) return currentItems.filter((_, currentIndex) => currentIndex !== index);
+      const nextItem = mutateItem?.(currentItems[index], index);
+      if (!nextItem || typeof nextItem !== "object") {
+        throw new Error(`${label} update did not produce a valid item.`);
+      }
+      return currentItems.map((currentItem, currentIndex) => currentIndex === index ? nextItem : currentItem);
+    },
+  });
+}
+
 export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, label = "Work Order", maxAttempts = 3 }) {
   const entity = base44.entities.WorkOrder;
   const id = String(workOrderId || "").trim();
