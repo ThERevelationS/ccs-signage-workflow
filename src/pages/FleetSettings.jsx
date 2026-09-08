@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 
 export default function FleetSettings() {
   const [user, setUser] = useState(null);
   const [settings, setSettings] = useState(null);
   const [connection, setConnection] = useState(null);
   const [audit, setAudit] = useState(null);
+  const [serverStatus, setServerStatus] = useState(null);
+  const [checking, setChecking] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,14 +18,16 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, connectionRows, auditRows] = await Promise.all([
+          const [settingsRows, connectionRows, auditRows, statusResult] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
             base44.entities.BouncieConnection.list("-updated_date", 10),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
+            base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection((connectionRows || [])[0] || null);
           setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
+          setServerStatus(statusResult?.data || null);
         }
       } finally {
         setLoading(false);
@@ -32,15 +36,49 @@ export default function FleetSettings() {
   }, []);
 
   const readiness = useMemo(() => {
+    const labels = {
+      settings_present: "Fleet settings present",
+      fleet_url_configured: "CCS Fleet production URL configured",
+      source_freeze_confirmed: "FleetMaster source freeze confirmed",
+      verification_audit_passed: "Migration verification audit passed",
+      verification_audit_no_delta: "Final source delta is clean",
+      destination_counts_match_audit: "Destination counts match verified snapshot",
+      notification_queue_clean: "Notification queue has no unresolved work",
+      operation_receipts_clean: "Operation ledger has no unresolved work",
+      bouncie_connection_present: "Bouncie connection present",
+      bouncie_reconnect_clear: "Bouncie REST authorization healthy",
+      bouncie_webhook_active: "Bouncie webhook active",
+      bouncie_rest_sync_recent: "Bouncie REST sync is recent",
+      bouncie_live_probe: "Bouncie live REST probe",
+    };
+    if (serverStatus?.checks?.length) {
+      return serverStatus.checks.map((item) => ({ label: labels[item.key] || item.key, ok: !!item.pass, detail: item.detail || "" }));
+    }
     if (!settings) return [];
     return [
       { label: "Fleet migration snapshot reconciled", ok: !!audit?.summary?.migration_snapshot_reconciled, detail: audit?.run_key || "No verification audit found" },
       { label: "CCS Fleet production URL configured", ok: !!settings.fleet_app_base_url, detail: settings.fleet_app_base_url || "Not configured" },
+      { label: "FleetMaster source freeze confirmed", ok: !!settings.source_freeze_confirmed, detail: settings.source_freeze_confirmed_at || "Not yet frozen" },
       { label: "Bouncie webhook active", ok: !!connection?.webhook_active, detail: connection?.last_webhook_at ? `Last event ${new Date(connection.last_webhook_at).toLocaleString()}` : "No recent webhook timestamp" },
       { label: "Bouncie REST authorization healthy", ok: !!connection && !connection.needs_reconnect, detail: connection?.needs_reconnect ? "Administrator OAuth reconnect required" : "No reconnect flag" },
-      { label: "Destination cutover gates still off", ok: !settings.maintenance_generation_enabled && !settings.notifications_enabled && !settings.scheduled_reminders_enabled && !settings.public_reporting_enabled, detail: "Generation, notifications, reminders, and public reporting remain disabled" },
     ];
-  }, [settings, connection, audit]);
+  }, [settings, connection, audit, serverStatus]);
+
+  const runServerCheck = async () => {
+    setChecking(true);
+    try {
+      const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
+      setServerStatus(data || null);
+      const [settingsRows, connectionRows] = await Promise.all([
+        base44.entities.FleetSettings.list("-updated_date", 10),
+        base44.entities.BouncieConnection.list("-updated_date", 10),
+      ]);
+      setSettings((settingsRows || [])[0] || null);
+      setConnection((connectionRows || [])[0] || null);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   if (loading) return <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
   if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
