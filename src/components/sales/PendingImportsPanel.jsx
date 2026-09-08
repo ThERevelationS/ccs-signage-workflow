@@ -131,6 +131,13 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
         </div>
       </div>
 
+      {mergeError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+          <div className="font-medium">Duplicate resolution blocked</div>
+          <div className="mt-1">{mergeError}</div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         {[recA, recB].map((rec, idx) => (
           <div key={idx} className="bg-white rounded-lg border border-orange-200 p-3 text-xs space-y-1">
@@ -138,7 +145,9 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
             {rec.title && rec.title !== rec.client_name && <p className="text-gray-500 truncate">{rec.title}</p>}
             {rec.est_inv_at && <p className="text-gray-400">Est/Inv: {rec.est_inv_at}</p>}
             <Button size="sm" variant="destructive" className="h-6 text-xs w-full mt-2"
-              onClick={() => handleMerge(idx === 0 ? recB.id : recA.id, rec.id)}>
+              onClick={() => handleMerge(idx === 0 ? recB.id : recA.id, rec.id)}
+              disabled={!!mergeLoading || rejectLoading}>
+              {mergeLoading === rec.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
               Delete this one
             </Button>
           </div>
@@ -150,7 +159,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
         await PendingImport.update(item.id, { status: 'rejected' });
         onReject(item.id);
         setRejectLoading(false);
-      }} disabled={rejectLoading} className="h-7 text-xs text-gray-500 hover:bg-gray-100 w-full">
+      }} disabled={rejectLoading || !!mergeLoading} className="h-7 text-xs text-gray-500 hover:bg-gray-100 w-full">
         {rejectLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <X className="w-3 h-3 mr-1" />}
         Not a duplicate — dismiss
       </Button>
