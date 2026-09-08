@@ -254,6 +254,7 @@ function EquipmentList({ items, equipment = [], attachments = [], subAttachments
 
 function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, onCancel }) {
     const [form, setForm] = useState(item);
+    const [saving, setSaving] = useState(false);
     
     // For bidirectional links. If this is an attachment, we can select which equipment it belongs to.
     const [linkedEquipmentIds, setLinkedEquipmentIds] = useState(
@@ -267,49 +268,95 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
     const update = (f, v) => setForm(prev => ({ ...prev, [f]: v }));
 
     const handleSave = async () => {
-        // We save the main item first.
-        // The tricky part: we need to update the parent entities if linked parents changed.
-        // We'll pass the complex saving logic up, or do it here. 
-        // For simplicity, let's just save the current item, and then issue updates for the parents.
-        
-        // 1. Save current item
-        let savedItem;
-        if (form.id) {
-            savedItem = await FoundationInventoryEntity.update(form.id, form);
-        } else {
-            savedItem = await FoundationInventoryEntity.create(form);
-        }
+        if (saving) return;
+        setSaving(true);
+        let wroteAnything = false;
+        try {
+            let savedItem;
+            if (form.id) {
+                const live = await FoundationInventoryEntity.get(form.id);
+                if (!live) throw new Error('This Foundation inventory item no longer exists. Reload before saving.');
+                if (item.updated_date && live.updated_date && item.updated_date !== live.updated_date) {
+                    throw new Error('This Foundation inventory item changed in another session. Your changes were not saved; reload and review the latest record before trying again.');
+                }
+                savedItem = await replaceEntityFieldsIfUnchanged({
+                    entity: FoundationInventoryEntity,
+                    id: form.id,
+                    expectedUpdatedAt: live.updated_date || '',
+                    expectedFields: expectedEntityFields(live, form),
+                    nextFields: form,
+                    label: `Foundation equipment item “${form.material_name || 'Item'}”`,
+                });
+            } else {
+                savedItem = await FoundationInventoryEntity.create(form);
+            }
+            wroteAnything = true;
 
-        // 2. Bidirectional sync
-        if (form.material_type === 'attachment') {
-            // Update all equipment to include/exclude this attachment
-            for (const eq of equipment) {
-                const isSelected = linkedEquipmentIds.includes(eq.id);
-                const currentArr = eq.compatible_attachment_ids || [];
-                const alreadyHas = currentArr.includes(savedItem.id);
-                
-                if (isSelected && !alreadyHas) {
-                    await FoundationInventoryEntity.update(eq.id, { compatible_attachment_ids: [...currentArr, savedItem.id] });
-                } else if (!isSelected && alreadyHas) {
-                    await FoundationInventoryEntity.update(eq.id, { compatible_attachment_ids: currentArr.filter(id => id !== savedItem.id) });
+            const relationshipChanges = [];
+            if (form.material_type === 'attachment') {
+                for (const eq of equipment) {
+                    const selected = linkedEquipmentIds.includes(eq.id);
+                    const currentArr = eq.compatible_attachment_ids || [];
+                    const alreadyHas = currentArr.includes(savedItem.id);
+                    if (selected !== alreadyHas) {
+                        relationshipChanges.push({
+                            row: eq,
+                            field: 'compatible_attachment_ids',
+                            nextIds: selected ? [...currentArr.filter(id => id !== savedItem.id), savedItem.id] : currentArr.filter(id => id !== savedItem.id),
+                            shouldContain: selected,
+                            label: `Equipment compatibility for ${eq.material_name || 'equipment'}`,
+                        });
+                    }
+                }
+            } else if (form.material_type === 'sub_attachment') {
+                for (const att of attachments) {
+                    const selected = linkedAttachmentIdsForSub.includes(att.id);
+                    const currentArr = att.compatible_sub_attachment_ids || [];
+                    const alreadyHas = currentArr.includes(savedItem.id);
+                    if (selected !== alreadyHas) {
+                        relationshipChanges.push({
+                            row: att,
+                            field: 'compatible_sub_attachment_ids',
+                            nextIds: selected ? [...currentArr.filter(id => id !== savedItem.id), savedItem.id] : currentArr.filter(id => id !== savedItem.id),
+                            shouldContain: selected,
+                            label: `Sub-attachment compatibility for ${att.material_name || 'attachment'}`,
+                        });
+                    }
                 }
             }
-        } else if (form.material_type === 'sub_attachment') {
-            // Update all attachments to include/exclude this sub_attachment
-            for (const att of attachments) {
-                const isSelected = linkedAttachmentIdsForSub.includes(att.id);
-                const currentArr = att.compatible_sub_attachment_ids || [];
-                const alreadyHas = currentArr.includes(savedItem.id);
-                
-                if (isSelected && !alreadyHas) {
-                    await FoundationInventoryEntity.update(att.id, { compatible_sub_attachment_ids: [...currentArr, savedItem.id] });
-                } else if (!isSelected && alreadyHas) {
-                    await FoundationInventoryEntity.update(att.id, { compatible_sub_attachment_ids: currentArr.filter(id => id !== savedItem.id) });
+
+            let confirmed = 0;
+            for (const change of relationshipChanges) {
+                try {
+                    await replaceRelationshipIdsIfUnchanged({
+                        entity: FoundationInventoryEntity,
+                        row: change.row,
+                        field: change.field,
+                        nextIds: change.nextIds,
+                        label: change.label,
+                    });
+                    confirmed += 1;
+                } catch (error) {
+                    throw new Error(`Foundation equipment relationship updates stopped after ${confirmed} of ${relationshipChanges.length} required changes were confirmed. Reload before retrying; remaining links were not skipped automatically. ${error?.message || ''}`.trim());
                 }
             }
-        }
 
-        onSave(savedItem);
+            for (const change of relationshipChanges) {
+                const current = await FoundationInventoryEntity.get(change.row.id);
+                const contains = !!current?.[change.field]?.includes(savedItem.id);
+                if (!current || contains !== change.shouldContain) {
+                    throw new Error(`Final verification failed for ${change.label}. Reload Foundation Inventory before retrying.`);
+                }
+            }
+
+            await onSave(savedItem);
+        } catch (error) {
+            console.error('Foundation equipment save failed:', error);
+            alert(error?.message || 'Foundation equipment item could not be saved.');
+            if (wroteAnything) await onSave();
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
