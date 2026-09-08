@@ -12,7 +12,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -674,7 +674,16 @@ export default function SIPs() {
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
           onMove={async (wo, newStage) => {
-            await WorkOrder.update(wo.id, { current_stage: newStage });
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage,
+                label: "SIPs details stage transition",
+              });
+            } catch (error) {
+              console.error("Error moving SIPs Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+            }
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
@@ -690,7 +699,17 @@ export default function SIPs() {
             loadWorkOrders();
           }}
           onComplete={async (wo) => {
-            await WorkOrder.update(wo.id, { completed: true });
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage: wo.current_stage,
+                completed: true,
+                label: "SIPs details completion",
+              });
+            } catch (error) {
+              console.error("Error completing SIPs Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+            }
             loadWorkOrders();
           }}
           onDelete={async (wo) => {
