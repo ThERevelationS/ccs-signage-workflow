@@ -864,8 +864,12 @@ export default function EstimateDetail() {
     const methodLabel = String(acceptedMethod || "other").replace(/_/g, " ");
     try {
       if (before.status === "sent") {
-        const approvalResult = await base44.entities.AllInOneEstimate.update(estimate.id, { status: "approved", edit_reason: "" });
-        const approved = approvalResult?.updated_date ? approvalResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+        const approved = await saveEstimateFieldsSafely({
+          baseline: before,
+          nextFields: { status: "approved", edit_reason: "" },
+          label: "Customer acceptance Estimate approval",
+          guardWholeVersion: true,
+        });
         after = { ...after, ...(approved || {}), status: "approved", edit_reason: "" };
         await rememberServerVersion(after);
       }
@@ -898,21 +902,27 @@ export default function EstimateDetail() {
     try {
       await syncEstimateEverywhere(after, { previousEstimateStatus: "sent", syncCustomer: false });
       if (after.pipeline_sync_pending || after.pipeline_sync_error) {
-        const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-          pipeline_sync_pending: false,
-          pipeline_sync_error: "",
+        const cleared = await saveEstimateFieldsSafely({
+          baseline: after,
+          nextFields: {
+            pipeline_sync_pending: false,
+            pipeline_sync_error: "",
+          },
+          label: "Customer acceptance pipeline cleanup",
         });
-        const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
         after = { ...after, ...(cleared || {}), pipeline_sync_pending: false, pipeline_sync_error: "" };
         await rememberServerVersion(after);
       }
     } catch (syncError) {
       const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
-      const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-        pipeline_sync_pending: true,
-        pipeline_sync_error: message,
-      }).catch(() => null);
-      const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      const recovered = await saveEstimateFieldsSafely({
+        baseline: after,
+        nextFields: {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        },
+        label: "Customer acceptance pipeline recovery marker",
+      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       syncWarning = `Customer acceptance and approval are saved, but Sales Pipeline synchronization is pending: ${message}`;
