@@ -8,16 +8,7 @@
     },
     "fluid_type": {
       "type": "string",
-      "enum": [
-        "engine_oil",
-        "transmission_fluid",
-        "brake_fluid",
-        "coolant",
-        "hydraulic_fluid",
-        "power_steering_fluid",
-        "differential_oil",
-        "other"
-      ]
+      "description": "Canonical or historical Fleet fluid type. Historical blank/legacy values are preserved exactly during migration; the future UI should offer canonical choices for new records."
     },
     "viscosity": {
       "type": "string"
