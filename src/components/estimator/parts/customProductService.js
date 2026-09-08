@@ -6,6 +6,7 @@ import { liveCustomerUnitPrice } from "@/components/estimator/customerPricing";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -74,8 +75,15 @@ function patchedEstimateLines(estimate, builderProductId, patch) {
 
 async function patchVerifiedEstimateLine(estimate, builder, patch) {
   const lineItems = patchedEstimateLines(estimate, builder.id, patch);
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
-  return lineItems.find((line) => line.builder_product_id === builder.id) || null;
+  const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId: estimate.id,
+    expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Custom Product Estimate line update",
+  });
+  const savedLines = savedEstimate.line_items || lineItems;
+  return savedLines.find((line) => line.builder_product_id === builder.id) || null;
 }
 
 function assertLoadedPartVersion(part, expectedPartUpdatedAt = "") {
