@@ -1,0 +1,92 @@
+{
+  "name": "FleetOperationReceipt",
+  "type": "object",
+  "description": "Durable idempotency and concurrency ledger for Fleet operations such as work-order completion, request receiving, scheduled generation, and notifications. Server functions are the only intended writers.",
+  "properties": {
+    "operation_key": {
+      "type": "string",
+      "description": "Deterministic idempotency key for the logical Fleet operation."
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "work_order_complete",
+        "work_order_reopen",
+        "request_receive",
+        "scheduled_generation",
+        "notification"
+      ]
+    },
+    "target_entity": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "started",
+        "applied",
+        "failed"
+      ],
+      "default": "started"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "payload_fingerprint": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "applied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "result_summary": {
+      "type": "object"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "operation_key",
+    "operation_type",
+    "target_entity",
+    "target_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
