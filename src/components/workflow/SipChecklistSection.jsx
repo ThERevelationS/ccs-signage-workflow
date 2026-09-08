@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, ChevronRight, Save, ClipboardList, Loader2 } from "lucide-react";
+import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -24,6 +25,8 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
   const [expandedItems, setExpandedItems] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState([]);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -45,6 +48,9 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
       // Load checklist FRESH from database (not from prop which may be stale)
       const currentWO = freshWO[0] || workOrder;
       const rawChecklist = currentWO.sip_checklist || [];
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(rawChecklist)));
+      setSaveError("");
+      setHasChanges(false);
       // Reconstruct hierarchy from IDs if type/parent_id fields are missing
       const reconstructedChecklist = rawChecklist.map(item => {
         if (item.type) return item;
@@ -97,15 +103,27 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError("");
     try {
-      await WorkOrder.update(workOrder.id, { sip_checklist: checklist });
-      Object.assign(workOrder, { sip_checklist: checklist });
+      const saved = await replaceWorkOrderArrayFieldIfUnchanged({
+        workOrderId: workOrder.id,
+        field: "sip_checklist",
+        expectedArray: loadedChecklistSnapshot,
+        nextArray: checklist,
+        label: "SIP checklist",
+      });
+      const savedChecklist = saved.sip_checklist || [];
+      Object.assign(workOrder, { sip_checklist: savedChecklist, updated_date: saved.updated_date });
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(savedChecklist)));
+      setChecklist(savedChecklist);
       setHasChanges(false);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error saving:", error);
+      setSaveError(error?.message || "SIP checklist could not be saved. Reload the latest Work Order and try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const toggleExpanded = (itemId) => {
