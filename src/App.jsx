@@ -43,6 +43,16 @@ import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
 import MasterInventory from './pages/MasterInventory';
 import QuoteSettings from './pages/QuoteSettings';
 import FleetTracking from './pages/FleetTracking';
+import FleetOverview from './pages/FleetOverview';
+import FleetEquipment from './pages/FleetEquipment';
+import FleetEquipmentDetail from './pages/FleetEquipmentDetail';
+import FleetMaintenance from './pages/FleetMaintenance';
+import FleetWorkOrders from './pages/FleetWorkOrders';
+import FleetParts from './pages/FleetParts';
+import FleetFluids from './pages/FleetFluids';
+import FleetRequests from './pages/FleetRequests';
+import FleetSettings from './pages/FleetSettings';
+import FleetPublicReport from './pages/FleetPublicReport';
 import FleetPublicReport from './pages/FleetPublicReport';
 
 const ESTIMATOR_PAGES = {
@@ -78,6 +88,19 @@ const ESTIMATOR_PAGES = {
   EstimatorTools,
   MasterInventory,
   QuoteSettings,
+};
+
+const FLEET_PAGES = {
+  FleetOverview,
+  FleetTracking,
+  FleetEquipment,
+  FleetEquipmentDetail,
+  FleetMaintenance,
+  FleetWorkOrders,
+  FleetParts,
+  FleetFluids,
+  FleetRequests,
+  FleetSettings,
 };
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -138,14 +161,17 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      <Route
-        path="/fleettracking"
-        element={
-          <LayoutWrapper currentPageName="FleetTracking">
-            <FleetTracking />
-          </LayoutWrapper>
-        }
-      />
+      {Object.entries(FLEET_PAGES).map(([name, Page]) => (
+        <Route
+          key={name}
+          path={`/${name}`}
+          element={
+            <LayoutWrapper currentPageName={name}>
+              <Page />
+            </LayoutWrapper>
+          }
+        />
+      ))}
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
