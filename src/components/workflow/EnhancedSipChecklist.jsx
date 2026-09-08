@@ -25,6 +25,7 @@ import {
   findOptionalWorkOrderArrayItemIndex,
   findWorkOrderArrayItemIndex,
   mutateWorkOrderArrayField,
+  replaceWorkOrderArrayFieldIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
 
 const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
@@ -724,6 +725,8 @@ export default function EnhancedSipChecklist({
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState([]);
+  const [saveError, setSaveError] = useState("");
   
   // Popup states
   const [showTaskCreation, setShowTaskCreation] = useState(false);
@@ -778,8 +781,12 @@ export default function EnhancedSipChecklist({
       setUsers(usersData);
       setTemplates(templatesData);
 
-      // Load checklist from fresh work order data
-      setChecklist(currentWorkOrder[checklistField] || []);
+      // Load checklist from fresh work order data and keep an immutable baseline
+      // so Save & Close can detect edits made in another session to this same field.
+      const loadedChecklist = currentWorkOrder[checklistField] || [];
+      setChecklist(loadedChecklist);
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(loadedChecklist)));
+      setSaveError("");
       
       // Load main job tasks (from notes) - use fresh data
       const freshNotes = currentWorkOrder.notes || [];
@@ -1122,14 +1129,26 @@ export default function EnhancedSipChecklist({
 
   const saveChecklist = async () => {
     setIsSaving(true);
+    setSaveError("");
     try {
-      await WorkOrder.update(workOrder.id, { [checklistField]: checklist });
+      const saved = await replaceWorkOrderArrayFieldIfUnchanged({
+        workOrderId: workOrder.id,
+        field: checklistField,
+        expectedArray: loadedChecklistSnapshot,
+        nextArray: checklist,
+        label: title || "SIP checklist",
+      });
+      const savedChecklist = saved[checklistField] || [];
+      Object.assign(workOrder, { [checklistField]: savedChecklist, updated_date: saved.updated_date });
+      setLoadedChecklistSnapshot(JSON.parse(JSON.stringify(savedChecklist)));
       if (onUpdate) onUpdate();
       onClose();
     } catch (error) {
       console.error("Error saving checklist:", error);
+      setSaveError(error?.message || "Checklist could not be saved. Reload the latest Work Order and try again.");
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const completedCount = checklist.filter(i => i.checked).length;
