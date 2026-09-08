@@ -7,6 +7,7 @@ import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 
 export default function Fabrication() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -15,6 +16,7 @@ export default function Fabrication() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReordering, setIsReordering] = useState(false);
   const { currentUser, isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
@@ -57,23 +59,26 @@ export default function Fabrication() {
     return ["WIP - Outsourced Fabrication"];
   };
 
+  const fetchWorkOrders = async () => {
+    const allWorkOrders = await loadAllEntityRows({
+      entity: WorkOrder,
+      query: { completed: false, deleted: { $ne: true } },
+      sort: "priority",
+      label: "Fabrication Work Orders",
+    });
+    const taskDescriptions = getFabricationTaskDescriptions();
+    // Filter to only show jobs with task descriptions assigned to Fabrication page, or riders locked to fabrication
+    return allWorkOrders.filter(wo => 
+      (wo.current_task_description && taskDescriptions.some(desc => 
+        wo.current_task_description.includes(desc)
+      )) || (wo.is_rider && wo.rider_stage === 'fabrication' && wo.in_pipeline !== false)
+    );
+  };
+
   const loadWorkOrders = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     try {
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false, deleted: { $ne: true } },
-        sort: "priority",
-        label: "Fabrication Work Orders",
-      });
-      const taskDescriptions = getFabricationTaskDescriptions();
-      // Filter to only show jobs with task descriptions assigned to Fabrication page, or riders locked to fabrication
-      const filtered = allWorkOrders.filter(wo => 
-        (wo.current_task_description && taskDescriptions.some(desc => 
-          wo.current_task_description.includes(desc)
-        )) || (wo.is_rider && wo.rider_stage === 'fabrication' && wo.in_pipeline !== false)
-      );
-      setWorkOrders(filtered);
+      setWorkOrders(await fetchWorkOrders());
     } catch (error) {
       console.error("Error loading work orders:", error);
     } finally {
@@ -83,14 +88,26 @@ export default function Fabrication() {
 
   const handleReorder = async (reorderedItems) => {
     if (!isRegistered) { promptForEmail(); return; }
+    if (isReordering) return;
+
+    const loadedItems = workOrders;
     setWorkOrders(reorderedItems);
+    setIsReordering(true);
     try {
-      for (let i = 0; i < reorderedItems.length; i++) {
-        await WorkOrder.update(reorderedItems[i].id, { priority: i });
-      }
+      const result = await reorderWorkOrdersFromLoadedSnapshot({
+        entity: WorkOrder,
+        loadedItems,
+        reorderedItems,
+        readCurrentItems: fetchWorkOrders,
+        label: "Fabrication priority reorder",
+      });
+      setWorkOrders(result.items);
     } catch (error) {
       console.error("Error reordering work orders:", error);
-      loadWorkOrders();
+      alert(error?.message || "The Fabrication priority order changed in another session. Reload and try the reorder again.");
+      await loadWorkOrders();
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -229,6 +246,7 @@ export default function Fabrication() {
             <DragDropList
               workOrders={workOrders}
               onReorder={handleReorder}
+              reorderDisabled={isReordering}
               onEdit={handleEdit}
               onMove={handleMove}
               onSplit={handleSplit}
