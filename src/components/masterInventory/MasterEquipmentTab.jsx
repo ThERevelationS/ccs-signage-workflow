@@ -616,10 +616,12 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         ? ChannelLetterInstallEquipmentEntity
         : FoundationInventoryEntity;
 
-      // Preflight the edited target before any write.
+      // Preflight the edited target before any write and retain the exact
+      // verified version for the later conditional save.
+      let verifiedTarget = null;
       if (!isNew) {
-        const liveTarget = await targetEntity.get(normalized.id);
-        assertFreshRow(normalized.raw, liveTarget, normalized.name || "This equipment item");
+        verifiedTarget = await targetEntity.get(normalized.id);
+        assertFreshRow(normalized.raw, verifiedTarget, normalized.name || "This equipment item");
       }
 
       let liveChannelRows = [];
