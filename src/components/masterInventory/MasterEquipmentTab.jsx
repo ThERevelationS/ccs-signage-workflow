@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, Star } from "lucide-react";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
@@ -162,7 +163,11 @@ export default function MasterEquipmentTab({ isAdmin }) {
         await load();
         return;
       }
-      await entity.delete(row.id);
+      await deleteEntityIfUnchanged({
+        entity,
+        record: live,
+        label: `Equipment item “${row.name || "Item"}”`,
+      });
       await load();
     } catch (error) {
       console.error("Equipment delete failed:", error);
@@ -185,7 +190,14 @@ export default function MasterEquipmentTab({ isAdmin }) {
         await load();
         return;
       }
-      await entity.update(row.id, { [field]: next });
+      const togglePatch = { [field]: next };
+      await replaceEntityFieldsIfUnchanged({
+        entity,
+        id: row.id,
+        expectedFields: expectedEntityFields(live, togglePatch),
+        nextFields: togglePatch,
+        label: "Equipment visibility",
+      });
       if (row._source === "channel_letter_equipment") {
         setChannelRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: next } : r)));
       } else {

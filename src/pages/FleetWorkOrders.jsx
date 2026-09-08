@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
