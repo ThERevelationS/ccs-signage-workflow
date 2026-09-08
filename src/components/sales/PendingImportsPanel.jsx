@@ -10,7 +10,7 @@ import {
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const PendingImport = base44.entities.PendingImport;
 const WorkOrder = base44.entities.WorkOrder;
@@ -66,16 +66,51 @@ function buildInitialData(item) {
 
 function DuplicateCard({ item, onReject, allWorkOrders }) {
   const [rejectLoading, setRejectLoading] = useState(false);
+  const [mergeLoading, setMergeLoading] = useState("");
+  const [mergeError, setMergeError] = useState("");
   const ed = item.extracted_data || {};
   const recA = ed.record_a || {};
   const recB = ed.record_b || {};
 
   const handleMerge = async (keepId, removeId) => {
+    const keepWo = allWorkOrders.find(w => w.id === keepId);
     const removeWo = allWorkOrders.find(w => w.id === removeId);
-    if (!removeWo) return;
-    await base44.entities.WorkOrder.update(removeId, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'duplicate_merge' });
-    await PendingImport.update(item.id, { status: 'merged', merged_into_id: keepId });
-    onReject(item.id);
+    if (!keepWo || !removeWo) {
+      setMergeError("One or both duplicate Work Orders are no longer available. Refresh Pending Imports before resolving this duplicate.");
+      return;
+    }
+
+    setMergeLoading(removeId);
+    setMergeError("");
+    try {
+      // Verify both sides of the duplicate decision. A newer edit to either record may
+      // change which Work Order should be kept, so do not delete from a stale comparison.
+      const [latestKeep, latestRemove] = await Promise.all([
+        WorkOrder.get(keepId),
+        WorkOrder.get(removeId),
+      ]);
+      if (!latestKeep?.id || latestKeep.deleted === true || latestKeep.updated_date !== keepWo.updated_date) {
+        throw new Error("The Work Order selected to keep changed after this duplicate was loaded.");
+      }
+      if (!latestRemove?.id || latestRemove.deleted === true || latestRemove.updated_date !== removeWo.updated_date) {
+        throw new Error("The Work Order selected to delete changed after this duplicate was loaded.");
+      }
+
+      await softDeleteWorkOrderFromLoadedSnapshot({
+        workOrder: removeWo,
+        deletedBy: "duplicate_merge",
+        label: "Pending Import duplicate resolution",
+      });
+      // Only mark the Pending Import resolved after the duplicate Work Order has
+      // actually reached Project Trash. A retry after response loss converges safely.
+      await PendingImport.update(item.id, { status: 'merged', merged_into_id: keepId });
+      onReject(item.id);
+    } catch (error) {
+      console.error("Pending Import duplicate resolution blocked:", error);
+      setMergeError(`${error?.message || "Duplicate resolution could not be completed."} Refresh Pending Imports before trying again. If the delete succeeded but the status update failed, retrying will safely finish the merge.`);
+    } finally {
+      setMergeLoading("");
+    }
   };
 
   return (
