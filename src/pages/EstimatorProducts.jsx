@@ -18,6 +18,7 @@ import { loadProductionProductTypes } from "@/components/estimator/productionPro
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
@@ -81,8 +82,14 @@ function QuickProductEditDialog({ product, open, onClose, onSaved, productionPro
         product_notes: draft.product_notes,
         is_active: draft.is_active,
       };
-      const updateResult = await base44.entities.QuickProduct.update(product.id, payload);
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.QuickProduct.get(product.id);
+      const refreshed = await replaceEntityFieldsIfUnchanged({
+        entity: base44.entities.QuickProduct,
+        id: product.id,
+        expectedUpdatedAt: live.updated_date || "",
+        expectedFields: expectedEntityFields(live, payload),
+        nextFields: payload,
+        label: "Quick Product metadata",
+      });
       onSaved?.({ ...product, ...payload, ...(refreshed || {}) });
       onClose?.();
     } catch (err) {
@@ -207,8 +214,14 @@ export default function EstimatorProducts() {
         throw new Error("This Quick Product status changed in another session. The latest status has been restored; review it before changing again.");
       }
       const next = product.is_active === false;
-      const updateResult = await base44.entities.QuickProduct.update(product.id, { is_active: next });
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.QuickProduct.get(product.id);
+      const statusPatch = { is_active: next };
+      const refreshed = await replaceEntityFieldsIfUnchanged({
+        entity: base44.entities.QuickProduct,
+        id: product.id,
+        expectedFields: expectedEntityFields(live, statusPatch),
+        nextFields: statusPatch,
+        label: "Quick Product status",
+      });
       updateLocal({ ...product, is_active: next, ...(refreshed || {}) });
     } catch (err) {
       setError(err?.message || "Quick Product status could not be changed.");
