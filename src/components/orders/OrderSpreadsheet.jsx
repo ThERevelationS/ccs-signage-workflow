@@ -104,6 +104,7 @@ import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { importOrders as importOrdersFn } from "@/functions/importOrders";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 
 const Order = base44.entities.Order;
@@ -229,7 +230,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         workOrderFilter 
           ? Order.filter({ work_order_id: workOrderFilter, deleted: { $ne: true } }, "row_number")
           : Order.filter({ deleted: { $ne: true } }, "row_number"),
-        WorkOrder.filter({ completed: { $ne: true }, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: { $ne: true }, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Order Spreadsheet Work Orders",
+        }),
         AuthorizedEmail.list()
       ]);
       setOrders(ordersData);
