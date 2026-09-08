@@ -6,7 +6,7 @@ import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 export default function Fabrication() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -15,7 +15,7 @@ export default function Fabrication() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isRegistered, promptForEmail } = useAuth();
+  const { currentUser, isRegistered, promptForEmail } = useAuth();
 
   useEffect(() => {
     document.title = "Fabrication - Workflow Manager";
@@ -174,11 +174,18 @@ export default function Fabrication() {
   const handleDelete = async (workOrder) => {
     if (!isRegistered) { promptForEmail(); return; }
     try {
+      const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
+        workOrder,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Fabrication Work Order delete",
+      });
+      Object.assign(workOrder, deleted);
       await ActivityActions.workOrderDeleted(workOrder);
-      await WorkOrder.delete(workOrder.id);
       loadWorkOrders();
     } catch (error) {
       console.error("Error deleting work order:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+      loadWorkOrders();
     }
   };
 
