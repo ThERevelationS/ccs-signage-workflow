@@ -45,7 +45,9 @@ async function currentCounts(base44:any) {
     FleetSystemLog: systemLogs.length,
     FleetSystemReport: systemReports.length,
     FleetNotificationQueue: queue.length,
+    FleetNotificationQueue_unresolved: queue.filter((r:any)=>['pending','sending','failed'].includes(r.status)).length,
     FleetOperationReceipt: receipts.length,
+    FleetOperationReceipt_unresolved: receipts.filter((r:any)=>['started','failed'].includes(r.status)).length,
   };
 }
 
@@ -78,7 +80,7 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
 
   const auditStatusOk = !!audit && ['passed','passed_with_findings'].includes(audit.status);
   const auditAppsOk = audit?.source_app_id === SOURCE_APP_ID && audit?.destination_app_id === DEST_APP_ID;
-  const auditDeltaOk = audit?.relationship_checks?.source_delta_detected === false || audit?.summary?.delta_records_migrated === 0;
+  const auditDeltaOk = audit?.relationship_checks?.source_delta_detected === false;
   add('verification_audit_passed', auditStatusOk && auditAppsOk, audit ? `${audit.run_key}: ${audit.status}` : 'No verification audit found.');
   add('verification_audit_no_delta', !!audit && auditDeltaOk, audit ? `delta_records_migrated=${audit?.summary?.delta_records_migrated ?? 'unknown'}` : 'No verification audit found.');
 
@@ -92,8 +94,8 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
     return counts[key] === expected ? [] : [{ key, expected, actual:counts[key] }];
   });
   add('destination_counts_match_audit', countMismatches.length === 0, countMismatches.length ? JSON.stringify(countMismatches) : 'Destination counts match latest verification audit.');
-  add('notification_queue_empty', counts.FleetNotificationQueue === 0, `${counts.FleetNotificationQueue} queue record(s).`);
-  add('operation_receipts_clean', counts.FleetOperationReceipt === 0, `${counts.FleetOperationReceipt} operation receipt(s).`);
+  add('notification_queue_clean', counts.FleetNotificationQueue_unresolved === 0, `${counts.FleetNotificationQueue_unresolved} unresolved of ${counts.FleetNotificationQueue} total queue record(s).`);
+  add('operation_receipts_clean', counts.FleetOperationReceipt_unresolved === 0, `${counts.FleetOperationReceipt_unresolved} unresolved of ${counts.FleetOperationReceipt} total operation receipt(s).`);
 
   const restFresh = !!conn?.last_sync_at && (Date.now() - new Date(conn.last_sync_at).getTime()) <= MAX_REST_SYNC_AGE_MS;
   add('bouncie_connection_present', !!conn, conn ? 'Bouncie connection record present.' : 'No Bouncie connection record.');
@@ -164,7 +166,7 @@ Deno.serve(async (req) => {
         return Response.json({ error:'Explicit FleetMaster freeze confirmation is required.' }, { status:400 });
       }
       const latest = await latestVerification(base44);
-      const auditOk = latest && ['passed','passed_with_findings'].includes(latest.status) && (latest.relationship_checks?.source_delta_detected === false || latest.summary?.delta_records_migrated === 0);
+      const auditOk = latest && ['passed','passed_with_findings'].includes(latest.status) && latest.relationship_checks?.source_delta_detected === false;
       if (!auditOk) return Response.json({ error:'A passing no-delta verification audit is required before confirming source freeze.' }, { status:409 });
       await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
         source_freeze_confirmed:true,
