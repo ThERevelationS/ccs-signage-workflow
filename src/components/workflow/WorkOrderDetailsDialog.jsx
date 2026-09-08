@@ -76,6 +76,7 @@ import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -316,16 +317,20 @@ export default function WorkOrderDetailsDialog({
       estimated_hours: 0,
       is_milestone: false
     };
-    const updatedTasks = [...tasks, newTask];
-    // Optimistic update - update UI immediately
-    Object.assign(workOrder, { notes: updatedTasks });
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "notes",
+      label: "Work Order tasks",
+      mutate: (currentTasks) => currentTasks.some((task) => task?.id === newTask.id)
+        ? currentTasks
+        : [...currentTasks, newTask],
+    });
+    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
     setNewTaskText("");
     setNewTaskAssignedTo("");
     setNewTaskAdditionalAssignees([]);
     setIsAddingTask(false);
     if (onUpdate) onUpdate();
-    // Then persist to database
-    await WorkOrder.update(workOrder.id, { notes: updatedTasks });
     await ActivityActions.taskAdded(workOrder, newTaskText);
   };
 
@@ -553,10 +558,16 @@ export default function WorkOrderDetailsDialog({
       created_by: currentUser?.full_name || currentUser?.email || "Unknown",
       sub_tasks: []
     };
-    const updatedNotes = [...workNotes, newNote];
-    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Work Order notes",
+      mutate: (currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
+        ? currentNotes
+        : [...currentNotes, newNote],
+    });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     await ActivityActions.noteAdded(workOrder, noteData.text, noteData.type);
-    Object.assign(workOrder, { work_notes: updatedNotes });
     await loadRelatedData();
   };
 
@@ -564,62 +575,71 @@ export default function WorkOrderDetailsDialog({
   const [localNotesVersion, setLocalNotesVersion] = useState(0);
 
   const handleDeleteWorkNote = async (noteId) => {
-    const updatedNotes = workNotes.filter((n) => n.id !== noteId);
-    // Optimistic update - update UI immediately by modifying workOrder directly
-    Object.assign(workOrder, { work_notes: updatedNotes });
-    // Force re-render by incrementing version
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Work Order notes",
+      mutate: (currentNotes) => currentNotes.filter((note) => note.id !== noteId),
+    });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     setLocalNotesVersion(v => v + 1);
-    // Then persist to database
-    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
     await ActivityActions.noteDeleted(workOrder);
   };
 
   const handleAddSubTask = async (noteId, subTaskText) => {
-    const updatedNotes = workNotes.map((note) => {
-      if (note.id === noteId) {
-        return {
-          ...note,
-          sub_tasks: [...(note.sub_tasks || []), {
-            id: Date.now(),
-            text: subTaskText,
-            completed: false
-          }]
-        };
-      }
-      return note;
+    const newSubTask = {
+      id: Date.now(),
+      text: subTaskText,
+      completed: false
+    };
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Work Order note subtasks",
+      mutate: (currentNotes) => currentNotes.map((note) => {
+        if (note.id !== noteId) return note;
+        const currentSubTasks = note.sub_tasks || [];
+        return currentSubTasks.some((subTask) => subTask?.id === newSubTask.id)
+          ? note
+          : { ...note, sub_tasks: [...currentSubTasks, newSubTask] };
+      }),
     });
-    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     await ActivityActions.subNoteAdded(workOrder, subTaskText);
     if (onUpdate) onUpdate();
   };
 
   const handleToggleSubTask = async (noteId, subTaskId) => {
-    const updatedNotes = workNotes.map((note) => {
-      if (note.id === noteId) {
-        return {
-          ...note,
-          sub_tasks: (note.sub_tasks || []).map((st) =>
-          st.id === subTaskId ? { ...st, completed: !st.completed } : st
-          )
-        };
-      }
-      return note;
+    const originalSubTask = workNotes.find((note) => note.id === noteId)?.sub_tasks?.find((subTask) => subTask.id === subTaskId);
+    if (!originalSubTask) return;
+    const targetCompleted = !originalSubTask.completed;
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Work Order note subtasks",
+      mutate: (currentNotes) => currentNotes.map((note) => note.id === noteId
+        ? {
+            ...note,
+            sub_tasks: (note.sub_tasks || []).map((subTask) => subTask.id === subTaskId
+              ? { ...subTask, completed: targetCompleted }
+              : subTask)
+          }
+        : note),
     });
-    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     loadRelatedData();
   };
 
   const handleDeleteSubTask = async (noteId, subTaskId) => {
-    const updatedNotes = workNotes.map((note) => {
-      if (note.id === noteId) {
-        return {
-          ...note,
-          sub_tasks: (note.sub_tasks || []).filter((st) => st.id !== subTaskId)
-        };
-      }
-      return note;
+    const saved = await mutateWorkOrderArrayField({
+      workOrderId: workOrder.id,
+      field: "work_notes",
+      label: "Work Order note subtasks",
+      mutate: (currentNotes) => currentNotes.map((note) => note.id === noteId
+        ? { ...note, sub_tasks: (note.sub_tasks || []).filter((subTask) => subTask.id !== subTaskId) }
+        : note),
     });
-    await WorkOrder.update(workOrder.id, { work_notes: updatedNotes });
+    Object.assign(workOrder, { work_notes: saved.work_notes || [], updated_date: saved.updated_date });
     await ActivityActions.subNoteDeleted(workOrder);
     if (onUpdate) onUpdate();
   };
