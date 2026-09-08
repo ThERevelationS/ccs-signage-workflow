@@ -12,6 +12,7 @@ import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
 import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
 import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -112,13 +113,14 @@ export default function MaintenanceSettings() {
     try {
       // Preflight Settings and the rate matrix before the first write so an older
       // admin browser cannot silently overwrite newer pricing/labor configuration.
-      await preflightSettingsRows({
+      const settingsPreflight = await preflightSettingsRows({
         SettingsEntity,
         rows: settingsRows,
         values: globalSettings,
         originalValues: originalSettings,
         changedRows: changedSettingRows,
       });
+      const liveSettingsById = new Map((settingsPreflight.liveRows || []).map((row) => [row.id, row]));
 
       const liveRates = await loadAllMaintenanceRates();
       const liveById = new Map((liveRates || []).filter((row) => row.id).map((row) => [row.id, row]));
