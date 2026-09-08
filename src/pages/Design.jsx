@@ -6,6 +6,7 @@ import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 export default function Design() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -97,7 +98,7 @@ export default function Design() {
     if (!isRegistered) { promptForEmail(); return; }
     try {
       if (editingWorkOrder) {
-        await WorkOrder.update(editingWorkOrder.id, formData);
+        await updateWorkOrderFromLoadedSnapshot({ workOrder: editingWorkOrder, formData, label: "Design Work Order" });
       } else {
         const maxPriority = workOrders.length > 0 ?
         Math.max(...workOrders.map((wo) => wo.priority || 0)) :
@@ -115,6 +116,7 @@ export default function Design() {
       loadWorkOrders();
     } catch (error) {
       console.error("Error saving:", error);
+      throw error;
     }
   };
 
