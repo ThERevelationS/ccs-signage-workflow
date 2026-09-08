@@ -115,27 +115,76 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError("");
     try {
-      // Clean up numeric fields - convert empty strings to null
+      // Clean up numeric fields - convert empty strings to null.
       const cleanedData = {
         ...localData,
-        products: products,
         ...(localData.budget_less_than !== undefined && {
           budget_less_than: localData.budget_less_than ? parseFloat(localData.budget_less_than) : null
         })
       };
-      await WorkOrder.update(workOrder.id, cleanedData);
-      // Update workOrder object directly so UI reflects changes immediately
-      Object.assign(workOrder, cleanedData);
-      // Keep local data in sync with saved values (don't clear it, merge it)
-      // This ensures the UI shows the saved values
+      const expectedFields = {};
+      const nextFields = { ...cleanedData };
+      Object.keys(cleanedData).forEach((field) => {
+        expectedFields[field] = Object.prototype.hasOwnProperty.call(fieldBaselinesRef.current, field)
+          ? cloneValue(fieldBaselinesRef.current[field])
+          : cloneValue(workOrder?.[field]);
+      });
+
+      if (productsChanged || productsNeedMigration) {
+        expectedFields.products = cloneValue(loadedProductsSnapshotRef.current);
+        nextFields.products = products;
+      }
+
+      if (Object.keys(nextFields).length === 0) return;
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields,
+        nextFields,
+        label: "Client Information",
+      });
+
+      const applied = Object.keys(nextFields).reduce((out, field) => {
+        out[field] = saved[field];
+        return out;
+      }, {});
+      Object.assign(workOrder, applied, { updated_date: saved.updated_date });
+      if (Object.prototype.hasOwnProperty.call(nextFields, "products")) {
+        loadedProductsSnapshotRef.current = cloneValue(saved.products);
+        setProducts(saved.products || []);
+        setProductsNeedMigration(false);
+      }
+      fieldBaselinesRef.current = {};
       setLocalData({});
       setProductsChanged(false);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Error saving:", error);
+      setSaveError(error?.message || "Client Information could not be saved. Reload the latest Work Order and try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  };
+
+  const reloadLatest = async () => {
+    setReloading(true);
+    try {
+      const rows = await WorkOrder.filter({ id: workOrder.id });
+      const latest = rows[0];
+      if (!latest) throw new Error("The latest Work Order could not be found.");
+      Object.assign(workOrder, latest);
+      fieldBaselinesRef.current = {};
+      setLocalData({});
+      initializeProductsFromRecord(latest);
+      setSaveError("");
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error("Error reloading Client Information:", error);
+      setSaveError(error?.message || "The latest Client Information could not be loaded.");
+    } finally {
+      setReloading(false);
+    }
   };
 
   const hasChanges = Object.keys(localData).length > 0 || productsChanged;
