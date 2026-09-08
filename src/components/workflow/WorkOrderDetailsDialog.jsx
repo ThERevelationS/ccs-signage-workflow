@@ -270,7 +270,9 @@ export default function WorkOrderDetailsDialog({
   };
 
   const saveEdit = async (field) => {
-    const oldValue = inlineEditBaselineRef.current[field];
+    const oldValue = Object.prototype.hasOwnProperty.call(inlineEditBaselineRef.current, field)
+      ? inlineEditBaselineRef.current[field]
+      : workOrder[field];
     const newValue = editValues[field];
     setInlineEditError("");
     try {
@@ -301,6 +303,23 @@ export default function WorkOrderDetailsDialog({
     setInlineEditError("");
     setEditingField(null);
     setEditValues({});
+  };
+
+  const reloadInlineEditLatest = async () => {
+    try {
+      const latest = await WorkOrder.get(workOrder.id);
+      if (!latest?.id) throw new Error("The latest Work Order could not be found.");
+      Object.assign(workOrder, latest);
+      inlineEditBaselineRef.current = {};
+      setEditingField(null);
+      setEditValues({});
+      setInlineEditError("");
+      if (onUpdate) await onUpdate(latest);
+      await loadRelatedData();
+    } catch (error) {
+      console.error("Could not reload latest Work Order inline-edit data:", error);
+      setInlineEditError(error?.message || "The latest Work Order could not be loaded. No unsaved value was written.");
+    }
   };
 
   const handleToggleTask = async (taskIndex) => {
