@@ -9,6 +9,7 @@ import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -43,7 +44,12 @@ export default function Permitting() {
       const [items, locs, wos, usersData, settings] = await Promise.all([
         PermitLineItem.list('-updated_date', 500),
         PermitLocality.list(),
-        WorkOrder.filter({ completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "Permitting Work Orders",
+        }),
         AuthorizedEmail.list(),
         GlobalSettings.list()
       ]);
