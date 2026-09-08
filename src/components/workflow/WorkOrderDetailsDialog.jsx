@@ -255,6 +255,8 @@ export default function WorkOrderDetailsDialog({
   };
 
   const startEdit = (field) => {
+    inlineEditBaselineRef.current[field] = workOrder[field];
+    setInlineEditError("");
     setEditingField(field);
     setEditValues({
       title: workOrder.title,
@@ -268,24 +270,35 @@ export default function WorkOrderDetailsDialog({
   };
 
   const saveEdit = async (field) => {
-    const oldValue = workOrder[field];
+    const oldValue = inlineEditBaselineRef.current[field];
     const newValue = editValues[field];
-    await WorkOrder.update(workOrder.id, { [field]: newValue });
-    await ActivityActions.fieldUpdated(workOrder, field, oldValue, newValue);
-    
-    // Update the local workOrder object immediately
-    Object.assign(workOrder, { [field]: newValue });
-    
-    setEditingField(null);
-    
-    // Don't refresh the entire page for google drive URL changes
-    if (field !== 'google_drive_folder_url') {
-      if (onUpdate) await onUpdate();
-      await loadRelatedData();
+    setInlineEditError("");
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields: { [field]: oldValue },
+        nextFields: { [field]: newValue },
+        label: `Work Order ${field}`,
+      });
+      await ActivityActions.fieldUpdated(workOrder, field, oldValue, saved[field]);
+      Object.assign(workOrder, { [field]: saved[field], updated_date: saved.updated_date });
+      delete inlineEditBaselineRef.current[field];
+      setEditingField(null);
+      
+      // Don't refresh the entire page for google drive URL changes
+      if (field !== 'google_drive_folder_url') {
+        if (onUpdate) await onUpdate();
+        await loadRelatedData();
+      }
+    } catch (error) {
+      console.error(`Could not save Work Order ${field}:`, error);
+      setInlineEditError(error?.message || "This Work Order field changed in another session. Reload the latest value before saving.");
     }
   };
 
   const cancelEdit = () => {
+    if (editingField) delete inlineEditBaselineRef.current[editingField];
+    setInlineEditError("");
     setEditingField(null);
     setEditValues({});
   };
