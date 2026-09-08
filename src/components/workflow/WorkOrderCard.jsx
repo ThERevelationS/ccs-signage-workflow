@@ -62,6 +62,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -676,13 +677,31 @@ export default function WorkOrderCard({
       return;
     }
     const newAsapValue = !isAsap;
-    // If toggling ASAP on, set priority to -1 to move to top
-    const updateData = { asap: newAsapValue };
+    const expectedFields = { asap: workOrder.asap };
+    const nextFields = { asap: newAsapValue };
+    // If toggling ASAP on, set priority to -1 to move to top. Protect the
+    // loaded priority too so an older card cannot overwrite a newer reorder.
     if (newAsapValue) {
-      updateData.priority = -1;
+      expectedFields.priority = workOrder.priority;
+      nextFields.priority = -1;
     }
-    await WorkOrder.update(workOrder.id, updateData);
-    await ActivityActions.asapToggled(workOrder, newAsapValue);
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields,
+        nextFields,
+        label: "Work Order ASAP toggle",
+      });
+      Object.assign(workOrder, {
+        asap: saved.asap,
+        priority: saved.priority,
+        updated_date: saved.updated_date,
+      });
+      await ActivityActions.asapToggled(workOrder, newAsapValue);
+    } catch (error) {
+      console.error("Could not toggle Work Order ASAP state:", error);
+      alert(error?.message || "This Work Order changed in another session. Reload and try the ASAP change again.");
+    }
     if (onUpdate) onUpdate();
   };
 
