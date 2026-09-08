@@ -6,7 +6,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
-import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -896,16 +896,55 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 }
 
 export async function deleteBuilderProductCascade(builderProductId) {
-  if (!builderProductId) return;
+  if (!builderProductId) return { deleted: false, reason: "missing_builder_product_id" };
+  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  if (!builder?.id) return { deleted: true, alreadyDeleted: true };
+
   const [parts, groups, revisions] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }).catch(() => []),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }).catch(() => []),
-    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }).catch(() => []),
+    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
-  await Promise.all((parts || []).map((row) => base44.entities.BuilderPart.delete(row.id).catch(() => null)));
-  await Promise.all((groups || []).map((row) => base44.entities.BuilderPartGroup.delete(row.id).catch(() => null)));
-  await Promise.all((revisions || []).map((row) => base44.entities.BuilderPriceRevision.delete(row.id).catch(() => null)));
-  await base44.entities.BuilderProduct.delete(builderProductId).catch(() => null);
+  if (!Array.isArray(parts) || !Array.isArray(groups) || !Array.isArray(revisions)) {
+    throw new Error("Builder Product cascade could not verify all owned records before deletion.");
+  }
+
+  let partDeletes = 0;
+  let groupDeletes = 0;
+  let revisionDeletes = 0;
+  for (const row of parts) {
+    await deleteBuilderEntityIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      record: row,
+      guardFields: { builder_product_id: builderProductId },
+      label: `Builder Part “${row.part_name || "Part"}” cascade delete`,
+    });
+    partDeletes += 1;
+  }
+  for (const row of groups) {
+    await deleteBuilderEntityIfUnchanged({
+      entity: base44.entities.BuilderPartGroup,
+      record: row,
+      guardFields: { builder_product_id: builderProductId },
+      label: `Builder Part Group “${row.group_name || "Part Group"}” cascade delete`,
+    });
+    groupDeletes += 1;
+  }
+  for (const row of revisions) {
+    await deleteBuilderEntityIfUnchanged({
+      entity: base44.entities.BuilderPriceRevision,
+      record: row,
+      guardFields: { builder_product_id: builderProductId },
+      label: "Builder price revision cascade delete",
+    });
+    revisionDeletes += 1;
+  }
+  await deleteBuilderEntityIfUnchanged({
+    entity: base44.entities.BuilderProduct,
+    record: builder,
+    label: "Builder Product cascade delete",
+  });
+  return { deleted: true, partDeletes, groupDeletes, revisionDeletes };
 }
 
 
