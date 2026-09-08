@@ -38,7 +38,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
   const [readError, setReadError] = useState("");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
-  const [pendingChanges, setPendingChanges] = useState({});
+  const pendingChangesRef = useRef({});
   const debounceTimers = useRef({});
 
   useEffect(() => {
@@ -79,37 +79,42 @@ const FinancialsSpreadsheet = React.forwardRef(({
   const updateWorkOrder = (orderId, field, value) => {
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
     
-    setPendingChanges(prev => ({
-      ...prev,
-      [orderId]: { ...prev[orderId], [field]: value }
-    }));
+    pendingChangesRef.current[orderId] = {
+      ...(pendingChangesRef.current[orderId] || {}),
+      [field]: value,
+    };
 
     if (debounceTimers.current[orderId]) {
       clearTimeout(debounceTimers.current[orderId]);
     }
 
-    debounceTimers.current[orderId] = setTimeout(async () => {
+    const timerId = setTimeout(async () => {
+      const queued = pendingChangesRef.current[orderId];
+      const changes = queued ? { ...queued } : null;
+      if (!changes || Object.keys(changes).length === 0) {
+        if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
+        return;
+      }
       try {
-        const changes = pendingChanges[orderId] || { [field]: value };
         await WorkOrder.update(orderId, changes);
-        setPendingChanges(prev => {
-          const updated = { ...prev };
-          delete updated[orderId];
-          return updated;
+        const remaining = { ...(pendingChangesRef.current[orderId] || {}) };
+        Object.entries(changes).forEach(([changedField, savedValue]) => {
+          if (JSON.stringify(remaining[changedField]) === JSON.stringify(savedValue)) {
+            delete remaining[changedField];
+          }
         });
-        delete debounceTimers.current[orderId];
+        if (Object.keys(remaining).length > 0) pendingChangesRef.current[orderId] = remaining;
+        else delete pendingChangesRef.current[orderId];
       } catch (error) {
         if (!error.message?.includes('not found')) {
           console.error("Error updating work order:", error);
         }
-        delete debounceTimers.current[orderId];
-        setPendingChanges(prev => {
-          const updated = { ...prev };
-          delete updated[orderId];
-          return updated;
-        });
+        // Preserve queued values so a later edit/retry cannot silently lose them.
+      } finally {
+        if (debounceTimers.current[orderId] === timerId) delete debounceTimers.current[orderId];
       }
     }, 1000);
+    debounceTimers.current[orderId] = timerId;
   };
 
   const applyCustomFilter = (wo, conditions) => {
