@@ -361,6 +361,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     debounceTimers.current[orderId] = timerId;
   };
 
+  const discardPendingQuickEdits = async () => {
+    Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
+    debounceTimers.current = {};
+    pendingChangesRef.current = {};
+    pendingBaselinesRef.current = {};
+    setQuickEditError("");
+    await loadWorkOrders(false);
+  };
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -960,10 +969,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     );
   }
 
+  const quickEditWarning = quickEditError ? (
+    <div className="mx-2 mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+      <div className="font-medium">Sales Pipeline quick edit save blocked</div>
+      <div className="mt-1">{quickEditError}</div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span>Reloading discards unsaved quick edits and keeps the newer saved Work Order values.</span>
+        <Button type="button" size="sm" variant="outline" onClick={discardPendingQuickEdits} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+          Reload latest
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   // Mobile card view
   if (isMobile) {
     return (
       <>
+        {quickEditWarning}
         <SalesPipelineMobileCards
           workOrders={filteredWorkOrders}
           onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
@@ -1014,6 +1037,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         headerContextMenu && setHeaderContextMenu(null); 
       }}
     >
+      {quickEditWarning}
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
