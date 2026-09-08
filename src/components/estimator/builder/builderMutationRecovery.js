@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -62,7 +63,13 @@ export async function markBuilderMutationPending({ estimate, builder, pending })
       ? { ...item, price_acceptance_pending: pending }
       : item
   );
-  await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId: estimate.id,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Builder mutation recovery marker",
+  });
 
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
     base44.entities.AllInOneEstimate.get(estimate.id),
@@ -386,7 +393,13 @@ export async function resumeBuilderMutation({
       ? { ...item, ...linePatch, price_acceptance_pending: {} }
       : item
   );
-  const updateResult = await base44.entities.AllInOneEstimate.update(estimateId, { line_items: lineItems });
+  const updateResult = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
+    nextFields: { line_items: lineItems },
+    label: "Builder mutation recovery completion",
+  });
   const completedLine = (updateResult?.line_items || lineItems).find((item) => item.builder_product_id === builder.id) || null;
   return {
     blocked: false,
