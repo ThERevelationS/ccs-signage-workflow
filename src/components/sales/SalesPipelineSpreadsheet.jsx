@@ -30,7 +30,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -1302,7 +1302,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
           onMove={async (wo, newStage) => {
-            await WorkOrder.update(wo.id, { current_stage: newStage });
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage,
+                label: "Sales Pipeline details stage transition",
+              });
+            } catch (error) {
+              console.error("Error moving Sales Pipeline Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+            }
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
@@ -1320,8 +1329,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             loadWorkOrders();
           }}
           onComplete={async (wo) => {
-            await WorkOrder.update(wo.id, { completed: true });
-            setWorkOrders(workOrders.filter(w => w.id !== wo.id));
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                newStage: wo.current_stage,
+                completed: true,
+                label: "Sales Pipeline details completion",
+              });
+              setWorkOrders(workOrders.filter(w => w.id !== wo.id));
+            } catch (error) {
+              console.error("Error completing Sales Pipeline Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+              loadWorkOrders();
+            }
           }}
           onDelete={async (wo) => {
             await WorkOrder.update(wo.id, {
