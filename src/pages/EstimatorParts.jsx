@@ -6,6 +6,7 @@ import { listPartTemplates } from "@/components/estimator/parts/partTemplateServ
 import { money } from "@/components/estimator/aioPricing";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
   const [draft, setDraft] = useState(null);
@@ -71,8 +72,14 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
           snapshotParts.map((part) => [part.part_name, part.client_label, part.part_type, part.part_subtype, part.inventory_item_name]),
         ].flat(3).filter(Boolean).join(" ").toLowerCase(),
       };
-      const updateResult = await base44.entities.PartTemplate.update(template.id, payload);
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.PartTemplate.get(template.id);
+      const refreshed = await replaceEntityFieldsIfUnchanged({
+        entity: base44.entities.PartTemplate,
+        id: template.id,
+        expectedUpdatedAt: live.updated_date || "",
+        expectedFields: expectedEntityFields(live, payload),
+        nextFields: payload,
+        label: "Saved Part metadata",
+      });
       onSaved?.({ ...template, ...payload, ...(refreshed || {}) });
       onClose?.();
     } catch (err) {
@@ -167,8 +174,14 @@ export default function EstimatorParts() {
         throw new Error("This Saved Part status changed in another session. The latest status has been restored; review it before changing again.");
       }
       const next = template.is_active === false;
-      const updateResult = await base44.entities.PartTemplate.update(template.id, { is_active: next });
-      const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.PartTemplate.get(template.id);
+      const statusPatch = { is_active: next };
+      const refreshed = await replaceEntityFieldsIfUnchanged({
+        entity: base44.entities.PartTemplate,
+        id: template.id,
+        expectedFields: expectedEntityFields(live, statusPatch),
+        nextFields: statusPatch,
+        label: "Saved Part status",
+      });
       updateLocal({ ...template, is_active: next, ...(refreshed || {}) });
     } catch (err) {
       setError(err?.message || "Saved Part status could not be changed.");
