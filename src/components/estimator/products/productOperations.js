@@ -7,6 +7,7 @@ import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/buil
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -278,7 +279,15 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
     label: "Product metadata Estimate line update",
   });
   if (builder && Object.keys(builderPatch).length) {
-    await base44.entities.BuilderProduct.update(builder.id, builderPatch);
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builder.id,
+      expectedUpdatedAt: builder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(builder, builderPatch),
+      nextFields: builderPatch,
+      guardFields: { estimate_id: estimateId },
+      label: "Product metadata Builder mirror",
+    });
   }
   const savedLines = savedEstimate.line_items || lineItems;
   return savedLines.find(matches) || { ...line, ...nextPatch };
@@ -306,7 +315,20 @@ export async function saveProductNotes({ estimateId, line, notes, expectedEstima
     label: "Product notes Estimate line update",
   });
   if (line.builder_product_id) {
-    await base44.entities.BuilderProduct.update(line.builder_product_id, { product_notes: notes });
+    const currentBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
+    if (!currentBuilder?.id || String(currentBuilder.estimate_id || "") !== String(estimateId)) {
+      throw new Error("The Product Builder changed ownership before its notes could be mirrored.");
+    }
+    const builderNotesPatch = { product_notes: notes };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: currentBuilder.id,
+      expectedUpdatedAt: currentBuilder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(currentBuilder, builderNotesPatch),
+      nextFields: builderNotesPatch,
+      guardFields: { estimate_id: estimateId },
+      label: "Product notes Builder mirror",
+    });
   }
   const savedLines = savedEstimate.line_items || lineItems;
   return savedLines.find((item) => item.builder_product_id === line.builder_product_id || item.line_id === line.line_id) || null;
