@@ -59,12 +59,36 @@ function DuplicateGroup({ group, onResolved }) {
 
   const handleKeepOne = async (keepWo) => {
     setKeeping(keepWo.id);
+    setActionError("");
     const toDelete = group.filter(w => w.id !== keepWo.id);
-    await Promise.all(toDelete.map(wo =>
-      WorkOrder.update(wo.id, { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'bulk_dedup' })
-    ));
-    setKeeping(null);
-    onResolved(...toDelete.map(w => w.id));
+    const deletedIds = [];
+    try {
+      // Verify the complete loaded duplicate group before deleting any record.
+      for (const wo of group) {
+        const latest = await WorkOrder.get(wo.id);
+        if (!latest?.id || latest.deleted === true || latest.updated_date !== wo.updated_date) {
+          throw new Error(`Duplicate cleanup was blocked because ${wo.client_name || wo.title || wo.id} changed after this duplicate group was loaded.`);
+        }
+      }
+      for (const wo of toDelete) {
+        await softDeleteWorkOrderFromLoadedSnapshot({
+          workOrder: wo,
+          deletedBy: "bulk_dedup",
+          label: "Duplicate cleanup keep-best",
+        });
+        deletedIds.push(wo.id);
+      }
+      onResolved(...deletedIds);
+    } catch (error) {
+      console.error("Duplicate cleanup keep-best stopped:", error);
+      if (deletedIds.length > 0) onResolved(...deletedIds);
+      const progress = deletedIds.length > 0
+        ? ` ${deletedIds.length} duplicate record${deletedIds.length === 1 ? " was" : "s were"} already moved to Project Trash and can be recovered there.`
+        : " No duplicate records were deleted.";
+      setActionError(`${error?.message || "Duplicate cleanup could not be completed."}${progress}`);
+    } finally {
+      setKeeping(null);
+    }
   };
 
   return (
