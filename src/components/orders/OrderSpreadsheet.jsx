@@ -17,7 +17,7 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -54,25 +54,17 @@ const safeFormatDate = (dateString, formatStr) => {
 import {
   Plus,
   Trash2,
-  Calendar as CalendarIcon,
-  Search,
   Link as LinkIcon,
   Loader2,
   Pencil,
   X,
-  Check,
   Expand,
   ExternalLink,
   Save,
-  Download,
-  Upload,
-  CheckSquare,
-  Square,
   ArrowUpDown,
   ArrowUp,
   ArrowDown
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
 import {
   Tooltip,
@@ -84,8 +76,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogDescription
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   AlertDialog,

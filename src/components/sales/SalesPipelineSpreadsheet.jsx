@@ -5,12 +5,9 @@ import { importSalesPipeline } from "@/functions/importSalesPipeline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays } from "date-fns";
 import * as XLSX from "xlsx";
-import { Plus, Trash2, Calendar as CalendarIcon, ArrowRight, Loader2, Download, Upload, Pencil, ExternalLink, Link as LinkIcon, Save, ArrowUpDown, ArrowUp, ArrowDown, Strikethrough, Copy } from "lucide-react";
+import { Plus, Trash2, Loader2, Download, Upload, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -21,14 +18,12 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
-import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
-import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
+import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
+import { useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
