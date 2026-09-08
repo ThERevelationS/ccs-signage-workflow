@@ -53,7 +53,6 @@ import FleetFluids from './pages/FleetFluids';
 import FleetRequests from './pages/FleetRequests';
 import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
-import FleetPublicReport from './pages/FleetPublicReport';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
