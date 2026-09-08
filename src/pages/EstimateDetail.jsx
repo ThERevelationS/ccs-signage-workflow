@@ -716,8 +716,12 @@ export default function EstimateDetail() {
       total_cost: internalCost,
       quote_total: pricing.quoteTotal,
     };
-    const updateResult = await base44.entities.AllInOneEstimate.update(estimate.id, persistedData);
-    const refreshed = updateResult?.updated_date ? updateResult : await base44.entities.AllInOneEstimate.get(estimate.id);
+    const refreshed = await saveEstimateFieldsSafely({
+      baseline: before,
+      nextFields: persistedData,
+      label: "Quote delivery Estimate finalization",
+      guardWholeVersion: true,
+    });
     let saved = { ...estimate, ...persistedData, ...(refreshed || {}), id: estimate.id };
     await rememberServerVersion(saved);
 
@@ -752,21 +756,27 @@ export default function EstimateDetail() {
     try {
       await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus, syncCustomer: false });
       if (saved.pipeline_sync_pending || saved.pipeline_sync_error) {
-        const clearResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-          pipeline_sync_pending: false,
-          pipeline_sync_error: "",
+        const cleared = await saveEstimateFieldsSafely({
+          baseline: saved,
+          nextFields: {
+            pipeline_sync_pending: false,
+            pipeline_sync_error: "",
+          },
+          label: "Quote delivery pipeline cleanup",
         });
-        const cleared = clearResult?.updated_date ? clearResult : await base44.entities.AllInOneEstimate.get(estimate.id);
         saved = { ...saved, ...(cleared || {}), pipeline_sync_pending: false, pipeline_sync_error: "" };
         await rememberServerVersion(saved);
       }
     } catch (syncError) {
       const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
-      const recoveryResult = await base44.entities.AllInOneEstimate.update(estimate.id, {
-        pipeline_sync_pending: true,
-        pipeline_sync_error: message,
-      }).catch(() => null);
-      const recovered = recoveryResult?.updated_date ? recoveryResult : await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => saved);
+      const recovered = await saveEstimateFieldsSafely({
+        baseline: saved,
+        nextFields: {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        },
+        label: "Quote delivery pipeline recovery marker",
+      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => saved);
       saved = { ...saved, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(saved);
       warnings.push(`The quote is issued, but Sales Pipeline synchronization is pending: ${message}`);
