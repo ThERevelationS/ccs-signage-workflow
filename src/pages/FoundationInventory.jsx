@@ -12,6 +12,7 @@ import { Trash2, Plus, Edit, Package, Building2, Layers, Wrench, Square } from '
 import EquipmentInventoryTab from '@/components/foundation/EquipmentInventoryTab';
 import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
 import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 
@@ -396,7 +397,11 @@ export default function FoundationInventoryPage({ embedded = false }) {
         await loadItems();
         return;
       }
-      await FoundationInventoryEntity.delete(item.id);
+      await deleteEntityIfUnchanged({
+        entity: FoundationInventoryEntity,
+        record: live,
+        label: `Foundation material “${item.material_name || 'Item'}”`,
+      });
       await loadItems();
     } catch (error) {
       console.error('Foundation inventory delete failed:', error);
@@ -420,7 +425,14 @@ export default function FoundationInventoryPage({ embedded = false }) {
           await loadItems();
           return;
         }
-        await FoundationInventoryEntity.update(wallEditItem.id, form);
+        await replaceEntityFieldsIfUnchanged({
+          entity: FoundationInventoryEntity,
+          id: wallEditItem.id,
+          expectedUpdatedAt: live.updated_date || '',
+          expectedFields: expectedEntityFields(live, form),
+          nextFields: form,
+          label: `Wall material “${form.material_name || 'Item'}”`,
+        });
       } else {
         await FoundationInventoryEntity.create(form);
       }
@@ -447,7 +459,14 @@ export default function FoundationInventoryPage({ embedded = false }) {
           await loadItems();
           return;
         }
-        await FoundationInventoryEntity.update(genericEditItem.id, form);
+        await replaceEntityFieldsIfUnchanged({
+          entity: FoundationInventoryEntity,
+          id: genericEditItem.id,
+          expectedUpdatedAt: live.updated_date || '',
+          expectedFields: expectedEntityFields(live, form),
+          nextFields: form,
+          label: `Foundation material “${form.material_name || 'Item'}”`,
+        });
       } else {
         await FoundationInventoryEntity.create(form);
       }
