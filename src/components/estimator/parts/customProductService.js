@@ -7,6 +7,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -138,7 +139,7 @@ export async function createCustomProduct({ estimate, name = "Custom Product", e
     linked_date: nowIso(),
   };
   const result = await ensureBuilderProductForLine({ estimate: currentEstimate, line: provisionalLine, isNew: true });
-  await base44.entities.BuilderProduct.update(result.builderProduct.id, {
+  const customBuilderPatch = {
     module_key: "custom",
     builder_name: "Custom Product",
     client_product_name: name,
@@ -148,6 +149,15 @@ export async function createCustomProduct({ estimate, name = "Custom Product", e
     frozen_customer_price: 0,
     current_recalculated_cost: 0,
     notes: "Blank / Custom Product. Pricing is driven directly by its Parts rather than a dedicated estimator Builder.",
+  };
+  await replaceBuilderEntityFieldsIfUnchanged({
+    entity: base44.entities.BuilderProduct,
+    id: result.builderProduct.id,
+    expectedUpdatedAt: result.builderProduct.updated_date || "",
+    expectedFields: expectedBuilderEntityFields(result.builderProduct, customBuilderPatch),
+    nextFields: customBuilderPatch,
+    guardFields: { estimate_id: currentEstimate.id },
+    label: "Custom Product Builder setup",
   });
   return { ...result, line: { ...result.line, price_state: "current" } };
 }
@@ -762,7 +772,7 @@ export async function refreshManualProductPricing(builderProductId) {
       Math.abs(num(part.price_delta) - nextDelta) > 0.005 ||
       Math.abs(num(part.price_delta_percent) - nextDeltaPercent) > 0.0001;
     if (changed) {
-      await base44.entities.BuilderPart.update(part.id, {
+      const partRefreshPatch = {
         current_unit_cost: currentUnit,
         current_extended_cost: currentExtended,
         current_inventory_snapshot: currentSnapshot,
@@ -773,6 +783,15 @@ export async function refreshManualProductPricing(builderProductId) {
         price_delta: nextDelta,
         price_delta_percent: nextDeltaPercent,
         last_price_check_at: timestamp,
+      };
+      await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderPart,
+        id: part.id,
+        expectedUpdatedAt: part.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(part, partRefreshPatch),
+        nextFields: partRefreshPatch,
+        guardFields: { builder_product_id: builderProductId },
+        label: `Custom Product Part “${part.part_name || "Part"}” refresh`,
       });
       partWrites += 1;
     }
@@ -790,7 +809,7 @@ export async function refreshManualProductPricing(builderProductId) {
     Math.abs(num(builder.price_delta) - (currentTotal - frozenTotal)) > 0.005 ||
     Math.abs(num(builder.price_delta_percent) - (frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0)) > 0.0001;
   if (builderChanged) {
-    await base44.entities.BuilderProduct.update(builderProductId, {
+    const builderRefreshPatch = {
       frozen_cost: frozenTotal,
       current_recalculated_cost: currentTotal,
       part_count: active.length,
@@ -800,6 +819,15 @@ export async function refreshManualProductPricing(builderProductId) {
       price_delta: currentTotal - frozenTotal,
       price_delta_percent: frozenTotal ? ((currentTotal - frozenTotal) / frozenTotal) * 100 : 0,
       last_price_check_at: timestamp,
+    };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builderProductId,
+      expectedUpdatedAt: builder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(builder, builderRefreshPatch),
+      nextFields: builderRefreshPatch,
+      guardFields: { estimate_id: estimate.id },
+      label: "Custom Product Builder pricing refresh",
     });
   }
 
