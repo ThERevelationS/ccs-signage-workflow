@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -89,7 +90,12 @@ export default function MyWorkflow() {
     setIsLoading(true);
     try {
       const [allOrders, allGeneralTasks] = await Promise.all([
-        WorkOrder.filter({ completed: false, deleted: { $ne: true } }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "created_date",
+          label: "My Workflow Work Orders",
+        }),
         GeneralTask.filter({ completed: false })
       ]);
 
