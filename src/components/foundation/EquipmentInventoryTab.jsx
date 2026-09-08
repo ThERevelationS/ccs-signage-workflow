@@ -81,27 +81,37 @@ export default function EquipmentInventoryTab({ allItems, loadItems, isAdmin }) 
   };
 
   const handleDragEnd = async (result, type) => {
-    if (!result.destination) return;
-    
-    const itemsList = 
-        type === 'excavation_equipment' ? equipment :
-        type === 'attachment' ? attachments : subAttachments;
-        
-    const sorted = [...itemsList].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    
-    const [reorderedItem] = sorted.splice(result.source.index, 1);
-    sorted.splice(result.destination.index, 0, reorderedItem);
+    if (!result.destination || isReordering) return;
 
-    const updates = sorted.map((item, index) => {
-        if (item.sort_order !== index) {
-            return FoundationInventoryEntity.update(item.id, { sort_order: index });
-        }
-        return null;
-    }).filter(Boolean);
+    const itemsList =
+      type === 'excavation_equipment' ? equipment :
+      type === 'attachment' ? attachments : subAttachments;
+    const loadedSorted = [...itemsList].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const reordered = [...loadedSorted];
+    const [reorderedItem] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, reorderedItem);
 
-    if (updates.length > 0) {
-        await Promise.all(updates);
-        loadItems();
+    setIsReordering(true);
+    try {
+      await reorderFoundationItemsSafely({
+        entity: FoundationInventoryEntity,
+        loadedItems: loadedSorted,
+        reorderedItems: reordered,
+        readCurrentItems: () => loadAllEntityRows({
+          entity: FoundationInventoryEntity,
+          query: { material_type: type },
+          sort: 'sort_order',
+          label: `Foundation ${type} inventory order`,
+        }),
+        label: `Foundation ${type} inventory order`,
+      });
+      await loadItems();
+    } catch (error) {
+      console.error('Foundation inventory reorder failed:', error);
+      alert(error?.message || 'Foundation inventory order could not be saved.');
+      await loadItems();
+    } finally {
+      setIsReordering(false);
     }
   };
 
