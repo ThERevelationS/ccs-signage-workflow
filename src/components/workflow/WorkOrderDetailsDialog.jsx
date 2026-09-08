@@ -1850,7 +1850,7 @@ export default function WorkOrderDetailsDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {workOrder.is_rider ? 'Rider' : 'Work Order'}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{workOrder.title}"? This action cannot be undone.
+              Are you sure you want to delete "{workOrder.title}"? It will be moved to Project Trash and can be recovered until it is permanently deleted there.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
