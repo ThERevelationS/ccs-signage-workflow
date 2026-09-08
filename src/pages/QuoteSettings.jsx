@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Save, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const DISPLAY_OPTIONS = [
   ["hide_section_prices", "Bundle Product pricing"],
@@ -74,14 +75,27 @@ export default function QuoteSettings() {
 
       const payload = { config_name: "default", ...quoteDefaultsPayload(form) };
       let saved = record?.id
-        ? await base44.entities.QuoteDefaults.update(record.id, payload)
+        ? await replaceEntityFieldsIfUnchanged({
+            entity: base44.entities.QuoteDefaults,
+            id: record.id,
+            expectedUpdatedAt: current?.updated_date || record.updated_date || "",
+            expectedFields: expectedEntityFields(current || record, payload),
+            nextFields: payload,
+            guardFields: { config_name: "default" },
+            label: "Quote Defaults",
+          })
         : await base44.entities.QuoteDefaults.create(payload);
 
       if (!record?.id && saved?.id) {
         await new Promise((resolve) => setTimeout(resolve, 50));
         const canonical = await loadQuoteDefaults();
         if (canonical?.id && canonical.id !== saved.id) {
-          await base44.entities.QuoteDefaults.delete(saved.id);
+          await deleteEntityIfUnchanged({
+            entity: base44.entities.QuoteDefaults,
+            record: saved,
+            guardFields: { config_name: "default" },
+            label: "Duplicate Quote Defaults record",
+          });
           saved = canonical;
         }
       }
