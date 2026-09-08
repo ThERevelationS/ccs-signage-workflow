@@ -5,6 +5,7 @@ import { acceptedCustomerUnitPrice, hasNumericValue, liveCustomerUnitPrice, manu
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -522,7 +523,14 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
   }
 
   if (changed) {
-    await base44.entities.AllInOneEstimate.update(estimate.id, { line_items: lineItems });
+    const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+      entity: base44.entities.AllInOneEstimate,
+      estimateId: estimate.id,
+      expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
+      nextFields: { line_items: lineItems },
+      label: "Builder estimate line synchronization",
+    });
+    return { ...estimate, ...savedEstimate, line_items: savedEstimate.line_items || lineItems };
   }
   return { ...estimate, line_items: lineItems };
 }
@@ -760,7 +768,13 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
             }
           : item
       );
-      await base44.entities.AllInOneEstimate.update(estimateId, { line_items: markedLines });
+      await replaceEstimateFieldsIfUnchanged({
+        entity: base44.entities.AllInOneEstimate,
+        estimateId,
+        expectedFields: expectedEstimateFields(preMarkerEstimate, { line_items: markedLines }),
+        nextFields: { line_items: markedLines },
+        label: "Builder initial price-freeze recovery marker",
+      });
 
       const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
         base44.entities.AllInOneEstimate.get(estimateId),
@@ -846,8 +860,15 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       updated_date_snapshot: sourceProject?.updated_date || timestamp,
     };
   });
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: nextLines });
-  return nextLines.find((item) => item.project_id === currentLine.project_id) || currentLine;
+  const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, { line_items: nextLines }),
+    nextFields: { line_items: nextLines },
+    label: "Builder save Estimate line synchronization",
+  });
+  const savedLines = savedEstimate.line_items || nextLines;
+  return savedLines.find((item) => item.project_id === currentLine.project_id) || currentLine;
 }
 
 export async function deleteBuilderProductCascade(builderProductId) {
@@ -939,13 +960,20 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
           }
         : item
     );
-    await base44.entities.AllInOneEstimate.update(estimateId, { line_items: blockedLines });
+    const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+      entity: base44.entities.AllInOneEstimate,
+      estimateId,
+      expectedFields: expectedEstimateFields(estimate, { line_items: blockedLines }),
+      nextFields: { line_items: blockedLines },
+      label: "Builder detached-parts Estimate state",
+    });
+    const savedLines = savedEstimate.line_items || blockedLines;
     return {
       blocked: true,
       reason: "detached_parts",
       detachedCount: partAcceptance.detachedCount,
       detachedParts: partAcceptance.detachedParts || [],
-      line: blockedLines.find((item) => item.builder_product_id === builder.id) || line,
+      line: savedLines.find((item) => item.builder_product_id === builder.id) || line,
     };
   }
 
@@ -969,13 +997,20 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
           }
         : item
     );
-    await base44.entities.AllInOneEstimate.update(estimateId, { line_items: blockedLines });
+    const savedEstimate = await replaceEstimateFieldsIfUnchanged({
+      entity: base44.entities.AllInOneEstimate,
+      estimateId,
+      expectedFields: expectedEstimateFields(estimate, { line_items: blockedLines }),
+      nextFields: { line_items: blockedLines },
+      label: "Builder recalc-required Estimate state",
+    });
+    const savedLines = savedEstimate.line_items || blockedLines;
     return {
       blocked: true,
       reason: "recalc_required",
       recalcReason: reason,
       recalcParts: partAcceptance.recalcParts || [],
-      line: blockedLines.find((item) => item.builder_product_id === builder.id) || line,
+      line: savedLines.find((item) => item.builder_product_id === builder.id) || line,
     };
   }
 
@@ -1071,7 +1106,13 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
       ? { ...item, price_acceptance_pending: pending }
       : item
   );
-  await base44.entities.AllInOneEstimate.update(estimateId, { line_items: markedLines });
+  await replaceEstimateFieldsIfUnchanged({
+    entity: base44.entities.AllInOneEstimate,
+    estimateId,
+    expectedFields: expectedEstimateFields(estimate, { line_items: markedLines }),
+    nextFields: { line_items: markedLines },
+    label: "Builder price-acceptance recovery marker",
+  });
 
   // Re-read all mutable inputs after the marker is durable. If a concurrent edit
   // won the race, the stored expected versions make recovery fail closed rather
