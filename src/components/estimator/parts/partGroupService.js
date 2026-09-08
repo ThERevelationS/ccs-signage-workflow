@@ -6,6 +6,7 @@ import { applyBuilderPartPriceAcceptancePlan } from "@/components/estimator/buil
 import { builderMutationHash, ensureBuilderPriceRevision, markBuilderMutationPending, pendingBuilderMutation, recoveryPatchDiffers, resumeBuilderMutation } from "@/components/estimator/builder/builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -530,9 +531,30 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   const groupNeedsWrite = assertMoveRecordState(group, pending.group_move_step || {}, sourceBuilder.id, `Part Group “${group?.group_name || "Part Group"}”`);
   const partNeedsWrite = movingParts.map((part, index) => assertMoveRecordState(part, pending.part_move_steps[index], sourceBuilder.id, `Part “${part?.part_name || "Part"}”`));
 
-  if (groupNeedsWrite) await base44.entities.BuilderPartGroup.update(group.id, pending.group_move_step.target_patch);
+  if (groupNeedsWrite) {
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderPartGroup,
+      id: group.id,
+      expectedUpdatedAt: group.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(group, pending.group_move_step.target_patch),
+      nextFields: pending.group_move_step.target_patch,
+      guardFields: { builder_product_id: sourceBuilder.id },
+      label: `Part Group “${group.group_name || "Part Group"}” move`,
+    });
+  }
   for (let index = 0; index < movingParts.length; index += 1) {
-    if (partNeedsWrite[index]) await base44.entities.BuilderPart.update(movingParts[index].id, pending.part_move_steps[index].target_patch);
+    if (!partNeedsWrite[index]) continue;
+    const part = movingParts[index];
+    const targetPatch = pending.part_move_steps[index].target_patch;
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderPart,
+      id: part.id,
+      expectedUpdatedAt: part.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(part, targetPatch),
+      nextFields: targetPatch,
+      guardFields: { builder_product_id: sourceBuilder.id },
+      label: `Part “${part.part_name || "Part"}” move`,
+    });
   }
 
   const [sourceBeforePriceWrite, targetBeforePriceWrite] = await Promise.all([
@@ -541,8 +563,28 @@ export async function resumeIndependentPartGroupMove({ estimateId, lineId = "" }
   ]);
   sourceBuilderNeedsWrite = assertMoveBuilderState(sourceBeforePriceWrite, pending.source_builder_patch || {}, pending.source_builder_updated_date_before, "Source Product");
   targetBuilderNeedsWrite = assertMoveBuilderState(targetBeforePriceWrite, pending.target_builder_patch || {}, pending.target_builder_updated_date_before, "Target Product");
-  if (sourceBuilderNeedsWrite) await base44.entities.BuilderProduct.update(sourceBuilder.id, pending.source_builder_patch);
-  if (targetBuilderNeedsWrite) await base44.entities.BuilderProduct.update(targetBuilder.id, pending.target_builder_patch);
+  if (sourceBuilderNeedsWrite) {
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: sourceBuilder.id,
+      expectedUpdatedAt: sourceBeforePriceWrite.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(sourceBeforePriceWrite, pending.source_builder_patch),
+      nextFields: pending.source_builder_patch,
+      guardFields: { estimate_id: estimateId },
+      label: "Source Product Part Group move totals",
+    });
+  }
+  if (targetBuilderNeedsWrite) {
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: targetBuilder.id,
+      expectedUpdatedAt: targetBeforePriceWrite.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(targetBeforePriceWrite, pending.target_builder_patch),
+      nextFields: pending.target_builder_patch,
+      guardFields: { estimate_id: estimateId },
+      label: "Target Product Part Group move totals",
+    });
+  }
 
   await ensureBuilderPriceRevision(pending.source_revision_key || `${pending.key}:source`, pending.source_revision || {});
   await ensureBuilderPriceRevision(pending.target_revision_key || `${pending.key}:target`, pending.target_revision || {});
