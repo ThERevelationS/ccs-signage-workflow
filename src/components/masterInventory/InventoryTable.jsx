@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Package } from "lucide-react";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const formatCell = (val, field) => {
   if (val === null || val === undefined || val === "") return "—";
@@ -40,8 +41,15 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
         alert("This inventory toggle changed in another session. The latest value has been restored; review it before changing again.");
         return;
       }
-      await entity.update(item.id, { [field.name]: next });
-      onInlineToggle?.(item.id, field.name, next);
+      const togglePatch = { [field.name]: next };
+      const saved = await replaceEntityFieldsIfUnchanged({
+        entity,
+        id: item.id,
+        expectedFields: expectedEntityFields(live, togglePatch),
+        nextFields: togglePatch,
+        label: `Inventory ${field.label || field.name} toggle`,
+      });
+      onInlineToggle?.(item.id, field.name, saved?.[field.name] ?? next);
     } catch (e) {
       console.error("Toggle failed:", e);
       alert("Failed to update toggle.");
