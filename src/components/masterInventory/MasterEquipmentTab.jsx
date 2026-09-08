@@ -214,25 +214,23 @@ export default function MasterEquipmentTab({ isAdmin }) {
   };
 
   // Mark a boom lift as the "Primary owned lift" — the suggester's go-to pick.
-  // Use the live channel-equipment set so unrelated stale browser rows are never
-  // used to decide which current primary flags should be cleared.
+  // The target is saved first, previous primaries are cleared conditionally,
+  // and the complete equipment cohort is verified afterward. A conflict stops
+  // the operation and is surfaced instead of silently skipping any row.
   const setPrimaryOwned = async (row, next) => {
     const lockKey = `primary:${row.id}`;
     if (row._source !== "channel_letter_equipment" || actionRef.current.has(lockKey)) return;
     actionRef.current.add(lockKey);
     try {
-      const liveRows = await loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" });
-      const liveTarget = liveRows.find((item) => item.id === row.id);
-      if (!liveTarget || liveTarget.is_primary_owned !== row.raw?.is_primary_owned) {
-        alert("This owned-lift primary setting changed in another session. The latest equipment inventory will be reloaded first.");
-        await load();
-        return;
-      }
-      if (next) {
-        const others = liveRows.filter((item) => item.id !== row.id && item.is_primary_owned);
-        await Promise.all(others.map((item) => ChannelLetterInstallEquipmentEntity.update(item.id, { is_primary_owned: false })));
-      }
-      await ChannelLetterInstallEquipmentEntity.update(row.id, { is_primary_owned: next });
+      await setExclusiveBooleanSafely({
+        entity: ChannelLetterInstallEquipmentEntity,
+        targetId: row.id,
+        field: "is_primary_owned",
+        next,
+        expectedTargetUpdatedAt: row.raw?.updated_date || "",
+        readRows: () => loadAllEntityRows({ entity: ChannelLetterInstallEquipmentEntity, sort: "sort_order", label: "Channel Letter equipment inventory" }),
+        label: "Primary owned lift selection",
+      });
       await load();
     } catch (error) {
       console.error("Primary owned equipment update failed:", error);
