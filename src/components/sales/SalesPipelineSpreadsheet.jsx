@@ -647,20 +647,80 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const openCorbridgeDialog = (workOrder) => {
+    if (!workOrder) return;
     setCorbridgeDialog({ open: true, workOrder });
+    setCorbridgeDraft({
+      invoiceNumber: workOrder.corbridge_invoice_number || workOrder.est_inv_at || "",
+      link: workOrder.corbridge_link || "",
+    });
+    setCorbridgeBaselines({
+      corbridge_invoice_number: workOrder.corbridge_invoice_number,
+      est_inv_at: workOrder.est_inv_at,
+      corbridge_link: workOrder.corbridge_link,
+    });
+    setCorbridgeSaveError("");
+  };
+
+  const closeCorbridgeDialog = () => {
+    setCorbridgeDialog({ open: false, workOrder: null });
+    setCorbridgeDraft({ invoiceNumber: "", link: "" });
+    setCorbridgeBaselines({});
+    setCorbridgeSaveError("");
+  };
+
+  const reloadCorbridgeLatest = async () => {
+    const id = corbridgeDialog.workOrder?.id;
+    if (!id) return;
+    try {
+      const latest = await WorkOrder.get(id);
+      if (!latest?.id) throw new Error("The latest Work Order could not be found.");
+      setWorkOrders((current) => current.map((workOrder) => workOrder.id === id ? latest : workOrder));
+      setCorbridgeDialog({ open: true, workOrder: latest });
+      setCorbridgeDraft({
+        invoiceNumber: latest.corbridge_invoice_number || latest.est_inv_at || "",
+        link: latest.corbridge_link || "",
+      });
+      setCorbridgeBaselines({
+        corbridge_invoice_number: latest.corbridge_invoice_number,
+        est_inv_at: latest.est_inv_at,
+        corbridge_link: latest.corbridge_link,
+      });
+      setCorbridgeSaveError("");
+    } catch (error) {
+      console.error("Could not reload latest Corebridge fields:", error);
+      setCorbridgeSaveError(error?.message || "The latest Corebridge fields could not be loaded.");
+    }
   };
 
   const saveCorbridgeData = async (invoiceNumber, link) => {
+    const workOrder = corbridgeDialog.workOrder;
+    if (!workOrder?.id) return;
     const updates = {
       corbridge_invoice_number: invoiceNumber,
       est_inv_at: invoiceNumber
     };
+    const expectedFields = {
+      corbridge_invoice_number: corbridgeBaselines.corbridge_invoice_number,
+      est_inv_at: corbridgeBaselines.est_inv_at,
+    };
     if (link) {
       updates.corbridge_link = link;
+      expectedFields.corbridge_link = corbridgeBaselines.corbridge_link;
     }
-    await WorkOrder.update(corbridgeDialog.workOrder.id, updates);
-    setCorbridgeDialog({ open: false, workOrder: null });
-    loadWorkOrders();
+    setCorbridgeSaveError("");
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: workOrder.id,
+        expectedFields,
+        nextFields: updates,
+        label: "Corebridge link fields",
+      });
+      setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
+      closeCorbridgeDialog();
+    } catch (error) {
+      console.error("Could not save Corebridge fields:", error);
+      setCorbridgeSaveError(error?.message || "These Corebridge fields changed in another session. Reload the latest values before saving.");
+    }
   };
 
   const getRowColor = (status) => {
