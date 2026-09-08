@@ -6,7 +6,7 @@ import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 export default function Production() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -122,23 +122,17 @@ export default function Production() {
     if (!isRegistered) { promptForEmail(); return; }
     try {
       const oldStage = workOrder.current_stage;
-      let notes = workOrder.notes || [];
-      if (typeof notes === 'string' && notes.trim()) {
-        notes = [{
-          text: notes,
-          timestamp: workOrder.created_date || new Date().toISOString(),
-          created_by: workOrder.created_by || "Unknown"
-        }];
-      }
-      
-      await WorkOrder.update(workOrder.id, { 
-        current_stage: newStage,
-        notes: notes
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder,
+        newStage,
+        normalizeLegacyNotes: true,
+        label: "Production stage transition",
       });
       await ActivityActions.stageChanged(workOrder, oldStage, newStage);
       loadWorkOrders();
     } catch (error) {
       console.error("Error moving:", error);
+      loadWorkOrders();
     }
   };
 
@@ -159,24 +153,18 @@ export default function Production() {
   const handleComplete = async (workOrder) => {
     if (!isRegistered) { promptForEmail(); return; }
     try {
-      let notes = workOrder.notes || [];
-      if (typeof notes === 'string' && notes.trim()) {
-        notes = [{
-          text: notes,
-          timestamp: workOrder.created_date || new Date().toISOString(),
-          created_by: workOrder.created_by || "Unknown"
-        }];
-      }
-      
-      await WorkOrder.update(workOrder.id, {
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder,
+        newStage: "completed",
         completed: true,
-        current_stage: 'completed',
-        notes: notes
+        normalizeLegacyNotes: true,
+        label: "Production completion",
       });
       await ActivityActions.workOrderCompleted(workOrder);
       loadWorkOrders();
     } catch (error) {
       console.error("Error completing work order:", error);
+      loadWorkOrders();
     }
   };
 
