@@ -6,6 +6,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -342,8 +343,15 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       : { ...identityPatch, ...pricingPatch };
     if (!skipUnchangedWrites || patchDiffers(builderProduct, productPatch)) {
       const writePatch = { ...productPatch, last_price_check_at: timestamp };
-      await base44.entities.BuilderProduct.update(builderProduct.id, writePatch);
-      builderProduct = { ...builderProduct, ...writePatch };
+      builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderProduct,
+        id: builderProduct.id,
+        expectedUpdatedAt: builderProduct.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(builderProduct, writePatch),
+        nextFields: writePatch,
+        guardFields: { estimate_id: builderProduct.estimate_id },
+        label: "Builder Product synchronization",
+      });
     }
   }
 
@@ -425,8 +433,15 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       const writePatch = skipUnchangedWrites
         ? { ...partProductPatch, last_price_check_at: timestamp }
         : partProductPatch;
-      await base44.entities.BuilderProduct.update(builderProduct.id, writePatch);
-      builderProduct = { ...builderProduct, ...writePatch };
+      builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
+        entity: base44.entities.BuilderProduct,
+        id: builderProduct.id,
+        expectedUpdatedAt: builderProduct.updated_date || "",
+        expectedFields: expectedBuilderEntityFields(builderProduct, writePatch),
+        nextFields: writePatch,
+        guardFields: { estimate_id: builderProduct.estimate_id },
+        label: "Builder Product synchronization",
+      });
     }
   }
 
@@ -813,7 +828,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 
   if (builder) {
     const nextRevision = num(builder.builder_version, 1) + (initialFreezeCompleted ? 1 : 0);
-    await base44.entities.BuilderProduct.update(builder.id, {
+    const builderSavePatch = {
       builder_snapshot: sourceProject || {},
       builder_snapshot_at: timestamp,
       builder_snapshot_source_updated_date: sourceProject?.updated_date || timestamp,
@@ -834,6 +849,15 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       part_count: partSummary.partCount,
       detached_part_count: partSummary.detachedCount,
       needs_reattach_review: partSummary.detachedCount > 0,
+    };
+    await replaceBuilderEntityFieldsIfUnchanged({
+      entity: base44.entities.BuilderProduct,
+      id: builder.id,
+      expectedUpdatedAt: builder.updated_date || "",
+      expectedFields: expectedBuilderEntityFields(builder, builderSavePatch),
+      nextFields: builderSavePatch,
+      guardFields: { estimate_id: estimateId },
+      label: "Builder Product save",
     });
 
   }
