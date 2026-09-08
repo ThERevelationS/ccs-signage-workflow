@@ -11,7 +11,7 @@ import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -547,11 +547,17 @@ export default function MondayMorningMeeting() {
             loadWorkOrders();
           }}
           onDelete={async (wo) => {
-            await WorkOrder.update(wo.id, {
-              deleted: true,
-              deleted_at: new Date().toISOString(),
-              deleted_by: "user"
-            });
+            try {
+              const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                deletedBy: currentUser?.email || "unknown",
+                label: "Monday Morning Meeting details Work Order delete",
+              });
+              Object.assign(wo, deleted);
+            } catch (error) {
+              console.error("Error deleting Monday Morning Meeting Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+            }
             loadWorkOrders();
           }}
         />
