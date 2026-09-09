@@ -70,10 +70,9 @@ async function claimReceipt(Receipt: any, data: any) {
       status: 'started',
       started_at: stamp,
       error_message: '',
-      result_summary: data.result_summary || failed.result_summary || {},
+      result_summary: { ...(data.result_summary || failed.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
       payload_fingerprint: data.payload_fingerprint || failed.payload_fingerprint || '',
     });
-    await Receipt.update(failed.id, { result_summary: { ...(data.result_summary || failed.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp } });
     await new Promise((resolve) => setTimeout(resolve, 75));
     const refreshed = await Receipt.get(failed.id);
     if (refreshed?.result_summary?.retry_claim_token !== retryToken) return { receipt: refreshed || failed, applied: false, owner: false, concurrent: true };
@@ -586,10 +585,19 @@ Deno.serve(async (req) => {
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, work_order: finalized });
         }
-        return Response.json({
-          error: 'This completion is already in progress. It was not replayed because one or more side effects are not yet safely reconcilable. Review FleetOperationReceipt before retrying.',
-          operation_key: completionKey,
-        }, { status: 409 });
+        const startedAt = Date.parse(mainClaim.receipt?.started_at || mainClaim.receipt?.created_date || '') || 0;
+        const stale = !!startedAt && (Date.now() - startedAt) >= STALE_CLAIM_MS;
+        if (!stale) {
+          return Response.json({
+            error: 'This completion is already in progress. It was not replayed because one or more side effects are not yet safely reconcilable. Review FleetOperationReceipt before retrying.',
+            operation_key: completionKey,
+          }, { status: 409 });
+        }
+        await Receipt.update(mainClaim.receipt.id, {
+          started_at: nowIso(),
+          error_message: '',
+          result_summary: { ...(mainClaim.receipt.result_summary || {}), stale_resume: true, stale_resumed_at: nowIso() },
+        });
       }
 
       try {
@@ -640,7 +648,11 @@ Deno.serve(async (req) => {
           schedule: schedule || null,
         });
       } catch (error) {
-        await Receipt.update(mainClaim.receipt.id, { error_message: error?.message || String(error) }).catch(() => null);
+        await Receipt.update(mainClaim.receipt.id, {
+          status: 'failed',
+          failed_at: nowIso(),
+          error_message: error?.message || String(error),
+        }).catch(() => null);
         throw error;
       }
     }
