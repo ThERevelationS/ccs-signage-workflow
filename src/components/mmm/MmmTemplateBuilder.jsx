@@ -256,10 +256,11 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
 
   const deleteSubTemplate = async (st) => {
     if (!confirm(`Delete "${st.name}"?`)) return;
+    const listSaved = await saveSubTemplateList(subTemplates.filter(s => s.id !== st.id));
+    if (!listSaved) return;
+    const itemsSaved = await saveSubTemplateMapEntry(st.id, undefined, { remove: true });
+    if (!itemsSaved) return;
     if (selectedSubTemplate === st.id) { setSelectedSubTemplate(null); setSubTemplateChecklistItems([]); }
-    const updated = { ...subTemplateItems };
-    delete updated[st.id];
-    await Promise.all([saveSubTemplateList(subTemplates.filter(s => s.id !== st.id)), saveSubTemplateItems(updated)]);
   };
 
   const selectSubTemplateForEditing = (st) => {
@@ -271,7 +272,9 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
   };
 
   const saveSubTemplateChecklist = async () => {
-    await saveSubTemplateItems({ ...subTemplateItems, [selectedSubTemplate]: { items: subTemplateChecklistItems } });
+    if (!selectedSubTemplate) return;
+    const saved = await saveSubTemplateMapEntry(selectedSubTemplate, { items: subTemplateChecklistItems });
+    if (!saved) return;
     setSubTemplateHasChanges(false);
     setSubTemplateSaveStatus('saved');
   };
@@ -285,7 +288,9 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
   };
 
   const saveProductTypeTemplate = async () => {
-    await saveProductTypeTemplates({ ...productTypeTemplates, [selectedProductType]: { items: productTypeItems } });
+    if (!selectedProductType) return;
+    const saved = await saveProductTemplateMapEntry(selectedProductType, { items: productTypeItems });
+    if (!saved) return;
     setProductTypeHasChanges(false);
     setProductTypeSaveStatus('saved');
   };
@@ -498,6 +503,18 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
+          {persistenceError && (
+            <div className="mx-3 mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start justify-between gap-3">
+              <div>
+                <div className="font-medium">MMM template update blocked</div>
+                <div className="mt-1">{persistenceError}</div>
+              </div>
+              <Button type="button" size="sm" variant="outline" className="h-7 shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await loadData(); }}>
+                Reload latest
+              </Button>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 py-1.5 border-b bg-white">
               <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-8`}>
@@ -621,7 +638,8 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
                               if (e.key === 'Enter' && editingProductTypeValue.trim()) {
                                 const newName = editingProductTypeValue.trim();
                                 const newTypes = productTypes.map(t => t === type ? newName : t);
-                                await saveProductTypes(newTypes);
+                                const typesSaved = await saveProductTypes(newTypes);
+                                if (!typesSaved) return;
                                 if (productTypeTemplates[type]) { const nt = { ...productTypeTemplates }; nt[newName] = nt[type]; delete nt[type]; await saveProductTypeTemplates(nt); }
                                 if (selectedProductType === type) setSelectedProductType(newName);
                                 setEditingProductTypeName(null);
@@ -632,7 +650,8 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
                             if (editingProductTypeValue.trim()) {
                               const newName = editingProductTypeValue.trim();
                               const newTypes = productTypes.map(t => t === type ? newName : t);
-                              await saveProductTypes(newTypes);
+                              const typesSaved = await saveProductTypes(newTypes);
+                              if (!typesSaved) return;
                               if (productTypeTemplates[type]) { const nt = { ...productTypeTemplates }; nt[newName] = nt[type]; delete nt[type]; await saveProductTypeTemplates(nt); }
                               if (selectedProductType === type) setSelectedProductType(newName);
                             }
