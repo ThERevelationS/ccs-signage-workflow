@@ -85,11 +85,11 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onMouseDown={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onMouseDown={e => e.target === e.currentTarget && !saving && !uploadingPhoto && onClose()}> 
       <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div><h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">{equipment ? "Edit Fleet Equipment" : "New Fleet Equipment"}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Maintenance identity only. Bouncie is read-only and linked by exact VIN/IMEI evidence.</p></div>
-          <button onClick={onClose} disabled={saving} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} disabled={saving || uploadingPhoto} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-5">
           {photoError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{photoError}</div>}
