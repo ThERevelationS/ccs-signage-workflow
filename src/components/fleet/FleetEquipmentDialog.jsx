@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { Loader2, X, Upload, ImagePlus, Trash2 } from "lucide-react";
 
 const EMPTY = {
   name: "",
@@ -17,11 +18,15 @@ const EMPTY = {
   last_service_date: "",
   next_service_due: "",
   notes: "",
+  photo_url: "",
   tracking_applicable: true,
 };
 
 export default function FleetEquipmentDialog({ open, equipment, onClose, onSave, saving }) {
   const [form, setForm] = useState(EMPTY);
+  const [pendingPhoto, setPendingPhoto] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -32,12 +37,30 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
       mileage_hours: equipment.mileage_hours ?? "",
       tracking_applicable: equipment.bouncie_link_status !== "not_applicable",
     } : EMPTY);
+    setPendingPhoto(null);
+    setUploadingPhoto(false);
+    setPhotoError("");
   }, [open, equipment]);
 
   if (!open) return null;
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
+    setPhotoError("");
+    let photoUrl = form.photo_url || "";
+    if (pendingPhoto) {
+      setUploadingPhoto(true);
+      try {
+        const uploaded = await base44.integrations.Core.UploadFile({ file: pendingPhoto });
+        if (!uploaded?.file_url) throw new Error("Equipment photo upload failed.");
+        photoUrl = uploaded.file_url;
+      } catch (error) {
+        setPhotoError(error?.message || "Equipment photo upload failed.");
+        setUploadingPhoto(false);
+        return;
+      }
+      setUploadingPhoto(false);
+    }
     onSave({
       equipment: {
         name: form.name.trim(),
@@ -54,6 +77,7 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
         mileage_hours: form.mileage_hours === "" ? undefined : Number(form.mileage_hours),
         last_service_date: form.last_service_date || undefined,
         next_service_due: form.next_service_due || undefined,
+        photo_url: photoUrl,
         notes: form.notes.trim(),
       },
       tracking_applicable: !!form.tracking_applicable,
@@ -68,6 +92,12 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
           <button onClick={onClose} disabled={saving} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-5">
+          {photoError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{photoError}</div>}
+          <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+            <div className="flex items-center justify-between gap-3"><div className="font-medium text-gray-900 dark:text-slate-100 inline-flex items-center gap-2"><ImagePlus className="w-4 h-4 text-indigo-500"/>Equipment Photo</div><label className="cursor-pointer inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-300"><Upload className="w-4 h-4"/>{form.photo_url || pendingPhoto ? "Replace" : "Add photo"}<input type="file" accept="image/*" className="hidden" onChange={e=>{const file=e.target.files?.[0]||null;setPendingPhoto(file);e.target.value="";}}/></label></div>
+            <div className="mt-3 flex items-center gap-3">{form.photo_url ? <img src={form.photo_url} alt={form.name || "Equipment"} className="w-20 h-20 rounded-lg object-cover bg-gray-100 dark:bg-slate-800"/> : <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center"><ImagePlus className="w-7 h-7 text-gray-300"/></div>}<div className="flex-1 min-w-0">{pendingPhoto ? <div className="text-sm text-indigo-700 dark:text-indigo-300 truncate">Selected: {pendingPhoto.name}</div> : <div className="text-xs text-gray-400">{form.photo_url ? "Current Fleet equipment photo." : "No equipment photo."}</div>}{(form.photo_url || pendingPhoto) && <button type="button" onClick={()=>{set("photo_url","");setPendingPhoto(null);}} className="mt-2 inline-flex items-center gap-1 text-xs text-red-600"><Trash2 className="w-3.5 h-3.5"/>Remove photo</button>}</div></div>
+            <div className="text-xs text-gray-400 mt-2">A selected photo uploads only when you save the equipment record.</div>
+          </div>
           <div className="grid md:grid-cols-2 gap-4">
             <Field label="Name *"><input required value={form.name} onChange={e => set("name", e.target.value)} className="field" /></Field>
             <Field label="Type"><select value={form.type} onChange={e => set("type", e.target.value)} className="field"><option value="car">Car</option><option value="truck">Truck</option><option value="boom_lift">Boom lift</option><option value="forklift">Forklift</option><option value="generator">Generator</option><option value="excavator">Excavator</option><option value="bulldozer">Bulldozer</option><option value="crane">Crane</option><option value="compressor">Compressor</option><option value="other">Other</option></select></Field>
@@ -91,7 +121,7 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
           </label>
 
           <Field label="Notes"><textarea rows="4" value={form.notes} onChange={e => set("notes", e.target.value)} className="field" /></Field>
-          <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{equipment ? "Save Equipment" : "Create Equipment"}</button></div>
+          <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{(saving || uploadingPhoto) && <Loader2 className="w-4 h-4 animate-spin" />}{uploadingPhoto ? "Uploading Photo…" : equipment ? "Save Equipment" : "Create Equipment"}</button></div>
         </form>
       </div>
       <style>{`.field{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.5rem .65rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}`}</style>
