@@ -12,19 +12,6 @@ const EDITABLE_FIELDS = [
   "_manual_permitting_url", "_manual_requirements", "_manual_documents",
 ];
 
-function normalize(value) {
-  if (Array.isArray(value)) return value.map(normalize);
-  if (!value || typeof value !== "object") return value;
-  return Object.keys(value).sort().reduce((out, key) => {
-    out[key] = normalize(value[key]);
-    return out;
-  }, {});
-}
-
-function sameValue(a, b) {
-  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
-}
-
 export function jurisdictionFormPayload(data = {}) {
   return Object.fromEntries(
     EDITABLE_FIELDS.filter((field) => Object.prototype.hasOwnProperty.call(data, field))
