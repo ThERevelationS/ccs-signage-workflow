@@ -203,6 +203,13 @@ export default function PermittingRepository() {
     !searchTerm || j.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const duplicateMap = new Map();
+  jurisdictions.forEach((jurisdiction) => {
+    const key = `${String(jurisdiction.name || "").trim().toLowerCase()}|${String(jurisdiction.state || "").trim().toLowerCase()}`;
+    if (!key.startsWith("|")) duplicateMap.set(key, [...(duplicateMap.get(key) || []), jurisdiction]);
+  });
+  const duplicateJurisdictionGroups = [...duplicateMap.values()].filter((rows) => rows.length > 1);
+
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
   return (
@@ -248,6 +255,16 @@ export default function PermittingRepository() {
             className="text-sm h-8"
           />
         </div>
+
+        {duplicateJurisdictionGroups.length > 0 && (
+          <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+            <div className="font-semibold">Duplicate jurisdiction profiles require review</div>
+            <div className="mt-1">
+              {duplicateJurisdictionGroups.map((rows) => `${rows[0].name}, ${rows[0].state} (${rows.length})`).join(" · ")}
+            </div>
+            <div className="mt-1 text-amber-800">No profile was merged or deleted automatically. Review the records and keep the correct history before removing any duplicate.</div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {loading ? (
