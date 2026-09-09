@@ -279,6 +279,16 @@ export default function TimeClock() {
           )}
         </div>
 
+        {timeEntryError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium">Time entry update blocked</div>
+              <div className="mt-1 text-xs">{timeEntryError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
+          </div>
+        )}
+
         {/* Current Time Display */}
         <div className="clay-card p-6 mb-6 text-center">
           <p className="text-sm text-gray-500 mb-1">{format(currentTime, "EEEE, MMMM d, yyyy")}</p>
