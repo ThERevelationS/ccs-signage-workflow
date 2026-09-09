@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   CheckCircle
 } from "lucide-react";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 
@@ -38,6 +39,8 @@ export default function OvertimeRulesManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [settingRecord, setSettingRecord] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -46,31 +49,42 @@ export default function OvertimeRulesManager() {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      const allSettings = await GlobalSettings.filter({ setting_key: "overtimeRules" });
-      if (allSettings.length > 0 && allSettings[0].setting_value) {
-        setSettings({ ...DEFAULT_OT_SETTINGS, ...allSettings[0].setting_value });
-      }
+      const record = await loadSingleGlobalSetting({
+        entity: GlobalSettings,
+        settingKey: "overtimeRules",
+        label: "Overtime rules",
+      });
+      setSettingRecord(record);
+      setSettings({ ...DEFAULT_OT_SETTINGS, ...(record?.setting_value || {}) });
     } catch (err) {
       console.error("Error loading OT settings:", err);
+      setSettingsError(err?.message || "Overtime rules could not be loaded safely.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSettingsError("");
     try {
-      const existing = await GlobalSettings.filter({ setting_key: "overtimeRules" });
-      if (existing.length > 0) {
-        await GlobalSettings.update(existing[0].id, { setting_value: settings });
-      } else {
-        await GlobalSettings.create({ setting_key: "overtimeRules", setting_value: settings });
-      }
+      const savedRecord = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: settingRecord,
+        settingKey: "overtimeRules",
+        nextValue: settings,
+        label: "Overtime rules",
+      });
+      setSettingRecord(savedRecord);
+      setSettings({ ...DEFAULT_OT_SETTINGS, ...(savedRecord?.setting_value || settings) });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      console.error("Error saving OT settings:", err);
+      console.error("Overtime rules save blocked:", err);
+      setSettingsError(err?.message || "Overtime rules changed in another session. Reload before saving.");
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   if (isLoading) {
@@ -93,6 +107,16 @@ export default function OvertimeRulesManager() {
           </div>
         </div>
       </div>
+
+      {settingsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Overtime rules update blocked</div>
+            <div className="mt-1 text-xs">{settingsError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await loadSettings(); }}>Reload latest</Button>
+        </div>
+      )}
 
       {/* Main Toggle */}
       <div className="clay-card p-5">
