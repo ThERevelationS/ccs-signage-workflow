@@ -13,6 +13,7 @@ import {
 import { sendGmail } from "@/functions/sendGmail";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
+import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -20,19 +21,25 @@ export default function UserSettingsTab({ currentUser, onUserUpdated }) {
   const [sendingReset, setSendingReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
+  const [resetError, setResetError] = useState("");
 
   const handleSendPasswordReset = async () => {
     if (!currentUser?.email) return;
     
     setSendingReset(true);
+    setResetError("");
     try {
       // Generate reset token
       const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       const resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
       
-      await AuthorizedEmail.update(currentUser.id, {
-        password_reset_token: resetToken,
-        password_reset_expires: resetExpires
+      await updateAuthorizedEmailIfUnchanged({
+        entity: AuthorizedEmail,
+        record: currentUser,
+        nextFields: { password_reset_token: resetToken, password_reset_expires: resetExpires },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `Password reset token for ${currentUser.full_name || currentUser.email}`
       });
       
       // Send email
@@ -54,7 +61,7 @@ export default function UserSettingsTab({ currentUser, onUserUpdated }) {
       setTimeout(() => setResetSent(false), 5000);
     } catch (err) {
       console.error("Error sending reset email:", err);
-      alert("Failed to send reset email. Please try again.");
+      setResetError(err?.message || "Failed to issue the password reset safely. Reload and try again.");
     }
     setSendingReset(false);
   };
@@ -72,6 +79,7 @@ export default function UserSettingsTab({ currentUser, onUserUpdated }) {
         <p className="text-sm text-gray-600 mb-4">
           We'll send you an email with a link to reset your password.
         </p>
+        {resetError && <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{resetError}</div>}
         <Button 
           onClick={handleSendPasswordReset}
           disabled={sendingReset || resetSent}

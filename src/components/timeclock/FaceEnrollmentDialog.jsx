@@ -9,6 +9,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
+import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -17,6 +18,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
+  const [saveError, setSaveError] = useState("");
 
   // Reset camera key when dialog opens to force fresh mount
   useEffect(() => {
@@ -33,9 +35,15 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     if (faceDescriptors.length < 3) return;
     
     setIsSaving(true);
+    setSaveError("");
     try {
-      await AuthorizedEmail.update(user.id, {
-        face_descriptors: faceDescriptors
+      await updateAuthorizedEmailIfUnchanged({
+        entity: AuthorizedEmail,
+        record: user,
+        nextFields: { face_descriptors: faceDescriptors },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
       });
       setSaved(true);
       setTimeout(() => {
@@ -44,6 +52,7 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
       }, 1500);
     } catch (err) {
       console.error("Error saving face data:", err);
+      setSaveError(err?.message || "Face enrollment could not be saved safely. Reload the user and try again.");
     }
     setIsSaving(false);
   };
@@ -74,6 +83,9 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
           </div>
         ) : (
           <>
+            {saveError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{saveError}</div>
+            )}
             <FaceRecognition 
               key={cameraKey}
               allUsers={[]} 

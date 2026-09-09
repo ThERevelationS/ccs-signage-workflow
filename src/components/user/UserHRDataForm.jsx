@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,14 +60,20 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
     setSaveSuccess("");
     
     try {
-      await base44.entities.AuthorizedEmail.update(userData.id, {
-        hr_data: hrData
+      await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: userData,
+        nextFields: { hr_data: hrData },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `HR data for ${userData.full_name || userData.email || userData.id}`
       });
       setSaveSuccess("Changes saved successfully!");
       setTimeout(() => setSaveSuccess(""), 3000);
       if (onUpdate) onUpdate();
     } catch (error) {
-      setSaveError("Failed to save changes");
+      console.error("HR data save blocked:", error);
+      setSaveError(error?.message || "Failed to save changes safely. Reload before retrying.");
     }
     setIsSaving(false);
   };
