@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { mergeWorkOrderArrayValues } from '../../shared/workOrderFieldPersistence.mjs';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -22,15 +23,15 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Missing workOrderId or fileIds' }, { status: 400 });
       }
 
-      const workOrder = await base44.asServiceRole.entities.WorkOrder.get(workOrderId);
-      const existingFiles = workOrder.google_drive_file_ids || [];
-      const updatedFiles = [...new Set([...existingFiles, ...fileIds])];
-
-      await base44.asServiceRole.entities.WorkOrder.update(workOrderId, {
-        google_drive_file_ids: updatedFiles
+      const saved = await mergeWorkOrderArrayValues({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        workOrderId,
+        field: 'google_drive_file_ids',
+        values: fileIds,
+        label: 'Google Drive file access merge',
       });
 
-      return Response.json({ success: true });
+      return Response.json({ success: true, fileIds: saved.google_drive_file_ids || [] });
     }
 
     if (action === 'listFiles') {
