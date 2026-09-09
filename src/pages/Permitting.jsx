@@ -412,6 +412,29 @@ export default function Permitting() {
         lineItemBaselinesRef.current.set(newItem.id, newItem);
         setLineItems(prev => prev.some(line => line.id === newItem.id) ? prev : [...prev, newItem]);
       }
+
+      const verifiedLines = await loadAllEntityRows({
+        entity: PermitLineItem,
+        query: { work_order_id: wo.id },
+        sort: "created_date",
+        label: `Permit line create verification for ${wo.title || wo.client_name || wo.id}`,
+      });
+      verifiedLines.forEach(line => lineItemBaselinesRef.current.set(line.id, line));
+      setLineItems(prev => {
+        const byId = new Map(prev.map(line => [line.id, line]));
+        verifiedLines.forEach(line => byId.set(line.id, line));
+        return [...byId.values()];
+      });
+
+      const identityCounts = new Map();
+      for (const line of verifiedLines) {
+        const key = [line.locality_id || "", line.row_name || "", line.office_type || ""].join("|");
+        identityCounts.set(key, (identityCounts.get(key) || 0) + 1);
+      }
+      const duplicateIdentities = [...identityCounts.values()].filter(count => count > 1).length;
+      if (duplicateIdentities > 0) {
+        setPermitLineEditError(`Final verification found ${duplicateIdentities} duplicate Permit office line${duplicateIdentities === 1 ? "" : "s"}, likely from simultaneous creation in another session. No line was deleted automatically; review the duplicates before continuing.`);
+      }
     } catch (error) {
       console.error("Permit locality line creation failed:", error);
       const latestLines = await loadAllEntityRows({
