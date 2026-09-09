@@ -22,8 +22,8 @@ function fieldsMatch(record, desired) {
 }
 
 function publicationRank(record) {
-  const sentAt = Date.parse(record?.sent_at || "") || 0;
-  return [sentAt, String(record?.id || "")];
+  const persistedAt = Date.parse(record?.updated_date || "") || Date.parse(record?.sent_at || "") || 0;
+  return [persistedAt, String(record?.id || "")];
 }
 
 function comparePublication(a, b) {
