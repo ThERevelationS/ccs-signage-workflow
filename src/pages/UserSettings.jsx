@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
 import { sendGmail } from "@/functions/sendGmail";
@@ -8,12 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   User,
   Lock,
@@ -26,12 +20,8 @@ import {
   Check,
   UserCircle,
   Phone,
-  MapPin,
-  Heart,
   GraduationCap,
   Shirt,
-  Users,
-  Trash2,
   CalendarDays
 } from "lucide-react";
 import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSettingsPanel";

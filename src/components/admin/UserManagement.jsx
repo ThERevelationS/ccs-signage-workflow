@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
@@ -35,8 +35,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Mail,
-  Shield,
   User as UserIcon,
   UserPlus,
   Crown,
@@ -44,7 +42,6 @@ import {
   Briefcase,
   Key,
   Send,
-  QrCode,
   Camera,
   Scan
 } from "lucide-react";

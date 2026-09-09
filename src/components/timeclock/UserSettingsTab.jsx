@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { 
-  Settings, 
   Mail, 
   QrCode, 
   Camera, 
   Loader2,
-  CheckCircle,
-  Download
+  CheckCircle
 } from "lucide-react";
 import { sendGmail } from "@/functions/sendGmail";
 import UserQRCode from "@/components/timeclock/UserQRCode";
