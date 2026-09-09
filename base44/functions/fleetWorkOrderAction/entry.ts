@@ -234,6 +234,24 @@ async function applyInventoryPlan(base44: any, Receipt: any, plan: any, workOrde
       await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
       return { reused: true, recovered: true, receipt: receiptClaim.receipt };
     }
+    if (!usageLog && sameNumber(current, plan.before_quantity)) {
+      await Log.create({
+        equipment_id: workOrder.equipment_id,
+        item_id: plan.item_id,
+        item_name: plan.item_name,
+        item_type: plan.item_type,
+        quantity_used: plan.quantity,
+        unit: plan.unit,
+        work_order_id: workOrder.id,
+        recorded_by: actor.email || 'system',
+        usage_receipt_key: plan.log_key,
+      });
+      await entity.update(plan.item_id, plan.item_type === 'part'
+        ? { quantity_on_hand: plan.after_quantity }
+        : { quantity: plan.after_quantity });
+      await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
+      return { reused: true, recovered: true, receipt: receiptClaim.receipt };
+    }
     throw new Error(`Inventory operation ${plan.operation_key} is already in progress and cannot be safely reconciled automatically.`);
   }
 
