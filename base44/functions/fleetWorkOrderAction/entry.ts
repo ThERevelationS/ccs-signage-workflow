@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
+const STALE_CLAIM_MS = 30 * 60 * 1000;
 const WORK_ORDER_STATUSES = new Set(['open', 'assigned', 'in_progress', 'completed', 'cancelled']);
 const EQUIPMENT_STATUSES = new Set(['operational', 'maintenance', 'down', 'retired']);
 
@@ -60,6 +61,24 @@ async function claimReceipt(Receipt: any, data: any) {
 
   const started = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'started' }));
   if (started) return { receipt: started, applied: false, owner: false, existingStarted: true };
+
+  const failed = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'failed' }));
+  if (failed) {
+    const retryToken = crypto.randomUUID();
+    const stamp = nowIso();
+    await Receipt.update(failed.id, {
+      status: 'started',
+      started_at: stamp,
+      error_message: '',
+      result_summary: data.result_summary || failed.result_summary || {},
+      payload_fingerprint: data.payload_fingerprint || failed.payload_fingerprint || '',
+    });
+    await Receipt.update(failed.id, { result_summary: { ...(data.result_summary || failed.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp } });
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    const refreshed = await Receipt.get(failed.id);
+    if (refreshed?.result_summary?.retry_claim_token !== retryToken) return { receipt: refreshed || failed, applied: false, owner: false, concurrent: true };
+    return { receipt: refreshed, applied: false, owner: true, retry: true };
+  }
 
   const created = await Receipt.create({
     ...data,
