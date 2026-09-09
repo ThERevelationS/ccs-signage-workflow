@@ -1,13 +1,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const nowIso = () => new Date().toISOString();
+const STALE_CLAIM_MS = 30 * 60 * 1000;
 const canonical = (rows: any[] = []) => rows.slice().sort((a,b) => String(a.id || '').localeCompare(String(b.id || '')))[0] || null;
 
 async function claimReceipt(Receipt: any, key: string, queue: any) {
   const applied = canonical(await Receipt.filter({ operation_key: key, status: 'applied' }));
   if (applied) return { applied: true, owner: false, receipt: applied };
   const started = canonical(await Receipt.filter({ operation_key: key, status: 'started' }));
-  if (started) return { applied: false, owner: false, receipt: started };
+  if (started) {
+    const startedAt = Date.parse(started.started_at || started.created_date || '') || 0;
+    if (!startedAt || (Date.now() - startedAt) < STALE_CLAIM_MS) return { applied: false, owner: false, receipt: started };
+    return { applied: false, owner: false, receipt: started, stale: true };
+  }
+
+  const failed = canonical(await Receipt.filter({ operation_key: key, status: 'failed' }));
+  if (failed) {
+    const retryToken = crypto.randomUUID();
+    const stamp = nowIso();
+    await Receipt.update(failed.id, {
+      status: 'started', started_at: stamp, error_message: '',
+      result_summary: { ...(failed.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
+    });
+    await new Promise(r => setTimeout(r, 50));
+    const refreshed = await Receipt.get(failed.id);
+    if (refreshed?.result_summary?.retry_claim_token !== retryToken) return { applied: false, owner: false, receipt: refreshed || failed };
+    return { applied: false, owner: true, receipt: refreshed, retry: true };
+  }
+
   const created = await Receipt.create({ operation_key: key, operation_type: 'notification', target_entity: 'FleetNotificationQueue', target_id: queue.id, status: 'started', started_at: nowIso(), result_summary: { notification_key: queue.notification_key, recipient_email: queue.recipient_email } });
   await new Promise(r => setTimeout(r, 50));
   const contenders = await Receipt.filter({ operation_key: key, status: 'started' });
@@ -44,6 +64,14 @@ Deno.serve(async (req) => {
       if (claim.applied) {
         if (item.status !== 'sent') await Queue.update(item.id, { status: 'sent', sent_at: claim.receipt.applied_at || now, last_error: '' });
         results.push({ id: item.id, status: 'reused' });
+        continue;
+      }
+      if (claim.stale) {
+        const message = 'Notification delivery state is ambiguous because a prior send remained in progress for more than 30 minutes. It was not resent automatically to avoid a duplicate email.';
+        const stamp = nowIso();
+        await Queue.update(item.id, { status: 'failed', last_error: message, last_attempt_at: item.last_attempt_at || stamp });
+        await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: stamp, error_message: message });
+        results.push({ id: item.id, status: 'failed_ambiguous', error: message });
         continue;
       }
       if (!claim.owner) {
