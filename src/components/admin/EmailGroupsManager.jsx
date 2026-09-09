@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { EmailGroup } from "@/entities/EmailGroup";
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,10 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Users, Mail, X } from "lucide-react";
+import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfUnchanged } from "@/components/admin/emailGroupPersistence";
+
+const EmailGroup = base44.entities.EmailGroup;
+const AutomationRule = base44.entities.AutomationRule;
 
 export default function EmailGroupsManager() {
   const [groups, setGroups] = useState([]);
@@ -30,6 +34,8 @@ export default function EmailGroupsManager() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [newEmail, setNewEmail] = useState("");
+  const [persistenceError, setPersistenceError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -43,12 +49,19 @@ export default function EmailGroupsManager() {
 
   const loadGroups = async () => {
     setIsLoading(true);
-    const data = await EmailGroup.list("-created_date");
-    setGroups(data);
-    setIsLoading(false);
+    try {
+      const data = await EmailGroup.list("-created_date");
+      setGroups(data || []);
+    } catch (error) {
+      console.error("Error loading email groups:", error);
+      setPersistenceError(error?.message || "Email groups could not be loaded safely.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openNewGroup = () => {
+    setPersistenceError("");
     setEditingGroup(null);
     setFormData({ name: "", description: "", emails: [] });
     setNewEmail("");
@@ -56,6 +69,7 @@ export default function EmailGroupsManager() {
   };
 
   const openEditGroup = (group) => {
+    setPersistenceError("");
     setEditingGroup(group);
     setFormData({
       name: group.name || "",
@@ -67,19 +81,59 @@ export default function EmailGroupsManager() {
   };
 
   const handleSave = async () => {
-    if (editingGroup) {
-      await EmailGroup.update(editingGroup.id, formData);
-    } else {
-      await EmailGroup.create(formData);
+    if (isSaving || !formData.name || formData.emails.length === 0) return;
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      if (editingGroup) {
+        await updateEmailGroupIfUnchanged({
+          entity: EmailGroup,
+          group: editingGroup,
+          nextFields: formData,
+          label: `Email group ${editingGroup.name || editingGroup.id}`,
+        });
+      } else {
+        const result = await createEmailGroupIfAbsent({
+          entity: EmailGroup,
+          data: formData,
+          label: `Email group ${formData.name}`,
+        });
+        if (result.status === "existing") {
+          throw new Error(`An email group named "${formData.name}" already exists. The existing group was kept instead of creating a duplicate.`);
+        }
+      }
+      setIsDialogOpen(false);
+      setEditingGroup(null);
+      await loadGroups();
+    } catch (error) {
+      console.error("Email group save blocked:", error);
+      setPersistenceError(error?.message || "The email group could not be saved safely.");
+    } finally {
+      setIsSaving(false);
     }
-    setIsDialogOpen(false);
-    loadGroups();
   };
 
-  const handleDelete = async (id) => {
-    await EmailGroup.delete(id);
-    setDeleteConfirm(null);
-    loadGroups();
+  const handleDelete = async (group) => {
+    if (!group?.id || isSaving) return;
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      await deleteEmailGroupIfUnused({
+        entity: EmailGroup,
+        automationRuleEntity: AutomationRule,
+        group,
+        label: `Email group ${group.name || group.id} deletion`,
+      });
+      setDeleteConfirm(null);
+      await loadGroups();
+    } catch (error) {
+      console.error("Email group deletion blocked:", error);
+      setPersistenceError(error?.message || "The email group changed or is still in use and was not deleted.");
+      setDeleteConfirm(null);
+      await loadGroups();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const addEmail = () => {
@@ -110,6 +164,16 @@ export default function EmailGroupsManager() {
           New Group
         </Button>
       </div>
+
+      {persistenceError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Email group update blocked</div>
+            <div className="mt-1 text-xs">{persistenceError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await loadGroups(); }}>Reload latest</Button>
+        </div>
+      )}
 
       {isLoading ? (
         <p className="text-gray-500 text-sm">Loading groups...</p>
@@ -231,7 +295,7 @@ export default function EmailGroupsManager() {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!formData.name || formData.emails.length === 0}
+                disabled={isSaving || !formData.name || formData.emails.length === 0}
                 className="clay-button border-none"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
               >
@@ -254,10 +318,11 @@ export default function EmailGroupsManager() {
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleDelete(deleteConfirm?.id)}
+              onClick={() => handleDelete(deleteConfirm)}
               className="bg-red-600 text-white"
+              disabled={isSaving}
             >
-              Delete
+              {isSaving ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
