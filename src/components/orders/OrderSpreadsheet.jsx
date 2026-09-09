@@ -259,49 +259,75 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const saveAllChanges = async () => {
-    const changes = pendingChangesRef.current;
+    if (saveInFlightRef.current) return;
+    const changes = Object.fromEntries(
+      Object.entries(pendingChangesRef.current).map(([orderId, updates]) => [orderId, { ...updates }])
+    );
     if (Object.keys(changes).length === 0) return;
-    
+
+    saveInFlightRef.current = true;
     setIsSaving(true);
+    setSaveError("");
+    let savedRows = 0;
     try {
-      const savePromises = Object.entries(changes).map(async ([orderId, updates]) => {
-        // Clean up date fields - remove empty strings
-        const cleanedUpdates = { ...updates };
-        ['date_needed', 'date_ordered', 'date_received'].forEach(field => {
-          if (field in cleanedUpdates && (cleanedUpdates[field] === "" || cleanedUpdates[field] === null)) {
-            delete cleanedUpdates[field];
-          }
+      for (const [orderId, updates] of Object.entries(changes)) {
+        const cleanedUpdates = Object.fromEntries(
+          Object.entries(updates).filter(([, value]) => value !== undefined)
+        );
+        if (Object.keys(cleanedUpdates).length === 0) continue;
+
+        const baseline = originalOrdersRef.current[orderId];
+        if (!baseline?.id) {
+          throw new Error("The loaded Order baseline is missing. Reload Orders before saving.");
+        }
+
+        const saved = await replaceOrderFieldsIfUnchanged({
+          entity: Order,
+          order: baseline,
+          nextFields: cleanedUpdates,
+          label: `Order ${baseline.row_number || orderId} save`,
         });
-        if (Object.keys(cleanedUpdates).length === 0) return;
+        savedRows += 1;
+
+        originalOrdersRef.current[orderId] = { ...saved };
+        const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
+        for (const [field, value] of Object.entries(cleanedUpdates)) {
+          if (Object.is(latestPending[field], value)) delete latestPending[field];
+        }
+        if (Object.keys(latestPending).length > 0) pendingChangesRef.current[orderId] = latestPending;
+        else delete pendingChangesRef.current[orderId];
+
+        setOrders((current) => current.map((order) => order.id === orderId
+          ? { ...saved, ...(pendingChangesRef.current[orderId] || {}) }
+          : order));
+
         try {
-          await Order.update(orderId, cleanedUpdates);
-        // Trigger notifications for significant changes
-        const order = orders.find(o => o.id === orderId);
-        if (order && updates.date_ordered && !originalOrdersRef.current[orderId]?.date_ordered) {
-          await NotificationTriggers.orderOrdered({ ...order, ...updates }, currentUser?.full_name || currentUser?.email);
-        }
-        if (order && updates.date_received && !originalOrdersRef.current[orderId]?.date_received) {
-          await NotificationTriggers.orderReceived({ ...order, ...updates }, currentUser?.full_name || currentUser?.email);
-        }
-        // Update original reference
-        originalOrdersRef.current[orderId] = { ...originalOrdersRef.current[orderId], ...updates };
-        } catch (err) {
-          // Order may have been deleted, remove from local state
-          if (err.message?.includes('not found')) {
-            setOrders(prev => prev.filter(o => o.id !== orderId));
-            delete originalOrdersRef.current[orderId];
+          if (cleanedUpdates.date_ordered && !baseline.date_ordered) {
+            await NotificationTriggers.orderOrdered(saved, currentUser?.full_name || currentUser?.email);
           }
+          if (cleanedUpdates.date_received && !baseline.date_received) {
+            await NotificationTriggers.orderReceived(saved, currentUser?.full_name || currentUser?.email);
+          }
+        } catch (notificationError) {
+          console.error("Order saved but its notification could not be sent:", notificationError);
         }
-      });
-      
-      await Promise.all(savePromises);
-      pendingChangesRef.current = {};
-      setHasUnsavedChanges(false);
-      setLastSaved(new Date());
+      }
+
+      const stillPending = Object.keys(pendingChangesRef.current).length > 0;
+      setHasUnsavedChanges(stillPending);
+      if (!stillPending) setLastSaved(new Date());
     } catch (error) {
-      console.error("Error saving orders:", error);
+      console.error("Error saving orders safely:", error);
+      const remaining = Object.keys(pendingChangesRef.current).length;
+      setHasUnsavedChanges(remaining > 0);
+      setSaveError(
+        `${savedRows} Order row${savedRows === 1 ? " was" : "s were"} saved before the save stopped. ` +
+        `${error?.message || "An Order changed in another session. Reload before retrying."}`
+      );
+    } finally {
+      saveInFlightRef.current = false;
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   // Expose save function to parent
