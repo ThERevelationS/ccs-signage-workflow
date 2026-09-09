@@ -29,6 +29,27 @@ async function claimReceipt(Receipt: any, data: any) {
   const started = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'started' }));
   if (started) return { receipt: started, applied: false, owner: false, existingStarted: true };
 
+  const failed = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'failed' }));
+  if (failed) {
+    const summary = failed.result_summary || {};
+    if (summary.inventory_item_id || summary.before_quantity != null || summary.after_quantity != null) {
+      return { receipt: failed, applied: false, owner: false, failedWithMutationEvidence: true };
+    }
+    const retryToken = crypto.randomUUID();
+    const stamp = nowIso();
+    await Receipt.update(failed.id, {
+      status: 'started',
+      started_at: stamp,
+      failed_at: null,
+      error_message: '',
+      result_summary: { ...(data.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    const refreshed = await Receipt.get(failed.id);
+    if (refreshed?.result_summary?.retry_claim_token !== retryToken) return { receipt: refreshed || failed, applied: false, owner: false, concurrent: true };
+    return { receipt: refreshed, applied: false, owner: true, retry: true };
+  }
+
   const created = await Receipt.create({ ...data, status: 'started', started_at: nowIso() });
   await new Promise((resolve) => setTimeout(resolve, 75));
   const contenders = await Receipt.filter({ operation_key: data.operation_key, status: 'started' });
@@ -42,7 +63,7 @@ async function claimReceipt(Receipt: any, data: any) {
 
 const requestPatch = (source: any) => {
   const allowed = [
-    'item_name', 'item_type', 'part_number', 'manufacturer_brand', 'quantity_needed',
+    'item_name', 'item_type', 'part_number', 'manufacturer_brand', 'inventory_item_id', 'quantity_needed',
     'unit_cost', 'equipment_id', 'requested_by_person', 'justification', 'vendor_link',
     'photo_urls', 'estimated_delivery_date', 'notes'
   ];
