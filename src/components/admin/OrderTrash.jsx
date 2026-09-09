@@ -231,6 +231,18 @@ export default function OrderTrash() {
 
   return (
     <div className="space-y-4">
+      {actionError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+          <div>
+            <div className="font-medium">Order Trash action blocked</div>
+            <div className="mt-1 text-xs">{actionError}</div>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={loadDeletedOrders} className="shrink-0 border-red-300 bg-white text-red-800">
+            Reload Order Trash
+          </Button>
+        </div>
+      )}
+
       {/* Bulk Delete Progress */}
       {bulkDeleteProgress.active && (
         <div className="clay-card p-4 mb-4">
@@ -238,7 +250,7 @@ export default function OrderTrash() {
             <span className="text-sm font-medium text-red-600">Deleting all orders...</span>
             <span className="text-xs text-gray-500">{bulkDeleteProgress.current} / {bulkDeleteProgress.total}</span>
           </div>
-          <Progress value={(bulkDeleteProgress.current / bulkDeleteProgress.total) * 100} className="h-2" />
+          <Progress value={bulkDeleteProgress.total ? (bulkDeleteProgress.current / bulkDeleteProgress.total) * 100 : 0} className="h-2" />
         </div>
       )}
 
@@ -253,7 +265,7 @@ export default function OrderTrash() {
           variant="destructive"
           size="sm"
           onClick={() => setBulkDeleteConfirm(true)}
-          disabled={bulkDeleteProgress.active}
+          disabled={bulkDeleteBusy || bulkDeleteProgress.active || recoverBusy || permanentDeleteBusy}
           className="bg-red-600 hover:bg-red-700"
         >
           <Lock className="w-4 h-4 mr-2" />
@@ -290,6 +302,7 @@ export default function OrderTrash() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setRecoverConfirm(order)}
+                  disabled={bulkDeleteBusy || recoverBusy || permanentDeleteBusy}
                   className="text-green-600 hover:text-green-700"
                 >
                   <RotateCcw className="w-4 h-4 mr-1" />
@@ -299,6 +312,7 @@ export default function OrderTrash() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setPermanentDeleteConfirm(order)}
+                  disabled={bulkDeleteBusy || recoverBusy || permanentDeleteBusy}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
@@ -321,8 +335,8 @@ export default function OrderTrash() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRecover} className="bg-green-600 text-white">
-              Recover
+            <AlertDialogAction onClick={handleRecover} disabled={recoverBusy} className="bg-green-600 text-white">
+              {recoverBusy ? "Recovering..." : "Recover"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -341,8 +355,8 @@ export default function OrderTrash() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePermanentDelete} className="bg-red-600 text-white">
-              Permanently Delete
+            <AlertDialogAction onClick={handlePermanentDelete} disabled={permanentDeleteBusy} className="bg-red-600 text-white">
+              {permanentDeleteBusy ? "Deleting..." : "Permanently Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -374,8 +388,8 @@ export default function OrderTrash() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-            <Button onClick={handleBulkDeleteAllOrders} className="bg-red-600 text-white hover:bg-red-700">
-              Delete All Orders
+            <Button onClick={handleBulkDeleteAllOrders} disabled={bulkDeleteBusy} className="bg-red-600 text-white hover:bg-red-700">
+              {bulkDeleteBusy ? "Verifying..." : "Delete All Orders"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
