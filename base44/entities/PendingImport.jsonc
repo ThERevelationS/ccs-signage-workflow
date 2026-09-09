@@ -10,9 +10,10 @@
       "type": "string",
       "enum": [
         "estimate",
-        "invoice"
+        "invoice",
+        "duplicate"
       ],
-      "description": "Type of document"
+      "description": "Type of Pending Import: Corebridge estimate/invoice or detected duplicate"
     },
     "email_subject": {
       "type": "string",
