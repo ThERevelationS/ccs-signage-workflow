@@ -111,6 +111,7 @@ export async function updateAuthorizedEmailIfUnchanged({
   nextFields,
   exactVersion = false,
   enforceIdentity = true,
+  guardFields = {},
   label = "Authorized user",
 } = {}) {
   if (!record?.id) throw new Error(`${label} is no longer loaded. Reload before saving.`);
@@ -140,7 +141,7 @@ export async function updateAuthorizedEmailIfUnchanged({
     expectedUpdatedAt: exactVersion ? (record.updated_date || "") : "",
     expectedFields: expectedEntityFields(record, desired),
     nextFields: desired,
-    guardFields: { email: record.email },
+    guardFields: { email: record.email, ...guardFields },
     label,
   });
 }
