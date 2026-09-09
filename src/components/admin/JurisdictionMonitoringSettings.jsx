@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-react";
 import { format } from "date-fns";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 
 export default function JurisdictionMonitoringSettings() {
   const [automations, setAutomations] = useState([]);
@@ -22,6 +23,8 @@ export default function JurisdictionMonitoringSettings() {
   const [newEmail, setNewEmail] = useState("");
   const [lastRunInfo, setLastRunInfo] = useState(null);
   const [alerts, setAlerts] = useState([]);
+  const [monitoringSettingRecord, setMonitoringSettingRecord] = useState(null);
+  const [settingsSaveError, setSettingsSaveError] = useState("");
 
   useEffect(() => {
     loadAutomations();
@@ -43,12 +46,17 @@ export default function JurisdictionMonitoringSettings() {
 
   const loadSettings = async () => {
     try {
-      const settings = await base44.entities.GlobalSettings?.filter?.({ setting_key: 'jurisdiction_monitoring' });
-      if (settings && Array.isArray(settings) && settings.length > 0) {
-        setMonitoringSettings(settings[0].setting_value || monitoringSettings);
-      }
+      const saved = await loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: 'jurisdiction_monitoring',
+        label: 'Jurisdiction Monitoring settings',
+      });
+      setMonitoringSettingRecord(saved);
+      if (saved?.id) setMonitoringSettings(current => ({ ...current, ...(saved.setting_value || {}) }));
+      setSettingsSaveError("");
     } catch (e) {
       console.error("Load settings error:", e);
+      setSettingsSaveError(e?.message || "Jurisdiction Monitoring settings could not be loaded safely.");
     }
   };
 
@@ -62,31 +70,30 @@ export default function JurisdictionMonitoringSettings() {
   };
 
   const handleSaveSettings = async () => {
+    if (isSaving) return;
     setIsSaving(true);
+    setSettingsSaveError("");
     try {
-      const existingSettings = await base44.entities.GlobalSettings?.filter?.({ setting_key: 'jurisdiction_monitoring' });
-      
-      if (existingSettings && Array.isArray(existingSettings) && existingSettings.length > 0) {
-        await base44.entities.GlobalSettings?.update?.(existingSettings[0].id, {
-          setting_value: monitoringSettings
-        });
-      } else {
-        await base44.entities.GlobalSettings?.create?.({
-          setting_key: 'jurisdiction_monitoring',
-          setting_value: monitoringSettings
-        });
-      }
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: monitoringSettingRecord,
+        settingKey: 'jurisdiction_monitoring',
+        nextValue: monitoringSettings,
+        label: 'Jurisdiction Monitoring settings',
+      });
+      setMonitoringSettingRecord(saved);
 
       // Update automation schedule
       if (automations.length > 0) {
         const automation = automations[0];
+        void automation;
         // Note: Would need to call a function to update the automation schedule
         console.log("Automation schedule would be updated via admin API");
       }
-
-      setIsSaving(false);
     } catch (e) {
       console.error("Save settings error:", e);
+      setSettingsSaveError(e?.message || "Jurisdiction Monitoring settings changed in another session. Reload before retrying.");
+    } finally {
       setIsSaving(false);
     }
   };
