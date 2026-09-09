@@ -48,6 +48,7 @@ export default function FleetSettings() {
       destination_counts_match_audit: "Destination counts match verified snapshot",
       notification_queue_clean: "Notification queue has no unresolved work",
       operation_receipts_clean: "Operation ledger has no unresolved work",
+      gmail_sender_connected: "Fleet Gmail sender connected",
       bouncie_connection_present: "Bouncie connection present",
       bouncie_reconnect_clear: "Bouncie REST authorization healthy",
       bouncie_webhook_active: "Bouncie webhook active",
