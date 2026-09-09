@@ -19,6 +19,7 @@ import { Plus, Trash2, Save, X, Search, LogOut, AlertTriangle } from "lucide-rea
 import LocalityOfficeEditor from "./LocalityOfficeEditor";
 import OfficeCatalogEditor from "./OfficeCatalogEditor";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -28,7 +29,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const [localities, setLocalities] = useState(initialLocalities || []);
   const [officeTypes, setOfficeTypes] = useState(initialOfficeTypes || []);
   const [officeCatalog, setOfficeCatalog] = useState([]);
-  const [catalogSettingId, setCatalogSettingId] = useState(null);
+  const [catalogSettingRecord, setCatalogSettingRecord] = useState(null);
+  const [officeTypesSettingRecord, setOfficeTypesSettingRecord] = useState(null);
   const [selectedLocality, setSelectedLocality] = useState(null);
   const [editingLocality, setEditingLocality] = useState(null);
   const [newOfficeType, setNewOfficeType] = useState("");
@@ -37,13 +39,22 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const localitySaveInFlightRef = useRef(false);
   const localityDeleteInFlightRef = useRef(new Set());
 
-  // Load office catalog from GlobalSettings
+  // Load the exact GlobalSettings rows that become the concurrency baselines for
+  // Office Catalog and Office Type saves in this dialog.
   useEffect(() => {
     const load = async () => {
-      const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeCatalog' });
-      if (settings.length > 0) {
-        setOfficeCatalog(settings[0].setting_value?.items || []);
-        setCatalogSettingId(settings[0].id);
+      try {
+        const [catalogSetting, typesSetting] = await Promise.all([
+          loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeCatalog', label: 'Permit Office Catalog' }),
+          loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeTypes', label: 'Permit Office Types' }),
+        ]);
+        setCatalogSettingRecord(catalogSetting);
+        setOfficeTypesSettingRecord(typesSetting);
+        if (catalogSetting?.id) setOfficeCatalog(catalogSetting.setting_value?.items || []);
+        if (typesSetting?.id) setOfficeTypes(typesSetting.setting_value?.items || []);
+      } catch (error) {
+        console.error("Could not load Permitting GlobalSettings safely:", error);
+        setLocalitySaveError(error?.message || "Permitting settings could not be loaded safely. Close and reopen before editing them.");
       }
     };
     load();
@@ -292,11 +303,24 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
   const saveOfficeTypes = async (types) => {
     const finalTypes = ensurePermanentTypes(types);
-    setOfficeTypes(finalTypes);
-    const settings = await GlobalSettings.filter({ setting_key: 'permitOfficeTypes' });
-    if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: finalTypes } });
-    else await GlobalSettings.create({ setting_key: 'permitOfficeTypes', setting_value: { items: finalTypes } });
-    setTypesDirty(false);
+    setLocalitySaveError("");
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: officeTypesSettingRecord,
+        settingKey: 'permitOfficeTypes',
+        nextValue: { items: finalTypes },
+        label: 'Permit Office Types',
+      });
+      setOfficeTypes(finalTypes);
+      setOfficeTypesSettingRecord(saved);
+      setTypesDirty(false);
+      return true;
+    } catch (error) {
+      console.error("Permit Office Types save blocked:", error);
+      setLocalitySaveError(error?.message || "Permit Office Types changed in another session. Close and reopen settings before retrying.");
+      return false;
+    }
   };
 
   const addOfficeType = () => {
@@ -308,14 +332,24 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
   // Office Catalog save
   const saveOfficeCatalog = async (newCatalog) => {
-    setOfficeCatalog(newCatalog);
-    if (catalogSettingId) {
-      await GlobalSettings.update(catalogSettingId, { setting_value: { items: newCatalog } });
-    } else {
-      const created = await GlobalSettings.create({ setting_key: 'permitOfficeCatalog', setting_value: { items: newCatalog } });
-      setCatalogSettingId(created.id);
+    setLocalitySaveError("");
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: catalogSettingRecord,
+        settingKey: 'permitOfficeCatalog',
+        nextValue: { items: newCatalog },
+        label: 'Permit Office Catalog',
+      });
+      setOfficeCatalog(newCatalog);
+      setCatalogSettingRecord(saved);
+      setCatalogDirty(false);
+      return true;
+    } catch (error) {
+      console.error("Permit Office Catalog save blocked:", error);
+      setLocalitySaveError(error?.message || "Permit Office Catalog changed in another session. Close and reopen settings before retrying.");
+      return false;
     }
-    setCatalogDirty(false);
   };
 
   // Close-guard handlers
