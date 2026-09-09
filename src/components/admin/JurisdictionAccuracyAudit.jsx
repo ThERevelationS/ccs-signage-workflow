@@ -51,13 +51,18 @@ export default function JurisdictionAccuracyAudit() {
       setSettingsRecord(stored);
       if (stored?.id) setSettings(prev => ({ ...prev, ...(stored.setting_value || {}) }));
       setSettingsSaveError("");
+    } catch (e) {
+      console.error("Accuracy Audit settings load error:", e);
+      setSettingsSaveError(e?.message || "Accuracy Audit settings could not be loaded safely.");
+    }
 
-      // Load audit alerts (flagged by accuracy audit)
+    try {
+      // Alert loading remains independent so a settings conflict cannot hide existing flags.
       const alerts = await base44.entities.RegulationAlert.list('-detected_at', 50);
       const auditOnly = Array.isArray(alerts) ? alerts.filter(a => a.title?.includes('[Accuracy Audit]')) : [];
       setAuditAlerts(auditOnly);
     } catch (e) {
-      console.error("Load error:", e);
+      console.error("Accuracy Audit alert load error:", e);
     }
     setLoading(false);
   };
@@ -192,6 +197,16 @@ export default function JurisdictionAccuracyAudit() {
             <div className="mt-1 text-xs">{alertActionError}</div>
           </div>
           <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setAlertActionError("")}>Dismiss</Button>
+        </div>
+      )}
+
+      {settingsSaveError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Accuracy Audit settings update blocked</div>
+            <div className="mt-1 text-xs">{settingsSaveError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setSettingsSaveError("")}>Dismiss</Button>
         </div>
       )}
 
