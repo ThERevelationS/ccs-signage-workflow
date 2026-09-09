@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, Pencil, Save, X, ChevronDown, ChevronRight, CheckSquare, List, Copy, GripVertical, Check } from "lucide-react";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { saveSettingMapEntryIfUnchanged } from "@/components/sips/templateBuilderPersistence";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 
@@ -52,6 +54,10 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
 
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
+  const [persistenceError, setPersistenceError] = useState("");
+  const settingBaselinesRef = useRef({});
+  const settingSaveQueuesRef = useRef({});
+  const settingSaveBlockedRef = useRef({});
 
   useEffect(() => {
     if (isOpen) loadData();
@@ -59,30 +65,130 @@ export default function MmmTemplateBuilder({ isOpen, onClose, onApplyTemplate, e
 
   const loadData = async () => {
     try {
-      const settings = await GlobalSettings.list();
-      const get = (key) => settings.find(s => s.setting_key === key);
+      const keys = [
+        SETTING_KEYS.productTypes,
+        SETTING_KEYS.productTypeTemplates,
+        'mmmSubTemplateList',
+        SETTING_KEYS.subTemplateItems,
+        SETTING_KEYS.dropdownConditions,
+      ];
+      const records = await Promise.all(keys.map((key) => loadSingleGlobalSetting({
+        entity: GlobalSettings,
+        settingKey: key,
+        label: `MMM setting ${key}`,
+      })));
+      const byKey = Object.fromEntries(keys.map((key, index) => [key, records[index] || null]));
+      settingBaselinesRef.current = byKey;
+      settingSaveBlockedRef.current = {};
 
-      setProductTypes(get(SETTING_KEYS.productTypes)?.setting_value?.items || []);
-      setProductTypeTemplates(get(SETTING_KEYS.productTypeTemplates)?.setting_value || {});
-      setSubTemplates(get('mmmSubTemplateList')?.setting_value?.items || []);
-      setSubTemplateItems(get(SETTING_KEYS.subTemplateItems)?.setting_value || {});
-      setDropdownConditions(get(SETTING_KEYS.dropdownConditions)?.setting_value?.items || []);
-    } catch (error) { console.error("Error loading MMM template data:", error); }
+      setProductTypes(byKey[SETTING_KEYS.productTypes]?.setting_value?.items || []);
+      setProductTypeTemplates(byKey[SETTING_KEYS.productTypeTemplates]?.setting_value || {});
+      setSubTemplates(byKey.mmmSubTemplateList?.setting_value?.items || []);
+      setSubTemplateItems(byKey[SETTING_KEYS.subTemplateItems]?.setting_value || {});
+      setDropdownConditions(byKey[SETTING_KEYS.dropdownConditions]?.setting_value?.items || []);
+      return true;
+    } catch (error) {
+      console.error("Error loading MMM template data:", error);
+      setPersistenceError(error?.message || "MMM template settings could not be loaded safely.");
+      return false;
+    }
   };
 
-  const saveSetting = async (key, value) => {
-    try {
-      const existing = await GlobalSettings.filter({ setting_key: key });
-      if (existing.length > 0) await GlobalSettings.update(existing[0].id, { setting_value: value });
-      else await GlobalSettings.create({ setting_key: key, setting_value: value });
-    } catch (error) { console.error("Error saving setting:", key, error); }
+  const queueSettingOperation = (key, operation) => {
+    const previous = settingSaveQueuesRef.current[key] || Promise.resolve();
+    const queued = previous.then(async () => {
+      if (settingSaveBlockedRef.current[key]) return null;
+      try {
+        return await operation();
+      } catch (error) {
+        settingSaveBlockedRef.current[key] = true;
+        console.error("MMM setting save blocked:", key, error);
+        setPersistenceError(error?.message || `MMM setting ${key} changed in another session. Reload latest before saving again.`);
+        return null;
+      }
+    });
+    settingSaveQueuesRef.current[key] = queued;
+    return queued;
   };
 
-  const saveProductTypes = async (types) => { await saveSetting(SETTING_KEYS.productTypes, { items: types }); setProductTypes(types); };
-  const saveProductTypeTemplates = async (templates) => { await saveSetting(SETTING_KEYS.productTypeTemplates, templates); setProductTypeTemplates(templates); };
-  const saveSubTemplateItems = async (items) => { await saveSetting(SETTING_KEYS.subTemplateItems, items); setSubTemplateItems(items); };
-  const saveDropdownConditions = async (items) => { await saveSetting(SETTING_KEYS.dropdownConditions, { items }); setDropdownConditions(items); };
-  const saveSubTemplateList = async (list) => { await saveSetting('mmmSubTemplateList', { items: list }); setSubTemplates(list); };
+  const saveSetting = (key, value) => queueSettingOperation(key, async () => {
+    const saved = await saveGlobalSettingValueIfUnchanged({
+      entity: GlobalSettings,
+      loadedRecord: settingBaselinesRef.current[key] || null,
+      settingKey: key,
+      nextValue: value,
+      label: `MMM setting ${key}`,
+    });
+    settingBaselinesRef.current[key] = saved;
+    return saved;
+  });
+
+  const saveMapEntry = (key, currentMap, entryKey, nextEntry, { remove = false } = {}) => queueSettingOperation(key, async () => {
+    let baseline = settingBaselinesRef.current[key] || null;
+    if (!baseline?.id) {
+      const nextMap = { ...(currentMap || {}) };
+      if (remove) delete nextMap[entryKey];
+      else nextMap[entryKey] = nextEntry;
+      const created = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: null,
+        settingKey: key,
+        nextValue: nextMap,
+        label: `MMM setting ${key}`,
+      });
+      settingBaselinesRef.current[key] = created;
+      return created;
+    }
+
+    const saved = await saveSettingMapEntryIfUnchanged({
+      entity: GlobalSettings,
+      settingRecord: baseline,
+      entryKey,
+      expectedEntry: currentMap?.[entryKey],
+      nextEntry,
+      remove,
+      label: `MMM ${key} entry ${entryKey}`,
+    });
+    settingBaselinesRef.current[key] = saved;
+    return saved;
+  });
+
+  const saveProductTypes = async (types) => {
+    const saved = await saveSetting(SETTING_KEYS.productTypes, { items: types });
+    if (!saved) return false;
+    setProductTypes(saved.setting_value?.items || types);
+    return true;
+  };
+  const saveProductTypeTemplates = async (templates) => {
+    const saved = await saveSetting(SETTING_KEYS.productTypeTemplates, templates);
+    if (!saved) return false;
+    setProductTypeTemplates(saved.setting_value || templates);
+    return true;
+  };
+  const saveSubTemplateMapEntry = async (entryKey, nextEntry, options = {}) => {
+    const saved = await saveMapEntry(SETTING_KEYS.subTemplateItems, subTemplateItems, entryKey, nextEntry, options);
+    if (!saved) return false;
+    setSubTemplateItems(saved.setting_value || {});
+    return true;
+  };
+  const saveProductTemplateMapEntry = async (entryKey, nextEntry, options = {}) => {
+    const saved = await saveMapEntry(SETTING_KEYS.productTypeTemplates, productTypeTemplates, entryKey, nextEntry, options);
+    if (!saved) return false;
+    setProductTypeTemplates(saved.setting_value || {});
+    return true;
+  };
+  const saveDropdownConditions = async (items) => {
+    const saved = await saveSetting(SETTING_KEYS.dropdownConditions, { items });
+    if (!saved) return false;
+    setDropdownConditions(saved.setting_value?.items || items);
+    return true;
+  };
+  const saveSubTemplateList = async (list) => {
+    const saved = await saveSetting('mmmSubTemplateList', { items: list });
+    if (!saved) return false;
+    setSubTemplates(saved.setting_value?.items || list);
+    return true;
+  };
 
   const getExistingProductNames = () => { const names = new Set(); existingChecklist.forEach(item => { if (item.product_name) names.add(item.product_name); }); return names; };
 
