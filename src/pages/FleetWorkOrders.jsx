@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
@@ -14,6 +16,8 @@ export default function FleetWorkOrders() {
   const [fluids, setFluids] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("active");
+  const [priority, setPriority] = useState("all");
+  const [equipmentFilter, setEquipmentFilter] = useState("all");
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
@@ -41,8 +45,20 @@ export default function FleetWorkOrders() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") !== "1") return;
+    const equipmentId = params.get("equipment") || "";
+    setDialog({ mode: "create", workOrder: equipmentId ? { equipment_id: equipmentId } : null });
+  }, []);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
+  const summary = useMemo(() => ({
+    active: orders.filter(w => !["completed", "cancelled"].includes(w.status)).length,
+    highCritical: orders.filter(w => !["completed", "cancelled"].includes(w.status) && ["high", "critical"].includes(w.priority)).length,
+    unassigned: orders.filter(w => !["completed", "cancelled"].includes(w.status) && !String(w.assigned_to || "").trim()).length,
+    completed: orders.filter(w => w.status === "completed").length,
+  }), [orders]);
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders.filter(w => {
@@ -50,10 +66,12 @@ export default function FleetWorkOrders() {
       if (status === "active" && !active) return false;
       if (status === "completed" && w.status !== "completed") return false;
       if (status === "cancelled" && w.status !== "cancelled") return false;
+      if (priority !== "all" && w.priority !== priority) return false;
+      if (equipmentFilter !== "all" && w.equipment_id !== equipmentFilter) return false;
       if (!q) return true;
       return [w.work_order_number, w.title, w.description, w.assigned_to, equipmentNames[w.equipment_id], w.corrective_action].some(v => String(v || "").toLowerCase().includes(q));
     });
-  }, [orders, search, status, equipmentNames]);
+  }, [orders, search, status, priority, equipmentFilter, equipmentNames]);
 
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
@@ -92,12 +110,21 @@ export default function FleetWorkOrders() {
           <button onClick={() => setDialog({ mode: "create", workOrder: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Fleet Work Order</button>
         </div>
 
-        <div className="rounded-lg border border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-200 px-3 py-2 text-xs">Operational writes use the Fleet-only server endpoint and durable idempotency receipts. Email notifications remain disabled until the automation phase is separately validated.</div>
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet maintenance is live in CCS. Creates/completions use Fleet-only server actions, durable idempotency receipts, inventory/history updates, recurring schedule advancement, and queued notifications.</div>
         {actionError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search work orders..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
-          <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Summary label="Active" value={summary.active} />
+          <Summary label="High / Critical" value={summary.highCritical} attention={summary.highCritical > 0} />
+          <Summary label="Unassigned" value={summary.unassigned} attention={summary.unassigned > 0} />
+          <Summary label="Completed" value={summary.completed} />
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_160px_160px_240px] gap-3">
+          <div className="relative"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search work orders..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
+          <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All statuses</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+          <select value={priority} onChange={e => setPriority(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All priorities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+          <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
         </div>
 
         {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : (
@@ -108,7 +135,7 @@ export default function FleetWorkOrders() {
               return <div key={w.id} className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
                 <button onClick={() => setExpanded(isOpen ? null : w.id)} className="w-full text-left p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-slate-800/40">
                   <ClipboardList className="w-5 h-5 mt-0.5 text-indigo-500 shrink-0" />
-                  <div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-gray-900 dark:text-slate-100">{w.work_order_number}</span><span className="text-gray-600 dark:text-slate-300">{w.title}</span><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 capitalize">{pretty(w.status)}</span><span className="text-xs text-gray-500 capitalize">{pretty(w.priority)} priority</span></div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{equipmentNames[w.equipment_id] || (w.source_equipment_id ? "Unresolved equipment" : "No equipment")} · {w.assigned_to || "Unassigned"}{photos.length ? ` · ${photos.length} photo${photos.length === 1 ? "" : "s"}` : ""}</div></div>
+                  <div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-gray-900 dark:text-slate-100">{w.work_order_number}</span><span className="text-gray-600 dark:text-slate-300">{w.title}</span><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 capitalize">{pretty(w.status)}</span><span className={`text-xs capitalize ${["critical","high"].includes(w.priority) ? "font-semibold text-red-600 dark:text-red-300" : "text-gray-500"}`}>{pretty(w.priority)} priority</span></div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{w.equipment_id ? <Link onClick={e => e.stopPropagation()} to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(w.equipment_id)}`} className="text-indigo-600 dark:text-indigo-300 hover:underline">{equipmentNames[w.equipment_id] || "Equipment"}</Link> : (w.source_equipment_id ? "Unresolved equipment" : "No equipment")} · {w.assigned_to || "Unassigned"}{photos.length ? ` · ${photos.length} photo${photos.length === 1 ? "" : "s"}` : ""}</div></div>
                   {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {isOpen && <div className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 text-sm">
