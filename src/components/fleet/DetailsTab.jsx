@@ -1,26 +1,20 @@
-import React, { useState } from "react";
-import { Car } from "lucide-react";
+import React from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Car, ArrowRight, ExternalLink } from "lucide-react";
 import { makeColor } from "./fleetHelpers";
 
-export default function DetailsTab({ vehicle }) {
-  const [editingVehicle, setEditingVehicle] = useState(false);
-  const [editingInsurance, setEditingInsurance] = useState(false);
-  const [vehicleEdits, setVehicleEdits] = useState({});
-  const [insuranceEdits, setInsuranceEdits] = useState({});
-
+export default function DetailsTab({ vehicle, fleetEquipment }) {
   const stats = vehicle?.stats || {};
   const model = vehicle?.model || {};
   const loc = stats.location || {};
+  const maintenanceUrl = fleetEquipment ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetEquipment");
 
   return (
     <div className="p-4">
-      {/* Vehicle header */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center relative" style={{ background: makeColor(model.make) }}>
+        <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: makeColor(model.make) }}>
           <Car className="w-10 h-10 text-white" />
-          <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow">
-            <span className="text-gray-500 text-xs font-bold">···</span>
-          </button>
         </div>
         <div className="mt-2 text-center">
           <div className="font-bold text-gray-900">{vehicle?.nickName || model.name || "Vehicle"}</div>
@@ -28,81 +22,51 @@ export default function DetailsTab({ vehicle }) {
         </div>
       </div>
 
-      {/* Daily Summary */}
-      <Section title="Daily Summary">
+      <Section title="Current Bouncie State">
         <Field label="Current Location" value={loc.address || "—"} full />
         <div className="grid grid-cols-2 gap-x-4">
-          <Field label="Distance" value="—" />
-          <Field label="Duration" value="—" />
-          <Field label="Idle Time" value="—" />
-          <Field label="Max Speed" value="—" />
+          <Field label="Odometer" value={stats.odometer != null ? `${Math.round(stats.odometer).toLocaleString()} miles` : "—"} />
+          <Field label="Fuel" value={stats.fuelLevel != null ? `${Math.round(stats.fuelLevel)}%` : "—"} />
+          <Field label="Trip State" value={stats.isRunning ? "Running" : "Parked"} />
+          <Field label="Timezone" value={stats.localTimeZone || "—"} />
         </div>
       </Section>
 
-      {/* Vehicle Summary */}
-      <Section title="Vehicle Summary" onEdit={() => setEditingVehicle(!editingVehicle)}>
+      <Section title="Bouncie Vehicle Identity">
         <div className="grid grid-cols-2 gap-x-4">
-          <Field label="Nickname" value={vehicle?.nickName || "—"} editing={editingVehicle} onChange={(v) => setVehicleEdits(s => ({ ...s, nickName: v }))} />
-          <Field label="Vehicle" value={`${model.year || ""} ${model.make || ""} ${model.name || ""}`} />
-          <Field label="Odometer" value={stats.odometer != null ? `${Math.round(stats.odometer).toLocaleString()} miles` : "—"} />
-          <Field label="License Plate" value={vehicleEdits.licensePlate || vehicle?.licensePlate || "—"} editing={editingVehicle} onChange={(v) => setVehicleEdits(s => ({ ...s, licensePlate: v }))} />
+          <Field label="Nickname" value={vehicle?.nickName || "—"} />
+          <Field label="Vehicle" value={`${model.year || ""} ${model.make || ""} ${model.name || ""}`.trim() || "—"} />
+          <Field label="License Plate" value={vehicle?.licensePlate || "—"} />
           <Field label="VIN" value={vehicle?.vin || "—"} />
           <Field label="Device IMEI" value={vehicle?.imei || "—"} />
           <Field label="Engine" value={vehicle?.standardEngine || "—"} full />
           <Field label="Body Style" value={vehicle?.bodyStyle || "—"} />
         </div>
+        <div className="mt-3 text-[11px] text-gray-500">Bouncie owns tracking identity, telemetry, trips, and device state. These values are intentionally read-only in CCS.</div>
       </Section>
 
-      {/* Insurance Summary */}
-      <Section title="Insurance Summary" onEdit={() => setEditingInsurance(!editingInsurance)}>
-        <div className="grid grid-cols-2 gap-x-4">
-          <Field label="Insurance Provider" value={insuranceEdits.provider || vehicle?.insuranceProvider || "ADD INSURANCE"} placeholder editing={editingInsurance} onChange={(v) => setInsuranceEdits(s => ({ ...s, provider: v }))} />
-          <Field label="Agent Name" value={insuranceEdits.agentName || vehicle?.insuranceAgent || "ADD AGENT"} placeholder editing={editingInsurance} onChange={(v) => setInsuranceEdits(s => ({ ...s, agentName: v }))} />
-          <Field label="Policy Number" value={insuranceEdits.policyNumber || vehicle?.insurancePolicy || "ADD POLICY"} placeholder editing={editingInsurance} onChange={(v) => setInsuranceEdits(s => ({ ...s, policyNumber: v }))} />
-          <Field label="Agent Contact" value={insuranceEdits.agentContact || vehicle?.insuranceContact || "ADD AGENT"} placeholder editing={editingInsurance} onChange={(v) => setInsuranceEdits(s => ({ ...s, agentContact: v }))} />
-          <Field label="Effective Date" value={vehicle?.insuranceEffective || "—"} />
-          <Field label="Expiration Date" value={vehicle?.insuranceExpiration || "—"} />
-          <Field label="Reminder" value={vehicle?.insuranceReminder || "None"} full />
-        </div>
+      <Section title="CCS Fleet Maintenance">
+        {fleetEquipment ? <>
+          <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3">
+            <div className="font-semibold text-sm text-gray-900">{fleetEquipment.name}</div>
+            <div className="text-xs text-gray-600 mt-1 capitalize">Status: {String(fleetEquipment.status || "unknown").replaceAll("_", " ")}</div>
+          </div>
+          <Link to={maintenanceUrl} className="mt-3 w-full py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm inline-flex items-center justify-center gap-2">Open maintenance & CCS metadata <ArrowRight className="w-4 h-4" /></Link>
+        </> : <>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">No exact FleetEquipment VIN match exists for this Bouncie vehicle. CCS will not guess a maintenance record.</div>
+          <Link to={maintenanceUrl} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-amber-700">Review Fleet equipment <ArrowRight className="w-4 h-4" /></Link>
+        </>}
       </Section>
 
-      <button className="w-full py-3 rounded-lg text-white font-semibold text-sm mt-4" style={{ background: "#2670ff" }}>
-        Add User
-      </button>
+      <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer" className="w-full py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm inline-flex items-center justify-center gap-2">Manage Bouncie-owned vehicle settings <ExternalLink className="w-4 h-4" /></a>
     </div>
   );
 }
 
-function Section({ title, onEdit, children }) {
-  return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-bold uppercase tracking-wide" style={{ color: "#495057" }}>{title}</h3>
-        {onEdit && (
-          <button onClick={onEdit} className="text-xs font-semibold" style={{ color: "#2b73ff" }}>EDIT</button>
-        )}
-      </div>
-      <div className="border border-gray-200 rounded p-3">{children}</div>
-    </div>
-  );
+function Section({ title, children }) {
+  return <div className="mb-6"><h3 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "#495057" }}>{title}</h3><div className="border border-gray-200 rounded p-3">{children}</div></div>;
 }
 
-function Field({ label, value, full, editing, onChange, placeholder }) {
-  return (
-    <div className={`py-2 ${full ? "col-span-2" : ""}`}>
-      <div className="text-[10px] font-semibold uppercase text-gray-400 mb-1">{label}</div>
-      {editing ? (
-        <input
-          value={value && value !== "ADD INSURANCE" && value !== "ADD AGENT" && value !== "ADD POLICY" ? value : ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ? `Add ${label.toLowerCase()}` : ""}
-          className="w-full text-sm border border-gray-200 rounded px-2 py-1 outline-none focus:border-blue-400"
-        />
-      ) : (
-        <div className={`text-sm ${placeholder ? "font-semibold" : "text-gray-800"}`} style={placeholder ? { color: "#2b73ff" } : {}}>
-          {value}
-        </div>
-      )}
-    </div>
-  );
+function Field({ label, value, full }) {
+  return <div className={`py-2 ${full ? "col-span-2" : ""}`}><div className="text-[10px] font-semibold uppercase text-gray-400 mb-1">{label}</div><div className="text-sm text-gray-800 break-words">{value}</div></div>;
 }
