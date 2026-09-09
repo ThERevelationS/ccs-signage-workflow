@@ -310,14 +310,19 @@ export default function PTOManagement() {
   };
 
   const assignPolicyToUser = async (userEmail, policyId) => {
+    if (ptoSaving) return;
+    setPtoError("");
+    setPtoSaving(true);
     try {
       const policy = policies.find(p => p.id === policyId);
       const user = users.find(u => u.email === userEmail);
+      if (!policy?.id) throw new Error("The selected PTO policy is no longer available. Reload before assigning it.");
       
       // Check if user already has a balance record
       const existingBalance = userBalances.find(b => b.user_email === userEmail);
       
-      // Initialize balances from policy
+      // Preserve the existing assignment behavior: assigning/reassigning a policy
+      // resets balances to that policy's configured starting values.
       const initialBalances = (policy.time_off_types || []).map(type => ({
         type_id: type.id,
         type_name: type.name,
@@ -328,29 +333,32 @@ export default function PTOManagement() {
         carryover_hours: 0,
         last_accrual_date: new Date().toISOString()
       }));
+
+      const balanceData = {
+        user_email: userEmail,
+        user_name: user?.full_name || userEmail,
+        policy_id: policyId,
+        hire_date: existingBalance?.hire_date || new Date().toISOString().split('T')[0],
+        balances: initialBalances,
+        floating_holidays_remaining: policy.floating_holidays_per_year || 0
+      };
       
-      if (existingBalance) {
-        await UserPTOBalance.update(existingBalance.id, {
-          policy_id: policyId,
-          balances: initialBalances,
-          floating_holidays_remaining: policy.floating_holidays_per_year || 0
-        });
-      } else {
-        await UserPTOBalance.create({
-          user_email: userEmail,
-          user_name: user?.full_name || userEmail,
-          policy_id: policyId,
-          hire_date: new Date().toISOString().split('T')[0],
-          balances: initialBalances,
-          floating_holidays_remaining: policy.floating_holidays_per_year || 0
-        });
-      }
+      await assignPTOBalanceIfUnchanged({
+        entity: UserPTOBalance,
+        existingBalance,
+        data: balanceData,
+        label: `PTO balance for ${user?.full_name || userEmail}`,
+      });
       
       setShowAssignDialog(false);
       setSelectedUser(null);
-      loadData();
+      await loadData();
     } catch (err) {
       console.error("Error assigning policy:", err);
+      setPtoError(err?.message || "The PTO policy assignment could not be saved safely.");
+      await loadData();
+    } finally {
+      setPtoSaving(false);
     }
   };
 
