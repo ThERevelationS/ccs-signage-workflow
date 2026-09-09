@@ -14,7 +14,12 @@ export async function assertPendingImportSnapshotCurrent({
     throw new Error(`${label} could not verify its loaded version.`);
   }
 
-  const current = await entity.get(id).catch(() => null);
+  let current;
+  try {
+    current = await entity.get(id);
+  } catch (error) {
+    throw new Error(`${label} could not be re-read safely. ${error?.message || "Refresh Pending Imports before resolving it."}`);
+  }
   if (!current?.id) throw new Error(`${label} no longer exists. Refresh Pending Imports.`);
   if (current.status !== "pending") {
     throw new Error(`${label} was already resolved in another session (${current.status || "unknown"}). Refresh Pending Imports.`);
