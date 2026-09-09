@@ -37,6 +37,7 @@ export default function Permitting() {
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
+  const localityCreateInFlightRef = useRef(new Set());
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -626,6 +627,18 @@ export default function Permitting() {
             </div>
           </div>
         </div>
+
+        {permitLineEditError && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">Permit line update blocked</div>
+              <div className="mt-1 text-xs">{permitLineEditError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={async () => { setPermitLineEditError(""); await loadData(true); }} className="shrink-0 border-red-300 bg-white text-red-800">
+              Reload latest
+            </Button>
+          </div>
+        )}
 
         {workOrderEditError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
