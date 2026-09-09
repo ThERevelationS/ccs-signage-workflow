@@ -10,6 +10,8 @@ export default function FleetSettings() {
   const [audit, setAudit] = useState(null);
   const [serverStatus, setServerStatus] = useState(null);
   const [checking, setChecking] = useState(false);
+  const [actionBusy, setActionBusy] = useState("");
+  const [actionError, setActionError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +83,27 @@ export default function FleetSettings() {
     }
   };
 
+  const runCutoverAction = async (action) => {
+    setActionBusy(action);
+    setActionError("");
+    try {
+      const payload = action === "confirm_source_freeze"
+        ? {
+            action,
+            confirmation: "FLEETMASTER_FROZEN_AND_DELTA_CHECKED",
+            notes: "FleetMaster source write paths and scheduled automation were frozen after a clean final delta check on 2026-09-09.",
+          }
+        : { action };
+      const { data } = await base44.functions.invoke("fleetCutoverControl", payload);
+      if (data?.error) throw new Error(data.error);
+      await runServerCheck();
+    } catch (error) {
+      setActionError(error?.message || "Cutover action failed.");
+    } finally {
+      setActionBusy("");
+    }
+  };
+
   if (loading) return <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
   if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
 
@@ -94,6 +117,19 @@ export default function FleetSettings() {
     <div className={`rounded-xl border p-4 ${blocked ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800" : "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800"}`}>
       <div className={`font-semibold ${blocked ? "text-amber-900 dark:text-amber-100" : "text-emerald-900 dark:text-emerald-100"}`}>{blocked ? "Cutover has blockers" : "Ready for controlled cutover"}</div>
       <div className="mt-3 space-y-2">{readiness.map(item => <div key={item.label} className="flex items-start gap-2 text-sm">{item.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"/> : <XCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0"/>}<div><div className="font-medium text-gray-900 dark:text-slate-100">{item.label}</div><div className="text-xs text-gray-500 dark:text-slate-400 break-all">{item.detail}</div></div></div>)}</div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Cutover Controls</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Admin-only controls. Every action is validated server-side and activation order is enforced.</p></div><ShieldCheck className="w-5 h-5 text-gray-400 shrink-0"/></div>
+      {actionError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">{actionError}</div>}
+      <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <button onClick={()=>runCutoverAction("probe_bouncie")} disabled={!!actionBusy} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{actionBusy==="probe_bouncie"?"Checking…":"Run live Bouncie probe"}</button>
+        <button onClick={()=>runCutoverAction("confirm_source_freeze")} disabled={!!actionBusy || !!gates.source_freeze_confirmed} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.source_freeze_confirmed?"Source freeze confirmed":actionBusy==="confirm_source_freeze"?"Confirming…":"Confirm source freeze"}</button>
+        <button onClick={()=>runCutoverAction("enable_notifications")} disabled={!!actionBusy || !gates.source_freeze_confirmed || !!gates.notifications_enabled} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.notifications_enabled?"Notifications ON":actionBusy==="enable_notifications"?"Enabling…":"Enable notifications"}</button>
+        <button onClick={()=>runCutoverAction("enable_scheduled_reminders")} disabled={!!actionBusy || !gates.notifications_enabled || !!gates.scheduled_reminders_enabled} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.scheduled_reminders_enabled?"Scheduled reminders ON":actionBusy==="enable_scheduled_reminders"?"Enabling…":"Enable scheduled reminders"}</button>
+        <button onClick={()=>runCutoverAction("enable_maintenance_generation")} disabled={!!actionBusy || !gates.scheduled_reminders_enabled || !!gates.maintenance_generation_enabled} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.maintenance_generation_enabled?"Maintenance generation ON":actionBusy==="enable_maintenance_generation"?"Enabling…":"Enable maintenance generation"}</button>
+        <button onClick={()=>runCutoverAction("enable_public_reporting")} disabled={!!actionBusy || !gates.maintenance_generation_enabled || !!gates.public_reporting_enabled} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.public_reporting_enabled?"Public reporting ON":actionBusy==="enable_public_reporting"?"Enabling…":"Enable public reporting"}</button>
+      </div>
     </div>
 
     {connection?.needs_reconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page before cutover.</p></div></div>}
