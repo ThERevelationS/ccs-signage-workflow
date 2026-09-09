@@ -373,24 +373,67 @@ export default function Permitting() {
       }];
     }
 
-    const created = [];
-    for (const office of officesToCreate) {
-      const newItem = await PermitLineItem.create({
-        work_order_id: wo.id,
-        work_order_title: wo.client_name || "",
-        work_order_description: wo.description || "",
-        row_name: office.name,
-        office_type: office.office_type,
-        office_types: office.office_types,
-        locality_id: locality.id,
-        locality_name: locality.name || "",
-        status: "active",
-        steps: office.steps,
-        priority: 0
+    if (localityCreateInFlightRef.current.has(workOrderId)) return;
+    localityCreateInFlightRef.current.add(workOrderId);
+    setPermitLineEditError("");
+
+    try {
+      const existingLines = await loadAllEntityRows({
+        entity: PermitLineItem,
+        query: { work_order_id: wo.id },
+        sort: "created_date",
+        label: `Permit lines for ${wo.title || wo.client_name || wo.id}`,
       });
-      created.push(newItem);
+      if (existingLines.length > 0) {
+        for (const existingLine of existingLines) lineItemBaselinesRef.current.set(existingLine.id, existingLine);
+        setLineItems(prev => {
+          const byId = new Map(prev.map(line => [line.id, line]));
+          existingLines.forEach(line => byId.set(line.id, line));
+          return [...byId.values()];
+        });
+        setPermitLineEditError("Permit lines already exist for this Work Order, likely from another session or an earlier partial create. The existing lines were loaded instead of creating duplicates.");
+        return;
+      }
+
+      for (const office of officesToCreate) {
+        const newItem = await PermitLineItem.create({
+          work_order_id: wo.id,
+          work_order_title: wo.client_name || "",
+          work_order_description: wo.description || "",
+          row_name: office.name,
+          office_type: office.office_type,
+          office_types: office.office_types,
+          locality_id: locality.id,
+          locality_name: locality.name || "",
+          status: "active",
+          steps: office.steps,
+          priority: 0
+        });
+        lineItemBaselinesRef.current.set(newItem.id, newItem);
+        setLineItems(prev => prev.some(line => line.id === newItem.id) ? prev : [...prev, newItem]);
+      }
+    } catch (error) {
+      console.error("Permit locality line creation failed:", error);
+      const latestLines = await loadAllEntityRows({
+        entity: PermitLineItem,
+        query: { work_order_id: wo.id },
+        sort: "created_date",
+        label: `Permit line create recovery for ${wo.title || wo.client_name || wo.id}`,
+      }).catch(() => null);
+      if (Array.isArray(latestLines) && latestLines.length > 0) {
+        latestLines.forEach(line => lineItemBaselinesRef.current.set(line.id, line));
+        setLineItems(prev => {
+          const byId = new Map(prev.map(line => [line.id, line]));
+          latestLines.forEach(line => byId.set(line.id, line));
+          return [...byId.values()];
+        });
+        setPermitLineEditError(`${error?.message || "Permit lines could not all be created."} ${latestLines.length} Permit line${latestLines.length === 1 ? " now exists" : "s now exist"} for this Work Order. Reload and review them before retrying so a partial or response-loss create is not duplicated.`);
+      } else {
+        setPermitLineEditError(error?.message || "Permit lines could not be created. Reload latest data before retrying.");
+      }
+    } finally {
+      localityCreateInFlightRef.current.delete(workOrderId);
     }
-    setLineItems(prev => [...prev, ...created]);
   }, [localities, workOrders]);
 
   // Update locality on an existing line — replaces steps using the office this line represents
