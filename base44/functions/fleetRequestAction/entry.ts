@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         estimated_delivery_date: body?.estimated_delivery_date || existing.estimated_delivery_date || null,
         unit_cost: body?.unit_cost == null || body?.unit_cost === '' ? existing.unit_cost : num(body.unit_cost),
       });
-      return Response.json({ success: true, request: updated, notifications_enabled: false });
+      return Response.json({ success: true, request: updated });
     }
 
     if (action === 'receive') {
