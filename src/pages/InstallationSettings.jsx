@@ -10,7 +10,7 @@ import BaseTimesSizeCard from "@/components/channelLetterInstall/BaseTimesSizeCa
 import RacewayTimesCard from "@/components/channelLetterInstall/RacewayTimesCard";
 import { HEIGHT_BUCKETS, ENV_KEYS, qualifiedKey, qualifiedNotesKey } from "@/components/channelLetterInstall/installSizeRates";
 import { WALL_MATERIALS } from "@/components/channelLetterInstall/wallMaterials";
-import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
+import { createSettingRowIfAbsent, preflightSettingsRows, saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 
 const SIZE_DEFS = [
   { key: "extra_small", label: "XS", range: '2"–8"' },
@@ -143,34 +143,34 @@ export default function InstallationSettings() {
 
       let created = 0;
       let updated = 0;
-      for (const row of existingDirtyRows) {
-        await SettingsEntity.update(row.id, { setting_value: String(values[row.setting_name] ?? "") });
-        updated += 1;
+      if (existingDirtyRows.length) {
+        const existingSave = await saveSettingsRowsSafely({
+          SettingsEntity,
+          rows: existingDirtyRows,
+          values,
+          originalValues: original,
+        });
+        updated = existingSave.changedCount;
       }
+
       for (const name of missingDirtyNames) {
         const setting_value = String(values[name] ?? "");
-        const createdRow = await SettingsEntity.create({
-          setting_name: name,
-          setting_value,
-          setting_type: settingType(name),
-          category: categoryForVirtual(name),
-          description: name.endsWith("__notes") ? "Installation rate notes" : "Installation time override by environment and height",
+        const result = await createSettingRowIfAbsent({
+          SettingsEntity,
+          data: {
+            setting_name: name,
+            setting_value,
+            setting_type: settingType(name),
+            category: categoryForVirtual(name),
+            description: name.endsWith("__notes") ? "Installation rate notes" : "Installation time override by environment and height",
+          },
+          label: `Installation Setting ${name}`,
         });
-        created += 1;
 
-        // Practical race collapse: if another admin created the same qualified
-        // setting between preflight and our create, keep the deterministic oldest
-        // row and remove only this request's newly-created losing row.
-        const sameName = (await SettingsEntity.list())
-          .filter((row) => row.setting_name === name)
-          .sort((a, b) => {
-            const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
-            return dateCompare || String(a.id).localeCompare(String(b.id));
-          });
-        if (sameName.length > 1 && sameName[0]?.id !== createdRow?.id) {
-          await SettingsEntity.delete(createdRow.id);
-          throw new Error(`The Installation Setting ${name} was created concurrently in another session. This save's duplicate was discarded; reload and review the canonical stored value before saving again.`);
+        if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
+          throw new Error(`The Installation Setting ${name} was created concurrently in another session. Reload and review the canonical stored value before saving again.`);
         }
+        created += 1;
       }
       const refreshed = await SettingsEntity.list();
       const relevant = (refreshed || []).filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
