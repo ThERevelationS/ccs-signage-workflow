@@ -277,8 +277,15 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allW
 
   const handleReject = async () => {
     setRejectLoading(true);
-    await onReject(item);
-    setRejectLoading(false);
+    setMergeError("");
+    try {
+      await onReject(item);
+    } catch (error) {
+      console.error("Pending import rejection failed:", error);
+      setMergeError(error?.message || "This Pending Import changed while it was open. Refresh and try again.");
+    } finally {
+      setRejectLoading(false);
+    }
   };
 
   const handleFormSave = async (formData) => {
@@ -424,7 +431,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allW
         {/* Actions */}
         {mergeError && (
           <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
-            <div className="font-medium">Merge blocked</div>
+            <div className="font-medium">Resolution blocked</div>
             <div className="mt-1">{mergeError}</div>
             <button type="button" onClick={async () => { await onRefresh?.(); setMergeError(""); }} className="mt-1 underline hover:no-underline">
               Refresh latest data
