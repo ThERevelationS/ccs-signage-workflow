@@ -31,6 +31,7 @@ import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDia
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -86,6 +87,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     gradientDays: 14
   });
   const [globalSettingsLoaded, setGlobalSettingsLoaded] = useState(false);
+  const [globalSettingsError, setGlobalSettingsError] = useState("");
+  const globalSettingsBaselinesRef = useRef({});
+  const globalSettingsSaveQueuesRef = useRef({});
+  const globalSettingsSaveBlockedRef = useRef({});
 
   // Use the column sorting hook with user-specific storage
   const { 
@@ -153,58 +158,107 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     } catch {}
   };
 
+  const normalizeTaskDescriptionItems = (items = []) => items.map(item => ({
+    text: item.text || item,
+    page: item.page || "",
+    color: item.color || "",
+    opacity: item.opacity ?? 100,
+    markOut: item.markOut ?? false,
+    wip: item.wip ?? false
+  }));
+
   const loadGlobalSettings = async () => {
     try {
-      const settings = await GlobalSettings.list();
-      
-      const leadSourcesSetting = settings.find(s => s.setting_key === 'salesLeadSources');
-      if (leadSourcesSetting?.setting_value?.items) {
-        setLeadSources(leadSourcesSetting.setting_value.items);
-      }
-      
-      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
-      if (taskDescSetting?.setting_value?.items) {
-        // Migration: ensure all items have required fields
-        const items = taskDescSetting.setting_value.items.map(item => ({
-          text: item.text || item,
-          page: item.page || "",
-          color: item.color || "",
-          opacity: item.opacity ?? 100,
-          markOut: item.markOut ?? false,
-          wip: item.wip ?? false
-        }));
-        setTaskDescriptions(items);
-      }
-      
-      const gradientSetting = settings.find(s => s.setting_key === 'deadlineGradientSettings');
-      if (gradientSetting?.setting_value) {
-        setDeadlineGradientSettings(gradientSetting.setting_value);
-      }
+      const [leadSourcesSetting, taskDescSetting, gradientSetting, defaultSortSetting] = await Promise.all([
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesLeadSources', label: 'Sales lead sources' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'deadlineGradientSettings', label: 'Deadline gradient settings' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesPipelineDefaultSort', label: 'Sales Pipeline default sort' }),
+      ]);
+
+      globalSettingsBaselinesRef.current = {
+        salesLeadSources: leadSourcesSetting,
+        salesTaskDescriptions: taskDescSetting,
+        deadlineGradientSettings: gradientSetting,
+      };
+      globalSettingsSaveBlockedRef.current = {};
+
+      const loadedLeadSources = leadSourcesSetting?.setting_value?.items || ["Walk-in", "Phone", "Email", "Referral", "Website"];
+      setLeadSources(loadedLeadSources);
+
+      const loadedTaskDescriptions = taskDescSetting?.setting_value?.items
+        ? normalizeTaskDescriptionItems(taskDescSetting.setting_value.items)
+        : [
+          { text: "Prospect Initiation (Gather Info, Initial Discuss ...)", page: "", color: "", opacity: 100, markOut: false },
+          { text: "Complete Estimate for Review", page: "Estimating", color: "", opacity: 100, markOut: false },
+          { text: "WIP - Prepare/Submit Permit", page: "Permitting", color: "", opacity: 100, markOut: false },
+          { text: "WIP - Production/Fabrication", page: "Production", color: "", opacity: 100, markOut: false },
+          { text: "Completed Sale", page: "", color: "#f1f5f9", opacity: 60, markOut: true },
+          { text: "Lost", page: "", color: "#fef2f2", opacity: 60, markOut: true },
+        ];
+      setTaskDescriptions(loadedTaskDescriptions);
+
+      const loadedGradient = gradientSetting?.setting_value || {
+        enabled: true,
+        baseColor: "#ffffff",
+        dueColor: "#fecaca",
+        overdueColor: "#ef4444",
+        gradientDays: 14
+      };
+      setDeadlineGradientSettings(loadedGradient);
+
+      setEditDialog(prev => {
+        if (!prev.open) return prev;
+        if (prev.storageKey === 'salesLeadSources') return { ...prev, items: loadedLeadSources };
+        if (prev.storageKey === 'salesTaskDescriptions') return { ...prev, items: loadedTaskDescriptions };
+        return prev;
+      });
 
       // Load default sort setting and apply if user has no custom sort
-      const defaultSortSetting = settings.find(s => s.setting_key === 'salesPipelineDefaultSort');
       if (defaultSortSetting?.setting_value?.column && !sortConfig.key) {
         handleColumnSort(defaultSortSetting.setting_value.column, defaultSortSetting.setting_value.direction || 'asc');
       }
-      
       setGlobalSettingsLoaded(true);
+      return true;
     } catch (error) {
       console.error("Error loading global settings:", error);
+      setGlobalSettingsError(error?.message || "Sales Pipeline settings could not be loaded safely.");
       setGlobalSettingsLoaded(true);
+      return false;
     }
   };
 
-  const saveGlobalSetting = async (key, value) => {
-    try {
-      const settings = await GlobalSettings.filter({ setting_key: key });
-      if (settings.length > 0) {
-        await GlobalSettings.update(settings[0].id, { setting_value: value });
-      } else {
-        await GlobalSettings.create({ setting_key: key, setting_value: value });
+  const saveGlobalSetting = (key, value) => {
+    const previous = globalSettingsSaveQueuesRef.current[key] || Promise.resolve();
+    const operation = previous.then(async () => {
+      if (globalSettingsSaveBlockedRef.current[key]) return null;
+      try {
+        const saved = await saveGlobalSettingValueIfUnchanged({
+          entity: GlobalSettings,
+          loadedRecord: globalSettingsBaselinesRef.current[key] || null,
+          settingKey: key,
+          nextValue: value,
+          label: key === 'salesLeadSources'
+            ? 'Sales lead sources'
+            : key === 'salesTaskDescriptions'
+              ? 'Sales task descriptions'
+              : 'Deadline gradient settings',
+        });
+        globalSettingsBaselinesRef.current[key] = saved;
+        const savedValue = saved?.setting_value || value;
+        if (key === 'salesLeadSources') setLeadSources(savedValue.items || []);
+        if (key === 'salesTaskDescriptions') setTaskDescriptions(normalizeTaskDescriptionItems(savedValue.items || []));
+        if (key === 'deadlineGradientSettings') setDeadlineGradientSettings(savedValue);
+        return saved;
+      } catch (error) {
+        globalSettingsSaveBlockedRef.current[key] = true;
+        console.error("Sales Pipeline global setting save blocked:", key, error);
+        setGlobalSettingsError(error?.message || "A Sales Pipeline setting changed in another session. Reload latest before saving again.");
+        return null;
       }
-    } catch (error) {
-      console.error("Error saving global setting:", error);
-    }
+    });
+    globalSettingsSaveQueuesRef.current[key] = operation;
+    return operation;
   };
 
   const loadWorkOrders = async (showLoading = true) => {
