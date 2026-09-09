@@ -173,6 +173,16 @@ export default function JurisdictionAccuracyAudit() {
         )}
       </div>
 
+      {alertActionError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Regulation Alert action blocked</div>
+            <div className="mt-1 text-xs">{alertActionError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setAlertActionError("")}>Dismiss</Button>
+        </div>
+      )}
+
       {/* Settings Panel */}
       <div className="p-5 bg-amber-50 rounded-xl border border-amber-200 space-y-5">
         <h4 className="font-semibold text-gray-800">Audit Settings</h4>
