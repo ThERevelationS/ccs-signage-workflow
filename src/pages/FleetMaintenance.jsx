@@ -9,6 +9,8 @@ const pretty = (v) => String(v || "—").replaceAll("_", " ");
 export default function FleetMaintenance() {
   const [tasks, setTasks] = useState([]);
   const [equipment, setEquipment] = useState([]);
+  const [parts, setParts] = useState([]);
+  const [fluids, setFluids] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -21,13 +23,17 @@ export default function FleetMaintenance() {
     setLoading(true);
     setError("");
     try {
-      const [t, e, u] = await Promise.all([
+      const [t, e, p, f, u] = await Promise.all([
         base44.entities.FleetMaintenanceTask.list("start_date", 500),
         base44.entities.FleetEquipment.list("name", 500),
+        base44.entities.FleetPart.list("part_name", 500),
+        base44.entities.FleetFluid.list("fluid_name", 500),
         base44.auth.me().catch(() => null),
       ]);
       setTasks(t || []);
       setEquipment(e || []);
+      setParts(p || []);
+      setFluids(f || []);
       setCurrentUser(u || null);
     } catch (e) {
       setError(e?.message || "Unable to load Fleet maintenance schedules.");
@@ -123,7 +129,7 @@ export default function FleetMaintenance() {
         )}
       </div>
 
-      <FleetMaintenanceDialog open={!!dialog} task={dialog?.task || null} equipment={equipment} onClose={() => !saving && setDialog(null)} onSave={saveTask} saving={saving} />
+      <FleetMaintenanceDialog open={!!dialog} task={dialog?.task || null} equipment={equipment} parts={parts} fluids={fluids} onClose={() => !saving && setDialog(null)} onSave={saveTask} saving={saving} />
     </div>
   );
 }
