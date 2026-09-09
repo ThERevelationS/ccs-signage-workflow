@@ -15,6 +15,7 @@ import {
   CheckCircle2, AlertCircle, Loader2, Globe, Users, Eye
 } from "lucide-react";
 import { format } from "date-fns";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -22,6 +23,7 @@ export default function AdminCalendarSettings() {
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [globalSettings, setGlobalSettings] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
   const [stats, setStats] = useState({ total: 0, universal: 0, synced: 0 });
 
   // Connection status (future OAuth)
@@ -34,34 +36,56 @@ export default function AdminCalendarSettings() {
 
   const loadData = async () => {
     setLoading(true);
-    const evs = await base44.entities.CalendarEvent.list("-start_datetime", 200);
-    setEvents(evs || []);
-
-    const gs = await base44.entities.GlobalSettings.filter({ setting_key: "calendarSettings" });
-    if (gs?.length > 0) {
-      setGlobalSettings(gs[0]);
-      const sv = gs[0].setting_value || {};
+    try {
+      const [evs, savedSettings] = await Promise.all([
+        base44.entities.CalendarEvent.list("-start_datetime", 200),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "calendarSettings",
+          label: "Calendar settings",
+        }),
+      ]);
+      setEvents(evs || []);
+      setGlobalSettings(savedSettings);
+      const sv = savedSettings?.setting_value || {};
       setOutlookConnected(sv.outlook_connected || false);
       setGoogleConnected(sv.google_connected || false);
-    }
 
-    const total = evs?.length || 0;
-    const universal = evs?.filter(e => e.is_universal).length || 0;
-    const synced = evs?.filter(e => e.external_source !== "manual").length || 0;
-    setStats({ total, universal, synced });
-    setLoading(false);
+      const total = evs?.length || 0;
+      const universal = evs?.filter(e => e.is_universal).length || 0;
+      const synced = evs?.filter(e => e.external_source !== "manual").length || 0;
+      setStats({ total, universal, synced });
+    } catch (error) {
+      console.error("Error loading calendar settings:", error);
+      setSettingsError(error?.message || "Calendar settings could not be loaded safely.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveGlobalSettings = async (updates) => {
+    setSettingsError("");
     const current = globalSettings?.setting_value || {};
     const newVal = { ...current, ...updates };
-    if (globalSettings?.id) {
-      await base44.entities.GlobalSettings.update(globalSettings.id, { setting_value: newVal });
-    } else {
-      const created = await base44.entities.GlobalSettings.create({ setting_key: "calendarSettings", setting_value: newVal });
-      setGlobalSettings(created);
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: globalSettings,
+        settingKey: "calendarSettings",
+        nextValue: newVal,
+        label: "Calendar settings",
+      });
+      setGlobalSettings(saved);
+      const savedValue = saved?.setting_value || newVal;
+      setOutlookConnected(savedValue.outlook_connected || false);
+      setGoogleConnected(savedValue.google_connected || false);
+      return saved;
+    } catch (error) {
+      console.error("Calendar settings save blocked:", error);
+      setSettingsError(error?.message || "Calendar settings changed in another session. Reload before saving.");
+      await loadData();
+      return null;
     }
-    setGlobalSettings(prev => ({ ...(prev || {}), setting_value: newVal }));
   };
 
   const handleDeleteEvent = async (id) => {
@@ -102,6 +126,16 @@ export default function AdminCalendarSettings() {
           New Event
         </Button>
       </div>
+
+      {settingsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Calendar settings update blocked</div>
+            <div className="mt-1 text-xs">{settingsError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await loadData(); }}>Reload latest</Button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
