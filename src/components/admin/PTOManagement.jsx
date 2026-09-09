@@ -136,6 +136,7 @@ export default function PTOManagement() {
   };
 
   const openNewPolicy = () => {
+    setPtoError("");
     setEditingPolicy(null);
     setPolicyForm({
       name: "",
@@ -148,6 +149,7 @@ export default function PTOManagement() {
   };
 
   const openEditPolicy = (policy) => {
+    setPtoError("");
     setEditingPolicy(policy);
     setPolicyForm({
       name: policy.name,
@@ -160,9 +162,14 @@ export default function PTOManagement() {
   };
 
   const duplicatePolicy = (policy) => {
+    setPtoError("");
     setEditingPolicy(null);
+    const names = new Set(policies.map(item => String(item.name || "").trim().toLowerCase()));
+    let copyName = `${policy.name} (Copy)`;
+    let suffix = 2;
+    while (names.has(copyName.toLowerCase())) copyName = `${policy.name} (Copy ${suffix++})`;
     setPolicyForm({
-      name: `${policy.name} (Copy)`,
+      name: copyName,
       is_template: true,
       time_off_types: policy.time_off_types || [...DEFAULT_TIME_OFF_TYPES],
       holidays: policy.holidays || [],
@@ -186,26 +193,59 @@ export default function PTOManagement() {
   };
 
   const handleSavePolicy = async () => {
+    if (ptoSaving) return;
+    const nextPolicy = { ...policyForm, name: String(policyForm.name || "").trim() };
+    if (!nextPolicy.name) return;
+    setPtoError("");
+    setPtoSaving(true);
     try {
       if (editingPolicy) {
-        await PTOPolicy.update(editingPolicy.id, policyForm);
+        const duplicateName = policies.find(policy => policy.id !== editingPolicy.id && String(policy.name || "").trim().toLowerCase() === nextPolicy.name.toLowerCase());
+        if (duplicateName) throw new Error(`Another PTO policy named "${nextPolicy.name}" already exists.`);
+        await updatePTOPolicyIfUnchanged({
+          entity: PTOPolicy,
+          policy: editingPolicy,
+          nextFields: nextPolicy,
+          label: `PTO policy ${editingPolicy.name || editingPolicy.id}`,
+        });
       } else {
-        await PTOPolicy.create(policyForm);
+        const result = await createPTOPolicyIfAbsent({
+          entity: PTOPolicy,
+          data: nextPolicy,
+          label: `PTO policy ${nextPolicy.name}`,
+        });
+        if (result.status === "existing") {
+          throw new Error(`A PTO policy named "${nextPolicy.name}" already exists. The existing policy was kept instead of creating a duplicate.`);
+        }
       }
       setShowPolicyDialog(false);
-      loadData();
+      setEditingPolicy(null);
+      await loadData();
     } catch (err) {
       console.error("Error saving policy:", err);
+      setPtoError(err?.message || "The PTO policy could not be saved safely.");
+    } finally {
+      setPtoSaving(false);
     }
   };
 
   const handleDeletePolicy = async () => {
+    if (!deleteConfirm?.id) return;
+    setPtoError("");
     try {
-      await PTOPolicy.delete(deleteConfirm.id);
+      await deletePTOPolicyIfUnused({
+        policyEntity: PTOPolicy,
+        balanceEntity: UserPTOBalance,
+        policy: deleteConfirm,
+        label: `PTO policy ${deleteConfirm.name || deleteConfirm.id} deletion`,
+      });
       setDeleteConfirm(null);
-      loadData();
+      await loadData();
     } catch (err) {
       console.error("Error deleting policy:", err);
+      setPtoError(err?.message || "The PTO policy changed or is still assigned and was not deleted.");
+      setDeleteConfirm(null);
+      await loadData();
     }
   };
 
