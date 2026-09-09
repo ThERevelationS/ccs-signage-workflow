@@ -161,6 +161,60 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return saved;
   };
 
+  const saveSubTemplateEntry = async (subTemplateId, nextEntry, { remove = false, label = 'SIP Sub-Template Items' } = {}) => {
+    const currentSetting = settingRecords.subTemplateItems;
+    if (!currentSetting?.id) {
+      if (remove) return null;
+      return saveSubTemplateItems({ ...subTemplateItems, [subTemplateId]: nextEntry });
+    }
+    setPersistenceError("");
+    try {
+      const saved = await saveSettingMapEntryIfUnchanged({
+        entity: GlobalSettings,
+        settingRecord: currentSetting,
+        entryKey: subTemplateId,
+        expectedEntry: subTemplateItems[subTemplateId],
+        nextEntry,
+        remove,
+        label,
+      });
+      setSettingRecords(prev => ({ ...prev, subTemplateItems: saved }));
+      setSubTemplateItems(saved.setting_value || {});
+      return saved;
+    } catch (error) {
+      console.error(`${label} save blocked:`, error);
+      setPersistenceError(error?.message || `${label} changed in another session. Reload before retrying.`);
+      throw error;
+    }
+  };
+
+  const saveProductTypeTemplateEntry = async (productType, nextEntry, { remove = false, label = 'SIP Product Type Template' } = {}) => {
+    const currentSetting = settingRecords.productTypeTemplates;
+    if (!currentSetting?.id) {
+      if (remove) return null;
+      return saveProductTypeTemplates({ ...productTypeTemplates, [productType]: nextEntry });
+    }
+    setPersistenceError("");
+    try {
+      const saved = await saveSettingMapEntryIfUnchanged({
+        entity: GlobalSettings,
+        settingRecord: currentSetting,
+        entryKey: productType,
+        expectedEntry: productTypeTemplates[productType],
+        nextEntry,
+        remove,
+        label,
+      });
+      setSettingRecords(prev => ({ ...prev, productTypeTemplates: saved }));
+      setProductTypeTemplates(saved.setting_value || {});
+      return saved;
+    } catch (error) {
+      console.error(`${label} save blocked:`, error);
+      setPersistenceError(error?.message || `${label} changed in another session. Reload before retrying.`);
+      throw error;
+    }
+  };
+
   // Pre-populate selected products from existing checklist on open
   useEffect(() => {
     if (!isOpen) return;
