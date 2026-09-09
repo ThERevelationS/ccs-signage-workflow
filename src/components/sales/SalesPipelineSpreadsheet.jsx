@@ -1174,12 +1174,26 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     </div>
   ) : null;
 
+  const globalSettingsWarning = globalSettingsError ? (
+    <div className="mx-2 mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+      <div className="font-medium">Sales Pipeline settings update blocked</div>
+      <div className="mt-1">{globalSettingsError}</div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span>No additional list or deadline-setting saves will run until the latest settings are reloaded.</span>
+        <Button type="button" size="sm" variant="outline" onClick={async () => { setGlobalSettingsError(""); await loadGlobalSettings(); }} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+          Reload latest
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   // Mobile card view
   if (isMobile) {
     return (
       <>
         {quickEditWarning}
         {destructiveActionWarning}
+        {globalSettingsWarning}
         <SalesPipelineMobileCards
           workOrders={filteredWorkOrders}
           onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
@@ -1232,6 +1246,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     >
       {quickEditWarning}
       {destructiveActionWarning}
+      {globalSettingsWarning}
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
