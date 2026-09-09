@@ -1,5 +1,5 @@
 import React from "react";
-import { Car, Plus, Menu } from "lucide-react";
+import { Car, ExternalLink, Menu } from "lucide-react";
 import { makeColor } from "./fleetHelpers";
 
 export default function FleetSidebar({ vehicles, selectedVin, onSelectVehicle, onAddVehicle, onMenu, totalCount }) {
@@ -63,8 +63,8 @@ export default function FleetSidebar({ vehicles, selectedVin, onSelectVehicle, o
           onClick={onAddVehicle}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Add Vehicle
+          <ExternalLink className="w-4 h-4" />
+          Manage Vehicles in Bouncie
         </button>
       </div>
     </div>
