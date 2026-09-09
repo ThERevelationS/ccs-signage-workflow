@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
+import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -98,56 +99,68 @@ Deno.serve(async (req) => {
 
           for (const change of data.alerts) {
             try {
-              const existingAlerts = await base44.asServiceRole.entities.RegulationAlert.filter({
+              const alertData = {
                 jurisdiction_id: jurisdiction.id,
+                jurisdiction_name: jurisdiction.name,
+                jurisdiction_state: jurisdiction.state,
+                alert_type: change.type,
+                title: change.title,
+                description: `Change detected in ${change.field}: "${change.previous}" → "${change.current}"`,
+                previous_value: change.previous,
+                new_value: change.current,
+                impact_summary: change.impact,
                 field_changed: change.field,
-                alert_type: change.type
+                severity: data.severity || 'medium',
+                detected_at: new Date().toISOString(),
+                notification_sent: false
+              };
+
+              const alertResult = await ensureConvergentRegulationAlertCreate({
+                entity: base44.asServiceRole.entities.RegulationAlert,
+                data: alertData,
+                label: `Regulation alert ${jurisdiction.name || jurisdiction.id} ${change.field || change.type || 'change'}`,
+                readMatches: async () => {
+                  const existingAlerts = await base44.asServiceRole.entities.RegulationAlert.filter({
+                    jurisdiction_id: jurisdiction.id,
+                    field_changed: change.field,
+                    alert_type: change.type
+                  });
+                  return (existingAlerts || []).filter(a => {
+                    const daysOld = (Date.now() - new Date(a.created_date).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysOld < 7;
+                  });
+                },
               });
 
-              const recentAlert = existingAlerts?.find(a => {
-                const daysOld = (Date.now() - new Date(a.created_date).getTime()) / (1000 * 60 * 60 * 24);
-                return daysOld < 7;
-              });
-
-              if (!recentAlert) {
-                const alert = await base44.asServiceRole.entities.RegulationAlert.create({
-                  jurisdiction_id: jurisdiction.id,
-                  jurisdiction_name: jurisdiction.name,
-                  jurisdiction_state: jurisdiction.state,
-                  alert_type: change.type,
-                  title: change.title,
-                  description: `Change detected in ${change.field}: "${change.previous}" → "${change.current}"`,
-                  previous_value: change.previous,
-                  new_value: change.current,
-                  impact_summary: change.impact,
-                  field_changed: change.field,
-                  severity: data.severity || 'medium',
-                  detected_at: new Date().toISOString(),
-                  notification_sent: false
+              if (alertResult.status === 'created') {
+                const claim = await claimRegulationAlertNotification({
+                  entity: base44.asServiceRole.entities.RegulationAlert,
+                  alert: alertResult.record,
+                  method: 'email',
+                  label: `Regulation alert email ${jurisdiction.name || jurisdiction.id}`,
                 });
 
-                alerts.push(alert);
+                if (claim.claimed) {
+                  alerts.push(claim.record);
 
-                // Send email to all configured recipients
-                const emailBody = `A significant change has been detected in permitting regulations:\n\nJurisdiction: ${jurisdiction.name}, ${jurisdiction.state}\n\nChange: ${change.title}\n\nPrevious: ${change.previous}\nNew: ${change.current}\n\nImpact: ${change.impact}\n\nNote: The jurisdiction profile has been automatically updated with verified changes.\n\nPlease review the Permitting Repository for full details.`;
+                  // The notification flag is claimed atomically before network delivery so
+                  // overlapping monitor runs cannot send the same alert twice. As with the
+                  // previous implementation, individual recipient failures are logged and
+                  // do not cause automatic resend attempts that could duplicate emails.
+                  const emailBody = `A significant change has been detected in permitting regulations:\n\nJurisdiction: ${jurisdiction.name}, ${jurisdiction.state}\n\nChange: ${change.title}\n\nPrevious: ${change.previous}\nNew: ${change.current}\n\nImpact: ${change.impact}\n\nNote: The jurisdiction profile has been automatically updated with verified changes.\n\nPlease review the Permitting Repository for full details.`;
 
-                for (const email of notificationEmails) {
-                  try {
-                    await base44.asServiceRole.integrations.Core.SendEmail({
-                      to: email,
-                      subject: `[${data.severity?.toUpperCase() || 'UPDATE'}] Regulation Change in ${jurisdiction.name}, ${jurisdiction.state}`,
-                      body: emailBody
-                    });
-                  } catch (emailError) {
-                    console.warn(`Failed to send email to ${email}:`, emailError.message);
+                  for (const email of notificationEmails) {
+                    try {
+                      await base44.asServiceRole.integrations.Core.SendEmail({
+                        to: email,
+                        subject: `[${data.severity?.toUpperCase() || 'UPDATE'}] Regulation Change in ${jurisdiction.name}, ${jurisdiction.state}`,
+                        body: emailBody
+                      });
+                    } catch (emailError) {
+                      console.warn(`Failed to send email to ${email}:`, emailError.message);
+                    }
                   }
                 }
-
-                await base44.asServiceRole.entities.RegulationAlert.update(alert.id, {
-                  notification_sent: true,
-                  notification_sent_at: new Date().toISOString(),
-                  notification_method: 'email'
-                });
               }
             } catch (alertError) {
               console.error(`Failed to create alert for ${jurisdiction.name}:`, alertError.message);
