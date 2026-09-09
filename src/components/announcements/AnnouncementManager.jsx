@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Megaphone, Save, Send, Trash2, Volume2, ImageIcon, Users, Monitor,
-  Plus, Check, X, RefreshCw, Loader2, ChevronDown, ChevronUp, Music
+  Plus, X, RefreshCw, Loader2, ChevronDown, ChevronUp, Music
 } from "lucide-react";
 import { playSoundEffect } from "./AnnouncementContext";
 import {

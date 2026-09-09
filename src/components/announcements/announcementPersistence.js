@@ -112,7 +112,6 @@ export async function convergeToSingleLiveAnnouncement({ entity, maxPasses = 4 }
     const active = rows.filter(row => row?.is_active === true).sort(comparePublication);
     if (active.length <= 1) return { winner: active[0] || null, activeCount: active.length };
 
-    const winner = active[0];
     for (const loser of active.slice(1)) {
       try {
         await deactivateIfStillLive({ entity, record: loser, label: `Announcement ${loser.title || loser.id} live-state convergence` });
