@@ -17,6 +17,13 @@ import {
   Plus, Check, X, RefreshCw, Loader2, ChevronDown, ChevronUp, Music
 } from "lucide-react";
 import { playSoundEffect } from "./AnnouncementContext";
+import {
+  createAnnouncementWithRecovery,
+  deleteAnnouncementIfUnchanged,
+  publishAnnouncementSafely,
+  stopAnnouncementIfUnchanged,
+  updateAnnouncementIfUnchanged,
+} from "./announcementPersistence";
 
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
@@ -71,6 +78,8 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
   const [uploadingSound, setUploadingSound] = useState(false);
   const [showSavedList, setShowSavedList] = useState(false);
   const [activeAnnId, setActiveAnnId] = useState(null);
+  const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+  const [persistenceError, setPersistenceError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -81,16 +90,29 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [anns, users] = await Promise.all([
+      const [anns, activeRows, users] = await Promise.all([
         Announcement.list("-updated_date", 50),
+        Announcement.filter({ is_active: true }),
         AuthorizedEmail.list()
       ]);
       setSavedAnnouncements(anns);
       setAllUsers(users);
-      // Find active announcement
-      const active = anns.find(a => a.is_active);
+      const sortedActive = [...activeRows].sort((a, b) => {
+        const aTime = Date.parse(a.updated_date || a.sent_at || "") || 0;
+        const bTime = Date.parse(b.updated_date || b.sent_at || "") || 0;
+        if (aTime !== bTime) return bTime - aTime;
+        return String(b.id || "").localeCompare(String(a.id || ""));
+      });
+      const active = sortedActive[0] || null;
+      setActiveAnnouncement(active);
       setActiveAnnId(active?.id || null);
-    } catch (e) {}
+      if (sortedActive.length > 1) {
+        setPersistenceError(`Multiple live announcements were found (${sortedActive.length}). Broadcasting again will converge them to one; review before sending.`);
+      }
+    } catch (e) {
+      console.error("Error loading announcements:", e);
+      setPersistenceError(e?.message || "Announcements could not be loaded safely.");
+    }
     setLoading(false);
   };
 
