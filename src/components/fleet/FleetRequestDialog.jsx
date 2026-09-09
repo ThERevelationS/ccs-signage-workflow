@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Upload, ImagePlus } from "lucide-react";
 
 export default function FleetRequestDialog({ open, mode, request, equipment, onClose, onSubmit }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmReceive, setConfirmReceive] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState([]);
 
   useEffect(() => {
     if (!open) return;
@@ -39,18 +41,33 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
       });
     }
     setConfirmReceive(false);
+    setPendingPhotos([]);
     setError("");
   }, [open, mode, request]);
 
   if (!open) return null;
   const title = mode === "create" ? "New Fleet Request" : mode === "edit" ? "Edit Fleet Request" : mode === "order" ? `Order ${request?.item_name || "Item"}` : `Receive ${request?.item_name || "Item"}`;
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const addPhotos = (fileList) => {
+    const files = Array.from(fileList || []).filter(file => file?.type?.startsWith("image/"));
+    if (files.length) setPendingPhotos(prev => [...prev, ...files]);
+  };
+  const removeSavedPhoto = (index) => set("photo_urls", (form.photo_urls || []).filter((_, i) => i !== index));
 
   const performSubmit = async () => {
     setConfirmReceive(false);
     setSaving(true);
     try {
-      await onSubmit(form);
+      let payload = form;
+      if (mode === "create" || mode === "edit") {
+        const uploaded = await Promise.all(pendingPhotos.map(async (file) => {
+          const result = await base44.integrations.Core.UploadFile({ file });
+          if (!result?.file_url) throw new Error(`Photo upload failed for ${file.name}.`);
+          return result.file_url;
+        }));
+        payload = { ...form, photo_urls: [...(form.photo_urls || []), ...uploaded] };
+      }
+      await onSubmit(payload);
     } catch (err) {
       setError(err?.message || "Fleet request operation failed.");
     } finally {
@@ -93,6 +110,13 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
         </div>
         <Field label="Justification"><textarea className="fleet-request-input" rows={4} value={form.justification || ""} onChange={(e)=>set("justification",e.target.value)}/></Field>
         <Field label="Notes"><textarea className="fleet-request-input" rows={3} value={form.notes || ""} onChange={(e)=>set("notes",e.target.value)}/></Field>
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-3">
+          <div className="flex items-center justify-between gap-2"><div className="font-medium text-gray-900 dark:text-slate-100 inline-flex items-center gap-2"><ImagePlus className="w-4 h-4 text-indigo-500"/>Request Photos</div><label className="cursor-pointer inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-300"><Upload className="w-4 h-4"/>Add photos<input type="file" accept="image/*" multiple className="hidden" onChange={e=>{addPhotos(e.target.files);e.target.value="";}}/></label></div>
+          {(form.photo_urls || []).length > 0 && <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">{(form.photo_urls || []).map((url,index)=><div key={`${url}-${index}`} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800"><img src={url} alt={`Request photo ${index+1}`} className="w-full h-full object-cover"/><button type="button" onClick={()=>removeSavedPhoto(index)} className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white"><X className="w-3 h-3"/></button></div>)}</div>}
+          {pendingPhotos.length > 0 && <div className="space-y-1">{pendingPhotos.map((file,index)=><div key={`${file.name}-${file.size}-${index}`} className="flex items-center justify-between gap-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 px-2 py-1.5 text-xs"><span className="truncate text-indigo-800 dark:text-indigo-200">{file.name}</span><button type="button" onClick={()=>setPendingPhotos(prev=>prev.filter((_,i)=>i!==index))} className="text-indigo-500 hover:text-red-600"><X className="w-3.5 h-3.5"/></button></div>)}</div>}
+          {!(form.photo_urls || []).length && !pendingPhotos.length && <div className="text-xs text-gray-400 border border-dashed border-gray-200 dark:border-slate-800 rounded-lg p-3 text-center">No request photos.</div>}
+          <div className="text-xs text-gray-400">Photos upload when the request is submitted or saved.</div>
+        </div>
       </>}
 
       {mode === "order" && <div className="grid sm:grid-cols-2 gap-4"><Field label="Estimated Delivery"><input className="fleet-request-input" type="date" value={form.estimated_delivery_date || ""} onChange={(e)=>set("estimated_delivery_date",e.target.value)}/></Field><Field label="Unit Cost"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.unit_cost ?? ""} onChange={(e)=>set("unit_cost",e.target.value)}/></Field></div>}
