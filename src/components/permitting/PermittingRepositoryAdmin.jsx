@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
+import { createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 
 export default function PermittingRepositoryAdmin() {
   const [jurisdictions, setJurisdictions] = useState([]);
@@ -88,6 +89,7 @@ export default function PermittingRepositoryAdmin() {
     try {
       const lines = bulkAddText.trim().split('\n');
       const created = [];
+      let existing = 0;
       let failed = 0;
       
       for (const line of lines) {
@@ -95,13 +97,13 @@ export default function PermittingRepositoryAdmin() {
         if (parts.length >= 2) {
           const [name, state, type = 'county'] = parts;
           try {
-            const newJ = await base44.entities.JurisdictionProfile.create({
-              name,
-              state,
-              type,
-              auto_refresh: true
+            const result = await createJurisdictionIfAbsent({
+              entity: base44.entities.JurisdictionProfile,
+              data: { name, state, type, auto_refresh: true },
+              label: `Bulk jurisdiction ${name}, ${state}`,
             });
-            created.push(newJ);
+            if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") existing++;
+            else created.push(result.record);
           } catch (e) {
             failed++;
             console.error(`Failed to create ${name}, ${state}:`, e);
@@ -113,9 +115,12 @@ export default function PermittingRepositoryAdmin() {
         await loadJurisdictions();
         setBulkAddText('');
         setShowBulkAdd(false);
-        if (failed > 0) {
-          setBulkAddError(`Created ${created.length} jurisdictions, ${failed} failed.`);
+        if (failed > 0 || existing > 0) {
+          setBulkAddError(`Created ${created.length} jurisdictions${existing ? `, ${existing} already existed` : ""}${failed ? `, ${failed} failed` : ""}.`);
         }
+      } else if (existing > 0) {
+        await loadJurisdictions();
+        setBulkAddError(`No duplicates were created; ${existing} jurisdiction${existing === 1 ? " already exists" : "s already exist"}.`);
       } else if (failed > 0) {
         setBulkAddError(`Failed to create any jurisdictions. Check the format.`);
       }
@@ -219,7 +224,11 @@ export default function PermittingRepositoryAdmin() {
         });
         
         try {
-          await base44.entities.JurisdictionProfile.delete(jurisdiction.id);
+          await deleteJurisdictionFromLoadedSnapshot({
+            entity: base44.entities.JurisdictionProfile,
+            jurisdiction,
+            label: `Admin delete ${jurisdiction.name || jurisdiction.id}`,
+          });
           deleted++;
         } catch (e) {
           console.error(`Failed to delete ${jurisdiction.id}:`, e);
