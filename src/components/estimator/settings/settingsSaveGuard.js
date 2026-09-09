@@ -1,6 +1,68 @@
-import { replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { deleteEntityIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const text = (value) => String(value ?? "");
+
+export async function createSettingRowIfAbsent({
+  SettingsEntity,
+  data = {},
+  label = "Setting",
+} = {}) {
+  const name = text(data?.setting_name).trim();
+  if (!name || typeof SettingsEntity?.filter !== "function" || typeof SettingsEntity?.create !== "function") {
+    throw new Error(`${label} could not initialize its duplicate-safe create.`);
+  }
+
+  const readMatches = async () => {
+    const rows = await SettingsEntity.filter({ setting_name: name });
+    if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
+    return rows.filter((row) => text(row?.setting_name).trim() === name);
+  };
+
+  const before = await readMatches();
+  if (before.length === 1) return { record: before[0], status: "existing" };
+  if (before.length > 1) {
+    throw new Error(`${label} has multiple stored rows for ${name}. No row was changed; review and resolve the duplicate records first.`);
+  }
+
+  let created = null;
+  let createError = null;
+  try {
+    created = await SettingsEntity.create({ ...data, setting_name: name });
+  } catch (error) {
+    createError = error;
+  }
+
+  const after = await readMatches();
+  if (after.length === 1) {
+    const status = created?.id === after[0].id ? "created" : "recovered";
+    return { record: after[0], status };
+  }
+
+  if (after.length > 1) {
+    const ordered = [...after].sort((a, b) => {
+      const dateCompare = text(a?.created_date).localeCompare(text(b?.created_date));
+      return dateCompare || text(a?.id).localeCompare(text(b?.id));
+    });
+    const canonical = ordered[0];
+    const ours = created?.id ? after.find((row) => row.id === created.id) : null;
+    if (ours && ours.id !== canonical?.id) {
+      await deleteEntityIfUnchanged({
+        entity: SettingsEntity,
+        record: ours,
+        guardFields: { setting_name: name },
+        label: `${label} concurrent duplicate cleanup`,
+      });
+      const finalRows = await readMatches();
+      if (finalRows.length === 1) {
+        return { record: finalRows[0], status: "concurrent_duplicate_discarded" };
+      }
+    }
+    throw new Error(`${label} was created concurrently more than once. No uncertain duplicate was deleted; reload and review ${name}.`);
+  }
+
+  if (createError) throw createError;
+  throw new Error(`${label} could not verify whether ${name} was created. Reload before retrying.`);
+}
 
 export function changedSettingRows(rows = [], values = {}, originalValues = {}) {
   return (rows || []).filter((row) =>
