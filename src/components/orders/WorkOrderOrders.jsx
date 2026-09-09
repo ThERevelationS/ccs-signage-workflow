@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -53,8 +53,7 @@ import {
   Pencil,
   X,
   Expand,
-  ExternalLink,
-  Check
+  ExternalLink
 } from "lucide-react";
 
 const Order = base44.entities.Order;
@@ -373,6 +372,15 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
 
   return (
     <div className="space-y-3">
+      {saveError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
+          <span>{saveError}</span>
+          <Button type="button" variant="outline" size="sm" onClick={loadData} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
+            Reload
+          </Button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
