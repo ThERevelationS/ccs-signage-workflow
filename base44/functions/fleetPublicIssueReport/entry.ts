@@ -26,9 +26,9 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const action = String(payload?.action || '').trim();
 
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({setting_type:'general'});
-    const settings = settingsRows?.[0];
-    if (!settings?.public_reporting_enabled) {
+    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({state_key:'primary'});
+    const cutover = cutoverRows?.[0];
+    if (!cutover?.public_reporting_enabled) {
       if (action === 'list') return Response.json({success:true,disabled:true,equipment:[]});
       return Response.json({error:'Public Fleet issue reporting is not currently enabled.'},{status:503});
     }
