@@ -1,7 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const nowIso = () => new Date().toISOString();
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const TASK_STATUSES = new Set(['pending', 'in_progress', 'completed', 'overdue']);
 const TASK_TYPES = new Set(['recurring', 'one_off']);
