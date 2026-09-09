@@ -40,7 +40,6 @@ async function claimReceipt(Receipt: any, data: any) {
     await Receipt.update(failed.id, {
       status: 'started',
       started_at: stamp,
-      failed_at: null,
       error_message: '',
       result_summary: { ...(data.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
     });
