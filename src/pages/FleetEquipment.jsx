@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
-import { Search, Truck, Link2, Loader2, AlertTriangle, Plus, Pencil, ArrowRight } from "lucide-react";
+import { Search, Truck, Link2, Loader2, AlertTriangle, Plus, Pencil, ArrowRight, Wrench, CircleOff } from "lucide-react";
 
 export default function FleetEquipment() {
   const [equipment, setEquipment] = useState([]);
@@ -12,6 +12,7 @@ export default function FleetEquipment() {
   const [tasks, setTasks] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [query, setQuery] = useState("");
+  const [viewFilter, setViewFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -41,11 +42,21 @@ export default function FleetEquipment() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const isAdmin = currentUser?.role === "admin";
+  const metrics = useMemo(() => ({
+    operational: equipment.filter(e => e.status === "operational").length,
+    maintenance: equipment.filter(e => e.status === "maintenance").length,
+    down: equipment.filter(e => e.status === "down").length,
+    trackingIssues: equipment.filter(e => e.bouncie_link_status === "ambiguous" || e.bouncie_link_status === "unmatched").length,
+  }), [equipment]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return equipment;
-    return equipment.filter(e => [e.name, e.make, e.model, e.serial_number, e.vin, e.license_plate, e.type, e.location].some(v => String(v || "").toLowerCase().includes(q)));
-  }, [equipment, query]);
+    return equipment.filter(e => {
+      if (viewFilter === "tracking_issues" && !["ambiguous", "unmatched"].includes(e.bouncie_link_status)) return false;
+      if (!["all", "tracking_issues"].includes(viewFilter) && e.status !== viewFilter) return false;
+      if (!q) return true;
+      return [e.name, e.make, e.model, e.serial_number, e.vin, e.license_plate, e.type, e.location].some(v => String(v || "").toLowerCase().includes(q));
+    });
+  }, [equipment, query, viewFilter]);
 
   const saveEquipment = async ({ equipment: payload, tracking_applicable }) => {
     setSaving(true);
@@ -71,8 +82,10 @@ export default function FleetEquipment() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Equipment</h1><p className="text-sm text-gray-500 dark:text-slate-400">Road vehicles and non-road assets. Bouncie linkage is evaluated only from exact existing VIN/IMEI evidence.</p></div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-80"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>{isAdmin && <button onClick={() => setDialog({ equipment: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={e => setViewFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link issues</option></select>{isAdmin && <button onClick={() => setDialog({ equipment: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
         </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance>0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down>0}/><EquipmentMetric icon={Link2} label="Bouncie link issues" value={metrics.trackingIssues} attention={metrics.trackingIssues>0}/></div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
@@ -103,4 +116,10 @@ export default function FleetEquipment() {
       <FleetEquipmentDialog open={!!dialog} equipment={dialog?.equipment || null} onClose={() => !saving && setDialog(null)} onSave={saveEquipment} saving={saving} />
     </div>
   );
+}
+
+function EquipmentMetric({ icon: Icon, label, value, attention = false, danger = false }) {
+  const style = danger ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20" : attention ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900";
+  const valueStyle = danger ? "text-red-700 dark:text-red-300" : attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100";
+  return <div className={`rounded-xl border p-3 ${style}`}><div className="flex items-center justify-between gap-2"><div className="text-xs text-gray-400">{label}</div><Icon className="w-4 h-4 text-gray-400" /></div><div className={`text-2xl font-bold mt-1 ${valueStyle}`}>{value}</div></div>;
 }
