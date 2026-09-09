@@ -778,7 +778,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none">
+                  <Button onClick={saveItem} className="clay-button border-none" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingItem ? "Update Information Filter" : "Save Information Filter"}
                   </Button>
@@ -896,7 +896,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none">
+                  <Button onClick={saveItem} className="clay-button border-none" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingItem ? "Update Preset" : "Save Preset"}
                   </Button>
