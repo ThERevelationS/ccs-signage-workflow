@@ -53,6 +53,11 @@ import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  createAuthorizedEmailIfAbsent,
+  deleteAuthorizedEmailIfUnchanged,
+  updateAuthorizedEmailIfUnchanged,
+} from "@/components/admin/authorizedEmailPersistence";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -83,6 +88,8 @@ export default function UserManagement() {
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
   const [sendingOnboardingEmail, setSendingOnboardingEmail] = useState(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
+  const [userMutationError, setUserMutationError] = useState("");
+  const [userMutationSaving, setUserMutationSaving] = useState(false);
 
   useEffect(() => {
     loadUsers();
