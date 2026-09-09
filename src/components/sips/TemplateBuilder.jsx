@@ -114,7 +114,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setProductTypeTemplates(ptTemplates?.setting_value || {});
       setSubTemplateItems(stItems?.setting_value || {});
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
-      setPersistenceError("");
     } catch (error) {
       console.error("Error loading data:", error);
       setPersistenceError(error?.message || "Template Builder data could not be loaded safely.");
@@ -1005,7 +1004,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <div className="mt-1">{persistenceError}</div>
               </div>
               <div className="flex gap-1 shrink-0">
-                <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={loadData}>Reload latest</Button>
+                <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setPersistenceError(""); }}>Reload latest</Button>
                 <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setPersistenceError("")}>Dismiss</Button>
               </div>
             </div>
