@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock } from "lucide-react";
 import { differenceInBusinessDays } from "date-fns";
+import { createPendingTimeOffRequestIfAbsent, updatePendingTimeOffRequestIfUnchanged } from "@/components/timeclock/ptoPersistence";
 
 const TimeOffRequest = base44.entities.TimeOffRequest;
 
@@ -64,33 +65,42 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
 
     setIsSubmitting(true);
     try {
+      const requestFields = {
+        request_type: requestType,
+        start_date: startDate,
+        end_date: endDate,
+        hours_requested: calculateHours(),
+        reason
+      };
+
       if (existingRequest) {
-        await TimeOffRequest.update(existingRequest.id, {
-          request_type: requestType,
-          start_date: startDate,
-          end_date: endDate,
-          hours_requested: calculateHours(),
-          reason
+        await updatePendingTimeOffRequestIfUnchanged({
+          entity: TimeOffRequest,
+          request: existingRequest,
+          nextFields: requestFields,
+          label: `Time off request for ${existingRequest.user_name || existingRequest.user_email || existingRequest.id}`,
         });
       } else {
-        await TimeOffRequest.create({
-          user_email: currentUser?.email,
-          user_name: currentUser?.full_name || currentUser?.email,
-          request_type: requestType,
-          start_date: startDate,
-          end_date: endDate,
-          hours_requested: calculateHours(),
-          reason,
-          status: "pending"
+        await createPendingTimeOffRequestIfAbsent({
+          entity: TimeOffRequest,
+          data: {
+            user_email: currentUser?.email,
+            user_name: currentUser?.full_name || currentUser?.email,
+            ...requestFields,
+            status: "pending"
+          },
+          label: `Time off request for ${currentUser?.full_name || currentUser?.email || "employee"}`,
         });
       }
       
-      if (onSubmit) onSubmit();
+      if (onSubmit) await onSubmit();
       onClose();
     } catch (err) {
-      setError("Failed to submit request. Please try again.");
+      console.error("Time off request save blocked:", err);
+      setError(err?.message || "Failed to submit request safely. Reload your requests before trying again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
