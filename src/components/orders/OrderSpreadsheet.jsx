@@ -96,6 +96,10 @@ import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/C
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { importOrders as importOrdersFn } from "@/functions/importOrders";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  replaceOrderFieldsIfUnchanged,
+  softDeleteOrderFromLoadedSnapshot,
+} from "@/components/orders/orderPersistence";
 
 
 const Order = base44.entities.Order;
@@ -121,6 +125,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [editingCell, setEditingCell] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [lastSaved, setLastSaved] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
@@ -165,6 +170,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const { trackChange } = useCellHistoryTracker("Order", currentUser);
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
+  const saveInFlightRef = useRef(false);
+  const addInFlightRef = useRef(false);
+  const deleteInFlightRef = useRef(false);
   const fileInputRef = useRef(null);
 
   // Helper to render text with clickable links
