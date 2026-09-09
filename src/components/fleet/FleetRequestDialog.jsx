@@ -27,6 +27,7 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
       });
     } else {
       setForm({
+        inventory_item_id: request?.inventory_item_id || "",
         item_name: request?.item_name || "",
         item_type: request?.item_type || "part",
         part_number: request?.part_number || "",
@@ -98,12 +99,13 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
     <form onSubmit={submit} className="p-4 sm:p-6 space-y-4">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
       {(mode === "create" || mode === "edit") && <>
+        {form.inventory_item_id && <div className="rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-200">This request is linked to an exact Fleet inventory record. Item identity is locked so receiving updates the intended part/fluid instead of relying on name matching.</div>}
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Item Type"><select className="fleet-request-input" value={form.item_type || "part"} onChange={(e)=>set("item_type",e.target.value)}><option value="part">Part</option><option value="fluid">Fluid</option></select></Field>
+          <Field label="Item Type"><select disabled={!!form.inventory_item_id} className="fleet-request-input disabled:opacity-60" value={form.item_type || "part"} onChange={(e)=>set("item_type",e.target.value)}><option value="part">Part</option><option value="fluid">Fluid</option></select></Field>
           <Field label="Quantity"><input className="fleet-request-input" type="number" min="0.01" step="0.01" value={form.quantity_needed ?? 1} onChange={(e)=>set("quantity_needed",e.target.value)}/></Field>
-          <Field label="Item Name"><input className="fleet-request-input" value={form.item_name || ""} onChange={(e)=>set("item_name",e.target.value)}/></Field>
-          <Field label={form.item_type === "part" ? "Part Number" : "Reference / Part Number"}><input className="fleet-request-input" value={form.part_number || ""} onChange={(e)=>set("part_number",e.target.value)}/></Field>
-          <Field label="Manufacturer / Brand"><input className="fleet-request-input" value={form.manufacturer_brand || ""} onChange={(e)=>set("manufacturer_brand",e.target.value)}/></Field>
+          <Field label="Item Name"><input disabled={!!form.inventory_item_id} className="fleet-request-input disabled:opacity-60" value={form.item_name || ""} onChange={(e)=>set("item_name",e.target.value)}/></Field>
+          <Field label={form.item_type === "part" ? "Part Number" : "Reference / Part Number"}><input disabled={!!form.inventory_item_id} className="fleet-request-input disabled:opacity-60" value={form.part_number || ""} onChange={(e)=>set("part_number",e.target.value)}/></Field>
+          <Field label="Manufacturer / Brand"><input disabled={!!form.inventory_item_id} className="fleet-request-input disabled:opacity-60" value={form.manufacturer_brand || ""} onChange={(e)=>set("manufacturer_brand",e.target.value)}/></Field>
           <Field label="Equipment"><select className="fleet-request-input" value={form.equipment_id || ""} onChange={(e)=>set("equipment_id",e.target.value)}><option value="">No equipment</option>{equipment.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
           <Field label="Requested By"><input className="fleet-request-input" value={form.requested_by_person || ""} onChange={(e)=>set("requested_by_person",e.target.value)} placeholder="Defaults to signed-in user"/></Field>
           <Field label="Vendor Link"><input className="fleet-request-input" value={form.vendor_link || ""} onChange={(e)=>set("vendor_link",e.target.value)} placeholder="https://..."/></Field>
