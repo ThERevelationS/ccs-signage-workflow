@@ -4,6 +4,19 @@ const nowIso = () => new Date().toISOString();
 const STALE_CLAIM_MS = 30 * 60 * 1000;
 const canonical = (rows: any[] = []) => rows.slice().sort((a,b) => String(a.id || '').localeCompare(String(b.id || '')))[0] || null;
 
+async function logWorker(base44: any, level: 'info' | 'warning' | 'error', message: string, details: any = {}) {
+  await base44.asServiceRole.entities.FleetSystemLog.create({ source: 'fleetNotificationWorker', level, message, details }).catch(() => null);
+}
+
+async function maybeLogIdleHeartbeat(base44: any) {
+  const logs = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'fleetNotificationWorker' }).catch(() => []);
+  const latest = (logs || []).slice().sort((a: any,b: any) => Date.parse(b.created_date || '') - Date.parse(a.created_date || ''))[0];
+  const lastAt = Date.parse(latest?.created_date || '') || 0;
+  if (!lastAt || (Date.now() - lastAt) >= 6 * 60 * 60 * 1000) {
+    await logWorker(base44, 'info', 'Fleet notification worker heartbeat.', { processed: 0, queue_was_idle: true });
+  }
+}
+
 async function claimReceipt(Receipt: any, key: string, queue: any) {
   const applied = canonical(await Receipt.filter({ operation_key: key, status: 'applied' }));
   if (applied) return { applied: true, owner: false, receipt: applied };
@@ -97,9 +110,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, processed: results.length, sent: results.filter(r => r.status === 'sent').length, results });
+    const sent = results.filter(r => r.status === 'sent').length;
+    const retried = results.filter(r => r.status === 'retry').length;
+    const failed = results.filter(r => ['failed','failed_ambiguous'].includes(r.status)).length;
+    if (results.length) {
+      await logWorker(base44, failed || retried ? 'warning' : 'info', 'Fleet notification worker processed queue items.', { processed: results.length, sent, retried, failed });
+    } else {
+      await maybeLogIdleHeartbeat(base44);
+    }
+    return Response.json({ success: true, processed: results.length, sent, results });
   } catch (error) {
     console.error('fleetNotificationWorker error:', error);
+    try { await logWorker(createClientFromRequest(req), 'error', 'Fleet notification worker failed.', { error: error?.message || String(error) }); } catch {}
     return Response.json({ error: error?.message || 'Fleet notification worker failed.' }, { status: 500 });
   }
 });
