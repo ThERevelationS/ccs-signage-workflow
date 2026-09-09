@@ -411,13 +411,12 @@ export default function Permitting() {
       }
     }
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...updates } : li));
-    await PermitLineItem.update(lineItemId, updates);
-  }, [localities, lineItems]);
+    await persistPermitLineItemFields(lineItemId, updates, "Permit locality update");
+  }, [localities, lineItems, persistPermitLineItemFields]);
 
   const deleteLineItem = useCallback(async (lineItemId) => {
-    await PermitLineItem.delete(lineItemId);
-    setLineItems(prev => prev.filter(li => li.id !== lineItemId));
-  }, []);
+    await deletePermitLineItemSafely(lineItemId);
+  }, [deletePermitLineItemSafely]);
 
   // Update a field on the underlying WorkOrder (used by the client group header)
   const updateWorkOrderField = useCallback(async (workOrderId, field, value) => {
