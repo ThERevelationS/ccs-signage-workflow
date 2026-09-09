@@ -173,6 +173,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const saveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
+  const importInFlightRef = useRef(false);
   const fileInputRef = useRef(null);
 
   // Helper to render text with clickable links
@@ -591,6 +592,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    if (importInFlightRef.current) return;
+    importInFlightRef.current = true;
 
     const importId = startMultiImport(file.name);
     const processingTimeout = setTimeout(() => {
@@ -605,14 +608,29 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         reader.readAsBinaryString(file);
       });
       const res = await importOrdersFn({ fileData, workOrderFilter: workOrderFilter || '' });
-      clearTimeout(processingTimeout);
       const result = res.data;
-      finishImport(importId, `${result.created} created, ${result.updated} updated${result.skipped ? `, ${result.skipped} unchanged` : ''}`);
+      const conflictCount = Number(result.conflicts || 0);
+      const errorCount = Number(result.errors || 0);
+      const hasIssues = conflictCount > 0 || errorCount > 0;
+      const summary = [
+        `${result.created} created`,
+        `${result.updated} updated`,
+        ...(result.skipped ? [`${result.skipped} unchanged`] : []),
+        ...(conflictCount ? [`${conflictCount} concurrency conflict${conflictCount === 1 ? '' : 's'}`] : []),
+        ...(errorCount ? [`${errorCount} failed`] : []),
+      ].join(', ');
+      finishImport(
+        importId,
+        hasIssues ? `${summary}. Conflicted rows were not overwritten; reload Orders before retrying them.` : summary,
+        hasIssues,
+      );
       await loadData(false);
     } catch (err) {
-      clearTimeout(processingTimeout);
       console.error("Import failed:", err);
       finishImport(importId, 'Import failed. Please try again.', true);
+    } finally {
+      clearTimeout(processingTimeout);
+      importInFlightRef.current = false;
     }
   };
 
