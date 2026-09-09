@@ -1,0 +1,79 @@
+{
+  "name": "FleetCutoverState",
+  "type": "object",
+  "description": "Server-owned Fleet cutover guard state. Normal clients may read as admin but cannot create/update/delete; fleetCutoverControl writes through service role.",
+  "properties": {
+    "state_key": {
+      "type": "string"
+    },
+    "source_freeze_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "source_freeze_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_freeze_confirmed_by": {
+      "type": "string"
+    },
+    "source_freeze_notes": {
+      "type": "string"
+    },
+    "notifications_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "scheduled_reminders_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "maintenance_generation_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "public_reporting_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "cutover_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cutover_started_by": {
+      "type": "string"
+    },
+    "cutover_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cutover_completed_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "state_key"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "__fleet_cutover_service_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_cutover_service_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_cutover_service_only__"
+      }
+    }
+  }
+}
