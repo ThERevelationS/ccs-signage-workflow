@@ -76,7 +76,7 @@
     },
     "inventory_item_id": {
       "type": "string",
-      "description": "FleetPart/FleetFluid id updated or created when received."
+      "description": "Optional exact FleetPart/FleetFluid identity for a reorder; also records the item updated or created when received."
     },
     "receipt_key": {
       "type": "string",
