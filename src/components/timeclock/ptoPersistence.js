@@ -210,10 +210,9 @@ export async function assignPTOBalanceIfUnchanged({
     return existing;
   }
 
-  let created = null;
   let createError = null;
   try {
-    created = await entity.create(desired);
+    await entity.create(desired);
   } catch (error) {
     createError = error;
   }
