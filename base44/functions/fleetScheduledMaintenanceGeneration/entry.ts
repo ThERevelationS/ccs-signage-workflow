@@ -32,9 +32,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me().catch(()=>null);
     if (user && user.role !== 'admin') return Response.json({error:'Forbidden'},{status:403});
 
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({setting_type:'general'});
-    const settings = settingsRows?.[0];
-    if (!settings?.maintenance_generation_enabled) return Response.json({success:true,disabled:true,created:0});
+    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({state_key:'primary'});
+    const cutover = cutoverRows?.[0];
+    if (!cutover?.maintenance_generation_enabled) return Response.json({success:true,disabled:true,created:0});
 
     const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
