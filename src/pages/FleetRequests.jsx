@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle } from "lucide-react";
+import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle, Clock3, CheckCircle2 } from "lucide-react";
 
 export default function FleetRequests() {
   const [requests, setRequests] = useState([]);
@@ -11,7 +11,7 @@ export default function FleetRequests() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("active");
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [actionError, setActionError] = useState("");
@@ -41,11 +41,30 @@ export default function FleetRequests() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") !== "1") return;
+    setDialog({ mode: "create", request: {
+      item_type: params.get("type") === "fluid" ? "fluid" : "part",
+      item_name: params.get("name") || "",
+      part_number: params.get("partNumber") || "",
+      manufacturer_brand: params.get("brand") || "",
+      equipment_id: params.get("equipment") || "",
+      quantity_needed: Number(params.get("quantity") || 1) || 1,
+      justification: params.get("reason") || "",
+    }});
+  }, []);
 
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
+  const metrics = useMemo(() => ({
+    pending: requests.filter(r => r.status === "pending").length,
+    ordered: requests.filter(r => r.status === "ordered").length,
+    received: requests.filter(r => r.status === "received").length,
+    cancelled: requests.filter(r => r.status === "cancelled").length,
+  }), [requests]);
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return requests.filter(r => (status === "all" || r.status === status) && (!q || [r.item_name, r.part_number, r.manufacturer_brand, r.requested_by_person, r.justification, names[r.equipment_id]].some(v => String(v || "").toLowerCase().includes(q))));
+    return requests.filter(r => ((status === "all") || (status === "active" && ["pending","ordered"].includes(r.status)) || r.status === status) && (!q || [r.item_name, r.part_number, r.manufacturer_brand, r.requested_by_person, r.justification, names[r.equipment_id]].some(v => String(v || "").toLowerCase().includes(q))));
   }, [requests, search, status, names]);
 
   const owns = (request) => String(request.requester_email || "").toLowerCase() === String(currentUser?.email || "").toLowerCase();
@@ -85,7 +104,8 @@ export default function FleetRequests() {
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Requests</h1><p className="text-sm text-gray-500 dark:text-slate-400">Parts/fluids requests are Fleet-only. Migrated received records are protected from being received twice.</p></div><button onClick={()=>setDialog({mode:"create",request:null})} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>New Request</button></div>
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet requests are live. Receiving uses a durable receipt and exact inventory matching, and request/received notifications are queued through the Fleet notification worker.</div>
     {actionError&&<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
-    <div className="flex flex-col sm:flex-row gap-3"><div className="relative flex-1"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search requests..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={status} onChange={e=>setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="ordered">Ordered</option><option value="received">Received</option><option value="cancelled">Cancelled</option></select></div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><RequestMetric icon={Clock3} label="Pending" value={metrics.pending} attention={metrics.pending>0} onClick={()=>setStatus("pending")}/><RequestMetric icon={Truck} label="Ordered" value={metrics.ordered} attention={metrics.ordered>0} onClick={()=>setStatus("ordered")}/><RequestMetric icon={CheckCircle2} label="Received" value={metrics.received} onClick={()=>setStatus("received")}/><RequestMetric icon={XCircle} label="Cancelled" value={metrics.cancelled} onClick={()=>setStatus("cancelled")}/></div>
+    <div className="flex flex-col sm:flex-row gap-3"><div className="relative flex-1"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search requests..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={status} onChange={e=>setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Needs action (pending + ordered)</option><option value="all">All statuses</option><option value="pending">Pending</option><option value="ordered">Ordered</option><option value="received">Received</option><option value="cancelled">Cancelled</option></select></div>
     {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : <div className="space-y-3">{rows.map(r=>{
       const canEdit = r.status === "pending" && (isAdmin || owns(r));
       const canCancel = (isAdmin && ["pending","ordered"].includes(r.status)) || (!isAdmin && owns(r) && r.status === "pending");
@@ -95,3 +115,4 @@ export default function FleetRequests() {
   </div><FleetRequestDialog open={!!dialog} mode={dialog?.mode} request={dialog?.request} equipment={equipment} onClose={()=>setDialog(null)} onSubmit={submitDialog}/><FleetConfirmDialog open={!!confirmCancel} title="Cancel Fleet request?" description={`Cancel the request for ${confirmCancel?.item_name || "this item"}? No inventory will be changed.`} confirmLabel="Cancel Request" tone="danger" busy={!!busyId} onCancel={()=>setConfirmCancel(null)} onConfirm={()=>cancelRequest(confirmCancel)}/></div>;
 }
 function Info({label,value}){return <div><div className="text-xs text-gray-400">{label}</div><div className="text-gray-800 dark:text-slate-200 mt-0.5">{value}</div></div>}
+function RequestMetric({icon:Icon,label,value,attention=false,onClick}){return <button type="button" onClick={onClick} className={`text-left rounded-xl border p-3 transition hover:border-indigo-300 dark:hover:border-indigo-700 ${attention?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}><div className="flex items-center justify-between gap-2"><div className="text-xs text-gray-400">{label}</div><Icon className="w-4 h-4 text-gray-400"/></div><div className={`text-2xl font-bold mt-1 ${attention?"text-amber-700 dark:text-amber-300":"text-gray-900 dark:text-slate-100"}`}>{value}</div></button>}
