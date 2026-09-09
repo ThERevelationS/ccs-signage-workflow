@@ -29,6 +29,7 @@ import {
   Save
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -43,6 +44,9 @@ export default function ResourcePlanning() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingCapacity, setEditingCapacity] = useState(null);
   const [capacityForm, setCapacityForm] = useState({ weekly_hours_capacity: 40, daily_hours_capacity: 8 });
+  const [capacityRecord, setCapacityRecord] = useState(null);
+  const [capacityError, setCapacityError] = useState("");
+  const [capacitySaving, setCapacitySaving] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [accessChecked, setAccessChecked] = useState(false);
   
@@ -195,23 +199,36 @@ export default function ResourcePlanning() {
   };
   
   const handleSaveCapacity = async () => {
-    if (!editingCapacity) return;
-    
+    if (!editingCapacity || capacitySaving) return;
+    setCapacitySaving(true);
+    setCapacityError("");
     try {
-      const existing = userCapacities.find(c => c.user_email === editingCapacity.email);
-      if (existing) {
-        await UserCapacity.update(existing.id, capacityForm);
-      } else {
-        await UserCapacity.create({
-          user_email: editingCapacity.email,
-          user_name: editingCapacity.full_name,
-          ...capacityForm
-        });
-      }
+      const saved = await saveUserCapacityIfUnchanged({
+        entity: UserCapacity,
+        loadedRecord: capacityRecord,
+        userEmail: editingCapacity.email,
+        nextFields: {
+          user_name: editingCapacity.full_name || editingCapacity.email,
+          ...capacityForm,
+        },
+        label: `Capacity for ${editingCapacity.full_name || editingCapacity.email}`,
+      });
+      setCapacityRecord(saved);
       await loadData();
       setEditingCapacity(null);
     } catch (error) {
-      console.error("Error saving capacity:", error);
+      console.error("Capacity save blocked:", error);
+      setCapacityError(error?.message || "This employee capacity changed in another session. Reload before saving.");
+      const latest = await loadSingleUserCapacity({ entity: UserCapacity, userEmail: editingCapacity.email, label: "Employee capacity" }).catch(() => null);
+      setCapacityRecord(latest);
+      if (latest) {
+        setCapacityForm({
+          weekly_hours_capacity: latest.weekly_hours_capacity || 40,
+          daily_hours_capacity: latest.daily_hours_capacity || 8,
+        });
+      }
+    } finally {
+      setCapacitySaving(false);
     }
   };
   
@@ -372,7 +389,9 @@ export default function ResourcePlanning() {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      const cap = userCapacities.find(c => c.user_email === allocation.user.email);
+                      const cap = userCapacities.find(c => c.user_email === allocation.user.email) || null;
+                      setCapacityRecord(cap);
+                      setCapacityError("");
                       setCapacityForm({
                         weekly_hours_capacity: cap?.weekly_hours_capacity || 40,
                         daily_hours_capacity: cap?.daily_hours_capacity || 8
@@ -423,6 +442,12 @@ export default function ResourcePlanning() {
           </DialogHeader>
           
           <div className="space-y-4">
+            {capacityError && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <div className="font-medium">Capacity update blocked</div>
+                <div className="mt-1 text-xs">{capacityError}</div>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium">Weekly Hours Capacity</label>
               <Input
@@ -443,7 +468,7 @@ export default function ResourcePlanning() {
               />
             </div>
             
-            <Button onClick={handleSaveCapacity} className="w-full">
+            <Button onClick={handleSaveCapacity} className="w-full" disabled={capacitySaving}>
               <Save className="w-4 h-4 mr-2" />
               Save Capacity
             </Button>
