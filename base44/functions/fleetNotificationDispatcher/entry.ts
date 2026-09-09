@@ -12,9 +12,13 @@ Deno.serve(async (req) => {
     const targetId = String(body?.target_id || '').trim();
     if (!eventType || !targetId) return Response.json({ error: 'event_type and target_id are required.' }, { status: 400 });
 
+    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key: 'primary' });
+    const cutover = cutoverRows?.[0];
+    if (!cutover?.notifications_enabled) return Response.json({ success: true, disabled: true, queued: 0 });
+
     const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
     const settings = settingsRows?.[0];
-    if (!settings?.notifications_enabled) return Response.json({ success: true, disabled: true, queued: 0 });
+    if (!settings) return Response.json({ error: 'FleetSettings record missing.' }, { status: 409 });
 
     let recipients: any[] = [];
     let subject = '';
