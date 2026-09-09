@@ -15,6 +15,12 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import {
+  calendarEventFieldsFromForm,
+  createCalendarEventWithRecovery,
+  deleteCalendarEventIfUnchanged,
+  updateCalendarEventIfUnchanged,
+} from "@/components/calendar/calendarEventPersistence";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -23,6 +29,7 @@ export default function AdminCalendarSettings() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [globalSettings, setGlobalSettings] = useState(null);
   const [settingsError, setSettingsError] = useState("");
+  const [eventError, setEventError] = useState("");
   const [stats, setStats] = useState({ total: 0, universal: 0, synced: 0 });
 
   // Connection status (future OAuth)
@@ -87,9 +94,21 @@ export default function AdminCalendarSettings() {
     }
   };
 
-  const handleDeleteEvent = async (id) => {
-    await base44.entities.CalendarEvent.delete(id);
-    loadData();
+  const handleDeleteEvent = async (event) => {
+    if (!event?.id) return;
+    setEventError("");
+    try {
+      await deleteCalendarEventIfUnchanged({
+        entity: base44.entities.CalendarEvent,
+        event,
+        label: `Calendar event ${event.title || event.id} deletion`,
+      });
+      await loadData();
+    } catch (error) {
+      console.error("Calendar event deletion blocked:", error);
+      setEventError(error?.message || "This calendar event changed in another session and was not deleted.");
+      await loadData();
+    }
   };
 
   const upcomingEvents = events
@@ -133,6 +152,16 @@ export default function AdminCalendarSettings() {
             <div className="mt-1 text-xs">{settingsError}</div>
           </div>
           <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await loadData(); }}>Reload latest</Button>
+        </div>
+      )}
+
+      {eventError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Calendar event update blocked</div>
+            <div className="mt-1 text-xs">{eventError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setEventError(""); await loadData(); }}>Reload latest</Button>
         </div>
       )}
 
@@ -284,7 +313,7 @@ export default function AdminCalendarSettings() {
                     <Settings className="w-3.5 h-3.5 text-gray-500" />
                   </Button>
                   <Button variant="ghost" size="icon" className="w-7 h-7"
-                    onClick={() => handleDeleteEvent(ev.id)}>
+                    onClick={() => handleDeleteEvent(ev)}>
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   </Button>
                 </div>
@@ -314,6 +343,7 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
     location: "", is_universal: true, recurrence: "none", status: "confirmed"
   });
   const [saving, setSaving] = useState(false);
+  const [persistenceError, setPersistenceError] = useState("");
 
   const toLocal = (iso) => {
     if (!iso) return "";
@@ -323,6 +353,7 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
   };
 
   useEffect(() => {
+    setPersistenceError("");
     if (event) {
       setForm({ ...event, start_datetime: toLocal(event.start_datetime), end_datetime: toLocal(event.end_datetime) });
     } else {
@@ -335,21 +366,38 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
   }, [event, isOpen]);
 
   const handleSave = async () => {
+    if (!form.title || !form.start_datetime || saving) return;
     setSaving(true);
-    const data = {
-      ...form,
-      start_datetime: new Date(form.start_datetime).toISOString(),
-      end_datetime: form.end_datetime ? new Date(form.end_datetime).toISOString() : new Date(form.start_datetime).toISOString(),
-      external_source: "manual"
-    };
-    if (event?.id) {
-      await base44.entities.CalendarEvent.update(event.id, data);
-    } else {
-      await base44.entities.CalendarEvent.create(data);
+    setPersistenceError("");
+    try {
+      const data = calendarEventFieldsFromForm({
+        ...form,
+        start_datetime: new Date(form.start_datetime).toISOString(),
+        end_datetime: form.end_datetime ? new Date(form.end_datetime).toISOString() : new Date(form.start_datetime).toISOString(),
+        external_source: "manual"
+      });
+      if (event?.id) {
+        await updateCalendarEventIfUnchanged({
+          entity: base44.entities.CalendarEvent,
+          event,
+          nextFields: data,
+          label: `Calendar event ${event.title || event.id}`,
+        });
+      } else {
+        await createCalendarEventWithRecovery({
+          entity: base44.entities.CalendarEvent,
+          data,
+          label: `Calendar event ${data.title}`,
+        });
+      }
+      if (onSaved) await onSaved();
+      onClose();
+    } catch (error) {
+      console.error("Calendar event save blocked:", error);
+      setPersistenceError(error?.message || "The calendar event could not be saved safely. Reload before retrying.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    onSaved?.();
-    onClose();
   };
 
   return (
@@ -359,6 +407,12 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
           <DialogTitle>{event ? "Edit Event" : "New Company Event"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {persistenceError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">Calendar event save blocked</div>
+              <div className="mt-1 text-xs">{persistenceError}</div>
+            </div>
+          )}
           <div>
             <Label>Title *</Label>
             <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="mt-1" />
