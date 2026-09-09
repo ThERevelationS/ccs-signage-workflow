@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  replaceOrderFieldsIfUnchanged,
+  softDeleteOrderFromLoadedSnapshot,
+} from "@/components/orders/orderPersistence";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +78,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   const [readError, setReadError] = useState("");
   const [pendingChanges, setPendingChanges] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -84,6 +89,11 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   const [editingVendors, setEditingVendors] = useState(false);
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
+  const pendingChangesRef = useRef({});
+  const originalOrdersRef = useRef({});
+  const saveInFlightRef = useRef(false);
+  const addInFlightRef = useRef(false);
+  const deleteInFlightRef = useRef(false);
   
   const [requestTypes, setRequestTypes] = useState(() => {
     const saved = localStorage.getItem('orderRequestTypes');
