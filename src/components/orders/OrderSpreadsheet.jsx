@@ -416,6 +416,31 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setHasUnsavedChanges(true);
   };
 
+  const persistImmediateOrderFields = async (orderId, nextFields, label) => {
+    const baseline = originalOrdersRef.current[orderId];
+    if (!baseline?.id) throw new Error(`${label} is missing its loaded Order baseline. Reload before saving.`);
+    const saved = await replaceOrderFieldsIfUnchanged({
+      entity: Order,
+      order: baseline,
+      nextFields,
+      label,
+    });
+    originalOrdersRef.current[orderId] = { ...saved };
+
+    const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
+    for (const [field, value] of Object.entries(nextFields)) {
+      if (Object.is(latestPending[field], value)) delete latestPending[field];
+    }
+    if (Object.keys(latestPending).length > 0) pendingChangesRef.current[orderId] = latestPending;
+    else delete pendingChangesRef.current[orderId];
+
+    setOrders((current) => current.map((order) => order.id === orderId
+      ? { ...saved, ...(pendingChangesRef.current[orderId] || {}) }
+      : order));
+    setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
+    return saved;
+  };
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const deleteOrder = async (order) => {
