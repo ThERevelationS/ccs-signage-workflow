@@ -198,13 +198,17 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     }
     setIsRecognizing(false);
 
-    // Check if user is currently clocked in
+    // Check if user is currently clocked in. Never choose an arbitrary row if
+    // payroll history already contains multiple active entries for this user.
     setIsLoading(true);
     const entries = await TimeEntry.filter({ user_email: user.email, status: "clocked_in" });
     setIsLoading(false);
     
-    if (entries.length > 0) {
-      // User is clocked in, show clock out dialog
+    if (entries.length > 1) {
+      setPersistenceError(`Multiple active time entries were found for ${user.email}. No clock-out row was selected automatically; an admin must review the duplicates.`);
+      setRecognitionStatus("Multiple active entries require admin review.");
+    } else if (entries.length === 1) {
+      setPersistenceError("");
       setActiveEntry(entries[0]);
       setShowClockOut(true);
     } else {
@@ -246,42 +250,55 @@ export default function QuickClockSection({ allUsers, currentTime }) {
 
   const performClockIn = async (user) => {
     setIsLoading(true);
+    setPersistenceError("");
     try {
       const clockInTime = new Date();
-      await TimeEntry.create({
-        user_email: user.email,
-        user_name: user.full_name || user.email,
-        clock_in: clockInTime.toISOString(),
-        status: "clocked_in"
+      const result = await createActiveTimeEntryIfAbsent({
+        entity: TimeEntry,
+        data: {
+          user_email: user.email,
+          user_name: user.full_name || user.email,
+          clock_in: clockInTime.toISOString(),
+          status: "clocked_in"
+        },
+        label: `Quick Clock entry for ${user.full_name || user.email}`,
       });
       setIsLoading(false);
-      showNotification("in", user.full_name || user.email, format(clockInTime, "h:mm a"));
+      if (result.status === "existing" || result.status === "reused") {
+        setActiveEntry(result.record);
+        setRecognitionStatus("Already clocked in. No duplicate entry was created.");
+        setTimeout(() => resetState(), 3000);
+        return;
+      }
+      showNotification("in", user.full_name || user.email, format(new Date(result.record.clock_in || clockInTime), "h:mm a"));
       // Keep showing success for longer before resetting
       setTimeout(() => resetState(), 5000);
     } catch (err) {
       console.error("Clock in error:", err);
       setIsLoading(false);
-      setRecognitionStatus("Error clocking in. Please try again.");
-      setTimeout(() => resetState(), 3000);
+      setPersistenceError(err?.message || "Clock-in could not be saved safely. Reload before trying again.");
+      setRecognitionStatus("Clock-in blocked. Review the message below.");
     }
   };
 
   const handleClockOut = async (data) => {
+    if (!activeEntry?.id) return;
+    setPersistenceError("");
     try {
       const clockOutTime = new Date(data.clockOutTime);
-      await TimeEntry.update(activeEntry.id, {
-        clock_out: data.clockOutTime,
-        lunch_minutes: data.lunchMinutes,
-        total_hours: data.totalHours,
-        job_allocations: data.jobAllocations,
-        notes: data.notes,
-        status: "clocked_out"
+      await clockOutTimeEntryIfUnchanged({
+        entity: TimeEntry,
+        entry: activeEntry,
+        clockOutData: data,
+        label: `Quick Clock clock-out for ${activeEntry.user_name || activeEntry.user_email || activeEntry.id}`,
       });
       showNotification("out", selectedUser?.full_name || "User", format(clockOutTime, "h:mm a"));
       setShowClockOut(false);
       setTimeout(() => resetState(), 2000);
     } catch (err) {
       console.error("Clock out error:", err);
+      setPersistenceError(err?.message || "This time entry changed in another session. It was not clocked out from this stale screen.");
+      setRecognitionStatus("Clock-out blocked. Review the message below.");
     }
   };
 
