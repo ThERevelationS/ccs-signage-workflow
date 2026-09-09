@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,6 @@ import {
   GitBranch,
   Sparkles,
   Loader2,
-  ArrowUpDown,
   SortAsc,
   Clock,
   Activity,
