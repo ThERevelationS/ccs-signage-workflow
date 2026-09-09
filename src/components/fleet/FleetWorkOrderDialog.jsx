@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Plus, Trash2, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { X, Plus, Trash2, Loader2, ImagePlus, Upload } from "lucide-react";
 
 const TYPE_OPTIONS = ["scheduled", "emergency", "inspection", "repair"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"];
@@ -42,6 +43,7 @@ export default function FleetWorkOrderDialog({
   const [equipmentStatus, setEquipmentStatus] = useState("operational");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [pendingPhotos, setPendingPhotos] = useState({ before_photos: [], problem_photos: [], after_photos: [] });
 
   useEffect(() => {
     if (!open) return;
@@ -62,6 +64,7 @@ export default function FleetWorkOrderDialog({
     setForm(source);
     const eq = equipment.find((e) => e.id === source.equipment_id);
     setEquipmentStatus(eq?.status || "operational");
+    setPendingPhotos({ before_photos: [], problem_photos: [], after_photos: [] });
     setError("");
   }, [open, workOrder, equipment]);
 
@@ -77,6 +80,13 @@ export default function FleetWorkOrderDialog({
 
   const addPart = () => setForm((prev) => ({ ...prev, parts_used: [...(prev.parts_used || []), { part_id: "", part_name: "", quantity: 1, cost: 0 }] }));
   const addFluid = () => setForm((prev) => ({ ...prev, fluids_used: [...(prev.fluids_used || []), { fluid_id: "", fluid_name: "", quantity: 1, unit: "", cost: 0 }] }));
+  const addPhotos = (field, fileList) => {
+    const files = Array.from(fileList || []).filter(file => file?.type?.startsWith("image/"));
+    if (!files.length) return;
+    setPendingPhotos(prev => ({ ...prev, [field]: [...(prev[field] || []), ...files] }));
+  };
+  const removePendingPhoto = (field, index) => setPendingPhotos(prev => ({ ...prev, [field]: (prev[field] || []).filter((_, i) => i !== index) }));
+  const removeSavedPhoto = (field, index) => setForm(prev => ({ ...prev, [field]: (prev[field] || []).filter((_, i) => i !== index) }));
 
   const updatePart = (index, field, value) => {
     setForm((prev) => ({ ...prev, parts_used: (prev.parts_used || []).map((line, i) => {
@@ -125,8 +135,19 @@ export default function FleetWorkOrderDialog({
     }
     setSaving(true);
     try {
+      const photoFields = ["problem_photos", "before_photos", "after_photos"];
+      const photoPatch = {};
+      for (const field of photoFields) {
+        const uploads = await Promise.all((pendingPhotos[field] || []).map(async (file) => {
+          const result = await base44.integrations.Core.UploadFile({ file });
+          if (!result?.file_url) throw new Error(`Photo upload failed for ${file.name}.`);
+          return result.file_url;
+        }));
+        photoPatch[field] = [...(form[field] || []), ...uploads];
+      }
       const payload = {
         ...form,
+        ...photoPatch,
         actual_hours: form.actual_hours === "" ? undefined : Number(form.actual_hours),
         maintenance_task_id: form.maintenance_task_id || undefined,
       };
@@ -164,6 +185,16 @@ export default function FleetWorkOrderDialog({
           <Field label="Description"><textarea value={form.description || ""} onChange={(e) => set("description", e.target.value)} rows={4} className="fleet-input" /></Field>
           <Field label={completing ? "Corrective Action *" : "Corrective Action"}><textarea value={form.corrective_action || ""} onChange={(e) => set("corrective_action", e.target.value)} rows={4} className="fleet-input" /></Field>
           <Field label="Notes"><textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} rows={3} className="fleet-input" /></Field>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2"><ImagePlus className="w-4 h-4 text-indigo-500" /><div className="font-medium text-gray-900 dark:text-slate-100">Work Order Photos</div></div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <PhotoEditor title="Problem Photos" field="problem_photos" urls={form.problem_photos || []} files={pendingPhotos.problem_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
+              <PhotoEditor title="Before Photos" field="before_photos" urls={form.before_photos || []} files={pendingPhotos.before_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
+              <PhotoEditor title="After Photos" field="after_photos" urls={form.after_photos || []} files={pendingPhotos.after_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
+            </div>
+            <div className="text-xs text-gray-400 mt-2">Selected photos upload when you save or complete the Fleet work order.</div>
+          </div>
 
           <UsageEditor title="Parts Used" onAdd={addPart}>
             {(form.parts_used || []).map((line, index) => <div key={`part-${index}`} className="grid sm:grid-cols-[1fr_120px_44px] gap-2 items-center">
