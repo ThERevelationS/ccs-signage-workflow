@@ -7,9 +7,9 @@ export default function FleetSidebar({ vehicles, selectedVin, onSelectVehicle, o
     <div className="h-full flex flex-col" style={{ background: "#1b2029", color: "#fff", width: 280 }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: "#2a2f3a" }}>
-        <button onClick={onMenu} className="p-1 hover:opacity-70" title="Menu">
+        {onMenu && <button onClick={onMenu} className="p-1 hover:opacity-70" title="Menu">
           <Menu className="w-5 h-5" />
-        </button>
+        </button>}
         <span className="text-sm text-gray-300">
           Viewing {selectedVin ? 1 : 0} of {totalCount || vehicles.length} vehicle{(totalCount || vehicles.length) !== 1 ? "s" : ""}
         </span>
