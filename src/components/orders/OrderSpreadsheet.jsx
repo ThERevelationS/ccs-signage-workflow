@@ -336,33 +336,40 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const addNewRow = async () => {
-    if (!isRegistered) return;
-    
-    const maxRowNumber = orders.length > 0 
-      ? Math.max(...orders.map(o => o.row_number || 0)) 
-      : 0;
-    
-    const newOrder = await Order.create({
-      customer_name: "",
-      request_type: requestTypes[0] || "Other",
-      description: "",
-      quantity: "",
-      requestor_email: currentUser?.email || "",
-      requestor_name: currentUser?.full_name || "",
-      vendor: "",
-      status: "pending",
-      row_number: maxRowNumber + 1,
-      work_order_id: workOrderFilter || ""
-    });
-    
-    setOrders([...orders, newOrder]);
-    originalOrdersRef.current[newOrder.id] = { ...newOrder };
-    
-    // Trigger notification for new order
+    if (!isRegistered || addInFlightRef.current) return;
+    addInFlightRef.current = true;
+    setSaveError("");
     try {
-      await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
-    } catch (e) {
-      console.error("Error triggering order notification:", e);
+      const maxRowNumber = orders.length > 0
+        ? Math.max(...orders.map(o => o.row_number || 0))
+        : 0;
+
+      const newOrder = await Order.create({
+        customer_name: "",
+        request_type: requestTypes[0] || "Other",
+        description: "",
+        quantity: "",
+        requestor_email: currentUser?.email || "",
+        requestor_name: currentUser?.full_name || "",
+        vendor: "",
+        status: "pending",
+        row_number: maxRowNumber + 1,
+        work_order_id: workOrderFilter || ""
+      });
+
+      setOrders((current) => [...current, newOrder]);
+      originalOrdersRef.current[newOrder.id] = { ...newOrder };
+
+      try {
+        await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
+      } catch (e) {
+        console.error("Error triggering order notification:", e);
+      }
+    } catch (error) {
+      console.error("Error creating Order:", error);
+      setSaveError(error?.message || "The Order could not be created.");
+    } finally {
+      addInFlightRef.current = false;
     }
   };
 
@@ -390,21 +397,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const updateOrder = (orderId, field, value, skipHistory = false) => {
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return;
+    const currentOrder = orders.find(o => o.id === orderId);
+    if (!currentOrder) return;
+    const oldValue = currentOrder[field];
 
-    const oldValue = orders[orderIndex][field];
+    setOrders((current) => current.map((order) => order.id === orderId
+      ? { ...order, [field]: value }
+      : order));
 
-    const updatedOrders = [...orders];
-    updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
-    setOrders(updatedOrders);
-
-    // Track cell history
     if (!skipHistory && oldValue !== value) {
       trackChange(orderId, field, oldValue, value);
     }
 
-    // Track changes for batch save
     pendingChangesRef.current[orderId] = {
       ...pendingChangesRef.current[orderId],
       [field]: value
@@ -419,13 +423,30 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const confirmDelete = async () => {
-    await Order.update(deleteConfirm.id, {
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: currentUser?.email || "unknown"
-    });
-    setOrders(orders.filter(o => o.id !== deleteConfirm.id));
-    setDeleteConfirm(null);
+    const target = deleteConfirm;
+    if (!target || deleteInFlightRef.current) return;
+    const baseline = originalOrdersRef.current[target.id] || target;
+    deleteInFlightRef.current = true;
+    setSaveError("");
+    try {
+      await softDeleteOrderFromLoadedSnapshot({
+        entity: Order,
+        order: baseline,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Order Spreadsheet delete",
+      });
+      setOrders((current) => current.filter(o => o.id !== target.id));
+      delete pendingChangesRef.current[target.id];
+      delete originalOrdersRef.current[target.id];
+      setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Could not delete Order safely:", error);
+      setSaveError(error?.message || "This Order changed in another session. Reload before deleting it.");
+      setDeleteConfirm(null);
+    } finally {
+      deleteInFlightRef.current = false;
+    }
   };
 
   const getFilteredWorkOrders = React.useCallback((searchTerm) => {
