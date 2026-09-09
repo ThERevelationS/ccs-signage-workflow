@@ -334,6 +334,19 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
         </DialogHeader>
 
         <div className="px-6 py-4 space-y-5">
+          {persistenceError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+              <div>
+                <div className="font-medium">Announcement update blocked</div>
+                <div className="mt-1 text-xs">{persistenceError}</div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setPersistenceError(""); }}>Reload latest</Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setPersistenceError("")}>Dismiss</Button>
+              </div>
+            </div>
+          )}
+
           {/* Saved announcements bar */}
           <div className="flex items-center gap-2">
             <Button
@@ -578,6 +591,7 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
               className="w-full h-10 rounded-xl text-sm font-bold shadow-sm transition-all hover:shadow-md"
               style={{ background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)', color: '#991B1B', border: '1px solid #FCA5A5' }}
               onClick={handleStopAnnouncement}
+              disabled={sending}
             >
               <X className="w-4 h-4 mr-2" />
               Stop Live Announcement
