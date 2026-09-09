@@ -448,30 +448,82 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
+    if (automationSaving) return;
     const saveData = {
       ...formData,
+      name: String(formData.name || "").trim(),
       triggers,
       actions
     };
-    
-    if (editingRule) {
-      await AutomationRule.update(editingRule.id, saveData);
-    } else {
-      await AutomationRule.create(saveData);
+    setAutomationSaveError("");
+    setAutomationSaving(true);
+    try {
+      if (editingRule) {
+        const duplicateName = automations.find(rule => rule.id !== editingRule.id && String(rule.name || "").trim().toLowerCase() === saveData.name.toLowerCase());
+        if (duplicateName) throw new Error(`Another automation named "${saveData.name}" already exists.`);
+        const saved = await updateAutomationRuleIfUnchanged({
+          entity: AutomationRule,
+          record: editingRule,
+          nextFields: saveData,
+          exactVersion: true,
+          label: `Automation Rule ${editingRule.name || editingRule.id}`,
+        });
+        setAutomations(prev => prev.map(rule => rule.id === saved.id ? saved : rule));
+      } else {
+        const result = await createAutomationRuleIfAbsent({
+          entity: AutomationRule,
+          data: saveData,
+          label: `Automation Rule ${saveData.name}`,
+        });
+        if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
+          throw new Error(`An automation named "${saveData.name}" already exists. The existing rule was kept instead of creating a duplicate.`);
+        }
+      }
+      setIsDialogOpen(false);
+      await loadAutomations();
+    } catch (error) {
+      console.error("Automation save blocked:", error);
+      setAutomationSaveError(error?.message || "This automation changed in another session. Reload before retrying.");
+    } finally {
+      setAutomationSaving(false);
     }
-    setIsDialogOpen(false);
-    loadAutomations();
   };
 
-  const handleDelete = async (id) => {
-    await AutomationRule.delete(id);
-    setDeleteConfirm(null);
-    loadAutomations();
+  const handleDelete = async (rule) => {
+    if (!rule?.id) return;
+    setAutomationSaveError("");
+    try {
+      await deleteAutomationRuleIfUnchanged({
+        entity: AutomationRule,
+        record: rule,
+        label: `Automation Rule ${rule.name || rule.id} deletion`,
+      });
+      setDeleteConfirm(null);
+      setAutomations(prev => prev.filter(item => item.id !== rule.id));
+    } catch (error) {
+      console.error("Automation delete blocked:", error);
+      setAutomationSaveError(error?.message || "This automation changed in another session and was not deleted.");
+      setDeleteConfirm(null);
+      await loadAutomations();
+    }
   };
 
   const toggleEnabled = async (rule) => {
-    await AutomationRule.update(rule.id, { enabled: !rule.enabled });
-    loadAutomations();
+    setAutomationSaveError("");
+    try {
+      const saved = await updateAutomationRuleIfUnchanged({
+        entity: AutomationRule,
+        record: rule,
+        nextFields: { enabled: !rule.enabled },
+        exactVersion: false,
+        label: `Automation Rule ${rule.name || rule.id} enabled state`,
+      });
+      setAutomations(prev => prev.map(item => item.id === saved.id ? saved : item));
+    } catch (error) {
+      console.error("Automation toggle blocked:", error);
+      setAutomationSaveError(error?.message || "This automation changed in another session. Latest rules were reloaded.");
+      await loadAutomations();
+    }
   };
 
   // Trigger helpers
