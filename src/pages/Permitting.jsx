@@ -232,8 +232,10 @@ export default function Permitting() {
     });
     const newStatus = permitReceived ? 'completed' : 'active';
 
-    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus } : li));
-    await PermitLineItem.update(lineItemId, { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus });
+    const lineUpdate = { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus };
+    setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...lineUpdate } : li));
+    const savedLine = await persistPermitLineItemFields(lineItemId, lineUpdate, "Permit workflow step update");
+    if (!savedLine) return;
 
     // ── Fire email automations for permit events ──
     const wo = workOrders.find(w => w.id === item.work_order_id);
@@ -271,12 +273,12 @@ export default function Permitting() {
     if (updatedStep?.type === 'permit_received_date' && updates.value && !item.permit_received_date) {
       fireTrigger('permit_received');
     }
-  }, [lineItems, workOrders, currentUser]);
+  }, [lineItems, workOrders, currentUser, persistPermitLineItemFields]);
 
   const updateField = useCallback(async (lineItemId, field, value) => {
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, [field]: value } : li));
-    await PermitLineItem.update(lineItemId, { [field]: value });
-  }, []);
+    await persistPermitLineItemFields(lineItemId, { [field]: value }, `Permit ${field} update`);
+  }, [persistPermitLineItemFields]);
 
   // Notes sync to work order's work_notes
   const updateNotesAndSync = useCallback(async (lineItemId, notesText) => {
@@ -284,7 +286,8 @@ export default function Permitting() {
     if (!item) return;
 
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, notes: notesText } : li));
-    await PermitLineItem.update(lineItemId, { notes: notesText });
+    const savedLine = await persistPermitLineItemFields(lineItemId, { notes: notesText }, "Permit notes update");
+    if (!savedLine) return;
 
     if (notesText && notesText.trim()) {
       const wo = workOrders.find(w => w.id === item.work_order_id);
@@ -314,7 +317,7 @@ export default function Permitting() {
           : prev);
       }
     }
-  }, [lineItems, workOrders, currentUser]);
+  }, [lineItems, workOrders, currentUser, persistPermitLineItemFields]);
 
   // When a locality is selected on a work order with no line items yet,
   // create one line item per OFFICE configured in that locality's settings.
