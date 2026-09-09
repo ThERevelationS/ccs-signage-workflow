@@ -14,6 +14,9 @@ import {
   AlertTriangle,
   Loader2,
   ArrowRight,
+  UserRoundX,
+  Wrench,
+  Clock3,
 } from "lucide-react";
 
 const statusClass = (status) => {
@@ -54,12 +57,38 @@ export default function FleetOverview() {
 
   const metrics = useMemo(() => {
     if (!data) return null;
-    const activeOrders = data.workOrders.filter(w => !["completed", "cancelled"].includes(w.status));
+    const priorityRank = { critical: 0, high: 1, medium: 2, low: 3 };
+    const activeOrders = data.workOrders
+      .filter(w => !["completed", "cancelled"].includes(w.status))
+      .sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9) || String(a.work_order_number || "").localeCompare(String(b.work_order_number || "")));
+    const highPriorityOrders = activeOrders.filter(w => ["critical", "high"].includes(w.priority));
+    const unassignedOrders = activeOrders.filter(w => !String(w.assigned_to || "").trim());
     const lowParts = data.parts.filter(p => p.enable_low_stock_alerts !== false && Number(p.quantity_on_hand ?? 0) <= Number(p.minimum_stock ?? 0));
     const lowFluids = data.fluids.filter(f => f.enable_low_stock_alerts !== false && f.quantity != null && f.minimum_stock != null && Number(f.quantity) <= Number(f.minimum_stock));
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    return { activeOrders, lowStock: lowParts.length + lowFluids.length, pendingRequests, uniqueTracked };
+    const todayText = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const today = new Date(`${todayText}T12:00:00`);
+    const horizon = new Date(today);
+    horizon.setDate(horizon.getDate() + 14);
+    const pendingTasks = data.tasks.filter(t => t.status === "pending" && t.start_date);
+    const overdueTasks = pendingTasks.filter(t => new Date(`${t.start_date}T12:00:00`) < today);
+    const upcomingTasks = pendingTasks.filter(t => {
+      const due = new Date(`${t.start_date}T12:00:00`);
+      return due >= today && due <= horizon;
+    }).sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+    return {
+      activeOrders,
+      highPriorityOrders,
+      unassignedOrders,
+      lowParts,
+      lowFluids,
+      lowStock: lowParts.length + lowFluids.length,
+      pendingRequests,
+      uniqueTracked,
+      overdueTasks,
+      upcomingTasks,
+    };
   }, [data]);
 
   if (!data && !error) {
@@ -84,11 +113,12 @@ export default function FleetOverview() {
 
         {data && metrics && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
               <MetricCard icon={Truck} label="Equipment" value={data.equipment.length} sub={`${metrics.uniqueTracked} tracked VIN${metrics.uniqueTracked === 1 ? "" : "s"}`} />
               <MetricCard icon={ClipboardList} label="Open Work Orders" value={metrics.activeOrders.length} sub={`${data.workOrders.length} total history`} />
-              <MetricCard icon={CalendarClock} label="Maintenance Schedules" value={data.tasks.length} sub="Recurring + one-off" />
-              <MetricCard icon={AlertTriangle} label="Low Stock" value={metrics.lowStock} sub={`${data.parts.length} parts · ${data.fluids.length} fluids`} />
+              <MetricCard icon={AlertTriangle} label="High / Critical" value={metrics.highPriorityOrders.length} sub="Active work orders" />
+              <MetricCard icon={Package} label="Low Stock" value={metrics.lowStock} sub={`${metrics.lowParts.length} parts · ${metrics.lowFluids.length} fluids`} />
+              <MetricCard icon={CalendarClock} label="Due in 14 Days" value={metrics.upcomingTasks.length} sub={`${metrics.overdueTasks.length} overdue schedule${metrics.overdueTasks.length === 1 ? "" : "s"}`} />
             </div>
 
             <div className="grid lg:grid-cols-3 gap-4">
@@ -118,10 +148,20 @@ export default function FleetOverview() {
               </div>
 
               <div className="space-y-4">
+                <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-2 mb-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Needs Attention</h2><AlertTriangle className="w-5 h-5 text-amber-500" /></div>
+                  <div className="space-y-2">
+                    <AttentionRow icon={AlertTriangle} label="High / critical work orders" value={metrics.highPriorityOrders.length} page="FleetWorkOrders" />
+                    <AttentionRow icon={UserRoundX} label="Unassigned active work" value={metrics.unassignedOrders.length} page="FleetWorkOrders" />
+                    <AttentionRow icon={Package} label="Low-stock items" value={metrics.lowStock} page="FleetParts" />
+                    <AttentionRow icon={Clock3} label="Maintenance due in 14 days" value={metrics.upcomingTasks.length} page="FleetMaintenance" />
+                  </div>
+                  {metrics.upcomingTasks.length > 0 && <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Next due</div>{metrics.upcomingTasks.slice(0, 3).map(task => <div key={task.id} className="text-xs text-gray-600 dark:text-slate-300 py-1"><span className="font-medium">{task.start_date}</span> · {task.title}</div>)}</div>}
+                </div>
                 <QuickLink icon={Navigation} title="Bouncie Tracking" text="Live vehicles, trips, alerts and telemetry" page="FleetTracking" />
                 <QuickLink icon={ShoppingCart} title="Requests" text={`${metrics.pendingRequests.length} pending or ordered`} page="FleetRequests" />
-                <QuickLink icon={Package} title="Parts" text={`${data.parts.length} Fleet-specific part records`} page="FleetParts" />
-                <QuickLink icon={Droplets} title="Fluids" text={`${data.fluids.length} Fleet-specific fluid records`} page="FleetFluids" />
+                <QuickLink icon={Wrench} title="New Fleet Work Order" text="Start maintenance or repair work" page="FleetWorkOrders?new=1" rawPage />
+                <div className="grid grid-cols-2 gap-3"><QuickLink icon={Package} title="Parts" text={`${data.parts.length} records`} page="FleetParts" /><QuickLink icon={Droplets} title="Fluids" text={`${data.fluids.length} records`} page="FleetFluids" /></div>
               </div>
             </div>
           </>
