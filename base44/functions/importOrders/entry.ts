@@ -23,8 +23,18 @@ const retryOnRateLimit = async (fn, maxRetries = 3) => {
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await base44.auth.me().catch(() => null);
+  if (!user?.email) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  let canImport = user.role === 'admin';
+  if (!canImport) {
+    const authorized = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
+    const appUser = authorized?.[0];
+    canImport = appUser?.role === 'admin' || appUser?.can_import_export === true;
+  }
+  if (!canImport) {
+    return Response.json({ error: 'Order import permission is required.' }, { status: 403 });
+  }
 
   let workbook;
   let workOrderFilter = '';
