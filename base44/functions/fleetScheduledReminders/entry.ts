@@ -4,6 +4,10 @@ const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'
 const weekday = () => new Intl.DateTimeFormat('en-US',{ weekday:'long', timeZone:'America/New_York' }).format(new Date()).toLowerCase();
 const localDate = () => new Intl.DateTimeFormat('en-CA',{ timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
 
+async function logRun(base44:any, level:'info'|'warning'|'error', message:string, details:any={}) {
+  await base44.asServiceRole.entities.FleetSystemLog.create({source:'fleetScheduledReminders',level,message,details}).catch(()=>null);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -59,9 +63,11 @@ Deno.serve(async (req) => {
     }
 
     if (queued > 0) await base44.asServiceRole.functions.invoke('fleetNotificationWorker', {}).catch(() => null);
+    await logRun(base44, 'info', 'Fleet scheduled reminders run completed.', {day,date:today,queued,reused});
     return Response.json({ success:true, day, date:today, queued, reused });
   } catch (error) {
     console.error('fleetScheduledReminders error:', error);
+    try { await logRun(createClientFromRequest(req),'error','Fleet scheduled reminders failed.',{error:error?.message || String(error)}); } catch {}
     return Response.json({ error:error?.message || 'Fleet scheduled reminders failed.' }, { status:500 });
   }
 });
