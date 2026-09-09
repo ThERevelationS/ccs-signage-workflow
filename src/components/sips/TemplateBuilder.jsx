@@ -998,6 +998,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
           </div>
 
+          {persistenceError && (
+            <div className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start justify-between gap-3">
+              <div>
+                <div className="font-medium">Checklist Builder update blocked</div>
+                <div className="mt-1">{persistenceError}</div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={loadData}>Reload latest</Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setPersistenceError("")}>Dismiss</Button>
+              </div>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 py-1.5 border-b bg-white">
               <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-8`}>
