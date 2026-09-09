@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,14 @@ import {
   Plus, Trash2, Pencil, Save, X, ChevronDown, ChevronRight, CheckSquare, 
   List, Copy, Clipboard, GripVertical, Eye, EyeOff, Check
 } from "lucide-react";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
+import {
+  createChecklistSubItemIfAbsent,
+  deleteChecklistSubItemIfUnchanged,
+  reorderChecklistSubItemsIfUnchanged,
+  saveSettingMapEntryIfUnchanged,
+  updateChecklistSubItemIfUnchanged,
+} from "./templateBuilderPersistence";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
