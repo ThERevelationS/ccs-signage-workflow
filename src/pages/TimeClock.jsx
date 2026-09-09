@@ -112,8 +112,13 @@ export default function TimeClock() {
       setTimeEntries(entries);
       setTimeOffRequests(requests);
       
-      const active = entries.find(e => e.status === "clocked_in");
-      setActiveEntry(active || null);
+      const activeEntries = entries.filter(e => e.status === "clocked_in");
+      if (activeEntries.length > 1) {
+        setActiveEntry(null);
+        setTimeEntryError(`Multiple active time entries were found for ${loggedInUser.email}. No clock-out row was selected automatically; an admin must review the duplicates.`);
+      } else {
+        setActiveEntry(activeEntries[0] || null);
+      }
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -133,35 +138,44 @@ export default function TimeClock() {
   };
 
   const handleClockIn = async () => {
+    setTimeEntryError("");
     try {
-      const entry = await TimeEntry.create({
-        user_email: loggedInUser.email,
-        user_name: loggedInUser.full_name || loggedInUser.email,
-        clock_in: new Date().toISOString(),
-        status: "clocked_in"
+      const result = await createActiveTimeEntryIfAbsent({
+        entity: TimeEntry,
+        data: {
+          user_email: loggedInUser.email,
+          user_name: loggedInUser.full_name || loggedInUser.email,
+          clock_in: new Date().toISOString(),
+          status: "clocked_in"
+        },
+        label: `Time clock entry for ${loggedInUser.full_name || loggedInUser.email}`,
       });
-      setActiveEntry(entry);
-      loadData();
+      setActiveEntry(result.record);
+      await loadData();
     } catch (err) {
       console.error("Clock in error:", err);
+      setTimeEntryError(err?.message || "Clock-in could not be saved safely. Reload before trying again.");
+      await loadData();
     }
   };
 
   const handleClockOut = async (data) => {
+    if (!activeEntry?.id) return;
+    setTimeEntryError("");
     try {
-      await TimeEntry.update(activeEntry.id, {
-        clock_out: data.clockOutTime,
-        lunch_minutes: data.lunchMinutes,
-        total_hours: data.totalHours,
-        job_allocations: data.jobAllocations,
-        notes: data.notes,
-        status: "clocked_out"
+      await clockOutTimeEntryIfUnchanged({
+        entity: TimeEntry,
+        entry: activeEntry,
+        clockOutData: data,
+        label: `Time clock-out for ${activeEntry.user_name || activeEntry.user_email || activeEntry.id}`,
       });
       setActiveEntry(null);
       setShowClockOut(false);
-      loadData();
+      await loadData();
     } catch (err) {
       console.error("Clock out error:", err);
+      setTimeEntryError(err?.message || "This time entry changed in another session. It was not clocked out from this stale screen.");
+      await loadData();
     }
   };
 
@@ -194,13 +208,26 @@ export default function TimeClock() {
   const elapsed = getElapsedTime();
 
   const handleSaveNotes = async (entryId) => {
+    const loadedEntry = timeEntries.find(entry => entry.id === entryId);
+    if (!loadedEntry?.id) {
+      setTimeEntryError("This time entry is no longer loaded. Reload before editing its notes.");
+      return;
+    }
+    setTimeEntryError("");
     try {
-      await TimeEntry.update(entryId, { notes: editNotesText });
+      await saveTimeEntryNotesIfUnchanged({
+        entity: TimeEntry,
+        entry: loadedEntry,
+        notes: editNotesText,
+        label: `Time entry notes for ${loadedEntry.user_name || loadedEntry.user_email || loadedEntry.id}`,
+      });
       setEditingNotes(null);
       setEditNotesText("");
-      loadData();
+      await loadData();
     } catch (err) {
       console.error("Error saving notes:", err);
+      setTimeEntryError(err?.message || "The notes changed in another session. Latest data was reloaded.");
+      await loadData();
     }
   };
 
