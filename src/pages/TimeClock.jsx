@@ -40,6 +40,11 @@ import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
+import {
+  clockOutTimeEntryIfUnchanged,
+  createActiveTimeEntryIfAbsent,
+  saveTimeEntryNotesIfUnchanged,
+} from "@/components/timeclock/timeEntryPersistence";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
@@ -63,6 +68,7 @@ export default function TimeClock() {
   const [editingNotes, setEditingNotes] = useState(null);
   const [editNotesText, setEditNotesText] = useState("");
   const [editingTimeOff, setEditingTimeOff] = useState(null);
+  const [timeEntryError, setTimeEntryError] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
