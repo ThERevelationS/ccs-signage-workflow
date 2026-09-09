@@ -385,21 +385,59 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveSubTemplateChecklist = async () => {
-    await saveSubTemplateItems({ ...subTemplateItems, [selectedSubTemplate]: { items: subTemplateChecklistItems } });
-    setSubTemplateHasChanges(false);
-    setSubTemplateSaveStatus('saved');
+    if (!selectedSubTemplate) return;
+    try {
+      await saveSubTemplateEntry(selectedSubTemplate, { items: subTemplateChecklistItems }, {
+        label: `SIP sub-template checklist ${subTemplates.find(st => st.id === selectedSubTemplate)?.name || selectedSubTemplate}`,
+      });
+      setSubTemplateHasChanges(false);
+      setSubTemplateSaveStatus('saved');
+    } catch (error) {
+      console.error("Error saving sub-template checklist:", error);
+      setSubTemplateSaveStatus('idle');
+    }
   };
 
   const duplicateSubTemplate = async (subTemplate) => {
+    setPersistenceError("");
+    const names = new Set(subTemplates.map(st => String(st.name || '').trim().toLowerCase()));
+    let copyName = `${subTemplate.name} (Copy)`;
+    let suffix = 2;
+    while (names.has(copyName.toLowerCase())) copyName = `${subTemplate.name} (Copy ${suffix++})`;
+
+    let createdResult = null;
     try {
-      const newSubTemplate = await ChecklistSubItem.create({ name: `${subTemplate.name} (Copy)`, applies_to_product_types: subTemplate.applies_to_product_types || [], order: subTemplates.length });
+      createdResult = await createChecklistSubItemIfAbsent({
+        entity: ChecklistSubItem,
+        data: { name: copyName, applies_to_product_types: subTemplate.applies_to_product_types || [], order: subTemplates.length },
+        label: `SIP sub-template copy ${copyName}`,
+      });
+      const newSubTemplate = createdResult.record;
       const originalItems = subTemplateItems[subTemplate.id]?.items || [];
       if (originalItems.length > 0) {
         const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
-        await saveSubTemplateItems({ ...subTemplateItems, [newSubTemplate.id]: { items: copiedItems } });
+        try {
+          await saveSubTemplateEntry(newSubTemplate.id, { items: copiedItems }, { label: `SIP copied items ${copyName}` });
+        } catch (settingsError) {
+          if (createdResult.status === 'created') {
+            const latestCreated = await ChecklistSubItem.get(newSubTemplate.id).catch(() => null);
+            if (latestCreated?.id) {
+              await deleteChecklistSubItemIfUnchanged({
+                entity: ChecklistSubItem,
+                record: latestCreated,
+                label: `SIP copy rollback ${copyName}`,
+              }).catch(() => null);
+            }
+          }
+          throw settingsError;
+        }
       }
       await loadData();
-    } catch (error) { console.error("Error duplicating sub-template:", error); }
+    } catch (error) {
+      console.error("Error duplicating sub-template:", error);
+      setPersistenceError(error?.message || "The sub-template copy could not be completed safely.");
+      await loadData();
+    }
   };
 
   // Product Type Management
