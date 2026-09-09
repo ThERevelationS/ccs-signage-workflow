@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -82,7 +83,13 @@ Deno.serve(async (req) => {
             if (Object.keys(profileUpdate).length > 0) {
               profileUpdate.last_updated = new Date().toISOString();
               try {
-                await base44.asServiceRole.entities.JurisdictionProfile.update(jurisdiction.id, profileUpdate);
+                await replaceJurisdictionFieldsIfUnchanged({
+                  entity: base44.asServiceRole.entities.JurisdictionProfile,
+                  jurisdiction,
+                  nextFields: profileUpdate,
+                  guardFields: jurisdictionProtectionGuards(jurisdiction, profileUpdate, { respectManualProtection: true }),
+                  label: `Jurisdiction change monitor ${jurisdiction.name || jurisdiction.id}`,
+                });
               } catch (updateErr) {
                 console.warn(`Failed to update profile for ${jurisdiction.name}:`, updateErr.message);
               }
