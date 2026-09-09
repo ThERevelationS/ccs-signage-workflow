@@ -6,6 +6,10 @@ const nowIso = () => new Date().toISOString();
 const todayEastern = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const canonical = (rows:any[]=[]) => rows.slice().sort((a,b)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
 
+async function logRun(base44:any, level:'info'|'warning'|'error', message:string, details:any={}) {
+  await base44.asServiceRole.entities.FleetSystemLog.create({source:'fleetScheduledMaintenanceGeneration',level,message,details}).catch(()=>null);
+}
+
 function workOrderNumber(task:any) {
   const date = String(task.start_date || todayEastern()).replaceAll('-','');
   return `FWO-${date}-${String(task.id || '').slice(-6).toUpperCase()}`;
@@ -153,9 +157,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({success:true,disabled:false,date:today,due:due.length,created:results.filter(r=>r.status==='created').length,results});
+    const createdCount = results.filter(r=>r.status==='created').length;
+    const recoveredCount = results.filter(r=>r.status==='recovered').length;
+    const errorCount = results.filter(r=>r.status==='error').length;
+    const skippedCount = results.filter(r=>['skipped','reused','in_progress_elsewhere'].includes(r.status)).length;
+    await logRun(base44, errorCount ? 'warning' : 'info', 'Fleet scheduled maintenance generation run completed.', {date:today,due:due.length,created:createdCount,recovered:recoveredCount,skipped:skippedCount,errors:errorCount});
+    return Response.json({success:true,disabled:false,date:today,due:due.length,created:createdCount,results});
   } catch (error) {
     console.error('fleetScheduledMaintenanceGeneration error:',error);
+    try { await logRun(createClientFromRequest(req),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
     return Response.json({error:error?.message || 'Fleet scheduled maintenance generation failed.'},{status:500});
   }
 });
