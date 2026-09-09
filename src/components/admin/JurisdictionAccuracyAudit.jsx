@@ -31,7 +31,6 @@ export default function JurisdictionAccuracyAudit() {
   const [running, setRunning] = useState(false);
   const [lastRunResult, setLastRunResult] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [automationExists, setAutomationExists] = useState(false);
   const [alertActionError, setAlertActionError] = useState("");
 
   useEffect(() => {
