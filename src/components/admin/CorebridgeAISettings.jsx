@@ -36,6 +36,7 @@ import {
   XCircle
 } from "lucide-react";
 import { processCorebridgeEmails } from "@/functions/processCorebridgeEmails";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 const CorebridgeLog = base44.entities.CorebridgeLog;
@@ -78,7 +79,8 @@ const DEFAULTS = {
 
 export default function CorebridgeAISettings() {
   const [settings, setSettings] = useState(DEFAULTS);
-  const [settingId, setSettingId] = useState(null);
+  const [settingRecord, setSettingRecord] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -95,13 +97,16 @@ export default function CorebridgeAISettings() {
 
   const loadSettings = async () => {
     try {
-      const records = await GlobalSettings.filter({ setting_key: "corebridgeAI" });
-      if (records.length > 0) {
-        setSettings({ ...DEFAULTS, ...records[0].setting_value });
-        setSettingId(records[0].id);
-      }
+      const record = await loadSingleGlobalSetting({
+        entity: GlobalSettings,
+        settingKey: "corebridgeAI",
+        label: "CoreBridge AI settings",
+      });
+      setSettingRecord(record);
+      setSettings({ ...DEFAULTS, ...(record?.setting_value || {}) });
     } catch (err) {
       console.error("Error loading settings:", err);
+      setSettingsError(err?.message || "CoreBridge AI settings could not be loaded safely.");
     }
   };
 
@@ -113,23 +118,26 @@ export default function CorebridgeAISettings() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSettingsError("");
     try {
-      if (settingId) {
-        await GlobalSettings.update(settingId, { setting_value: settings });
-      } else {
-        const created = await GlobalSettings.create({
-          setting_key: "corebridgeAI",
-          setting_value: settings
-        });
-        setSettingId(created.id);
-      }
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: settingRecord,
+        settingKey: "corebridgeAI",
+        nextValue: settings,
+        label: "CoreBridge AI settings",
+      });
+      setSettingRecord(saved);
+      setSettings({ ...DEFAULTS, ...(saved?.setting_value || settings) });
       setIsDirty(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error("Error saving:", err);
+      console.error("CoreBridge AI settings save blocked:", err);
+      setSettingsError(err?.message || "CoreBridge AI settings changed in another session. Reload before saving.");
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const handleReset = () => {
@@ -188,6 +196,16 @@ export default function CorebridgeAISettings() {
           </Badge>
         </div>
       </div>
+
+      {settingsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">CoreBridge AI settings update blocked</div>
+            <div className="mt-1 text-xs">{settingsError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await loadSettings(); }}>Reload latest</Button>
+        </div>
+      )}
 
       {/* Gmail Query Settings */}
       <div className="clay-card p-5 space-y-4">
