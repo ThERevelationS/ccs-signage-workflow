@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -115,39 +116,46 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     for (const issue of issues) {
-      // Avoid duplicate alerts for same jurisdiction/issue within 30 days
-      const existingAlerts = await base44.asServiceRole.entities.RegulationAlert.filter({
+      // Preserve the existing 30-day unread suppression rule, but converge
+      // simultaneous audit runs to one canonical alert instead of racing create().
+      const alertData = {
         jurisdiction_id: jurisdiction.id,
-        is_read: false
+        jurisdiction_name: jurisdiction.name,
+        jurisdiction_state: jurisdiction.state,
+        alert_type: ['requirement_change', 'url_change', 'contact_change', 'document_update'].includes(issue.alert_type)
+          ? issue.alert_type
+          : 'other',
+        title: `[Accuracy Audit] ${issue.title}`,
+        description: issue.description || '',
+        field_changed: issue.field_changed || '',
+        previous_value: issue.previous_value || '',
+        new_value: issue.new_value || '',
+        impact_summary: issue.impact_summary || '',
+        severity: ['low', 'medium', 'high', 'critical'].includes(issue.severity) ? issue.severity : 'medium',
+        detected_at: new Date().toISOString(),
+        is_read: false,
+        notification_sent: false
+      };
+
+      const alertResult = await ensureConvergentRegulationAlertCreate({
+        entity: base44.asServiceRole.entities.RegulationAlert,
+        data: alertData,
+        identityFields: ['jurisdiction_id', 'field_changed'],
+        label: `Accuracy audit alert ${jurisdiction.name || jurisdiction.id} ${issue.field_changed || issue.title || 'issue'}`,
+        readMatches: async () => {
+          const existingAlerts = await base44.asServiceRole.entities.RegulationAlert.filter({
+            jurisdiction_id: jurisdiction.id,
+            is_read: false
+          });
+          return (existingAlerts || []).filter(a =>
+            a.field_changed === issue.field_changed &&
+            a.title?.includes('[Accuracy Audit]') &&
+            new Date(a.detected_at) > thirtyDaysAgo
+          );
+        },
       });
 
-      const isDuplicate = existingAlerts.some(a =>
-        a.field_changed === issue.field_changed &&
-        a.title?.includes('[Accuracy Audit]') &&
-        new Date(a.detected_at) > thirtyDaysAgo
-      );
-
-      if (!isDuplicate) {
-        await base44.asServiceRole.entities.RegulationAlert.create({
-          jurisdiction_id: jurisdiction.id,
-          jurisdiction_name: jurisdiction.name,
-          jurisdiction_state: jurisdiction.state,
-          alert_type: ['requirement_change', 'url_change', 'contact_change', 'document_update'].includes(issue.alert_type)
-            ? issue.alert_type
-            : 'other',
-          title: `[Accuracy Audit] ${issue.title}`,
-          description: issue.description || '',
-          field_changed: issue.field_changed || '',
-          previous_value: issue.previous_value || '',
-          new_value: issue.new_value || '',
-          impact_summary: issue.impact_summary || '',
-          severity: ['low', 'medium', 'high', 'critical'].includes(issue.severity) ? issue.severity : 'medium',
-          detected_at: new Date().toISOString(),
-          is_read: false,
-          notification_sent: false
-        });
-        issuesCreated++;
-      }
+      if (alertResult.status === 'created') issuesCreated++;
     }
   } catch (e) {
     console.error(`Audit error for ${jurisdiction.name}:`, e.message);
