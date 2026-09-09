@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createVinylMachineWithRecovery } from "@/components/vinylInventory/vinylMachinePersistence";
 
 const TYPE_META = {
   printer: { label: "Printer", icon: Printer },
@@ -124,12 +126,18 @@ export default function VinylSettings() {
       }
 
       const payload = stripMeta(machine);
-      const updateResult = await VinylMachine.update(machine.id, payload);
-      const refreshed = updateResult?.updated_date ? updateResult : await VinylMachine.get(machine.id);
-      const merged = { ...machine, ...(refreshed || {}) };
-      setMachines((prev) => prev.map((row) => row.id === machine.id ? merged : row));
-      setOriginal((prev) => ({ ...prev, [machine.id]: JSON.stringify(stripMeta(merged)) }));
-      setMessage(`Saved ${machine.machine_name || "Vinyl machine"}.`);
+      const saved = await replaceEntityFieldsIfUnchanged({
+        entity: VinylMachine,
+        id: machine.id,
+        expectedUpdatedAt: live.updated_date || "",
+        expectedFields: expectedEntityFields(live, payload),
+        nextFields: payload,
+        guardFields: { machine_type: live.machine_type },
+        label: `Vinyl machine ${live.machine_name || live.id}`,
+      });
+      setMachines((prev) => prev.map((row) => row.id === machine.id ? saved : row));
+      setOriginal((prev) => ({ ...prev, [machine.id]: JSON.stringify(stripMeta(saved)) }));
+      setMessage(`Saved ${saved.machine_name || machine.machine_name || "Vinyl machine"}.`);
     } catch (e) {
       if (!String(e?.message || "").includes("changed in another session")) {
         const refreshed = await VinylMachine.get(machine.id).catch(() => null);
@@ -152,14 +160,19 @@ export default function VinylSettings() {
     setMessage("");
     try {
       const meta = TYPE_META[type] || TYPE_META.printer;
-      const created = await VinylMachine.create({
-        machine_name: `New ${meta.label}`,
-        machine_type: type,
-        is_active: false,
-        is_default_for_type: false,
-        sort_order: machines.length + 1,
+      const result = await createVinylMachineWithRecovery({
+        entity: VinylMachine,
+        data: {
+          machine_name: `New ${meta.label}`,
+          machine_type: type,
+          is_active: false,
+          is_default_for_type: false,
+          sort_order: machines.length + 1,
+        },
+        label: `New ${meta.label}`,
       });
-      setMachines((prev) => [...prev, created]);
+      const created = result.record;
+      setMachines((prev) => [...prev.filter((row) => row.id !== created.id), created]);
       setOriginal((prev) => ({ ...prev, [created.id]: JSON.stringify(stripMeta(created)) }));
       setMessage(`Added ${meta.label}. It starts inactive so it cannot affect estimating until configured and enabled.`);
     } catch (e) {
