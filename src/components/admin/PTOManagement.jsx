@@ -47,6 +47,12 @@ import {
   Save,
   FileText
 } from "lucide-react";
+import {
+  assignPTOBalanceIfUnchanged,
+  createPTOPolicyIfAbsent,
+  deletePTOPolicyIfUnused,
+  updatePTOPolicyIfUnchanged,
+} from "@/components/timeclock/ptoPersistence";
 
 const PTOPolicy = base44.entities.PTOPolicy;
 const UserPTOBalance = base44.entities.UserPTOBalance;
@@ -96,6 +102,8 @@ export default function PTOManagement() {
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [ptoError, setPtoError] = useState("");
+  const [ptoSaving, setPtoSaving] = useState(false);
   
   // Form states
   const [policyForm, setPolicyForm] = useState({
