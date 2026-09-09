@@ -7,16 +7,17 @@ import {
 const PendingImport = base44.entities.PendingImport;
 
 export async function assertPendingImportSnapshotCurrent({
+  entity = PendingImport,
   item,
   label = "Pending Import",
 } = {}) {
   const id = String(item?.id || "").trim();
   const expectedUpdatedAt = String(item?.updated_date || "").trim();
-  if (!id || !expectedUpdatedAt || typeof PendingImport?.get !== "function") {
+  if (!id || !expectedUpdatedAt || typeof entity?.get !== "function") {
     throw new Error(`${label} could not verify its loaded version.`);
   }
 
-  const current = await PendingImport.get(id).catch(() => null);
+  const current = await entity.get(id).catch(() => null);
   if (!current?.id) throw new Error(`${label} no longer exists. Refresh Pending Imports.`);
   if (current.status !== "pending") {
     throw new Error(`${label} was already resolved in another session (${current.status || "unknown"}). Refresh Pending Imports.`);
@@ -28,6 +29,7 @@ export async function assertPendingImportSnapshotCurrent({
 }
 
 export async function resolvePendingImportFromLoadedSnapshot({
+  entity = PendingImport,
   item,
   status,
   mergedIntoId,
@@ -44,7 +46,7 @@ export async function resolvePendingImportFromLoadedSnapshot({
   if (mergedIntoId !== undefined) nextFields.merged_into_id = mergedIntoId || "";
 
   return replaceEntityFieldsIfUnchanged({
-    entity: PendingImport,
+    entity,
     id,
     expectedUpdatedAt,
     expectedFields: expectedEntityFields(item, nextFields),
