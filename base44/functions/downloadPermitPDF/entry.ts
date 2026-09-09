@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { patchJurisdictionDocuments } from '../../shared/jurisdictionPersistence.mjs';
 
 // Maps content-type to file extension
 function getExtFromContentType(contentType, fallbackUrl) {
@@ -77,24 +78,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Failed to upload file' }, { status: 500 });
     }
 
-    // Update the jurisdiction profile with the file URL
-    const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdiction_id);
-    const updatedDocuments = (jurisdiction.documents || []).map(doc => {
-      if (doc.url === document_url) {
-        return {
-          ...doc,
-          file_url: uploadResult.file_url,
-          downloaded_at: new Date().toISOString()
-        };
-      }
-      return doc;
+    // Patch only the matching document against the latest Jurisdiction snapshot so
+    // concurrent document additions/edits are preserved instead of replacing the array.
+    const downloadedAt = new Date().toISOString();
+    const updatedJurisdiction = await patchJurisdictionDocuments({
+      entity: base44.entities.JurisdictionProfile,
+      jurisdictionId: jurisdiction_id,
+      documentUrl: document_url,
+      patch: {
+        file_url: uploadResult.file_url,
+        downloaded_at: downloadedAt,
+      },
+      label: `Jurisdiction document download ${document_title || document_url}`,
     });
-
-    await base44.entities.JurisdictionProfile.update(jurisdiction_id, { documents: updatedDocuments });
 
     return Response.json({ 
       success: true, 
-      file_url: uploadResult.file_url 
+      file_url: uploadResult.file_url,
+      jurisdiction: updatedJurisdiction,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
