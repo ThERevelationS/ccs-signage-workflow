@@ -157,7 +157,8 @@ async function buildInventoryPlans(base44: any, workOrder: any, patch: any, comp
     grouped.set(key, existing);
   }
 
-  if (grouped.size > 0 && !String(patch.equipment_id ?? workOrder.equipment_id ?? '').trim()) {
+  const equipmentId = String(patch.equipment_id ?? workOrder.equipment_id ?? '').trim();
+  if (grouped.size > 0 && !equipmentId) {
     throw new Error('An equipment link is required before inventory-backed parts or fluids can be consumed.');
   }
 
@@ -167,6 +168,9 @@ async function buildInventoryPlans(base44: any, workOrder: any, patch: any, comp
     const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
     const item = await entity.get(plan.item_id);
     if (!item) throw new Error(`${plan.item_type === 'part' ? 'Part' : 'Fluid'} inventory item not found: ${plan.item_id}`);
+    if (Array.isArray(item.compatible_equipment_ids) && item.compatible_equipment_ids.length && !item.compatible_equipment_ids.includes(equipmentId)) {
+      throw new Error(`${item.part_name || item.fluid_name || plan.item_id} is not marked compatible with the selected Fleet equipment.`);
+    }
     const before = plan.item_type === 'part' ? num(item.quantity_on_hand) : num(item.quantity);
     if (before + 1e-9 < plan.quantity) {
       throw new Error(`Insufficient stock for ${item.part_name || item.fluid_name || plan.item_id}. Available ${before}, requested ${plan.quantity}.`);
