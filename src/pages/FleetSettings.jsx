@@ -38,6 +38,7 @@ export default function FleetSettings() {
   const readiness = useMemo(() => {
     const labels = {
       settings_present: "Fleet settings present",
+      cutover_state_present: "Server-owned cutover state present",
       fleet_url_configured: "CCS Fleet production URL configured",
       source_freeze_confirmed: "FleetMaster source freeze confirmed",
       verification_audit_passed: "Migration verification audit passed",
@@ -85,6 +86,7 @@ export default function FleetSettings() {
 
   const oldUrl = settings?.email_body_template?.includes("ccsfleet-master") || settings?.email_body_template?.includes("68accb163a1b474cdb95ea70");
   const blocked = readiness.some((item) => !item.ok);
+  const gates = serverStatus?.cutover || settings || {};
 
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Settings className="w-6 h-6"/>Fleet Settings</h1><p className="text-sm text-gray-500 dark:text-slate-400">CCS Fleet administration and cutover readiness. Operational gates remain off until controlled activation.</p></div><button onClick={runServerCheck} disabled={checking} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{checking?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Run server readiness check</button></div>
@@ -99,7 +101,7 @@ export default function FleetSettings() {
     {oldUrl && <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0"/><div><div className="font-semibold text-amber-800 dark:text-amber-200">Legacy FleetMaster URL still preserved in a template</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Replace this before notifications are enabled.</p></div></div>}
 
     {settings ? <div className="grid md:grid-cols-2 gap-4">
-      <Card title="Cutover Gates"><Row label="FleetMaster source freeze" value={settings.source_freeze_confirmed ? `CONFIRMED${settings.source_freeze_confirmed_at?` · ${new Date(settings.source_freeze_confirmed_at).toLocaleString()}`:""}` : "NOT CONFIRMED"}/><Row label="Maintenance generation" value={settings.maintenance_generation_enabled ? "ON" : "OFF"}/><Row label="Operational notifications" value={settings.notifications_enabled ? "ON" : "OFF"}/><Row label="Scheduled reminders" value={settings.scheduled_reminders_enabled ? "ON" : "OFF"}/><Row label="Public reporting" value={settings.public_reporting_enabled ? "ON" : "OFF"}/></Card>
+      <Card title="Cutover Gates"><Row label="FleetMaster source freeze" value={gates.source_freeze_confirmed ? `CONFIRMED${gates.source_freeze_confirmed_at?` · ${new Date(gates.source_freeze_confirmed_at).toLocaleString()}`:""}` : "NOT CONFIRMED"}/><Row label="Maintenance generation" value={gates.maintenance_generation_enabled ? "ON" : "OFF"}/><Row label="Operational notifications" value={gates.notifications_enabled ? "ON" : "OFF"}/><Row label="Scheduled reminders" value={gates.scheduled_reminders_enabled ? "ON" : "OFF"}/><Row label="Public reporting" value={gates.public_reporting_enabled ? "ON" : "OFF"}/></Card>
       <Card title="Company & Fleet URL"><Row label="Company name" value={settings.company_name}/><Row label="Fleet URL" value={settings.fleet_app_base_url}/><Row label="Setting type" value={settings.setting_type}/></Card>
       <Card title="Reminder Schedule"><Row label="Items on order" value={(settings.item_order_reminder_days||[]).join(", ")||"Disabled"}/><Row label="Open work orders" value={(settings.open_work_order_reminder_days||[]).join(", ")||"Disabled"}/></Card>
       <Card title="Notification Recipients"><Recipient label="New work orders" values={settings.work_order_creation_emails}/><Recipient label="Completed work orders" values={settings.work_order_completed_emails}/><Recipient label="Low stock" values={settings.low_stock_emails}/><Recipient label="Requests" values={settings.request_emails}/><Recipient label="Parts received" values={settings.parts_received_emails}/></Card>
