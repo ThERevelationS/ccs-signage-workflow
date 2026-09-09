@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
+const STALE_CLAIM_MS = 30 * 60 * 1000;
 const nowIso = () => new Date().toISOString();
 const todayEastern = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const canonical = (rows:any[]=[]) => rows.slice().sort((a,b)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
@@ -14,7 +15,31 @@ async function claim(Receipt:any, key:string, task:any) {
   const applied = canonical(await Receipt.filter({operation_key:key,status:'applied'}));
   if (applied) return {applied:true,owner:false,receipt:applied};
   const started = canonical(await Receipt.filter({operation_key:key,status:'started'}));
-  if (started) return {applied:false,owner:false,receipt:started};
+  if (started) {
+    const startedAt = Date.parse(started.started_at || started.created_date || '') || 0;
+    if (!startedAt || (Date.now() - startedAt) < STALE_CLAIM_MS) return {applied:false,owner:false,receipt:started};
+
+    // A serverless invocation cannot legitimately hold this claim for 30 minutes.
+    // Reclaim the same durable receipt using a nonce so concurrent recovery attempts
+    // elect one owner instead of creating another receipt for the same due cycle.
+    const recoveryToken = crypto.randomUUID();
+    const recoveryStamp = nowIso();
+    await Receipt.update(started.id, {
+      started_at: recoveryStamp,
+      error_message: '',
+      result_summary: {
+        ...(started.result_summary || {}),
+        recovery_claim_token: recoveryToken,
+        recovery_claimed_at: recoveryStamp,
+      },
+    });
+    await new Promise(r=>setTimeout(r,75));
+    const refreshed = await Receipt.get(started.id);
+    if (refreshed?.result_summary?.recovery_claim_token !== recoveryToken) {
+      return {applied:false,owner:false,receipt:refreshed || started};
+    }
+    return {applied:false,owner:true,receipt:refreshed,recoveredClaim:true};
+  }
   const created = await Receipt.create({operation_key:key,operation_type:'scheduled_generation',target_entity:'FleetMaintenanceTask',target_id:task.id,status:'started',started_at:nowIso(),result_summary:{due_date:task.start_date,title:task.title}});
   await new Promise(r=>setTimeout(r,75));
   const contenders = await Receipt.filter({operation_key:key,status:'started'});
@@ -46,10 +71,26 @@ Deno.serve(async (req) => {
     for (const task of due) {
       const key = `fleetmaint:${task.id}:due:${task.start_date}`;
       const existingOrders = await WorkOrder.filter({maintenance_task_id:task.id});
+      const exact = canonical(existingOrders.filter((wo:any)=>wo.generation_key===key));
+
+      // Recover cleanly if a prior invocation created the work order but stopped
+      // before advancing the task and applying its operation receipt.
+      if (exact) {
+        if (task.status !== 'in_progress' || task.generation_key !== key || task.last_generated_for_date !== task.start_date) {
+          await Task.update(task.id,{status:'in_progress',generation_key:key,last_generated_for_date:task.start_date});
+        }
+        const appliedReceipt = canonical(await Receipt.filter({operation_key:key,status:'applied'}));
+        const startedReceipt = canonical(await Receipt.filter({operation_key:key,status:'started'}));
+        if (!appliedReceipt && startedReceipt) {
+          await Receipt.update(startedReceipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(startedReceipt.result_summary||{}),work_order_id:exact.id,work_order_number:exact.work_order_number,recovered:true}});
+        }
+        results.push({task_id:task.id,status:'recovered',reason:'generation_key_exists',work_order_id:exact.id,work_order_number:exact.work_order_number});
+        continue;
+      }
+
       const active = existingOrders.find((wo:any)=>ACTIVE.has(wo.status));
-      const exact = existingOrders.find((wo:any)=>wo.generation_key===key);
-      if (active || exact) {
-        results.push({task_id:task.id,status:'skipped',reason:active?'active_work_order_exists':'generation_key_exists',work_order_id:(active||exact)?.id||''});
+      if (active) {
+        results.push({task_id:task.id,status:'skipped',reason:'active_work_order_exists',work_order_id:active.id});
         continue;
       }
 
