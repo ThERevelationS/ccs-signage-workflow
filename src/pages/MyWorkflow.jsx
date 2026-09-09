@@ -21,6 +21,7 @@ import {
   softDeleteWorkOrderFromLoadedSnapshot,
   transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
+import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -162,6 +163,7 @@ export default function MyWorkflow() {
           current_stage: null,
           _stage: gt.stage || "",
           due_date: gt.due_date,
+          _generalRecord: gt,
           notes: [{
             id: gt.id,
             text: gt.text,
@@ -186,15 +188,27 @@ export default function MyWorkflow() {
     if (!wo || !task || typeof mutateItem !== "function") return null;
     if (wo._isGeneral) {
       const updatedTask = mutateItem(task);
-      await GeneralTask.update(wo.id, {
-        text: updatedTask.text,
-        assigned_to: updatedTask.assigned_to || [],
-        sub_tasks: updatedTask.sub_tasks || [],
-        completed: !!updatedTask.completed
-      });
-      const updatedNotes = [updatedTask];
-      setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, notes: updatedNotes } : w));
-      return updatedNotes;
+      try {
+        const saved = await updateGeneralTaskIfUnchanged({
+          entity: GeneralTask,
+          task: wo._generalRecord,
+          nextFields: {
+            text: updatedTask.text,
+            assigned_to: updatedTask.assigned_to || [],
+            sub_tasks: updatedTask.sub_tasks || [],
+            completed: !!updatedTask.completed
+          },
+          label: `General task ${task.text || wo.id}`,
+        });
+        const updatedNotes = [{ ...updatedTask, timestamp: saved.created_date || updatedTask.timestamp }];
+        setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, notes: updatedNotes, _generalRecord: saved } : w));
+        return updatedNotes;
+      } catch (error) {
+        console.error("General task update blocked:", error);
+        await loadWorkOrders();
+        alert(error?.message || "This general task changed in another session. The latest task was reloaded.");
+        return null;
+      }
     }
 
     const saved = await mutateLocatedWorkOrderArrayItem({
