@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
+import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 
 const GeneralTask = base44.entities.GeneralTask;
 
@@ -10,6 +11,7 @@ const GeneralTask = base44.entities.GeneralTask;
 export default function StageTasksPanel({ stage }) {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [persistenceError, setPersistenceError] = useState("");
 
   const load = async () => {
     try {
@@ -30,13 +32,34 @@ export default function StageTasksPanel({ stage }) {
   }, [stage]);
 
   const toggleComplete = async (task) => {
-    await GeneralTask.update(task.id, { completed: !task.completed });
-    load();
+    setPersistenceError("");
+    try {
+      await updateGeneralTaskIfUnchanged({
+        entity: GeneralTask,
+        task,
+        nextFields: { completed: !task.completed },
+        label: `General task ${task.text || task.id}`,
+      });
+    } catch (error) {
+      console.error("General task completion update blocked:", error);
+      setPersistenceError(error?.message || "This task changed in another session. Reload before updating it.");
+    }
+    await load();
   };
 
   const handleDelete = async (task) => {
-    await GeneralTask.delete(task.id);
-    load();
+    setPersistenceError("");
+    try {
+      await deleteGeneralTaskIfUnchanged({
+        entity: GeneralTask,
+        task,
+        label: `General task ${task.text || task.id} deletion`,
+      });
+    } catch (error) {
+      console.error("General task deletion blocked:", error);
+      setPersistenceError(error?.message || "This task changed in another session and was not deleted.");
+    }
+    await load();
   };
 
   if (isLoading) {
@@ -47,10 +70,16 @@ export default function StageTasksPanel({ stage }) {
     );
   }
 
-  if (tasks.length === 0) return null;
+  if (tasks.length === 0 && !persistenceError) return null;
 
   return (
     <div className="clay-card p-3 mb-4">
+      {persistenceError && (
+        <div className="mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+          <div className="font-medium">Office task update blocked</div>
+          <div className="mt-1">{persistenceError}</div>
+        </div>
+      )}
       <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
         <ClipboardList className="w-4 h-4 text-purple-600" />
         Office Tasks ({tasks.length})
