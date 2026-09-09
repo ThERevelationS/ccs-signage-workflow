@@ -46,7 +46,7 @@ export default function VinylEditDialog({
       setDraft(vinyl || {});
       setTab("identification");
     }
-  }, [open, vinyl?.id]);
+  }, [open, vinyl?.id, vinyl?.updated_date]);
 
   if (!open) return null;
 
