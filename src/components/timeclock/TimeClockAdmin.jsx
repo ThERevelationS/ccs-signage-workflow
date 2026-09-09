@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
+import { deleteTimeEntryIfUnchanged, updateTimeEntryIfUnchanged } from "@/components/timeclock/timeEntryPersistence";
 
 const TimeEntry = base44.entities.TimeEntry;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -45,7 +46,9 @@ export default function TimeClockAdmin() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingEntry, setEditingEntry] = useState(null);
+  const [editingEntryBaseline, setEditingEntryBaseline] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [timeEntryError, setTimeEntryError] = useState("");
 
   useEffect(() => {
     loadData();
