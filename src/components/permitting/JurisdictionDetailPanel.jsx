@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
 import JurisdictionActivityTab from "./JurisdictionActivityTab";
+import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
@@ -65,13 +66,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
             document_url: doc.url,
             document_title: doc.title
           });
-          if (res.data?.file_url) {
-            onUpdate({
-              ...jurisdiction,
-              documents: (jurisdiction.documents || []).map(d => 
-                d.id === doc.id ? { ...d, file_url: res.data.file_url, downloaded_at: new Date().toISOString() } : d
-              )
-            });
+          if (res.data?.jurisdiction?.id) {
+            onUpdate(res.data.jurisdiction);
+          } else if (res.data?.file_url) {
+            const latest = await base44.entities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);
+            if (latest?.id) onUpdate(latest);
           }
         } catch (e) {
           console.error(`Failed to download ${doc.title}:`, e);
@@ -270,11 +269,13 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
           timestamp: new Date().toISOString(),
           changes: {}
         };
-        const existingLog = updated.activity_log || jurisdiction.activity_log || [];
-        await base44.entities.JurisdictionProfile.update(jurisdiction.id, {
-          activity_log: [...existingLog, newEntry]
+        const savedWithActivity = await appendJurisdictionActivitySafely({
+          entity: base44.entities.JurisdictionProfile,
+          jurisdictionId: jurisdiction.id,
+          entry: newEntry,
+          label: `Jurisdiction research activity ${jurisdiction.name || jurisdiction.id}`,
         });
-        onUpdate({ ...updated, activity_log: [...existingLog, newEntry] });
+        onUpdate(savedWithActivity);
         completeResearch(1, 0);
       } else {
         completeResearch(0, 1, "Research completed but no updates");
@@ -337,13 +338,11 @@ Answer the question based on the documents and information available. Be specifi
         document_url: doc.url,
         document_title: doc.title
       });
-      if (res.data?.file_url) {
-        onUpdate({
-          ...jurisdiction,
-          documents: (jurisdiction.documents || []).map(d => 
-            d.id === doc.id ? { ...d, file_url: res.data.file_url, downloaded_at: new Date().toISOString() } : d
-          )
-        });
+      if (res.data?.jurisdiction?.id) {
+        onUpdate(res.data.jurisdiction);
+      } else if (res.data?.file_url) {
+        const latest = await base44.entities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);
+        if (latest?.id) onUpdate(latest);
       }
     } catch (e) {
       console.error("Download error:", e);
