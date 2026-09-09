@@ -137,6 +137,16 @@ export default function JurisdictionMonitoringSettings() {
           </p>
         </div>
 
+        {settingsSaveError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium">Monitoring settings update blocked</div>
+              <div className="mt-1 text-xs">{settingsSaveError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setSettingsSaveError("")}>Dismiss</Button>
+          </div>
+        )}
+
         {/* Enable/Disable */}
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div>
