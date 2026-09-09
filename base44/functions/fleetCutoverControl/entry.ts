@@ -3,6 +3,7 @@ import { callBouncieApi, getActiveConnection } from '../../shared/bouncie.ts';
 
 const SOURCE_APP_ID = '68accb163a1b474cdb95ea70';
 const DEST_APP_ID = '68dfcc5e57bbbc35387da97c';
+const CUTOVER_STATE_KEY = 'primary';
 const MAX_REST_SYNC_AGE_MS = 24 * 60 * 60 * 1000;
 const nowIso = () => new Date().toISOString();
 
@@ -14,6 +15,20 @@ function countFromAudit(audit:any, key:string) {
 async function latestVerification(base44:any) {
   const rows = await base44.asServiceRole.entities.FleetMigrationAudit.filter({ mode:'verification' });
   return (rows || []).sort((a:any,b:any) => new Date(b.created_date || b.updated_date || 0).getTime() - new Date(a.created_date || a.updated_date || 0).getTime())[0] || null;
+}
+
+async function getCutoverState(base44:any, createIfMissing = false) {
+  const rows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:CUTOVER_STATE_KEY });
+  const existing = (rows || []).sort((a:any,b:any)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
+  if (existing || !createIfMissing) return existing;
+  return await base44.asServiceRole.entities.FleetCutoverState.create({
+    state_key:CUTOVER_STATE_KEY,
+    source_freeze_confirmed:false,
+    notifications_enabled:false,
+    scheduled_reminders_enabled:false,
+    maintenance_generation_enabled:false,
+    public_reporting_enabled:false,
+  });
 }
 
 async function currentCounts(base44:any) {
@@ -51,9 +66,15 @@ async function currentCounts(base44:any) {
   };
 }
 
+async function mirrorSettings(base44:any, settings:any, patch:any) {
+  if (!settings) return;
+  await base44.asServiceRole.entities.FleetSettings.update(settings.id, patch);
+}
+
 async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
   const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
   const settings = settingsRows?.[0] || null;
+  const state = await getCutoverState(base44, true);
   const audit = await latestVerification(base44);
   const counts = await currentCounts(base44);
   let conn = await getActiveConnection(base44);
@@ -75,8 +96,9 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
   const add = (key:string, pass:boolean, detail:string) => checks.push({ key, pass:!!pass, detail });
 
   add('settings_present', !!settings, settings ? 'FleetSettings record present.' : 'FleetSettings record missing.');
+  add('cutover_state_present', !!state, state ? 'Server-owned FleetCutoverState present.' : 'FleetCutoverState missing.');
   add('fleet_url_configured', !!settings?.fleet_app_base_url && /^https:\/\//i.test(settings.fleet_app_base_url), settings?.fleet_app_base_url || 'Fleet URL missing.');
-  add('source_freeze_confirmed', !!settings?.source_freeze_confirmed && !!settings?.source_freeze_confirmed_at, settings?.source_freeze_confirmed_at || 'FleetMaster freeze has not been confirmed.');
+  add('source_freeze_confirmed', !!state?.source_freeze_confirmed && !!state?.source_freeze_confirmed_at, state?.source_freeze_confirmed_at || 'FleetMaster freeze has not been confirmed.');
 
   const auditStatusOk = !!audit && ['passed','passed_with_findings'].includes(audit.status);
   const auditAppsOk = audit?.source_app_id === SOURCE_APP_ID && audit?.destination_app_id === DEST_APP_ID;
@@ -111,13 +133,18 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
     blocking,
     settings: settings ? {
       id: settings.id,
-      maintenance_generation_enabled: !!settings.maintenance_generation_enabled,
-      notifications_enabled: !!settings.notifications_enabled,
-      scheduled_reminders_enabled: !!settings.scheduled_reminders_enabled,
-      public_reporting_enabled: !!settings.public_reporting_enabled,
-      source_freeze_confirmed: !!settings.source_freeze_confirmed,
-      source_freeze_confirmed_at: settings.source_freeze_confirmed_at || null,
       fleet_app_base_url: settings.fleet_app_base_url || '',
+    } : null,
+    cutover: state ? {
+      id:state.id,
+      source_freeze_confirmed:!!state.source_freeze_confirmed,
+      source_freeze_confirmed_at:state.source_freeze_confirmed_at || null,
+      notifications_enabled:!!state.notifications_enabled,
+      scheduled_reminders_enabled:!!state.scheduled_reminders_enabled,
+      maintenance_generation_enabled:!!state.maintenance_generation_enabled,
+      public_reporting_enabled:!!state.public_reporting_enabled,
+      cutover_started_at:state.cutover_started_at || null,
+      cutover_completed_at:state.cutover_completed_at || null,
     } : null,
     audit: audit ? { id:audit.id, run_key:audit.run_key, status:audit.status, created_date:audit.created_date } : null,
     counts,
@@ -145,19 +172,22 @@ Deno.serve(async (req) => {
     const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
     const settings = settingsRows?.[0];
     if (!settings) return Response.json({ error:'FleetSettings record missing.' }, { status:409 });
+    const state = await getCutoverState(base44, true);
 
     if (action === 'status') return Response.json(await evaluate(base44));
     if (action === 'probe_bouncie') return Response.json(await evaluate(base44,{liveBouncieProbe:true}));
 
     if (action === 'disable_all') {
-      await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
+      const patch = {
         maintenance_generation_enabled:false,
         notifications_enabled:false,
         scheduled_reminders_enabled:false,
         public_reporting_enabled:false,
         cutover_completed_at:null,
         cutover_completed_by:'',
-      });
+      };
+      await base44.asServiceRole.entities.FleetCutoverState.update(state.id, patch);
+      await mirrorSettings(base44, settings, patch);
       return Response.json({ success:true, disabled:true, status:await evaluate(base44) });
     }
 
@@ -168,17 +198,19 @@ Deno.serve(async (req) => {
       const latest = await latestVerification(base44);
       const auditOk = latest && ['passed','passed_with_findings'].includes(latest.status) && latest.relationship_checks?.source_delta_detected === false;
       if (!auditOk) return Response.json({ error:'A passing no-delta verification audit is required before confirming source freeze.' }, { status:409 });
-      await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
+      const patch = {
         source_freeze_confirmed:true,
         source_freeze_confirmed_at:nowIso(),
         source_freeze_confirmed_by:user.email || user.id || 'admin',
         source_freeze_notes:String(body.notes || '').slice(0,1000),
-      });
+      };
+      await base44.asServiceRole.entities.FleetCutoverState.update(state.id, patch);
+      await mirrorSettings(base44, settings, patch);
       return Response.json({ success:true, status:await evaluate(base44) });
     }
 
     if (action === 'clear_source_freeze') {
-      await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
+      const patch = {
         source_freeze_confirmed:false,
         source_freeze_confirmed_at:null,
         source_freeze_confirmed_by:'',
@@ -187,7 +219,9 @@ Deno.serve(async (req) => {
         notifications_enabled:false,
         scheduled_reminders_enabled:false,
         public_reporting_enabled:false,
-      });
+      };
+      await base44.asServiceRole.entities.FleetCutoverState.update(state.id, patch);
+      await mirrorSettings(base44, settings, patch);
       return Response.json({ success:true, status:await evaluate(base44) });
     }
 
@@ -203,23 +237,25 @@ Deno.serve(async (req) => {
     const readiness = await evaluate(base44,{liveBouncieProbe:true});
     if (!readiness.ready) return Response.json({ error:'Fleet cutover readiness checks failed.', readiness }, { status:409 });
 
-    if (action === 'enable_scheduled_reminders' && !settings.notifications_enabled) {
+    if (action === 'enable_scheduled_reminders' && !state.notifications_enabled) {
       return Response.json({ error:'Enable Fleet notifications before scheduled reminders.' }, { status:409 });
     }
-    if (action === 'enable_maintenance_generation' && (!settings.notifications_enabled || !settings.scheduled_reminders_enabled)) {
+    if (action === 'enable_maintenance_generation' && (!state.notifications_enabled || !state.scheduled_reminders_enabled)) {
       return Response.json({ error:'Enable Fleet notifications and scheduled reminders before maintenance generation.' }, { status:409 });
     }
-    if (action === 'enable_public_reporting' && (!settings.notifications_enabled || !settings.scheduled_reminders_enabled || !settings.maintenance_generation_enabled)) {
+    if (action === 'enable_public_reporting' && (!state.notifications_enabled || !state.scheduled_reminders_enabled || !state.maintenance_generation_enabled)) {
       return Response.json({ error:'Enable notifications, scheduled reminders, and maintenance generation before public reporting.' }, { status:409 });
     }
 
     const stamp = nowIso();
-    await base44.asServiceRole.entities.FleetSettings.update(settings.id, {
+    const statePatch = {
       ...patch,
-      cutover_started_at: settings.cutover_started_at || stamp,
-      cutover_started_by: settings.cutover_started_by || user.email || user.id || 'admin',
+      cutover_started_at: state.cutover_started_at || stamp,
+      cutover_started_by: state.cutover_started_by || user.email || user.id || 'admin',
       ...(action === 'enable_public_reporting' ? { cutover_completed_at:stamp, cutover_completed_by:user.email || user.id || 'admin' } : {}),
-    });
+    };
+    await base44.asServiceRole.entities.FleetCutoverState.update(state.id, statePatch);
+    await mirrorSettings(base44, settings, statePatch);
     return Response.json({ success:true, action, status:await evaluate(base44) });
   } catch (error:any) {
     console.error('fleetCutoverControl error:', error);
