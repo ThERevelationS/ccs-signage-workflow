@@ -450,9 +450,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveProductTypeTemplate = async () => {
-    await saveProductTypeTemplates({ ...productTypeTemplates, [selectedProductType]: { items: productTypeItems } });
-    setProductTypeHasChanges(false);
-    setProductTypeSaveStatus('saved');
+    if (!selectedProductType) return;
+    try {
+      await saveProductTypeTemplateEntry(selectedProductType, { items: productTypeItems }, {
+        label: `SIP Product Type Template ${selectedProductType}`,
+      });
+      setProductTypeHasChanges(false);
+      setProductTypeSaveStatus('saved');
+    } catch (error) {
+      console.error("Error saving product type template:", error);
+      setProductTypeSaveStatus('idle');
+    }
   };
 
   const duplicateProductTypeTemplate = async (productType) => {
@@ -553,14 +561,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const handleSubTemplateDragEnd = async (result) => {
-    if (!result.destination) return;
+    if (!result.destination || result.source.index === result.destination.index) return;
     const reordered = Array.from(subTemplates);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
+    setPersistenceError("");
     try {
-      await Promise.all(reordered.map((item, idx) => ChecklistSubItem.update(item.id, { order: idx })));
+      const savedRows = await reorderChecklistSubItemsIfUnchanged({
+        entity: ChecklistSubItem,
+        loadedRows: subTemplates,
+        reorderedRows: reordered,
+        label: 'SIP sub-template reorder',
+      });
+      setSubTemplates([...savedRows].sort((a, b) => (a.order || 0) - (b.order || 0)));
+    } catch (error) {
+      console.error("Error reordering:", error);
+      setPersistenceError(error?.message || "The sub-template order changed in another session. Latest data was reloaded.");
       await loadData();
-    } catch (error) { console.error("Error reordering:", error); }
+    }
   };
 
   const handleProductTypeDragEnd = async (result) => {
