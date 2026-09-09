@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -475,18 +476,32 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           } else {
             // Has potential matches → send to pending review
             const action = candidates[0].match_score >= 50 ? 'pending_merge' : 'pending_approve';
-            await PendingImport.create({
-              doc_number: docNumber,
-              doc_type: docType,
-              email_subject: subject,
-              extracted_data: extractedData,
-              proposed_work_order: proposedWorkOrder,
-              match_candidates: candidates,
-              status: 'pending',
-              pdf_url: pdfUrl
+            const pendingCreate = await ensureConvergentPendingImportCreate({
+              entity: PendingImport,
+              data: {
+                doc_number: docNumber,
+                doc_type: docType,
+                email_subject: subject,
+                extracted_data: extractedData,
+                proposed_work_order: proposedWorkOrder,
+                match_candidates: candidates,
+                status: 'pending',
+                pdf_url: pdfUrl
+              },
+              readMatches: () => loadAllEntityRows({
+                entity: PendingImport,
+                query: { doc_number: docNumber },
+                sort: 'created_date',
+                label: `CoreBridge Pending Import ${docNumber}`,
+              }),
+              label: `CoreBridge Pending Import ${docNumber}`,
             });
             pendingImportDocNumbers.add(docNumber.toUpperCase());
-            results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
+            if (pendingCreate.status === 'created') {
+              results.push({ action, subject, docNumber, client: clientName, candidates: candidates.length });
+            } else {
+              results.push({ action: 'skipped', subject, docNumber, skipped_reason: 'Pending import was created concurrently or already existed during final convergence' });
+            }
           }
         }
 
