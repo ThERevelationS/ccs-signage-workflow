@@ -74,6 +74,39 @@ export default function FleetWorkOrderDialog({
   const filteredTasks = useMemo(() => tasks.filter((t) => !form.equipment_id || t.equipment_id === form.equipment_id), [tasks, form.equipment_id]);
   const compatibleParts = useMemo(() => parts.filter((p) => !form.equipment_id || !p.compatible_equipment_ids?.length || p.compatible_equipment_ids.includes(form.equipment_id)), [parts, form.equipment_id]);
   const compatibleFluids = useMemo(() => fluids.filter((f) => !form.equipment_id || !f.compatible_equipment_ids?.length || f.compatible_equipment_ids.includes(form.equipment_id)), [fluids, form.equipment_id]);
+  const usageIssues = useMemo(() => {
+    const issues = [];
+    const partTotals = new Map();
+    for (const line of form.parts_used || []) {
+      const id = String(line.part_id || "");
+      const qty = Number(line.quantity || 0);
+      if (!id || qty <= 0) continue;
+      const item = parts.find(p => p.id === id);
+      if (!item) { issues.push(`Selected Fleet part no longer exists: ${line.part_name || id}.`); continue; }
+      if (form.equipment_id && item.compatible_equipment_ids?.length && !item.compatible_equipment_ids.includes(form.equipment_id)) issues.push(`${item.part_name} is not marked compatible with this equipment.`);
+      partTotals.set(id, (partTotals.get(id) || 0) + qty);
+    }
+    for (const [id, qty] of partTotals) {
+      const item = parts.find(p => p.id === id);
+      if (item && Number(item.quantity_on_hand ?? 0) + 1e-9 < qty) issues.push(`Insufficient stock for ${item.part_name}: ${item.quantity_on_hand ?? 0} available, ${qty} entered.`);
+    }
+    const fluidTotals = new Map();
+    for (const line of form.fluids_used || []) {
+      const id = String(line.fluid_id || "");
+      const qty = Number(line.quantity ?? line.quantity_quarts ?? 0);
+      if (!id || qty <= 0) continue;
+      const item = fluids.find(f => f.id === id);
+      if (!item) { issues.push(`Selected Fleet fluid no longer exists: ${line.fluid_name || id}.`); continue; }
+      if (form.equipment_id && item.compatible_equipment_ids?.length && !item.compatible_equipment_ids.includes(form.equipment_id)) issues.push(`${item.fluid_name} is not marked compatible with this equipment.`);
+      if (line.unit && item.unit && line.unit !== item.unit) issues.push(`${item.fluid_name} is stored in ${item.unit}, but this usage line is ${line.unit}.`);
+      fluidTotals.set(id, (fluidTotals.get(id) || 0) + qty);
+    }
+    for (const [id, qty] of fluidTotals) {
+      const item = fluids.find(f => f.id === id);
+      if (item && Number(item.quantity ?? 0) + 1e-9 < qty) issues.push(`Insufficient stock for ${item.fluid_name}: ${item.quantity ?? 0} ${item.unit || ""} available, ${qty} entered.`);
+    }
+    return [...new Set(issues)];
+  }, [form.parts_used, form.fluids_used, form.equipment_id, parts, fluids]);
 
   if (!open) return null;
   const completing = mode === "complete";
@@ -157,6 +190,7 @@ export default function FleetWorkOrderDialog({
     if (!form.title?.trim()) return setError("Title is required.");
     if (!editing && !form.equipment_id) return setError("Equipment is required for a new Fleet work order.");
     if (completing && !form.corrective_action?.trim()) return setError("Corrective action is required to complete the work order.");
+    if (completing && usageIssues.length) return setError(usageIssues[0]);
     if (completing) {
       const usageCount = (form.parts_used || []).filter((p) => p.part_id && Number(p.quantity) > 0).length + (form.fluids_used || []).filter((f) => f.fluid_id && Number(f.quantity ?? f.quantity_quarts) > 0).length;
       setConfirmComplete(usageCount
@@ -220,6 +254,8 @@ export default function FleetWorkOrderDialog({
               <button type="button" onClick={() => setForm((prev) => ({ ...prev, fluids_used: prev.fluids_used.filter((_, i) => i !== index) }))} className="p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
             </div>)}
           </UsageEditor>
+
+          {usageIssues.length > 0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-200 px-3 py-2 text-xs"><div className="font-semibold">Inventory usage needs attention</div><ul className="mt-1 list-disc pl-4 space-y-0.5">{usageIssues.map(issue => <li key={issue}>{issue}</li>)}</ul>{!completing && <div className="mt-1">You can save the work order, but these issues must be resolved before completion.</div>}</div>}
 
           {completing && <Field label="Equipment Status After Completion"><select value={equipmentStatus} onChange={(e) => setEquipmentStatus(e.target.value)} className="fleet-input">{EQUIPMENT_STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>}
 
