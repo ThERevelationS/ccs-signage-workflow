@@ -91,7 +91,13 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
 
     setMergeLoading(removeId);
     setMergeError("");
+    let deletedSnapshot = null;
     try {
+      await assertPendingImportSnapshotCurrent({
+        item,
+        label: "Pending Import duplicate decision",
+      });
+
       // Verify both sides of the duplicate decision. A newer edit to either record may
       // change which Work Order should be kept, so do not delete from a stale comparison.
       const [latestKeep, latestRemove] = await Promise.all([
@@ -105,24 +111,49 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
       // If a prior attempt already moved this exact duplicate to Project Trash but the
       // PendingImport status write failed afterward, finish that same operation safely.
       const deleteAlreadyCompleted = latestRemove?.deleted === true && latestRemove.deleted_by === "duplicate_merge";
-      if (!deleteAlreadyCompleted) {
+      if (deleteAlreadyCompleted) {
+        deletedSnapshot = latestRemove;
+      } else {
         if (!removeWo || !latestRemove?.id || latestRemove.deleted === true || latestRemove.updated_date !== removeWo.updated_date) {
           throw new Error("The Work Order selected to delete changed after this duplicate was loaded.");
         }
-        await softDeleteWorkOrderFromLoadedSnapshot({
+        deletedSnapshot = await softDeleteWorkOrderFromLoadedSnapshot({
           workOrder: removeWo,
           deletedBy: "duplicate_merge",
           label: "Pending Import duplicate resolution",
         });
       }
 
-      // Only mark the Pending Import resolved after the duplicate Work Order has
-      // actually reached Project Trash. Retrying a status-write failure converges.
-      await PendingImport.update(item.id, { status: 'merged', merged_into_id: keepId });
+      try {
+        await resolvePendingImportFromLoadedSnapshot({
+          item,
+          status: "merged",
+          mergedIntoId: keepId,
+          label: "Pending Import duplicate resolution",
+        });
+      } catch (resolutionError) {
+        const latestItem = await PendingImport.get(item.id).catch(() => null);
+        const resolutionSucceeded = latestItem?.status === "merged" && latestItem?.merged_into_id === keepId;
+        if (!resolutionSucceeded) {
+          if (!latestItem) {
+            throw new Error(`${resolutionError?.message || "Pending Import resolution could not be verified."} The duplicate Work Order remains in Project Trash because the queue outcome is ambiguous; refresh before taking another action.`);
+          }
+          try {
+            await restoreWorkOrderFromLoadedTrashSnapshot({
+              workOrder: deletedSnapshot,
+              label: "Pending Import duplicate rollback",
+            });
+          } catch (rollbackError) {
+            throw new Error(`${resolutionError?.message || "Pending Import resolution failed."} The duplicate Work Order could not be safely restored from Project Trash: ${rollbackError?.message || "unknown rollback error"}`);
+          }
+          throw resolutionError;
+        }
+      }
+
       onReject(item.id);
     } catch (error) {
       console.error("Pending Import duplicate resolution blocked:", error);
-      setMergeError(`${error?.message || "Duplicate resolution could not be completed."} Refresh Pending Imports before trying again. If the delete succeeded but the status update failed, retrying will safely finish the merge.`);
+      setMergeError(`${error?.message || "Duplicate resolution could not be completed."} Refresh Pending Imports before trying again.`);
     } finally {
       setMergeLoading("");
     }
