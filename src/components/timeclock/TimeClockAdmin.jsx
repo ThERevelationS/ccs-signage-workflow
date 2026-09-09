@@ -234,6 +234,16 @@ export default function TimeClockAdmin() {
 
   return (
     <div className="space-y-6">
+      {timeEntryError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Time entry update blocked</div>
+            <div className="mt-1 text-xs">{timeEntryError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
+        </div>
+      )}
+
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -453,7 +463,7 @@ export default function TimeClockAdmin() {
                         <Button variant="ghost" size="icon" onClick={() => handleEditEntry(entry)} className="h-7 w-7">
                           <Pencil className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteEntry(entry.id)} className="h-7 w-7">
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteEntry(entry)} className="h-7 w-7">
                           <Trash2 className="w-3 h-3 text-red-500" />
                         </Button>
                       </div>
@@ -467,7 +477,7 @@ export default function TimeClockAdmin() {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); } }}>
         <DialogContent className="clay-card border-none max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -568,7 +578,7 @@ export default function TimeClockAdmin() {
               )}
 
               <div className="flex gap-3 pt-4">
-                <Button variant="outline" onClick={() => setShowEditDialog(false)} className="flex-1">
+                <Button variant="outline" onClick={() => { setShowEditDialog(false); setEditingEntry(null); setEditingEntryBaseline(null); }} className="flex-1">
                   Cancel
                 </Button>
                 <Button onClick={handleSaveEntry} className="flex-1 gap-2">
