@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import XLSX from 'npm:xlsx@0.18.5';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 const parseSheetDate = (name) => {
   const match = name.match(/WIP\s+(\d+)-(\d+)-(\d+)/);
@@ -267,6 +268,8 @@ Deno.serve(async (req) => {
 
     // Match and collect updates
     let updated = 0;
+    let failed = 0;
+    let conflicts = 0;
     let notFound = 0;
     let matchedByOrderNum = 0;
     let matchedByClient = 0;
@@ -348,7 +351,14 @@ Deno.serve(async (req) => {
       }
 
       if (Object.keys(updateData).length > 0) {
-        pendingUpdates.push({ id: match.id, data: updateData, orderNumber, wipData, match });
+        pendingUpdates.push({
+          id: match.id,
+          data: updateData,
+          expectedFields: expectedWorkOrderFields(match, updateData),
+          orderNumber,
+          wipData,
+          match,
+        });
       }
     }
 
@@ -359,7 +369,14 @@ Deno.serve(async (req) => {
       const results = await Promise.allSettled(batch.map(async (item) => {
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            await base44.asServiceRole.entities.WorkOrder.update(item.id, item.data);
+            const saved = await replaceWorkOrderFieldsIfUnchanged({
+              entity: base44.asServiceRole.entities.WorkOrder,
+              workOrderId: item.id,
+              expectedFields: item.expectedFields,
+              nextFields: item.data,
+              label: `WIP import ${item.orderNumber}`,
+            });
+            Object.assign(item.match, saved);
             return item;
           } catch (e) {
             if (e.message && e.message.includes('429') && attempt < 2) {
@@ -383,6 +400,9 @@ Deno.serve(async (req) => {
               fieldsUpdated: Object.keys(item.data)
             });
           }
+        } else if (r.status === 'rejected') {
+          failed++;
+          if (r.reason?.code === 'WORK_ORDER_FIELD_CONFLICT') conflicts++;
         }
       }
       // Small delay between batches
@@ -412,7 +432,9 @@ Deno.serve(async (req) => {
       matchedByOrderNum,
       matchedByClient,
       notFoundOrders,
-      message: `Updated ${updated} work orders (${matchedByOrderNum} by order#, ${matchedByClient} by client name). ${notFound} not matched.`,
+      failed,
+      conflicts,
+      message: `Updated ${updated} work orders (${matchedByOrderNum} by order#, ${matchedByClient} by client name). ${notFound} not matched.${failed ? ` ${failed} update${failed === 1 ? '' : 's'} blocked/failed${conflicts ? ` (${conflicts} concurrency conflict${conflicts === 1 ? '' : 's'})` : ''}.` : ''}`,
       debug: {
         totalWorkOrdersInDB: allWorkOrders.length,
         headers: allHeaders,
