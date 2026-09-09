@@ -327,24 +327,53 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   // Sub-template Management
   const createSubTemplate = async () => {
-    if (!newSubTemplateName.trim()) return;
+    const name = newSubTemplateName.trim();
+    if (!name) return;
+    setPersistenceError("");
     try {
-      await ChecklistSubItem.create({ name: newSubTemplateName.trim(), applies_to_product_types: [], order: subTemplates.length });
+      const result = await createChecklistSubItemIfAbsent({
+        entity: ChecklistSubItem,
+        data: { name, applies_to_product_types: [], order: subTemplates.length },
+        label: `SIP sub-template ${name}`,
+      });
+      if (result.status === 'existing') {
+        setPersistenceError(`A sub-template named "${name}" already exists. The existing template was kept instead of creating a duplicate.`);
+      }
       await loadData();
       setNewSubTemplateName("");
-    } catch (error) { console.error("Error creating sub-template:", error); }
+    } catch (error) {
+      console.error("Error creating sub-template:", error);
+      setPersistenceError(error?.message || "The sub-template could not be created safely.");
+    }
   };
 
   const deleteSubTemplate = async (subTemplate) => {
     if (!confirm(`Delete "${subTemplate.name}"?`)) return;
-    if (selectedSubTemplate === subTemplate.id) { setSelectedSubTemplate(null); setSubTemplateChecklistItems([]); }
+    setPersistenceError("");
     try {
-      await ChecklistSubItem.delete(subTemplate.id);
-      const updated = { ...subTemplateItems };
-      delete updated[subTemplate.id];
-      await saveSubTemplateItems(updated);
+      await deleteChecklistSubItemIfUnchanged({
+        entity: ChecklistSubItem,
+        record: subTemplate,
+        label: `SIP sub-template ${subTemplate.name || subTemplate.id} deletion`,
+      });
+      if (selectedSubTemplate === subTemplate.id) {
+        setSelectedSubTemplate(null);
+        setSubTemplateChecklistItems([]);
+      }
+      try {
+        await saveSubTemplateEntry(subTemplate.id, undefined, {
+          remove: true,
+          label: `SIP sub-template ${subTemplate.name || subTemplate.id} item cleanup`,
+        });
+      } catch (cleanupError) {
+        setPersistenceError(`${cleanupError?.message || "The sub-template was deleted, but its hidden item-map cleanup could not be confirmed."} The deleted template itself will not reappear.`);
+      }
       await loadData();
-    } catch (error) { console.error("Error deleting sub-template:", error); }
+    } catch (error) {
+      console.error("Error deleting sub-template:", error);
+      setPersistenceError(error?.message || "This sub-template changed in another session and was not deleted.");
+      await loadData();
+    }
   };
 
   const selectSubTemplateForEditing = (subTemplate) => {
