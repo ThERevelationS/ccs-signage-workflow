@@ -46,12 +46,12 @@ export default function FleetEquipment() {
     operational: equipment.filter(e => e.status === "operational").length,
     maintenance: equipment.filter(e => e.status === "maintenance").length,
     down: equipment.filter(e => e.status === "down").length,
-    trackingIssues: equipment.filter(e => e.bouncie_link_status === "ambiguous" || e.bouncie_link_status === "unmatched").length,
+    trackingIssues: equipment.filter(e => e.bouncie_link_status === "ambiguous").length,
   }), [equipment]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return equipment.filter(e => {
-      if (viewFilter === "tracking_issues" && !["ambiguous", "unmatched"].includes(e.bouncie_link_status)) return false;
+      if (viewFilter === "tracking_issues" && e.bouncie_link_status !== "ambiguous") return false;
       if (!["all", "tracking_issues"].includes(viewFilter) && e.status !== viewFilter) return false;
       if (!q) return true;
       return [e.name, e.make, e.model, e.serial_number, e.vin, e.license_plate, e.type, e.location].some(v => String(v || "").toLowerCase().includes(q));
@@ -82,10 +82,10 @@ export default function FleetEquipment() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Equipment</h1><p className="text-sm text-gray-500 dark:text-slate-400">Road vehicles and non-road assets. Bouncie linkage is evaluated only from exact existing VIN/IMEI evidence.</p></div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={e => setViewFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link issues</option></select>{isAdmin && <button onClick={() => setDialog({ equipment: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={e => setViewFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link conflicts</option></select>{isAdmin && <button onClick={() => setDialog({ equipment: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance>0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down>0}/><EquipmentMetric icon={Link2} label="Bouncie link issues" value={metrics.trackingIssues} attention={metrics.trackingIssues>0}/></div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance>0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down>0}/><EquipmentMetric icon={Link2} label="Bouncie link conflicts" value={metrics.trackingIssues} attention={metrics.trackingIssues>0}/></div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
