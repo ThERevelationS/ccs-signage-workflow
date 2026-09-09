@@ -131,9 +131,16 @@ export default function UserManagement() {
       const expires = new Date();
       expires.setHours(expires.getHours() + 24);
       
-      await base44.entities.AuthorizedEmail.update(user.id, {
-        password_reset_token: resetToken,
-        password_reset_expires: expires.toISOString()
+      await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: user,
+        nextFields: {
+          password_reset_token: resetToken,
+          password_reset_expires: expires.toISOString()
+        },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `Password reset token for ${user.full_name || user.email}`
       });
       
       // Build the reset link
@@ -190,10 +197,17 @@ export default function UserManagement() {
       expires.setDate(expires.getDate() + 7); // Token valid for 7 days
       
       // Update user with new token and reset onboarding status
-      await base44.entities.AuthorizedEmail.update(user.id, {
-        onboarding_token: onboardingToken,
-        onboarding_expires: expires.toISOString(),
-        onboarding_complete: false
+      await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: user,
+        nextFields: {
+          onboarding_token: onboardingToken,
+          onboarding_expires: expires.toISOString(),
+          onboarding_complete: false
+        },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `Onboarding token for ${user.full_name || user.email}`
       });
       
       // Build the unique registration link - always use production URL
@@ -258,19 +272,29 @@ Return valid HTML that will render beautifully in ALL email clients including da
   };
 
   const handleSave = async () => {
-    if (editingUser) {
+    if (!editingUser || userMutationSaving) return;
+    setUserMutationError("");
+    setUserMutationSaving(true);
+    try {
       const dataToSave = { ...formData };
       const newPassword = dataToSave.password_hash;
       // Never send password_hash directly — use secure backend
       delete dataToSave.password_hash;
-      await base44.entities.AuthorizedEmail.update(editingUser.id, dataToSave);
+      const savedUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: editingUser,
+        nextFields: dataToSave,
+        exactVersion: false,
+        enforceIdentity: true,
+        label: `Authorized user ${editingUser.full_name || editingUser.email}`
+      });
 
       // If a new password was entered, save it securely via backend function
       if (newPassword) {
         try {
           const res = await setPasswordFn({
-            user_email: editingUser.email,
-            username: dataToSave.username || editingUser.username,
+            user_email: savedUser.email,
+            username: savedUser.username || editingUser.username,
             new_password: newPassword,
             session_token: sessionToken,
           });
@@ -282,9 +306,15 @@ Return valid HTML that will render beautifully in ALL email clients including da
         }
       }
       await loadUsers();
+      setIsDialogOpen(false);
+      setEditingUser(null);
+    } catch (error) {
+      console.error("User update blocked:", error);
+      setUserMutationError(error?.message || "This user changed in another session. Reload before saving.");
+      await loadUsers();
+    } finally {
+      setUserMutationSaving(false);
     }
-    setIsDialogOpen(false);
-    setEditingUser(null);
   };
 
   const handleInvite = async () => {
@@ -315,16 +345,25 @@ Return valid HTML that will render beautifully in ALL email clients including da
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // Token valid for 7 days
       
-      // Add to authorized emails list with onboarding token
-      await base44.entities.AuthorizedEmail.create({
-        email,
-        full_name: fullName || null,
-        role: inviteRole,
-        sales_roles: ["Task Assigned"],
-        onboarding_token: onboardingToken,
-        onboarding_expires: expires.toISOString(),
-        onboarding_complete: false
+      // Add to authorized emails list with response-loss and duplicate protection.
+      const inviteResult = await createAuthorizedEmailIfAbsent({
+        entity: base44.entities.AuthorizedEmail,
+        data: {
+          email,
+          full_name: fullName || null,
+          role: inviteRole,
+          sales_roles: ["Task Assigned"],
+          onboarding_token: onboardingToken,
+          onboarding_expires: expires.toISOString(),
+          onboarding_complete: false
+        },
+        label: `Authorized user invitation ${email}`
       });
+      if (inviteResult.status === "existing") {
+        setInviteError("This email is already authorized");
+        setIsInviting(false);
+        return;
+      }
 
       // Send invitation email via Gmail
       let emailSent = false;
@@ -404,10 +443,26 @@ Return valid HTML that will render beautifully in ALL email clients including da
     setIsInviting(false);
   };
 
-  const handleDelete = async (userId) => {
-    await base44.entities.AuthorizedEmail.delete(userId);
-    setDeleteConfirm(null);
-    loadUsers();
+  const handleDelete = async (user) => {
+    if (!user?.id || userMutationSaving) return;
+    setUserMutationError("");
+    setUserMutationSaving(true);
+    try {
+      await deleteAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: user,
+        label: `Authorized user ${user.full_name || user.email} deletion`
+      });
+      setDeleteConfirm(null);
+      await loadUsers();
+    } catch (error) {
+      console.error("User deletion blocked:", error);
+      setUserMutationError(error?.message || "This user changed in another session and was not removed.");
+      setDeleteConfirm(null);
+      await loadUsers();
+    } finally {
+      setUserMutationSaving(false);
+    }
   };
 
   const getRoleBadge = (role) => {
@@ -832,7 +887,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleDelete(deleteConfirm?.id)}
+              onClick={() => handleDelete(deleteConfirm)}
               className="bg-red-600 text-white"
             >
               Remove User
