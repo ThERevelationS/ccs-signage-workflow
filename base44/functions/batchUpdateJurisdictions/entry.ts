@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -78,12 +79,22 @@ Deno.serve(async (req) => {
           updateData.documents = [...(jurisdiction.documents || []).filter(d => d.source === 'manual'), ...newDocs, ...countyDocs];
         }
 
-        updateData.contact_info = data.contact_info || jurisdiction.contact_info;
+        if (settings.updateRequirements && (!settings.skipManualData || !jurisdiction._manual_requirements)) {
+          updateData.contact_info = data.contact_info || jurisdiction.contact_info;
+          updateData.ai_summary = data.ai_summary || jurisdiction.ai_summary;
+        }
         updateData.parent_county = data.parent_county || jurisdiction.parent_county;
-        updateData.ai_summary = data.ai_summary || jurisdiction.ai_summary;
         updateData.last_updated = new Date().toISOString();
 
-        await base44.entities.JurisdictionProfile.update(jurisdictionId, updateData);
+        await replaceJurisdictionFieldsIfUnchanged({
+          entity: base44.entities.JurisdictionProfile,
+          jurisdiction,
+          nextFields: updateData,
+          guardFields: jurisdictionProtectionGuards(jurisdiction, updateData, {
+            respectManualProtection: settings.skipManualData !== false,
+          }),
+          label: `Jurisdiction batch research ${jurisdiction.name || jurisdictionId}`,
+        });
         updated++;
       } catch (e) {
         console.error(`Error updating jurisdiction ${jurisdictionId}:`, e);
