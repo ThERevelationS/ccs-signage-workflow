@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,11 @@ import { Loader2, Plus, Wand2, RefreshCw, MapPin, FileText } from "lucide-react"
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
+import {
+  createJurisdictionIfAbsent,
+  deleteJurisdictionFromLoadedSnapshot,
+  saveJurisdictionFromLoadedSnapshot,
+} from "@/components/permitting/jurisdictionPersistence";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
@@ -86,12 +91,26 @@ export default function PermittingRepository() {
 
   const handleSave = async (formData) => {
     if (editingJurisdiction?.id) {
-      const updated = await JurisdictionProfile.update(editingJurisdiction.id, formData);
+      const updated = await saveJurisdictionFromLoadedSnapshot({
+        entity: JurisdictionProfile,
+        jurisdiction: editingJurisdiction,
+        formData,
+        label: `Jurisdiction ${editingJurisdiction.name || editingJurisdiction.id}`,
+      });
       setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
       if (selectedJurisdiction?.id === updated.id) setSelectedJurisdiction(updated);
     } else {
-      const created = await JurisdictionProfile.create(formData);
-      setJurisdictions(prev => [created, ...prev]);
+      const result = await createJurisdictionIfAbsent({
+        entity: JurisdictionProfile,
+        data: formData,
+        label: `Jurisdiction ${formData.name || "create"}`,
+      });
+      const created = result.record;
+      if (result.status === "existing") {
+        alert(`${created.name}, ${created.state || ""} was created in another session while this form was open. The existing profile was loaded instead of creating a duplicate.`);
+      }
+      setJurisdictions(prev => prev.some(j => j.id === created.id) ? prev.map(j => j.id === created.id ? created : j) : [created, ...prev]);
+      setSelectedJurisdiction(created);
     }
     setShowForm(false);
     setEditingJurisdiction(null);
@@ -103,9 +122,26 @@ export default function PermittingRepository() {
   };
 
   const handleDelete = async (id) => {
-    await JurisdictionProfile.delete(id);
-    setJurisdictions(prev => prev.filter(j => j.id !== id));
-    if (selectedJurisdiction?.id === id) setSelectedJurisdiction(null);
+    const loaded = jurisdictions.find(j => j.id === id);
+    if (!loaded?.id) {
+      alert("This jurisdiction is no longer loaded. Reload the repository before deleting it.");
+      return false;
+    }
+    try {
+      await deleteJurisdictionFromLoadedSnapshot({
+        entity: JurisdictionProfile,
+        jurisdiction: loaded,
+        label: `Jurisdiction ${loaded.name || id} deletion`,
+      });
+      setJurisdictions(prev => prev.filter(j => j.id !== id));
+      if (selectedJurisdiction?.id === id) setSelectedJurisdiction(null);
+      return true;
+    } catch (error) {
+      console.error("Jurisdiction deletion blocked:", error);
+      alert(error?.message || "This jurisdiction changed in another session. Reload before deleting it.");
+      await loadJurisdictions();
+      return false;
+    }
   };
 
   const aiDiscover = async () => {
@@ -113,16 +149,21 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(true);
 
     try {
-      const placeholder = await JurisdictionProfile.create({
-        name: aiDiscoverQuery,
-        state: "",
-        type: "city",
-        ai_summary: "Research in progress...",
-        last_updated: new Date().toISOString(),
-        auto_refresh: true
+      const placeholderResult = await createJurisdictionIfAbsent({
+        entity: JurisdictionProfile,
+        data: {
+          name: aiDiscoverQuery,
+          state: "",
+          type: "city",
+          ai_summary: "Research in progress...",
+          last_updated: new Date().toISOString(),
+          auto_refresh: true
+        },
+        label: `AI Discover ${aiDiscoverQuery}`,
       });
+      const placeholder = placeholderResult.record;
 
-      setJurisdictions(prev => [placeholder, ...prev]);
+      setJurisdictions(prev => prev.some(j => j.id === placeholder.id) ? prev : [placeholder, ...prev]);
       setSelectedJurisdiction(placeholder);
 
       const request = await createResearchRequest({
