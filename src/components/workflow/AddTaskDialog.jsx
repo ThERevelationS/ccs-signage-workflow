@@ -11,6 +11,7 @@ import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
+import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
@@ -174,13 +175,17 @@ export default function AddTaskDialog({ isOpen, onClose }) {
 
       if (isGeneralTask) {
         // Save as a standalone general office task (no work order)
-        await GeneralTask.create({
-          text: newTask.text,
-          stage: newTask.stage,
-          assigned_to: newTask.assigned_to,
-          sub_tasks: newTask.sub_tasks,
-          completed: false,
-          created_by_name: currentUser?.full_name || currentUser?.email || ""
+        await createGeneralTaskWithRecovery({
+          entity: GeneralTask,
+          data: {
+            text: newTask.text,
+            stage: newTask.stage,
+            assigned_to: newTask.assigned_to,
+            sub_tasks: newTask.sub_tasks,
+            completed: false,
+            created_by_name: currentUser?.full_name || currentUser?.email || ""
+          },
+          label: `General task ${newTask.text}`,
         });
       } else {
         const wo = workOrders.find(w => w.id === selectedWorkOrder);
