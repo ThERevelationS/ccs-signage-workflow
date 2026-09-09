@@ -8,6 +8,7 @@ import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPicker
 import { money } from "@/components/estimator/aioPricing";
 import { SIGN_TYPES, ACTIONS } from "./constants";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createMaintenanceMaterialRuleIfAbsent } from "./maintenanceMaterialRulePersistence";
 import {
   isMaintenanceMaterialCatalogItem,
   legacyPricingModeForUsageBasis,
@@ -60,7 +61,7 @@ function RuleEditor({ open, rule, catalog, onClose, onSaved }) {
     setDraft({ ...emptyDraft(), ...(rule || {}) });
     setSaving(false);
     setError("");
-  }, [open, rule?.id]);
+  }, [open, rule?.id, rule?.updated_date]);
 
   const linked = catalog.find((item) => item.entity === draft.inventory_entity && item.inventoryId === draft.inventory_item_id) || null;
   const patch = (changes) => setDraft((current) => ({ ...current, ...changes }));
@@ -98,11 +99,22 @@ function RuleEditor({ open, rule, catalog, onClose, onSaved }) {
           label: `Maintenance material rule “${rule.item_name || payload.item_name || "Rule"}”`,
         });
       } else {
-        await MaintenanceInventory.create(payload);
+        const result = await createMaintenanceMaterialRuleIfAbsent({
+          entity: MaintenanceInventory,
+          data: payload,
+          label: `Maintenance material rule “${payload.item_name || "Rule"}”`,
+        });
+        if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
+          throw new Error("An equivalent Maintenance material rule already exists for this Master Inventory resource, usage, and applicability. The existing rule was kept.");
+        }
       }
       await onSaved?.();
       onClose?.();
     } catch (err) {
+      if (rule?.id) {
+        const latest = await MaintenanceInventory.get(rule.id).catch(() => null);
+        if (latest?.id) setDraft({ ...emptyDraft(), ...latest });
+      }
       setError(err?.message || "Maintenance material rule could not be saved.");
     } finally {
       saveRef.current = false;
