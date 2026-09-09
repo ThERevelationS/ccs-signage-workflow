@@ -80,9 +80,39 @@
     "timestamp"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
+    "create": {
+      "user_condition": {
+        "role": "__bouncie_notification_service_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
     "delete": {
       "user_condition": {
         "role": "admin"
