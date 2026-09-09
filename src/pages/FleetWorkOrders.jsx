@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
@@ -23,6 +24,7 @@ export default function FleetWorkOrders() {
   const [dialog, setDialog] = useState(null);
   const [actionError, setActionError] = useState("");
   const [reopeningId, setReopeningId] = useState("");
+  const [confirmReopen, setConfirmReopen] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -87,7 +89,7 @@ export default function FleetWorkOrders() {
   };
 
   const reopen = async (workOrder) => {
-    if (!window.confirm(`Reopen ${workOrder.work_order_number}? Inventory already consumed by prior completion will NOT be restored, matching FleetMaster behavior.`)) return;
+    if (!workOrder) return;
     setReopeningId(workOrder.id);
     setActionError("");
     try {
@@ -98,6 +100,7 @@ export default function FleetWorkOrders() {
       setActionError(error?.message || "Failed to reopen Fleet work order.");
     } finally {
       setReopeningId("");
+      setConfirmReopen(null);
     }
   };
 
@@ -142,7 +145,7 @@ export default function FleetWorkOrders() {
                   <div className="flex flex-wrap gap-2">
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
-                    {w.status === "completed" && <button onClick={() => reopen(w)} disabled={reopeningId === w.id} className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 disabled:opacity-50">{reopeningId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}Reopen</button>}
+                    {w.status === "completed" && <button onClick={() => setConfirmReopen(w)} disabled={reopeningId === w.id} className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 disabled:opacity-50">{reopeningId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}Reopen</button>}
                     {w.status === "cancelled" && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit / Reactivate</button>}
                   </div>
                   {w.equipment_id && <Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(w.equipment_id)}`} className="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-300 hover:underline">Open {equipmentNames[w.equipment_id] || "equipment"} detail</Link>}
@@ -170,6 +173,16 @@ export default function FleetWorkOrders() {
         fluids={fluids}
         onClose={() => setDialog(null)}
         onSubmit={submitDialog}
+      />
+      <FleetConfirmDialog
+        open={!!confirmReopen}
+        title={`Reopen ${confirmReopen?.work_order_number || "Fleet work order"}?`}
+        description="This returns the work order to In Progress. Inventory consumed by the prior completion is not restored, matching the preserved Fleet workflow."
+        confirmLabel="Reopen Work Order"
+        tone="warning"
+        busy={!!reopeningId}
+        onCancel={() => setConfirmReopen(null)}
+        onConfirm={() => reopen(confirmReopen)}
       />
     </div>
   );
