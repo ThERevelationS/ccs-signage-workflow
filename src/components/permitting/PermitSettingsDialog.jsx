@@ -199,12 +199,34 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const deleteLocality = async (id) => {
-    if (!confirm("Delete this locality?")) return;
-    await PermitLocality.delete(id);
-    setLocalities(prev => prev.filter(l => l.id !== id));
-    if (selectedLocality === id) {
-      setSelectedLocality(null);
-      setEditingLocality(null);
+    if (!confirm("Delete this locality?") || localityDeleteInFlightRef.current.has(id)) return;
+    const loaded = localities.find(loc => loc.id === id);
+    if (!loaded?.id) {
+      setLocalitySaveError("The locality selected for deletion is no longer loaded. Reload settings before deleting it.");
+      return;
+    }
+
+    localityDeleteInFlightRef.current.add(id);
+    setLocalitySaveError("");
+    try {
+      await deleteEntityIfUnchanged({
+        entity: PermitLocality,
+        record: loaded,
+        guardFields: { name: loaded.name },
+        label: `Permit locality ${loaded.name || loaded.id} deletion`,
+      });
+      setLocalities(prev => prev.filter(l => l.id !== id));
+      if (selectedLocality === id) {
+        setSelectedLocality(null);
+        setEditingLocality(null);
+      }
+    } catch (error) {
+      console.error("Permit locality deletion blocked:", error);
+      const latest = await PermitLocality.get(id).catch(() => null);
+      if (latest?.id) setLocalities(prev => prev.map(loc => loc.id === id ? latest : loc));
+      setLocalitySaveError(error?.message || "This locality changed in another session. Reload settings before deleting it.");
+    } finally {
+      localityDeleteInFlightRef.current.delete(id);
     }
   };
 
