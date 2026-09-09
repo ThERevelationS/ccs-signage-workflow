@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -408,9 +409,15 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
           if (extractedData.install_location) updateData.install_location = extractedData.install_location;
           if (extractedData.description) updateData.description = extractedData.description;
 
-          await WorkOrder.update(exactMatch.id, updateData);
-          // Update in-memory so subsequent emails in this run see the change
-          Object.assign(exactMatch, updateData);
+          const savedWorkOrder = await replaceWorkOrderFieldsIfUnchanged({
+            entity: WorkOrder,
+            workOrderId: exactMatch.id,
+            expectedFields: expectedWorkOrderFields(exactMatch, updateData),
+            nextFields: updateData,
+            label: `CoreBridge ${docNumber} Work Order update`,
+          });
+          // Update in-memory so subsequent emails in this run see the confirmed latest record.
+          Object.assign(exactMatch, savedWorkOrder);
           results.push({ action: 'updated', subject, docNumber, workOrderId: exactMatch.id, client: clientName, estToInv: isEstToInv });
 
         } else {
