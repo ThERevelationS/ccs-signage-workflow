@@ -24,10 +24,12 @@ function workOrderNumber(token: string) {
 
 const toHex = (bytes: ArrayBuffer) => Array.from(new Uint8Array(bytes)).map((b)=>b.toString(16).padStart(2,'0')).join('');
 async function requestFingerprint(req: Request) {
-  const forwarded = String(req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for') || '').split(',')[0].trim();
-  if (!forwarded) return '';
-  const userAgent = clean(req.headers.get('user-agent'),300);
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${forwarded}\n${userAgent}`));
+  const cfIp = String(req.headers.get('cf-connecting-ip') || '').trim();
+  const realIp = String(req.headers.get('x-real-ip') || '').trim();
+  const xff = String(req.headers.get('x-forwarded-for') || '').split(',').map(v=>v.trim()).filter(Boolean);
+  const networkOrigin = cfIp || realIp || xff.at(-1) || '';
+  if (!networkOrigin) return '';
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(networkOrigin));
   return toHex(digest);
 }
 
