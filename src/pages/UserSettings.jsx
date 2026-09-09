@@ -38,6 +38,7 @@ import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSetting
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
+import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 
 export default function UserSettings() {
   const { currentUser } = useAuth();
@@ -112,15 +113,22 @@ export default function UserSettings() {
         }
       }
       
-      await base44.entities.AuthorizedEmail.update(userData.id, {
-        username: username.toLowerCase().trim()
+      const savedUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: userData,
+        nextFields: { username: username.toLowerCase().trim() },
+        exactVersion: false,
+        enforceIdentity: true,
+        label: `Username for ${userData.full_name || userData.email}`
       });
+      setUserData(savedUser);
       
       setSaveSuccess("Username updated successfully!");
       setTimeout(() => setSaveSuccess(""), 3000);
       loadUsers();
     } catch (error) {
-      setSaveError("Failed to update username");
+      console.error("Username update blocked:", error);
+      setSaveError(error?.message || "Failed to update username safely. Reload before retrying.");
     }
     setIsSaving(false);
   };
@@ -134,10 +142,18 @@ export default function UserSettings() {
       const expires = new Date();
       expires.setHours(expires.getHours() + 24);
       
-      await base44.entities.AuthorizedEmail.update(userData.id, {
-        password_reset_token: resetToken,
-        password_reset_expires: expires.toISOString()
+      const resetUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: userData,
+        nextFields: {
+          password_reset_token: resetToken,
+          password_reset_expires: expires.toISOString()
+        },
+        exactVersion: false,
+        enforceIdentity: false,
+        label: `Password reset token for ${userData.full_name || userData.email}`
       });
+      setUserData(resetUser);
       
       const appUrl = window.location.origin;
       const resetLink = `${appUrl}/ResetPassword?token=${resetToken}`;
@@ -174,7 +190,7 @@ export default function UserSettings() {
       setTimeout(() => setPasswordResetSent(false), 5000);
     } catch (err) {
       console.error("Error sending password reset:", err);
-      setSaveError("Failed to send password reset email");
+      setSaveError(err?.message || "Failed to issue the password reset safely. Reload before retrying.");
     }
     setSendingPasswordReset(false);
   };
