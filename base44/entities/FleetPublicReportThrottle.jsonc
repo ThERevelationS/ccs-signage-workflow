@@ -1,0 +1,50 @@
+{
+  "name": "FleetPublicReportThrottle",
+  "type": "object",
+  "description": "Server-owned abuse throttle for anonymous Fleet issue reporting. Stores only a SHA-256 request fingerprint and rolling-window counters; never stores raw IP addresses.",
+  "properties": {
+    "fingerprint_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of normalized request origin signals; no raw network address is stored."
+    },
+    "window_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "fingerprint_hash",
+    "window_started_at",
+    "accepted_count"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_public_report_service_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_public_report_service_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_public_report_service_only__"
+      }
+    }
+  }
+}
