@@ -81,6 +81,11 @@ import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import { useAuth } from "@/components/auth/EmailGate";
 import { verifyLogin } from "@/functions/verifyLogin";
 import PasswordMigrationButton from "@/components/admin/PasswordMigrationButton";
+import {
+  createAutomationRuleIfAbsent,
+  deleteAutomationRuleIfUnchanged,
+  updateAutomationRuleIfUnchanged,
+} from "@/components/admin/automationRulePersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -331,6 +336,8 @@ export default function AdminSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sortBy, setSortBy] = useState("name"); // "name", "trigger", "action", "enabled"
   const [sortDirection, setSortDirection] = useState("asc");
+  const [automationSaveError, setAutomationSaveError] = useState("");
+  const [automationSaving, setAutomationSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
