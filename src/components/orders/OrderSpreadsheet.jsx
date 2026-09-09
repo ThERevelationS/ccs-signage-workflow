@@ -224,6 +224,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }, [hasUnsavedChanges, isSaving, lastSaved]);
 
   const loadData = async (showLoading = true) => {
+    if (!showLoading && (saveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
     if (showLoading && orders.length === 0) setIsLoading(true);
     setReadError("");
     try {
