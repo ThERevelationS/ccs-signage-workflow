@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { claimPermitFollowupForToday } from '../../shared/permitLineItemPersistence.mjs';
 
 // Scheduled: scans PermitLineItems for follow-up dates that are due today or overdue,
 // fires `permit_followup_due` and `permit_followup_overdue` automation triggers.
@@ -31,44 +32,62 @@ Deno.serve(async (req) => {
 
     let dueFired = 0;
     let overdueFired = 0;
+    let alreadyClaimed = 0;
+    let claimSkipped = 0;
+    let triggerErrors = 0;
 
     for (const line of allLines) {
-      if (!line.next_followup_date) continue;
-      // Already fired today → skip
-      if (line.last_followup_fired_date === today) continue;
+      let claim;
+      try {
+        claim = await claimPermitFollowupForToday({
+          entity: base44.asServiceRole.entities.PermitLineItem,
+          lineId: line.id,
+          today,
+          label: `Permit follow-up ${line.id}`,
+        });
+      } catch (claimError) {
+        claimSkipped++;
+        console.warn('Failed reminder claim for line', line.id, claimError.message);
+        continue;
+      }
 
-      const wo = woById.get(line.work_order_id);
-      if (!wo) continue;
+      if (!claim?.claimed) {
+        if (claim?.reason === 'already_claimed') alreadyClaimed++;
+        else claimSkipped++;
+        continue;
+      }
 
-      const followupDate = line.next_followup_date;
-      let event_type = null;
-      if (followupDate === today) event_type = 'permit_followup_due';
-      else if (followupDate < today) event_type = 'permit_followup_overdue';
-
-      if (!event_type) continue;
+      const claimedLine = claim.record;
+      const wo = woById.get(claimedLine.work_order_id);
+      if (!wo) {
+        claimSkipped++;
+        console.warn('Permit follow-up claim has no active Work Order', claimedLine.id, claimedLine.work_order_id);
+        continue;
+      }
 
       try {
         await base44.asServiceRole.functions.invoke('processWorkflowTriggers', {
-          event_type,
+          event_type: claim.eventType,
           work_order: {
             ...wo,
-            locality_name: line.locality_name,
-            office_type: line.office_type,
-            row_name: line.row_name,
-            submitted_date: line.submitted_date,
-            next_followup_date: line.next_followup_date,
-            permit_received_date: line.permit_received_date
+            locality_name: claimedLine.locality_name,
+            office_type: claimedLine.office_type,
+            row_name: claimedLine.row_name,
+            submitted_date: claimedLine.submitted_date,
+            next_followup_date: claimedLine.next_followup_date,
+            permit_received_date: claimedLine.permit_received_date
           },
           old_data: {},
           changed_by: 'Scheduled Reminder'
         });
-        await base44.asServiceRole.entities.PermitLineItem.update(line.id, {
-          last_followup_fired_date: today
-        });
-        if (event_type === 'permit_followup_due') dueFired++;
+        if (claim.eventType === 'permit_followup_due') dueFired++;
         else overdueFired++;
       } catch (e) {
-        console.warn('Failed trigger for line', line.id, e.message);
+        triggerErrors++;
+        // The claim intentionally remains set for today. A failed function response
+        // can be ambiguous after downstream email/actions, so retrying automatically
+        // could duplicate reminders or workflow actions.
+        console.warn('Failed trigger for claimed permit line', claimedLine.id, e.message);
       }
     }
 
@@ -76,7 +95,10 @@ Deno.serve(async (req) => {
       success: true,
       scanned: allLines.length,
       due_fired: dueFired,
-      overdue_fired: overdueFired
+      overdue_fired: overdueFired,
+      already_claimed: alreadyClaimed,
+      claim_skipped: claimSkipped,
+      trigger_errors: triggerErrors
     });
   } catch (error) {
     console.error('checkPermitFollowupReminders error:', error);
