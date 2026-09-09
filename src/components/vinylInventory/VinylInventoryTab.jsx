@@ -7,7 +7,7 @@
 // Editing flow:
 //   - "Add Vinyl"  → creates a blank record, immediately opens VinylEditDialog.
 //   - Row "Edit"   → opens VinylEditDialog populated with that row.
-//   - Save in dialog persists the full draft via VinylInventory.update(id, draft).
+//   - Save in dialog persists the full draft through guarded VinylInventory persistence.
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { VinylInventory, User } from "@/entities/all";
