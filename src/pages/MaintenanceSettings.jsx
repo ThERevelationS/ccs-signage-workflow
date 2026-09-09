@@ -12,7 +12,8 @@ import SiteConditionsTab from "@/components/signMaintenance/SiteConditionsTab";
 import MaintenanceMaterialRulesTab from "@/components/signMaintenance/MaintenanceMaterialRulesTab";
 import { preflightSettingsRows } from "@/components/estimator/settings/settingsSaveGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createMaintenanceActionRateIfAbsent } from "@/components/signMaintenance/maintenanceActionRatePersistence";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -140,38 +141,18 @@ export default function MaintenanceSettings() {
         throw new Error(`These Maintenance action rates changed in another session: ${keys}. Reload this page, review the latest values, and apply your changes again.`);
       }
 
-      // Create genuinely missing, explicitly edited rate rows first. If another
-      // session creates the same key after preflight, remove only our losing row.
+      // Create genuinely missing, explicitly edited rate rows first. The helper
+      // converges lost responses and removes only this save's identifiable losing
+      // duplicate when another admin creates the same sign-type/action key.
       for (const row of changedRateRows.filter((item) => !item.id)) {
         const payload = { sign_type: row.sign_type, action: row.action, ...comparableRate(row) };
-        let created;
-        try {
-          created = await MaintenanceActionRate.create(payload);
-        } catch (createError) {
-          const recovered = (await loadAllMaintenanceRates())
-            .filter((item) => item.sign_type === row.sign_type && item.action === row.action);
-          if (recovered.length === 1 && sameRate(recovered[0], payload)) {
-            created = recovered[0];
-          } else {
-            throw createError;
-          }
-        }
-        const sameKey = (await loadAllMaintenanceRates())
-          .filter((item) => item.sign_type === row.sign_type && item.action === row.action)
-          .sort((a, b) => {
-            const dateCompare = String(a.created_date || "").localeCompare(String(b.created_date || ""));
-            return dateCompare || String(a.id).localeCompare(String(b.id));
-          });
-        if (sameKey.length > 1) {
-          const ownCreated = sameKey.find((item) => item.id === created?.id);
-          if (ownCreated) {
-            await deleteEntityIfUnchanged({
-              entity: MaintenanceActionRate,
-              record: ownCreated,
-              label: `Duplicate Maintenance action rate ${row.sign_type}/${row.action}`,
-            });
-          }
-          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. This save's new row was discarded when identifiable; reload before saving again.`);
+        const result = await createMaintenanceActionRateIfAbsent({
+          entity: MaintenanceActionRate,
+          payload,
+          label: `Maintenance action rate ${row.sign_type}/${row.action}`,
+        });
+        if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
+          throw new Error(`The Maintenance action rate ${row.sign_type}/${row.action} was created concurrently in another session. Reload and review the canonical row before saving again.`);
         }
       }
 
