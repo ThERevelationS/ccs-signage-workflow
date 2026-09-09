@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle } from "lucide-react";
 
 export default function FleetRequests() {
@@ -15,6 +16,7 @@ export default function FleetRequests() {
   const [dialog, setDialog] = useState(null);
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState("");
+  const [confirmCancel, setConfirmCancel] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -64,7 +66,7 @@ export default function FleetRequests() {
   };
 
   const cancelRequest = async (request) => {
-    if (!window.confirm(`Cancel the Fleet request for ${request.item_name}?`)) return;
+    if (!request) return;
     setBusyId(request.id);
     setActionError("");
     try {
@@ -75,6 +77,7 @@ export default function FleetRequests() {
       setActionError(error?.message || "Failed to cancel Fleet request.");
     } finally {
       setBusyId("");
+      setConfirmCancel(null);
     }
   };
 
@@ -87,8 +90,8 @@ export default function FleetRequests() {
       const canEdit = r.status === "pending" && (isAdmin || owns(r));
       const canCancel = (isAdmin && ["pending","ordered"].includes(r.status)) || (!isAdmin && owns(r) && r.status === "pending");
       return <div key={r.id} className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm"><div className="flex items-start gap-3"><ShoppingCart className="w-5 h-5 mt-0.5 text-indigo-500 shrink-0"/><div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-gray-900 dark:text-slate-100">{r.item_name}</h2><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 capitalize">{r.status}</span>{r.receipt_applied_at&&<span className="text-xs text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5"/>receipt applied</span>}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{r.item_type} · qty {r.quantity_needed} · {names[r.equipment_id] || "No equipment"}</div>
-      <div className="flex flex-wrap gap-2 mt-3">{canEdit&&<button onClick={()=>setDialog({mode:"edit",request:r})} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5 text-sm"><Pencil className="w-4 h-4"/>Edit</button>}{isAdmin&&r.status==="pending"&&<button onClick={()=>setDialog({mode:"order",request:r})} className="px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 dark:text-blue-300 flex items-center gap-1.5 text-sm"><Truck className="w-4 h-4"/>Mark Ordered</button>}{isAdmin&&r.status==="ordered"&&<><button onClick={()=>setDialog({mode:"order",request:r})} className="px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 dark:text-blue-300 flex items-center gap-1.5 text-sm"><Truck className="w-4 h-4"/>Order Details</button><button onClick={()=>setDialog({mode:"receive",request:r})} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5 text-sm"><PackageCheck className="w-4 h-4"/>Receive</button></>}{canCancel&&<button onClick={()=>cancelRequest(r)} disabled={busyId===r.id} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 dark:text-red-300 flex items-center gap-1.5 text-sm disabled:opacity-50">{busyId===r.id?<Loader2 className="w-4 h-4 animate-spin"/>:<XCircle className="w-4 h-4"/>}Cancel</button>}</div>
+      <div className="flex flex-wrap gap-2 mt-3">{canEdit&&<button onClick={()=>setDialog({mode:"edit",request:r})} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5 text-sm"><Pencil className="w-4 h-4"/>Edit</button>}{isAdmin&&r.status==="pending"&&<button onClick={()=>setDialog({mode:"order",request:r})} className="px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 dark:text-blue-300 flex items-center gap-1.5 text-sm"><Truck className="w-4 h-4"/>Mark Ordered</button>}{isAdmin&&r.status==="ordered"&&<><button onClick={()=>setDialog({mode:"order",request:r})} className="px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 dark:text-blue-300 flex items-center gap-1.5 text-sm"><Truck className="w-4 h-4"/>Order Details</button><button onClick={()=>setDialog({mode:"receive",request:r})} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5 text-sm"><PackageCheck className="w-4 h-4"/>Receive</button></>}{canCancel&&<button onClick={()=>setConfirmCancel(r)} disabled={busyId===r.id} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 dark:text-red-300 flex items-center gap-1.5 text-sm disabled:opacity-50">{busyId===r.id?<Loader2 className="w-4 h-4 animate-spin"/>:<XCircle className="w-4 h-4"/>}Cancel</button>}</div>
       <div className="grid sm:grid-cols-3 gap-3 mt-3 text-sm"><Info label="Requested by" value={r.requested_by_person||r.requester_email||"—"}/><Info label="Brand / Part #" value={[r.manufacturer_brand,r.part_number].filter(Boolean).join(" · ")||"—"}/><Info label="Est. delivery" value={r.estimated_delivery_date||"—"}/></div>{r.justification&&<div className="mt-3 text-sm text-gray-600 dark:text-slate-300 whitespace-pre-wrap">{r.justification}</div>}{r.vendor_link&&<a href={r.vendor_link} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-300">Vendor link <ExternalLink className="w-3.5 h-3.5"/></a>}{r.received_at&&<div className="mt-3 text-xs text-gray-500">Received {r.quantity_received ?? "—"} {r.received_unit || ""} on {String(r.received_at).slice(0,10)} · inventory link {r.inventory_item_id || "unresolved historical item"}</div>}</div></div></div>})}{rows.length===0&&<div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 py-12 text-center text-gray-500">No requests found.</div>}</div>}
-  </div><FleetRequestDialog open={!!dialog} mode={dialog?.mode} request={dialog?.request} equipment={equipment} onClose={()=>setDialog(null)} onSubmit={submitDialog}/></div>;
+  </div><FleetRequestDialog open={!!dialog} mode={dialog?.mode} request={dialog?.request} equipment={equipment} onClose={()=>setDialog(null)} onSubmit={submitDialog}/><FleetConfirmDialog open={!!confirmCancel} title="Cancel Fleet request?" description={`Cancel the request for ${confirmCancel?.item_name || "this item"}? No inventory will be changed.`} confirmLabel="Cancel Request" tone="danger" busy={!!busyId} onCancel={()=>setConfirmCancel(null)} onConfirm={()=>cancelRequest(confirmCancel)}/></div>;
 }
 function Info({label,value}){return <div><div className="text-xs text-gray-400">{label}</div><div className="text-gray-800 dark:text-slate-200 mt-0.5">{value}</div></div>}
