@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Save, Edit, Check, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { createTaskTemplateIfAbsent, deleteTaskTemplateIfUnchanged, updateTaskTemplateIfUnchanged } from "@/components/workflow/taskTemplatePersistence";
 
 const TaskTemplate = base44.entities.TaskTemplate;
 
@@ -15,6 +16,8 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
   const [templateName, setTemplateName] = useState("");
   const [templateTasks, setTemplateTasks] = useState([{ text: "", sub_tasks: [] }]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [persistenceError, setPersistenceError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -28,6 +31,7 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
   };
 
   const handleSaveTemplate = async () => {
+    if (isSaving) return;
     if (!templateName.trim()) {
       alert("Please enter a template name");
       return;
@@ -52,19 +56,42 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
       }))
     };
 
-    if (editingTemplate) {
-      await TaskTemplate.update(editingTemplate.id, templateData);
-    } else {
-      await TaskTemplate.create(templateData);
-    }
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      if (editingTemplate) {
+        await updateTaskTemplateIfUnchanged({
+          entity: TaskTemplate,
+          template: editingTemplate,
+          nextFields: templateData,
+          label: `Task template ${editingTemplate.name || editingTemplate.id}`,
+        });
+      } else {
+        const result = await createTaskTemplateIfAbsent({
+          entity: TaskTemplate,
+          data: templateData,
+          label: `Task template ${templateData.name}`,
+        });
+        if (result.status === "existing") {
+          throw new Error(`A task template named "${templateData.name}" already exists. The existing template was kept instead of creating a duplicate.`);
+        }
+      }
 
-    setTemplateName("");
-    setTemplateTasks([{ text: "", sub_tasks: [] }]);
-    setEditingTemplate(null);
-    await loadTemplates();
+      setTemplateName("");
+      setTemplateTasks([{ text: "", sub_tasks: [] }]);
+      setEditingTemplate(null);
+      await loadTemplates();
+    } catch (error) {
+      console.error("Task template save blocked:", error);
+      setPersistenceError(error?.message || "This task template changed in another session. Reload before saving.");
+      await loadTemplates();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleEditTemplate = (template) => {
+    setPersistenceError("");
     setEditingTemplate(template);
     setTemplateName(template.name);
     setTemplateTasks(template.tasks.map(t => ({
@@ -76,9 +103,25 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
   };
 
   const handleDeleteTemplate = async () => {
-    await TaskTemplate.delete(deleteConfirm.id);
-    setDeleteConfirm(null);
-    await loadTemplates();
+    if (!deleteConfirm?.id || isSaving) return;
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      await deleteTaskTemplateIfUnchanged({
+        entity: TaskTemplate,
+        template: deleteConfirm,
+        label: `Task template ${deleteConfirm.name || deleteConfirm.id} deletion`,
+      });
+      setDeleteConfirm(null);
+      await loadTemplates();
+    } catch (error) {
+      console.error("Task template deletion blocked:", error);
+      setPersistenceError(error?.message || "This task template changed in another session and was not deleted.");
+      setDeleteConfirm(null);
+      await loadTemplates();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUseTemplate = async (e, template) => {
