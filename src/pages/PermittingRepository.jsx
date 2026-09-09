@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Wand2, RefreshCw, MapPin, FileText } from "lucide-react";
+import { Loader2, Plus, Wand2, MapPin } from "lucide-react";
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
