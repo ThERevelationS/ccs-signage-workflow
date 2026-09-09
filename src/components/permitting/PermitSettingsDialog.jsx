@@ -407,6 +407,16 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           </div>
         </DialogHeader>
 
+        {localitySaveError && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium">Permitting settings update blocked</div>
+              <div className="mt-1">{localitySaveError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="h-7 shrink-0 border-red-300 bg-white text-red-800" onClick={() => setLocalitySaveError("")}>Dismiss</Button>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-3 bg-gray-200 h-9">
             <TabsTrigger value="localities" className="text-sm">Localities</TabsTrigger>
