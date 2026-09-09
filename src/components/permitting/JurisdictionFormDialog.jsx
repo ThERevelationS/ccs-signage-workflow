@@ -221,7 +221,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
           return;
         }
       } else {
-        await onSave(form);
+        await onSave(savePayload);
       }
     } catch (e) {
       console.error("Save error:", e);
