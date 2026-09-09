@@ -1274,13 +1274,29 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     return;
                                   }
                                   const dateStr = format(date, "yyyy-MM-dd");
-                                  // Update state immediately
-                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: dateStr, status: "ordered" } : o));
-                                  // Save immediately
-                                  await Order.update(order.id, { date_ordered: dateStr, status: "ordered" });
+                                  try {
+                                    setSaveError("");
+                                    await persistImmediateOrderFields(
+                                      order.id,
+                                      { date_ordered: dateStr, status: "ordered" },
+                                      "Order date ordered"
+                                    );
+                                  } catch (error) {
+                                    console.error("Could not save Order date ordered safely:", error);
+                                    setSaveError(error?.message || "This Order changed in another session. Reload before changing Date Ordered.");
+                                  }
                                 } else {
-                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: "" } : o));
-                                  await Order.update(order.id, { date_ordered: "" });
+                                  try {
+                                    setSaveError("");
+                                    await persistImmediateOrderFields(
+                                      order.id,
+                                      { date_ordered: "" },
+                                      "Order date ordered clear"
+                                    );
+                                  } catch (error) {
+                                    console.error("Could not clear Order date ordered safely:", error);
+                                    setSaveError(error?.message || "This Order changed in another session. Reload before clearing Date Ordered.");
+                                  }
                                 }
                                 setOpenDatePopover(null);
                               }}
@@ -1367,13 +1383,29 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     return;
                                   }
                                   const dateStr = format(date, "yyyy-MM-dd");
-                                  // Update state immediately
-                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: dateStr, status: "received" } : o));
-                                  // Save immediately
-                                  await Order.update(order.id, { date_received: dateStr, status: "received" });
+                                  try {
+                                    setSaveError("");
+                                    await persistImmediateOrderFields(
+                                      order.id,
+                                      { date_received: dateStr, status: "received" },
+                                      "Order date received"
+                                    );
+                                  } catch (error) {
+                                    console.error("Could not save Order date received safely:", error);
+                                    setSaveError(error?.message || "This Order changed in another session. Reload before changing Date Received.");
+                                  }
                                 } else {
-                                  setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: "" } : o));
-                                  await Order.update(order.id, { date_received: "" });
+                                  try {
+                                    setSaveError("");
+                                    await persistImmediateOrderFields(
+                                      order.id,
+                                      { date_received: "" },
+                                      "Order date received clear"
+                                    );
+                                  } catch (error) {
+                                    console.error("Could not clear Order date received safely:", error);
+                                    setSaveError(error?.message || "This Order changed in another session. Reload before clearing Date Received.");
+                                  }
                                 }
                                 setOpenDatePopover(null);
                               }}
