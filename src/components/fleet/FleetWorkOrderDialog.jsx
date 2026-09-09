@@ -184,7 +184,7 @@ export default function FleetWorkOrderDialog({
 
           {completing && <Field label="Equipment Status After Completion"><select value={equipmentStatus} onChange={(e) => setEquipmentStatus(e.target.value)} className="fleet-input">{EQUIPMENT_STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>}
 
-          <div className="rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-200 px-3 py-2 text-xs">Notifications are intentionally disabled during migration validation. Completion will update Fleet inventory/history and recurring maintenance only after the server-side idempotency checks pass.</div>
+          <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet notifications are live. Completion updates Fleet inventory/history, advances linked recurring maintenance, and queues completion/low-stock notifications only after the server-side idempotency checks pass.</div>
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button>
