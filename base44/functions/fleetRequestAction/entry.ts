@@ -113,9 +113,32 @@ Deno.serve(async (req) => {
     const Equipment = base44.asServiceRole.entities.FleetEquipment;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
 
+    const applyLinkedInventoryIdentity = async (sourcePatch: any, fallbackType = '') => {
+      const itemId = String(sourcePatch?.inventory_item_id || '').trim();
+      if (!itemId) return { patch: sourcePatch };
+      const itemType = String(sourcePatch?.item_type || fallbackType || '').trim();
+      if (!['part', 'fluid'].includes(itemType)) return { error: Response.json({ error: 'Linked inventory requires a valid part/fluid request type.' }, { status: 400 }) };
+      const item = itemType === 'part' ? await Part.get(itemId).catch(() => null) : await Fluid.get(itemId).catch(() => null);
+      if (!item) return { error: Response.json({ error: `The linked Fleet ${itemType} no longer exists.` }, { status: 404 }) };
+      const patch = { ...sourcePatch, inventory_item_id: item.id, item_type: itemType };
+      if (itemType === 'part') {
+        patch.item_name = item.part_name || '';
+        patch.part_number = item.part_number || '';
+        patch.manufacturer_brand = item.manufacturer || '';
+      } else {
+        patch.item_name = item.fluid_name || '';
+        patch.part_number = '';
+        patch.manufacturer_brand = item.brand || '';
+      }
+      return { patch, item };
+    };
+
     if (action === 'create') {
-      const patch = requestPatch(body?.request || body);
-      if (!['part', 'fluid'].includes(String(patch.item_type || ''))) return Response.json({ error: 'Request type must be part or fluid.' }, { status: 400 });
+      const requestedPatch = requestPatch(body?.request || body);
+      if (!['part', 'fluid'].includes(String(requestedPatch.item_type || ''))) return Response.json({ error: 'Request type must be part or fluid.' }, { status: 400 });
+      const linked = await applyLinkedInventoryIdentity(requestedPatch);
+      if (linked.error) return linked.error;
+      const patch = linked.patch;
       if (!String(patch.item_name || '').trim() || num(patch.quantity_needed) <= 0 || !String(patch.justification || '').trim()) {
         return Response.json({ error: 'Item name, quantity, and justification are required.' }, { status: 400 });
       }
@@ -144,7 +167,17 @@ Deno.serve(async (req) => {
     if (action === 'update') {
       if (!isAdmin && !ownsRequest) return Response.json({ error: 'You can only edit your own Fleet requests.' }, { status: 403 });
       if (existing.status !== 'pending') return Response.json({ error: 'Only pending Fleet requests can be edited.' }, { status: 409 });
-      const patch = requestPatch(body?.request || body);
+      const requestedPatch = requestPatch(body?.request || body);
+      if (existing.inventory_item_id && requestedPatch.inventory_item_id && requestedPatch.inventory_item_id !== existing.inventory_item_id) {
+        return Response.json({ error: 'A linked Fleet inventory request cannot be reassigned to a different inventory item.' }, { status: 409 });
+      }
+      const linked = await applyLinkedInventoryIdentity({
+        ...requestedPatch,
+        inventory_item_id: existing.inventory_item_id || requestedPatch.inventory_item_id || '',
+        item_type: existing.inventory_item_id ? existing.item_type : (requestedPatch.item_type || existing.item_type),
+      }, existing.item_type);
+      if (linked.error) return linked.error;
+      const patch = linked.patch;
       if (patch.equipment_id) {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
