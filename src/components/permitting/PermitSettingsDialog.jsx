@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, X, Search, LogOut, AlertTriangle } from "lucide-react";
 import LocalityOfficeEditor from "./LocalityOfficeEditor";
 import OfficeCatalogEditor from "./OfficeCatalogEditor";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -32,6 +33,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const [editingLocality, setEditingLocality] = useState(null);
   const [newOfficeType, setNewOfficeType] = useState("");
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [localitySaveError, setLocalitySaveError] = useState("");
+  const localitySaveInFlightRef = useRef(false);
+  const localityDeleteInFlightRef = useRef(new Set());
 
   // Load office catalog from GlobalSettings
   useEffect(() => {
