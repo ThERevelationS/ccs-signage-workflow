@@ -585,8 +585,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         selected={parseLocalDate(order.date_needed)}
                         onSelect={async (date) => {
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
-                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_needed: dateStr } : o));
-                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_needed: dateStr } }));
+                          queueOrderChanges(order.id, { date_needed: dateStr });
                           setOpenDatePopover(null);
                         }}
                       />
@@ -624,8 +623,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         onSelect={async (date) => {
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
                           const newStatus = date ? "ordered" : "pending";
-                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_ordered: dateStr, status: newStatus } : o));
-                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_ordered: dateStr, status: newStatus } }));
+                          queueOrderChanges(order.id, { date_ordered: dateStr, status: newStatus });
                           setOpenDatePopover(null);
                         }}
                       />
@@ -681,8 +679,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                         onSelect={async (date) => {
                           const dateStr = date ? format(date, "yyyy-MM-dd") : "";
                           const newStatus = date ? "received" : (order.date_ordered ? "ordered" : "pending");
-                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, date_received: dateStr, status: newStatus } : o));
-                          setPendingChanges(prev => ({ ...prev, [order.id]: { ...prev[order.id], date_received: dateStr, status: newStatus } }));
+                          queueOrderChanges(order.id, { date_received: dateStr, status: newStatus });
                           setOpenDatePopover(null);
                         }}
                       />
@@ -914,10 +911,8 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     newStatus = "received";
                   }
                   
-                  // Clear date locally and update status
-                  setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: "", status: newStatus } : o));
-                  // For clearing dates, update directly to the API
-                  Order.update(orderId, { status: newStatus }).catch(err => console.error("Error updating status:", err));
+                  queueOrderChanges(orderId, { [field]: "", status: newStatus });
+                  await saveChanges();
                 }
                 setClearDateConfirm(null);
               }}
