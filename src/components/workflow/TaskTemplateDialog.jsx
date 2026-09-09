@@ -374,7 +374,7 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={handleSaveTemplate} className="flex-1">
+                  <Button onClick={handleSaveTemplate} className="flex-1" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingTemplate ? "Update" : "Save"} Template
                   </Button>
