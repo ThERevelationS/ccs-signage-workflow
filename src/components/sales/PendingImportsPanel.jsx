@@ -202,9 +202,20 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
 
       <Button size="sm" variant="ghost" onClick={async () => {
         setRejectLoading(true);
-        await PendingImport.update(item.id, { status: 'rejected' });
-        onReject(item.id);
-        setRejectLoading(false);
+        setMergeError("");
+        try {
+          await resolvePendingImportFromLoadedSnapshot({
+            item,
+            status: "rejected",
+            label: "Pending Import duplicate dismissal",
+          });
+          onReject(item.id);
+        } catch (error) {
+          console.error("Pending Import duplicate dismissal blocked:", error);
+          setMergeError(`${error?.message || "This duplicate decision could not be dismissed."} Refresh Pending Imports before trying again.`);
+        } finally {
+          setRejectLoading(false);
+        }
       }} disabled={rejectLoading || !!mergeLoading} className="h-7 text-xs text-gray-500 hover:bg-gray-100 w-full">
         {rejectLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <X className="w-3 h-3 mr-1" />}
         Not a duplicate — dismiss
