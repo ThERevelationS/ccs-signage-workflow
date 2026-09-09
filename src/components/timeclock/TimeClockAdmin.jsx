@@ -133,13 +133,17 @@ export default function TimeClockAdmin() {
   };
 
   const handleEditEntry = (entry) => {
+    setTimeEntryError("");
+    setEditingEntryBaseline(entry);
     setEditingEntry({ ...entry });
     setShowEditDialog(true);
   };
 
   const handleSaveEntry = async () => {
+    if (!editingEntryBaseline?.id || !editingEntry?.id) return;
+    setTimeEntryError("");
     try {
-      // Recalculate total hours if times changed
+      // Preserve the existing admin correction formula exactly.
       const clockIn = new Date(editingEntry.clock_in);
       const clockOut = editingEntry.clock_out ? new Date(editingEntry.clock_out) : null;
       let totalHours = editingEntry.total_hours;
@@ -150,30 +154,45 @@ export default function TimeClockAdmin() {
         totalHours = Math.max(0, (totalMinutes - lunchMins) / 60);
       }
 
-      await TimeEntry.update(editingEntry.id, {
-        clock_in: editingEntry.clock_in,
-        clock_out: editingEntry.clock_out,
-        lunch_minutes: editingEntry.lunch_minutes,
-        total_hours: totalHours,
-        notes: editingEntry.notes,
-        job_allocations: editingEntry.job_allocations
+      await updateTimeEntryIfUnchanged({
+        entity: TimeEntry,
+        entry: editingEntryBaseline,
+        nextFields: {
+          clock_in: editingEntry.clock_in,
+          clock_out: editingEntry.clock_out,
+          lunch_minutes: editingEntry.lunch_minutes,
+          total_hours: totalHours,
+          notes: editingEntry.notes,
+          job_allocations: editingEntry.job_allocations
+        },
+        label: `Admin time entry correction for ${editingEntryBaseline.user_name || editingEntryBaseline.user_email || editingEntryBaseline.id}`,
       });
       
       setShowEditDialog(false);
       setEditingEntry(null);
-      loadData();
+      setEditingEntryBaseline(null);
+      await loadData();
     } catch (err) {
       console.error("Error saving entry:", err);
+      setTimeEntryError(err?.message || "This time entry changed in another session. The stale correction was not applied.");
+      await loadData();
     }
   };
 
-  const handleDeleteEntry = async (entryId) => {
-    if (!confirm("Are you sure you want to delete this time entry?")) return;
+  const handleDeleteEntry = async (entry) => {
+    if (!entry?.id || !confirm("Are you sure you want to delete this time entry?")) return;
+    setTimeEntryError("");
     try {
-      await TimeEntry.delete(entryId);
-      loadData();
+      await deleteTimeEntryIfUnchanged({
+        entity: TimeEntry,
+        entry,
+        label: `Admin time entry deletion for ${entry.user_name || entry.user_email || entry.id}`,
+      });
+      await loadData();
     } catch (err) {
       console.error("Error deleting entry:", err);
+      setTimeEntryError(err?.message || "This time entry changed in another session and was not deleted.");
+      await loadData();
     }
   };
 
