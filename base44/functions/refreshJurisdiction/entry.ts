@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -162,7 +163,15 @@ Deno.serve(async (req) => {
 
     updateData.last_updated = new Date().toISOString();
 
-    const updated = await base44.asServiceRole.entities.JurisdictionProfile.update(id, updateData);
+    const updated = await replaceJurisdictionFieldsIfUnchanged({
+      entity: base44.asServiceRole.entities.JurisdictionProfile,
+      jurisdiction,
+      nextFields: updateData,
+      guardFields: jurisdictionProtectionGuards(jurisdiction, updateData, {
+        respectManualProtection: batchSettings.skipManualData !== false,
+      }),
+      label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
+    });
 
     return Response.json({ success: true, jurisdiction: updated });
   } catch (error) {
