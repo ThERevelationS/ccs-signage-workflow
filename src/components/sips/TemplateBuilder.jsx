@@ -1238,8 +1238,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 {editingSubTemplateId === st.id ? (
                                   <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-6 text-xs flex-1" autoFocus
-                                      onKeyDown={async (e) => { if (e.key === 'Enter') { await ChecklistSubItem.update(st.id, { name: editingSubTemplateName }); await loadData(); setEditingSubTemplateId(null); } if (e.key === 'Escape') setEditingSubTemplateId(null); }} />
-                                    <Button size="sm" className="h-6 px-1" onClick={async () => { await ChecklistSubItem.update(st.id, { name: editingSubTemplateName }); await loadData(); setEditingSubTemplateId(null); }}><Save className="w-3 h-3" /></Button>
+                                      onKeyDown={async (e) => { if (e.key === 'Enter') await renameSubTemplate(st, editingSubTemplateName); if (e.key === 'Escape') setEditingSubTemplateId(null); }} />
+                                    <Button size="sm" className="h-6 px-1" onClick={() => renameSubTemplate(st, editingSubTemplateName)}><Save className="w-3 h-3" /></Button>
                                   </div>
                                 ) : (
                                   <>
@@ -1301,8 +1301,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 const newApplies = isApplied 
                                   ? currentApplies.filter(t => t !== type)
                                   : [...currentApplies, type];
-                                await ChecklistSubItem.update(selectedSubTemplate, { applies_to_product_types: newApplies });
-                                await loadData();
+                                await updateSubTemplateProductTypes(currentST, newApplies);
                               }}
                               className={`text-xs px-2 py-1 rounded border flex items-center gap-1 ${isApplied ? 'bg-blue-100 border-blue-400' : 'bg-white border-gray-300 hover:border-blue-300'}`}
                             >
