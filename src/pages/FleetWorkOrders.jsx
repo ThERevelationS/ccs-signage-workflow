@@ -49,9 +49,16 @@ export default function FleetWorkOrders() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("new") !== "1") return;
     const equipmentId = params.get("equipment") || "";
-    setDialog({ mode: "create", workOrder: equipmentId ? { equipment_id: equipmentId } : null });
+    const workOrderId = params.get("workOrder") || "";
+    if (equipmentId) setEquipmentFilter(equipmentId);
+    if (workOrderId) {
+      setStatus("all");
+      setExpanded(workOrderId);
+    }
+    if (params.get("new") === "1") {
+      setDialog({ mode: "create", workOrder: equipmentId ? { equipment_id: equipmentId } : null });
+    }
   }, []);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
