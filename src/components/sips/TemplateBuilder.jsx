@@ -384,6 +384,50 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setSubTemplateSaveStatus('idle');
   };
 
+  const renameSubTemplate = async (subTemplate, nextName) => {
+    const name = String(nextName || '').trim();
+    if (!subTemplate?.id || !name) return false;
+    setPersistenceError("");
+    try {
+      const duplicate = subTemplates.find(st => st.id !== subTemplate.id && String(st.name || '').trim().toLowerCase() === name.toLowerCase());
+      if (duplicate) throw new Error(`A sub-template named "${name}" already exists.`);
+      const saved = await updateChecklistSubItemIfUnchanged({
+        entity: ChecklistSubItem,
+        record: subTemplate,
+        nextFields: { name },
+        label: `SIP sub-template rename ${subTemplate.name || subTemplate.id}`,
+      });
+      setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
+      setEditingSubTemplateId(null);
+      return true;
+    } catch (error) {
+      console.error("Sub-template rename blocked:", error);
+      setPersistenceError(error?.message || "This sub-template changed in another session. Reload before renaming it.");
+      await loadData();
+      return false;
+    }
+  };
+
+  const updateSubTemplateProductTypes = async (subTemplate, nextApplies) => {
+    if (!subTemplate?.id) return false;
+    setPersistenceError("");
+    try {
+      const saved = await updateChecklistSubItemIfUnchanged({
+        entity: ChecklistSubItem,
+        record: subTemplate,
+        nextFields: { applies_to_product_types: nextApplies },
+        label: `SIP sub-template product types ${subTemplate.name || subTemplate.id}`,
+      });
+      setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
+      return true;
+    } catch (error) {
+      console.error("Sub-template product type update blocked:", error);
+      setPersistenceError(error?.message || "This sub-template changed in another session. Latest data was reloaded.");
+      await loadData();
+      return false;
+    }
+  };
+
   const saveSubTemplateChecklist = async () => {
     if (!selectedSubTemplate) return;
     try {
