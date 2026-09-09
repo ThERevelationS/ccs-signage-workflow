@@ -149,7 +149,7 @@ export default function FleetTracking() {
         const started = Date.now();
         const poll = setInterval(async () => {
           const s = await loadStatus();
-          if (s?.connected) {
+          if (s?.connected && !s?.needsReconnect) {
             clearInterval(poll);
             setConnecting(false);
             loadVehicles();
