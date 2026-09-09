@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
+import {
+  assertAuthorizedEmailIdentityAvailable,
+  updateAuthorizedEmailIfUnchanged,
+} from "@/components/admin/authorizedEmailPersistence";
 
 export default function NewUserSetup() {
   const [loading, setLoading] = useState(true);
@@ -142,14 +146,15 @@ export default function NewUserSetup() {
       return;
     }
     
-    // Check if username is already taken
-    const existingUsers = await base44.entities.AuthorizedEmail.list();
-    const usernameTaken = existingUsers.some(u => 
-      u.id !== user.id && u.username?.toLowerCase() === username.toLowerCase().trim()
-    );
-    
-    if (usernameTaken) {
-      setFormError("This username is already taken. Please choose a different one.");
+    // Check username uniqueness against the same guarded identity rules used by admin settings.
+    try {
+      await assertAuthorizedEmailIdentityAvailable({
+        entity: base44.entities.AuthorizedEmail,
+        recordId: user.id,
+        username: username.toLowerCase().trim(),
+      });
+    } catch (identityError) {
+      setFormError(identityError?.message || "This username is already taken. Please choose a different one.");
       return;
     }
     
@@ -167,21 +172,42 @@ export default function NewUserSetup() {
     setFormError("");
 
     try {
-      // Update user profile (no password)
-      await base44.entities.AuthorizedEmail.update(user.id, {
+      // Update only the onboarding-owned profile fields. Guard the invitation token so
+      // an expired/reissued onboarding session cannot overwrite a newer user record.
+      const profileFields = {
         full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
-        face_descriptors: faceDescriptors.length > 0 ? faceDescriptors : undefined
+      };
+      if (faceDescriptors.length > 0) profileFields.face_descriptors = faceDescriptors;
+      const profileUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: user,
+        nextFields: profileFields,
+        exactVersion: false,
+        enforceIdentity: true,
+        guardFields: {
+          onboarding_token: user.onboarding_token,
+          onboarding_complete: user.onboarding_complete,
+        },
+        label: `Onboarding profile for ${user.full_name || user.email}`
       });
+      setUser(profileUser);
 
-      // Save password securely via backend using the onboarding token as a one-time auth
-      // We reuse the password_reset_token mechanism — set it to the onboarding token,
-      // then call setPassword with reset_token flow. Simpler: use a short-lived token.
-      // Actually we'll just set password_reset_token to onboarding token first:
-      await base44.entities.AuthorizedEmail.update(user.id, {
-        password_reset_token: user.onboarding_token,
-        password_reset_expires: user.onboarding_expires,
+      // Reuse the onboarding token as the one-time password reset credential.
+      // setPassword claims this token atomically on the server before changing a password.
+      const resetUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: profileUser,
+        nextFields: {
+          password_reset_token: profileUser.onboarding_token,
+          password_reset_expires: profileUser.onboarding_expires,
+        },
+        exactVersion: false,
+        enforceIdentity: false,
+        guardFields: { onboarding_token: profileUser.onboarding_token },
+        label: `Onboarding password token for ${profileUser.full_name || profileUser.email}`
       });
+      setUser(resetUser);
 
       const res = await setPasswordFn({
         reset_token: user.onboarding_token,
@@ -195,11 +221,12 @@ export default function NewUserSetup() {
         return;
       }
 
+      await reloadUser();
       // Move to HR data step
       setStep(4);
     } catch (err) {
       console.error("Error saving:", err);
-      setFormError("Failed to save your information. Please try again.");
+      setFormError(err?.message || "Failed to save your information safely. Please reload your invitation and try again.");
     }
 
     setSaving(false);
@@ -210,27 +237,39 @@ export default function NewUserSetup() {
     setFormError("");
     
     try {
-      // Mark onboarding as complete
-      await base44.entities.AuthorizedEmail.update(user.id, {
-        onboarding_complete: true,
-        onboarding_token: null,
-        onboarding_expires: null
+      // Mark onboarding as complete only while this invitation token is still the current one.
+      const completedUser = await updateAuthorizedEmailIfUnchanged({
+        entity: base44.entities.AuthorizedEmail,
+        record: user,
+        nextFields: {
+          onboarding_complete: true,
+          onboarding_token: null,
+          onboarding_expires: null
+        },
+        exactVersion: false,
+        enforceIdentity: false,
+        guardFields: { onboarding_token: user.onboarding_token },
+        label: `Complete onboarding for ${user.full_name || user.email}`
       });
-      
+      setUser(completedUser);
       setStep(5);
     } catch (err) {
       console.error("Error completing setup:", err);
-      setFormError("Failed to complete setup. Please try again.");
+      setFormError(err?.message || "Failed to complete setup safely. Reload your invitation before retrying.");
     }
     
     setSaving(false);
   };
 
   const reloadUser = async () => {
+    if (!user?.id) return null;
     const updated = await base44.entities.AuthorizedEmail.filter({ id: user.id });
-    if (updated.length > 0) {
+    if (updated.length === 1) {
       setUser(updated[0]);
+      return updated[0];
     }
+    if (updated.length > 1) throw new Error("Duplicate onboarding user records were found. Contact an administrator before continuing.");
+    return null;
   };
 
   if (loading) {
