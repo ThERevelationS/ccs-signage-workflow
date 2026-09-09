@@ -5,7 +5,12 @@ const WORK_ORDER_STATUSES = new Set(['open', 'assigned', 'in_progress', 'complet
 const EQUIPMENT_STATUSES = new Set(['operational', 'maintenance', 'down', 'retired']);
 
 const nowIso = () => new Date().toISOString();
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
 const num = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
