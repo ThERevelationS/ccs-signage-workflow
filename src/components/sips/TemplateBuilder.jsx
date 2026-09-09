@@ -30,6 +30,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [productTypeTemplates, setProductTypeTemplates] = useState({});
   const [subTemplateItems, setSubTemplateItems] = useState({});
   const [dropdownConditions, setDropdownConditions] = useState([]);
+  const [settingRecords, setSettingRecords] = useState({});
+  const [persistenceError, setPersistenceError] = useState("");
   
   // Template Selector state
   const [selectedProducts, setSelectedProducts] = useState([]);
