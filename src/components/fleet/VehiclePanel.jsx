@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { X, Fuel, Battery, Wrench, Cpu, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { X, Fuel, Battery, Wrench, Cpu, CheckCircle2, ClipboardList, ArrowRight, Plus } from "lucide-react";
 import TripsTab from "./TripsTab";
 import StatsTab from "./StatsTab";
 import NotificationsTab from "./NotificationsTab";
@@ -13,7 +15,7 @@ const TABS = [
 ];
 
 export default function VehiclePanel({
-  vehicle, trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
+  vehicle, fleetEquipment, fleetOpenWorkOrders = [], trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
   onOpenAlertSettings, onClose, daysBack, onDaysBackChange, avgBy, onAvgByChange,
   onTripsRefresh, selectedTripId, onSelectTrip
 }) {
@@ -21,6 +23,8 @@ export default function VehiclePanel({
   const stats = vehicle?.stats || {};
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const equipmentDetailUrl = fleetEquipment ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetEquipment");
+  const newWorkOrderUrl = fleetEquipment ? `${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetWorkOrders");
 
   return (
     <div className="absolute top-4 right-4 bottom-4 z-20 flex flex-col bg-white rounded-lg shadow-2xl overflow-hidden"
@@ -48,6 +52,22 @@ export default function VehiclePanel({
         <button onClick={onClose} className="ml-auto p-2 hover:bg-gray-100 rounded" title="Close">
           <X className="w-4 h-4 text-gray-500" />
         </button>
+      </div>
+
+      <div className={`mx-3 mt-3 rounded-lg border p-3 ${fleetEquipment ? "border-indigo-200 bg-indigo-50" : "border-amber-200 bg-amber-50"}`}>
+        {fleetEquipment ? <>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0"><div className="text-[10px] uppercase tracking-wide font-semibold text-indigo-500">CCS Fleet Maintenance</div><div className="font-semibold text-sm text-gray-900 truncate mt-0.5">{fleetEquipment.name}</div><div className="text-xs text-gray-600 mt-1 capitalize">{String(fleetEquipment.status || "unknown").replaceAll("_", " ")} · {fleetOpenWorkOrders.length} open work order{fleetOpenWorkOrders.length === 1 ? "" : "s"}</div></div>
+            <ClipboardList className="w-5 h-5 text-indigo-500 shrink-0" />
+          </div>
+          {fleetOpenWorkOrders.length > 0 && <div className="mt-2 space-y-1">{fleetOpenWorkOrders.slice(0, 2).map(wo => <div key={wo.id} className="text-xs text-gray-700 truncate"><span className={`font-semibold ${["critical","high"].includes(wo.priority) ? "text-red-600" : ""}`}>{wo.work_order_number}</span> · {wo.title}</div>)}{fleetOpenWorkOrders.length > 2 && <div className="text-xs text-gray-500">+{fleetOpenWorkOrders.length - 2} more open</div>}</div>}
+          <div className="mt-3 flex items-center gap-2"><Link to={equipmentDetailUrl} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">Open maintenance record <ArrowRight className="w-3.5 h-3.5" /></Link><Link to={newWorkOrderUrl} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-600 text-white text-xs font-semibold"><Plus className="w-3.5 h-3.5" />Work order</Link></div>
+        </> : <>
+          <div className="text-[10px] uppercase tracking-wide font-semibold text-amber-600">CCS Fleet Maintenance</div>
+          <div className="text-sm font-semibold text-gray-900 mt-0.5">No FleetEquipment VIN match</div>
+          <div className="text-xs text-gray-600 mt-1">Tracking remains available, but maintenance is not linked until an exact FleetEquipment VIN match exists.</div>
+          <Link to={equipmentDetailUrl} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">Review Fleet equipment <ArrowRight className="w-3.5 h-3.5" /></Link>
+        </>}
       </div>
 
       {/* Body */}
