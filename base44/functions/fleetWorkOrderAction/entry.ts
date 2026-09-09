@@ -436,9 +436,18 @@ Deno.serve(async (req) => {
           }
         }
       }
-      if (patch.equipment_id) {
-        const equipment = await Equipment.get(patch.equipment_id);
+      const nextEquipmentId = Object.prototype.hasOwnProperty.call(patch, 'equipment_id') ? patch.equipment_id : existing.equipment_id;
+      const nextTaskId = Object.prototype.hasOwnProperty.call(patch, 'maintenance_task_id') ? patch.maintenance_task_id : existing.maintenance_task_id;
+      if (nextEquipmentId) {
+        const equipment = await Equipment.get(nextEquipmentId);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+      }
+      if (nextTaskId) {
+        const task = await Task.get(nextTaskId);
+        if (!task) return Response.json({ error: 'Selected Fleet maintenance task was not found.' }, { status: 404 });
+        if (task.equipment_id && nextEquipmentId && task.equipment_id !== nextEquipmentId) {
+          return Response.json({ error: 'Maintenance task belongs to different Fleet equipment.' }, { status: 409 });
+        }
       }
       const updated = await WorkOrder.update(id, patch);
       return Response.json({ success: true, work_order: updated });
@@ -536,6 +545,9 @@ Deno.serve(async (req) => {
       if (completionPatch.maintenance_task_id) {
         const task = await Task.get(completionPatch.maintenance_task_id);
         if (!task) return Response.json({ error: 'Linked Fleet maintenance task was not found.' }, { status: 404 });
+        if (task.equipment_id && completionPatch.equipment_id && task.equipment_id !== completionPatch.equipment_id) {
+          return Response.json({ error: 'Linked maintenance task belongs to different Fleet equipment.' }, { status: 409 });
+        }
       }
 
       if (equipmentStatus && !EQUIPMENT_STATUSES.has(equipmentStatus)) {
