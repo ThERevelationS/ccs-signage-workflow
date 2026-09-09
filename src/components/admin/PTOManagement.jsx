@@ -230,8 +230,9 @@ export default function PTOManagement() {
   };
 
   const handleDeletePolicy = async () => {
-    if (!deleteConfirm?.id) return;
+    if (!deleteConfirm?.id || ptoSaving) return;
     setPtoError("");
+    setPtoSaving(true);
     try {
       await deletePTOPolicyIfUnused({
         policyEntity: PTOPolicy,
@@ -246,6 +247,8 @@ export default function PTOManagement() {
       setPtoError(err?.message || "The PTO policy changed or is still assigned and was not deleted.");
       setDeleteConfirm(null);
       await loadData();
+    } finally {
+      setPtoSaving(false);
     }
   };
 
@@ -380,6 +383,16 @@ export default function PTOManagement() {
         </div>
       </div>
 
+      {ptoError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">PTO update blocked</div>
+            <div className="mt-1 text-xs">{ptoError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setPtoError(""); }}>Reload latest</Button>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="policies" className="gap-2">
@@ -495,7 +508,7 @@ export default function PTOManagement() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => { setSelectedUser(user); setShowAssignDialog(true); }}
+                          onClick={() => { setPtoError(""); setSelectedUser(user); setShowAssignDialog(true); }}
                         >
                           {balance ? "Change Policy" : "Assign Policy"}
                         </Button>
@@ -510,13 +523,20 @@ export default function PTOManagement() {
       </Tabs>
 
       {/* Policy Dialog */}
-      <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
+      <Dialog open={showPolicyDialog} onOpenChange={(open) => { setShowPolicyDialog(open); if (!open) setEditingPolicy(null); }}>
         <DialogContent className="clay-card border-none max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPolicy ? "Edit Policy" : "Create PTO Policy"}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-6 mt-4">
+            {ptoError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <div className="font-medium">PTO policy save blocked</div>
+                <div className="mt-1 text-xs">{ptoError}</div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Policy Name</Label>
@@ -699,10 +719,10 @@ export default function PTOManagement() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setShowPolicyDialog(false)}>Cancel</Button>
-              <Button onClick={handleSavePolicy} disabled={!policyForm.name}>
+              <Button variant="outline" onClick={() => { setShowPolicyDialog(false); setEditingPolicy(null); }}>Cancel</Button>
+              <Button onClick={handleSavePolicy} disabled={ptoSaving || !policyForm.name}>
                 <Save className="w-4 h-4 mr-2" />
-                {editingPolicy ? "Update" : "Create"} Policy
+                {ptoSaving ? "Saving..." : `${editingPolicy ? "Update" : "Create"} Policy`}
               </Button>
             </div>
           </div>
@@ -710,7 +730,7 @@ export default function PTOManagement() {
       </Dialog>
 
       {/* Assign Policy Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+      <Dialog open={showAssignDialog} onOpenChange={(open) => { setShowAssignDialog(open); if (!open) setSelectedUser(null); }}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
             <DialogTitle>Assign PTO Policy</DialogTitle>
@@ -720,13 +740,21 @@ export default function PTOManagement() {
             <p className="text-sm text-gray-600">
               Assign a PTO policy to <strong>{selectedUser?.full_name || selectedUser?.email}</strong>
             </p>
+
+            {ptoError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <div className="font-medium">PTO assignment blocked</div>
+                <div className="mt-1 text-xs">{ptoError}</div>
+              </div>
+            )}
             
             <div className="space-y-2">
               {policies.map(policy => (
                 <button
                   key={policy.id}
-                  onClick={() => assignPolicyToUser(selectedUser.email, policy.id)}
-                  className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => selectedUser?.email && assignPolicyToUser(selectedUser.email, policy.id)}
+                  disabled={ptoSaving}
+                  className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium">{policy.name}</div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -736,7 +764,7 @@ export default function PTOManagement() {
               ))}
             </div>
             
-            <Button variant="outline" className="w-full" onClick={() => setShowAssignDialog(false)}>
+            <Button variant="outline" className="w-full" onClick={() => { setShowAssignDialog(false); setSelectedUser(null); }} disabled={ptoSaving}>
               Cancel
             </Button>
           </div>
@@ -754,7 +782,7 @@ export default function PTOManagement() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePolicy} className="bg-red-600">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeletePolicy} className="bg-red-600" disabled={ptoSaving}>{ptoSaving ? "Deleting..." : "Delete"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
