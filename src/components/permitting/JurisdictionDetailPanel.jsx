@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, AlertCircle, DownloadCloud, History } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
@@ -259,7 +259,6 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
       });
       
       if (res.data?.jurisdiction) {
-        const updated = res.data.jurisdiction;
         // Append activity log entry
         const newEntry = {
           id: `act_${Date.now()}`,
