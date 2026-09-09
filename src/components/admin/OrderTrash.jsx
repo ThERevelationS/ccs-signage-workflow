@@ -35,6 +35,7 @@ export default function OrderTrash() {
   const [readError, setReadError] = useState("");
   const [actionError, setActionError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
+  const [recoverBusy, setRecoverBusy] = useState(false);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
   const [permanentDeleteBusy, setPermanentDeleteBusy] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -67,63 +68,147 @@ export default function OrderTrash() {
   };
 
   const handleRecover = async () => {
-    await Order.update(recoverConfirm.id, {
-      deleted: false,
-      deleted_at: null,
-      deleted_by: null
-    });
-    setDeletedOrders(deletedOrders.filter(o => o.id !== recoverConfirm.id));
-    setRecoverConfirm(null);
+    const target = recoverConfirm;
+    if (!target || recoverBusy) return;
+    setRecoverBusy(true);
+    setActionError("");
+    try {
+      await restoreOrderFromLoadedTrashSnapshot({
+        entity: Order,
+        order: target,
+        label: "Order Trash recovery",
+      });
+      setDeletedOrders((current) => current.filter(o => o.id !== target.id));
+      setRecoverConfirm(null);
+    } catch (error) {
+      console.error("Could not recover Order safely:", error);
+      setActionError(error?.message || "The deleted Order changed after trash was loaded. Reload Order Trash before recovering it.");
+      setRecoverConfirm(null);
+    } finally {
+      setRecoverBusy(false);
+    }
   };
 
   const handlePermanentDelete = async () => {
-    await Order.delete(permanentDeleteConfirm.id);
-    setDeletedOrders(deletedOrders.filter(o => o.id !== permanentDeleteConfirm.id));
-    setPermanentDeleteConfirm(null);
+    const target = permanentDeleteConfirm;
+    if (!target || permanentDeleteBusy) return;
+    setPermanentDeleteBusy(true);
+    setActionError("");
+    try {
+      await permanentlyDeleteTrashOrderFromLoadedSnapshot({
+        entity: Order,
+        order: target,
+        label: "Order Trash permanent delete",
+      });
+      setDeletedOrders((current) => current.filter(o => o.id !== target.id));
+      setPermanentDeleteConfirm(null);
+    } catch (error) {
+      console.error("Could not permanently delete Order safely:", error);
+      setActionError(error?.message || "Permanent deletion was blocked because the Order could not be verified safely. Reload Order Trash before retrying.");
+      setPermanentDeleteConfirm(null);
+    } finally {
+      setPermanentDeleteBusy(false);
+    }
   };
 
   const handleBulkDeleteAllOrders = async () => {
+    if (bulkDeleteBusy) return;
     if (bulkDeletePassword !== SYSTEM_RESET_PASSWORD) {
       setBulkDeleteError("Incorrect password");
       return;
     }
-    setBulkDeleteError("");
 
-    let allOrders;
+    setBulkDeleteError("");
+    setActionError("");
+    setBulkDeleteBusy(true);
+
+    let verifiedOrders;
     try {
-      // Verify the complete archive before deleting anything. A later-page read
-      // failure must abort the reset rather than silently deleting only a subset.
-      allOrders = await loadAllEntityRows({
+      const loadedOrders = await loadAllEntityRows({
         entity: Order,
         sort: "row_number",
-        label: "Order system reset archive",
+        label: "Order System Reset Orders",
+      });
+      verifiedOrders = await loadAllEntityRows({
+        entity: Order,
+        sort: "row_number",
+        label: "Order System Reset verification Orders",
+      });
+      assertOrderSystemResetCatalogStable({
+        loaded: loadedOrders,
+        verified: verifiedOrders,
+        label: "Order System Reset preflight",
       });
     } catch (error) {
-      console.error("Error verifying Orders for system reset:", error);
-      setBulkDeleteError(error?.message || "All Orders could not be verified. Nothing was deleted.");
+      console.error("Could not verify all Orders for system reset:", error);
+      setBulkDeleteError(error?.message || "All Orders could not be verified. Nothing was permanently deleted.");
+      setBulkDeleteBusy(false);
       return;
     }
 
     setBulkDeleteConfirm(false);
-    setBulkDeleteProgress({ active: true, current: 0, total: allOrders.length });
+    setBulkDeleteProgress({ active: true, current: 0, total: verifiedOrders.length });
 
-    let deletedCount = 0;
+    let completed;
     try {
-      for (let i = 0; i < allOrders.length; i++) {
-        await Order.delete(allOrders[i].id);
-        deletedCount = i + 1;
-        setBulkDeleteProgress({ active: true, current: deletedCount, total: allOrders.length });
-      }
-      setBulkDeletePassword("");
-      await loadDeletedOrders();
+      completed = await deleteVerifiedOrderSnapshots({
+        entity: Order,
+        orders: verifiedOrders,
+        label: "Order System Reset",
+        delayMs: 300,
+        onProgress: ({ confirmedAbsent, total }) => {
+          setBulkDeleteProgress({ active: true, current: confirmedAbsent, total });
+        },
+      });
     } catch (error) {
-      console.error("Error during Order system reset:", error);
+      console.error("Order System Reset stopped before completing:", error);
+      const progress = error?.orderResetProgress || {
+        confirmedAbsent: 0,
+        deletedNow: 0,
+        convergedAbsent: 0,
+        total: verifiedOrders.length,
+      };
+      const notConfirmed = progress.total - progress.confirmedAbsent;
+      setBulkDeleteProgress({ active: false, current: progress.confirmedAbsent, total: progress.total });
       setBulkDeletePassword("");
-      setBulkDeleteError(`System reset stopped after ${deletedCount} of ${allOrders.length} Orders. No further Orders were deleted.`);
-      setBulkDeleteConfirm(true);
-    } finally {
-      setBulkDeleteProgress({ active: false, current: 0, total: 0 });
+      setBulkDeleteBusy(false);
+      await loadDeletedOrders();
+      setActionError(
+        `Order System Reset stopped safely after ${progress.confirmedAbsent} of ${progress.total} Orders were confirmed absent. ` +
+        `${progress.deletedNow} were permanently deleted by this run${progress.convergedAbsent ? ` and ${progress.convergedAbsent} were independently confirmed already absent` : ""}. ` +
+        `${notConfirmed} Order${notConfirmed === 1 ? " was" : "s were"} not confirmed deleted and will not be skipped automatically. ` +
+        `${error?.message || "An Order changed or the deletion outcome could not be verified."}`
+      );
+      return;
     }
+
+    try {
+      const remainingOrders = await loadAllEntityRows({
+        entity: Order,
+        sort: "row_number",
+        label: "Order System Reset final verification",
+      });
+      assertOrderSystemResetComplete({
+        remaining: remainingOrders,
+        label: "Order System Reset final verification",
+      });
+    } catch (error) {
+      console.error("Could not verify final Order catalog after system reset:", error);
+      setBulkDeleteProgress({ active: false, current: completed.confirmedAbsent, total: completed.total });
+      setBulkDeletePassword("");
+      setBulkDeleteBusy(false);
+      await loadDeletedOrders();
+      setActionError(
+        `All ${completed.confirmedAbsent} preflight Orders were processed, but the final Order catalog did not verify empty. ` +
+        `Do not assume Order System Reset is complete. ${error?.message || "Reload and verify the Order catalog before retrying."}`
+      );
+      return;
+    }
+
+    setBulkDeleteProgress({ active: false, current: completed.confirmedAbsent, total: completed.total });
+    setBulkDeletePassword("");
+    setBulkDeleteBusy(false);
+    await loadDeletedOrders();
   };
 
   if (isLoading) {
