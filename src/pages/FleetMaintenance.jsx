@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
-import { CalendarClock, Search, Loader2, Plus, Pencil, ShieldCheck } from "lucide-react";
+import { CalendarClock, Search, Loader2, Plus, Pencil, Clock3, Activity, CheckCircle2 } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
@@ -11,6 +11,7 @@ export default function FleetMaintenance() {
   const [equipment, setEquipment] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -39,10 +40,28 @@ export default function FleetMaintenance() {
 
   const isAdmin = currentUser?.role === "admin";
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
+  const metrics = useMemo(() => {
+    const todayText = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const today = new Date(`${todayText}T12:00:00`);
+    const horizon = new Date(today);
+    horizon.setDate(horizon.getDate() + 14);
+    const pending = tasks.filter(t => t.status === "pending");
+    const inProgress = tasks.filter(t => t.status === "in_progress");
+    const completed = tasks.filter(t => t.status === "completed");
+    const dueSoon = pending.filter(t => {
+      if (!t.start_date) return false;
+      const due = new Date(`${t.start_date}T12:00:00`);
+      return due >= today && due <= horizon;
+    });
+    return { pending, inProgress, completed, dueSoon };
+  }, [tasks]);
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return tasks.filter(t => !q || [t.title, t.description, t.assigned_to, names[t.equipment_id], t.frequency, t.status].some(v => String(v || "").toLowerCase().includes(q)));
-  }, [tasks, search, names]);
+    return tasks.filter(t => {
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      return !q || [t.title, t.description, t.assigned_to, names[t.equipment_id], t.frequency, t.status].some(v => String(v || "").toLowerCase().includes(q));
+    });
+  }, [tasks, search, statusFilter, names]);
 
   const saveTask = async (payload) => {
     setSaving(true);
@@ -69,18 +88,23 @@ export default function FleetMaintenance() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Maintenance Schedules</h1>
-            <p className="text-sm text-gray-500 dark:text-slate-400">Create and maintain Fleet schedules. CCS automatic work-order generation remains disabled until cutover.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Recurring and one-time Fleet maintenance. Due schedules are automatically converted into Fleet maintenance work orders by the guarded CCS generator.</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-            <div className="relative w-full sm:w-80"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search maintenance..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
+            <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search maintenance..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
             {isAdmin && <button onClick={() => setDialog({ task: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Schedule</button>}
           </div>
         </div>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 px-4 py-3 text-sm text-amber-800 dark:text-amber-200 flex items-start gap-2">
-          <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" />
-          <span><strong>Cutover guard active:</strong> the CCS due-maintenance generator exists only as a dormant server function. There is no scheduled workflow and no execute button on this page, so FleetMaster remains the only live generator.</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Metric icon={Clock3} label="Pending" value={metrics.pending.length} />
+          <Metric icon={Activity} label="In progress" value={metrics.inProgress.length} />
+          <Metric icon={CalendarClock} label="Due in 14 days" value={metrics.dueSoon.length} attention={metrics.dueSoon.length > 0} />
+          <Metric icon={CheckCircle2} label="Completed schedules" value={metrics.completed.length} />
         </div>
+
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">Automatic generation is live and idempotent. A pending schedule is generated only when due and only when there is no active Fleet work order for that schedule.</div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
