@@ -80,6 +80,16 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
   let conn = await getActiveConnection(base44);
   let bouncieProbeOk = false;
   let bouncieProbeError = '';
+  let gmailSenderOk = false;
+  let gmailSenderDetail = 'Gmail sender connection unavailable.';
+
+  try {
+    const gmailConnection = await base44.asServiceRole.connectors.getConnection('gmail');
+    gmailSenderOk = !!gmailConnection?.accessToken;
+    gmailSenderDetail = gmailSenderOk ? 'Gmail sender connection is active.' : 'Gmail sender has no active access token.';
+  } catch (error:any) {
+    gmailSenderDetail = error?.message || 'Gmail sender connection check failed.';
+  }
 
   if (liveBouncieProbe) {
     try {
@@ -118,6 +128,7 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
   add('destination_counts_match_audit', countMismatches.length === 0, countMismatches.length ? JSON.stringify(countMismatches) : 'Destination counts match latest verification audit.');
   add('notification_queue_clean', counts.FleetNotificationQueue_unresolved === 0, `${counts.FleetNotificationQueue_unresolved} unresolved of ${counts.FleetNotificationQueue} total queue record(s).`);
   add('operation_receipts_clean', counts.FleetOperationReceipt_unresolved === 0, `${counts.FleetOperationReceipt_unresolved} unresolved of ${counts.FleetOperationReceipt} total operation receipt(s).`);
+  add('gmail_sender_connected', gmailSenderOk, gmailSenderDetail);
 
   const restFresh = !!conn?.last_sync_at && (Date.now() - new Date(conn.last_sync_at).getTime()) <= MAX_REST_SYNC_AGE_MS;
   add('bouncie_connection_present', !!conn, conn ? 'Bouncie connection record present.' : 'No Bouncie connection record.');
