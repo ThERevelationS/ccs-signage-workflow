@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import XLSX from 'npm:xlsx@0.18.5';
+import * as XLSX from 'npm:xlsx@0.18.5';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 const parseSheetDate = (name) => {
