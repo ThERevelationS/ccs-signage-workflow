@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
@@ -118,9 +119,31 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (toCreate.length > 0) {
-    await base44.asServiceRole.entities.PendingImport.bulkCreate(toCreate);
+  let createdCount = 0;
+  let reusedCount = 0;
+  for (const pendingData of toCreate) {
+    const createResult = await ensureConvergentPendingImportCreate({
+      entity: base44.asServiceRole.entities.PendingImport,
+      data: pendingData,
+      readMatches: () => loadAllEntityRows({
+        entity: base44.asServiceRole.entities.PendingImport,
+        query: {
+          doc_number: pendingData.doc_number,
+          doc_type: 'duplicate',
+          status: 'pending',
+        },
+        sort: 'created_date',
+        label: `Pending duplicate ${pendingData.doc_number}`,
+      }),
+      label: `Pending duplicate ${pendingData.doc_number}`,
+    });
+    if (createResult.status === 'created') createdCount += 1;
+    else reusedCount += 1;
   }
 
-  return Response.json({ duplicates_found: groups.length, new_flags_created: toCreate.length });
+  return Response.json({
+    duplicates_found: groups.length,
+    new_flags_created: createdCount,
+    concurrent_existing_flags: reusedCount,
+  });
 });
