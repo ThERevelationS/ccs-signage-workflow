@@ -3,6 +3,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const replaceVars = (text: string, vars: Record<string,string>) => Object.entries(vars).reduce((out,[k,v]) => out.split(k).join(v), text || '');
 const nowIso = () => new Date().toISOString();
+const FLUID_OUNCES_PER_UNIT: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
+const fluidIsLowStock = (item: any) => {
+  if (!item || item.quantity == null || item.minimum_stock == null) return false;
+  const stockUnit = String(item.unit || '').toLowerCase();
+  const minimumUnit = String(item.minimum_stock_unit || item.unit || '').toLowerCase();
+  if (!FLUID_OUNCES_PER_UNIT[stockUnit] || !FLUID_OUNCES_PER_UNIT[minimumUnit]) return false;
+  const minimumInStockUnit = Number(item.minimum_stock) * FLUID_OUNCES_PER_UNIT[minimumUnit] / FLUID_OUNCES_PER_UNIT[stockUnit];
+  return Number(item.quantity) <= minimumInStockUnit + 1e-9;
+};
 
 Deno.serve(async (req) => {
   try {
@@ -71,6 +80,10 @@ Deno.serve(async (req) => {
       const item = isPart ? await base44.asServiceRole.entities.FleetPart.get(targetId) : await base44.asServiceRole.entities.FleetFluid.get(targetId);
       if (!item) return Response.json({ error: 'Fleet inventory item not found.' }, { status: 404 });
       if (item.enable_low_stock_alerts === false) return Response.json({ success: true, skipped: true, reason: 'item_alerts_disabled', queued: 0 });
+      const actuallyLow = isPart
+        ? Number(item.quantity_on_hand ?? 0) <= Number(item.minimum_stock ?? 0)
+        : fluidIsLowStock(item);
+      if (!actuallyLow) return Response.json({ success: true, skipped: true, reason: 'item_not_low_stock', queued: 0 });
       recipients = settings.low_stock_emails || [];
       targetEntity = isPart ? 'FleetPart' : 'FleetFluid';
       const qty = isPart ? item.quantity_on_hand : item.quantity;
