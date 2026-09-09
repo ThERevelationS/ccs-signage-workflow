@@ -2,11 +2,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await base44.auth.me().catch(() => null);
+  if (!user?.email) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  let canImport = user.role === 'admin';
+  if (!canImport) {
+    const authorized = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
+    const appUser = authorized?.[0];
+    canImport = appUser?.role === 'admin' || appUser?.can_import_export === true;
+  }
+  if (!canImport) return Response.json({ error: 'Sales Pipeline import permission is required.' }, { status: 403 });
 
   let workbook;
   const contentType = req.headers.get('content-type') || '';
@@ -127,7 +136,7 @@ Deno.serve(async (req) => {
     return titleMatch || null;
   }
 
-  let created = 0, updated = 0, failed = 0;
+  let created = 0, updated = 0, failed = 0, conflicts = 0;
   const BATCH_SIZE = 5;
   const BATCH_DELAY_MS = 300;
 
@@ -139,7 +148,14 @@ Deno.serve(async (req) => {
         const existing = findMatchingWorkOrder(clientName, estInvAt, rest.title);
 
         if (existing) {
-          await base44.asServiceRole.entities.WorkOrder.update(existing.id, rest);
+          const saved = await replaceWorkOrderFieldsIfUnchanged({
+            entity: base44.asServiceRole.entities.WorkOrder,
+            workOrderId: existing.id,
+            expectedFields: expectedWorkOrderFields(existing, rest),
+            nextFields: rest,
+            label: `Sales Pipeline import ${estInvAt || clientName}`,
+          });
+          Object.assign(existing, saved);
           updated++;
         } else {
           const newWo = await base44.asServiceRole.entities.WorkOrder.create(rest);
@@ -153,6 +169,7 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         console.error('Row import error:', err.message);
+        if (err?.code === 'WORK_ORDER_FIELD_CONFLICT') conflicts++;
         failed++;
       }
     }));
@@ -161,5 +178,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return Response.json({ created, updated, failed, total: validRows.length });
+  return Response.json({ created, updated, failed, conflicts, total: validRows.length });
 });
