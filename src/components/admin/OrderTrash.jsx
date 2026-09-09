@@ -18,6 +18,13 @@ import {
 import { Trash2, RotateCcw, Loader2, AlertTriangle, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  assertOrderSystemResetCatalogStable,
+  assertOrderSystemResetComplete,
+  deleteVerifiedOrderSnapshots,
+  permanentlyDeleteTrashOrderFromLoadedSnapshot,
+  restoreOrderFromLoadedTrashSnapshot,
+} from "@/components/orders/orderPersistence";
 
 const Order = base44.entities.Order;
 const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
@@ -26,9 +33,12 @@ export default function OrderTrash() {
   const [deletedOrders, setDeletedOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [recoverConfirm, setRecoverConfirm] = useState(null);
   const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState(null);
+  const [permanentDeleteBusy, setPermanentDeleteBusy] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
   const [bulkDeletePassword, setBulkDeletePassword] = useState("");
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState({ active: false, current: 0, total: 0 });
