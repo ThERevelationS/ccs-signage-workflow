@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,16 +26,36 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [manualProtectionEdits, setManualProtectionEdits] = useState({
+    website: false,
+    permitting: false,
+    requirements: false,
+    documents: false,
+  });
 
   useEffect(() => {
-    if (jurisdiction) setForm({ ...form, ...jurisdiction });
+    if (jurisdiction) setForm(current => ({ ...current, ...jurisdiction }));
     else setForm({ name: "", state: "", type: "county", website_url: "", permitting_url: "", notes: "", documents: [], contact_info: { department: "", phone: "", email: "", address: "" }, auto_refresh: true });
+    setManualProtectionEdits({ website: false, permitting: false, requirements: false, documents: false });
   }, [jurisdiction, open]);
 
-  const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
-  const setContact = (field, val) => setForm(f => ({ ...f, contact_info: { ...(f.contact_info || {}), [field]: val } }));
+  const markManualProtection = (group) => {
+    setManualProtectionEdits(current => ({ ...current, [group]: true }));
+  };
+
+  const set = (field, val) => {
+    setForm(f => ({ ...f, [field]: val }));
+    if (field === "website_url") markManualProtection("website");
+    else if (field === "permitting_url") markManualProtection("permitting");
+    else if (field === "ai_summary" || field === "permit_requirements" || field === "sqft_width_height_rules" || field === "height_allowances" || field === "setback_rules" || field === "lighting_allowances") markManualProtection("requirements");
+  };
+  const setContact = (field, val) => {
+    setForm(f => ({ ...f, contact_info: { ...(f.contact_info || {}), [field]: val } }));
+    markManualProtection("requirements");
+  };
 
   const addDocument = () => {
+    markManualProtection("documents");
     setForm(f => ({
       ...f,
       documents: [...(f.documents || []), { id: Date.now().toString(), title: "", url: "", doc_type: "other", source: "manual" }]
@@ -43,10 +63,12 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   };
 
   const updateDoc = (id, field, val) => {
+    markManualProtection("documents");
     setForm(f => ({ ...f, documents: f.documents.map(d => d.id === id ? { ...d, [field]: val } : d) }));
   };
 
   const removeDoc = (id) => {
+    markManualProtection("documents");
     setForm(f => ({ ...f, documents: f.documents.filter(d => d.id !== id) }));
   };
 
@@ -82,6 +104,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
 
       const analysis = analysisRes?.output || {};
       
+      markManualProtection("documents");
       setForm(f => ({
         ...f,
         documents: [...(f.documents || []), {
@@ -167,6 +190,14 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
 
     setSaving(true);
     try {
+      const savePayload = {
+        ...form,
+        _manual_website_url: !!(form._manual_website_url || manualProtectionEdits.website),
+        _manual_permitting_url: !!(form._manual_permitting_url || manualProtectionEdits.permitting),
+        _manual_requirements: !!(form._manual_requirements || manualProtectionEdits.requirements),
+        _manual_documents: !!(form._manual_documents || manualProtectionEdits.documents),
+      };
+
       // Check if this jurisdiction already exists (excluding current edit)
       const existing = await base44.entities.JurisdictionProfile.filter({
         name: form.name,
@@ -177,7 +208,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
         // If editing, check if it's a different record
         if (isEdit && existing[0].id === jurisdiction.id) {
           // Same jurisdiction, proceed
-          await onSave(form);
+          await onSave(savePayload);
         } else if (!isEdit) {
           // Creating new and duplicate exists
           alert(`${form.name}, ${form.state} already exists in the repository. Please edit the existing profile instead.`);
