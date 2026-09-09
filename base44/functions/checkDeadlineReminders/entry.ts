@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 // Check for approaching and overdue deadlines and trigger notifications
 Deno.serve(async (req) => {
@@ -141,40 +142,67 @@ async function executeRuleActions(base44, rule, work_order, trigger_type) {
           results.push({ type: 'send_email', result: emailResult });
           break;
           
-        case 'set_asap':
-          await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-            asap: config.asap === true
+        case 'set_asap': {
+          const nextFields = { asap: config.asap === true };
+          const saved = await replaceWorkOrderFieldsIfUnchanged({
+            entity: base44.asServiceRole.entities.WorkOrder,
+            workOrderId: work_order.id,
+            expectedFields: expectedWorkOrderFields(work_order, nextFields),
+            nextFields,
+            label: `Deadline automation ${rule.name || 'set_asap'}`,
           });
+          Object.assign(work_order, saved);
           results.push({ type: 'set_asap', result: { asap: config.asap } });
           break;
+        }
           
         case 'add_task':
           if (config.task) {
-            const notes = work_order.notes || [];
-            notes.push({
-              text: config.task,
-              timestamp: new Date().toISOString(),
-              created_by: 'Deadline Automation',
-              completed: false,
-              sub_tasks: []
+            const notes = [
+              ...(Array.isArray(work_order.notes) ? work_order.notes : []),
+              {
+                text: config.task,
+                timestamp: new Date().toISOString(),
+                created_by: 'Deadline Automation',
+                completed: false,
+                sub_tasks: []
+              }
+            ];
+            const nextFields = { notes };
+            const saved = await replaceWorkOrderFieldsIfUnchanged({
+              entity: base44.asServiceRole.entities.WorkOrder,
+              workOrderId: work_order.id,
+              expectedFields: expectedWorkOrderFields(work_order, nextFields),
+              nextFields,
+              label: `Deadline automation ${rule.name || 'add_task'}`,
             });
-            await base44.asServiceRole.entities.WorkOrder.update(work_order.id, { notes });
+            Object.assign(work_order, saved);
             results.push({ type: 'add_task', result: { task: config.task } });
           }
           break;
           
         case 'add_note':
           if (config.note) {
-            const workNotes = work_order.work_notes || [];
-            workNotes.push({
-              id: Date.now(),
-              type: config.note_type || 'admin',
-              text: config.note,
-              timestamp: new Date().toISOString(),
-              created_by: 'Deadline Automation',
-              sub_tasks: []
+            const workNotes = [
+              ...(Array.isArray(work_order.work_notes) ? work_order.work_notes : []),
+              {
+                id: Date.now(),
+                type: config.note_type || 'admin',
+                text: config.note,
+                timestamp: new Date().toISOString(),
+                created_by: 'Deadline Automation',
+                sub_tasks: []
+              }
+            ];
+            const nextFields = { work_notes: workNotes };
+            const saved = await replaceWorkOrderFieldsIfUnchanged({
+              entity: base44.asServiceRole.entities.WorkOrder,
+              workOrderId: work_order.id,
+              expectedFields: expectedWorkOrderFields(work_order, nextFields),
+              nextFields,
+              label: `Deadline automation ${rule.name || 'add_note'}`,
             });
-            await base44.asServiceRole.entities.WorkOrder.update(work_order.id, { work_notes: workNotes });
+            Object.assign(work_order, saved);
             results.push({ type: 'add_note', result: { note: config.note } });
           }
           break;
