@@ -16,7 +16,7 @@ export default function FleetTracking() {
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
   const [fleetEquipment, setFleetEquipment] = useState([]);
   const [fleetWorkOrders, setFleetWorkOrders] = useState([]);
-  const [selectedVin, setSelectedVin] = useState(null);
+  const [selectedVin, setSelectedVin] = useState(() => new URLSearchParams(window.location.search).get("vin") || null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [trips, setTrips] = useState([]);
   const [tripsLoading, setTripsLoading] = useState(false);
