@@ -316,7 +316,6 @@ export default function FleetTracking() {
         selectedVin={selectedVin}
         onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
         onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
-        onMenu={() => {}}
         totalCount={vehicles.length}
       />
 
