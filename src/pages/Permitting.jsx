@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -32,6 +33,10 @@ export default function Permitting() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [workOrderEditError, setWorkOrderEditError] = useState("");
+  const [permitLineEditError, setPermitLineEditError] = useState("");
+  const lineItemBaselinesRef = useRef(new Map());
+  const lineItemMutationQueuesRef = useRef(new Map());
+  const lineItemMutationCountRef = useRef(0);
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -41,6 +46,7 @@ export default function Permitting() {
   }, []);
 
   const loadData = async (showLoading = true) => {
+    if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
       const [items, locs, wos, usersData, settings] = await Promise.all([
@@ -85,6 +91,7 @@ export default function Permitting() {
 
       // Store only permitting WOs (so the "no lines" group only shows real permitting WOs)
       setWorkOrders(permittingWOs);
+      lineItemBaselinesRef.current = new Map(visibleItems.map((item) => [item.id, item]));
       setLineItems(visibleItems);
     } catch (error) {
       console.error("Error loading data:", error);
