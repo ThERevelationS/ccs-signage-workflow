@@ -104,7 +104,7 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
         <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Exact matching follows FleetMaster rules: Part by exact part number; Fluid by exact name + brand. Ambiguous duplicate matches fail closed instead of choosing one arbitrarily.</div>
       </>}
 
-      <div className="rounded-lg bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-200 px-3 py-2 text-xs">Fleet request emails remain disabled during migration validation.</div>
+      <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet request notifications are live and queued durably. Receiving remains retry-safe and cannot increment inventory twice.</div>
       <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button><button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center gap-2 disabled:opacity-50">{saving&&<Loader2 className="w-4 h-4 animate-spin"/>}{mode === "create" ? "Submit Request" : mode === "edit" ? "Save Request" : mode === "order" ? "Save Order Details" : "Receive Into Fleet Inventory"}</button></div>
     </form>
   </div><style>{`.fleet-request-input{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.dark .fleet-request-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style></div>;
