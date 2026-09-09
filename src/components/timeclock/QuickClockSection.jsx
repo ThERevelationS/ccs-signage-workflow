@@ -357,6 +357,16 @@ export default function QuickClockSection({ allUsers, currentTime }) {
           Quick Clock In/Out
         </h2>
 
+        {persistenceError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium">Time clock action blocked</div>
+              <div className="mt-1 text-xs">{persistenceError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={() => setPersistenceError("")}>Dismiss</Button>
+          </div>
+        )}
+
         {/* Main View - Single Clock In/Out Button */}
         {!isRecognizing && !showClockOut && (
           <div className="flex flex-col items-center gap-6">
