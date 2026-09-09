@@ -95,63 +95,70 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const loadData = async () => {
     try {
-      const [subTemplatesData, settings] = await Promise.all([
+      const [subTemplatesData, productTypesSetting, ptTemplates, stItems, dropdownsSetting] = await Promise.all([
         ChecklistSubItem.list(),
-        GlobalSettings.list()
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypes', label: 'SIP Product Types' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypeTemplates', label: 'SIP Product Type Templates' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'subTemplateItems', label: 'SIP Sub-Template Items' }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'dropdownConditions', label: 'SIP Dropdown Conditions' }),
       ]);
       
-      setSubTemplates(subTemplatesData.sort((a, b) => (a.order || 0) - (b.order || 0)));
-      
-      const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
+      setSubTemplates([...subTemplatesData].sort((a, b) => (a.order || 0) - (b.order || 0)));
+      setSettingRecords({
+        productTypes: productTypesSetting,
+        productTypeTemplates: ptTemplates,
+        subTemplateItems: stItems,
+        dropdownConditions: dropdownsSetting,
+      });
       setProductTypes(productTypesSetting?.setting_value?.items || ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
-      
-      const ptTemplates = settings.find(s => s.setting_key === 'productTypeTemplates');
       setProductTypeTemplates(ptTemplates?.setting_value || {});
-      
-      const stItems = settings.find(s => s.setting_key === 'subTemplateItems');
       setSubTemplateItems(stItems?.setting_value || {});
-      
-      const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+      setPersistenceError("");
     } catch (error) {
       console.error("Error loading data:", error);
+      setPersistenceError(error?.message || "Template Builder data could not be loaded safely.");
+    }
+  };
+
+  const saveWholeSetting = async (key, nextValue, label, applyLocal) => {
+    setPersistenceError("");
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: settingRecords[key] || null,
+        settingKey: key,
+        nextValue,
+        label,
+      });
+      setSettingRecords(prev => ({ ...prev, [key]: saved }));
+      applyLocal(saved.setting_value);
+      return saved;
+    } catch (error) {
+      console.error(`${label} save blocked:`, error);
+      setPersistenceError(error?.message || `${label} changed in another session. Reload before retrying.`);
+      throw error;
     }
   };
 
   const saveProductTypes = async (types) => {
-    try {
-      const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
-      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items: types } });
-      else await GlobalSettings.create({ setting_key: 'productTypes', setting_value: { items: types } });
-      setProductTypes(types);
-    } catch (error) { console.error("Error saving product types:", error); }
+    const saved = await saveWholeSetting('productTypes', { items: types }, 'SIP Product Types', value => setProductTypes(value?.items || []));
+    return saved;
   };
 
   const saveProductTypeTemplates = async (templates) => {
-    try {
-      const settings = await GlobalSettings.filter({ setting_key: 'productTypeTemplates' });
-      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: templates });
-      else await GlobalSettings.create({ setting_key: 'productTypeTemplates', setting_value: templates });
-      setProductTypeTemplates(templates);
-    } catch (error) { console.error("Error saving product type templates:", error); }
+    const saved = await saveWholeSetting('productTypeTemplates', templates, 'SIP Product Type Templates', value => setProductTypeTemplates(value || {}));
+    return saved;
   };
 
   const saveSubTemplateItems = async (items) => {
-    try {
-      const settings = await GlobalSettings.filter({ setting_key: 'subTemplateItems' });
-      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: items });
-      else await GlobalSettings.create({ setting_key: 'subTemplateItems', setting_value: items });
-      setSubTemplateItems(items);
-    } catch (error) { console.error("Error saving sub-template items:", error); }
+    const saved = await saveWholeSetting('subTemplateItems', items, 'SIP Sub-Template Items', value => setSubTemplateItems(value || {}));
+    return saved;
   };
 
   const saveDropdownConditions = async (items) => {
-    try {
-      const settings = await GlobalSettings.filter({ setting_key: 'dropdownConditions' });
-      if (settings.length > 0) await GlobalSettings.update(settings[0].id, { setting_value: { items } });
-      else await GlobalSettings.create({ setting_key: 'dropdownConditions', setting_value: { items } });
-      setDropdownConditions(items);
-    } catch (error) { console.error("Error saving dropdown conditions:", error); }
+    const saved = await saveWholeSetting('dropdownConditions', { items }, 'SIP Dropdown Conditions', value => setDropdownConditions(value?.items || []));
+    return saved;
   };
 
   // Pre-populate selected products from existing checklist on open
