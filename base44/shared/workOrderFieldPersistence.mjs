@@ -30,6 +30,73 @@ export function expectedWorkOrderFields(record = {}, nextFields = {}) {
   );
 }
 
+export async function mergeWorkOrderArrayValues({
+  entity,
+  workOrderId,
+  field,
+  values,
+  label = 'Work Order array merge',
+  maxAttempts = 3,
+} = {}) {
+  const id = String(workOrderId || '').trim();
+  const fieldName = String(field || '').trim();
+  const additions = Array.isArray(values) ? values : [];
+  if (!id || !fieldName || additions.length === 0 || typeof entity?.get !== 'function' || typeof entity?.updateMany !== 'function') {
+    throw new Error(`${label} could not initialize its concurrency-safe merge.`);
+  }
+
+  const attempts = Math.max(1, Math.min(5, Number(maxAttempts) || 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const current = await entity.get(id);
+    if (!current?.id) throw new WorkOrderFieldConflictError(`${label} could not verify its Work Order before saving.`);
+    if (current.deleted === true) throw new WorkOrderFieldConflictError(`${label} was blocked because the Work Order is in Project Trash.`);
+
+    const currentValues = Array.isArray(current[fieldName]) ? current[fieldName] : [];
+    const seen = new Set(currentValues.map((value) => JSON.stringify(normalize(value))));
+    const desired = [...currentValues];
+    for (const value of additions) {
+      const key = JSON.stringify(normalize(value));
+      if (!seen.has(key)) {
+        seen.add(key);
+        desired.push(value);
+      }
+    }
+    if (sameValue(currentValues, desired)) return current;
+
+    const currentVersion = String(current.updated_date || '').trim();
+    if (!currentVersion) throw new Error(`${label} is missing its current Work Order version.`);
+
+    let result;
+    try {
+      result = await entity.updateMany(
+        { id, updated_date: currentVersion },
+        { $set: { [fieldName]: desired } },
+      );
+    } catch (error) {
+      let afterError;
+      try {
+        afterError = await entity.get(id);
+      } catch (verificationError) {
+        throw new Error(`${label} returned an error and its outcome could not be verified. ${verificationError?.message || ''}`.trim());
+      }
+      const afterValues = Array.isArray(afterError?.[fieldName]) ? afterError[fieldName] : [];
+      const afterKeys = new Set(afterValues.map((value) => JSON.stringify(normalize(value))));
+      if (additions.every((value) => afterKeys.has(JSON.stringify(normalize(value))))) return afterError;
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== 'number') throw new Error(`${label} conditional merge result could not be verified.`);
+    if (result.updated > 1) throw new Error(`${label} returned an impossible multi-record update count.`);
+    if (result.updated === 1) {
+      const saved = await entity.get(id);
+      if (!saved?.id) throw new Error(`${label} was saved but could not be re-read.`);
+      return saved;
+    }
+  }
+
+  throw new WorkOrderFieldConflictError(`${label} changed repeatedly while saving. No concurrent file links were overwritten.`);
+}
+
 export async function replaceWorkOrderFieldsIfUnchanged({
   entity,
   workOrderId,
