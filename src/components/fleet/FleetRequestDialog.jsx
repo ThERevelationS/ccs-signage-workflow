@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { Loader2, X, Upload, ImagePlus } from "lucide-react";
 
-export default function FleetRequestDialog({ open, mode, request, equipment, onClose, onSubmit }) {
+export default function FleetRequestDialog({ open, mode, request, equipment, parts = [], fluids = [], onClose, onSubmit }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -15,14 +15,17 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
     if (mode === "order") {
       setForm({ estimated_delivery_date: request?.estimated_delivery_date || "", unit_cost: request?.unit_cost ?? "" });
     } else if (mode === "receive") {
+      const linked = request?.inventory_item_id
+        ? (request?.item_type === "part" ? parts.find(item => item.id === request.inventory_item_id) : fluids.find(item => item.id === request.inventory_item_id))
+        : null;
       setForm({
         quantity_received: request?.quantity_needed ?? 1,
-        location: "",
-        category: "other",
-        minimum_stock: 1,
-        fluid_type: "",
-        unit: "quarts",
-        minimum_stock_unit: "quarts",
+        location: linked?.location || "",
+        category: linked?.category || "other",
+        minimum_stock: linked?.minimum_stock ?? 1,
+        fluid_type: linked?.fluid_type || "",
+        unit: linked?.unit || "quarts",
+        minimum_stock_unit: linked?.minimum_stock_unit || linked?.unit || "quarts",
         notes: "",
       });
     } else {
@@ -44,9 +47,12 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
     setConfirmReceive(false);
     setPendingPhotos([]);
     setError("");
-  }, [open, mode, request]);
+  }, [open, mode, request, parts, fluids]);
 
   if (!open) return null;
+  const linkedInventory = request?.inventory_item_id
+    ? (request?.item_type === "part" ? parts.find(item => item.id === request.inventory_item_id) : fluids.find(item => item.id === request.inventory_item_id))
+    : null;
   const title = mode === "create" ? "New Fleet Request" : mode === "edit" ? "Edit Fleet Request" : mode === "order" ? `Order ${request?.item_name || "Item"}` : `Receive ${request?.item_name || "Item"}`;
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const addPhotos = (fileList) => {
@@ -124,21 +130,20 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
       {mode === "order" && <div className="grid sm:grid-cols-2 gap-4"><Field label="Estimated Delivery"><input className="fleet-request-input" type="date" value={form.estimated_delivery_date || ""} onChange={(e)=>set("estimated_delivery_date",e.target.value)}/></Field><Field label="Unit Cost"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.unit_cost ?? ""} onChange={(e)=>set("unit_cost",e.target.value)}/></Field></div>}
 
       {mode === "receive" && <>
+        {linkedInventory && <div className="rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-200"><div className="font-semibold">Exact Fleet inventory item linked</div><div className="mt-1">Current stock: {request?.item_type === "part" ? linkedInventory.quantity_on_hand ?? "—" : `${linkedInventory.quantity ?? "—"} ${linkedInventory.unit || ""}`} · Location: {linkedInventory.location || "—"}. Receiving will update this exact record.</div></div>}
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Quantity Received"><input className="fleet-request-input" type="number" min="0.01" step="0.01" value={form.quantity_received ?? 1} onChange={(e)=>set("quantity_received",e.target.value)}/></Field>
-          <Field label="Storage Location"><input className="fleet-request-input" value={form.location || ""} onChange={(e)=>set("location",e.target.value)}/></Field>
+          <Field label="Storage Location"><input disabled={!!linkedInventory} className="fleet-request-input disabled:opacity-60" value={form.location || ""} onChange={(e)=>set("location",e.target.value)}/></Field>
           {request?.item_type === "part" ? <>
-            <Field label="Category (used only if a new Fleet Part must be created)"><input className="fleet-request-input" value={form.category || "other"} onChange={(e)=>set("category",e.target.value)}/></Field>
-            <Field label="Minimum Stock"><input className="fleet-request-input" type="number" min="0" step="1" value={form.minimum_stock ?? 1} onChange={(e)=>set("minimum_stock",e.target.value)}/></Field>
+            {!linkedInventory && <><Field label="Category (used only if a new Fleet Part must be created)"><input className="fleet-request-input" value={form.category || "other"} onChange={(e)=>set("category",e.target.value)}/></Field><Field label="Minimum Stock"><input className="fleet-request-input" type="number" min="0" step="1" value={form.minimum_stock ?? 1} onChange={(e)=>set("minimum_stock",e.target.value)}/></Field></>}
           </> : <>
-            <Field label="Fluid Type (used only if new)"><input className="fleet-request-input" value={form.fluid_type || ""} onChange={(e)=>set("fluid_type",e.target.value)}/></Field>
-            <Field label="Stock Unit"><select className="fleet-request-input" value={form.unit || "quarts"} onChange={(e)=>{set("unit",e.target.value);set("minimum_stock_unit",e.target.value)}}>{["quarts","gallons","pints","ounces"].map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
-            <Field label="Minimum Stock"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.minimum_stock ?? 0} onChange={(e)=>set("minimum_stock",e.target.value)}/></Field>
-            <Field label="Minimum Stock Unit"><select className="fleet-request-input" value={form.minimum_stock_unit || form.unit || "quarts"} onChange={(e)=>set("minimum_stock_unit",e.target.value)}>{["quarts","gallons","pints","ounces"].map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
+            {!linkedInventory && <Field label="Fluid Type (used only if new)"><input className="fleet-request-input" value={form.fluid_type || ""} onChange={(e)=>set("fluid_type",e.target.value)}/></Field>}
+            <Field label="Stock Unit"><select disabled={!!linkedInventory} className="fleet-request-input disabled:opacity-60" value={form.unit || "quarts"} onChange={(e)=>{set("unit",e.target.value);set("minimum_stock_unit",e.target.value)}}>{["quarts","gallons","pints","ounces"].map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
+            {!linkedInventory && <><Field label="Minimum Stock"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.minimum_stock ?? 0} onChange={(e)=>set("minimum_stock",e.target.value)}/></Field><Field label="Minimum Stock Unit"><select className="fleet-request-input" value={form.minimum_stock_unit || form.unit || "quarts"} onChange={(e)=>set("minimum_stock_unit",e.target.value)}>{["quarts","gallons","pints","ounces"].map(v=><option key={v} value={v}>{v}</option>)}</select></Field></>}
           </>}
         </div>
-        <Field label="Inventory Notes"><textarea className="fleet-request-input" rows={3} value={form.notes || ""} onChange={(e)=>set("notes",e.target.value)}/></Field>
-        <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Exact matching follows FleetMaster rules: Part by exact part number; Fluid by exact name + brand. Ambiguous duplicate matches fail closed instead of choosing one arbitrarily.</div>
+        {!linkedInventory && <Field label="Inventory Notes"><textarea className="fleet-request-input" rows={3} value={form.notes || ""} onChange={(e)=>set("notes",e.target.value)}/></Field>}
+        <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">{linkedInventory ? "This request uses an exact Fleet inventory ID; no name-based matching is needed." : "Unlinked requests follow preserved FleetMaster matching rules: Part by exact part number; Fluid by exact name + brand. Ambiguous duplicate matches fail closed."}</div>
       </>}
 
       <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet request notifications are live and queued durably. Receiving remains retry-safe and cannot increment inventory twice.</div>
