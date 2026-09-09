@@ -46,6 +46,7 @@ export default function FleetRequests() {
     if (params.get("new") !== "1") return;
     setDialog({ mode: "create", request: {
       item_type: params.get("type") === "fluid" ? "fluid" : "part",
+      inventory_item_id: params.get("inventoryItem") || "",
       item_name: params.get("name") || "",
       part_number: params.get("partNumber") || "",
       manufacturer_brand: params.get("brand") || "",
