@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Copy, CheckCircle2, AlertTriangle, Loader2, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -237,36 +238,54 @@ export default function TaskAssignmentRules() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [settingId, setSettingId] = useState(null);
+  const [settingRecord, setSettingRecord] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
 
   // Form state
   const [form, setForm] = useState(defaultRule());
 
   const load = async () => {
     setLoading(true);
-    const [settings, usersData] = await Promise.all([
-      GlobalSettings.filter({ setting_key: SETTING_KEY }),
-      AuthorizedEmail.list()
-    ]);
-    if (settings.length > 0) {
-      setSettingId(settings[0].id);
-      setRules(settings[0].setting_value?.rules || []);
+    try {
+      const [record, usersData] = await Promise.all([
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: "Task assignment rules" }),
+        AuthorizedEmail.list()
+      ]);
+      setSettingRecord(record);
+      setRules(record?.setting_value?.rules || []);
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Error loading task assignment rules:", error);
+      setSettingsError(error?.message || "Task assignment rules could not be loaded safely.");
+    } finally {
+      setLoading(false);
     }
-    setUsers(usersData);
-    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
   const persist = async (updatedRules) => {
     setSaving(true);
-    if (settingId) {
-      await GlobalSettings.update(settingId, { setting_value: { rules: updatedRules } });
-    } else {
-      const created = await GlobalSettings.create({ setting_key: SETTING_KEY, setting_value: { rules: updatedRules } });
-      setSettingId(created.id);
+    setSettingsError("");
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: settingRecord,
+        settingKey: SETTING_KEY,
+        nextValue: { rules: updatedRules },
+        label: "Task assignment rules",
+      });
+      setSettingRecord(saved);
+      setRules(saved?.setting_value?.rules || updatedRules);
+      return true;
+    } catch (error) {
+      console.error("Task assignment rules save blocked:", error);
+      setSettingsError(error?.message || "Task assignment rules changed in another session. Reload before saving.");
+      await load();
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const openNew = () => {
@@ -295,22 +314,19 @@ export default function TaskAssignmentRules() {
     const updated = editingRule
       ? rules.map(r => r.id === editingRule.id ? form : r)
       : [...rules, form];
-    setRules(updated);
-    await persist(updated);
-    setDialogOpen(false);
+    const saved = await persist(updated);
+    if (saved) setDialogOpen(false);
   };
 
   const handleToggle = async (rule) => {
     const updated = rules.map(r => r.id === rule.id ? { ...r, enabled: !r.enabled } : r);
-    setRules(updated);
     await persist(updated);
   };
 
   const handleDelete = async (rule) => {
     const updated = rules.filter(r => r.id !== rule.id);
-    setRules(updated);
-    await persist(updated);
-    setDeleteConfirm(null);
+    const saved = await persist(updated);
+    if (saved) setDeleteConfirm(null);
   };
 
   // Condition helpers
@@ -381,6 +397,16 @@ export default function TaskAssignmentRules() {
           <Plus className="w-4 h-4 mr-1" /> New Rule
         </Button>
       </div>
+
+      {settingsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Task assignment rules update blocked</div>
+            <div className="mt-1 text-xs">{settingsError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await load(); }}>Reload latest</Button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
