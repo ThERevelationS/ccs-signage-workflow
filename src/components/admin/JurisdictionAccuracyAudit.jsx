@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, AlertTriangle, CheckCircle, Bot, Clock, RefreshCw, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const SEVERITY_COLORS = {
   critical: "bg-red-100 text-red-800 border-red-200",
@@ -31,6 +32,7 @@ export default function JurisdictionAccuracyAudit() {
   const [lastRunResult, setLastRunResult] = useState(null);
   const [saving, setSaving] = useState(false);
   const [automationExists, setAutomationExists] = useState(false);
+  const [alertActionError, setAlertActionError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -97,20 +99,51 @@ export default function JurisdictionAccuracyAudit() {
   };
 
   const handleMarkRead = async (alertId) => {
+    const loaded = auditAlerts.find((alert) => alert.id === alertId);
+    if (!loaded?.id) {
+      setAlertActionError("This alert is no longer loaded. Reload the audit before changing it.");
+      return;
+    }
+
+    const nextFields = { is_read: true, read_at: new Date().toISOString() };
+    setAlertActionError("");
     try {
-      await base44.entities.RegulationAlert.update(alertId, { is_read: true, read_at: new Date().toISOString() });
+      await replaceEntityFieldsIfUnchanged({
+        entity: base44.entities.RegulationAlert,
+        id: loaded.id,
+        expectedFields: expectedEntityFields(loaded, nextFields),
+        nextFields,
+        guardFields: { jurisdiction_id: loaded.jurisdiction_id },
+        label: `Regulation Alert ${loaded.title || loaded.id} mark read`,
+      });
       setAuditAlerts(prev => prev.filter(a => a.id !== alertId));
     } catch (e) {
       console.error("Mark read error:", e);
+      setAlertActionError(e?.message || "This alert changed in another session. The latest alerts were reloaded.");
+      await loadData();
     }
   };
 
   const handleDeleteAlert = async (alertId) => {
+    const loaded = auditAlerts.find((alert) => alert.id === alertId);
+    if (!loaded?.id) {
+      setAlertActionError("This alert is no longer loaded. Reload the audit before deleting it.");
+      return;
+    }
+
+    setAlertActionError("");
     try {
-      await base44.entities.RegulationAlert.delete(alertId);
+      await deleteEntityIfUnchanged({
+        entity: base44.entities.RegulationAlert,
+        record: loaded,
+        guardFields: { jurisdiction_id: loaded.jurisdiction_id },
+        label: `Regulation Alert ${loaded.title || loaded.id} deletion`,
+      });
       setAuditAlerts(prev => prev.filter(a => a.id !== alertId));
     } catch (e) {
       console.error("Delete error:", e);
+      setAlertActionError(e?.message || "This alert changed in another session and was not deleted. The latest alerts were reloaded.");
+      await loadData();
     }
   };
 
