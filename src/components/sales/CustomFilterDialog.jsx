@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, Pencil, Copy, Users } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -126,6 +127,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
   const [users, setUsers] = useState([]);
+  const [persistenceError, setPersistenceError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -230,28 +233,43 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       selected_by: editingItem?.selected_by || []
     };
 
-    if (editingItem && !editingItem.is_standard) {
-      await SalesFilter.update(editingItem.id, data);
-    } else {
-      await SalesFilter.create(data);
+    if (isSaving) return;
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      if (editingItem && !editingItem.is_standard) {
+        await updateSalesFilterIfUnchanged({ entity: SalesFilter, record: editingItem, nextFields: data, label: `Saved filter ${editingItem.name || editingItem.id}` });
+      } else {
+        const result = await createSalesFilterIfAbsent({ entity: SalesFilter, data, label: `Saved filter ${data.name}` });
+        if (result.status === "existing") throw new Error(`A ${data.type === "column_preset" ? "column preset" : "filter"} named "${data.name}" already exists.`);
+      }
+      await loadData();
+      resetForm();
+    } catch (error) {
+      console.error("Saved filter update blocked:", error);
+      setPersistenceError(error?.message || "This saved filter changed in another session. Reload before saving.");
+      await loadData();
+    } finally {
+      setIsSaving(false);
     }
-
-    await loadData();
-    resetForm();
   };
 
   const duplicateItem = async (item) => {
     const SalesFilter = base44.entities.SalesFilter;
-    await SalesFilter.create({
-      name: `${item.name} (Copy)`,
-      type: item.type,
-      conditions: item.conditions || [],
-      column_settings: item.column_settings || [],
-      is_standard: false,
-      created_by_name: currentUser?.full_name || currentUser?.email || "Unknown",
-      selected_by: []
-    });
-    await loadData();
+    setPersistenceError("");
+    try {
+      await createUniqueSalesFilterCopy({
+        entity: SalesFilter,
+        source: item,
+        createdByName: currentUser?.full_name || currentUser?.email || "Unknown",
+        label: `Saved filter copy ${item.name}`,
+      });
+      await loadData();
+    } catch (error) {
+      console.error("Saved filter copy blocked:", error);
+      setPersistenceError(error?.message || "The saved filter could not be copied safely.");
+      await loadData();
+    }
   };
 
   const editItem = (item) => {
@@ -268,9 +286,21 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   const confirmDelete = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    await SalesFilter.delete(deleteConfirm.id);
-    await loadData();
-    setDeleteConfirm(null);
+    if (!deleteConfirm?.id || isSaving) return;
+    setIsSaving(true);
+    setPersistenceError("");
+    try {
+      await deleteSalesFilterIfUnchanged({ entity: SalesFilter, record: deleteConfirm, label: `Saved filter ${deleteConfirm.name || deleteConfirm.id} deletion` });
+      await loadData();
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Saved filter deletion blocked:", error);
+      setPersistenceError(error?.message || "This saved filter changed in another session and was not deleted.");
+      setDeleteConfirm(null);
+      await loadData();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetForm = () => {
@@ -297,12 +327,20 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       const selectedBy = item.selected_by || [];
       const isSelected = selectedBy.includes(userEmail);
       
-      await SalesFilter.update(item.id, {
-        selected_by: isSelected 
-          ? selectedBy.filter(e => e !== userEmail)
-          : [...selectedBy, userEmail]
-      });
-      await loadData();
+      try {
+        await setSalesFilterSelectionSafely({
+          entity: SalesFilter,
+          recordId: item.id,
+          userEmail,
+          selected: !isSelected,
+          label: `Saved filter ${item.name || item.id} selection`,
+        });
+        await loadData();
+      } catch (error) {
+        console.error("Saved filter selection update blocked:", error);
+        setPersistenceError(error?.message || "This saved filter changed while your selection was being saved.");
+        await loadData();
+      }
     }
   };
 
