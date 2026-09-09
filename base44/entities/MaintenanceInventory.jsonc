@@ -71,6 +71,49 @@
         ]
       }
     },
+    "inventory_entity": {
+      "type": "string",
+      "description": "Master Inventory entity that owns the linked resource and authoritative cost."
+    },
+    "inventory_item_id": {
+      "type": "string",
+      "description": "ID of the linked Master Inventory resource."
+    },
+    "inventory_item_name": {
+      "type": "string",
+      "description": "Cached display name of the linked Master Inventory resource."
+    },
+    "usage_basis": {
+      "type": "string",
+      "enum": [
+        "per_letter",
+        "per_cabinet",
+        "per_linear_foot",
+        "per_sqft",
+        "per_service_item"
+      ],
+      "default": "per_service_item",
+      "description": "Estimator quantity basis used to convert service-item dimensions/counts into Master Inventory usage."
+    },
+    "usage_multiplier": {
+      "type": "number",
+      "default": 1,
+      "description": "Master Inventory units consumed per usage-basis unit."
+    },
+    "usage_rounding": {
+      "type": "string",
+      "enum": [
+        "none",
+        "ceil_whole"
+      ],
+      "default": "none",
+      "description": "Optional quantity rounding applied after usage multiplication."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this Maintenance material rule is active."
+    },
     "pricing_mode": {
       "type": "string",
       "enum": [
