@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 
 // Process workflow automation triggers
 Deno.serve(async (req) => {
@@ -16,6 +17,10 @@ Deno.serve(async (req) => {
     const automations = await base44.asServiceRole.entities.AutomationRule.filter({ enabled: true });
     
     const triggeredActions = [];
+    // Trigger conditions and notification templates keep using the original event
+    // snapshot, while mutation actions advance through confirmed saved state.
+    const eventWorkOrder = work_order;
+    const actionWorkOrder = { ...work_order };
     
     for (const rule of automations) {
       const triggers = rule.triggers || [];
@@ -24,7 +29,7 @@ Deno.serve(async (req) => {
       let triggered = false;
       
       for (const trigger of triggers) {
-        if (matchesTrigger(trigger, event_type, work_order, old_data)) {
+        if (matchesTrigger(trigger, event_type, eventWorkOrder, old_data)) {
           triggered = true;
           break;
         }
@@ -35,7 +40,7 @@ Deno.serve(async (req) => {
       // Execute all actions
       for (const action of rule.actions || []) {
         try {
-          const result = await executeAction(base44, action, work_order, changed_by);
+          const result = await executeAction(base44, action, actionWorkOrder, eventWorkOrder, changed_by);
           triggeredActions.push({
             rule: rule.name,
             action: action.action_type,
@@ -133,40 +138,59 @@ function matchesTrigger(trigger, event_type, work_order, old_data) {
   return true;
 }
 
-async function executeAction(base44, action, work_order, changed_by) {
+async function executeAction(base44, action, work_order, event_work_order, changed_by) {
   const config = action.action_config || {};
   
   switch (action.action_type) {
     case 'send_email':
-      return await sendEmailAction(base44, config, work_order, changed_by);
+      return await sendEmailAction(base44, config, event_work_order, changed_by);
       
     case 'change_stage':
       if (config.stage) {
-        await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-          current_stage: config.stage
+        const nextFields = { current_stage: config.stage };
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          workOrderId: work_order.id,
+          expectedFields: expectedWorkOrderFields(work_order, nextFields),
+          nextFields,
+          label: 'Workflow automation stage change',
         });
+        Object.assign(work_order, saved);
         return { stage_changed_to: config.stage };
       }
       break;
       
-    case 'set_asap':
-      await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-        asap: config.asap === true
+    case 'set_asap': {
+      const nextFields = { asap: config.asap === true };
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        workOrderId: work_order.id,
+        expectedFields: expectedWorkOrderFields(work_order, nextFields),
+        nextFields,
+        label: 'Workflow automation ASAP update',
       });
+      Object.assign(work_order, saved);
       return { asap_set: config.asap };
+    }
       
     case 'assign_to':
       if (config.assignee) {
-        await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-          assigned_to: config.assignee
+        const nextFields = { assigned_to: config.assignee };
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          workOrderId: work_order.id,
+          expectedFields: expectedWorkOrderFields(work_order, nextFields),
+          nextFields,
+          label: 'Workflow automation assignment',
         });
+        Object.assign(work_order, saved);
         return { assigned_to: config.assignee };
       }
       break;
       
     case 'add_task':
       if (config.task) {
-        const currentNotes = work_order.notes || [];
+        const currentNotes = Array.isArray(work_order.notes) ? work_order.notes : [];
         const newTask = {
           text: config.task,
           timestamp: new Date().toISOString(),
@@ -174,16 +198,22 @@ async function executeAction(base44, action, work_order, changed_by) {
           completed: false,
           sub_tasks: []
         };
-        await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-          notes: [...currentNotes, newTask]
+        const nextFields = { notes: [...currentNotes, newTask] };
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          workOrderId: work_order.id,
+          expectedFields: expectedWorkOrderFields(work_order, nextFields),
+          nextFields,
+          label: 'Workflow automation task addition',
         });
+        Object.assign(work_order, saved);
         return { task_added: config.task };
       }
       break;
       
     case 'add_note':
       if (config.note) {
-        const currentWorkNotes = work_order.work_notes || [];
+        const currentWorkNotes = Array.isArray(work_order.work_notes) ? work_order.work_notes : [];
         const newNote = {
           id: Date.now(),
           type: config.note_type || 'admin',
@@ -192,9 +222,15 @@ async function executeAction(base44, action, work_order, changed_by) {
           created_by: 'Automation',
           sub_tasks: []
         };
-        await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-          work_notes: [...currentWorkNotes, newNote]
+        const nextFields = { work_notes: [...currentWorkNotes, newNote] };
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          workOrderId: work_order.id,
+          expectedFields: expectedWorkOrderFields(work_order, nextFields),
+          nextFields,
+          label: 'Workflow automation note addition',
         });
+        Object.assign(work_order, saved);
         return { note_added: config.note };
       }
       break;
@@ -204,19 +240,31 @@ async function executeAction(base44, action, work_order, changed_by) {
         const days = parseInt(config.days);
         const date = new Date();
         date.setDate(date.getDate() + days);
-        await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-          due_date: date.toISOString().split('T')[0]
+        const nextFields = { due_date: date.toISOString().split('T')[0] };
+        const saved = await replaceWorkOrderFieldsIfUnchanged({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          workOrderId: work_order.id,
+          expectedFields: expectedWorkOrderFields(work_order, nextFields),
+          nextFields,
+          label: 'Workflow automation due date update',
         });
-        return { due_date_set: date.toISOString().split('T')[0] };
+        Object.assign(work_order, saved);
+        return { due_date_set: nextFields.due_date };
       }
       break;
       
-    case 'mark_complete':
-      await base44.asServiceRole.entities.WorkOrder.update(work_order.id, {
-        completed: true,
-        current_stage: 'completed'
+    case 'mark_complete': {
+      const nextFields = { completed: true, current_stage: 'completed' };
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        workOrderId: work_order.id,
+        expectedFields: expectedWorkOrderFields(work_order, nextFields),
+        nextFields,
+        label: 'Workflow automation completion',
       });
+      Object.assign(work_order, saved);
       return { marked_complete: true };
+    }
       
     default:
       return { skipped: true, reason: 'Unknown action type' };
