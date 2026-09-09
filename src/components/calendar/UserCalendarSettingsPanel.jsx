@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Check, Calendar, Settings, Eye, Link, Unlink } from "lucide-react";
+import { editableUserCalendarSettings, loadSingleUserCalendarSettings, saveUserCalendarSettingsIfUnchanged } from "@/components/calendar/userCalendarSettingsPersistence";
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
@@ -18,7 +19,8 @@ const STAGES = [
 
 export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange }) {
   const [settings, setSettings] = useState(null);
-  const [settingsId, setSettingsId] = useState(null);
+  const [settingsRecord, setSettingsRecord] = useState(null);
+  const [settingsError, setSettingsError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -29,11 +31,13 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
 
   const load = async () => {
     setLoading(true);
-    const all = await base44.entities.UserCalendarSettings.filter({ user_email: userEmail });
-    if (all?.length > 0) {
-      setSettings(all[0]);
-      setSettingsId(all[0].id);
-    } else {
+    try {
+      const record = await loadSingleUserCalendarSettings({
+        entity: base44.entities.UserCalendarSettings,
+        userEmail,
+        label: "Your calendar settings",
+      });
+      setSettingsRecord(record);
       setSettings({
         user_email: userEmail,
         show_universal: true,
@@ -45,23 +49,40 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
         work_order_stages: [],
         outlook_connected: false,
         google_connected: false,
+        ...(record ? editableUserCalendarSettings(record, userEmail) : {}),
       });
+    } catch (error) {
+      console.error("Error loading user calendar settings:", error);
+      setSettingsError(error?.message || "Your calendar settings could not be loaded safely.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSave = async () => {
+    if (saving || !settings) return;
     setSaving(true);
-    if (settingsId) {
-      await base44.entities.UserCalendarSettings.update(settingsId, settings);
-    } else {
-      const created = await base44.entities.UserCalendarSettings.create(settings);
-      setSettingsId(created.id);
+    setSettingsError("");
+    try {
+      const savedRecord = await saveUserCalendarSettingsIfUnchanged({
+        entity: base44.entities.UserCalendarSettings,
+        loadedRecord: settingsRecord,
+        userEmail,
+        nextSettings: settings,
+        label: "Your calendar settings",
+      });
+      setSettingsRecord(savedRecord);
+      const savedSettings = editableUserCalendarSettings(savedRecord, userEmail);
+      setSettings(savedSettings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      onSettingsChange?.(savedSettings);
+    } catch (error) {
+      console.error("User calendar settings save blocked:", error);
+      setSettingsError(error?.message || "Your calendar settings changed in another session. Reload before saving.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    onSettingsChange?.(settings);
   };
 
   const update = (key, val) => setSettings(s => ({ ...s, [key]: val }));
@@ -79,6 +100,16 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
 
   return (
     <div className="space-y-5">
+      {settingsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Calendar settings update blocked</div>
+            <div className="mt-1 text-xs">{settingsError}</div>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await load(); }}>Reload latest</Button>
+        </div>
+      )}
+
       {/* Default View */}
       <div className="clay-card p-4">
         <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
