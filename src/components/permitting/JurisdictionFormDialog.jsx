@@ -225,7 +225,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
       }
     } catch (e) {
       console.error("Save error:", e);
-      alert("Error saving jurisdiction");
+      alert(e?.message || "Error saving jurisdiction");
     }
     setSaving(false);
   };
@@ -385,10 +385,18 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
                     size="sm"
                     onClick={async () => {
                       setDeleting(true);
-                      await onDelete(jurisdiction.id);
-                      setDeleting(false);
-                      setConfirmDelete(false);
-                      onClose();
+                      try {
+                        const deleted = await onDelete(jurisdiction.id);
+                        if (deleted !== false) {
+                          setConfirmDelete(false);
+                          onClose();
+                        }
+                      } catch (error) {
+                        console.error("Jurisdiction delete failed:", error);
+                        alert(error?.message || "Jurisdiction could not be deleted safely.");
+                      } finally {
+                        setDeleting(false);
+                      }
                     }}
                     disabled={deleting}
                     className="h-7 text-xs bg-red-600 hover:bg-red-700 text-white"
