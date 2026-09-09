@@ -205,6 +205,16 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
             <DialogTitle className="text-xl font-bold">Task Templates</DialogTitle>
           </DialogHeader>
 
+          {persistenceError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">Task template update blocked</div>
+              <div className="mt-1 text-xs">{persistenceError}</div>
+              <Button type="button" size="sm" variant="outline" className="mt-2 h-7 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await loadTemplates(); }}>
+                Reload latest
+              </Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-6">
             {/* Left: Template List */}
             <div>
@@ -390,8 +400,8 @@ export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-red-600">
-              Delete
+            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-red-600" disabled={isSaving}>
+              {isSaving ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
