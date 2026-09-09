@@ -123,6 +123,10 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
       ]);
       setOrders(ordersData);
       setUsers(usersData);
+      originalOrdersRef.current = Object.fromEntries(ordersData.map((order) => [order.id, { ...order }]));
+      pendingChangesRef.current = {};
+      setPendingChanges({});
+      setSaveError("");
     } catch (error) {
       console.error("Error loading orders:", error);
       setReadError(error?.message || "Work Order orders could not be verified completely.");
@@ -131,92 +135,134 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
   };
 
   const addNewRow = async () => {
-    if (!isRegistered) return;
-    
-    const maxRowNumber = orders.length > 0 
-      ? Math.max(...orders.map(o => o.row_number || 0)) 
-      : 0;
-    
-    const newOrder = await Order.create({
-      customer_name: clientName || "",
-      work_order_id: workOrderId,
-      request_type: requestTypes[0] || "Other",
-      description: "",
-      quantity: "",
-      requestor_email: currentUser?.email || "",
-      requestor_name: currentUser?.full_name || "",
-      vendor: "",
-      status: "pending",
-      row_number: maxRowNumber + 1
-    });
-    
-    setOrders([...orders, newOrder]);
+    if (!isRegistered || addInFlightRef.current) return;
+    addInFlightRef.current = true;
+    setSaveError("");
+    try {
+      const maxRowNumber = orders.length > 0
+        ? Math.max(...orders.map(o => o.row_number || 0))
+        : 0;
+
+      const newOrder = await Order.create({
+        customer_name: clientName || "",
+        work_order_id: workOrderId,
+        request_type: requestTypes[0] || "Other",
+        description: "",
+        quantity: "",
+        requestor_email: currentUser?.email || "",
+        requestor_name: currentUser?.full_name || "",
+        vendor: "",
+        status: "pending",
+        row_number: maxRowNumber + 1
+      });
+
+      setOrders((current) => [...current, newOrder]);
+      originalOrdersRef.current[newOrder.id] = { ...newOrder };
+    } catch (error) {
+      console.error("Error creating Work Order purchase Order:", error);
+      setSaveError(error?.message || "The Order could not be created.");
+    } finally {
+      addInFlightRef.current = false;
+    }
+  };
+
+  const queueOrderChanges = (orderId, changes) => {
+    setOrders((current) => current.map((order) => order.id === orderId
+      ? { ...order, ...changes }
+      : order));
+    pendingChangesRef.current[orderId] = {
+      ...pendingChangesRef.current[orderId],
+      ...changes,
+    };
+    setPendingChanges({ ...pendingChangesRef.current });
   };
 
   const updateOrder = (orderId, field, value) => {
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return;
-    
-    const updatedOrders = [...orders];
-    updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], [field]: value };
-    setOrders(updatedOrders);
-    
-    setPendingChanges(prev => ({
-      ...prev,
-      [orderId]: { ...prev[orderId], [field]: value }
-    }));
+    queueOrderChanges(orderId, { [field]: value });
   };
 
   const saveChanges = async () => {
+    if (saveInFlightRef.current) return;
+    const updates = Object.fromEntries(
+      Object.entries(pendingChangesRef.current).map(([orderId, changes]) => [orderId, { ...changes }])
+    );
+    if (Object.keys(updates).length === 0) return;
+
+    saveInFlightRef.current = true;
     setIsSaving(true);
+    setSaveError("");
+    let savedRows = 0;
     try {
-      const updates = Object.entries(pendingChanges);
-      await Promise.all(
-        updates.map(([orderId, changes]) => {
-          // Filter out undefined values and ensure date fields are valid strings
-          const cleanedChanges = {};
-          Object.entries(changes).forEach(([key, value]) => {
-            if (value !== undefined) {
-              // For date fields, ensure they are valid strings or skip empty/null
-              if (['date_needed', 'date_ordered', 'date_received'].includes(key)) {
-                if (value === "" || value === null) {
-                  // Skip empty dates - don't include in update
-                  return;
-                } else if (value instanceof Date) {
-                  // Convert Date objects to string format
-                  cleanedChanges[key] = format(value, "yyyy-MM-dd");
-                } else if (typeof value === 'string' && value.trim()) {
-                  cleanedChanges[key] = value;
-                }
-                // Skip if not a valid value
-              } else {
-                cleanedChanges[key] = value;
-              }
-            }
-          });
-          
-          // Only update if there are actual changes
-          if (Object.keys(cleanedChanges).length > 0) {
-            return Order.update(orderId, cleanedChanges);
-          }
-          return Promise.resolve();
-        })
-      );
-      setPendingChanges({});
+      for (const [orderId, changes] of Object.entries(updates)) {
+        const cleanedChanges = {};
+        for (const [key, value] of Object.entries(changes)) {
+          if (value === undefined) continue;
+          cleanedChanges[key] = value instanceof Date ? format(value, "yyyy-MM-dd") : value;
+        }
+        if (Object.keys(cleanedChanges).length === 0) continue;
+
+        const baseline = originalOrdersRef.current[orderId];
+        if (!baseline?.id) throw new Error("The loaded Order baseline is missing. Reload this Work Order before saving purchases.");
+
+        const saved = await replaceOrderFieldsIfUnchanged({
+          entity: Order,
+          order: baseline,
+          nextFields: cleanedChanges,
+          label: `Work Order purchasing Order ${baseline.row_number || orderId} save`,
+        });
+        savedRows += 1;
+        originalOrdersRef.current[orderId] = { ...saved };
+
+        const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
+        for (const [field, value] of Object.entries(cleanedChanges)) {
+          if (Object.is(latestPending[field], value)) delete latestPending[field];
+        }
+        if (Object.keys(latestPending).length > 0) pendingChangesRef.current[orderId] = latestPending;
+        else delete pendingChangesRef.current[orderId];
+
+        setOrders((current) => current.map((order) => order.id === orderId
+          ? { ...saved, ...(pendingChangesRef.current[orderId] || {}) }
+          : order));
+        setPendingChanges({ ...pendingChangesRef.current });
+      }
     } catch (error) {
-      console.error("Error saving changes:", error);
+      console.error("Error saving Work Order purchases safely:", error);
+      setSaveError(
+        `${savedRows} Order row${savedRows === 1 ? " was" : "s were"} saved before the save stopped. ` +
+        `${error?.message || "An Order changed in another session. Reload before retrying."}`
+      );
+    } finally {
+      setPendingChanges({ ...pendingChangesRef.current });
+      saveInFlightRef.current = false;
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const confirmDelete = async () => {
-    await Order.update(deleteConfirm.id, {
-      deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: currentUser?.email || "unknown"
-    });
-    setOrders(orders.filter(o => o.id !== deleteConfirm.id));
-    setDeleteConfirm(null);
+    const target = deleteConfirm;
+    if (!target || deleteInFlightRef.current) return;
+    const baseline = originalOrdersRef.current[target.id] || target;
+    deleteInFlightRef.current = true;
+    setSaveError("");
+    try {
+      await softDeleteOrderFromLoadedSnapshot({
+        entity: Order,
+        order: baseline,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Work Order purchasing delete",
+      });
+      setOrders((current) => current.filter(o => o.id !== target.id));
+      delete pendingChangesRef.current[target.id];
+      delete originalOrdersRef.current[target.id];
+      setPendingChanges({ ...pendingChangesRef.current });
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Could not delete Work Order purchase safely:", error);
+      setSaveError(error?.message || "This Order changed in another session. Reload before deleting it.");
+      setDeleteConfirm(null);
+    } finally {
+      deleteInFlightRef.current = false;
+    }
   };
 
   const getFilteredUsers = (searchTerm) => {
