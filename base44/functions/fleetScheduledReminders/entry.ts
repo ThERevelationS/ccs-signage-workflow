@@ -10,9 +10,13 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me().catch(() => null);
     if (user && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:'primary' });
+    const cutover = cutoverRows?.[0];
+    if (!cutover?.scheduled_reminders_enabled || !cutover?.notifications_enabled) return Response.json({ success:true, disabled:true, queued:0 });
+
     const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
     const settings = settingsRows?.[0];
-    if (!settings?.scheduled_reminders_enabled || !settings?.notifications_enabled) return Response.json({ success:true, disabled:true, queued:0 });
+    if (!settings) return Response.json({ error:'FleetSettings record missing.' }, { status:409 });
 
     const Queue = base44.asServiceRole.entities.FleetNotificationQueue;
     const today = localDate();
