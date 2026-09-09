@@ -456,13 +456,29 @@ Deno.serve(async (req) => {
 
     if (action === 'complete') {
       if (existing.status === 'completed') {
-        return Response.json({ success: true, reused: true, work_order: existing });
+        const completionKey = String(existing.completion_receipt_key || '').trim();
+        if (completionKey) {
+          const completionReceipts = await Receipt.filter({ operation_key: completionKey });
+          const completionReceipt = canonical(completionReceipts);
+          if (completionReceipt && completionReceipt.status !== 'applied') {
+            await Receipt.update(completionReceipt.id, {
+              status: 'applied',
+              applied_at: existing.inventory_applied_at || nowIso(),
+              error_message: '',
+              result_summary: { ...(completionReceipt.result_summary || {}), reconciled_from_completed_work_order: true },
+            });
+          }
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'work_order_completed', target_id: id, event_token: completionKey
+          }).catch(() => null);
+        }
+        return Response.json({ success: true, reused: true, reconciled_receipt: !!completionKey, work_order: existing });
       }
       if (existing.status === 'cancelled') {
         return Response.json({ error: 'A cancelled Fleet work order must be reopened/edited before it can be completed.' }, { status: 409 });
       }
 
-      const completionPatch = safePatch(body?.work_order || body);
+      let completionPatch = safePatch(body?.work_order || body);
       completionPatch.equipment_id = completionPatch.equipment_id ?? existing.equipment_id;
       completionPatch.maintenance_task_id = completionPatch.maintenance_task_id ?? existing.maintenance_task_id;
       completionPatch.title = completionPatch.title ?? existing.title;
@@ -484,6 +500,15 @@ Deno.serve(async (req) => {
       completionPatch.completed_date = body?.completed_date || today();
       delete completionPatch.status;
 
+      const appliedCompletions = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
+      const completionKey = `fleetwo:${id}:complete:${appliedCompletions.length}`;
+      const unresolvedMain = canonical(await Receipt.filter({ operation_key: completionKey, status: { $in: ['started','failed'] } }));
+      let equipmentStatus = String(body?.equipment_status || '').trim();
+      if (unresolvedMain?.result_summary?.work_order_patch) {
+        completionPatch = { ...unresolvedMain.result_summary.work_order_patch };
+        equipmentStatus = String(unresolvedMain.result_summary.equipment_status || equipmentStatus || '').trim();
+      }
+
       if (!String(completionPatch.corrective_action || '').trim()) {
         return Response.json({ error: 'Corrective action is required to complete a Fleet work order.' }, { status: 400 });
       }
@@ -496,9 +521,6 @@ Deno.serve(async (req) => {
         if (!task) return Response.json({ error: 'Linked Fleet maintenance task was not found.' }, { status: 404 });
       }
 
-      const appliedCompletions = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
-      const completionKey = `fleetwo:${id}:complete:${appliedCompletions.length}`;
-      const equipmentStatus = String(body?.equipment_status || '').trim();
       if (equipmentStatus && !EQUIPMENT_STATUSES.has(equipmentStatus)) {
         return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
       }
