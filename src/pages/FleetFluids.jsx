@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetInventoryDialog from "@/components/fleet/FleetInventoryDialog";
-import { Droplets, Search, Loader2, AlertTriangle, Plus, Pencil } from "lucide-react";
+import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
+import { Droplets, Search, Loader2, AlertTriangle, Plus, Pencil, PackageCheck } from "lucide-react";
 
 export default function FleetFluids() {
   const [fluids, setFluids] = useState([]);
   const [equipment, setEquipment] = useState([]);
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -25,7 +27,8 @@ export default function FleetFluids() {
   useEffect(()=>{load();},[load]);
 
   const isAdmin=user?.role==="admin";
-  const rows=useMemo(()=>{const q=search.trim().toLowerCase();return fluids.filter(f=>!q||[f.fluid_name,f.fluid_type,f.brand,f.viscosity,f.location].some(v=>String(v||"").toLowerCase().includes(q)));},[fluids,search]);
+  const metrics=useMemo(()=>({low:fluids.filter(isFluidLowStock).length,tracked:fluids.filter(f=>f.quantity!=null&&f.unit).length,incomplete:fluids.filter(f=>f.quantity==null||!f.unit).length}),[fluids]);
+  const rows=useMemo(()=>{const q=search.trim().toLowerCase();return fluids.filter(f=>{if(stockFilter==="low"&&!isFluidLowStock(f))return false;if(stockFilter==="incomplete"&&f.quantity!=null&&f.unit)return false;return !q||[f.fluid_name,f.fluid_type,f.brand,f.viscosity,f.location].some(v=>String(v||"").toLowerCase().includes(q));});},[fluids,search,stockFilter]);
 
   const save=async(payload)=>{setSaving(true);setError("");try{const body=dialog?.item?{action:"update",item_type:"fluid",id:dialog.item.id,item:payload}:{action:"create",item_type:"fluid",item:payload};const {data}=await base44.functions.invoke("fleetInventoryAction",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||"Unable to save Fleet fluid.");}finally{setSaving(false);}};
 
