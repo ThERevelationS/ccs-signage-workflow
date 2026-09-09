@@ -390,9 +390,13 @@ export default function AdminSettings() {
 
   const loadAutomations = async () => {
     setIsLoading(true);
-    const rules = await AutomationRule.list("-created_date");
-    setAutomations(rules);
-    setIsLoading(false);
+    try {
+      const rules = await AutomationRule.list("-created_date");
+      setAutomations(rules);
+      return rules;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -402,6 +406,7 @@ export default function AdminSettings() {
   }, []);
 
   const openNewRule = async () => {
+    setAutomationSaveError("");
     setEditingRule(null);
     await loadEmailGroups();
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
@@ -411,6 +416,7 @@ export default function AdminSettings() {
   };
 
   const openEditRule = async (rule) => {
+    setAutomationSaveError("");
     setEditingRule(rule);
     await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
@@ -424,12 +430,17 @@ export default function AdminSettings() {
   };
 
   const duplicateRule = async (rule) => {
+    setAutomationSaveError("");
     setEditingRule(null);
     await loadEmailGroups();
     setTriggers(rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions(rule.actions || [{ action_type: "", action_config: {} }]);
+    const names = new Set(automations.map(item => String(item.name || "").trim().toLowerCase()));
+    let copyName = `${rule.name} (Copy)`;
+    let suffix = 2;
+    while (names.has(copyName.toLowerCase())) copyName = `${rule.name} (Copy ${suffix++})`;
     setFormData({
-      name: `${rule.name} (Copy)`,
+      name: copyName,
       enabled: true,
       priority: rule.priority || 0
     });
