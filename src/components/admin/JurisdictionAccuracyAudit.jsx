@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, AlertTriangle, CheckCircle, Bot, Clock, RefreshCw, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 
 const SEVERITY_COLORS = {
   critical: "bg-red-100 text-red-800 border-red-200",
@@ -32,6 +33,8 @@ export default function JurisdictionAccuracyAudit() {
   const [lastRunResult, setLastRunResult] = useState(null);
   const [saving, setSaving] = useState(false);
   const [alertActionError, setAlertActionError] = useState("");
+  const [settingsRecord, setSettingsRecord] = useState(null);
+  const [settingsSaveError, setSettingsSaveError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -39,11 +42,15 @@ export default function JurisdictionAccuracyAudit() {
 
   const loadData = async () => {
     try {
-      // Load saved settings
-      const stored = await base44.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_accuracy_audit' });
-      if (stored && stored.length > 0) {
-        setSettings(prev => ({ ...prev, ...stored[0].setting_value }));
-      }
+      // Load saved settings with an exact record baseline for concurrency-safe saves.
+      const stored = await loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: 'jurisdiction_accuracy_audit',
+        label: 'Jurisdiction Accuracy Audit settings',
+      });
+      setSettingsRecord(stored);
+      if (stored?.id) setSettings(prev => ({ ...prev, ...(stored.setting_value || {}) }));
+      setSettingsSaveError("");
 
       // Load audit alerts (flagged by accuracy audit)
       const alerts = await base44.entities.RegulationAlert.list('-detected_at', 50);
@@ -56,18 +63,24 @@ export default function JurisdictionAccuracyAudit() {
   };
 
   const handleSaveSettings = async () => {
+    if (saving) return;
     setSaving(true);
+    setSettingsSaveError("");
     try {
-      const existing = await base44.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_accuracy_audit' });
-      if (existing && existing.length > 0) {
-        await base44.entities.GlobalSettings.update(existing[0].id, { setting_value: settings });
-      } else {
-        await base44.entities.GlobalSettings.create({ setting_key: 'jurisdiction_accuracy_audit', setting_value: settings });
-      }
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: settingsRecord,
+        settingKey: 'jurisdiction_accuracy_audit',
+        nextValue: settings,
+        label: 'Jurisdiction Accuracy Audit settings',
+      });
+      setSettingsRecord(saved);
     } catch (e) {
       console.error("Save error:", e);
+      setSettingsSaveError(e?.message || "Accuracy Audit settings changed in another session. Reload before retrying.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleRunNow = async () => {
