@@ -10,7 +10,16 @@ import {
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import {
+  replaceWorkOrderFieldsIfUnchanged,
+  restoreWorkOrderFromLoadedTrashSnapshot,
+  softDeleteWorkOrderFromLoadedSnapshot,
+} from "@/components/workflow/workOrderPersistence";
+import { deleteCreatedDuplicateWorkOrderIfUnchanged } from "@/components/estimator/workOrderSyncPersistence";
+import {
+  assertPendingImportSnapshotCurrent,
+  resolvePendingImportFromLoadedSnapshot,
+} from "@/components/sales/pendingImportPersistence";
 
 const PendingImport = base44.entities.PendingImport;
 const WorkOrder = base44.entities.WorkOrder;
