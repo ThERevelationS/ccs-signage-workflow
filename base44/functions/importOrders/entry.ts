@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { OrderImportConflictError, replaceImportedOrderFieldsIfUnchanged } from '../../shared/orderImportPersistence.mjs';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -85,8 +86,9 @@ Deno.serve(async (req) => {
     ? Math.max(...existingOrders.map(o => o.row_number || 0))
     : 0;
 
-  let created = 0, updated = 0, skipped = 0, errors = 0;
+  let created = 0, updated = 0, skipped = 0, conflicts = 0, errors = 0;
   let importedCount = 0;
+  const issues = [];
 
   const validRows = jsonData.filter(row => {
     const customer = String(row['Customer'] ?? row['Customer Name'] ?? row['customer'] ?? row['customer_name'] ?? '').trim();
@@ -130,8 +132,15 @@ Deno.serve(async (req) => {
         else if (finalOrdered && existing.status === 'pending') updates.status = 'ordered';
 
         if (Object.keys(updates).length > 0) {
-          await retryOnRateLimit(() => base44.asServiceRole.entities.Order.update(existing.id, updates));
-          updated++;
+          const result = await retryOnRateLimit(() => replaceImportedOrderFieldsIfUnchanged({
+            entity: base44.asServiceRole.entities.Order,
+            order: existing,
+            nextFields: updates,
+            label: `Order import row ${i + 1}`,
+          }));
+          existingMap.set(uniqueKey, result.record);
+          if (result.status === 'already_desired') skipped++;
+          else updated++;
         } else {
           skipped++;
         }
@@ -162,7 +171,18 @@ Deno.serve(async (req) => {
       }
     } catch (err) {
       console.error(`Error processing row ${i + 1}: ${customer} - ${description}`, err.message);
-      errors++;
+      const isConflict = err instanceof OrderImportConflictError || err?.code === 'ORDER_IMPORT_CONFLICT';
+      if (isConflict) conflicts++;
+      else errors++;
+      if (issues.length < 20) {
+        issues.push({
+          row: i + 1,
+          customer,
+          description,
+          type: isConflict ? 'conflict' : 'error',
+          message: err?.message || 'Unknown import error',
+        });
+      }
     }
 
     // Delay between each row to stay under rate limits
@@ -171,5 +191,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return Response.json({ created, updated, skipped, errors, total: validRows.length });
+  return Response.json({ created, updated, skipped, conflicts, errors, total: validRows.length, issues });
 });
