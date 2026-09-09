@@ -181,6 +181,7 @@ export default function UserManagement() {
       alert(`Password reset email sent to ${user.email}`);
     } catch (err) {
       console.error("Error sending password reset:", err);
+      setUserMutationError(err?.message || "Failed to issue the password reset safely.");
       alert("Failed to send password reset email");
     }
     setSendingPasswordReset(null);
@@ -266,6 +267,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
       loadUsers();
     } catch (err) {
       console.error("Error sending onboarding email:", err);
+      setUserMutationError(err?.message || "Failed to issue the onboarding link safely.");
       alert("Failed to send registration email");
     }
     setSendingOnboardingEmail(null);
@@ -484,6 +486,19 @@ Return valid HTML that will render beautifully in ALL email clients including da
 
   return (
     <div className="space-y-6">
+      {userMutationError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">User update blocked</div>
+            <div className="mt-1 text-xs">{userMutationError}</div>
+          </div>
+          <div className="flex gap-1 shrink-0">
+            <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { await loadUsers(); setUserMutationError(""); }}>Reload latest</Button>
+            <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setUserMutationError("")}>Dismiss</Button>
+          </div>
+        </div>
+      )}
+
       {/* Invite New User Section */}
       <div className="clay-card p-4">
         <div className="flex items-center gap-3 mb-4">
@@ -865,6 +880,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
             </Button>
             <Button
               onClick={handleSave}
+              disabled={userMutationSaving}
               className="clay-button border-none"
               style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}
             >
@@ -888,6 +904,7 @@ Return valid HTML that will render beautifully in ALL email clients including da
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleDelete(deleteConfirm)}
+              disabled={userMutationSaving}
               className="bg-red-600 text-white"
             >
               Remove User
