@@ -395,6 +395,16 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
             </div>
           </DialogHeader>
 
+          {persistenceError && (
+            <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <div className="font-medium">Saved filter update blocked</div>
+              <div className="mt-1 text-xs">{persistenceError}</div>
+              <Button type="button" size="sm" variant="outline" className="mt-2 h-7 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await loadData(); }}>
+                Reload latest
+              </Button>
+            </div>
+          )}
+
           {/* Sub-tabs */}
           <div className="flex gap-2 mb-4">
             <Button
@@ -910,8 +920,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white">
-              Delete
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white" disabled={isSaving}>
+              {isSaving ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
