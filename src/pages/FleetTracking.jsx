@@ -14,6 +14,8 @@ export default function FleetTracking() {
   const [currentUser, setCurrentUser] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
+  const [fleetEquipment, setFleetEquipment] = useState([]);
+  const [fleetWorkOrders, setFleetWorkOrders] = useState([]);
   const [selectedVin, setSelectedVin] = useState(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [trips, setTrips] = useState([]);
@@ -89,6 +91,19 @@ export default function FleetTracking() {
     } finally {
       setTripsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      base44.entities.FleetEquipment.list("name", 500),
+      base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
+    ]).then(([equipmentRows, workOrderRows]) => {
+      if (!mounted) return;
+      setFleetEquipment(equipmentRows || []);
+      setFleetWorkOrders(workOrderRows || []);
+    }).catch(() => {});
+    return () => { mounted = false; };
   }, []);
 
   // Initial load + auth
@@ -187,6 +202,12 @@ export default function FleetTracking() {
   };
 
   const selectedVehicle = vehicles.find(v => v.vin === selectedVin);
+  const selectedFleetEquipment = selectedVehicle?.vin
+    ? fleetEquipment.find(eq => String(eq.vin || "").trim().toUpperCase() === String(selectedVehicle.vin || "").trim().toUpperCase()) || null
+    : null;
+  const selectedFleetOpenWorkOrders = selectedFleetEquipment
+    ? fleetWorkOrders.filter(wo => wo.equipment_id === selectedFleetEquipment.id && !["completed", "cancelled"].includes(wo.status))
+    : [];
 
   // Loading state
   if (statusLoading) {
@@ -350,6 +371,8 @@ export default function FleetTracking() {
         {panelOpen && selectedVehicle && (
           <VehiclePanel
             vehicle={selectedVehicle}
+            fleetEquipment={selectedFleetEquipment}
+            fleetOpenWorkOrders={selectedFleetOpenWorkOrders}
             trips={trips}
             tripsLoading={tripsLoading}
             selectedTripId={selectedTrip?.transactionId}
