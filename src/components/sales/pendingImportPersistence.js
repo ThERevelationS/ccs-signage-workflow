@@ -1,13 +1,10 @@
-import { base44 } from "@/api/base44Client";
 import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
-} from "@/components/estimator/builder/builderEntityPersistence";
-
-const PendingImport = base44.entities.PendingImport;
+} from "../estimator/builder/builderEntityPersistence.js";
 
 export async function assertPendingImportSnapshotCurrent({
-  entity = PendingImport,
+  entity,
   item,
   label = "Pending Import",
 } = {}) {
@@ -29,7 +26,7 @@ export async function assertPendingImportSnapshotCurrent({
 }
 
 export async function resolvePendingImportFromLoadedSnapshot({
-  entity = PendingImport,
+  entity,
   item,
   status,
   mergedIntoId,
