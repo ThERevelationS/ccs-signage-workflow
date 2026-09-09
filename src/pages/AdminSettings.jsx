@@ -1025,6 +1025,16 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {automationSaveError && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium">Automation update blocked</div>
+                  <div className="mt-1 text-xs">{automationSaveError}</div>
+                </div>
+                <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadAutomations(); setAutomationSaveError(""); }}>Reload rules</Button>
+              </div>
+            )}
+
             <div className="flex justify-between items-center mb-4">
               {/* Sort Controls */}
               <div className="flex items-center gap-2">
@@ -1420,6 +1430,13 @@ export default function AdminSettings() {
                 </div>
               </div>
 
+              {automationSaveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+                  <div className="font-medium">Automation save blocked</div>
+                  <div className="mt-1 text-xs">{automationSaveError}</div>
+                </div>
+              )}
+
               {/* Validation Messages */}
               {(!formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type) && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -1438,9 +1455,9 @@ export default function AdminSettings() {
               {/* Save */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={!formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button onClick={handleSave} disabled={automationSaving || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
-                  {editingRule ? "Update" : "Create"} Automation
+                  {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
               </div>
             </div>
@@ -1456,7 +1473,7 @@ export default function AdminSettings() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(deleteConfirm?.id)} className="bg-red-600 text-white">Delete</AlertDialogAction>
+              <AlertDialogAction onClick={() => handleDelete(deleteConfirm)} className="bg-red-600 text-white">Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
