@@ -511,16 +511,88 @@ export default function PendingImportsPanel({ onCountChange }) {
     });
   };
 
+  const findWorkOrdersForDocNumber = async (docNumber) => {
+    const doc = String(docNumber || "").trim();
+    if (!doc) return [];
+    const [estMatches, invoiceMatches] = await Promise.all([
+      loadAllEntityRows({
+        entity: WorkOrder,
+        query: { est_inv_at: doc, deleted: { $ne: true } },
+        sort: "created_date",
+        label: `Pending Import ${doc} existing Work Orders`,
+      }),
+      loadAllEntityRows({
+        entity: WorkOrder,
+        query: { corbridge_invoice_number: doc, deleted: { $ne: true } },
+        sort: "created_date",
+        label: `Pending Import ${doc} invoice Work Orders`,
+      }),
+    ]);
+    return [...new Map([...estMatches, ...invoiceMatches].map((workOrder) => [workOrder.id, workOrder])).values()];
+  };
+
   const handleApprove = async (item, formData) => {
+    await assertPendingImportSnapshotCurrent({
+      item,
+      label: `Pending Import ${item.doc_number || item.id} approval`,
+    });
+
+    const existingDocWorkOrders = await findWorkOrdersForDocNumber(item.doc_number);
+    if (existingDocWorkOrders.length > 0) {
+      throw new Error(`A Work Order with document number ${item.doc_number} now exists. Refresh Pending Imports and merge into the existing project instead. No new project was created.`);
+    }
+
     // formData comes from WorkOrderForm save
     const wo = { ...formData };
     Object.keys(wo).forEach(k => { if (wo[k] === null || wo[k] === undefined || wo[k] === '') delete wo[k]; });
-    const created = await WorkOrder.create(wo);
-    await PendingImport.update(item.id, { status: 'approved', merged_into_id: created.id });
+
+    let created;
+    try {
+      created = await WorkOrder.create(wo);
+    } catch (createError) {
+      const afterCreateMatches = await findWorkOrdersForDocNumber(item.doc_number).catch(() => null);
+      if (afterCreateMatches?.length) {
+        throw new Error(`The create request returned an error, but a Work Order with document number ${item.doc_number} now exists. Refresh Pending Imports before retrying so a duplicate is not created.`);
+      }
+      throw createError;
+    }
+
+    try {
+      await resolvePendingImportFromLoadedSnapshot({
+        item,
+        status: "approved",
+        mergedIntoId: created.id,
+        label: `Pending Import ${item.doc_number || item.id} approval`,
+      });
+    } catch (resolutionError) {
+      const latestItem = await PendingImport.get(item.id).catch(() => null);
+      const resolutionSucceeded = latestItem?.status === "approved" && latestItem?.merged_into_id === created.id;
+      if (!resolutionSucceeded) {
+        if (!latestItem) {
+          throw new Error(`${resolutionError?.message || "Pending Import approval outcome could not be verified."} Work Order ${created.id} may already exist and was left intact because the queue outcome is ambiguous. Refresh before retrying.`);
+        }
+        try {
+          await deleteCreatedDuplicateWorkOrderIfUnchanged({
+            entity: WorkOrder,
+            created,
+            label: `Pending Import ${item.doc_number || item.id} approval rollback`,
+          });
+        } catch (cleanupError) {
+          throw new Error(`${resolutionError?.message || "Pending Import approval failed."} The newly created Work Order could not be safely rolled back: ${cleanupError?.message || "unknown cleanup error"}. Refresh before taking another action.`);
+        }
+        throw new Error(`${resolutionError?.message || "Pending Import approval failed."} The newly created Work Order was safely removed, so no unresolved duplicate was left behind.`);
+      }
+    }
+
     removeItem(item.id);
   };
 
   const handleMerge = async (item, targetWoId) => {
+    await assertPendingImportSnapshotCurrent({
+      item,
+      label: `Pending Import ${item.doc_number || item.id} merge decision`,
+    });
+
     const target = allWorkOrders.find(w => w.id === targetWoId);
     if (!target) throw new Error("The selected Work Order is no longer available. Refresh and try again.");
     const ed = item.extracted_data || {};
@@ -546,12 +618,48 @@ export default function PendingImportsPanel({ onCountChange }) {
       nextFields: updateData,
       label: `Pending import ${item.doc_number || item.id}`,
     });
-    await PendingImport.update(item.id, { status: 'merged', merged_into_id: targetWoId });
+
+    try {
+      await resolvePendingImportFromLoadedSnapshot({
+        item,
+        status: "merged",
+        mergedIntoId: targetWoId,
+        label: `Pending Import ${item.doc_number || item.id} merge resolution`,
+      });
+    } catch (resolutionError) {
+      const latestItem = await PendingImport.get(item.id).catch(() => null);
+      const resolutionSucceeded = latestItem?.status === "merged" && latestItem?.merged_into_id === targetWoId;
+      if (!resolutionSucceeded) {
+        if (!latestItem) {
+          throw new Error(`${resolutionError?.message || "Pending Import merge outcome could not be verified."} The Work Order update was left intact because the queue outcome is ambiguous. Refresh before retrying.`);
+        }
+
+        const rollbackFields = Object.fromEntries(
+          Object.keys(updateData).map((field) => [field, target[field] ?? null])
+        );
+        try {
+          await replaceWorkOrderFieldsIfUnchanged({
+            workOrderId: targetWoId,
+            expectedFields: updateData,
+            nextFields: rollbackFields,
+            label: `Pending import ${item.doc_number || item.id} merge rollback`,
+          });
+        } catch (rollbackError) {
+          throw new Error(`${resolutionError?.message || "Pending Import merge failed."} The Work Order could not be safely rolled back: ${rollbackError?.message || "unknown rollback error"}. Refresh before taking another action.`);
+        }
+        throw new Error(`${resolutionError?.message || "Pending Import merge failed."} The Work Order changes were safely rolled back.`);
+      }
+    }
+
     removeItem(item.id);
   };
 
   const handleReject = async (item) => {
-    await PendingImport.update(item.id, { status: 'rejected' });
+    await resolvePendingImportFromLoadedSnapshot({
+      item,
+      status: "rejected",
+      label: `Pending Import ${item.doc_number || item.id} rejection`,
+    });
     removeItem(item.id);
   };
 
