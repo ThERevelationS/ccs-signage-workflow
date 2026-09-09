@@ -126,20 +126,71 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const saveLocality = async () => {
-    if (!form.name.trim()) return false;
+    if (!form.name.trim() || localitySaveInFlightRef.current) return false;
+    localitySaveInFlightRef.current = true;
+    setLocalitySaveError("");
     const payload = { ...form };
-    if (editingLocality === "new") {
-      const created = await PermitLocality.create(payload);
-      setLocalities(prev => [...prev, created]);
-      setSelectedLocality(created.id);
-      setEditingLocality(created.id);
-    } else {
-      await PermitLocality.update(editingLocality, payload);
-      setLocalities(prev => prev.map(l => l.id === editingLocality ? { ...l, ...payload } : l));
+
+    try {
+      if (editingLocality === "new") {
+        const normalizedName = form.name.trim().toLowerCase();
+        const normalizedState = (form.state || "").trim().toLowerCase();
+        const existing = localities.find(loc =>
+          (loc.name || "").trim().toLowerCase() === normalizedName &&
+          (loc.state || "").trim().toLowerCase() === normalizedState
+        );
+        if (existing) {
+          setSelectedLocality(existing.id);
+          setEditingLocality(existing.id);
+          loadFormFromLocality(existing);
+          setLocalitySaveError("A locality with this name and state already exists. The existing locality was opened instead of creating a duplicate.");
+          return false;
+        }
+
+        let created;
+        try {
+          created = await PermitLocality.create(payload);
+        } catch (createError) {
+          const matches = await PermitLocality.filter({ name: payload.name, state: payload.state || "" }).catch(() => null);
+          if (Array.isArray(matches) && matches.length === 1) {
+            created = matches[0];
+            setLocalitySaveError("The create request returned an error, but the locality was found on re-read and recovered safely.");
+          } else {
+            throw createError;
+          }
+        }
+        setLocalities(prev => prev.some(loc => loc.id === created.id) ? prev : [...prev, created]);
+        setSelectedLocality(created.id);
+        setEditingLocality(created.id);
+      } else {
+        const loaded = localities.find(loc => loc.id === editingLocality);
+        if (!loaded?.id) throw new Error("The locality being edited is no longer loaded. Reopen it before saving.");
+        const saved = await replaceEntityFieldsIfUnchanged({
+          entity: PermitLocality,
+          id: loaded.id,
+          expectedFields: expectedEntityFields(loaded, payload),
+          nextFields: payload,
+          label: `Permit locality ${loaded.name || loaded.id}`,
+        });
+        setLocalities(prev => prev.map(l => l.id === saved.id ? saved : l));
+      }
+      cleanSnapshot.current = JSON.stringify(form);
+      setIsDirty(false);
+      return true;
+    } catch (error) {
+      console.error("Permit locality save blocked:", error);
+      const latest = editingLocality && editingLocality !== "new"
+        ? await PermitLocality.get(editingLocality).catch(() => null)
+        : null;
+      if (latest?.id) {
+        setLocalities(prev => prev.map(loc => loc.id === latest.id ? latest : loc));
+        loadFormFromLocality(latest);
+      }
+      setLocalitySaveError(error?.message || "This locality changed in another session. Reload it before saving.");
+      return false;
+    } finally {
+      localitySaveInFlightRef.current = false;
     }
-    cleanSnapshot.current = JSON.stringify(form);
-    setIsDirty(false);
-    return true;
   };
 
   const saveAndExit = async () => {
