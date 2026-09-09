@@ -48,10 +48,11 @@ Deno.serve(async (req) => {
       throw lastErr;
     };
     const users = await filterWithRetry();
-    const user = users?.[0];
-    if (!user) {
+    if (!users || users.length !== 1) {
+      if (users?.length > 1) console.error(`verifyLogin duplicate username records for ${uname}`);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
+    const user = users[0];
 
     const stored = user.password_hash || '';
     if (!stored) {

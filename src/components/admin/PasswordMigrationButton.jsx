@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { migrateCredentials } from "@/functions/migrateCredentials";
 import { Button } from "@/components/ui/button";
 import { Loader2, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
@@ -9,7 +9,7 @@ export default function PasswordMigrationButton() {
   const [error, setError] = useState("");
 
   const handleRun = async () => {
-    if (!window.confirm("This will migrate all existing passwords to the new secure storage (bcrypt hashed) and clear the old plain password_hash field from AuthorizedEmail. Users will log in with their existing username/password. Continue?")) return;
+    if (!window.confirm("This will convert any legacy plaintext Time Clock passwords to bcrypt hashes in the current AuthorizedEmail credential field. It will not move or clear active login credentials. Continue?")) return;
     setRunning(true);
     setResult(null);
     setError("");
@@ -33,8 +33,8 @@ export default function PasswordMigrationButton() {
           <KeyRound className="w-5 h-5 text-amber-700" />
         </div>
         <div>
-          <h4 className="font-medium text-gray-800">Password Security Migration</h4>
-          <p className="text-sm text-gray-600">One-time: hash existing passwords with bcrypt and remove them from the public user table.</p>
+          <h4 className="font-medium text-gray-800">Legacy Password Hash Upgrade</h4>
+          <p className="text-sm text-gray-600">One-time safety tool: convert any legacy plaintext Time Clock passwords to bcrypt without moving or clearing the active login credential.</p>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export default function PasswordMigrationButton() {
         {running ? (
           <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Migrating...</>
         ) : (
-          <><KeyRound className="w-4 h-4 mr-2" /> Run Password Migration</>
+          <><KeyRound className="w-4 h-4 mr-2" /> Hash Legacy Passwords</>
         )}
       </Button>
 
@@ -55,8 +55,8 @@ export default function PasswordMigrationButton() {
         <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
           <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-green-900">
-            <p className="font-medium">Migration complete!</p>
-            <p>Migrated: {result.migrated} · Skipped: {result.skipped} · Cleared old hashes: {result.cleared}</p>
+            <p className="font-medium">Password hash upgrade complete!</p>
+            <p>Converted to bcrypt: {result.migrated} · Already safe/empty: {result.skipped}</p>
             {result.errors?.length > 0 && (
               <p className="text-red-700 mt-1">{result.errors.length} errors — check console</p>
             )}

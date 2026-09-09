@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     }
 
     const password_hash = await bcrypt.hash(new_password, 10);
-    const nextFields = { username: uname, password_hash };
+    const nextFields: Record<string, unknown> = { username: uname, password_hash };
     // Admin password changes invalidate any outstanding reset link. Reset-flow links
     // were already claimed atomically above.
     if (!isResetFlow) {
