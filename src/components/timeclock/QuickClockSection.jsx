@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
+import { clockOutTimeEntryIfUnchanged, createActiveTimeEntryIfAbsent } from "@/components/timeclock/timeEntryPersistence";
 import * as faceapi from "face-api.js";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -27,6 +28,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [persistenceError, setPersistenceError] = useState("");
   
   // Recognition state
   const [isRecognizing, setIsRecognizing] = useState(false);
