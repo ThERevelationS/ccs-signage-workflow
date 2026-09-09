@@ -8,7 +8,7 @@
 //   - All edits stay LOCAL until user clicks Save (avoids the noisy optimistic save loop).
 //   - Cancel/X discards local edits and closes.
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
