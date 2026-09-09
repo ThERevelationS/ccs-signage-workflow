@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
 import {
   Truck,
   ClipboardList,
@@ -64,7 +65,7 @@ export default function FleetOverview() {
     const highPriorityOrders = activeOrders.filter(w => ["critical", "high"].includes(w.priority));
     const unassignedOrders = activeOrders.filter(w => !String(w.assigned_to || "").trim());
     const lowParts = data.parts.filter(p => p.enable_low_stock_alerts !== false && Number(p.quantity_on_hand ?? 0) <= Number(p.minimum_stock ?? 0));
-    const lowFluids = data.fluids.filter(f => f.enable_low_stock_alerts !== false && f.quantity != null && f.minimum_stock != null && Number(f.quantity) <= Number(f.minimum_stock));
+    const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
     const todayText = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
