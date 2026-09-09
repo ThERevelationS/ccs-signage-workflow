@@ -99,6 +99,94 @@ export default function Permitting() {
     if (showLoading) setIsLoading(false);
   };
 
+  const persistPermitLineItemFields = useCallback((lineItemId, nextFields, label = "Permit line update") => {
+    const id = String(lineItemId || "").trim();
+    if (!id || !nextFields || Object.keys(nextFields).length === 0) return Promise.resolve(null);
+
+    lineItemMutationCountRef.current += 1;
+    const previous = lineItemMutationQueuesRef.current.get(id) || Promise.resolve();
+
+    let tracked;
+    const operation = previous.catch(() => null).then(async () => {
+      const baseline = lineItemBaselinesRef.current.get(id);
+      if (!baseline?.id) {
+        setPermitLineEditError(`${label} could not find its loaded Permit line. Reload latest data before retrying.`);
+        return null;
+      }
+
+      try {
+        const saved = await replaceEntityFieldsIfUnchanged({
+          entity: PermitLineItem,
+          id,
+          expectedFields: expectedEntityFields(baseline, nextFields),
+          nextFields,
+          label,
+        });
+        lineItemBaselinesRef.current.set(id, saved);
+        setLineItems(prev => prev.map(li => li.id === id ? { ...li, ...nextFields, updated_date: saved.updated_date } : li));
+        setPermitLineEditError("");
+        return saved;
+      } catch (error) {
+        console.error(`${label} blocked:`, error);
+        const latest = await PermitLineItem.get(id).catch(() => null);
+        if (latest?.id) {
+          lineItemBaselinesRef.current.set(id, latest);
+          setLineItems(prev => prev.map(li => li.id === id ? latest : li));
+        }
+        setPermitLineEditError(error?.message || `${label} changed in another session. Reload latest data before retrying.`);
+        return null;
+      }
+    });
+
+    tracked = operation.finally(() => {
+      lineItemMutationCountRef.current = Math.max(0, lineItemMutationCountRef.current - 1);
+      if (lineItemMutationQueuesRef.current.get(id) === tracked) {
+        lineItemMutationQueuesRef.current.delete(id);
+      }
+    });
+    lineItemMutationQueuesRef.current.set(id, tracked);
+    return tracked;
+  }, []);
+
+  const deletePermitLineItemSafely = useCallback(async (lineItemId) => {
+    const id = String(lineItemId || "").trim();
+    if (!id) return false;
+
+    const queued = lineItemMutationQueuesRef.current.get(id);
+    if (queued) await queued.catch(() => null);
+
+    const baseline = lineItemBaselinesRef.current.get(id);
+    if (!baseline?.id) {
+      setPermitLineEditError("Permit line deletion could not find its loaded record. Reload latest data before retrying.");
+      return false;
+    }
+
+    lineItemMutationCountRef.current += 1;
+    try {
+      await deleteEntityIfUnchanged({
+        entity: PermitLineItem,
+        record: baseline,
+        guardFields: { work_order_id: baseline.work_order_id },
+        label: "Permit line deletion",
+      });
+      lineItemBaselinesRef.current.delete(id);
+      setLineItems(prev => prev.filter(li => li.id !== id));
+      setPermitLineEditError("");
+      return true;
+    } catch (error) {
+      console.error("Permit line deletion blocked:", error);
+      const latest = await PermitLineItem.get(id).catch(() => null);
+      if (latest?.id) {
+        lineItemBaselinesRef.current.set(id, latest);
+        setLineItems(prev => prev.map(li => li.id === id ? latest : li));
+      }
+      setPermitLineEditError(error?.message || "Permit line changed in another session. Reload latest data before deleting it.");
+      return false;
+    } finally {
+      lineItemMutationCountRef.current = Math.max(0, lineItemMutationCountRef.current - 1);
+    }
+  }, []);
+
   // Work orders on permitting that don't have any line items yet — these show as "unassigned" groups
   const permittingWorkOrdersWithoutLines = useMemo(() => {
     const withLineIds = new Set(lineItems.map(li => li.work_order_id));
