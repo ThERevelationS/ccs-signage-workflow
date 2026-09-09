@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       }
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const created = await Entity.create(payload);
-      return Response.json({ success: true, item: created, notifications_enabled: false });
+      return Response.json({ success: true, item: created });
     }
 
     const id = String(body?.id || body?.item_id || '').trim();
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       }
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const updated = await Entity.update(id, payload);
-      return Response.json({ success: true, item: updated, notifications_enabled: false });
+      return Response.json({ success: true, item: updated });
     }
 
     if (action === 'delete') {
