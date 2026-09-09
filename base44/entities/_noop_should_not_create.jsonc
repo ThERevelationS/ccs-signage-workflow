@@ -1,0 +1,28 @@
+{
+  "name": "_noop_should_not_create",
+  "type": "object",
+  "properties": {},
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled__"
+      }
+    }
+  }
+}
