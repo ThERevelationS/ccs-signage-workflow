@@ -159,62 +159,104 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
     playSoundEffect(form.sound_type, form.custom_sound_url);
   };
 
-  const handleSave = async () => {
-    if (!form.title || !form.message) return;
-    setSaving(true);
-    if (editingId) {
-      await Announcement.update(editingId, { ...form });
-    } else {
-      const saved = await Announcement.create({ ...form, is_active: false });
-      setEditingId(saved.id);
+  const getEditingRecord = () => savedAnnouncements.find(a => a.id === editingId) || null;
+
+  const saveCurrentAnnouncement = async () => {
+    if (!form.title || !form.message) return null;
+    const loadedRecord = getEditingRecord();
+    if (editingId && !loadedRecord) {
+      throw new Error("The announcement being edited is no longer in the loaded list. Reload before saving.");
     }
-    await loadData();
-    setSaving(false);
+    if (loadedRecord) {
+      return updateAnnouncementIfUnchanged({
+        entity: Announcement,
+        record: loadedRecord,
+        nextFields: { ...form },
+        exactVersion: true,
+        label: `Announcement ${loadedRecord.name || loadedRecord.title || loadedRecord.id}`,
+      });
+    }
+    const created = await createAnnouncementWithRecovery({
+      entity: Announcement,
+      data: { ...form, is_active: false },
+      label: `Announcement ${form.name || form.title}`,
+    });
+    setEditingId(created.record.id);
+    return created.record;
+  };
+
+  const handleSave = async () => {
+    if (!form.title || !form.message || saving) return;
+    setPersistenceError("");
+    setSaving(true);
+    try {
+      await saveCurrentAnnouncement();
+      await loadData();
+    } catch (error) {
+      console.error("Announcement save blocked:", error);
+      setPersistenceError(error?.message || "This announcement changed in another session. Reload before saving.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleUpdate = async () => {
-    if (!editingId || !form.title || !form.message) return;
-    setSaving(true);
-    await Announcement.update(editingId, { ...form });
-    await loadData();
-    setSaving(false);
+    if (!editingId || !form.title || !form.message || saving) return;
+    await handleSave();
   };
 
   const handleSend = async () => {
-    if (!form.title || !form.message) return;
+    if (!form.title || !form.message || sending) return;
+    setPersistenceError("");
     setSending(true);
-
-    // Deactivate all current announcements first
-    const actives = savedAnnouncements.filter(a => a.is_active);
-    for (const a of actives) {
-      await Announcement.update(a.id, { is_active: false });
+    try {
+      const loadedRecord = getEditingRecord();
+      if (editingId && !loadedRecord) {
+        throw new Error("The announcement being broadcast is no longer in the loaded list. Reload before broadcasting.");
+      }
+      const result = await publishAnnouncementSafely({
+        entity: Announcement,
+        loadedRecord,
+        form: { ...form },
+        sentBy: currentUserEmail || "admin",
+        label: `Announcement broadcast ${form.name || form.title}`,
+      });
+      setEditingId(result.published.id);
+      setActiveAnnouncement(result.winner);
+      setActiveAnnId(result.winner.id);
+      if (!result.won) {
+        setPersistenceError(`A newer announcement was broadcast concurrently. "${result.winner.title || result.winner.name || "Another announcement"}" remains live; this broadcast was saved but deactivated.`);
+      }
+      await loadData();
+    } catch (error) {
+      console.error("Announcement broadcast blocked:", error);
+      setPersistenceError(error?.message || "The announcement could not be broadcast safely. Reload before retrying.");
+      await loadData();
+    } finally {
+      setSending(false);
     }
-
-    const payload = {
-      ...form,
-      is_active: true,
-      sent_at: new Date().toISOString(),
-      sent_by: currentUserEmail || "admin",
-    };
-
-    let annId = editingId;
-    if (editingId) {
-      await Announcement.update(editingId, payload);
-    } else {
-      const saved = await Announcement.create(payload);
-      annId = saved.id;
-      setEditingId(saved.id);
-    }
-    setActiveAnnId(annId);
-    await loadData();
-    setSending(false);
   };
 
   const handleStopAnnouncement = async () => {
-    if (!activeAnnId) return;
-    await Announcement.update(activeAnnId, { is_active: false });
-    setActiveAnnId(null);
-    await loadData();
+    if (!activeAnnouncement?.id || sending) return;
+    setPersistenceError("");
+    setSending(true);
+    try {
+      await stopAnnouncementIfUnchanged({
+        entity: Announcement,
+        record: activeAnnouncement,
+        label: `Stop announcement ${activeAnnouncement.title || activeAnnouncement.id}`,
+      });
+      setActiveAnnouncement(null);
+      setActiveAnnId(null);
+      await loadData();
+    } catch (error) {
+      console.error("Stop announcement blocked:", error);
+      setPersistenceError(error?.message || "The live announcement changed in another session and was not stopped from this stale screen.");
+      await loadData();
+    } finally {
+      setSending(false);
+    }
   };
 
   const loadSaved = (ann) => {
@@ -235,14 +277,37 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
   };
 
   const handleNew = () => {
+    setPersistenceError("");
     setForm(defaultForm);
     setEditingId(null);
   };
 
-  const handleDelete = async (id) => {
-    await Announcement.delete(id);
-    if (editingId === id) { setForm(defaultForm); setEditingId(null); }
-    await loadData();
+  const handleDelete = async (announcement) => {
+    if (!announcement?.id || saving || sending) return;
+    setPersistenceError("");
+    setSaving(true);
+    try {
+      await deleteAnnouncementIfUnchanged({
+        entity: Announcement,
+        record: announcement,
+        label: `Announcement ${announcement.name || announcement.title || announcement.id} deletion`,
+      });
+      if (editingId === announcement.id) {
+        setForm(defaultForm);
+        setEditingId(null);
+      }
+      if (activeAnnId === announcement.id) {
+        setActiveAnnouncement(null);
+        setActiveAnnId(null);
+      }
+      await loadData();
+    } catch (error) {
+      console.error("Announcement delete blocked:", error);
+      setPersistenceError(error?.message || "This announcement changed in another session and was not deleted.");
+      await loadData();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -312,7 +377,7 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
                   <Button
                     variant="ghost" size="icon"
                     className="h-6 w-6 flex-shrink-0"
-                    onClick={() => handleDelete(ann.id)}
+                    onClick={() => handleDelete(ann)}
                   >
                     <Trash2 className="w-3 h-3 text-red-500" />
                   </Button>
