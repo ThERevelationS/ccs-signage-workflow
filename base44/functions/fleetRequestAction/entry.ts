@@ -75,7 +75,9 @@ const requestPatch = (source: any) => {
 async function finalizeReceive(Request: any, Receipt: any, request: any, receipt: any, itemId: string, body: any) {
   const stamp = nowIso();
   const qty = num(body?.quantity_received ?? receipt?.result_summary?.quantity_received);
-  const unit = String(body?.unit || body?.received_unit || receipt?.result_summary?.unit || '').trim();
+  const unit = request?.item_type === 'part'
+    ? 'units'
+    : String(body?.unit || body?.received_unit || receipt?.result_summary?.unit || '').trim();
   const location = String(body?.location || receipt?.result_summary?.location || '').trim();
   const noteLine = `Received ${qty}${unit ? ` ${unit}` : ''} on ${stamp.slice(0, 10)}. Added to Fleet inventory.${location ? ` Storage: ${location}.` : ''}`;
   const updated = await Request.update(request.id, {
@@ -233,7 +235,7 @@ Deno.serve(async (req) => {
         result_summary: {
           item_type: existing.item_type,
           quantity_received: quantityReceived,
-          unit: body?.unit || body?.received_unit || '',
+          unit: existing.item_type === 'part' ? 'units' : (body?.unit || body?.received_unit || ''),
           location: body?.location || '',
         },
       });
@@ -377,7 +379,7 @@ Deno.serve(async (req) => {
       const updatedRequest = await finalizeReceive(Request, Receipt, existing, await Receipt.get(claim.receipt.id), inventoryItem.id, {
         ...body,
         quantity_received: quantityReceived,
-        unit: body?.unit || body?.received_unit || inventoryItem.unit || (existing.item_type === 'part' ? 'units' : ''),
+        unit: existing.item_type === 'part' ? 'units' : (body?.unit || body?.received_unit || inventoryItem.unit || ''),
         received_by: user.email,
       });
       await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
