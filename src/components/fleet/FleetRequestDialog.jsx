@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { Loader2, X } from "lucide-react";
 
 export default function FleetRequestDialog({ open, mode, request, equipment, onClose, onSubmit }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [confirmReceive, setConfirmReceive] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -36,12 +38,25 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
         photo_urls: request?.photo_urls || [],
       });
     }
+    setConfirmReceive(false);
     setError("");
   }, [open, mode, request]);
 
   if (!open) return null;
   const title = mode === "create" ? "New Fleet Request" : mode === "edit" ? "Edit Fleet Request" : mode === "order" ? `Order ${request?.item_name || "Item"}` : `Receive ${request?.item_name || "Item"}`;
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const performSubmit = async () => {
+    setConfirmReceive(false);
+    setSaving(true);
+    try {
+      await onSubmit(form);
+    } catch (err) {
+      setError(err?.message || "Fleet request operation failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -54,15 +69,11 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
       setError("Quantity received must be greater than zero.");
       return;
     }
-    if (mode === "receive" && !window.confirm("Receive this item into Fleet inventory? This action is protected by a durable idempotency receipt and cannot be applied twice.")) return;
-    setSaving(true);
-    try {
-      await onSubmit(form);
-    } catch (err) {
-      setError(err?.message || "Fleet request operation failed.");
-    } finally {
-      setSaving(false);
+    if (mode === "receive") {
+      setConfirmReceive(true);
+      return;
     }
+    await performSubmit();
   };
 
   return <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto"><div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
@@ -107,6 +118,6 @@ export default function FleetRequestDialog({ open, mode, request, equipment, onC
       <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet request notifications are live and queued durably. Receiving remains retry-safe and cannot increment inventory twice.</div>
       <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button><button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center gap-2 disabled:opacity-50">{saving&&<Loader2 className="w-4 h-4 animate-spin"/>}{mode === "create" ? "Submit Request" : mode === "edit" ? "Save Request" : mode === "order" ? "Save Order Details" : "Receive Into Fleet Inventory"}</button></div>
     </form>
-  </div><style>{`.fleet-request-input{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.dark .fleet-request-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style></div>;
+  </div><FleetConfirmDialog open={confirmReceive} title={`Receive ${request?.item_name || "Fleet item"}?`} description={`This will add ${form.quantity_received || 0} ${form.unit || (request?.item_type === "part" ? "units" : "")} to Fleet inventory and mark the request received. A durable receipt prevents the inventory addition from being applied twice.`} confirmLabel="Receive Into Inventory" tone="success" busy={saving} onCancel={()=>setConfirmReceive(false)} onConfirm={performSubmit}/><style>{`.fleet-request-input{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.dark .fleet-request-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style></div>;
 }
 function Field({label,children}){return <label className="block space-y-1.5"><span className="text-xs font-medium text-gray-600 dark:text-slate-300">{label}</span>{children}</label>}
