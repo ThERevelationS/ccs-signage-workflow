@@ -50,10 +50,12 @@ export async function createAuthorizedEmailIfAbsent({ entity, data, label = "Aut
   const desired = { ...data, email };
   if (Object.prototype.hasOwnProperty.call(desired, "username")) desired.username = cleanUsername(desired.username);
 
-  await assertAuthorizedEmailIdentityAvailable({ entity, email, username: desired.username });
   const before = await entity.filter({ email });
   if (before.length > 1) throw new Error(`${label} has duplicate email records already. Review them before inviting again.`);
   if (before.length === 1) return { record: before[0], status: "existing" };
+  if (desired.username) {
+    await assertAuthorizedEmailIdentityAvailable({ entity, username: desired.username });
+  }
 
   let created = null;
   let createError = null;
@@ -67,17 +69,38 @@ export async function createAuthorizedEmailIfAbsent({ entity, data, label = "Aut
     if (createError) throw createError;
     throw error;
   });
-  if (after.length > 1) {
-    throw new Error(`${label} create is ambiguous: multiple records now use ${email}. Do not retry blindly.`);
-  }
-  const saved = after[0] || null;
-  if (saved?.id) {
+  if (after.length === 1) {
+    const saved = after[0];
     const critical = ["email", "role", "onboarding_token", "onboarding_complete"].filter(field => Object.prototype.hasOwnProperty.call(desired, field));
     if (critical.every(field => sameValue(saved[field], desired[field]))) {
       return { record: saved, status: created?.id ? "created" : "recovered_after_response_loss" };
     }
     throw new Error(`${label} was created concurrently with different access values. Reload before changing it.`);
   }
+
+  if (after.length > 1) {
+    const canonical = [...after].sort((a, b) => {
+      const aCreated = Date.parse(a.created_date || "") || 0;
+      const bCreated = Date.parse(b.created_date || "") || 0;
+      if (aCreated !== bCreated) return aCreated - bCreated;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    })[0];
+    const ours = created?.id ? after.find(row => row.id === created.id) : null;
+    if (ours?.id && canonical?.id !== ours.id) {
+      await deleteEntityIfUnchanged({
+        entity,
+        record: ours,
+        guardFields: { email },
+        label: `${label} concurrent duplicate cleanup`,
+      });
+      const verified = await entity.filter({ email });
+      if (verified.length === 1 && verified[0].id === canonical.id) {
+        return { record: verified[0], status: "concurrent_duplicate_discarded" };
+      }
+    }
+    throw new Error(`${label} create is ambiguous: multiple records now use ${email}. Do not retry blindly; review the duplicates.`);
+  }
+
   if (createError) throw createError;
   throw new Error(`${label} create could not be verified. Reload before retrying.`);
 }
