@@ -24,8 +24,8 @@ export default function FleetRequestDialog({ open, mode, request, equipment, par
         category: linked?.category || "other",
         minimum_stock: linked?.minimum_stock ?? 1,
         fluid_type: linked?.fluid_type || "",
-        unit: linked?.unit || "quarts",
-        minimum_stock_unit: linked?.minimum_stock_unit || linked?.unit || "quarts",
+        unit: request?.item_type === "fluid" ? (linked?.unit || "quarts") : "units",
+        minimum_stock_unit: request?.item_type === "fluid" ? (linked?.minimum_stock_unit || linked?.unit || "quarts") : "units",
         notes: "",
       });
     } else {
