@@ -167,6 +167,9 @@ Deno.serve(async (req) => {
           });
           await Task.update(task.id, { status: 'in_progress', generation_key: item.generation_key, last_generated_for_date: task.start_date });
           await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), result_summary: { ...(claim.receipt.result_summary || {}), work_order_id: created.id, work_order_number: created.work_order_number } });
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'work_order_created', target_id: created.id, event_token: item.generation_key,
+          }).catch(() => null);
           results.push({ ...item, action: 'created', work_order_id: created.id, work_order_number: created.work_order_number });
         } catch (error) {
           await Receipt.update(claim.receipt.id, { error_message: error?.message || String(error) }).catch(() => null);
@@ -174,7 +177,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return Response.json({ success: true, dry_run: false, due_count: due.length, created: results.filter((r) => r.action === 'created').length, recovered: results.filter((r) => r.action === 'recovered').length, results, notifications_enabled: false });
+      return Response.json({ success: true, dry_run: false, due_count: due.length, created: results.filter((r) => r.action === 'created').length, recovered: results.filter((r) => r.action === 'recovered').length, results });
     }
 
     const id = String(body?.id || body?.task_id || '').trim();
