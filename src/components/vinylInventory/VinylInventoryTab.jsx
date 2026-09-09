@@ -21,17 +21,12 @@ import { Plus, Search, Droplets, Lock } from "lucide-react";
 import VinylRowCard from "./VinylRowCard";
 import VinylEditDialog from "./VinylEditDialog";
 import { VINYL_CATEGORIES, VINYL_USE_CASES, filterVinylForScope } from "./vinylConstants";
+import { createVinylRecordWithRecovery, deleteVinylIfUnchanged, duplicateVinylSafely, stripVinylRecordMeta, updateVinylIfUnchanged } from "./vinylInventoryPersistence";
 
 const SCOPE_META = {
   master:           { label: "All Vinyl", color: "text-blue-600",    accent: "bg-blue-50 border-blue-200" },
   channel_letters:  { label: "Channel & Dimensional Letters", color: "text-purple-600", accent: "bg-purple-50 border-purple-200" },
   sign_maintenance: { label: "Sign Maintenance",  color: "text-cyan-600", accent: "bg-cyan-50 border-cyan-200" },
-};
-
-const stripVinylMeta = (row = {}) => {
-  const payload = { ...row };
-  ["id", "created_date", "updated_date", "created_by_id"].forEach((key) => delete payload[key]);
-  return payload;
 };
 
 const blankVinyl = (scope) => ({
@@ -66,6 +61,7 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const [useCaseFilter, setUseCaseFilter] = useState("all");
   const [editingVinyl, setEditingVinyl] = useState(null);
   const [loadError, setLoadError] = useState("");
+  const [persistenceError, setPersistenceError] = useState("");
   const itemActionRef = useRef(new Set());
   const addRef = useRef(false);
   const isAdmin = user?.role === "admin";
@@ -106,13 +102,18 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const handleAdd = async () => {
     if (!isAdmin || loadError || addRef.current) return;
     addRef.current = true;
+    setPersistenceError("");
     try {
-      const created = await VinylInventory.create({ ...blankVinyl(scope), sort_order: items.length + 1 });
-      setItems(prev => [created, ...prev]);
-      setEditingVinyl(created);
+      const result = await createVinylRecordWithRecovery({
+        entity: VinylInventory,
+        data: { ...blankVinyl(scope), sort_order: items.length + 1 },
+        label: "New vinyl inventory record",
+      });
+      setItems(prev => [result.record, ...prev.filter((row) => row.id !== result.record.id)]);
+      setEditingVinyl(result.record);
     } catch (e) {
       console.error(e);
-      alert("Failed to add vinyl: " + e.message);
+      setPersistenceError(e?.message || "The new vinyl record could not be created safely.");
     } finally {
       addRef.current = false;
     }
@@ -121,23 +122,27 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const handleDialogSave = async (draft) => {
     if (!draft?.id || itemActionRef.current.has(draft.id)) return;
     itemActionRef.current.add(draft.id);
+    setPersistenceError("");
     try {
-      const live = await VinylInventory.get(draft.id);
-      if (draft.updated_date && live?.updated_date && draft.updated_date !== live.updated_date) {
-        setItems(prev => prev.map(v => v.id === draft.id ? live : v));
-        setEditingVinyl(live);
-        alert("This vinyl changed in another session. Your changes were not saved; the latest record has been reloaded into the editor.");
-        return;
-      }
-      const id = draft.id;
-      const patch = stripVinylMeta(draft);
-      const updateResult = await VinylInventory.update(id, patch);
-      const refreshed = updateResult?.updated_date ? updateResult : await VinylInventory.get(id);
-      setItems(prev => prev.map(v => v.id === id ? { ...v, ...patch, ...(refreshed || {}) } : v));
+      const baseline = items.find((row) => row.id === draft.id);
+      if (!baseline) throw new Error("This vinyl is no longer in the loaded inventory. Reload before saving.");
+      const patch = stripVinylRecordMeta(draft);
+      const saved = await updateVinylIfUnchanged({
+        entity: VinylInventory,
+        record: baseline,
+        nextFields: patch,
+        label: `Vinyl ${baseline.vinyl_name || baseline.id}`,
+      });
+      setItems(prev => prev.map(v => v.id === saved.id ? saved : v));
       setEditingVinyl(null);
     } catch (e) {
       console.error(e);
-      alert("Save failed: " + e.message);
+      const live = await VinylInventory.get(draft.id).catch(() => null);
+      if (live?.id) {
+        setItems(prev => prev.map(v => v.id === draft.id ? live : v));
+        setEditingVinyl(live);
+      }
+      setPersistenceError(e?.message || "This vinyl changed in another session. The latest record was reloaded and your stale save was blocked.");
     } finally {
       itemActionRef.current.delete(draft.id);
     }
@@ -150,18 +155,19 @@ export default function VinylInventoryTab({ scope = "master" }) {
       itemActionRef.current.delete(vinyl.id);
       return;
     }
+    setPersistenceError("");
     try {
-      const live = await VinylInventory.get(vinyl.id);
-      if (vinyl.updated_date && live?.updated_date && vinyl.updated_date !== live.updated_date) {
-        setItems(prev => prev.map(v => v.id === vinyl.id ? live : v));
-        alert("This vinyl changed in another session and was not deleted. The latest record has been reloaded.");
-        return;
-      }
-      await VinylInventory.delete(vinyl.id);
+      await deleteVinylIfUnchanged({
+        entity: VinylInventory,
+        record: vinyl,
+        label: `Vinyl ${vinyl.vinyl_name || vinyl.id} deletion`,
+      });
       setItems(prev => prev.filter(v => v.id !== vinyl.id));
     } catch (e) {
       console.error(e);
-      alert("Delete failed: " + e.message);
+      const live = await VinylInventory.get(vinyl.id).catch(() => null);
+      if (live?.id) setItems(prev => prev.map(v => v.id === vinyl.id ? live : v));
+      setPersistenceError(e?.message || "This vinyl changed in another session and was not deleted.");
     } finally {
       itemActionRef.current.delete(vinyl.id);
     }
@@ -173,33 +179,32 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const handleDuplicate = async (source) => {
     if (!isAdmin || !source?.id || itemActionRef.current.has(source.id)) return;
     itemActionRef.current.add(source.id);
+    setPersistenceError("");
     try {
-      const live = await VinylInventory.get(source.id);
-      if (source.updated_date && live?.updated_date && source.updated_date !== live.updated_date) {
-        setItems(prev => prev.map(v => v.id === source.id ? live : v));
-        alert("This vinyl changed in another session and was not duplicated. The latest record has been reloaded.");
-        return;
-      }
-      const id = live.id;
-      const rest = stripVinylMeta(live);
-      let groupKey = live.product_group_key;
-      if (!groupKey) {
-        groupKey = `grp-${id || Math.random().toString(36).slice(2, 9)}`;
-        await VinylInventory.update(id, { product_group_key: groupKey });
-      }
+      const groupKey = source.product_group_key || `grp-${source.id}`;
       const copy = {
-        ...rest,
+        ...stripVinylRecordMeta(source),
         product_group_key: groupKey,
-        vinyl_name: `${live.vinyl_name || "Vinyl"} (copy)`,
-        sort_order: (live.sort_order || 0) + 0.1,
+        vinyl_name: `${source.vinyl_name || "Vinyl"} (copy)`,
+        sort_order: (source.sort_order || 0) + 0.1,
       };
-      const created = await VinylInventory.create(copy);
-      setItems(prev => prev.map(v => v.id === id ? { ...v, product_group_key: groupKey } : v));
-      setItems(prev => [created, ...prev]);
-      setEditingVinyl(created);
+      const result = await duplicateVinylSafely({
+        entity: VinylInventory,
+        source,
+        copyData: copy,
+        groupKey,
+        label: `Duplicate vinyl ${source.vinyl_name || source.id}`,
+      });
+      setItems(prev => [
+        result.copy,
+        ...prev.filter(v => v.id !== result.copy.id).map(v => v.id === result.source.id ? result.source : v),
+      ]);
+      setEditingVinyl(result.copy);
     } catch (e) {
       console.error(e);
-      alert("Duplicate failed: " + e.message);
+      const live = await VinylInventory.get(source.id).catch(() => null);
+      if (live?.id) setItems(prev => prev.map(v => v.id === source.id ? live : v));
+      setPersistenceError(e?.message || "This vinyl could not be duplicated safely. Reload before retrying.");
     } finally {
       itemActionRef.current.delete(source.id);
     }
@@ -254,6 +259,15 @@ export default function VinylInventoryTab({ scope = "master" }) {
       </CardHeader>
 
       <CardContent className="p-4">
+        {persistenceError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
+            <div>
+              <div className="font-medium">Vinyl inventory update blocked</div>
+              <div className="mt-1 text-xs">{persistenceError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { setPersistenceError(""); await load(); }}>Reload latest</Button>
+          </div>
+        )}
         {loading ? (
           <div className="p-8 text-center text-slate-500">Loading vinyl inventory…</div>
         ) : loadError ? (
