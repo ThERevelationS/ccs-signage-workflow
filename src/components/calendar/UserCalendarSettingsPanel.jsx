@@ -98,6 +98,16 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
     return <div className="flex justify-center p-6"><Loader2 className="w-5 h-5 animate-spin text-purple-600" /></div>;
   }
 
+  if (!settings) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="font-medium">Calendar settings could not be loaded safely</div>
+        <div className="mt-1 text-xs">{settingsError || "Reload your settings before making changes."}</div>
+        <Button type="button" size="sm" variant="outline" className="mt-3 border-red-300 bg-white text-red-800" onClick={async () => { setSettingsError(""); await load(); }}>Reload latest</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {settingsError && (
