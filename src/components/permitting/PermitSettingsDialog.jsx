@@ -298,7 +298,6 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     if (JSON.stringify(enriched) !== JSON.stringify(initialOfficeTypes || [])) {
       setOfficeTypes(enriched);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialOfficeTypes]);
 
   const saveOfficeTypes = async (types) => {
