@@ -86,7 +86,7 @@ export default function VehiclePanel({
             onClearAll={onClearNotifications} onMarkRead={onMarkNotificationRead}
             onOpenSettings={onOpenAlertSettings} />
         )}
-        {activeTab === "details" && <DetailsTab vehicle={vehicle} />}
+        {activeTab === "details" && <DetailsTab vehicle={vehicle} fleetEquipment={fleetEquipment} />}
       </div>
 
       {/* Footer: status icons */}
