@@ -94,6 +94,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
     let deletedSnapshot = null;
     try {
       await assertPendingImportSnapshotCurrent({
+        entity: PendingImport,
         item,
         label: "Pending Import duplicate decision",
       });
@@ -126,6 +127,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
 
       try {
         await resolvePendingImportFromLoadedSnapshot({
+          entity: PendingImport,
           item,
           status: "merged",
           mergedIntoId: keepId,
@@ -205,6 +207,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
         setMergeError("");
         try {
           await resolvePendingImportFromLoadedSnapshot({
+          entity: PendingImport,
             item,
             status: "rejected",
             label: "Pending Import duplicate dismissal",
@@ -540,6 +543,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
   const handleApprove = async (item, formData) => {
     await assertPendingImportSnapshotCurrent({
+        entity: PendingImport,
       item,
       label: `Pending Import ${item.doc_number || item.id} approval`,
     });
@@ -566,6 +570,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
     try {
       await resolvePendingImportFromLoadedSnapshot({
+          entity: PendingImport,
         item,
         status: "approved",
         mergedIntoId: created.id,
@@ -596,6 +601,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
   const handleMerge = async (item, targetWoId) => {
     await assertPendingImportSnapshotCurrent({
+        entity: PendingImport,
       item,
       label: `Pending Import ${item.doc_number || item.id} merge decision`,
     });
@@ -628,6 +634,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
     try {
       await resolvePendingImportFromLoadedSnapshot({
+          entity: PendingImport,
         item,
         status: "merged",
         mergedIntoId: targetWoId,
@@ -663,6 +670,7 @@ export default function PendingImportsPanel({ onCountChange }) {
 
   const handleReject = async (item) => {
     await resolvePendingImportFromLoadedSnapshot({
+          entity: PendingImport,
       item,
       status: "rejected",
       label: `Pending Import ${item.doc_number || item.id} rejection`,
