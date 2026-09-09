@@ -46,6 +46,31 @@ export function formatNumber(n, suffix = "") {
   return `${Number(n).toLocaleString(undefined, { maximumFractionDigits: 1 })}${suffix}`;
 }
 
+const FLUID_OUNCES_PER_UNIT = {
+  ounces: 1,
+  pints: 16,
+  quarts: 32,
+  gallons: 128,
+};
+
+export function convertFluidQuantity(value, fromUnit, toUnit) {
+  const numeric = Number(value);
+  const from = String(fromUnit || "").toLowerCase();
+  const to = String(toUnit || "").toLowerCase();
+  if (!Number.isFinite(numeric) || !FLUID_OUNCES_PER_UNIT[from] || !FLUID_OUNCES_PER_UNIT[to]) return null;
+  return numeric * FLUID_OUNCES_PER_UNIT[from] / FLUID_OUNCES_PER_UNIT[to];
+}
+
+export function isFluidLowStock(fluid) {
+  if (!fluid || fluid.enable_low_stock_alerts === false || fluid.quantity == null || fluid.minimum_stock == null) return false;
+  const stockUnit = String(fluid.unit || "").toLowerCase();
+  const minimumUnit = String(fluid.minimum_stock_unit || fluid.unit || "").toLowerCase();
+  if (!stockUnit || !minimumUnit) return false;
+  const minimumInStockUnit = convertFluidQuantity(fluid.minimum_stock, minimumUnit, stockUnit);
+  if (minimumInStockUnit == null) return false;
+  return Number(fluid.quantity) <= minimumInStockUnit + 1e-9;
+}
+
 export function formatTime(iso, timeZone) {
   if (!iso) return "";
   try {
