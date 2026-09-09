@@ -16,6 +16,14 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 const sameNumber = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) < 1e-9;
+const FLUID_OUNCES_PER_UNIT: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
+const fluidMinimumInStockUnit = (item: any) => {
+  const minimum = num(item?.minimum_stock, NaN);
+  const stockUnit = String(item?.unit || '').toLowerCase();
+  const minimumUnit = String(item?.minimum_stock_unit || item?.unit || '').toLowerCase();
+  if (!Number.isFinite(minimum) || !FLUID_OUNCES_PER_UNIT[stockUnit] || !FLUID_OUNCES_PER_UNIT[minimumUnit]) return NaN;
+  return minimum * FLUID_OUNCES_PER_UNIT[minimumUnit] / FLUID_OUNCES_PER_UNIT[stockUnit];
+};
 
 const safePatch = (body: any) => {
   const allowed = [
@@ -553,7 +561,7 @@ Deno.serve(async (req) => {
         for (const plan of inventoryPlans) {
           const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
           const item = await entity.get(plan.item_id).catch(() => null);
-          const minimum = num(item?.minimum_stock, NaN);
+          const minimum = plan.item_type === 'part' ? num(item?.minimum_stock, NaN) : fluidMinimumInStockUnit(item);
           if (item && Number.isFinite(minimum) && plan.before_quantity > minimum && plan.after_quantity <= minimum) {
             await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
               event_type: plan.item_type === 'part' ? 'low_stock_part' : 'low_stock_fluid',
