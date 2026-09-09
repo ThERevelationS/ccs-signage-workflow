@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { X, Plus, Trash2, Loader2, ImagePlus, Upload } from "lucide-react";
 
 const TYPE_OPTIONS = ["scheduled", "emergency", "inspection", "repair"];
@@ -44,6 +45,7 @@ export default function FleetWorkOrderDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [pendingPhotos, setPendingPhotos] = useState({ before_photos: [], problem_photos: [], after_photos: [] });
+  const [confirmComplete, setConfirmComplete] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -65,6 +67,7 @@ export default function FleetWorkOrderDialog({
     const eq = equipment.find((e) => e.id === source.equipment_id);
     setEquipmentStatus(eq?.status || "operational");
     setPendingPhotos({ before_photos: [], problem_photos: [], after_photos: [] });
+    setConfirmComplete("");
     setError("");
   }, [open, workOrder, equipment]);
 
@@ -120,19 +123,8 @@ export default function FleetWorkOrderDialog({
     }) }));
   };
 
-  const submit = async (event) => {
-    event.preventDefault();
-    setError("");
-    if (!form.title?.trim()) return setError("Title is required.");
-    if (!editing && !form.equipment_id) return setError("Equipment is required for a new Fleet work order.");
-    if (completing && !form.corrective_action?.trim()) return setError("Corrective action is required to complete the work order.");
-    if (completing) {
-      const usageCount = (form.parts_used || []).filter((p) => p.part_id && Number(p.quantity) > 0).length + (form.fluids_used || []).filter((f) => f.fluid_id && Number(f.quantity ?? f.quantity_quarts) > 0).length;
-      const message = usageCount
-        ? `Complete this Fleet work order and apply ${usageCount} inventory usage line${usageCount === 1 ? "" : "s"}? This operation is protected by idempotency receipts.`
-        : "Complete this Fleet work order with no inventory usage recorded?";
-      if (!window.confirm(message)) return;
-    }
+  const performSubmit = async () => {
+    setConfirmComplete("");
     setSaving(true);
     try {
       const photoFields = ["problem_photos", "before_photos", "after_photos"];
@@ -157,6 +149,22 @@ export default function FleetWorkOrderDialog({
     } finally {
       setSaving(false);
     }
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError("");
+    if (!form.title?.trim()) return setError("Title is required.");
+    if (!editing && !form.equipment_id) return setError("Equipment is required for a new Fleet work order.");
+    if (completing && !form.corrective_action?.trim()) return setError("Corrective action is required to complete the work order.");
+    if (completing) {
+      const usageCount = (form.parts_used || []).filter((p) => p.part_id && Number(p.quantity) > 0).length + (form.fluids_used || []).filter((f) => f.fluid_id && Number(f.quantity ?? f.quantity_quarts) > 0).length;
+      setConfirmComplete(usageCount
+        ? `Completing this work order will apply ${usageCount} Fleet inventory usage line${usageCount === 1 ? "" : "s"}, write equipment usage history, and advance any linked recurring maintenance schedule. Durable receipts prevent the operation from being applied twice.`
+        : "Completing this work order will record it as complete with no inventory usage. Any linked recurring maintenance schedule will advance after the idempotency checks pass.");
+      return;
+    }
+    await performSubmit();
   };
 
   return (
@@ -223,6 +231,16 @@ export default function FleetWorkOrderDialog({
           </div>
         </form>
       </div>
+      <FleetConfirmDialog
+        open={!!confirmComplete}
+        title={`Complete ${workOrder?.work_order_number || "Fleet work order"}?`}
+        description={confirmComplete}
+        confirmLabel="Complete Work Order"
+        tone="success"
+        busy={saving}
+        onCancel={() => setConfirmComplete("")}
+        onConfirm={performSubmit}
+      />
       <style>{`.fleet-input{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.dark .fleet-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style>
     </div>
   );
