@@ -176,7 +176,8 @@ Deno.serve(async (req) => {
       return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
-    return Response.json({ revision: canonical, reused: false });
+    const settled = await settleCreatedRevisionNumber(RevisionService, estimateId, canonical || created);
+    return Response.json({ revision: settled, reused: false });
   } catch (error) {
     console.error('ensureOpenEstimateRevision error:', error);
     return Response.json({ error: error?.message || 'Estimate revision could not be started.' }, { status: 500 });
