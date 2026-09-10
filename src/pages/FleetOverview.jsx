@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
-import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   Truck,
   ClipboardList,
@@ -58,19 +58,24 @@ export default function FleetOverview() {
         ]);
         if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState });
         if (user?.role === "admin") {
-          const [maintenanceLog, reminderLog, workerLog, bouncieLog, pendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
+          const [maintenanceLog, reminderLog, workerLog, bouncieLog, connectionRows, pendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
-            base44.entities.FleetNotificationQueue.filter({ status: "pending" }, "-created_date", 100),
-            base44.entities.FleetNotificationQueue.filter({ status: "failed" }, "-created_date", 100),
-            base44.entities.FleetOperationReceipt.filter({ status: "started" }, "-created_date", 100),
-            base44.entities.FleetOperationReceipt.filter({ status: "failed" }, "-created_date", 100),
+            base44.entities.BouncieConnection.list("-updated_date", 1),
+            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
+            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
+            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
+            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
           ]);
+          const connection = connectionRows?.[0] || null;
+          const connectionFreshMs = Math.max(Date.parse(connection?.last_sync_at || "") || 0, Date.parse(connection?.last_webhook_at || "") || 0);
           if (mounted) setAdminHealth({
             logs: [maintenanceLog?.[0], reminderLog?.[0], workerLog?.[0], bouncieLog?.[0]].filter(Boolean),
             unresolved: (pendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
+            bouncieHealthy: !!connection && !connection.needs_reconnect && !connection.last_error && !connection.webhook_error && connection.webhook_active === true,
+            bouncieFreshMinutes: connectionFreshMs ? Math.floor((Date.now() - connectionFreshMs) / 60000) : null,
           });
         }
       } catch (e) {
@@ -92,9 +97,6 @@ export default function FleetOverview() {
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    const latestLiveStateMs = Math.max(0, ...data.liveState.map(v => Date.parse(v.last_seen_at || v.updated_date || "") || 0));
-    const bouncieAgeMinutes = latestLiveStateMs ? Math.floor((Date.now() - latestLiveStateMs) / 60000) : null;
-    const bouncieFresh = bouncieAgeMinutes != null && bouncieAgeMinutes <= 30;
     const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
@@ -114,8 +116,6 @@ export default function FleetOverview() {
       lowStock: lowParts.length + lowFluids.length,
       pendingRequests,
       uniqueTracked,
-      bouncieAgeMinutes,
-      bouncieFresh,
       overdueTasks,
       upcomingTasks,
     };
@@ -154,13 +154,14 @@ export default function FleetOverview() {
             <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${metrics.bouncieFresh ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
-                    <Activity className={`w-5 h-5 ${metrics.bouncieFresh ? "text-emerald-600 dark:text-emerald-300" : "text-amber-600 dark:text-amber-300"}`} />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${!isAdmin || adminHealth?.bouncieHealthy ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
+                    <Activity className={`w-5 h-5 ${!isAdmin || adminHealth?.bouncieHealthy ? "text-emerald-600 dark:text-emerald-300" : "text-amber-600 dark:text-amber-300"}`} />
                   </div>
                   <div>
                     <h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet System Health</h2>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-slate-400">
-                      <span className="inline-flex items-center gap-1">{metrics.bouncieFresh ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-amber-600" />} Bouncie live data: {metrics.bouncieAgeMinutes == null ? "no timestamp" : `${metrics.bouncieAgeMinutes}m ago`}</span>
+                      {!isAdmin && <span className="inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {metrics.uniqueTracked} tracked VIN{metrics.uniqueTracked === 1 ? "" : "s"} available</span>}
+                      {isAdmin && <span className="inline-flex items-center gap-1">{adminHealth?.bouncieHealthy ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-amber-600" />} Bouncie: {adminHealth?.bouncieHealthy ? "healthy" : "needs attention"}{adminHealth?.bouncieFreshMinutes != null ? ` · activity ${adminHealth.bouncieFreshMinutes}m ago` : ""}</span>}
                       {isAdmin && <span className="inline-flex items-center gap-1">{(adminHealth?.unresolved || 0) === 0 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-red-600" />} Automation issues: {adminHealth?.unresolved ?? "…"}</span>}
                       {isAdmin && <span>{adminHealth?.logs?.length || 0}/4 core automation heartbeats recorded</span>}
                     </div>
