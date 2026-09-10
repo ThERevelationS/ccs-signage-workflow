@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -64,6 +65,9 @@ async function claimReceipt(Receipt: any, data: any) {
 
   const failed = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'failed' }));
   if (failed) {
+    if (data.operation_type === 'inventory_usage' && failed?.result_summary?.safe_retry !== true) {
+      return { receipt: failed, applied: false, owner: false, failedInventoryReceipt: true };
+    }
     const retryToken = crypto.randomUUID();
     const stamp = nowIso();
     await Receipt.update(failed.id, {
