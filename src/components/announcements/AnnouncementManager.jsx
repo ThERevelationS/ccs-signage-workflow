@@ -24,6 +24,7 @@ import {
   stopAnnouncementIfUnchanged,
   updateAnnouncementIfUnchanged,
 } from "./announcementPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
@@ -91,9 +92,9 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
     setLoading(true);
     try {
       const [anns, activeRows, users] = await Promise.all([
-        Announcement.list("-updated_date", 50),
-        Announcement.filter({ is_active: true }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: Announcement, sort: "-updated_date", label: "Announcement history" }),
+        loadAllEntityRows({ entity: Announcement, query: { is_active: true }, sort: null, label: "Active announcements" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Announcement target users" })
       ]);
       setSavedAnnouncements(anns);
       setAllUsers(users);
