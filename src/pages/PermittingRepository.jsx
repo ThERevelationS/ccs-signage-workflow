@@ -11,6 +11,7 @@ import {
   deleteJurisdictionFromLoadedSnapshot,
   saveJurisdictionFromLoadedSnapshot,
 } from "@/components/permitting/jurisdictionPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
@@ -52,7 +53,11 @@ export default function PermittingRepository() {
 
   const loadJurisdictions = async () => {
     try {
-      const data = await JurisdictionProfile.list();
+      const data = await loadAllEntityRows({
+        entity: JurisdictionProfile,
+        sort: null,
+        label: "Permitting Repository catalog",
+      });
       setJurisdictions(data);
     } catch (e) { console.error(e); }
     setLoading(false);
