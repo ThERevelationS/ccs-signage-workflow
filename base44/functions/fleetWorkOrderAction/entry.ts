@@ -703,6 +703,12 @@ Deno.serve(async (req) => {
             || String(winner.title || '').trim() !== String(patch.title || '').trim()) {
             return Response.json({ error: 'Another manual Fleet work-order create won this operation identity with different details. The losing duplicate was discarded; reload before continuing.' }, { status: 409 });
           }
+          if (task && ACTIVE_STATUSES.has(winner.status)) {
+            const currentTask = await Task.get(task.id).catch(() => null);
+            if (!currentTask || currentTask.status !== 'in_progress') {
+              return Response.json({ error: 'This Fleet work-order create is already being finalized by another request. The losing duplicate was discarded; retry the same save after the first request finishes.' }, { status: 409 });
+            }
+          }
           return Response.json({ success: true, reused: true, work_order: winner });
         }
         for (const duplicate of contenders) {
