@@ -2,7 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
-import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderPartGroupWithRecovery } from "./builderPartGroupPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -116,7 +116,7 @@ async function applyPendingSourcePatch(pending) {
   const sourcePatch = pending?.source_patch && typeof pending.source_patch === "object" ? pending.source_patch : null;
   if (!sourceEntity || !sourceProjectId || !sourcePatch || Object.keys(sourcePatch).length === 0) return null;
   const entity = base44.entities[sourceEntity];
-  if (!entity?.get || !entity?.update) throw new Error("The Builder source entity needed for recovery is unavailable.");
+  if (!entity?.get || !entity?.updateMany) throw new Error("The Builder source entity needed for recovery is unavailable.");
   const current = await entity.get(sourceProjectId);
   if (!current) throw new Error("The Builder source project could not be verified while recovering the pending mutation.");
   if (!recoveryPatchDiffers(current, sourcePatch)) return current;
@@ -126,7 +126,14 @@ async function applyPendingSourcePatch(pending) {
   if (expected && actual && expected !== actual) {
     throw new Error("The Builder source project changed while reattachment was pending. The recovery marker was retained and no unrelated source edit was overwritten.");
   }
-  return entity.update(sourceProjectId, sourcePatch);
+  return replaceEntityFieldsIfUnchanged({
+    entity,
+    id: sourceProjectId,
+    expectedUpdatedAt: current.updated_date || "",
+    expectedFields: expectedEntityFields(current, sourcePatch),
+    nextFields: sourcePatch,
+    label: "Builder source recovery",
+  });
 }
 
 async function applyPendingGroupCreatePlan(pending, builderProductId) {
