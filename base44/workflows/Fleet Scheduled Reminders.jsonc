@@ -1,6 +1,6 @@
 {
   "name": "Fleet Scheduled Reminders",
-  "description": "Runs Fleet reminder digest checks every morning at 7am Eastern. Safe before cutover because FleetSettings.scheduled_reminders_enabled and notifications_enabled default to false.",
+  "description": "Production Fleet reminder digest check at 7:00 AM Eastern. Server-gated by FleetCutoverState and idempotent per recipient/day; the notification worker provides a configured-day fallback after 7:10 AM if the primary heartbeat is absent.",
   "trigger": {
     "condition": null,
     "config": {
