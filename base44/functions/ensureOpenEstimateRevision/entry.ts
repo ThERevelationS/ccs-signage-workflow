@@ -32,6 +32,64 @@ const canonicalOpenRevision = (rows: any[] = []) => rows
     return String(a?.id || '').localeCompare(String(b?.id || ''));
   })[0] || null;
 
+const revisionOrder = (a: any, b: any) => {
+  const aTime = Date.parse(a?.created_date || a?.started_at || '') || 0;
+  const bTime = Date.parse(b?.created_date || b?.started_at || '') || 0;
+  if (aTime !== bTime) return aTime - bTime;
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+};
+
+async function settleCreatedRevisionNumber(RevisionService: any, estimateId: string, created: any) {
+  let current = created;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const rows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
+    const live = rows.find((row) => String(row?.id || '') === String(current?.id || ''));
+    if (!live) throw new Error('The newly created open Estimate revision disappeared before its sequence number could be verified.');
+    current = { ...current, ...live };
+
+    const currentNumber = num(current.revision_number);
+    const collisions = rows.filter((row) => row?.id !== current.id && num(row?.revision_number) === currentNumber);
+    if (!collisions.length) return current;
+
+    const winner = [current, ...collisions].slice().sort(revisionOrder)[0];
+    if (winner?.id === current.id && attempt < 4) continue;
+
+    const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
+    const version = String(current?.updated_date || '').trim();
+    if (!version) throw new Error('Open Estimate revision version metadata is incomplete; concurrent-safe renumbering was blocked.');
+
+    let result;
+    try {
+      result = await RevisionService.updateMany(
+        { id: current.id, estimate_id: estimateId, revision_status: 'open', updated_date: version },
+        { $set: { revision_number: nextNumber } },
+      );
+    } catch (error) {
+      const afterError = await RevisionService.get(current.id).catch(() => null);
+      if (afterError?.id && num(afterError.revision_number) === nextNumber) {
+        current = afterError;
+        continue;
+      }
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error('Open Estimate revision conditional renumber result could not be verified.');
+    }
+    if (result.updated !== 1) continue;
+    const updated = await RevisionService.get(current.id).catch(() => null);
+    if (!updated?.id) throw new Error('Open Estimate revision was renumbered but could not be re-read.');
+    current = updated;
+  }
+
+  const finalRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
+  const finalCurrent = finalRows.find((row) => String(row?.id || '') === String(current?.id || '')) || current;
+  const collision = finalRows.some((row) => row?.id !== finalCurrent.id && num(row?.revision_number) === num(finalCurrent.revision_number));
+  if (collision) throw new Error('Concurrent Estimate revisions could not settle on unique revision numbers. No duplicate number was accepted silently.');
+  return finalCurrent;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
