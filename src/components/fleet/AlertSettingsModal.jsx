@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { AlertCircle, ExternalLink, Fuel, Gauge, Loader2, Save, X } from "lucide-react";
 
