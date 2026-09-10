@@ -85,6 +85,7 @@ import {
   deleteAutomationRuleIfUnchanged,
   updateAutomationRuleIfUnchanged,
 } from "@/components/admin/automationRulePersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -348,12 +349,20 @@ export default function AdminSettings() {
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
 
   const loadEmailGroups = async () => {
-    const groups = await EmailGroup.list();
+    const groups = await loadAllEntityRows({
+      entity: EmailGroup,
+      sort: null,
+      label: "Admin Settings email groups",
+    });
     setEmailGroups(groups);
   };
 
   const loadAllUsers = async () => {
-    const users = await base44.entities.AuthorizedEmail.list();
+    const users = await loadAllEntityRows({
+      entity: base44.entities.AuthorizedEmail,
+      sort: null,
+      label: "Admin Settings authorized users",
+    });
     setAllUsers(users);
   };
 
@@ -390,7 +399,11 @@ export default function AdminSettings() {
   const loadAutomations = async () => {
     setIsLoading(true);
     try {
-      const rules = await AutomationRule.list("-created_date");
+      const rules = await loadAllEntityRows({
+        entity: AutomationRule,
+        sort: "-created_date",
+        label: "Admin Settings automation rules",
+      });
       setAutomations(rules);
       return rules;
     } finally {
