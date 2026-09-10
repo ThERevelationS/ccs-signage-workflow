@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import { createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function PermittingRepositoryAdmin() {
   const [jurisdictions, setJurisdictions] = useState([]);
@@ -46,7 +47,11 @@ export default function PermittingRepositoryAdmin() {
   const loadJurisdictions = async () => {
     setIsLoading(true);
     try {
-      const all = await base44.entities.JurisdictionProfile.list("-created_date");
+      const all = await loadAllEntityRows({
+        entity: base44.entities.JurisdictionProfile,
+        sort: "-created_date",
+        label: "Permitting Repository admin catalog",
+      });
       setJurisdictions(Array.isArray(all) ? all : []);
     } catch (e) {
       console.error("Load error:", e);
