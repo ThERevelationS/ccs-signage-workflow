@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -23,7 +24,11 @@ Deno.serve(async (req) => {
     }
 
     // Get all jurisdictions
-    const jurisdictions = await base44.entities.JurisdictionProfile.list("-updated_date");
+    const jurisdictions = await loadAllEntityRows({
+      entity: base44.entities.JurisdictionProfile,
+      sort: '-updated_date',
+      label: 'Jurisdiction monitoring catalog',
+    });
     if (!Array.isArray(jurisdictions)) {
       return Response.json({ alerts: [], message: 'No jurisdictions found' });
     }
