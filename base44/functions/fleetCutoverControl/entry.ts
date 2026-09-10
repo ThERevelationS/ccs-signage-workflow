@@ -19,9 +19,13 @@ async function listAllRows(entity:any, label:string) {
   throw new Error(`${label} count exceeded the ${MAX_COUNT_ROWS}-row Fleet health safety limit.`);
 }
 
-const migratedFromFleetMaster = (rows:any[]) => (rows || []).filter((row:any) =>
-  row?.migration_source_app_id === SOURCE_APP_ID && !!row?.migration_source_id
-).length;
+function migrationRetentionStats(rows:any[]) {
+  const sourceIds = (rows || [])
+    .filter((row:any) => row?.migration_source_app_id === SOURCE_APP_ID && !!row?.migration_source_id)
+    .map((row:any) => String(row.migration_source_id));
+  const unique = new Set(sourceIds);
+  return { unique: unique.size, duplicates: sourceIds.length - unique.size };
+}
 
 function countFromAudit(audit:any, key:string) {
   const n = Number(audit?.destination_counts?.[key]);
