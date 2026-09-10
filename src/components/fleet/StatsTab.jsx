@@ -28,13 +28,12 @@ export default function StatsTab({ vehicle, trips, loading, daysBack, onDaysBack
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-semibold text-gray-700">Viewing Last {daysBack} Days</span>
+        <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">Viewing Last {daysBack} Days</span>
         <div className="relative">
           <select
             value={daysBack}
             onChange={(e) => onDaysBackChange(Number(e.target.value))}
-            className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold rounded border bg-white"
-            style={{ color: "#2b73ff", borderColor: "#2b73ff" }}
+            className="appearance-none pl-3 pr-8 py-1.5 text-xs font-semibold rounded border border-indigo-500 bg-white dark:bg-slate-950 text-indigo-600 dark:text-indigo-300"
           >
             {RANGES.map(r => <option key={r.days} value={r.days}>{r.label}</option>)}
           </select>
@@ -42,16 +41,12 @@ export default function StatsTab({ vehicle, trips, loading, daysBack, onDaysBack
       </div>
 
       {/* Average By toggle */}
-      <div className="flex gap-1 mb-5 p-1 rounded bg-gray-100">
+      <div className="flex gap-1 mb-5 p-1 rounded bg-gray-100 dark:bg-slate-800">
         {AVG_OPTIONS.map(o => (
           <button
             key={o.key}
             onClick={() => onAvgByChange(o.key)}
-            className="flex-1 py-1.5 text-xs font-semibold rounded transition-colors"
-            style={{
-              background: avgBy === o.key ? "#2b73ff" : "transparent",
-              color: avgBy === o.key ? "#fff" : "#7f8897"
-            }}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded transition-colors ${avgBy === o.key ? "bg-indigo-600 text-white" : "text-gray-500 dark:text-slate-400"}`}
           >
             {o.label}
           </button>
@@ -86,9 +81,9 @@ export default function StatsTab({ vehicle, trips, loading, daysBack, onDaysBack
 function Section({ title, children }) {
   return (
     <div className="mb-6">
-      <h3 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "#495057" }}>{title}</h3>
-      <div className="border border-gray-200 rounded overflow-hidden">
-        <div className="flex bg-gray-100 text-xs font-semibold text-gray-500 px-3 py-2">
+      <h3 className="text-xs font-bold uppercase tracking-wide mb-2 text-gray-600 dark:text-slate-300">{title}</h3>
+      <div className="border border-gray-200 dark:border-slate-700 rounded overflow-hidden">
+        <div className="flex bg-gray-100 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 px-3 py-2">
           <div className="flex-1"></div>
           <div className="w-24 text-right">TOTAL</div>
           <div className="w-24 text-right">AVERAGE</div>
@@ -101,14 +96,14 @@ function Section({ title, children }) {
 
 function Row({ label, total, avg, value, align }) {
   return (
-    <div className="flex items-center px-3 py-2.5 border-t border-gray-100 text-sm">
-      <div className="flex-1 text-gray-700">{label}</div>
+    <div className="flex items-center px-3 py-2.5 border-t border-gray-100 dark:border-slate-800 text-sm">
+      <div className="flex-1 text-gray-700 dark:text-slate-300">{label}</div>
       {value !== undefined ? (
-        <div className="w-48 text-right font-medium text-gray-900">{value}</div>
+        <div className="w-48 text-right font-medium text-gray-900 dark:text-slate-100">{value}</div>
       ) : (
         <>
-          <div className="w-24 text-right text-gray-900">{total}</div>
-          <div className="w-24 text-right text-gray-500">{avg}</div>
+          <div className="w-24 text-right text-gray-900 dark:text-slate-100">{total}</div>
+          <div className="w-24 text-right text-gray-500 dark:text-slate-400">{avg}</div>
         </>
       )}
     </div>
