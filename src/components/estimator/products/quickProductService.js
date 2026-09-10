@@ -9,7 +9,7 @@ import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers, resu
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
-import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -637,8 +637,14 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
   const currentNotes = String(sourceProject.notes || "");
   if (blueprint.sourceRecoveryToken && currentNotes.includes(blueprint.sourceRecoveryToken)) {
     const restoredNotes = removeRecoveryToken(currentNotes, blueprint.sourceRecoveryToken, String(blueprint.sourceExpectedData.notes || ""));
-    await entity.update(sourceProject.id, { notes: restoredNotes });
-    sourceProject = await entity.get(sourceProject.id);
+    sourceProject = await replaceEntityFieldsIfUnchanged({
+      entity,
+      id: sourceProject.id,
+      expectedUpdatedAt: sourceProject.updated_date || "",
+      expectedFields: expectedEntityFields(sourceProject, { notes: restoredNotes }),
+      nextFields: { notes: restoredNotes },
+      label: "Quick Product source recovery token cleanup",
+    });
   }
   if (!sourceProject || sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
     throw new Error("Quick Product source project could not be verified after removing its recovery token.");
