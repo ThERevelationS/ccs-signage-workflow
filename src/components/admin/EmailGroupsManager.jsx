@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Users, Mail, X } from "lucide-react";
 import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfUnchanged } from "@/components/admin/emailGroupPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const EmailGroup = base44.entities.EmailGroup;
 const AutomationRule = base44.entities.AutomationRule;
@@ -50,7 +51,11 @@ export default function EmailGroupsManager() {
   const loadGroups = async () => {
     setIsLoading(true);
     try {
-      const data = await EmailGroup.list("-created_date");
+      const data = await loadAllEntityRows({
+        entity: EmailGroup,
+        sort: "-created_date",
+        label: "Email Groups admin catalog",
+      });
       setGroups(data || []);
     } catch (error) {
       console.error("Error loading email groups:", error);
