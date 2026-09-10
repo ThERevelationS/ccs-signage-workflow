@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { estimateAuditSnapshot, summarizeEstimateChanges } from "./estimateLifecycle";
 import { quoteIssueKey } from "./quoteLifecycle";
-import { loadAllEntityRows } from "./loadAllEntityRows";
+import { loadAllEntityRows, withRateLimitRetry } from "./loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "./builder/builderEntityPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -13,8 +13,19 @@ async function nextRevisionNumber(estimateId) {
 
 export async function getOpenEstimateRevision(estimateId) {
   if (!estimateId) return null;
-  const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId, revision_status: "open" }, sort: "revision_number", label: "Open Estimate revisions" });
-  return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number))[0] || null;
+  // Open revisions are rare (0-1 per estimate). A direct filtered read with a
+  // small limit avoids the full-catalog paging overhead of loadAllEntityRows,
+  // which compounds API calls during estimate page load and can trip the
+  // platform rate limit after the preceding builder/part reconciliation.
+  const rows = await withRateLimitRetry(() =>
+    base44.entities.EstimateRevision.filter(
+      { estimate_id: estimateId, revision_status: "open" },
+      "-revision_number",
+      50,
+      0
+    )
+  ).catch(() => null);
+  return (rows || [])[0] || null;
 }
 
 export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
@@ -251,4 +262,3 @@ export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId
   });
   return { revision: { ...issuanceRevision, delivery_evidence: deliveryEvidence, ...(updated || {}) }, warning: "" };
 }
-

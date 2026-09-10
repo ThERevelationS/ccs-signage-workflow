@@ -1,9 +1,42 @@
 const DEFAULT_PAGE_SIZE = 500;
 const DEFAULT_MAX_ROWS = 50000;
+const RATE_LIMIT_MAX_RETRIES = 3;
+const RATE_LIMIT_BASE_DELAY_MS = 1200;
 
 function rowIdentity(row, index) {
   const id = String(row?.id || "").trim();
   return id || `__row_${index}`;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function isRateLimitError(error) {
+  const message = String(
+    error?.message ||
+    error?.response?.data?.error ||
+    error?.data?.error ||
+    ""
+  ).toLowerCase();
+  return message.includes("rate limit");
+}
+
+/**
+ * Retries a single SDK call when the platform returns a transient rate-limit
+ * error. Uses exponential backoff so concurrent page-load calls (builder
+ * reconciliation, part catalogs, section snapshots) don't all retry at once.
+ */
+export async function withRateLimitRetry(fn) {
+  for (let attempt = 0; attempt <= RATE_LIMIT_MAX_RETRIES; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt < RATE_LIMIT_MAX_RETRIES && isRateLimitError(error)) {
+        await sleep(RATE_LIMIT_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
 }
 
 /**
@@ -36,9 +69,11 @@ export async function loadAllEntityRows({
   let skip = 0;
 
   while (skip < safeMaxRows) {
-    const page = hasFilter
-      ? await entity.filter(query, sort || undefined, safePageSize, skip)
-      : await entity.list(sort || undefined, safePageSize, skip);
+    const page = await withRateLimitRetry(() =>
+      hasFilter
+        ? entity.filter(query, sort || undefined, safePageSize, skip)
+        : entity.list(sort || undefined, safePageSize, skip)
+    );
 
     if (!Array.isArray(page)) {
       throw new Error(`${label} could not be verified completely. Estimating was blocked rather than using a partial catalog.`);

@@ -178,16 +178,41 @@ Deno.serve(async (req) => {
       const existingOrders = await loadAllEntityRows({ entity:WorkOrder, query:{maintenance_task_id:task.id}, sort:'-created_date', label:`Fleet work orders for maintenance task ${task.id}` });
       const exact = canonical(existingOrders.filter((wo:any)=>wo.generation_key===key));
 
-      // Recover cleanly if a prior invocation created the work order but stopped
-      // before advancing the task and applying its operation receipt.
+      // Recover only when the exact generated work order and the task's durable
+      // generation lock agree. A changed schedule is never overwritten merely
+      // because a work order with this generation key exists.
       if (exact) {
-        if (task.status !== 'in_progress' || task.generation_key !== key || task.last_generated_for_date !== task.start_date) {
-          await Task.update(task.id,{status:'in_progress',generation_key:key,last_generated_for_date:task.start_date});
-        }
         const appliedReceipt = canonical(await Receipt.filter({operation_key:key,status:'applied'}));
         const startedReceipt = canonical(await Receipt.filter({operation_key:key,status:'started'}));
-        if (!appliedReceipt && startedReceipt) {
-          await Receipt.update(startedReceipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(startedReceipt.result_summary||{}),work_order_id:exact.id,work_order_number:exact.work_order_number,recovered:true}});
+        const failedReceipt = canonical(await Receipt.filter({operation_key:key,status:'failed'}));
+        const recoveryReceipt = appliedReceipt || startedReceipt || failedReceipt;
+        const currentTask = await Task.get(task.id);
+        const alreadyAdvanced = currentTask?.status === 'in_progress'
+          && currentTask?.generation_key === key
+          && currentTask?.last_generated_for_date === task.start_date;
+
+        if (!alreadyAdvanced) {
+          const lockEvidence = recoveryReceipt?.result_summary?.task_lock_acquired === true
+            && currentTask?.generation_key === key
+            && String(currentTask?.start_date || '') === String(task.start_date || '');
+          if (!lockEvidence) {
+            if (recoveryReceipt && recoveryReceipt.status !== 'failed') {
+              await Receipt.update(recoveryReceipt.id,{status:'failed',failed_at:nowIso(),error_message:'Generated work order exists but the maintenance schedule no longer matches its generation lock.'}).catch(()=>null);
+            }
+            results.push({task_id:task.id,status:'error',reason:'generation_recovery_lock_mismatch',work_order_id:exact.id,work_order_number:exact.work_order_number});
+            continue;
+          }
+          try {
+            await advanceLockedTask(Task,Receipt,task.id,key,recoveryReceipt,task.start_date);
+          } catch (error:any) {
+            await Receipt.update(recoveryReceipt.id,{status:'failed',failed_at:nowIso(),error_message:error?.message || String(error)}).catch(()=>null);
+            results.push({task_id:task.id,status:'error',reason:'generation_recovery_conflict',error:error?.message || String(error),work_order_id:exact.id});
+            continue;
+          }
+        }
+
+        if (recoveryReceipt && recoveryReceipt.status !== 'applied') {
+          await Receipt.update(recoveryReceipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(recoveryReceipt.result_summary||{}),work_order_id:exact.id,work_order_number:exact.work_order_number,recovered:true}});
         }
         results.push({task_id:task.id,status:'recovered',reason:'generation_key_exists',work_order_id:exact.id,work_order_number:exact.work_order_number});
         continue;
