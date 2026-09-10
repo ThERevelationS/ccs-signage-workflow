@@ -683,8 +683,12 @@ Deno.serve(async (req) => {
         for (const plan of inventoryPlans) {
           const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
           const item = await entity.get(plan.item_id).catch(() => null);
+          const appliedRows = await Receipt.filter({ operation_key: plan.operation_key, status: 'applied' });
+          const appliedSummary = canonical(appliedRows)?.result_summary || {};
+          const actualBefore = num(appliedSummary.before_quantity, NaN);
+          const actualAfter = num(appliedSummary.after_quantity, NaN);
           const minimum = plan.item_type === 'part' ? num(item?.minimum_stock, NaN) : fluidMinimumInStockUnit(item);
-          if (item && Number.isFinite(minimum) && plan.before_quantity > minimum && plan.after_quantity <= minimum) {
+          if (item && Number.isFinite(minimum) && Number.isFinite(actualBefore) && Number.isFinite(actualAfter) && actualBefore > minimum && actualAfter <= minimum) {
             await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
               event_type: plan.item_type === 'part' ? 'low_stock_part' : 'low_stock_fluid',
               target_id: plan.item_id,
