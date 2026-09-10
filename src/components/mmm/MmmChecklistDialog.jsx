@@ -13,10 +13,11 @@ import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeade
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MmmTemplateBuilder from "./MmmTemplateBuilder";
 import { replaceWorkOrderArrayFieldIfUnchanged, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 // MMM uses its own sip_checklist field (same field, different templates)
 // but the data is stored on the work order's sip_checklist
@@ -58,10 +59,14 @@ export default function MmmChecklistDialog({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [freshWO, usersData, settings] = await Promise.all([
+      const [freshWO, usersData, dropdownsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "MMM checklist authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "mmmDropdownConditions",
+          label: "MMM dropdown conditions",
+        })
       ]);
 
       const currentWO = freshWO[0];
@@ -101,7 +106,6 @@ export default function MmmChecklistDialog({
       setChecklist(reconstructedChecklist);
 
       // MMM-specific dropdown conditions
-      const dropdownsSetting = settings.find(s => s.setting_key === 'mmmDropdownConditions');
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
     } catch (error) {
       console.error("Error loading MMM checklist data:", error);
