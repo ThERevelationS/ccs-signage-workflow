@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const DAYS = new Set(['monday','tuesday','wednesday','thursday','friday','saturday','sunday']);
 const MAX_DELAY_MINUTES = 1440;
@@ -74,7 +75,13 @@ Deno.serve(async (req) => {
     // Deliberately excluded from this editor: cutover gates, source-freeze state,
     // migration metadata, setting_type, and fleet_app_base_url. Those remain
     // controlled by the dedicated Fleet cutover/admin paths.
-    const updated = await base44.asServiceRole.entities.FleetSettings.update(settings.id, patch);
+    const updated = await updateFleetRecordIfCurrent({
+      entity: base44.asServiceRole.entities.FleetSettings,
+      id: settings.id,
+      expectedUpdatedAt: String(body?.expected_updated_date || '').trim(),
+      patch,
+      label: 'Fleet notification/reminder settings',
+    });
     await base44.asServiceRole.entities.FleetSystemLog.create({
       source: 'fleetSettingsAction',
       level: 'info',
@@ -83,8 +90,9 @@ Deno.serve(async (req) => {
     }).catch(() => null);
 
     return Response.json({ success: true, settings: updated });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetSettingsAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet settings update failed.' }, { status: 500 });
   }
 });
