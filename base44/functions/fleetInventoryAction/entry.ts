@@ -11,6 +11,7 @@ async function requireAdmin(base44: any) {
 
 const units = new Set(['quarts', 'gallons', 'pints', 'ounces']);
 const fluidOuncesPerUnit: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
+const USAGE_STALE_MS = 60 * 1000;
 const partFields = ['part_name','part_number','category','manufacturer','quantity_on_hand','minimum_stock','unit_cost','location','notes','enable_low_stock_alerts','compatible_equipment_ids'];
 const fluidFields = ['fluid_name','fluid_type','viscosity','brand','quantity','unit','minimum_stock','minimum_stock_unit','cost_per_unit','location','notes','enable_low_stock_alerts','compatible_equipment_ids'];
 
@@ -172,6 +173,7 @@ Deno.serve(async (req) => {
       const afterQuantity = beforeQuantity - stockDeduction;
       const operationKey = `fleetinventory:${itemType}:${id}:usage:${clientKey}`;
       const logKey = `${operationKey}:log`;
+      const usageNotes = String(body?.notes || '').trim();
       const resultSummary = {
         item_type: itemType,
         item_id: id,
@@ -182,6 +184,7 @@ Deno.serve(async (req) => {
         stock_deduction: stockDeduction,
         before_quantity: beforeQuantity,
         after_quantity: afterQuantity,
+        notes: usageNotes,
         log_key: logKey,
       };
       const claim = await claimUsageReceipt(Receipt, {
@@ -193,6 +196,21 @@ Deno.serve(async (req) => {
         actor_user_id: auth.user?.id || '',
         result_summary: resultSummary,
       });
+      const claimedSummary = claim.receipt?.result_summary || resultSummary;
+      const sameRequest = String(claimedSummary.item_id || id) === id
+        && String(claimedSummary.equipment_id || '') === equipmentId
+        && sameNumber(claimedSummary.entered_quantity, enteredQuantity)
+        && String(claimedSummary.entered_unit || enteredUnit) === enteredUnit
+        && String(claimedSummary.notes || '') === usageNotes;
+      if (!sameRequest) {
+        return Response.json({ error: 'This retry key belongs to different Fleet usage details. Close and reopen Record Usage before submitting the changed values.' }, { status: 409 });
+      }
+      if (!claim.owner && !claim.applied && claim.receipt?.status === 'started') {
+        const startedAt = Date.parse(claim.receipt?.started_at || claim.receipt?.created_date || '') || 0;
+        if (startedAt && Date.now() - startedAt < USAGE_STALE_MS) {
+          return Response.json({ error: 'This Fleet usage operation is already in progress. It was not replayed or deducted again.' }, { status: 409 });
+        }
+      }
 
       const reconcile = async () => {
         const summary = claim.receipt?.result_summary || resultSummary;
@@ -215,7 +233,7 @@ Deno.serve(async (req) => {
             item_type: itemType,
             quantity_used: num(summary.entered_quantity, enteredQuantity),
             unit: summary.entered_unit || enteredUnit,
-            notes: String(body?.notes || '').trim(),
+            notes: String(summary.notes || usageNotes),
             recorded_by: auth.user?.email || '',
             usage_receipt_key: summary.log_key || logKey,
           });
@@ -241,8 +259,11 @@ Deno.serve(async (req) => {
         throw error;
       }
 
+      const effectiveSummary = claim.receipt?.result_summary || resultSummary;
+      const effectiveBefore = num(effectiveSummary.before_quantity, beforeQuantity);
+      const effectiveAfter = num(effectiveSummary.after_quantity, afterQuantity);
       const minimum = itemType === 'part' ? num(updatedItem?.minimum_stock, NaN) : fluidMinimumInStockUnit(updatedItem);
-      if (updatedItem?.enable_low_stock_alerts !== false && Number.isFinite(minimum) && beforeQuantity > minimum && afterQuantity <= minimum) {
+      if (updatedItem?.enable_low_stock_alerts !== false && Number.isFinite(minimum) && effectiveBefore > minimum && effectiveAfter <= minimum) {
         await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
           event_type: itemType === 'part' ? 'low_stock_part' : 'low_stock_fluid',
           target_id: id,
