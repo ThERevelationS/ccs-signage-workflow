@@ -43,6 +43,49 @@ export async function deleteJurisdictionFromLoadedSnapshot({ entity, jurisdictio
   });
 }
 
+function jurisdictionCatalogVersions(rows, label) {
+  if (!Array.isArray(rows)) {
+    throw new Error(`${label} could not verify the complete Jurisdiction catalog.`);
+  }
+  const versions = new Map();
+  for (const row of rows) {
+    const id = String(row?.id || "").trim();
+    const updatedDate = String(row?.updated_date || "").trim();
+    if (!id || !updatedDate) {
+      throw new Error(`${label} found a Jurisdiction without identity/version metadata. Nothing was deleted.`);
+    }
+    if (versions.has(id)) {
+      throw new Error(`${label} found a duplicate Jurisdiction id. Nothing was deleted.`);
+    }
+    versions.set(id, {
+      updatedDate,
+      name: String(row?.name || ""),
+      state: String(row?.state || ""),
+    });
+  }
+  return versions;
+}
+
+export function assertJurisdictionCatalogStable({ loaded, verified, label = "Jurisdiction delete-all preflight" } = {}) {
+  const loadedVersions = jurisdictionCatalogVersions(loaded, label);
+  const verifiedVersions = jurisdictionCatalogVersions(verified, label);
+  if (loadedVersions.size !== verifiedVersions.size) {
+    throw new Error(`${label} was blocked because the Jurisdiction catalog changed after this page loaded. Nothing was deleted; reload and review the current repository first.`);
+  }
+  for (const [id, expected] of loadedVersions) {
+    const current = verifiedVersions.get(id);
+    if (
+      !current ||
+      current.updatedDate !== expected.updatedDate ||
+      current.name !== expected.name ||
+      current.state !== expected.state
+    ) {
+      throw new Error(`${label} was blocked because at least one Jurisdiction changed after this page loaded. Nothing was deleted; reload and review the current repository first.`);
+    }
+  }
+  return true;
+}
+
 export async function appendJurisdictionActivitySafely({ entity, jurisdictionId, entry, label = "Jurisdiction activity" } = {}) {
   const id = String(jurisdictionId || "").trim();
   const entryId = String(entry?.id || "").trim();
