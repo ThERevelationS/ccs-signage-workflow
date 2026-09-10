@@ -2,6 +2,28 @@ import { deleteEntityIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/compo
 
 const text = (value) => String(value ?? "");
 
+function normalizeSettingValue(value) {
+  if (Array.isArray(value)) return value.map(normalizeSettingValue);
+  if (!value || typeof value !== "object") return value ?? "";
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = normalizeSettingValue(value[key]);
+    return out;
+  }, {});
+}
+
+function sameSettingField(a, b) {
+  const leftEmpty = a === null || a === undefined || a === "";
+  const rightEmpty = b === null || b === undefined || b === "";
+  if (leftEmpty && rightEmpty) return true;
+  return JSON.stringify(normalizeSettingValue(a)) === JSON.stringify(normalizeSettingValue(b));
+}
+
+function settingCreatePayloadMatches(row, payload) {
+  return Boolean(row?.id) && Object.entries(payload).every(([field, value]) =>
+    sameSettingField(row?.[field], value)
+  );
+}
+
 export async function createSettingRowIfAbsent({
   SettingsEntity,
   data = {},
@@ -24,16 +46,30 @@ export async function createSettingRowIfAbsent({
     throw new Error(`${label} has multiple stored rows for ${name}. No row was changed; review and resolve the duplicate records first.`);
   }
 
+  const payload = { ...data, setting_name: name };
   let created = null;
   let createError = null;
   try {
-    created = await SettingsEntity.create({ ...data, setting_name: name });
+    created = await SettingsEntity.create(payload);
   } catch (error) {
     createError = error;
   }
 
-  const after = await readMatches();
+  let after;
+  try {
+    after = await readMatches();
+  } catch (verificationError) {
+    if (created?.id) {
+      throw new Error(`${label} was created, but its verification read failed. Do not retry blindly; reload this Settings page first. ${verificationError?.message || ""}`.trim());
+    }
+    throw new Error(`${label} create response was unavailable and its recovery lookup also failed. Do not retry blindly; reload this Settings page first. ${verificationError?.message || ""}`.trim());
+  }
+
   if (after.length === 1) {
+    const matched = settingCreatePayloadMatches(after[0], payload);
+    if (!matched) {
+      throw new Error(`${label} was created concurrently with different stored values. Reload this Settings page and review the current value before saving again.`);
+    }
     const status = created?.id === after[0].id ? "created" : "recovered";
     return { record: after[0], status };
   }
