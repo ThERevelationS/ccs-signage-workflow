@@ -31,11 +31,10 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedT
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Trips</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Trips</h2>
         <button
           onClick={() => setSelectMode(!selectMode)}
-          className="px-3 py-1.5 rounded text-xs font-semibold border"
-          style={{ color: "#2b73ff", borderColor: "#2b73ff" }}
+          className="px-3 py-1.5 rounded text-xs font-semibold border border-indigo-500 text-indigo-600 dark:text-indigo-300 dark:border-indigo-500"
         >
           {selectMode ? "Done" : "Select"}
         </button>
@@ -52,7 +51,7 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedT
           <div key={month} className="mb-4">
             <button
               onClick={() => toggleMonth(month)}
-              className="w-full flex items-center justify-between py-2 text-sm font-semibold text-gray-600"
+              className="w-full flex items-center justify-between py-2 text-sm font-semibold text-gray-600 dark:text-slate-300"
             >
               <span className="flex items-center gap-1">
                 <ChevronDown className={`w-4 h-4 transition-transform ${collapsed ? "-rotate-90" : ""}`} />
@@ -62,7 +61,7 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedT
             </button>
             {!collapsed && dayGroups.map((g) => (
               <div key={g.day} className="mb-3">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-500 py-1 border-b border-gray-100">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 dark:text-slate-400 py-1 border-b border-gray-100 dark:border-slate-800">
                   <span>{formatRelativeDay(g.day).toUpperCase()}</span>
                   <span>{Math.round(g.totalMiles)} miles</span>
                 </div>
@@ -73,8 +72,7 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedT
                   return (
                     <div
                       key={id}
-                      className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-                      style={isActive ? { background: "#e8f0fe" } : undefined}
+                      className={`flex items-center gap-3 py-2.5 px-2 -mx-2 rounded border-b border-gray-50 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/60 cursor-pointer ${isActive ? "bg-indigo-50 dark:bg-indigo-950/40" : ""}`}
                       onClick={() => selectMode ? setSelected(s => ({ ...s, [id]: !s[id] })) : onSelectTrip?.(t)}
                     >
                       {selectMode && (
@@ -82,14 +80,14 @@ export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedT
                       )}
                       <Car className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-800">
+                        <div className="text-sm text-gray-800 dark:text-slate-200">
                           {formatTime(t.startTime, tz)} – {formatTime(t.endTime, tz)}
                         </div>
                         <div className="text-xs text-gray-400">
                           {Math.round(t.distance || 0)} mi · avg {Math.round(t.averageSpeed || 0)} mph
                         </div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">{formatMiles(t.distance).replace(" miles", " mi")}</div>
+                      <div className="text-sm font-semibold text-gray-700 dark:text-slate-300">{formatMiles(t.distance).replace(" miles", " mi")}</div>
                     </div>
                   );
                 })}
