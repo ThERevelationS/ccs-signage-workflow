@@ -101,7 +101,20 @@ Deno.serve(async (req) => {
     const canonical = canonicalOpenRevision(openRows || []) || created;
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
-      await RevisionService.delete(created.id).catch(() => null);
+      const createdVersion = String(created.updated_date || '').trim();
+      if (!createdVersion) {
+        throw new Error('A duplicate open Estimate revision was detected, but the losing row has no version metadata. No uncertain revision was deleted.');
+      }
+      const deleted = await RevisionService.deleteMany({
+        id: created.id,
+        estimate_id: estimateId,
+        idempotency_key: idempotencyKey,
+        revision_status: 'open',
+        updated_date: createdVersion,
+      });
+      if (!deleted || deleted.deleted !== 1) {
+        throw new Error('A duplicate open Estimate revision changed before cleanup. No uncertain revision was deleted; reload the Estimate revision history before retrying.');
+      }
       return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
