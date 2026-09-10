@@ -166,6 +166,9 @@ Deno.serve(async (req) => {
       }
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const created = await Entity.create(payload);
+      if (inventoryIsLow(itemType, created)) {
+        await dispatchLowStock(base44, itemType, created, `inventory-created-low:${created.id}`);
+      }
       return Response.json({ success: true, item: created });
     }
 
@@ -318,7 +321,29 @@ Deno.serve(async (req) => {
         if ([payload.quantity,payload.minimum_stock,payload.cost_per_unit].some((v: any) => Number.isNaN(v) || (v != null && v < 0))) return Response.json({ error: 'Fluid quantities/costs must be valid non-negative numbers.' }, { status: 400 });
       }
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
+      const wasLow = inventoryIsLow(itemType, existing);
+      const beforeQuantity = itemType === 'part' ? num(existing.quantity_on_hand, NaN) : num(existing.quantity, NaN);
       const updated = await Entity.update(id, payload);
+      const afterQuantity = itemType === 'part' ? num(updated.quantity_on_hand, NaN) : num(updated.quantity, NaN);
+      if (Number.isFinite(beforeQuantity) && Number.isFinite(afterQuantity) && !sameNumber(beforeQuantity, afterQuantity)) {
+        await base44.asServiceRole.entities.FleetSystemLog.create({
+          source: 'fleetInventoryAction',
+          level: 'info',
+          message: 'Fleet inventory quantity adjusted manually.',
+          details: {
+            item_type: itemType,
+            item_id: id,
+            item_name: updated.part_name || updated.fluid_name || '',
+            before_quantity: beforeQuantity,
+            after_quantity: afterQuantity,
+            unit: itemType === 'part' ? 'units' : (updated.unit || existing.unit || ''),
+            changed_by: auth.user?.email || '',
+          },
+        }).catch(() => null);
+      }
+      if (!wasLow && inventoryIsLow(itemType, updated)) {
+        await dispatchLowStock(base44, itemType, updated, `inventory-manual-low:${id}:${updated.updated_date || nowIso()}`);
+      }
       return Response.json({ success: true, item: updated });
     }
 
