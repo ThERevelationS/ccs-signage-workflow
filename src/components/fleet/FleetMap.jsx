@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "./loadGoogleMaps";
-import { Loader2, Search, Layers, Plus, Minus, Maximize2 } from "lucide-react";
+import { Loader2, Search, Layers } from "lucide-react";
 import { makeColor } from "./fleetHelpers";
 
 function pinSvg(color, selected) {
@@ -111,7 +111,6 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
     if (hasPoints && !selectedVin) {
       mapRef.current.fitBounds(bounds, 60);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicles]);
 
   // Recenter on selected vehicle
@@ -124,7 +123,6 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
       mapRef.current.panTo({ lat: loc.lat, lng: loc.lon });
       mapRef.current.setZoom(16);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVin]);
 
   // Draw selected trip route
