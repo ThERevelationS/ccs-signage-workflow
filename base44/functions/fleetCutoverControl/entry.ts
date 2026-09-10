@@ -169,16 +169,30 @@ async function evaluate(base44:any, { liveBouncieProbe = false } = {}) {
   add('verification_audit_passed', auditStatusOk && auditAppsOk, audit ? `${audit.run_key}: ${audit.status}` : 'No verification audit found.');
   add('verification_audit_no_delta', !!audit && auditDeltaOk, audit ? `delta_records_migrated=${audit?.summary?.delta_records_migrated ?? 'unknown'}` : 'No verification audit found.');
 
-  const protectedCountKeys = [
-    'FleetEquipment','FleetMaintenanceTask','FleetMaintenanceWorkOrder','FleetMaintenanceWorkOrder_completed','FleetMaintenanceWorkOrder_active',
-    'FleetPart','FleetFluid','FleetEquipmentLog','FleetPartFluidRequest','FleetSettings','FleetSystemLog','FleetSystemReport'
+  const baselineEntityKeys = [
+    'FleetEquipment','FleetMaintenanceTask','FleetMaintenanceWorkOrder','FleetPart','FleetFluid',
+    'FleetEquipmentLog','FleetPartFluidRequest','FleetSettings','FleetSystemLog','FleetSystemReport'
   ];
-  const countMismatches = protectedCountKeys.flatMap((key) => {
+  const preCutoverCountKeys = [
+    ...baselineEntityKeys,'FleetMaintenanceWorkOrder_completed','FleetMaintenanceWorkOrder_active'
+  ];
+  const cutoverCompleted = !!state?.cutover_completed_at;
+  const countMismatches = (cutoverCompleted ? baselineEntityKeys : preCutoverCountKeys).flatMap((key) => {
     const expected = countFromAudit(audit,key);
     if (expected == null) return [];
-    return counts[key] === expected ? [] : [{ key, expected, actual:counts[key] }];
+    if (!cutoverCompleted) return counts[key] === expected ? [] : [{ key, expected, actual:counts[key], mode:'exact_pre_cutover' }];
+    const retained = Number(counts[`${key}_migrated_from_source`] ?? 0);
+    const duplicates = Number(counts[`${key}_migration_duplicates`] ?? 0);
+    return retained === expected && duplicates === 0
+      ? []
+      : [{ key, expected_migrated:expected, retained_migrated:retained, duplicate_source_ids:duplicates, current_total:counts[key], mode:'post_cutover_retention' }];
   });
-  add('destination_counts_match_audit', countMismatches.length === 0, countMismatches.length ? JSON.stringify(countMismatches) : 'Destination counts match latest verification audit.');
+  const countDetail = countMismatches.length
+    ? JSON.stringify(countMismatches)
+    : cutoverCompleted
+      ? 'All FleetMaster-migrated source IDs remain uniquely retained. Normal post-cutover Fleet growth is allowed.'
+      : 'Destination counts exactly match the latest verification audit.';
+  add('destination_counts_match_audit', countMismatches.length === 0, countDetail);
   add('notification_queue_clean', counts.FleetNotificationQueue_unresolved === 0, `${counts.FleetNotificationQueue_unresolved} unresolved of ${counts.FleetNotificationQueue} total queue record(s).`);
   add('operation_receipts_clean', counts.FleetOperationReceipt_unresolved === 0, `${counts.FleetOperationReceipt_unresolved} unresolved of ${counts.FleetOperationReceipt} total operation receipt(s).`);
   add('gmail_sender_connected', gmailSenderOk, gmailSenderDetail);
