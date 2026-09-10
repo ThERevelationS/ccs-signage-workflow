@@ -34,7 +34,10 @@ async function settleRevisionNumber(RevisionService: any, builderProductId: stri
       if (aTime !== bTime) return aTime - bTime;
       return String(a?.id || '').localeCompare(String(b?.id || ''));
     })[0];
-    if (winner?.id === current.id && attempt < 4) continue;
+    if (winner?.id === current.id) {
+      if (attempt < 4) continue;
+      throw new Error('A later concurrent Builder price revision still shares this revision number. The earlier canonical row was not renumbered; reload the pricing history before retrying.');
+    }
 
     const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
     const version = String(current?.updated_date || '').trim();
