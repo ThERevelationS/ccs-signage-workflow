@@ -103,9 +103,10 @@ export default function FleetWorkOrders() {
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
+    const selectedEquipment = action === "complete" ? equipment.find((row) => row.id === workOrderData.equipment_id) : null;
     const payload = action === "create"
       ? { action, work_order: workOrderData }
-      : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus } : {}) };
+      : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus, equipment_expected_updated_date: selectedEquipment?.updated_date || "" } : {}) };
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
