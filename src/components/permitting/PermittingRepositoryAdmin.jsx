@@ -432,7 +432,7 @@ export default function PermittingRepositoryAdmin() {
             )}
           </Button>
           <Button 
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => { setDeleteError(''); setShowDeleteConfirm(true); }}
             disabled={isDeleting || jurisdictions.length === 0}
             variant="destructive"
             className="gap-2"
@@ -541,7 +541,14 @@ export default function PermittingRepositoryAdmin() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {isDeleting && (
+          {deleteError && (
+            <div className="my-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-relaxed text-red-800">
+              <div className="font-semibold mb-1">Delete All stopped</div>
+              <div>{deleteError}</div>
+            </div>
+          )}
+
+          {(isDeleting || deleteProgress.processed > 0) && (
             <div className="space-y-2 my-4">
               <Progress value={deleteProgress.total > 0 ? (deleteProgress.processed / deleteProgress.total) * 100 : 0} className="h-2" />
               <div className="text-xs text-gray-600 space-y-1">
