@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const weekday = () => new Intl.DateTimeFormat('en-US',{ weekday:'long', timeZone:'America/New_York' }).format(new Date()).toLowerCase();
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
     };
 
     if ((settings.item_order_reminder_days || []).includes(day) && (settings.item_order_reminder_emails || []).length) {
-      const items = await base44.asServiceRole.entities.FleetPartFluidRequest.filter({ status:{ $in:['pending','ordered'] } });
+      const items = await loadAllEntityRows({ entity: base44.asServiceRole.entities.FleetPartFluidRequest, query:{ status:{ $in:['pending','ordered'] } }, sort:'-created_date', label:'Fleet reminder requests' });
       if (items.length) {
         const rows = items.map((item:any) => `<tr><td style="padding:7px;border-bottom:1px solid #ddd">${esc(item.item_name)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(item.status)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(item.quantity_needed)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(item.requested_by_person || item.requester_email)}</td></tr>`).join('');
         const intro = esc(settings.item_order_reminder_body_template || 'Items pending or on order:');
@@ -51,9 +52,9 @@ Deno.serve(async (req) => {
     }
 
     if ((settings.open_work_order_reminder_days || []).includes(day) && (settings.open_work_order_reminder_emails || []).length) {
-      const orders = await base44.asServiceRole.entities.FleetMaintenanceWorkOrder.filter({ status:{ $in:['open','assigned','in_progress'] } });
+      const orders = await loadAllEntityRows({ entity: base44.asServiceRole.entities.FleetMaintenanceWorkOrder, query:{ status:{ $in:['open','assigned','in_progress'] } }, sort:'-created_date', label:'Fleet reminder work orders' });
       if (orders.length) {
-        const equipment = await base44.asServiceRole.entities.FleetEquipment.list();
+        const equipment = await loadAllEntityRows({ entity: base44.asServiceRole.entities.FleetEquipment, sort:'name', label:'Fleet reminder equipment' });
         const names = Object.fromEntries((equipment || []).map((row:any) => [row.id,row.name]));
         const rows = orders.map((wo:any) => `<tr><td style="padding:7px;border-bottom:1px solid #ddd">${esc(wo.work_order_number)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(wo.title)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(names[wo.equipment_id] || 'N/A')}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(wo.status)}</td><td style="padding:7px;border-bottom:1px solid #ddd">${esc(wo.priority)}</td></tr>`).join('');
         const intro = esc(settings.open_work_order_reminder_body_template || 'Open Fleet work orders:');
