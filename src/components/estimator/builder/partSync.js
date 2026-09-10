@@ -2984,12 +2984,12 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
     partWritePlan.push(step);
     if (planOnly) return { ...data, id: `planned:${data.part_key}`, updated_date: "" };
-    const { record: created } = await createBuilderPartWithRecovery({
+    const { record: created, status } = await createBuilderPartWithRecovery({
       entity: base44.entities.BuilderPart,
       data,
       label: `Builder Part “${data.part_name || data.part_key || "Part"}” synchronization`,
     });
-    writesPerformed += 1;
+    if (status !== "existing") writesPerformed += 1;
     return created;
   };
 
@@ -3361,12 +3361,12 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
         }
         continue;
       }
-      const { record: created } = await createBuilderPartWithRecovery({
+      const { record: created, status } = await createBuilderPartWithRecovery({
         entity: base44.entities.BuilderPart,
         data,
         label: `Builder Part “${data.part_name || data.part_key || "Part"}” recovery create`,
       });
-      writesPerformed += 1;
+      if (status !== "existing") writesPerformed += 1;
       if (created?.id) byId.set(created.id, created);
       if (created?.part_key) byKey.set(created.part_key, created);
       continue;
