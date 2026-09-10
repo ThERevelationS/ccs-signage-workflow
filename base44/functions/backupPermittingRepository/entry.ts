@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -36,7 +37,11 @@ Deno.serve(async (req) => {
         if (j) jurisdictions.push(j);
       }
     } else {
-      jurisdictions = await base44.entities.JurisdictionProfile.list();
+      jurisdictions = await loadAllEntityRows({
+        entity: base44.entities.JurisdictionProfile,
+        sort: 'created_date',
+        label: 'Permitting Repository backup catalog',
+      });
     }
 
     // Backup each jurisdiction
