@@ -47,11 +47,15 @@ export default function FleetRequests() {
     }
   }, []);
 
+  const openCreateDialog = useCallback((request = null) => {
+    setDialog({ mode: "create", request, createKey: crypto.randomUUID() });
+  }, []);
+
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") !== "1") return;
-    setDialog({ mode: "create", request: {
+    openCreateDialog({
       item_type: params.get("type") === "fluid" ? "fluid" : "part",
       inventory_item_id: params.get("inventoryItem") || "",
       item_name: params.get("name") || "",
@@ -60,8 +64,8 @@ export default function FleetRequests() {
       equipment_id: params.get("equipment") || "",
       quantity_needed: Number(params.get("quantity") || 1) || 1,
       justification: params.get("reason") || "",
-    }});
-  }, []);
+    });
+  }, [openCreateDialog]);
 
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const metrics = useMemo(() => ({
@@ -81,7 +85,7 @@ export default function FleetRequests() {
     if (!dialog) return;
     const action = dialog.mode;
     const payload = action === "create"
-      ? { action: "create", request: form }
+      ? { action: "create", creation_key: dialog.createKey || "", request: form }
       : action === "edit"
         ? { action: "update", id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", request: form }
         : { action, id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", ...form };
@@ -109,7 +113,7 @@ export default function FleetRequests() {
   };
 
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav /><div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
-    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Requests</h1><p className="text-sm text-gray-500 dark:text-slate-400">Parts/fluids requests are Fleet-only. Migrated received records are protected from being received twice.</p></div><button onClick={()=>setDialog({mode:"create",request:null})} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>New Request</button></div>
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Requests</h1><p className="text-sm text-gray-500 dark:text-slate-400">Parts/fluids requests are Fleet-only. Migrated received records are protected from being received twice.</p></div><button onClick={()=>openCreateDialog()} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>New Request</button></div>
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet requests are live. Receiving uses a durable receipt and exact inventory matching, and request/received notifications are queued through the Fleet notification worker.</div>
     {actionError&&<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><RequestMetric icon={Clock3} label="Pending" value={metrics.pending} attention={metrics.pending>0} onClick={()=>setStatus("pending")}/><RequestMetric icon={Truck} label="Ordered" value={metrics.ordered} attention={metrics.ordered>0} onClick={()=>setStatus("ordered")}/><RequestMetric icon={CheckCircle2} label="Received" value={metrics.received} onClick={()=>setStatus("received")}/><RequestMetric icon={XCircle} label="Cancelled" value={metrics.cancelled} onClick={()=>setStatus("cancelled")}/></div>
