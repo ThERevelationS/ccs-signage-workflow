@@ -1,7 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity } from "lucide-react";
+
+const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker"];
+
+async function loadAutomationHealthData() {
+  const [maintenance, reminders, worker, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
+    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
+    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
+    base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
+    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
+    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
+    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
+    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
+    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
+  ]);
+  return {
+    logs: [...(maintenance || []), ...(reminders || []), ...(worker || [])],
+    notifications: [...queuePending, ...queueSending, ...queueFailed],
+    receipts: [...receiptStarted, ...receiptFailed],
+  };
+}
 
 export default function FleetSettings() {
   const [user, setUser] = useState(null);
@@ -23,22 +44,20 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, connectionRows, auditRows, statusResult, logRows, notifications, receipts] = await Promise.all([
+          const [settingsRows, connectionRows, auditRows, statusResult, health] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
             base44.entities.BouncieConnection.list("-updated_date", 10),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
             base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
-            base44.entities.FleetSystemLog.list("-created_date", 500),
-            base44.entities.FleetNotificationQueue.list("-created_date", 500),
-            base44.entities.FleetOperationReceipt.list("-created_date", 500),
+            loadAutomationHealthData(),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection((connectionRows || [])[0] || null);
           setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
           setServerStatus(statusResult?.data || null);
-          setAutomationLogs((logRows || []).filter(row => ["fleetScheduledMaintenanceGeneration","fleetScheduledReminders","fleetNotificationWorker"].includes(row.source)));
-          setQueueRows(notifications || []);
-          setReceiptRows(receipts || []);
+          setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
+          setQueueRows(health.notifications || []);
+          setReceiptRows(health.receipts || []);
         }
       } finally {
         setLoading(false);
@@ -82,18 +101,16 @@ export default function FleetSettings() {
     try {
       const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
       setServerStatus(data || null);
-      const [settingsRows, connectionRows, logRows, notifications, receipts] = await Promise.all([
+      const [settingsRows, connectionRows, health] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
         base44.entities.BouncieConnection.list("-updated_date", 10),
-        base44.entities.FleetSystemLog.list("-created_date", 500),
-        base44.entities.FleetNotificationQueue.list("-created_date", 500),
-        base44.entities.FleetOperationReceipt.list("-created_date", 500),
+        loadAutomationHealthData(),
       ]);
       setSettings((settingsRows || [])[0] || null);
       setConnection((connectionRows || [])[0] || null);
-      setAutomationLogs((logRows || []).filter(row => ["fleetScheduledMaintenanceGeneration","fleetScheduledReminders","fleetNotificationWorker"].includes(row.source)));
-      setQueueRows(notifications || []);
-      setReceiptRows(receipts || []);
+      setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
+      setQueueRows(health.notifications || []);
+      setReceiptRows(health.receipts || []);
     } finally {
       setChecking(false);
     }
