@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download, Bot } from "lucide-react";
+import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download } from "lucide-react";
 import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAudit";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
