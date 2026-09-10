@@ -1,23 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi, getActiveConnection } from '../../shared/bouncie.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const SOURCE_APP_ID = '68accb163a1b474cdb95ea70';
 const DEST_APP_ID = '68dfcc5e57bbbc35387da97c';
 const CUTOVER_STATE_KEY = 'primary';
 const MAX_REST_SYNC_AGE_MS = 24 * 60 * 60 * 1000;
-const COUNT_PAGE_SIZE = 500;
-const MAX_COUNT_ROWS = 50000;
 const nowIso = () => new Date().toISOString();
-
-async function listAllRows(entity:any, label:string) {
-  const rows:any[] = [];
-  for (let skip = 0; skip < MAX_COUNT_ROWS; skip += COUNT_PAGE_SIZE) {
-    const page = await entity.list('-created_date', COUNT_PAGE_SIZE, skip);
-    rows.push(...(page || []));
-    if (!page || page.length < COUNT_PAGE_SIZE) return rows;
-  }
-  throw new Error(`${label} count exceeded the ${MAX_COUNT_ROWS}-row Fleet health safety limit.`);
-}
 
 function migrationRetentionStats(rows:any[]) {
   const sourceIds = (rows || [])
@@ -54,18 +43,18 @@ async function getCutoverState(base44:any, createIfMissing = false) {
 async function currentCounts(base44:any) {
   const E = base44.asServiceRole.entities;
   const [equipment,tasks,workOrders,parts,fluids,logs,requests,settings,systemLogs,systemReports,queue,receipts] = await Promise.all([
-    listAllRows(E.FleetEquipment, 'FleetEquipment'),
-    listAllRows(E.FleetMaintenanceTask, 'FleetMaintenanceTask'),
-    listAllRows(E.FleetMaintenanceWorkOrder, 'FleetMaintenanceWorkOrder'),
-    listAllRows(E.FleetPart, 'FleetPart'),
-    listAllRows(E.FleetFluid, 'FleetFluid'),
-    listAllRows(E.FleetEquipmentLog, 'FleetEquipmentLog'),
-    listAllRows(E.FleetPartFluidRequest, 'FleetPartFluidRequest'),
-    listAllRows(E.FleetSettings, 'FleetSettings'),
-    listAllRows(E.FleetSystemLog, 'FleetSystemLog'),
-    listAllRows(E.FleetSystemReport, 'FleetSystemReport'),
-    listAllRows(E.FleetNotificationQueue, 'FleetNotificationQueue'),
-    listAllRows(E.FleetOperationReceipt, 'FleetOperationReceipt'),
+    loadAllEntityRows({ entity:E.FleetEquipment, sort:'-created_date', label:'FleetEquipment' }),
+    loadAllEntityRows({ entity:E.FleetMaintenanceTask, sort:'-created_date', label:'FleetMaintenanceTask' }),
+    loadAllEntityRows({ entity:E.FleetMaintenanceWorkOrder, sort:'-created_date', label:'FleetMaintenanceWorkOrder' }),
+    loadAllEntityRows({ entity:E.FleetPart, sort:'-created_date', label:'FleetPart' }),
+    loadAllEntityRows({ entity:E.FleetFluid, sort:'-created_date', label:'FleetFluid' }),
+    loadAllEntityRows({ entity:E.FleetEquipmentLog, sort:'-created_date', label:'FleetEquipmentLog' }),
+    loadAllEntityRows({ entity:E.FleetPartFluidRequest, sort:'-created_date', label:'FleetPartFluidRequest' }),
+    loadAllEntityRows({ entity:E.FleetSettings, sort:'-created_date', label:'FleetSettings' }),
+    loadAllEntityRows({ entity:E.FleetSystemLog, sort:'-created_date', label:'FleetSystemLog' }),
+    loadAllEntityRows({ entity:E.FleetSystemReport, sort:'-created_date', label:'FleetSystemReport' }),
+    loadAllEntityRows({ entity:E.FleetNotificationQueue, sort:'-created_date', label:'FleetNotificationQueue' }),
+    loadAllEntityRows({ entity:E.FleetOperationReceipt, sort:'-created_date', label:'FleetOperationReceipt' }),
   ]);
   const retention = {
     FleetEquipment: migrationRetentionStats(equipment),
