@@ -3,8 +3,6 @@ import * as XLSX from 'npm:xlsx@0.18.5';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';
 
-const GlobalSettings = 'GlobalSettings';
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
