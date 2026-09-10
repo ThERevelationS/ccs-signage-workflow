@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { CalendarClock, Search, Loader2, Plus, Pencil, Clock3, Activity, CheckCircle2 } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
@@ -24,10 +25,10 @@ export default function FleetMaintenance() {
     setError("");
     try {
       const [t, e, p, f, u] = await Promise.all([
-        base44.entities.FleetMaintenanceTask.list("start_date", 500),
-        base44.entities.FleetEquipment.list("name", 500),
-        base44.entities.FleetPart.list("part_name", 500),
-        base44.entities.FleetFluid.list("fluid_name", 500),
+        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
+        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
+        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
         base44.auth.me().catch(() => null),
       ]);
       setTasks(t || []);
