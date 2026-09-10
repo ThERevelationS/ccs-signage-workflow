@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const nowIso = () => new Date().toISOString();
 const num = (value: unknown, fallback = 0) => {
@@ -6,6 +7,7 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 const sameNumber = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) < 1e-9;
+const normIdentity = (value: unknown) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const at = Date.parse(a?.created_date || a?.started_at || '') || 0;
   const bt = Date.parse(b?.created_date || b?.started_at || '') || 0;
