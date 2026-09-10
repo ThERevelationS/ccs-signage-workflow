@@ -1,18 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
-const PAGE_SIZE = 1000;
-const MAX_ROWS = 20000;
 const ACTIVE_WO = new Set(['open','assigned','in_progress']);
-
-async function listAll(entity:any, sort='created_date') {
-  const out:any[] = [];
-  for (let skip=0; skip<MAX_ROWS; skip+=PAGE_SIZE) {
-    const rows = await entity.list(sort, PAGE_SIZE, skip);
-    out.push(...(rows || []));
-    if (!rows || rows.length < PAGE_SIZE) return out;
-  }
-  throw new Error('Fleet integrity audit exceeded its safety row limit.');
-}
 
 const normVin = (value:any) => String(value || '').trim().toUpperCase();
 const groupBy = (rows:any[], keyFn:(row:any)=>string) => {
@@ -34,17 +23,17 @@ Deno.serve(async (req) => {
 
     const E = base44.asServiceRole.entities;
     const [equipment,tasks,workOrders,parts,fluids,logs,requests,metadata,liveState,receipts,queue] = await Promise.all([
-      listAll(E.FleetEquipment,'name'),
-      listAll(E.FleetMaintenanceTask,'-created_date'),
-      listAll(E.FleetMaintenanceWorkOrder,'-created_date'),
-      listAll(E.FleetPart,'part_name'),
-      listAll(E.FleetFluid,'fluid_name'),
-      listAll(E.FleetEquipmentLog,'-created_date'),
-      listAll(E.FleetPartFluidRequest,'-created_date'),
-      listAll(E.FleetVehicleMetadata,'-created_date'),
-      listAll(E.BouncieVehicleLiveState,'-last_seen_at'),
-      listAll(E.FleetOperationReceipt,'-created_date'),
-      listAll(E.FleetNotificationQueue,'-created_date'),
+      loadAllEntityRows({ entity:E.FleetEquipment, sort:'name', label:'Fleet equipment integrity data' }),
+      loadAllEntityRows({ entity:E.FleetMaintenanceTask, sort:'-created_date', label:'Fleet maintenance integrity data' }),
+      loadAllEntityRows({ entity:E.FleetMaintenanceWorkOrder, sort:'-created_date', label:'Fleet work-order integrity data' }),
+      loadAllEntityRows({ entity:E.FleetPart, sort:'part_name', label:'Fleet part integrity data' }),
+      loadAllEntityRows({ entity:E.FleetFluid, sort:'fluid_name', label:'Fleet fluid integrity data' }),
+      loadAllEntityRows({ entity:E.FleetEquipmentLog, sort:'-created_date', label:'Fleet usage-log integrity data' }),
+      loadAllEntityRows({ entity:E.FleetPartFluidRequest, sort:'-created_date', label:'Fleet request integrity data' }),
+      loadAllEntityRows({ entity:E.FleetVehicleMetadata, sort:'-created_date', label:'Fleet vehicle metadata integrity data' }),
+      loadAllEntityRows({ entity:E.BouncieVehicleLiveState, sort:'-last_seen_at', label:'Bouncie live-state integrity data' }),
+      loadAllEntityRows({ entity:E.FleetOperationReceipt, sort:'-created_date', label:'Fleet operation-receipt integrity data' }),
+      loadAllEntityRows({ entity:E.FleetNotificationQueue, sort:'-created_date', label:'Fleet notification-queue integrity data' }),
     ]);
 
     const equipmentIds = new Set(equipment.map((r:any)=>r.id));
