@@ -105,7 +105,7 @@ export default function FleetWorkOrders() {
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
     const payload = action === "create"
       ? { action, work_order: workOrderData }
-      : { action, id: dialog.workOrder.id, work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus } : {}) };
+      : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus } : {}) };
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
@@ -123,6 +123,7 @@ export default function FleetWorkOrders() {
       const response = await base44.functions.invoke("fleetWorkOrderAction", {
         action: "update",
         id: startWorkOrder.id,
+        expected_updated_date: startWorkOrder.updated_date || "",
         work_order: {
           status: "in_progress",
           started_date: startWorkOrder.started_date || easternTodayText(),
@@ -164,7 +165,7 @@ export default function FleetWorkOrders() {
     setReopeningId(workOrder.id);
     setActionError("");
     try {
-      const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id });
+      const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id, expected_updated_date: workOrder.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
     } catch (error) {
