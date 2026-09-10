@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const nowIso = () => new Date().toISOString();
 const today = () => new Intl.DateTimeFormat('en-CA', {
@@ -11,18 +12,6 @@ const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const DUE_TASK_STATUSES = new Set(['pending', 'overdue']);
 const TASK_STATUSES = new Set(['pending', 'in_progress', 'completed']);
 const TASK_TYPES = new Set(['recurring', 'one_off']);
-const PAGE_SIZE = 1000;
-const MAX_TASK_ROWS = 20000;
-
-async function listAllTasks(Task:any) {
-  const out:any[] = [];
-  for (let skip=0; skip<MAX_TASK_ROWS; skip+=PAGE_SIZE) {
-    const rows = await Task.list('-created_date', PAGE_SIZE, skip);
-    out.push(...(rows || []));
-    if (!rows || rows.length < PAGE_SIZE) return out;
-  }
-  throw new Error('Fleet maintenance task scan exceeded its safety row limit.');
-}
 
 const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const at = Date.parse(a?.created_date || a?.started_at || '') || 0;
@@ -100,12 +89,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'generate_due') {
-      const allTasks = await listAllTasks(Task);
+      const allTasks = await loadAllEntityRows({ entity: Task, sort: '-created_date', label: 'Fleet maintenance schedules' });
       const due = allTasks.filter((task: any) => DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date <= today());
       const report: any[] = [];
 
       for (const task of due) {
-        const existingOrders = await WorkOrder.filter({ maintenance_task_id: task.id });
+        const existingOrders = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` });
         const active = existingOrders.find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         const key = `fleetmaint:${task.id}:due:${task.start_date}`;
         const exactGenerated = existingOrders.find((wo: any) => wo.generation_key === key);
@@ -131,7 +120,7 @@ Deno.serve(async (req) => {
           results.push({ ...item, action: 'skip', reason: 'task_changed_after_dry_run' });
           continue;
         }
-        const activeNow = (await WorkOrder.filter({ maintenance_task_id: task.id })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
+        const activeNow = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         if (activeNow) {
           results.push({ ...item, action: 'skip', reason: 'active_work_order_exists', work_order_id: activeNow.id });
           continue;
@@ -205,7 +194,7 @@ Deno.serve(async (req) => {
       if (patch.equipment_id && patch.equipment_id !== existing.equipment_id) {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
-        const active = (await WorkOrder.filter({ maintenance_task_id: id })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
+        const active = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         if (active) return Response.json({ error: 'Equipment cannot be changed while this maintenance schedule has an active Fleet work order.' }, { status: 409 });
       }
       const updated = await Task.update(id, patch);
@@ -213,7 +202,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
-      const linked = await WorkOrder.filter({ maintenance_task_id: id });
+      const linked = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` });
       if (linked.length) return Response.json({ error: 'This maintenance schedule has Fleet work-order history and cannot be deleted. Mark it completed instead.' }, { status: 409 });
       await Task.delete(id);
       return Response.json({ success: true, deleted: true });
