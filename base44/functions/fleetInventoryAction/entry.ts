@@ -263,22 +263,23 @@ Deno.serve(async (req) => {
         }
       }
 
+      let inventoryApplied = claim.receipt?.result_summary?.inventory_applied === true;
       const reconcile = async () => {
         const summary = claim.receipt?.result_summary || resultSummary;
         let currentItem = await Entity.get(id);
-        let currentQuantity = itemType === 'part' ? num(currentItem?.quantity_on_hand) : num(currentItem?.quantity);
         const existingLog = canonical(await Log.filter({ usage_receipt_key: summary.log_key || logKey }));
         const expectedBefore = num(summary.before_quantity, NaN);
         const expectedAfter = num(summary.after_quantity, NaN);
         if (!Number.isFinite(expectedBefore) || !Number.isFinite(expectedAfter)) {
           throw new Error('Existing Fleet usage receipt is missing reconciliation quantities. Review FleetOperationReceipt.');
         }
-        if (!sameNumber(currentQuantity, expectedBefore) && !sameNumber(currentQuantity, expectedAfter)) {
-          const conflict: any = new Error('Fleet inventory changed during this usage operation. It was not replayed; retry against the current stock value.');
-          conflict.code = 'FLEET_INVENTORY_QUANTITY_CONFLICT';
-          throw conflict;
-        }
-        if (sameNumber(currentQuantity, expectedBefore)) {
+
+        if (!claim.owner) {
+          if (summary.inventory_applied !== true) {
+            throw new Error('This Fleet usage receipt has no durable proof that its stock deduction was applied. It was not replayed automatically; review FleetOperationReceipt.');
+          }
+          inventoryApplied = true;
+        } else {
           const quantityResult = await setFleetInventoryQuantityIfUnchanged({
             entity: Entity,
             itemId: id,
@@ -288,8 +289,13 @@ Deno.serve(async (req) => {
             label: `${existing.part_name || existing.fluid_name || 'Fleet inventory'} stock`,
           });
           currentItem = quantityResult.item || await Entity.get(id);
-          currentQuantity = itemType === 'part' ? num(currentItem?.quantity_on_hand) : num(currentItem?.quantity);
+          await Receipt.update(claim.receipt.id, {
+            result_summary: { ...summary, inventory_applied: true, safe_retry: false },
+            error_message: '',
+          });
+          inventoryApplied = true;
         }
+
         if (!existingLog) {
           await Log.create({
             equipment_id: summary.equipment_id || equipmentId,
@@ -303,7 +309,10 @@ Deno.serve(async (req) => {
             usage_receipt_key: summary.log_key || logKey,
           });
         }
-        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '', result_summary: { ...summary, safe_retry: false, reconciled: !claim.owner } });
+        await Receipt.update(claim.receipt.id, {
+          status: 'applied', applied_at: nowIso(), error_message: '',
+          result_summary: { ...summary, inventory_applied: true, safe_retry: false, reconciled: !claim.owner },
+        });
         return currentItem?.id ? currentItem : await Entity.get(id);
       };
 
@@ -316,12 +325,17 @@ Deno.serve(async (req) => {
         }
       } catch (error: any) {
         if (claim.receipt?.id && claim.receipt?.status !== 'applied') {
-          const safeRetry = error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+          const safeRetry = !inventoryApplied && error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
           await Receipt.update(claim.receipt.id, {
             status: 'failed',
             failed_at: nowIso(),
             error_message: error?.message || String(error),
-            result_summary: { ...(claim.receipt?.result_summary || resultSummary), safe_retry: safeRetry },
+            result_summary: {
+              ...(claim.receipt?.result_summary || resultSummary),
+              safe_retry: safeRetry,
+              ...(inventoryApplied ? { inventory_applied: true } : {}),
+              ...(!inventoryApplied && !safeRetry ? { inventory_outcome_ambiguous: true } : {}),
+            },
           }).catch(() => null);
         }
         throw error;
