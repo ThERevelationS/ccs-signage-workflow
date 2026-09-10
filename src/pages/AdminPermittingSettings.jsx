@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download, Bot } from "lucide-react";
 import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAudit";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function AdminPermittingSettings() {
   const [activeTab, setActiveTab] = useState("batch");
@@ -29,7 +30,11 @@ export default function AdminPermittingSettings() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await base44.entities.JurisdictionProfile.list();
+        const res = await loadAllEntityRows({
+          entity: base44.entities.JurisdictionProfile,
+          sort: null,
+          label: "Permitting admin jurisdiction catalog",
+        });
         setJurisdictions(Array.isArray(res) ? res : []);
       } catch (e) {
         console.error("Error loading jurisdictions:", e);
@@ -113,7 +118,11 @@ export default function AdminPermittingSettings() {
       setBatchProgress(p => ({ ...p, done: p.done + 1 }));
     }
 
-    const refreshed = await base44.entities.JurisdictionProfile.list();
+    const refreshed = await loadAllEntityRows({
+      entity: base44.entities.JurisdictionProfile,
+      sort: null,
+      label: "Permitting admin jurisdiction refresh",
+    });
     setJurisdictions(Array.isArray(refreshed) ? refreshed : []);
     setSelectedJurisdictions(new Set());
     setBatchProgress({ done: 0, total: 0, current: "" });
