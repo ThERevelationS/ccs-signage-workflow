@@ -192,14 +192,48 @@ Deno.serve(async (req) => {
           }),
           label: `Order import row ${i + 1}`,
         });
-        existingMap.set(uniqueKey, createResult.record);
         // A row that appeared concurrently after the initial catalog load still
         // occupies the row-number slot this import was about to use. Advance the
         // local row cursor even when that row is reused so the next new row does
         // not receive the same display position.
         importedCount++;
-        if (createResult.status === 'reused') skipped++;
-        else created++;
+
+        if (createResult.status === 'reused') {
+          // Preserve the existing import semantics for a row that arrived between
+          // the initial catalog load and this create attempt: treat it exactly as
+          // an existing row and apply only the same non-empty mutable source fields.
+          const concurrent = createResult.record;
+          const updates = {};
+          if (quantity && quantity !== (concurrent.quantity || '')) updates.quantity = quantity;
+          if (requestor && requestor !== (concurrent.requestor_name || '')) updates.requestor_name = requestor;
+          if (vendor && vendor !== (concurrent.vendor || '')) updates.vendor = vendor;
+          if (requestType && requestType !== (concurrent.request_type || '')) updates.request_type = requestType;
+          if (dateNeeded && dateNeeded !== concurrent.date_needed) updates.date_needed = dateNeeded;
+          if (dateOrdered && dateOrdered !== concurrent.date_ordered) updates.date_ordered = dateOrdered;
+          if (dateReceived && dateReceived !== concurrent.date_received) updates.date_received = dateReceived;
+          const finalReceived = updates.date_received || concurrent.date_received;
+          const finalOrdered = updates.date_ordered || concurrent.date_ordered;
+          if (finalReceived && concurrent.status !== 'received') updates.status = 'received';
+          else if (finalOrdered && concurrent.status === 'pending') updates.status = 'ordered';
+
+          if (Object.keys(updates).length > 0) {
+            const result = await retryOnRateLimit(() => replaceImportedOrderFieldsIfUnchanged({
+              entity: orderEntity,
+              order: concurrent,
+              nextFields: updates,
+              label: `Order import row ${i + 1} concurrent convergence`,
+            }));
+            existingMap.set(uniqueKey, result.record);
+            if (result.status === 'already_desired') skipped++;
+            else updated++;
+          } else {
+            existingMap.set(uniqueKey, concurrent);
+            skipped++;
+          }
+        } else {
+          existingMap.set(uniqueKey, createResult.record);
+          created++;
+        }
       }
     } catch (err) {
       console.error(`Error processing row ${i + 1}: ${customer} - ${description}`, err.message);
