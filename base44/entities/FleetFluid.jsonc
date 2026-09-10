@@ -69,6 +69,10 @@
       "type": "string",
       "description": "Deterministic receive receipt key used to prevent duplicate inventory creation on retries."
     },
+    "creation_key": {
+      "type": "string",
+      "description": "Stable client-generated idempotency key for a logical Fleet fluid create operation."
+    },
     "migration_source_app_id": {
       "type": "string"
     },
