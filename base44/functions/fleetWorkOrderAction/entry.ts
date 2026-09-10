@@ -390,21 +390,45 @@ async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt:
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
   const Equipment = base44.asServiceRole.entities.FleetEquipment;
   const patch = plan.work_order_patch;
-  if (plan.equipment_status && patch.equipment_id) {
-    await Equipment.update(patch.equipment_id, { status: plan.equipment_status });
+  const current = await WorkOrder.get(workOrderId);
+  if (!current) throw new Error(`Fleet work order ${workOrderId} no longer exists.`);
+  if (String(current.completion_receipt_key || '') !== String(mainReceipt.operation_key || '')) {
+    throw new Error(`Fleet work order ${workOrderId} no longer holds completion lock ${mainReceipt.operation_key}. Recovery was not applied.`);
   }
+
   const stamp = nowIso();
-  const completed = await WorkOrder.update(workOrderId, {
-    ...patch,
-    status: 'completed',
-    completed_date: patch.completed_date || today(),
-    completion_receipt_key: mainReceipt.operation_key,
-    inventory_applied_at: stamp,
-    schedule_applied_at: plan.schedule_operation_key ? stamp : null,
-  });
+  let completed = current;
+  if (current.status !== 'completed') {
+    const lockedVersion = String(plan.work_order_locked_updated_date || current.updated_date || '').trim();
+    if (!lockedVersion || lockedVersion !== String(current.updated_date || '')) {
+      const conflict: any = new Error('Fleet work order changed after its completion lock was acquired. Recovery was not applied.');
+      conflict.code = 'FLEET_RECORD_CONFLICT';
+      throw conflict;
+    }
+    completed = await updateFleetRecordIfCurrent({
+      entity: WorkOrder,
+      id: workOrderId,
+      expectedUpdatedAt: lockedVersion,
+      patch: {
+        ...patch,
+        status: 'completed',
+        completed_date: patch.completed_date || today(),
+        completion_receipt_key: mainReceipt.operation_key,
+        inventory_applied_at: stamp,
+        schedule_applied_at: plan.schedule_operation_key ? stamp : null,
+      },
+      label: 'Fleet work order completion recovery',
+    });
+  }
+  if (plan.equipment_status && patch.equipment_id) {
+    const equipment = await Equipment.get(patch.equipment_id).catch(() => null);
+    if (equipment && equipment.status !== plan.equipment_status) {
+      await Equipment.update(patch.equipment_id, { status: plan.equipment_status });
+    }
+  }
   await Receipt.update(mainReceipt.id, {
     status: 'applied', applied_at: stamp,
-    result_summary: { ...plan, finalized_from_retry: true },
+    result_summary: { ...plan, finalized_from_retry: true, equipment_status_reconciled: !!(plan.equipment_status && patch.equipment_id) },
     error_message: '',
   });
   return completed;
