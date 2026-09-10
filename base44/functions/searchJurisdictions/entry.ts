@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -10,7 +11,11 @@ Deno.serve(async (req) => {
     if (!query) return Response.json({ error: 'query required' }, { status: 400 });
 
     // First search existing jurisdictions
-    const all = await base44.entities.JurisdictionProfile.list();
+    const all = await loadAllEntityRows({
+      entity: base44.entities.JurisdictionProfile,
+      sort: 'created_date',
+      label: 'Jurisdiction search catalog',
+    });
     const queryLower = query.toLowerCase();
     const existing = all.filter(j =>
       j.name?.toLowerCase().includes(queryLower) ||
