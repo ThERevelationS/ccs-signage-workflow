@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil } from "lucide-react";
 
 const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
 
@@ -40,6 +41,7 @@ export default function FleetSettings() {
   const [checking, setChecking] = useState(false);
   const [actionBusy, setActionBusy] = useState("");
   const [actionError, setActionError] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -165,7 +167,7 @@ export default function FleetSettings() {
   const cutoverComplete = !!gates.cutover_completed_at && !!gates.notifications_enabled && !!gates.scheduled_reminders_enabled && !!gates.maintenance_generation_enabled && !!gates.public_reporting_enabled;
 
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
-    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Settings className="w-6 h-6"/>Fleet Settings</h1><p className="text-sm text-gray-500 dark:text-slate-400">CCS Fleet operations health, production gates, notification configuration, and migration safety records.</p></div><button onClick={runServerCheck} disabled={checking} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{checking?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh operations health</button></div>
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Settings className="w-6 h-6"/>Fleet Settings</h1><p className="text-sm text-gray-500 dark:text-slate-400">CCS Fleet operations health, production gates, notification configuration, and migration safety records.</p></div><div className="flex flex-col sm:flex-row gap-2"><button onClick={()=>setEditorOpen(true)} disabled={!settings} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-indigo-300 bg-indigo-50 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"><Pencil className="w-4 h-4"/>Edit notifications & reminders</button><button onClick={runServerCheck} disabled={checking} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{checking?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh operations health</button></div></div>
 
     <div className={`rounded-xl border p-4 ${blocked ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800" : "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800"}`}>
       <div className={`font-semibold ${blocked ? "text-amber-900 dark:text-amber-100" : "text-emerald-900 dark:text-emerald-100"}`}>{blocked ? "Fleet operations need attention" : cutoverComplete ? "Fleet production is live" : "Fleet operational checks are passing"}</div>
@@ -213,6 +215,7 @@ export default function FleetSettings() {
       <Card title="Migration Verification"><Row label="Latest audit" value={audit?.run_key}/><Row label="Audit status" value={audit?.status}/><Row label="Delta records migrated" value={audit?.summary?.delta_records_migrated ?? "—"}/></Card>
       <div className="md:col-span-2"><Card title="Templates"><Row label="New WO subject" value={settings.email_subject_template}/><Row label="Completed WO subject" value={settings.email_completed_subject_template}/><Row label="Items reminder subject" value={settings.item_order_reminder_subject_template}/><Row label="Open WO reminder subject" value={settings.open_work_order_reminder_subject_template}/></Card></div>
     </div> : <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-8 text-center text-gray-500">No Fleet settings record found.</div>}
+    <FleetSettingsEditor open={editorOpen} settings={settings} onClose={()=>setEditorOpen(false)} onSaved={(updated)=>{ if(updated) setSettings(updated); runServerCheck(); }}/>
   </div></div>;
 }
 
