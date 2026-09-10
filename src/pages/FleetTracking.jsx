@@ -417,11 +417,13 @@ export default function FleetTracking() {
         )}
       </div>
 
-        {currentUser?.role === "admin" && <AlertSettingsModal
-          open={alertSettingsOpen}
-          onClose={() => setAlertSettingsOpen(false)}
-          vehicle={selectedVehicle}
-        />}
+        {currentUser?.role === "admin" && (
+          <AlertSettingsModal
+            open={alertSettingsOpen}
+            onClose={() => setAlertSettingsOpen(false)}
+            vehicle={selectedVehicle}
+          />
+        )}
       </div>
     </div>
   );
