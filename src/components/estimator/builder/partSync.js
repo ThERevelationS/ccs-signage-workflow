@@ -8,6 +8,7 @@ import { acceptedCustomerUnitPrice, liveCustomerUnitPrice } from "@/components/e
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { createBuilderPartWithRecovery } from "./builderPartPersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -2983,7 +2984,11 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
     partWritePlan.push(step);
     if (planOnly) return { ...data, id: `planned:${data.part_key}`, updated_date: "" };
-    const created = await base44.entities.BuilderPart.create(data);
+    const { record: created } = await createBuilderPartWithRecovery({
+      entity: base44.entities.BuilderPart,
+      data,
+      label: `Builder Part “${data.part_name || data.part_key || "Part"}” synchronization`,
+    });
     writesPerformed += 1;
     return created;
   };
@@ -3356,7 +3361,11 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
         }
         continue;
       }
-      const created = await base44.entities.BuilderPart.create(data);
+      const { record: created } = await createBuilderPartWithRecovery({
+        entity: base44.entities.BuilderPart,
+        data,
+        label: `Builder Part “${data.part_name || data.part_key || "Part"}” recovery create`,
+      });
       writesPerformed += 1;
       if (created?.id) byId.set(created.id, created);
       if (created?.part_key) byKey.set(created.part_key, created);
