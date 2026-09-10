@@ -7,6 +7,7 @@ import { pendingBuilderMutation, resumeBuilderMutation } from "./builderMutation
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { createBuilderProductWithRecovery } from "./builderProductPersistence";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -254,7 +255,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     : null;
 
   if (!builderProduct) {
-    builderProduct = await base44.entities.BuilderProduct.create({
+    const builderProductData = {
       estimate_id: estimateId,
       estimate_line_id: lineId,
       module_key: line.module_key,
@@ -290,7 +291,13 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       notes: isNew
         ? "Builder Product created with estimate product. First priced save creates the initial frozen revision."
         : "Backfilled from an existing estimate line. Existing total_snapshot remains the authoritative legacy frozen price.",
+    };
+    const createResult = await createBuilderProductWithRecovery({
+      entity: base44.entities.BuilderProduct,
+      data: builderProductData,
+      label: `Builder Product “${clientName || builderName || lineId}”`,
     });
+    builderProduct = createResult.record;
   } else {
     const frozen = num(builderProduct.frozen_cost, acceptedTotal);
     const frozenCustomer = hasNumericValue(builderProduct.frozen_customer_price)
