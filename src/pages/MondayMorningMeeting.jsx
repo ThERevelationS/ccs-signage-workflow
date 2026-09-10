@@ -11,7 +11,7 @@ import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -521,14 +521,17 @@ export default function MondayMorningMeeting() {
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
-            await WorkOrder.create({
-              title: `${wo.title} - Rider`,
-              client_name: wo.client_name,
-              description: wo.description,
-              is_rider: true,
-              parent_work_order_id: wo.id,
-              current_stage: wo.current_stage,
-              rider_stage: wo.current_stage
+            await createWorkOrderWithRecovery({
+              data: {
+                title: `${wo.title} - Rider`,
+                client_name: wo.client_name,
+                description: wo.description,
+                is_rider: true,
+                parent_work_order_id: wo.id,
+                current_stage: wo.current_stage,
+                rider_stage: wo.current_stage
+              },
+              label: "Monday Morning Meeting rider Work Order",
             });
             loadWorkOrders();
           }}
