@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const DUE_TASK_STATUSES = new Set(['pending','overdue']);
@@ -46,7 +47,7 @@ async function claim(Receipt:any, key:string, task:any) {
     }
     return {applied:false,owner:true,receipt:refreshed,recoveredClaim:true};
   }
-  const created = await Receipt.create({operation_key:key,operation_type:'scheduled_generation',target_entity:'FleetMaintenanceTask',target_id:task.id,status:'started',started_at:nowIso(),result_summary:{due_date:task.start_date,title:task.title}});
+  const created = await Receipt.create({operation_key:key,operation_type:'scheduled_generation',target_entity:'FleetMaintenanceTask',target_id:task.id,status:'started',started_at:nowIso(),result_summary:{due_date:task.start_date,title:task.title,task_expected_updated_date:task.updated_date || '',prior_generation_key:task.generation_key || '',prior_status:task.status || ''}});
   await new Promise(r=>setTimeout(r,75));
   const contenders = await Receipt.filter({operation_key:key,status:'started'});
   const winner = canonical(contenders) || created;
@@ -55,6 +56,87 @@ async function claim(Receipt:any, key:string, task:any) {
     return {applied:false,owner:false,receipt:winner};
   }
   return {applied:false,owner:true,receipt:created};
+}
+
+async function acquireTaskGenerationLock(Task:any, Receipt:any, task:any, key:string, receipt:any) {
+  let activeReceipt = receipt;
+  let summary = activeReceipt?.result_summary || {};
+  const current = await Task.get(task.id);
+  if (!current) throw new Error(`Maintenance task ${task.id} no longer exists.`);
+
+  if (String(current.generation_key || '') === key && summary.task_lock_acquired === true) {
+    const lockedVersion = String(summary.task_locked_updated_date || '').trim();
+    if (!lockedVersion || lockedVersion !== String(current.updated_date || '')) {
+      const conflict:any = new Error('Maintenance schedule changed after its generation lock was acquired. Work-order generation was stopped.');
+      conflict.code = 'FLEET_RECORD_CONFLICT';
+      throw conflict;
+    }
+    return { task: current, receipt: activeReceipt };
+  }
+
+  const expectedUpdatedAt = String(summary.task_expected_updated_date || task.updated_date || '').trim();
+  if (!expectedUpdatedAt) throw new Error('Maintenance schedule version is missing; generation cannot be reserved safely.');
+  if (!DUE_TASK_STATUSES.has(current.status) || !current.start_date || current.start_date !== summary.due_date) {
+    const conflict:any = new Error('Maintenance schedule changed before generation could acquire its lock.');
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  const locked = await updateFleetRecordIfCurrent({
+    entity: Task,
+    id: current.id,
+    expectedUpdatedAt,
+    patch: { generation_key: key },
+    label: 'Fleet maintenance schedule generation lock',
+  });
+  await Receipt.update(activeReceipt.id, {
+    result_summary: {
+      ...summary,
+      task_lock_acquired: true,
+      task_locked_updated_date: String(locked.updated_date || ''),
+      task_expected_updated_date: expectedUpdatedAt,
+      prior_generation_key: summary.prior_generation_key ?? task.generation_key ?? '',
+      prior_status: summary.prior_status || task.status || '',
+    },
+  });
+  activeReceipt = await Receipt.get(activeReceipt.id);
+  return { task: locked, receipt: activeReceipt };
+}
+
+async function advanceLockedTask(Task:any, Receipt:any, taskId:string, key:string, receipt:any, dueDate:string) {
+  const current = await Task.get(taskId);
+  if (!current) throw new Error(`Maintenance task ${taskId} no longer exists.`);
+  if (current.status === 'in_progress' && current.generation_key === key && current.last_generated_for_date === dueDate) return current;
+
+  const summary = receipt?.result_summary || {};
+  const lockedVersion = String(summary.task_locked_updated_date || '').trim();
+  if (summary.task_lock_acquired !== true || String(current.generation_key || '') !== key || String(current.start_date || '') !== String(dueDate || '') || !lockedVersion || lockedVersion !== String(current.updated_date || '')) {
+    const conflict:any = new Error('Maintenance schedule no longer matches its generation lock. The generated work order was preserved, but the schedule was not overwritten.');
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  return updateFleetRecordIfCurrent({
+    entity: Task,
+    id: taskId,
+    expectedUpdatedAt: lockedVersion,
+    patch: { status:'in_progress', generation_key:key, last_generated_for_date:dueDate },
+    label: 'Fleet maintenance schedule generation finalization',
+  });
+}
+
+async function releaseTaskGenerationLock(Task:any, task:any, receipt:any) {
+  const summary = receipt?.result_summary || {};
+  const lockedVersion = String(summary.task_locked_updated_date || '').trim();
+  if (!task?.id || !lockedVersion || String(task.updated_date || '') !== lockedVersion || String(task.generation_key || '') !== String(receipt?.operation_key || '')) return false;
+  await updateFleetRecordIfCurrent({
+    entity: Task,
+    id: task.id,
+    expectedUpdatedAt: lockedVersion,
+    patch: { generation_key: String(summary.prior_generation_key || '') },
+    label: 'Fleet maintenance schedule generation lock release',
+  });
+  return true;
 }
 
 Deno.serve(async (req) => {
