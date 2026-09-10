@@ -150,7 +150,14 @@ export default function FleetHistory() {
     if (!REPORT_STATUSES.includes(status)) return;
     setError("");
     try {
-      const updated = await base44.entities.FleetSystemReport.update(report.id, { status });
+      const { data } = await base44.functions.invoke("fleetSystemReportAction", {
+        action: "update_status",
+        id: report.id,
+        status,
+        expected_updated_date: report.updated_date || "",
+      });
+      if (data?.error) throw new Error(data.error);
+      const updated = data?.report || report;
       setReports(current => current.map(row => row.id === report.id ? updated : row));
     } catch (e) {
       setError(e?.message || "Unable to update Fleet feedback status.");
