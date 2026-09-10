@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
@@ -30,11 +31,11 @@ export default function FleetWorkOrders() {
     setLoading(true);
     try {
       const [w, e, t, p, f] = await Promise.all([
-        base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-        base44.entities.FleetEquipment.list("name", 500),
-        base44.entities.FleetMaintenanceTask.list("start_date", 500),
-        base44.entities.FleetPart.list("part_name", 500),
-        base44.entities.FleetFluid.list("fluid_name", 500),
+        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
+        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
+        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
+        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
       ]);
       setOrders(w || []);
       setEquipment(e || []);
