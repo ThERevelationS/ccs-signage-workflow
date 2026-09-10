@@ -95,17 +95,26 @@ Deno.serve(async (req) => {
     const EstimateUser = base44.entities.AllInOneEstimate;
     const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;
 
-    const readKeyedRows = async () => EstimateService.filter({ creation_request_key: creationKey });
-    const validateKeyedRows = (rows: any[] = []) => {
-      const mismatches = (rows || []).filter((row: any) => !sameCreateIdentity(row, estimate));
+    const readKeyedRows = async () => {
+      const rows = await EstimateService.filter({ creation_request_key: creationKey });
+      if (!Array.isArray(rows)) {
+        throw Object.assign(new Error('Estimate creation receipt lookup did not return a verifiable record list.'), { statusCode: 409 });
+      }
+      return rows;
+    };
+    const validateKeyedRows = (rows: any[] = [], { allowMultiple = false } = {}) => {
+      const mismatches = rows.filter((row: any) => !sameCreateIdentity(row, estimate));
       if (mismatches.length) {
         throw Object.assign(new Error('This Estimate creation receipt is already associated with different client/project/estimate-number data. No Estimate was changed.'), { statusCode: 409 });
       }
-      return canonicalRow(rows || []);
+      if (!allowMultiple && rows.length > 1) {
+        throw Object.assign(new Error('Multiple Estimates already share this creation receipt. No uncertain Estimate was deleted; review the duplicate Drafts before retrying.'), { statusCode: 409 });
+      }
+      return canonicalRow(rows);
     };
 
     let existingRows = await readKeyedRows();
-    const existing = validateKeyedRows(existingRows || []);
+    const existing = validateKeyedRows(existingRows);
     if (existing?.id) return Response.json({ estimate: existing, reused: true });
 
     let created;
@@ -118,15 +127,34 @@ Deno.serve(async (req) => {
       // A datastore response can be lost after persistence. Re-read by the
       // creation receipt before surfacing the error so the caller can still
       // receive the already-created Estimate on the same attempt when possible.
-      existingRows = await readKeyedRows().catch(() => []);
-      const recovered = validateKeyedRows(existingRows || []);
+      try {
+        existingRows = await readKeyedRows();
+      } catch (verificationError) {
+        throw Object.assign(new Error(
+          `Estimate create response was unavailable and its recovery lookup also failed. Do not retry blindly; reload Estimates first. ${verificationError?.message || ''}`.trim()
+        ), { statusCode: 409 });
+      }
+      const recovered = validateKeyedRows(existingRows);
       if (recovered?.id) return Response.json({ estimate: recovered, reused: true, recovered_after_create_error: true });
       throw createError;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    const afterCreateRows = await readKeyedRows();
-    const canonical = validateKeyedRows(afterCreateRows || []) || created;
+    let afterCreateRows;
+    try {
+      afterCreateRows = await readKeyedRows();
+    } catch (verificationError) {
+      throw Object.assign(new Error(
+        `Estimate was created, but its concurrent verification read failed. Do not retry blindly; reload Estimates first. ${verificationError?.message || ''}`.trim()
+      ), { statusCode: 409 });
+    }
+    const canonical = validateKeyedRows(afterCreateRows, { allowMultiple: true }) || created;
+
+    if (afterCreateRows.length > 1 && canonical?.id === created?.id) {
+      return Response.json({
+        error: 'A concurrent Estimate was created with the same creation receipt after this request became canonical. The canonical Draft was preserved and no uncertain concurrent row was deleted; review the duplicate Drafts before continuing.',
+      }, { status: 409 });
+    }
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
       const discard = await canDiscardRaceDuplicate(base44, created);
