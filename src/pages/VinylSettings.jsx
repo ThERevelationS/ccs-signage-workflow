@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createVinylMachineWithRecovery } from "@/components/vinylInventory/vinylMachinePersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TYPE_META = {
   printer: { label: "Printer", icon: Printer },
@@ -85,7 +86,7 @@ export default function VinylSettings() {
     setError("");
     try {
       const [rows, me] = await Promise.all([
-        VinylMachine.list("sort_order"),
+        loadAllEntityRows({ entity: VinylMachine, sort: "sort_order", label: "Vinyl machines" }),
         User.me().catch(() => null),
       ]);
       setMachines(rows || []);
