@@ -237,7 +237,9 @@ Deno.serve(async (req) => {
           `Estimator Customer create response was unavailable and its recovery lookup also failed. Do not retry blindly; reload Customers first. ${verificationError?.message || ''}`.trim()
         ), { statusCode: 409 });
       }
-      throw verificationError;
+      throw Object.assign(new Error(
+        `Estimator Customer was created, but its concurrent verification read failed. Do not retry blindly; reload Customers first. ${verificationError?.message || ''}`.trim()
+      ), { statusCode: 409 });
     }
 
     if (!created?.id) {
