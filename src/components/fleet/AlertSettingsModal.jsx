@@ -53,6 +53,7 @@ export default function AlertSettingsModal({ open, onClose, vehicle }) {
         rule_key: rule.rule_key,
         enabled: !!rule.enabled,
         threshold: rule.threshold,
+        expected_updated_date: rule.source === "vehicle" ? (rule.updated_date || "") : "",
       }));
       const { data } = await base44.functions.invoke("fleetAlertSettingsAction", {
         action: "save_vehicle",
