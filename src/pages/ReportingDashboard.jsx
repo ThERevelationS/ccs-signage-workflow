@@ -43,7 +43,7 @@ export default function ReportingDashboard() {
           sort: "created_date",
           label: "Reporting Dashboard Work Orders",
         }),
-        base44.entities.AuthorizedEmail.list()
+        loadAllEntityRows({ entity: base44.entities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
       ]);
       setWorkOrders(wos || []);
       setUsers(us || []);
