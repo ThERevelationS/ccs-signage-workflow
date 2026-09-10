@@ -195,9 +195,18 @@ Deno.serve(async (req) => {
         row.operation_type === 'scheduled_generation' && row?.result_summary?.task_lock_acquired === true
       ));
     };
+    const activeCompletionReschedule = async () => {
+      const rows = await Receipt.filter({
+        operation_type: 'maintenance_reschedule',
+        target_id: id,
+        status: { $in: ['started', 'failed'] },
+      });
+      return canonical((rows || []).filter((row: any) => row?.result_summary?.work_order_id));
+    };
 
     if (action === 'update') {
       if (await activeGenerationLock()) return Response.json({ error: 'This maintenance schedule is currently reserved by Fleet work-order generation. Refresh after that operation finishes before editing it.' }, { status: 409 });
+      if (await activeCompletionReschedule()) return Response.json({ error: 'This maintenance schedule is currently being advanced by a Fleet work-order completion. Finish/reconcile that completion before editing the schedule.' }, { status: 409 });
       const patch = taskPatch(body?.task || body);
       if (patch.status && !TASK_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid maintenance status.' }, { status: 400 });
       if (patch.type && !TASK_TYPES.has(patch.type)) return Response.json({ error: 'Invalid maintenance type.' }, { status: 400 });
@@ -221,6 +230,7 @@ Deno.serve(async (req) => {
 
     if (action === 'delete') {
       if (await activeGenerationLock()) return Response.json({ error: 'This maintenance schedule is currently reserved by Fleet work-order generation and cannot be deleted.' }, { status: 409 });
+      if (await activeCompletionReschedule()) return Response.json({ error: 'This maintenance schedule is currently being advanced by a Fleet work-order completion and cannot be deleted.' }, { status: 409 });
       const linked = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` });
       if (linked.length) return Response.json({ error: 'This maintenance schedule has Fleet work-order history and cannot be deleted. Mark it completed instead.' }, { status: 409 });
       await Task.delete(id);
