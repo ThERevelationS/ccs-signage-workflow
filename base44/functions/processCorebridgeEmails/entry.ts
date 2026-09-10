@@ -3,6 +3,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
+import { loadGlobalSettingSingleton } from '../../shared/globalSettingSingleton.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -108,9 +109,15 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // Load settings
-    const settingsRecords = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: "corebridgeAI" });
-    const cfg = settingsRecords.length > 0 ? settingsRecords[0].setting_value : {};
+    // Load the CoreBridge business-routing settings as a true singleton. If a
+    // duplicate setting row ever exists, fail closed instead of arbitrarily using
+    // whichever record the datastore returns first.
+    const settingsRecord = await loadGlobalSettingSingleton({
+      entity: base44.asServiceRole.entities.GlobalSettings,
+      settingKey: 'corebridgeAI',
+      label: 'CoreBridge AI settings',
+    });
+    const cfg = settingsRecord?.setting_value || {};
 
     if (cfg.enabled === false) {
       logData.status = 'no_emails';
