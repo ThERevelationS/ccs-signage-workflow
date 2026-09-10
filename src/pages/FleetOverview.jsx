@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   Truck,
   ClipboardList,
@@ -40,13 +41,13 @@ export default function FleetOverview() {
     (async () => {
       try {
         const [equipment, tasks, workOrders, parts, fluids, requests, liveState] = await Promise.all([
-          base44.entities.FleetEquipment.list("name", 500),
-          base44.entities.FleetMaintenanceTask.list("start_date", 500),
-          base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-          base44.entities.FleetPart.list("part_name", 500),
-          base44.entities.FleetFluid.list("fluid_name", 500),
-          base44.entities.FleetPartFluidRequest.list("-created_date", 500),
-          base44.entities.BouncieVehicleLiveState.list("-last_seen_at", 500),
+          listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+          listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
+          listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
+          listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
+          listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
+          listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
+          listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
         ]);
         if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState });
       } catch (e) {
