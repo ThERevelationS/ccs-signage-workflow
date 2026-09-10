@@ -29,6 +29,7 @@ import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function UserSettings() {
   const { currentUser } = useAuth();
@@ -53,7 +54,11 @@ export default function UserSettings() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const users = await base44.entities.AuthorizedEmail.list();
+      const users = await loadAllEntityRows({
+        entity: base44.entities.AuthorizedEmail,
+        sort: null,
+        label: "User Settings authorized users",
+      });
       setAllUsers(users);
       
       // Find current user's data
