@@ -3,7 +3,7 @@ import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pip
 import { localDateStamp } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
-import { deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { createEstimateLinkedWorkOrderWithRecovery, deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
@@ -196,21 +196,25 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     });
   }
 
-  const created = await base44.entities.WorkOrder.create({
+  const createFields = {
     ...fields,
     current_stage: "estimating",
     date_initial_contact: new Date().toISOString().slice(0, 10),
-  });
+  };
 
-  // Collapse only the practical two-session create race for this exact estimate.
-  // Never delete/merge a WorkOrder that existed before this request. If another
-  // session won, discard only this request's newly-created losing row and apply
-  // the latest estimator fields to the canonical pipeline record.
-  return convergeCreatedEstimateWorkOrder({
+  // Preserve the existing estimate-ID convergence behavior, but also recover a
+  // durable create whose response was lost before the convergence step could run.
+  return createEstimateLinkedWorkOrderWithRecovery({
+    entity: base44.entities.WorkOrder,
     estimateId: estimate.id,
-    created,
-    fields,
-    duplicateLabel: "Sales Pipeline record",
+    data: createFields,
+    label: "Sales Pipeline estimate synchronization",
+    convergeCreated: (created) => convergeCreatedEstimateWorkOrder({
+      estimateId: estimate.id,
+      created,
+      fields,
+      duplicateLabel: "Sales Pipeline record",
+    }),
   });
 };
 
