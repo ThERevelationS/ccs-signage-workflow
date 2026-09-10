@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "./NotificationService";
 import { createActivityLogBestEffort } from "./activityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const ActivityLog = base44.entities.ActivityLog;
 
@@ -9,7 +10,11 @@ export async function getCurrentUser() {
   const storedEmail = localStorage.getItem("userEmail");
   if (storedEmail) {
     try {
-      const users = await base44.entities.AuthorizedEmail.list();
+      const users = await loadAllEntityRows({
+        entity: base44.entities.AuthorizedEmail,
+        sort: null,
+        label: "Activity logger authorized users",
+      });
       const user = users.find(u => u.email.toLowerCase() === storedEmail.toLowerCase());
       if (user) {
         return user;
