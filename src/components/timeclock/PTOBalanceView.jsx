@@ -45,6 +45,9 @@ export default function PTOBalanceView({ currentUser }) {
 
   const loadBalanceData = async () => {
     setIsLoading(true);
+    setBalance(null);
+    setPolicy(null);
+    setUpcomingRequests([]);
     try {
       const [balanceData, requests] = await Promise.all([
         loadAllEntityRows({
