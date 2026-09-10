@@ -19,6 +19,9 @@ import {
   UserRoundX,
   Wrench,
   Clock3,
+  Activity,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 const statusClass = (status) => {
@@ -35,11 +38,15 @@ const statusClass = (status) => {
 export default function FleetOverview() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminHealth, setAdminHealth] = useState(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
+        const user = await base44.auth.me().catch(() => null);
+        if (mounted) setIsAdmin(user?.role === "admin");
         const [equipment, tasks, workOrders, parts, fluids, requests, liveState] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
@@ -50,6 +57,22 @@ export default function FleetOverview() {
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
         ]);
         if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState });
+        if (user?.role === "admin") {
+          const [maintenanceLog, reminderLog, workerLog, bouncieLog, pendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
+            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
+            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
+            base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
+            base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
+            base44.entities.FleetNotificationQueue.filter({ status: "pending" }, "-created_date", 100),
+            base44.entities.FleetNotificationQueue.filter({ status: "failed" }, "-created_date", 100),
+            base44.entities.FleetOperationReceipt.filter({ status: "started" }, "-created_date", 100),
+            base44.entities.FleetOperationReceipt.filter({ status: "failed" }, "-created_date", 100),
+          ]);
+          if (mounted) setAdminHealth({
+            logs: [maintenanceLog?.[0], reminderLog?.[0], workerLog?.[0], bouncieLog?.[0]].filter(Boolean),
+            unresolved: (pendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
+          });
+        }
       } catch (e) {
         if (mounted) setError(e?.message || "Unable to load Fleet overview.");
       }
@@ -69,6 +92,9 @@ export default function FleetOverview() {
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
+    const latestLiveStateMs = Math.max(0, ...data.liveState.map(v => Date.parse(v.last_seen_at || v.updated_date || "") || 0));
+    const bouncieAgeMinutes = latestLiveStateMs ? Math.floor((Date.now() - latestLiveStateMs) / 60000) : null;
+    const bouncieFresh = bouncieAgeMinutes != null && bouncieAgeMinutes <= 30;
     const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
@@ -88,6 +114,8 @@ export default function FleetOverview() {
       lowStock: lowParts.length + lowFluids.length,
       pendingRequests,
       uniqueTracked,
+      bouncieAgeMinutes,
+      bouncieFresh,
       overdueTasks,
       upcomingTasks,
     };
@@ -121,6 +149,25 @@ export default function FleetOverview() {
               <MetricCard icon={AlertTriangle} label="High / Critical" value={metrics.highPriorityOrders.length} sub="Active work orders" />
               <MetricCard icon={Package} label="Low Stock" value={metrics.lowStock} sub={`${metrics.lowParts.length} parts · ${metrics.lowFluids.length} fluids`} />
               <MetricCard icon={CalendarClock} label="Due in 14 Days" value={metrics.upcomingTasks.length} sub={`${metrics.overdueTasks.length} overdue schedule${metrics.overdueTasks.length === 1 ? "" : "s"}`} />
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${metrics.bouncieFresh ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
+                    <Activity className={`w-5 h-5 ${metrics.bouncieFresh ? "text-emerald-600 dark:text-emerald-300" : "text-amber-600 dark:text-amber-300"}`} />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet System Health</h2>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1">{metrics.bouncieFresh ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-amber-600" />} Bouncie live data: {metrics.bouncieAgeMinutes == null ? "no timestamp" : `${metrics.bouncieAgeMinutes}m ago`}</span>
+                      {isAdmin && <span className="inline-flex items-center gap-1">{(adminHealth?.unresolved || 0) === 0 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-red-600" />} Automation issues: {adminHealth?.unresolved ?? "…"}</span>}
+                      {isAdmin && <span>{adminHealth?.logs?.length || 0}/4 core automation heartbeats recorded</span>}
+                    </div>
+                  </div>
+                </div>
+                {isAdmin && <Link to={createPageUrl("FleetSettings")} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1">Operations health <ArrowRight className="w-4 h-4" /></Link>}
+              </div>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-4">
