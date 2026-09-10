@@ -48,24 +48,28 @@ export default function FleetMaintenance() {
   const isAdmin = currentUser?.role === "admin";
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const metrics = useMemo(() => {
-    const todayText = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
     horizon.setDate(horizon.getDate() + 14);
     const pending = tasks.filter(t => t.status === "pending");
     const inProgress = tasks.filter(t => t.status === "in_progress");
     const completed = tasks.filter(t => t.status === "completed");
+    const overdue = pending.filter(t => t.start_date && t.start_date < todayText);
     const dueSoon = pending.filter(t => {
       if (!t.start_date) return false;
       const due = new Date(`${t.start_date}T12:00:00`);
       return due >= today && due <= horizon;
     });
-    return { pending, inProgress, completed, dueSoon };
+    return { pending, inProgress, completed, overdue, dueSoon };
   }, [tasks]);
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     return tasks.filter(t => {
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      const overdue = t.status === "pending" && !!t.start_date && t.start_date < todayText;
+      if (statusFilter === "overdue" && !overdue) return false;
+      if (!["all", "overdue"].includes(statusFilter) && t.status !== statusFilter) return false;
       return !q || [t.title, t.description, t.assigned_to, names[t.equipment_id], t.frequency, t.status].some(v => String(v || "").toLowerCase().includes(q));
     });
   }, [tasks, search, statusFilter, names]);
@@ -104,9 +108,10 @@ export default function FleetMaintenance() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <Metric icon={Clock3} label="Pending" value={metrics.pending.length} />
           <Metric icon={Activity} label="In progress" value={metrics.inProgress.length} />
+          <Metric icon={CalendarClock} label="Overdue" value={metrics.overdue.length} attention={metrics.overdue.length > 0} />
           <Metric icon={CalendarClock} label="Due in 14 days" value={metrics.dueSoon.length} attention={metrics.dueSoon.length > 0} />
           <Metric icon={CheckCircle2} label="Completed schedules" value={metrics.completed.length} />
         </div>
