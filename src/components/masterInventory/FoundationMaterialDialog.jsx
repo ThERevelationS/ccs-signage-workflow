@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 import { MATERIAL_TYPES, fieldsFor } from "./foundationFieldSchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 
 export default function FoundationMaterialDialog({ open, record, defaultType, onClose, onSaved }) {
   const [form, setForm] = useState({});
@@ -52,7 +53,12 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
           label: "Foundation Catalog item",
         });
       } else {
-        await base44.entities.FoundationInventory.create(data);
+        await createInventoryRecordWithRecovery({
+          entity: base44.entities.FoundationInventory,
+          data,
+          nameField: "material_name",
+          label: `Foundation Catalog item “${data.material_name || "Material"}”`,
+        });
       }
       onSaved();
     } catch (error) {
