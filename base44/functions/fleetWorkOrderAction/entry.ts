@@ -839,6 +839,8 @@ Deno.serve(async (req) => {
         result_summary: {
           work_order_patch: completionPatch,
           equipment_status: equipmentStatus || '',
+          equipment_expected_updated_date: equipmentExpectedUpdatedAt || '',
+          equipment_status_before: completionEquipment?.status || '',
           inventory_operation_keys: inventoryPlans.map((p) => p.operation_key),
           schedule_operation_key: scheduleKey,
           schedule_preview: schedulePreview,
