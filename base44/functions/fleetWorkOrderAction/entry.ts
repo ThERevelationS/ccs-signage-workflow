@@ -818,7 +818,7 @@ Deno.serve(async (req) => {
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, work_order: finalized });
         }
-        const startedAt = Date.parse(mainClaim.receipt?.started_at || mainClaim.receipt?.created_date || '') || 0;
+        const startedAt = Date.parse(activeMainReceipt?.started_at || activeMainReceipt?.created_date || '') || 0;
         const stale = !!startedAt && (Date.now() - startedAt) >= STALE_CLAIM_MS;
         if (!stale) {
           return Response.json({
@@ -826,11 +826,12 @@ Deno.serve(async (req) => {
             operation_key: completionKey,
           }, { status: 409 });
         }
-        await Receipt.update(mainClaim.receipt.id, {
+        await Receipt.update(activeMainReceipt.id, {
           started_at: nowIso(),
           error_message: '',
-          result_summary: { ...(mainClaim.receipt.result_summary || {}), stale_resume: true, stale_resumed_at: nowIso() },
+          result_summary: { ...(activeMainReceipt.result_summary || {}), stale_resume: true, stale_resumed_at: nowIso() },
         });
+        activeMainReceipt = await Receipt.get(activeMainReceipt.id);
       }
 
       try {
@@ -838,23 +839,30 @@ Deno.serve(async (req) => {
           await applyInventoryPlan(base44, Receipt, plan, { ...existing, ...completionPatch, id }, user);
         }
         const schedule = await applySchedule(base44, Receipt, { ...existing, ...completionPatch, id }, completionKey, user);
+        if (!lockedWorkOrderVersion) throw new Error('Fleet completion lock is missing its work-order version. Completion was not finalized.');
+        const stamp = nowIso();
+        const completed = await updateFleetRecordIfCurrent({
+          entity: WorkOrder,
+          id,
+          expectedUpdatedAt: lockedWorkOrderVersion,
+          patch: {
+            ...completionPatch,
+            status: 'completed',
+            completed_date: completionPatch.completed_date || today(),
+            completion_receipt_key: completionKey,
+            inventory_applied_at: stamp,
+            schedule_applied_at: schedule?.applied ? stamp : null,
+          },
+          label: 'Fleet work order completion',
+        });
         if (equipmentStatus && completionPatch.equipment_id) {
           await Equipment.update(completionPatch.equipment_id, { status: equipmentStatus });
         }
-        const stamp = nowIso();
-        const completed = await WorkOrder.update(id, {
-          ...completionPatch,
-          status: 'completed',
-          completed_date: completionPatch.completed_date || today(),
-          completion_receipt_key: completionKey,
-          inventory_applied_at: stamp,
-          schedule_applied_at: schedule?.applied ? stamp : null,
-        });
-        await Receipt.update(mainClaim.receipt.id, {
+        await Receipt.update(activeMainReceipt.id, {
           status: 'applied',
           applied_at: stamp,
           result_summary: {
-            ...(mainClaim.receipt.result_summary || {}),
+            ...(activeMainReceipt.result_summary || {}),
             inventory_operations_applied: inventoryPlans.length,
             schedule_result: schedule || null,
           },
@@ -885,7 +893,7 @@ Deno.serve(async (req) => {
           schedule: schedule || null,
         });
       } catch (error) {
-        await Receipt.update(mainClaim.receipt.id, {
+        await Receipt.update(activeMainReceipt.id, {
           status: 'failed',
           failed_at: nowIso(),
           error_message: error?.message || String(error),
