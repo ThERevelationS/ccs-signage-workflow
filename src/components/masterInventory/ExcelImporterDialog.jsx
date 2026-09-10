@@ -15,7 +15,8 @@ import {
   SkipForward,
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createImportedInventoryRowSafely, importedPayloadMatches } from "./inventoryImportPersistence";
 import {
   routeRow,
   validateColumns,
@@ -222,16 +223,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
         return;
       }
 
-      const sameImportedValue = (a, b) => {
-        const emptyA = a === undefined || a === null || a === "";
-        const emptyB = b === undefined || b === null || b === "";
-        if (emptyA && emptyB) return true;
-        if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
-          return Math.abs(Number(a) - Number(b)) <= 0.000001;
-        }
-        return JSON.stringify(a) === JSON.stringify(b);
-      };
-      const payloadMatches = (record, payload) => !!record && Object.entries(payload || {}).every(([field, value]) => sameImportedValue(record[field], value));
+      const payloadMatches = importedPayloadMatches;
       const completedRows = [];
 
       const writeOne = async (r) => {
@@ -254,24 +246,15 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
               res.updated += 1;
               completedRows.push(r);
             } else {
-              const beforeCreate = await conf.entity.filter({ [conf.nameField]: r.name });
-              const appeared = (beforeCreate || []).find((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
-              if (appeared) {
-                throw new Error("An item with this name appeared after import preflight. Refresh the preview so it can be treated as an update instead of creating a duplicate.");
-              }
-              const created = await conf.entity.create(r.payload);
-              await sleep(50);
-              const afterCreate = await conf.entity.filter({ [conf.nameField]: r.name });
-              const exactMatches = (afterCreate || []).filter((item) => nameKey(item[conf.nameField]) === nameKey(r.name));
-              if (exactMatches.length !== 1 || exactMatches[0].id !== created?.id) {
-                if (created?.id) {
-                  await deleteEntityIfUnchanged({
-                    entity: conf.entity,
-                    record: created,
-                    label: `${conf.label} duplicate import rollback “${r.name}”`,
-                  });
-                }
-                throw new Error("Another same-name inventory item appeared while this row was being created. This import row was rolled back; refresh the preview before retrying.");
+              const createResult = await createImportedInventoryRowSafely({
+                entity: conf.entity,
+                payload: r.payload,
+                nameField: conf.nameField,
+                name: r.name,
+                label: `${conf.label} import create “${r.name}”`,
+              });
+              if (createResult.status === "existing" || createResult.status === "concurrent_duplicate_discarded") {
+                throw new Error("An item with this name appeared after import preflight. Refresh the preview so the canonical row can be treated as an update instead of creating a duplicate.");
               }
               res.created += 1;
               completedRows.push(r);
