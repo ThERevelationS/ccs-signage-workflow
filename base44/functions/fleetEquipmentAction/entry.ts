@@ -16,6 +16,27 @@ async function requireAdmin(base44: any) {
 }
 
 const normalizeVin = (value: unknown) => String(value || '').trim().toUpperCase();
+const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
+  const at = Date.parse(a?.created_date || '') || 0;
+  const bt = Date.parse(b?.created_date || '') || 0;
+  if (at !== bt) return at - bt;
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+})[0] || null;
+const normalizedText = (value: unknown) => String(value ?? '').trim();
+const equipmentCreateMatches = (row: any, desired: any) => {
+  const fields = ['name','type','make','model','serial_number','vin','engine_details','status','location','purchase_date','photo_url','notes'];
+  for (const field of fields) {
+    const left = field === 'vin' ? normalizeVin(row?.[field]) : normalizedText(row?.[field]);
+    const right = field === 'vin' ? normalizeVin(desired?.[field]) : normalizedText(desired?.[field]);
+    if (left !== right) return false;
+  }
+  for (const field of ['year','mileage_hours']) {
+    const left = row?.[field] == null || row?.[field] === '' ? null : Number(row[field]);
+    const right = desired?.[field] == null || desired?.[field] === '' ? null : Number(desired[field]);
+    if (left !== right) return false;
+  }
+  return true;
+};
 
 const equipmentPatch = (source: any) => {
   const allowed = [
