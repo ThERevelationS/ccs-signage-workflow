@@ -137,7 +137,13 @@ Deno.serve(async (req) => {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    rows = await readKeyedRows();
+    try {
+      rows = await readKeyedRows();
+    } catch (verificationError) {
+      throw Object.assign(new Error(
+        `Customer was created, but its concurrent verification read failed. Do not retry blindly; reload Customers first. ${verificationError?.message || ''}`.trim()
+      ), { statusCode: 409 });
+    }
     const canonical = validateRows(rows, { allowMultiple: true }) || created;
 
     if (rows.length > 1 && canonical?.id === created?.id) {
