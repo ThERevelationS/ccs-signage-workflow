@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,12 +10,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
 import { 
   HardDrive, 
   Loader2, 
@@ -31,8 +24,7 @@ import {
   FolderOpen,
   Save,
   Settings,
-  History,
-  FileSpreadsheet
+  History
 } from "lucide-react";
 import { format } from "date-fns";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
