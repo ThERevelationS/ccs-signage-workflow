@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, Pencil, Copy, Users } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -136,13 +138,13 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   const loadData = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    const all = await SalesFilter.list();
+    const all = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales custom filters" });
     setFilters(all.filter(f => f.type === "filter"));
     setColumnPresets(all.filter(f => f.type === "column_preset"));
   };
 
   const loadUsers = async () => {
-    const usersData = await AuthorizedEmail.list();
+    const usersData = await loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales custom-filter users" });
     setUsers(usersData);
   };
 
@@ -154,13 +156,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   const loadGlobalOptions = useCallback(async () => {
     try {
-      const settings = await GlobalSettings.list();
+      const [leadSourcesSetting, taskDescSetting] = await Promise.all([
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: "salesLeadSources", label: "Sales custom-filter lead sources" }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: "salesTaskDescriptions", label: "Sales custom-filter task descriptions" }),
+      ]);
       const cache = {};
       
-      const leadSourcesSetting = settings.find(s => s.setting_key === 'salesLeadSources');
       cache.salesLeadSources = leadSourcesSetting?.setting_value?.items || ["Walk-in", "Phone", "Email", "Referral", "Website"];
       
-      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
+
       if (taskDescSetting?.setting_value?.items) {
         cache.salesTaskDescriptions = taskDescSetting.setting_value.items.map(item => 
           typeof item === 'string' ? item : item.text
