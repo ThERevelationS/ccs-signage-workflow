@@ -49,13 +49,21 @@ async function estimateReference(base44: any, estimateId: string) {
 }
 
 async function canDiscardRaceDuplicate(base44: any, row: any) {
-  if (!row?.id) return { ok: false, reason: 'missing Estimate id' };
-  if (clean(row.status || 'draft') !== 'draft') return { ok: false, reason: `status is ${row.status}` };
-  if (clean(row.work_order_id)) return { ok: false, reason: 'work_order_id is already set' };
-  if ((row.line_items || []).length) return { ok: false, reason: 'Products are already attached' };
-  const referencedBy = await estimateReference(base44, row.id);
-  if (referencedBy) return { ok: false, reason: `${referencedBy} already references it` };
-  return { ok: true, reason: '' };
+  if (!row?.id) return { ok: false, reason: 'missing Estimate id', record: null };
+  const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;
+  let live;
+  try {
+    live = await EstimateService.get(row.id);
+  } catch {
+    return { ok: false, reason: 'the losing Draft could not be re-read safely', record: null };
+  }
+  if (!live?.id) return { ok: true, reason: '', record: null };
+  if (clean(live.status || 'draft') !== 'draft') return { ok: false, reason: `status is ${live.status}`, record: live };
+  if (clean(live.work_order_id)) return { ok: false, reason: 'work_order_id is already set', record: live };
+  if ((live.line_items || []).length) return { ok: false, reason: 'Products are already attached', record: live };
+  const referencedBy = await estimateReference(base44, live.id);
+  if (referencedBy) return { ok: false, reason: `${referencedBy} already references it`, record: live };
+  return { ok: true, reason: '', record: live };
 }
 
 Deno.serve(async (req) => {
@@ -127,7 +135,39 @@ Deno.serve(async (req) => {
           error: `A simultaneous duplicate Estimate was detected, but the losing Draft could not be safely removed because ${discard.reason}. No Estimate was deleted.`,
         }, { status: 409 });
       }
-      await EstimateService.delete(created.id);
+      const losing = discard.record;
+      if (!losing?.id) {
+        return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true, duplicate_already_absent: true });
+      }
+      const losingVersion = String(losing.updated_date || '').trim();
+      if (!losingVersion) {
+        return Response.json({ error: 'A simultaneous duplicate Estimate was detected, but the losing Draft has no version metadata. No uncertain Estimate was deleted.' }, { status: 409 });
+      }
+      let deleted;
+      try {
+        deleted = await EstimateService.deleteMany({
+          id: losing.id,
+          creation_request_key: creationKey,
+          updated_date: losingVersion,
+        });
+      } catch (deleteError) {
+        let readFailed = false;
+        const afterError = await EstimateService.get(losing.id).catch(() => {
+          readFailed = true;
+          return null;
+        });
+        if (!readFailed && !afterError) {
+          return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true, recovered_after_delete_error: true });
+        }
+        throw deleteError;
+      }
+      if (!deleted || deleted.deleted !== 1) {
+        const afterDelete = await EstimateService.get(losing.id).catch(() => undefined);
+        if (afterDelete === null) {
+          return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true });
+        }
+        return Response.json({ error: 'The losing duplicate Estimate changed before cleanup. No uncertain Estimate was deleted; reload before retrying.' }, { status: 409 });
+      }
       return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
