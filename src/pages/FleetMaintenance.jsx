@@ -80,7 +80,7 @@ export default function FleetMaintenance() {
     setError("");
     try {
       const body = dialog?.task
-        ? { action: "update", id: dialog.task.id, task: payload }
+        ? { action: "update", id: dialog.task.id, expected_updated_date: dialog.task.updated_date || "", task: payload }
         : { action: "create", task: payload };
       const { data } = await base44.functions.invoke("fleetMaintenanceAction", body);
       if (data?.error) throw new Error(data.error);
