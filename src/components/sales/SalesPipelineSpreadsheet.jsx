@@ -30,7 +30,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -317,11 +317,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleSaveNew = async (workOrderData) => {
-    const newOrder = await WorkOrder.create({
-      ...workOrderData,
-      sales_status: "lead"
+    const { record: newOrder } = await createWorkOrderWithRecovery({
+      data: {
+        ...workOrderData,
+        sales_status: "lead"
+      },
+      label: "Sales Pipeline Work Order",
     });
-    setWorkOrders([newOrder, ...workOrders]);
+    setWorkOrders(prev => [newOrder, ...prev.filter(wo => wo.id !== newOrder.id)]);
     setShowForm(false);
     setDuplicateData(null);
   };
@@ -906,12 +909,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleCreateFromForm = async (data) => {
-    const newOrder = await WorkOrder.create({
-      ...data,
-      sales_status: "lead",
-      in_pipeline: false
+    const { record: newOrder } = await createWorkOrderWithRecovery({
+      data: {
+        ...data,
+        sales_status: "lead",
+        in_pipeline: false
+      },
+      label: "Sales Pipeline form Work Order",
     });
-    setWorkOrders([newOrder, ...workOrders]);
+    setWorkOrders(prev => [newOrder, ...prev.filter(wo => wo.id !== newOrder.id)]);
   };
 
   React.useImperativeHandle(ref, () => ({
@@ -1461,16 +1467,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
-            // Create a rider work order
-            const rider = await WorkOrder.create({
-              title: `${wo.title} - Rider`,
-              client_name: wo.client_name,
-              description: wo.description,
-              is_rider: true,
-              parent_work_order_id: wo.id,
-              current_stage: wo.current_stage,
-              rider_stage: wo.current_stage,
-              sales_status: wo.sales_status
+            await createWorkOrderWithRecovery({
+              data: {
+                title: `${wo.title} - Rider`,
+                client_name: wo.client_name,
+                description: wo.description,
+                is_rider: true,
+                parent_work_order_id: wo.id,
+                current_stage: wo.current_stage,
+                rider_stage: wo.current_stage,
+                sales_status: wo.sales_status
+              },
+              label: "Sales Pipeline rider Work Order",
             });
             loadWorkOrders();
           }}
