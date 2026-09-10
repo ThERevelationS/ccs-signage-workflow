@@ -67,10 +67,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'The issued Quote Version changed. Reload the estimate before recording acceptance.' }, { status: 409 });
     }
 
-    const existing = canonicalAcceptance(await Acceptance.filter({
+    const existingRows = await Acceptance.filter({
       estimate_id: estimateId,
       quote_version: quoteVersion,
-    }));
+    });
+    if (!Array.isArray(existingRows)) {
+      throw new Error('Acceptance history could not be verified safely.');
+    }
+    if (existingRows.length > 1) {
+      throw new Error('Multiple immutable acceptance records already exist for this Quote Version. No acceptance was changed; review the acceptance history before continuing.');
+    }
+    const existing = canonicalAcceptance(existingRows);
     if (existing) return Response.json({ acceptance: existing, reused: true });
     if (estimate.status === 'approved') {
       return Response.json({ error: 'This estimate is already Approved, but no immutable acceptance record exists for the current Quote Version. Acceptance cannot be reconstructed automatically.' }, { status: 409 });
@@ -89,33 +96,57 @@ Deno.serve(async (req) => {
       }
     }
 
-    const created = await Acceptance.create({
-      estimate_id: estimateId,
-      work_order_id: estimate.work_order_id || '',
-      delivery_id: delivery?.id || '',
-      quote_issue_key: quoteIssueKey(estimateId, quoteVersion),
-      quote_version: quoteVersion,
-      quote_issue_date: estimate.quote_issue_date || '',
-      quote_expiration_date: quoteExpirationDate(estimate.quote_issue_date, estimate.quote_valid_days ?? 30),
-      quote_total: Number(estimate.quote_total || 0),
-      accepted_at: new Date(acceptedAt).toISOString(),
-      accepted_by_name: acceptedByName,
-      accepted_by_email: acceptedByEmail,
-      acceptance_method: acceptanceMethod,
-      evidence_reference: evidenceReference,
-      notes,
-      recorded_by_email: String(user.email || ''),
-      recorded_by_name: String(user.full_name || user.name || user.email || ''),
-    });
+    let created: any = null;
+    let createError: any = null;
+    try {
+      created = await Acceptance.create({
+        estimate_id: estimateId,
+        work_order_id: estimate.work_order_id || '',
+        delivery_id: delivery?.id || '',
+        quote_issue_key: quoteIssueKey(estimateId, quoteVersion),
+        quote_version: quoteVersion,
+        quote_issue_date: estimate.quote_issue_date || '',
+        quote_expiration_date: quoteExpirationDate(estimate.quote_issue_date, estimate.quote_valid_days ?? 30),
+        quote_total: Number(estimate.quote_total || 0),
+        accepted_at: new Date(acceptedAt).toISOString(),
+        accepted_by_name: acceptedByName,
+        accepted_by_email: acceptedByEmail,
+        acceptance_method: acceptanceMethod,
+        evidence_reference: evidenceReference,
+        notes,
+        recorded_by_email: String(user.email || ''),
+        recorded_by_name: String(user.full_name || user.name || user.email || ''),
+      });
+    } catch (error) {
+      createError = error;
+    }
 
     // Re-read after create to collapse the practical two-session race without
     // requiring unsupported database unique-index behavior. Only this request's
     // losing insert is removed; an already-canonical immutable row is never edited.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    const canonical = canonicalAcceptance(await Acceptance.filter({
+    const afterCreateRows = await Acceptance.filter({
       estimate_id: estimateId,
       quote_version: quoteVersion,
-    })) || created;
+    });
+    if (!Array.isArray(afterCreateRows)) {
+      throw new Error('Acceptance create outcome could not be verified safely.');
+    }
+    if (!created?.id) {
+      if (afterCreateRows.length === 1) {
+        return Response.json({ acceptance: afterCreateRows[0], reused: true, recovered_after_create_error: true });
+      }
+      if (afterCreateRows.length > 1) {
+        throw new Error('Acceptance creation became ambiguous and multiple immutable records are now visible. No uncertain acceptance was deleted; review the acceptance history before retrying.');
+      }
+      throw createError || new Error('Acceptance could not be created or verified.');
+    }
+
+    const canonical = canonicalAcceptance(afterCreateRows) || created;
+
+    if (afterCreateRows.length > 1 && canonical?.id === created.id) {
+      throw new Error('A concurrent acceptance record was detected after this acceptance was created. The earlier canonical row was preserved and no uncertain concurrent record was deleted; review the acceptance history before continuing.');
+    }
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
       const createdVersion = String(created.updated_date || '').trim();
