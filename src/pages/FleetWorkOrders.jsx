@@ -153,16 +153,13 @@ export default function FleetWorkOrders() {
       return;
     }
     setActionError("");
-    setDialog({
-      mode: "create",
-      workOrder: {
-        equipment_id: workOrder.equipment_id,
-        title: "",
-        description: `Follow-up work identified from ${workOrder.work_order_number} — ${workOrder.title}`,
-        type: "repair",
-        priority: workOrder.priority || "medium",
-        status: "open",
-      },
+    openCreateDialog({
+      equipment_id: workOrder.equipment_id,
+      title: "",
+      description: `Follow-up work identified from ${workOrder.work_order_number} — ${workOrder.title}`,
+      type: "repair",
+      priority: workOrder.priority || "medium",
+      status: "open",
     });
   };
 
@@ -188,7 +185,7 @@ export default function FleetWorkOrders() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Work Orders</h1><p className="text-sm text-gray-500 dark:text-slate-400">Fleet maintenance only. These records are separate from customer/signage WorkOrders.</p></div>
-          <button onClick={() => setDialog({ mode: "create", workOrder: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Fleet Work Order</button>
+          <button onClick={() => openCreateDialog()} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Fleet Work Order</button>
         </div>
 
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet maintenance is live in CCS. Creates/completions use Fleet-only server actions, durable idempotency receipts, inventory/history updates, recurring schedule advancement, and queued notifications.</div>
