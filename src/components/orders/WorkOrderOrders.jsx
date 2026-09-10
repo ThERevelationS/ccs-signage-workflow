@@ -119,7 +119,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
           sort: "row_number",
           label: "Work Order orders",
         }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Work Order purchasing authorized users" })
       ]);
       setOrders(ordersData);
       setUsers(usersData);
