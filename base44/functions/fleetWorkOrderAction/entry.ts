@@ -1033,11 +1033,13 @@ Deno.serve(async (req) => {
           label: 'Fleet work order completion',
         });
         if (equipmentStatus && completionPatch.equipment_id) {
-          await Equipment.update(completionPatch.equipment_id, { status: equipmentStatus });
+          await applyCompletionEquipmentStatus(base44, Receipt, activeMainReceipt, completionPatch.equipment_id, equipmentStatus);
+          activeMainReceipt = await Receipt.get(activeMainReceipt.id);
         }
         await Receipt.update(activeMainReceipt.id, {
           status: 'applied',
           applied_at: stamp,
+          error_message: '',
           result_summary: {
             ...(activeMainReceipt.result_summary || {}),
             inventory_operations_applied: inventoryPlans.length,
