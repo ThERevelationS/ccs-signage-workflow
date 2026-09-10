@@ -462,6 +462,17 @@ Deno.serve(async (req) => {
     if (!existing) return Response.json({ error: 'Fleet work order not found.' }, { status: 404 });
 
     if (action === 'update') {
+      const unresolvedCompletionReceipts = await Receipt.filter({
+        operation_type: 'work_order_complete',
+        target_id: id,
+        status: { $in: ['started', 'failed'] },
+      });
+      const completionLock = canonical((unresolvedCompletionReceipts || []).filter((receipt: any) =>
+        receipt?.result_summary?.work_order_lock_acquired === true || String(existing.completion_receipt_key || '') === String(receipt.operation_key || '')
+      ));
+      if (completionLock) {
+        return Response.json({ error: 'This Fleet work order has a completion operation in progress or awaiting reconciliation. Finish/review that completion before editing the work order.' }, { status: 409 });
+      }
       const patch = safePatch(body?.work_order || body);
       if (patch.status === 'completed' && existing.status !== 'completed') {
         return Response.json({ error: 'Use the complete action to complete a Fleet work order.' }, { status: 409 });
@@ -525,9 +536,25 @@ Deno.serve(async (req) => {
       if (existing.status !== 'completed') {
         return Response.json({ error: 'Only completed Fleet work orders can be reopened.' }, { status: 409 });
       }
-      const reopened = await WorkOrder.update(id, { status: 'in_progress', completed_date: null });
-      await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso() });
-      return Response.json({ success: true, work_order: reopened, inventory_reversed: false });
+      try {
+        const reopened = await updateFleetRecordIfCurrent({
+          entity: WorkOrder,
+          id,
+          expectedUpdatedAt: expectedUpdatedAt || String(existing.updated_date || ''),
+          patch: { status: 'in_progress', completed_date: null },
+          label: 'Fleet work order',
+        });
+        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
+        return Response.json({ success: true, work_order: reopened, inventory_reversed: false });
+      } catch (error: any) {
+        await Receipt.update(claim.receipt.id, {
+          status: 'failed',
+          failed_at: nowIso(),
+          error_message: error?.message || String(error),
+          result_summary: { ...(claim.receipt.result_summary || {}), safe_retry: error?.code === 'FLEET_RECORD_CONFLICT' },
+        }).catch(() => null);
+        throw error;
+      }
     }
 
     if (action === 'complete') {
@@ -537,11 +564,18 @@ Deno.serve(async (req) => {
           const completionReceipts = await Receipt.filter({ operation_key: completionKey });
           const completionReceipt = canonical(completionReceipts);
           if (completionReceipt && completionReceipt.status !== 'applied') {
+            const summary = completionReceipt.result_summary || {};
+            const equipmentId = String(summary?.work_order_patch?.equipment_id || existing.equipment_id || '').trim();
+            const equipmentStatus = String(summary?.equipment_status || '').trim();
+            if (equipmentId && equipmentStatus && EQUIPMENT_STATUSES.has(equipmentStatus)) {
+              const equipment = await Equipment.get(equipmentId).catch(() => null);
+              if (equipment && equipment.status !== equipmentStatus) await Equipment.update(equipmentId, { status: equipmentStatus });
+            }
             await Receipt.update(completionReceipt.id, {
               status: 'applied',
               applied_at: existing.inventory_applied_at || nowIso(),
               error_message: '',
-              result_summary: { ...(completionReceipt.result_summary || {}), reconciled_from_completed_work_order: true },
+              result_summary: { ...summary, reconciled_from_completed_work_order: true, equipment_status_reconciled: !!(equipmentId && equipmentStatus) },
             });
           }
           await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
