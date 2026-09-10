@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const GeneralTask = base44.entities.GeneralTask;
 
@@ -15,7 +16,12 @@ export default function StageTasksPanel({ stage }) {
 
   const load = async () => {
     try {
-      const all = await GeneralTask.filter({ completed: false });
+      const all = await loadAllEntityRows({
+        entity: GeneralTask,
+        query: { completed: false },
+        sort: "created_date",
+        label: `Open ${stage} office tasks`,
+      });
       const filtered = (all || []).filter(t => t.stage === stage);
       setTasks(filtered);
     } catch (e) {
