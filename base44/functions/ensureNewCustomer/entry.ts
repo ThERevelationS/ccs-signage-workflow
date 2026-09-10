@@ -126,13 +126,41 @@ Deno.serve(async (req) => {
     const canonical = validateRows(rows || []) || created;
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
-      const referencedBy = await customerReference(base44, created.id);
-      if (referencedBy) {
-        return Response.json({
-          error: `A simultaneous duplicate Customer was detected, but the losing row is already referenced by ${referencedBy}. No Customer was deleted.`,
-        }, { status: 409 });
+      const losingRows = await CustomerService.filter({ id: created.id });
+      if (!Array.isArray(losingRows) || losingRows.length > 1) {
+        return Response.json({ error: 'The losing duplicate Customer could not be re-read safely. No uncertain Customer was deleted.' }, { status: 409 });
       }
-      await CustomerService.delete(created.id);
+      const losing = losingRows[0] || null;
+      if (losing?.id) {
+        const referencedBy = await customerReference(base44, losing.id);
+        if (referencedBy) {
+          return Response.json({
+            error: `A simultaneous duplicate Customer was detected, but the losing row is already referenced by ${referencedBy}. No Customer was deleted.`,
+          }, { status: 409 });
+        }
+        const losingVersion = String(losing.updated_date || '').trim();
+        if (!losingVersion) {
+          return Response.json({ error: 'The losing duplicate Customer has no version metadata. No uncertain Customer was deleted.' }, { status: 409 });
+        }
+        let deleted;
+        try {
+          deleted = await CustomerService.deleteMany({
+            id: losing.id,
+            creation_request_key: creationKey,
+            updated_date: losingVersion,
+          });
+        } catch (deleteError) {
+          const afterError = await CustomerService.filter({ id: losing.id }).catch(() => null);
+          if (!Array.isArray(afterError) || afterError.length !== 0) throw deleteError;
+          deleted = { deleted: 1 };
+        }
+        if (!deleted || deleted.deleted !== 1) {
+          const afterDelete = await CustomerService.filter({ id: losing.id }).catch(() => null);
+          if (!Array.isArray(afterDelete) || afterDelete.length !== 0) {
+            return Response.json({ error: 'The losing duplicate Customer changed before cleanup. No uncertain Customer was deleted; reload before retrying.' }, { status: 409 });
+          }
+        }
+      }
       return Response.json({ customer: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
