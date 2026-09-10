@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { X, Fuel, Battery, Wrench, Cpu, CheckCircle2, ClipboardList, ArrowRight, Plus } from "lucide-react";
