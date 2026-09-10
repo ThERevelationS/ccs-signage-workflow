@@ -6,6 +6,7 @@ import FleetMap from "@/components/fleet/FleetMap";
 import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
 import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
+import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink } from "lucide-react";
 
 export default function FleetTracking() {
@@ -96,10 +97,10 @@ export default function FleetTracking() {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      base44.entities.FleetEquipment.list("name", 500),
-      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "open" }, "-created_date", 500),
-      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "assigned" }, "-created_date", 500),
-      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "in_progress" }, "-created_date", 500),
+      listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "open" }, "-created_date", { label: "Open Fleet work orders" }),
+      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "assigned" }, "-created_date", { label: "Assigned Fleet work orders" }),
+      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "in_progress" }, "-created_date", { label: "In-progress Fleet work orders" }),
     ]).then(([equipmentRows, openRows, assignedRows, inProgressRows]) => {
       if (!mounted) return;
       setFleetEquipment(equipmentRows || []);
