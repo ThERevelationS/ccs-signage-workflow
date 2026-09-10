@@ -13,6 +13,7 @@ import EquipmentInventoryTab from '@/components/foundation/EquipmentInventoryTab
 import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
 import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
+import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 
@@ -434,7 +435,12 @@ export default function FoundationInventoryPage({ embedded = false }) {
           label: `Wall material “${form.material_name || 'Item'}”`,
         });
       } else {
-        await FoundationInventoryEntity.create(form);
+        await createInventoryRecordWithRecovery({
+          entity: FoundationInventoryEntity,
+          data: form,
+          nameField: 'material_name',
+          label: `Wall material “${form.material_name || 'Item'}”`,
+        });
       }
       setShowWallForm(false); setWallEditItem(null); setWallEditItemIsFill(false);
       await loadItems();
@@ -468,7 +474,12 @@ export default function FoundationInventoryPage({ embedded = false }) {
           label: `Foundation material “${form.material_name || 'Item'}”`,
         });
       } else {
-        await FoundationInventoryEntity.create(form);
+        await createInventoryRecordWithRecovery({
+          entity: FoundationInventoryEntity,
+          data: form,
+          nameField: 'material_name',
+          label: `Foundation material “${form.material_name || 'Item'}”`,
+        });
       }
       setShowGenericForm(false); setGenericEditItem(null); setGenericTabKey(null);
       await loadItems();
