@@ -77,6 +77,16 @@ Deno.serve(async (req) => {
         bodyHtml = `<div style="font-family:Arial,sans-serif"><p>The requested Fleet item has been received and applied to Fleet inventory.</p><p><b>Item:</b> ${esc(request.item_name)}<br><b>Quantity received:</b> ${esc(request.quantity_received)} ${esc(request.received_unit)}<br><b>Received by:</b> ${esc(request.received_by)}</p></div>`;
         eventToken ||= request.receipt_key || `received:${request.id}`;
       }
+    } else if (eventType === 'system_report_created') {
+      const report = await base44.asServiceRole.entities.FleetSystemReport.get(targetId);
+      if (!report) return Response.json({ error: 'Fleet system report not found.' }, { status: 404 });
+      recipients = settings.report_emails || [];
+      targetEntity = 'FleetSystemReport';
+      const typeLabel = String(report.type || 'feedback').replaceAll('_', ' ');
+      const attachmentLinks = (report.attachment_urls || []).map((url: string, index: number) => `<li><a href="${esc(url)}" target="_blank" rel="noreferrer">Attachment ${index + 1}</a></li>`).join('');
+      subject = `Fleet Feedback: ${typeLabel} - ${report.title}`;
+      bodyHtml = `<div style="font-family:Arial,sans-serif"><p>A new CCS Fleet feedback report was submitted.</p><p><b>Type:</b> ${esc(typeLabel)}<br><b>Priority:</b> ${esc(report.priority || 'medium')}<br><b>Title:</b> ${esc(report.title)}<br><b>Submitted by:</b> ${esc(report.submitted_by_name || report.submitted_by_email)}</p><p><b>Description:</b><br>${esc(report.description).replace(/\n/g,'<br>')}</p>${attachmentLinks ? `<p><b>Attachments:</b></p><ul>${attachmentLinks}</ul>` : ''}${fleetUrl ? `<p><a href="${esc(fleetUrl)}">Open CCS Fleet</a></p>` : ''}</div>`;
+      eventToken ||= `created:${report.id}`;
     } else if (eventType === 'low_stock_part' || eventType === 'low_stock_fluid') {
       const isPart = eventType === 'low_stock_part';
       const item = isPart ? await base44.asServiceRole.entities.FleetPart.get(targetId) : await base44.asServiceRole.entities.FleetFluid.get(targetId);
