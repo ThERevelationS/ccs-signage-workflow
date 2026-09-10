@@ -5,9 +5,10 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
+import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
-import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
+import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
@@ -28,6 +29,8 @@ export default function FleetWorkOrders() {
   const [actionError, setActionError] = useState("");
   const [reopeningId, setReopeningId] = useState("");
   const [confirmReopen, setConfirmReopen] = useState(null);
+  const [startWorkOrder, setStartWorkOrder] = useState(null);
+  const [startingId, setStartingId] = useState("");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -110,6 +113,52 @@ export default function FleetWorkOrders() {
     setActionError("");
   };
 
+  const startWork = async ({ projected_completion_date, planning_notes }) => {
+    if (!startWorkOrder) return;
+    setStartingId(startWorkOrder.id);
+    setActionError("");
+    try {
+      const schedulingLine = planning_notes ? `Scheduling Notes: ${planning_notes}` : "";
+      const notes = [startWorkOrder.notes, schedulingLine].filter(Boolean).join("\n\n");
+      const response = await base44.functions.invoke("fleetWorkOrderAction", {
+        action: "update",
+        id: startWorkOrder.id,
+        work_order: {
+          status: "in_progress",
+          started_date: startWorkOrder.started_date || easternTodayText(),
+          projected_completion_date,
+          notes,
+        },
+      });
+      if (response?.data?.error) throw new Error(response.data.error);
+      await loadData();
+      setStartWorkOrder(null);
+    } catch (error) {
+      setActionError(error?.message || "Failed to start Fleet work order.");
+    } finally {
+      setStartingId("");
+    }
+  };
+
+  const createFollowUp = (workOrder) => {
+    if (!workOrder?.equipment_id) {
+      setActionError("This historical work order has no linked Fleet equipment, so a follow-up cannot be prelinked safely.");
+      return;
+    }
+    setActionError("");
+    setDialog({
+      mode: "create",
+      workOrder: {
+        equipment_id: workOrder.equipment_id,
+        title: "",
+        description: `Follow-up work identified from ${workOrder.work_order_number} — ${workOrder.title}`,
+        type: "repair",
+        priority: workOrder.priority || "medium",
+        status: "open",
+      },
+    });
+  };
+
   const reopen = async (workOrder) => {
     if (!workOrder) return;
     setReopeningId(workOrder.id);
@@ -171,7 +220,9 @@ export default function FleetWorkOrders() {
                 {isOpen && <div className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 text-sm">
                   <div className="flex flex-wrap gap-2">
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
+                    {["open", "assigned"].includes(w.status) && <button onClick={() => setStartWorkOrder(w)} disabled={startingId === w.id} className="px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 disabled:opacity-50">{startingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}Start Work</button>}
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
+                    {w.status === "completed" && <button onClick={() => createFollowUp(w)} className="px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><CornerUpRight className="w-4 h-4" />Follow-up Work Order</button>}
                     {w.status === "completed" && <button onClick={() => setConfirmReopen(w)} disabled={reopeningId === w.id} className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 disabled:opacity-50">{reopeningId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}Reopen</button>}
                     {w.status === "cancelled" && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit / Reactivate</button>}
                   </div>
@@ -200,6 +251,13 @@ export default function FleetWorkOrders() {
         fluids={fluids}
         onClose={() => setDialog(null)}
         onSubmit={submitDialog}
+      />
+      <FleetStartWorkDialog
+        open={!!startWorkOrder}
+        workOrder={startWorkOrder}
+        busy={!!startingId}
+        onClose={() => !startingId && setStartWorkOrder(null)}
+        onConfirm={startWork}
       />
       <FleetConfirmDialog
         open={!!confirmReopen}
