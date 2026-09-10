@@ -14,22 +14,62 @@ export default async function (req) {
     const count = Math.min(Math.max(parseInt(body.count || 1, 10) || 1, 1), 50);
 
     const svc = base44.asServiceRole;
-    let counters = await svc.entities.DocNumberCounter.filter({ config_name: 'default' });
-    let counter = counters && counters.length ? counters[0] : null;
+    const Counter = svc.entities.DocNumberCounter;
+    const MAX_ATTEMPTS = 8;
 
+    const loadSingleton = async () => {
+      const rows = await Counter.filter({ config_name: 'default' });
+      if (!Array.isArray(rows)) {
+        throw new Error('Document number counter could not be verified.');
+      }
+      if (rows.length > 1) {
+        throw new Error('Multiple default document number counters exist. Number allocation was blocked; an administrator must resolve the duplicate counters.');
+      }
+      return rows[0] || null;
+    };
+
+    let counter = await loadSingleton();
     if (!counter) {
-      counter = await svc.entities.DocNumberCounter.create({ config_name: 'default', next_seq: 1 });
+      let createError = null;
+      try {
+        await Counter.create({ config_name: 'default', next_seq: 1 });
+      } catch (error) {
+        createError = error;
+      }
+
+      counter = await loadSingleton();
+      if (!counter) {
+        throw createError || new Error('Document number counter could not be initialized safely.');
+      }
     }
 
-    const start = Number(counter.next_seq) || 1;
-    await svc.entities.DocNumberCounter.update(counter.id, { next_seq: start + count });
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      counter = attempt === 0 ? counter : await loadSingleton();
+      if (!counter?.id || !counter?.updated_date) {
+        throw new Error('Document number counter version metadata is incomplete; allocation was blocked.');
+      }
 
-    const numbers = [];
-    for (let i = 0; i < count; i++) {
-      numbers.push(prefix + String(start + i).padStart(5, '0'));
+      const start = Math.max(1, Math.floor(Number(counter.next_seq) || 1));
+      const nextSeq = start + count;
+      const result = await Counter.updateMany(
+        { id: counter.id, config_name: 'default', updated_date: counter.updated_date },
+        { $set: { next_seq: nextSeq } },
+      );
+
+      if (!result || typeof result.updated !== 'number') {
+        throw new Error('Document number allocation result could not be verified. No number was returned; retrying may leave a harmless gap but will not intentionally reuse an uncertain allocation.');
+      }
+      if (result.updated !== 1) continue;
+
+      const numbers = [];
+      for (let i = 0; i < count; i++) {
+        numbers.push(prefix + String(start + i).padStart(5, '0'));
+      }
+
+      return Response.json({ numbers, number: numbers[0], next_seq: nextSeq });
     }
 
-    return Response.json({ numbers, number: numbers[0], next_seq: start + count });
+    throw new Error('Document number allocation was busy because the shared counter kept changing. Try again.');
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
