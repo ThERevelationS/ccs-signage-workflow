@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { liquidPaintRatePerSqft } from "@/components/estimator/paint/paintCalc";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const PAINT_CATEGORIES = new Set(["painting_pricing", "painting_labor", "painting_supplies"]);
 const UNIT_OPTIONS = ["oz", "pint", "quart", "liter", "gallon"];
@@ -76,7 +77,7 @@ export default function PaintingSettings() {
     const load = async () => {
       setLoading(true);
       try {
-        const all = await SettingsEntity.list();
+        const all = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Painting Settings catalog" });
         const paintRows = (all || []).filter((row) => PAINT_CATEGORIES.has(row.category));
         const map = Object.fromEntries(paintRows.map((row) => [row.setting_name, row.setting_value ?? ""]));
         setRows(paintRows);
