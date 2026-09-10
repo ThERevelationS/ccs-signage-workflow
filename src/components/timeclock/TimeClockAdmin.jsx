@@ -24,6 +24,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
 import { deleteTimeEntryIfUnchanged, updateTimeEntryIfUnchanged } from "@/components/timeclock/timeEntryPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -51,8 +52,8 @@ export default function TimeClockAdmin() {
     setIsLoading(true);
     try {
       const [entries, usersData] = await Promise.all([
-        TimeEntry.list("-clock_in"),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: TimeEntry, sort: "-clock_in", label: "Time Clock admin entries" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock authorized users" })
       ]);
       setTimeEntries(entries);
       setUsers(usersData);
