@@ -4,14 +4,15 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity } from "lucide-react";
 
-const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback"];
+const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
 
 async function loadAutomationHealthData() {
-  const [maintenance, reminders, worker, reminderFallback, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
+  const [maintenance, reminders, worker, reminderFallback, bouncieAlerts, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
     base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
     base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
     base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
     base44.entities.FleetSystemLog.filter({ source: "fleetReminderFallback" }, "-created_date", 1),
+    base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
@@ -19,7 +20,7 @@ async function loadAutomationHealthData() {
     filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
   ]);
   return {
-    logs: [...(maintenance || []), ...(reminders || []), ...(worker || []), ...(reminderFallback || [])],
+    logs: [...(maintenance || []), ...(reminders || []), ...(worker || []), ...(reminderFallback || []), ...(bouncieAlerts || [])],
     notifications: [...queuePending, ...queueSending, ...queueFailed],
     receipts: [...receiptStarted, ...receiptFailed],
   };
@@ -172,11 +173,12 @@ export default function FleetSettings() {
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Automation Health</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Durable Fleet-scoped heartbeats and delivery state. Scheduled jobs now leave a summary even when nothing is due.</p></div><Activity className="w-5 h-5 text-gray-400 shrink-0"/></div>
-      <div className="mt-4 grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="mt-4 grid md:grid-cols-2 xl:grid-cols-5 gap-3">
         <AutomationStatus label="Maintenance generation" schedule="Daily · 6:45 AM ET" log={latestAutomation.fleetScheduledMaintenanceGeneration}/>
         <AutomationStatus label="Scheduled reminders" schedule="Daily · 7:00 AM ET" log={latestAutomation.fleetScheduledReminders}/>
         <AutomationStatus label="Notification worker" schedule="Every 10 min · idle heartbeat ≤ 6 hr" log={latestAutomation.fleetNotificationWorker}/>
         <AutomationStatus label="Reminder safety net" schedule="Configured reminder days · after 7:10 AM ET" log={latestAutomation.fleetReminderFallback}/>
+        <AutomationStatus label="Bouncie local alerts" schedule="Every 5 min · heartbeat ≤ 6 hr" log={latestAutomation.bouncieSyncNotifications}/>
       </div>
       <div className="mt-4 grid sm:grid-cols-2 gap-3"><HealthCount label="Notification queue unresolved" value={queueUnresolved.length} ok={queueUnresolved.length===0}/><HealthCount label="Operation receipts unresolved" value={receiptUnresolved.length} ok={receiptUnresolved.length===0}/></div>
       {(queueUnresolved.length>0 || receiptUnresolved.length>0) && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">Unresolved automation state is intentionally surfaced rather than silently replayed. Ambiguous notification delivery is not automatically resent.</div>}
@@ -201,5 +203,5 @@ export default function FleetSettings() {
 function Card({title,children}){return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm"><h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">{title}</h2><div className="space-y-3">{children}</div></div>}
 function Row({label,value}){return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-0.5 whitespace-pre-wrap break-words">{value === 0 ? "0" : value || "—"}</div></div>}
 function Recipient({label,values}){return <Row label={label} value={(values||[]).map(v=>`${v.email}${v.delay_minutes!=null?` (${v.delay_minutes}m)`:""}`).join(", ")||"None"}/>} 
-function AutomationStatus({label,schedule,log}){const tone=log?.level==="error"?"border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20":log?.level==="warning"?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-950/40";const details=log?.details||{};const summary=log?.source==="fleetScheduledMaintenanceGeneration"?`due ${details.due??"—"} · created ${details.created??"—"} · errors ${details.errors??0}`:log?.source==="fleetScheduledReminders"?`queued ${details.queued??"—"} · reused ${details.reused??"—"}`:log?.source==="fleetNotificationWorker"?`processed ${details.processed??0} · sent ${details.sent??0} · failed ${details.failed??0}`:"";return <div className={`rounded-lg border p-3 ${tone}`}><div className="font-medium text-sm text-gray-900 dark:text-slate-100">{label}</div><div className="text-xs text-gray-400 mt-0.5">{schedule}</div>{log?<><div className="text-xs text-gray-600 dark:text-slate-300 mt-2">Last: {new Date(log.created_date).toLocaleString()} · {log.level}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{summary||log.message}</div></>:<div className="text-xs text-gray-500 dark:text-slate-400 mt-2">Awaiting first production heartbeat.</div>}</div>}
+function AutomationStatus({label,schedule,log}){const tone=log?.level==="error"?"border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20":log?.level==="warning"?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-950/40";const details=log?.details||{};const summary=log?.source==="fleetScheduledMaintenanceGeneration"?`due ${details.due??"—"} · created ${details.created??"—"} · errors ${details.errors??0}`:log?.source==="fleetScheduledReminders"?`queued ${details.queued??"—"} · reused ${details.reused??"—"}`:log?.source==="fleetNotificationWorker"?`processed ${details.processed??0} · sent ${details.sent??0} · failed ${details.failed??0}`:log?.source==="bouncieSyncNotifications"?`vehicles ${details.vehicles??"—"} · rules ${details.configured_rules??0} · alerts ${details.created??0}`:"";return <div className={`rounded-lg border p-3 ${tone}`}><div className="font-medium text-sm text-gray-900 dark:text-slate-100">{label}</div><div className="text-xs text-gray-400 mt-0.5">{schedule}</div>{log?<><div className="text-xs text-gray-600 dark:text-slate-300 mt-2">Last: {new Date(log.created_date).toLocaleString()} · {log.level}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{summary||log.message}</div></>:<div className="text-xs text-gray-500 dark:text-slate-400 mt-2">Awaiting first production heartbeat.</div>}</div>}
 function HealthCount({label,value,ok}){return <div className={`rounded-lg border px-3 py-2 ${ok?"border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20":"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20"}`}><div className="text-xs text-gray-500 dark:text-slate-400">{label}</div><div className={`text-lg font-bold mt-0.5 ${ok?"text-emerald-700 dark:text-emerald-300":"text-amber-700 dark:text-amber-300"}`}>{value}</div></div>}
