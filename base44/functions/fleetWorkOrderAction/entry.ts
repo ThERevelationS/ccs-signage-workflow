@@ -782,17 +782,28 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This Fleet work order changed after the completion dialog was opened. Reload it before completing so newer work, notes, or usage are not overwritten.' }, { status: 409 });
       }
       let equipmentStatus = String(body?.equipment_status || '').trim();
+      let equipmentExpectedUpdatedAt = String(body?.equipment_expected_updated_date || '').trim();
       if (unresolvedMain?.result_summary?.work_order_patch) {
         completionPatch = { ...unresolvedMain.result_summary.work_order_patch };
         equipmentStatus = String(unresolvedMain.result_summary.equipment_status || equipmentStatus || '').trim();
+        equipmentExpectedUpdatedAt = String(unresolvedMain.result_summary.equipment_expected_updated_date || equipmentExpectedUpdatedAt || '').trim();
       }
 
       if (!String(completionPatch.corrective_action || '').trim()) {
         return Response.json({ error: 'Corrective action is required to complete a Fleet work order.' }, { status: 400 });
       }
+      let completionEquipment: any = null;
       if (completionPatch.equipment_id) {
-        const equipment = await Equipment.get(completionPatch.equipment_id);
-        if (!equipment) return Response.json({ error: 'Linked Fleet equipment was not found.' }, { status: 404 });
+        completionEquipment = await Equipment.get(completionPatch.equipment_id);
+        if (!completionEquipment) return Response.json({ error: 'Linked Fleet equipment was not found.' }, { status: 404 });
+        if (!unresolvedMain && equipmentStatus && completionEquipment.status !== equipmentStatus) {
+          if (!equipmentExpectedUpdatedAt) {
+            return Response.json({ error: 'Fleet equipment version is missing. Reload the work order before changing equipment status during completion.' }, { status: 409 });
+          }
+          if (String(completionEquipment.updated_date || '') !== equipmentExpectedUpdatedAt) {
+            return Response.json({ error: 'Fleet equipment changed after the completion dialog was opened. Reload before completing so the newer equipment record is not overwritten.' }, { status: 409 });
+          }
+        }
       }
       if (completionPatch.maintenance_task_id) {
         const task = await Task.get(completionPatch.maintenance_task_id);
