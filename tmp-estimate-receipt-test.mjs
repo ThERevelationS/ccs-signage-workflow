@@ -31,14 +31,21 @@ function makeStore(mode='normal',{initial=[],referencedId='',protectLosing=false
   const userEntity={
     create:async payload=>{
       createCalls++;
-      const own=mk(undefined,payload);
       if(mode==='hard_fail')throw new Error('create failed');
+      if(mode==='concurrent_current_loses' || mode==='concurrent_loser_protected') {
+        const other=mk(undefined,payload);
+        const own=mk(undefined,payload);
+        const storedOwn=mode==='concurrent_loser_protected'
+          ? {...own,line_items:protectLosing?[{id:'p1'}]:[],work_order_id:protectLosing?'wo1':''}
+          : own;
+        rows.push(other,storedOwn);
+        return clone(own);
+      }
+      const own=mk(undefined,payload);
       if(mode==='lost_one'){rows.push(own);throw new Error('lost response');}
       if(mode==='lost_two'){rows.push(own,mk(undefined,payload));throw new Error('lost response');}
       if(mode==='lost_read_fail'){rows.push(own);throw new Error('lost response');}
       if(mode==='concurrent_current_wins'){rows.push(own,mk(undefined,payload));return clone(own);}
-      if(mode==='concurrent_current_loses'){const other=mk(undefined,payload);rows.push(other,own);return clone(own);}
-      if(mode==='concurrent_loser_protected'){const other=mk(undefined,payload);const protectedOwn={...own,line_items:protectLosing?[{id:'p1'}]:[],work_order_id:protectLosing?'wo1':''};rows.push(other,protectedOwn);return clone(own);}
       rows.push(own);return clone(own);
     }
   };
