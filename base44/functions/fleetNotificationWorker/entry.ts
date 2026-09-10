@@ -17,6 +17,49 @@ async function maybeLogIdleHeartbeat(base44: any) {
   }
 }
 
+function easternNow() {
+  const now = new Date();
+  const date = new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+  const day = new Intl.DateTimeFormat('en-US',{weekday:'long',timeZone:'America/New_York'}).format(now).toLowerCase();
+  const parts = new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);
+  const hour = Number(parts.find(p=>p.type==='hour')?.value || 0);
+  const minute = Number(parts.find(p=>p.type==='minute')?.value || 0);
+  return { date, day, minutes: hour * 60 + minute };
+}
+
+async function maybeRunReminderFallback(base44: any, cutover: any) {
+  if (!cutover?.scheduled_reminders_enabled || !cutover?.notifications_enabled) return;
+  const local = easternNow();
+  if (local.minutes < 7 * 60 + 10) return;
+
+  const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
+  const settings = settingsRows?.[0];
+  if (!settings) return;
+  const configuredToday = (settings.item_order_reminder_days || []).includes(local.day) || (settings.open_work_order_reminder_days || []).includes(local.day);
+  if (!configuredToday) return;
+
+  const reminderLogs = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'fleetScheduledReminders' }, '-created_date', 10).catch(() => []);
+  if ((reminderLogs || []).some((row: any) => row?.level === 'info' && row?.details?.date === local.date)) return;
+
+  const fallbackLogs = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'fleetReminderFallback' }, '-created_date', 3).catch(() => []);
+  if ((fallbackLogs || []).some((row: any) => row?.details?.date === local.date)) return;
+
+  let result: any = null;
+  let error = '';
+  try {
+    result = await base44.asServiceRole.functions.invoke('fleetScheduledReminders', {});
+    error = result?.data?.error || '';
+  } catch (e: any) {
+    error = e?.message || String(e);
+  }
+  await base44.asServiceRole.entities.FleetSystemLog.create({
+    source: 'fleetReminderFallback',
+    level: error ? 'warning' : 'info',
+    message: error ? 'Fleet reminder fallback invocation failed.' : 'Fleet reminder fallback invoked because no primary reminder heartbeat was present.',
+    details: { date: local.date, day: local.day, error, response: error ? {} : (result?.data || {}) },
+  }).catch(() => null);
+}
+
 async function claimReceipt(Receipt: any, key: string, queue: any) {
   const applied = canonical(await Receipt.filter({ operation_key: key, status: 'applied' }));
   if (applied) return { applied: true, owner: false, receipt: applied };
@@ -61,6 +104,8 @@ Deno.serve(async (req) => {
     const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key: 'primary' });
     const cutover = cutoverRows?.[0];
     if (!cutover?.notifications_enabled) return Response.json({ success: true, disabled: true, processed: 0 });
+
+    await maybeRunReminderFallback(base44, cutover);
 
     const Queue = base44.asServiceRole.entities.FleetNotificationQueue;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
