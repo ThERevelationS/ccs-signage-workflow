@@ -1,26 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const DUE_TASK_STATUSES = new Set(['pending','overdue']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
-const PAGE_SIZE = 1000;
-const MAX_TASK_ROWS = 20000;
 const nowIso = () => new Date().toISOString();
 const todayEastern = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const canonical = (rows:any[]=[]) => rows.slice().sort((a,b)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
 
 async function logRun(base44:any, level:'info'|'warning'|'error', message:string, details:any={}) {
   await base44.asServiceRole.entities.FleetSystemLog.create({source:'fleetScheduledMaintenanceGeneration',level,message,details}).catch(()=>null);
-}
-
-async function listAllTasks(Task:any) {
-  const out:any[] = [];
-  for (let skip=0; skip<MAX_TASK_ROWS; skip+=PAGE_SIZE) {
-    const rows = await Task.list('-created_date', PAGE_SIZE, skip);
-    out.push(...(rows || []));
-    if (!rows || rows.length < PAGE_SIZE) return out;
-  }
-  throw new Error('Fleet scheduled maintenance scan exceeded its safety row limit.');
 }
 
 function workOrderNumber(task:any) {
@@ -82,12 +71,12 @@ Deno.serve(async (req) => {
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
     const today = todayEastern();
-    const due = (await listAllTasks(Task)).filter((task:any)=>DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date<=today);
+    const due = (await loadAllEntityRows({ entity:Task, sort:'-created_date', label:'Fleet maintenance schedules' })).filter((task:any)=>DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date<=today);
     const results:any[] = [];
 
     for (const task of due) {
       const key = `fleetmaint:${task.id}:due:${task.start_date}`;
-      const existingOrders = await WorkOrder.filter({maintenance_task_id:task.id});
+      const existingOrders = await loadAllEntityRows({ entity:WorkOrder, query:{maintenance_task_id:task.id}, sort:'-created_date', label:`Fleet work orders for maintenance task ${task.id}` });
       const exact = canonical(existingOrders.filter((wo:any)=>wo.generation_key===key));
 
       // Recover cleanly if a prior invocation created the work order but stopped
@@ -136,7 +125,7 @@ Deno.serve(async (req) => {
           results.push({task_id:task.id,status:'skipped',reason:'task_changed'});
           continue;
         }
-        const activeNow = (await WorkOrder.filter({maintenance_task_id:task.id})).find((wo:any)=>ACTIVE.has(wo.status));
+        const activeNow = (await loadAllEntityRows({ entity:WorkOrder, query:{maintenance_task_id:task.id}, sort:'-created_date', label:`Fleet work orders for maintenance task ${task.id}` })).find((wo:any)=>ACTIVE.has(wo.status));
         if (activeNow) {
           await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),result_summary:{existing_work_order_id:activeNow.id,skipped:true}});
           results.push({task_id:task.id,status:'skipped',reason:'active_work_order_exists',work_order_id:activeNow.id});
