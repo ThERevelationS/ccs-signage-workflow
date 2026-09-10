@@ -4,6 +4,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 const ACTIVE_WO = new Set(['open','assigned','in_progress']);
 
 const normVin = (value:any) => String(value || '').trim().toUpperCase();
+const normIdentity = (value:any) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 const groupBy = (rows:any[], keyFn:(row:any)=>string) => {
   const map = new Map<string,any[]>();
   for (const row of rows) {
@@ -77,6 +78,20 @@ Deno.serve(async (req) => {
     const badFluidCompatibility:any[] = [];
     for (const fluid of fluids) for (const id of fluid.compatible_equipment_ids || []) if (!equipmentIds.has(id)) badFluidCompatibility.push({id:fluid.id,item:fluid.fluid_name,equipment_id:id});
     add('warning','fluid_compatibility_missing_equipment','Fluids reference missing compatible equipment',badFluidCompatibility,'Compatibility links should point only to current FleetEquipment records.');
+
+    const partReceiveGroups = groupBy(parts, (part:any) => normIdentity(part.part_number));
+    const duplicatePartReceiveIdentity:any[] = [];
+    for (const [partNumber,rows] of partReceiveGroups) if (rows.length > 1) duplicatePartReceiveIdentity.push({part_number:partNumber,rows:rows.map((row:any)=>({id:row.id,name:row.part_name,manufacturer:row.manufacturer || ''}))});
+    add('warning','duplicate_part_receive_identity','Parts sharing the same receive-match part number',duplicatePartReceiveIdentity,'Unlinked Fleet requests cannot be safely auto-matched when multiple parts share a normalized part number. Preserve the records and use an exact inventory link before receiving.');
+
+    const fluidReceiveGroups = groupBy(fluids, (fluid:any) => {
+      const name = normIdentity(fluid.fluid_name);
+      if (!name) return '';
+      return `${name}|${normIdentity(fluid.brand || '')}`;
+    });
+    const duplicateFluidReceiveIdentity:any[] = [];
+    for (const [identity,rows] of fluidReceiveGroups) if (rows.length > 1) duplicateFluidReceiveIdentity.push({identity,rows:rows.map((row:any)=>({id:row.id,name:row.fluid_name,brand:row.brand || '',unit:row.unit || '',location:row.location || ''}))});
+    add('warning','duplicate_fluid_receive_identity','Fluids sharing the same receive-match name and brand',duplicateFluidReceiveIdentity,'Unlinked Fleet requests cannot be safely auto-matched when multiple fluids share a normalized name and brand. Preserve the records and use an exact inventory link before receiving.');
 
     add('error','negative_part_stock','Parts with negative stock',parts.filter((p:any)=>Number(p.quantity_on_hand) < 0).map((p:any)=>({id:p.id,item:p.part_name,quantity:p.quantity_on_hand})),'Fleet parts inventory should never be negative.');
     add('error','negative_fluid_stock','Fluids with negative stock',fluids.filter((f:any)=>f.quantity != null && Number(f.quantity) < 0).map((f:any)=>({id:f.id,item:f.fluid_name,quantity:f.quantity,unit:f.unit})),'Fleet fluid inventory should never be negative.');
