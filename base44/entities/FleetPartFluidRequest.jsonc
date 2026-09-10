@@ -57,6 +57,10 @@
     "requester_email": {
       "type": "string"
     },
+    "creation_key": {
+      "type": "string",
+      "description": "Stable client-generated idempotency key for a logical Fleet request create operation."
+    },
     "estimated_delivery_date": {
       "type": "string",
       "format": "date"
