@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { VinylWorkflowTemplate } from "@/entities/all";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function VinylWorkflowTemplatesDialog({
   open, onClose, mode = "apply", currentWorkflow, onApply,
@@ -18,7 +19,7 @@ export default function VinylWorkflowTemplatesDialog({
   const [isMutating, setIsMutating] = useState(false);
   const [mutationError, setMutationError] = useState("");
 
-  const load = async () => setTemplates(await VinylWorkflowTemplate.list("sort_order"));
+  const load = async () => setTemplates(await loadAllEntityRows({ entity: VinylWorkflowTemplate, sort: "sort_order", label: "Vinyl workflow templates" }));
   useEffect(() => { if (open) load(); }, [open]);
 
   const handleSave = async () => {
