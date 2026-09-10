@@ -22,6 +22,7 @@ import {
   transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -86,12 +87,19 @@ export default function MyWorkflow() {
   }, [currentUser]);
 
   const loadUsers = async () => {
-    const users = await AuthorizedEmail.list();
+    const [users, dropdownsSetting] = await Promise.all([
+      loadAllEntityRows({
+        entity: AuthorizedEmail,
+        sort: null,
+        label: "My Workflow authorized users",
+      }),
+      loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: "dropdownConditions",
+        label: "My Workflow dropdown conditions",
+      }),
+    ]);
     setAllUsers(users);
-    
-    // Load dropdown conditions for SIP checklist
-    const settings = await base44.entities.GlobalSettings.list();
-    const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
     setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
   };
 
@@ -105,7 +113,12 @@ export default function MyWorkflow() {
           sort: "created_date",
           label: "My Workflow Work Orders",
         }),
-        GeneralTask.filter({ completed: false })
+        loadAllEntityRows({
+          entity: GeneralTask,
+          query: { completed: false },
+          sort: "created_date",
+          label: "My Workflow general tasks",
+        })
       ]);
 
       const userName = currentUser?.full_name || currentUser?.email;
