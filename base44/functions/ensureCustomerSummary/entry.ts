@@ -178,13 +178,36 @@ function duplicateIsSafeToDelete(row: any, userId: string, summaryKey: string, n
 }
 
 async function deleteVerified(Summary: any, row: any) {
+  const version = String(row?.updated_date || '').trim();
+  const summaryKey = String(row?.summary_key || '').trim();
+  if (!row?.id || !version || !summaryKey) {
+    throw new Error('Duplicate Customer Summary is missing identity/version metadata required for safe deletion.');
+  }
+
+  let result;
   try {
-    await Summary.delete(row.id);
+    result = await Summary.deleteMany({
+      id: row.id,
+      summary_key: summaryKey,
+      updated_date: version,
+    });
   } catch (error) {
     const stillThere = await getFresh(Summary, row.id);
     if (stillThere) throw error;
     return;
   }
+
+  if (!result || typeof result.deleted !== 'number') {
+    const stillThere = await getFresh(Summary, row.id);
+    if (!stillThere) return;
+    throw new Error('Duplicate Customer Summary conditional-delete result could not be verified.');
+  }
+  if (result.deleted !== 1) {
+    const stillThere = await getFresh(Summary, row.id);
+    if (!stillThere) return;
+    throw new Error('Duplicate Customer Summary changed before deletion. The newer row was preserved.');
+  }
+
   const stillThere = await getFresh(Summary, row.id);
   if (stillThere) throw new Error('Duplicate Customer Summary delete returned successfully but the row still exists.');
 }
