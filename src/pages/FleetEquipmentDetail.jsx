@@ -7,6 +7,7 @@ import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/component
 import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Bell, Loader2, Pencil, Save, X, MapPin, Gauge, Activity, Plus } from "lucide-react";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
+const TRACKED_LINK = new Set(["matched", "manual"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
 
 export default function FleetEquipmentDetail() {
@@ -31,29 +32,37 @@ export default function FleetEquipmentDetail() {
     setLoading(true);
     setError("");
     try {
-      const [equipmentRows, woRows, taskRows, logRows, liveRows, notifRows, metaRows, user] = await Promise.all([
-        base44.entities.FleetEquipment.list("name", 500),
-        base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-        base44.entities.FleetMaintenanceTask.list("start_date", 500),
-        base44.entities.FleetEquipmentLog.list("-created_date", 500),
-        base44.entities.BouncieVehicleLiveState.list("-last_seen_at", 500),
-        base44.entities.BouncieNotification.list("-timestamp", 500),
-        base44.entities.FleetVehicleMetadata.list("-updated_date", 500),
+      const [equipmentRows, user] = await Promise.all([
+        base44.entities.FleetEquipment.filter({ id }, "name", 1),
         base44.auth.me().catch(() => null),
       ]);
-      const eq = (equipmentRows || []).find(row => row.id === id) || null;
+      const eq = (equipmentRows || [])[0] || null;
       setEquipment(eq);
-      setWorkOrders((woRows || []).filter(row => row.equipment_id === id));
-      setTasks((taskRows || []).filter(row => row.equipment_id === id));
-      setLogs((logRows || []).filter(row => row.equipment_id === id));
-      const vin = String(eq?.vin || "").trim().toUpperCase();
-      setLiveStates((liveRows || []).filter(row => String(row.vehicle_vin || "").trim().toUpperCase() === vin));
-      setNotifications((notifRows || []).filter(row => String(row.vehicle_vin || "").trim().toUpperCase() === vin));
-      const meta = (metaRows || []).find(row => String(row.vehicle_vin || "").trim().toUpperCase() === vin) || null;
-      setMetadata(meta);
       setCurrentUser(user || null);
+      setTrips([]);
+      if (!eq) {
+        setWorkOrders([]); setTasks([]); setLogs([]); setLiveStates([]); setNotifications([]); setMetadata(null); setMetaForm({});
+        return;
+      }
+
+      const vin = String(eq.vin || "").trim().toUpperCase();
+      const [woRows, taskRows, logRows, liveRows, notifRows, metaRows] = await Promise.all([
+        base44.entities.FleetMaintenanceWorkOrder.filter({ equipment_id: id }, "-created_date", 500),
+        base44.entities.FleetMaintenanceTask.filter({ equipment_id: id }, "start_date", 500),
+        base44.entities.FleetEquipmentLog.filter({ equipment_id: id }, "-created_date", 500),
+        vin ? base44.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin }, "-last_seen_at", 20) : Promise.resolve([]),
+        vin ? base44.entities.BouncieNotification.filter({ vehicle_vin: vin }, "-timestamp", 100) : Promise.resolve([]),
+        vin ? base44.entities.FleetVehicleMetadata.filter({ vehicle_vin: vin }, "-updated_date", 10) : Promise.resolve([]),
+      ]);
+      setWorkOrders(woRows || []);
+      setTasks(taskRows || []);
+      setLogs(logRows || []);
+      setLiveStates(liveRows || []);
+      setNotifications(notifRows || []);
+      const meta = (metaRows || [])[0] || null;
+      setMetadata(meta);
       setMetaForm(metadataSeed(meta, eq));
-      if (eq?.bouncie_imei && eq?.bouncie_link_status === "matched") loadTrips(eq.bouncie_imei);
+      if (eq.bouncie_imei && TRACKED_LINK.has(eq.bouncie_link_status)) loadTrips(eq.bouncie_imei);
     } catch (e) {
       setError(e?.message || "Unable to load Fleet equipment detail.");
     } finally {
@@ -111,7 +120,7 @@ export default function FleetEquipmentDetail() {
             <div className="w-24 h-24 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">{equipment.photo_url ? <img src={equipment.photo_url} alt={equipment.name} className="w-full h-full object-cover" /> : <Truck className="w-10 h-10 text-gray-300" />}</div>
             <div><Link to={createPageUrl("FleetEquipment")} className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-300"><ArrowLeft className="w-3.5 h-3.5" />Equipment</Link><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 mt-1">{equipment.name}</h1><p className="text-sm text-gray-500 dark:text-slate-400">{[equipment.year, equipment.make, equipment.model].filter(Boolean).join(" ") || pretty(equipment.type)}</p><div className="flex flex-wrap gap-2 mt-2"><Tag>{pretty(equipment.status)}</Tag><Tag>Bouncie: {pretty(equipment.bouncie_link_status)}</Tag>{equipment.vin && <Tag>VIN {equipment.vin}</Tag>}</div></div>
           </div>
-          <div className="flex flex-wrap gap-2">{equipment.vin && equipment.bouncie_link_status === "matched" ? <Link to={`${createPageUrl("FleetTracking")}?vin=${encodeURIComponent(equipment.vin)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><Navigation className="w-4 h-4" />Open Live Tracking</Link> : <Link to={createPageUrl("FleetTracking")} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><Navigation className="w-4 h-4" />Tracking</Link>}<Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><ClipboardList className="w-4 h-4" />Work Orders</Link><Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center gap-2 text-sm font-medium"><Plus className="w-4 h-4" />New Work Order</Link></div>
+          <div className="flex flex-wrap gap-2">{equipment.vin && TRACKED_LINK.has(equipment.bouncie_link_status) ? <Link to={`${createPageUrl("FleetTracking")}?vin=${encodeURIComponent(equipment.vin)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><Navigation className="w-4 h-4" />Open Live Tracking</Link> : <Link to={createPageUrl("FleetTracking")} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><Navigation className="w-4 h-4" />Tracking</Link>}<Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-2 text-sm"><ClipboardList className="w-4 h-4" />Work Orders</Link><Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center gap-2 text-sm font-medium"><Plus className="w-4 h-4" />New Work Order</Link></div>
         </div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
@@ -141,7 +150,7 @@ export default function FleetEquipmentDetail() {
 
           <div className="space-y-5">
             <Card title="Tracking State" icon={Navigation}>
-              {equipment.bouncie_link_status === "matched" && live ? <div className="space-y-3"><Info label="Trip state" value={live.is_trip_active ? "Driving" : "Parked"} icon={Activity} /><Info label="Speed" value={live.speed != null ? `${Math.round(live.speed)} mph` : "—"} icon={Gauge} /><Info label="Odometer" value={live.odometer != null ? `${Number(live.odometer).toLocaleString()} mi` : "—"} icon={Gauge} /><Info label="Last seen" value={live.last_seen_at ? formatDateTimeShort(live.last_seen_at) : "—"} icon={MapPin} />{live.latitude != null && live.longitude != null && <Info label="Coordinates" value={`${Number(live.latitude).toFixed(5)}, ${Number(live.longitude).toFixed(5)}`} icon={MapPin} />}{liveStates.length > 1 && <div className="text-xs text-amber-700 dark:text-amber-300 rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2">{liveStates.length} Bouncie live-state rows exist for this VIN; this page uses the newest row only.</div>}</div> : <Empty>{equipment.bouncie_link_status === "not_applicable" ? "Bouncie tracking is not applicable to this asset." : "No proven Bouncie live state is linked."}</Empty>}
+              {TRACKED_LINK.has(equipment.bouncie_link_status) && live ? <div className="space-y-3"><Info label="Trip state" value={live.is_trip_active ? "Driving" : "Parked"} icon={Activity} /><Info label="Speed" value={live.speed != null ? `${Math.round(live.speed)} mph` : "—"} icon={Gauge} /><Info label="Odometer" value={live.odometer != null ? `${Number(live.odometer).toLocaleString()} mi` : "—"} icon={Gauge} /><Info label="Last seen" value={live.last_seen_at ? formatDateTimeShort(live.last_seen_at) : "—"} icon={MapPin} />{live.latitude != null && live.longitude != null && <Info label="Coordinates" value={`${Number(live.latitude).toFixed(5)}, ${Number(live.longitude).toFixed(5)}`} icon={MapPin} />}{liveStates.length > 1 && <div className="text-xs text-amber-700 dark:text-amber-300 rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2">{liveStates.length} Bouncie live-state rows exist for this VIN; this page uses the newest row only.</div>}</div> : <Empty>{equipment.bouncie_link_status === "not_applicable" ? "Bouncie tracking is not applicable to this asset." : "No proven Bouncie live state is linked."}</Empty>}
             </Card>
 
             <Card title="Recent Trips · 7 Days" icon={Navigation}>
