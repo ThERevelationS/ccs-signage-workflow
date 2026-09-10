@@ -21,8 +21,12 @@ const num = (value: unknown, fallback = 0) => {
 };
 const sameNumber = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) < 1e-9;
 const manualCreateNumber = (clientKey: string) => {
-  const token = String(clientKey || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16).toUpperCase();
-  return token ? `FWO-${today().replaceAll('-', '')}-${token}` : '';
+  const raw = String(clientKey || '').trim();
+  const dateMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})-/);
+  const stableDate = dateMatch ? `${dateMatch[1]}${dateMatch[2]}${dateMatch[3]}` : '';
+  const tokenSource = dateMatch ? raw.slice(dateMatch[0].length) : raw;
+  const token = tokenSource.replace(/[^a-zA-Z0-9]/g, '').slice(0, 16).toUpperCase();
+  return stableDate && token ? `FWO-${stableDate}-${token}` : '';
 };
 const FLUID_OUNCES_PER_UNIT: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
 const fluidMinimumInStockUnit = (item: any) => {
