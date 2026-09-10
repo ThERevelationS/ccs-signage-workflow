@@ -1,0 +1,74 @@
+{
+  "name": "FleetAlertRuntimeState",
+  "type": "object",
+  "description": "Server-owned runtime state for CCS-local Fleet alert thresholds. Tracks per-vehicle breach/clear transitions so scheduled evaluation is durable and does not spam repeated alerts while a condition remains active.",
+  "properties": {
+    "state_key": {
+      "type": "string",
+      "description": "Deterministic vehicle/rule key, e.g. VIN:rule_key."
+    },
+    "vehicle_vin": {
+      "type": "string"
+    },
+    "rule_key": {
+      "type": "string",
+      "enum": [
+        "speed",
+        "fuel_level"
+      ]
+    },
+    "breached": {
+      "type": "boolean",
+      "default": false
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "last_observed_value": {
+      "type": "number"
+    },
+    "last_observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "breached_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cleared_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_notification_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "state_key",
+    "vehicle_vin",
+    "rule_key",
+    "breached"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "__fleet_alert_runtime_service_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_alert_runtime_service_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_alert_runtime_service_only__"
+      }
+    }
+  }
+}
