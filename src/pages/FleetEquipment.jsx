@@ -64,7 +64,7 @@ export default function FleetEquipment() {
     setError("");
     try {
       const body = dialog?.equipment
-        ? { action: "update", id: dialog.equipment.id, equipment: payload, tracking_applicable }
+        ? { action: "update", id: dialog.equipment.id, expected_updated_date: dialog.equipment.updated_date || "", equipment: payload, tracking_applicable }
         : { action: "create", equipment: payload, tracking_applicable };
       const { data } = await base44.functions.invoke("fleetEquipmentAction", body);
       if (data?.error) throw new Error(data.error);
