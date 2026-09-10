@@ -96,7 +96,7 @@ export default function FleetEquipmentDetail() {
     setSavingMeta(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", { action: "save_metadata", equipment_id: id, metadata: metaForm });
+      const { data } = await base44.functions.invoke("fleetEquipmentAction", { action: "save_metadata", equipment_id: id, metadata_id: metadata?.id || "", expected_metadata_updated_date: metadata?.updated_date || "", metadata: metaForm });
       if (data?.error) throw new Error(data.error);
       setMetadata(data?.metadata || null);
       setMetaForm(metadataSeed(data?.metadata || null, equipment));
