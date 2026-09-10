@@ -187,8 +187,17 @@ Deno.serve(async (req) => {
     if (!id) return Response.json({ error: 'Fleet maintenance task id is required.' }, { status: 400 });
     const existing = await Task.get(id);
     if (!existing) return Response.json({ error: 'Fleet maintenance task not found.' }, { status: 404 });
+    const activeGenerationLock = async () => {
+      const key = String(existing.generation_key || '').trim();
+      if (!key || !DUE_TASK_STATUSES.has(existing.status)) return null;
+      const rows = await Receipt.filter({ operation_key: key, status: { $in: ['started', 'failed'] } });
+      return canonical((rows || []).filter((row: any) =>
+        row.operation_type === 'scheduled_generation' && row?.result_summary?.task_lock_acquired === true
+      ));
+    };
 
     if (action === 'update') {
+      if (await activeGenerationLock()) return Response.json({ error: 'This maintenance schedule is currently reserved by Fleet work-order generation. Refresh after that operation finishes before editing it.' }, { status: 409 });
       const patch = taskPatch(body?.task || body);
       if (patch.status && !TASK_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid maintenance status.' }, { status: 400 });
       if (patch.type && !TASK_TYPES.has(patch.type)) return Response.json({ error: 'Invalid maintenance type.' }, { status: 400 });
@@ -198,10 +207,12 @@ Deno.serve(async (req) => {
         const active = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         if (active) return Response.json({ error: 'Equipment cannot be changed while this maintenance schedule has an active Fleet work order.' }, { status: 409 });
       }
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (!expectedUpdatedAt) return Response.json({ error: 'Maintenance schedule version is missing. Reload before saving.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
         entity: Task,
         id,
-        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        expectedUpdatedAt,
         patch,
         label: 'Fleet maintenance schedule',
       });
@@ -209,6 +220,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
+      if (await activeGenerationLock()) return Response.json({ error: 'This maintenance schedule is currently reserved by Fleet work-order generation and cannot be deleted.' }, { status: 409 });
       const linked = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` });
       if (linked.length) return Response.json({ error: 'This maintenance schedule has Fleet work-order history and cannot be deleted. Mark it completed instead.' }, { status: 409 });
       await Task.delete(id);
