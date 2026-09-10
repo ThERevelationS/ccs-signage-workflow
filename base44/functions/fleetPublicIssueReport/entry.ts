@@ -230,13 +230,41 @@ Deno.serve(async (req) => {
       notes:'Submitted through the CCS Fleet public issue form.',
       public_submission_key:submissionKey,
       public_reported_at:new Date().toISOString(),
-    return Response.json({success:true,reused:false,id:winner.id,work_order_number:winner.work_order_number,photo_warning:photoWarning});
+      public_reporter_name:reporterName,
+      public_reporter_contact:reporterContact,
+      problem_photos:[],
+    });
+
+    // Collapse practical concurrent retries before uploading files so only the winning record owns attachments.
+    await new Promise(resolve=>setTimeout(resolve,75));
+    let winner = canonical(await WorkOrder.filter({public_submission_key:submissionKey})) || created;
+    if (winner.id !== created.id) {
+      await WorkOrder.delete(created.id).catch(()=>null);
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+        event_type:'work_order_created',
+        target_id:winner.id,
+        event_token:submissionKey,
+      }).catch(()=>null);
+      return Response.json({success:true,reused:true,id:winner.id,work_order_number:winner.work_order_number});
+    }
+
+    let photoWarning = '';
+    if (photoValidation.photos.length) {
+      const uploaded = await uploadPublicPhotos(base44, photoValidation.photos);
+      if (uploaded.urls.length) {
+        await WorkOrder.update(winner.id,{problem_photos:uploaded.urls});
+        winner = {...winner,problem_photos:uploaded.urls};
+      }
+      if (uploaded.failed) photoWarning = `${uploaded.failed} photo${uploaded.failed === 1 ? '' : 's'} could not be attached. The Fleet issue report was still submitted.`;
+    }
+
+    await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
       event_type:'work_order_created',
       target_id:winner.id,
       event_token:submissionKey,
     }).catch(()=>null);
 
-    return Response.json({success:true,reused:winner.id !== created.id,id:winner.id,work_order_number:winner.work_order_number});
+    return Response.json({success:true,reused:false,id:winner.id,work_order_number:winner.work_order_number,photo_warning:photoWarning});
   } catch (error) {
     console.error('fleetPublicIssueReport error:',error);
     return Response.json({error:error?.message || 'Fleet issue report could not be submitted.'},{status:500});
