@@ -8,39 +8,68 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { VinylWorkflowTemplate } from "@/entities/all";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
+import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
 
 export default function VinylWorkflowTemplatesDialog({
   open, onClose, mode = "apply", currentWorkflow, onApply,
 }) {
   const [templates, setTemplates] = useState([]);
   const [newName, setNewName] = useState("");
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutationError, setMutationError] = useState("");
 
   const load = async () => setTemplates(await VinylWorkflowTemplate.list("sort_order"));
   useEffect(() => { if (open) load(); }, [open]);
 
   const handleSave = async () => {
-    if (!newName.trim()) return;
-    await VinylWorkflowTemplate.create({
-      name: newName.trim(),
-      vinyl_id:     currentWorkflow.vinyl_id     || "",
-      laminate_id:  currentWorkflow.laminate_id  || "",
-      printer_id:   currentWorkflow.printer_id   || "",
-      cutter_id:    currentWorkflow.cutter_id    || "",
-      laminator_id: currentWorkflow.laminator_id || "",
-      apply_print:    currentWorkflow.apply_print,
-      apply_cut:      currentWorkflow.apply_cut,
-      apply_laminate: currentWorkflow.apply_laminate,
-      preset_key:     currentWorkflow.preset_key || "",
-      color_tag:      currentWorkflow.color_tag  || "",
-    });
-    setNewName("");
-    load();
+    if (!newName.trim() || isMutating) return;
+    setIsMutating(true);
+    setMutationError("");
+    try {
+      await createVinylTemplateWithRecovery({
+        entity: VinylWorkflowTemplate,
+        data: {
+          name: newName.trim(),
+          vinyl_id:     currentWorkflow.vinyl_id     || "",
+          laminate_id:  currentWorkflow.laminate_id  || "",
+          printer_id:   currentWorkflow.printer_id   || "",
+          cutter_id:    currentWorkflow.cutter_id    || "",
+          laminator_id: currentWorkflow.laminator_id || "",
+          apply_print:    currentWorkflow.apply_print,
+          apply_cut:      currentWorkflow.apply_cut,
+          apply_laminate: currentWorkflow.apply_laminate,
+          preset_key:     currentWorkflow.preset_key || "",
+          color_tag:      currentWorkflow.color_tag  || "",
+        },
+        label: "Vinyl workflow template",
+      });
+      setNewName("");
+      await load();
+    } catch (error) {
+      console.error("Vinyl workflow template create blocked:", error);
+      setMutationError(error?.message || "The workflow template could not be created. Reload before retrying.");
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this template?")) return;
-    await VinylWorkflowTemplate.delete(id);
-    load();
+  const handleDelete = async (template) => {
+    if (!template?.id || isMutating || !confirm("Delete this template?")) return;
+    setIsMutating(true);
+    setMutationError("");
+    try {
+      await deleteVinylTemplateIfUnchanged({
+        entity: VinylWorkflowTemplate,
+        template,
+        label: `Vinyl workflow template ${template.name || template.id} deletion`,
+      });
+      await load();
+    } catch (error) {
+      console.error("Vinyl workflow template deletion blocked:", error);
+      setMutationError(error?.message || "This workflow template changed in another session. Reload before deleting it.");
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleApply = (t) => {
@@ -84,7 +113,7 @@ export default function VinylWorkflowTemplatesDialog({
                   <Button size="icon" variant="ghost" onClick={() => handleApply(t)} className="h-7 w-7 text-blue-600" title="Apply">
                     <Plus className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => handleDelete(t.id)} className="h-7 w-7 text-red-500">
+                  <Button size="icon" variant="ghost" onClick={() => handleDelete(t)} className="h-7 w-7 text-red-500">
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -92,12 +121,14 @@ export default function VinylWorkflowTemplatesDialog({
             </div>
           )}
 
+          {mutationError && <div className="text-xs text-red-600">{mutationError}</div>}
+
           {mode === "save" && currentWorkflow && (
             <div className="border-t border-slate-200 pt-3 space-y-2">
               <Label className="text-xs">Save current workflow as template</Label>
               <div className="flex gap-2">
                 <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. 3M IJ180 + 8508 on HP360" className="h-8 text-sm" />
-                <Button size="sm" onClick={handleSave} disabled={!newName.trim()} className="h-8">Save</Button>
+                <Button size="sm" onClick={handleSave} disabled={!newName.trim() || isMutating} className="h-8">Save</Button>
               </div>
             </div>
           )}

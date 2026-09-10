@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { VinylPartTemplate } from "@/entities/all";
 import { BookmarkPlus, Plus, Trash2, Search } from "lucide-react";
+import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
 
 export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutationError, setMutationError] = useState("");
 
   // Add-new fields
   const [newName, setNewName] = useState("");
@@ -28,22 +31,48 @@ export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
   useEffect(() => { if (open) load(); }, [open]);
 
   const handleSaveNew = async () => {
-    if (!newName.trim()) return;
-    await VinylPartTemplate.create({
-      name: newName.trim(),
-      width_inches: parseFloat(newW) || 0,
-      height_inches: parseFloat(newH) || 0,
-      default_quantity: 1,
-      allow_rotation: true,
-    });
-    setNewName(""); setNewW(12); setNewH(12);
-    load();
+    if (!newName.trim() || isMutating) return;
+    setIsMutating(true);
+    setMutationError("");
+    try {
+      await createVinylTemplateWithRecovery({
+        entity: VinylPartTemplate,
+        data: {
+          name: newName.trim(),
+          width_inches: parseFloat(newW) || 0,
+          height_inches: parseFloat(newH) || 0,
+          default_quantity: 1,
+          allow_rotation: true,
+        },
+        label: "Saved vinyl part",
+      });
+      setNewName(""); setNewW(12); setNewH(12);
+      await load();
+    } catch (error) {
+      console.error("Saved vinyl part create blocked:", error);
+      setMutationError(error?.message || "The saved vinyl part could not be created. Reload before retrying.");
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this saved part?")) return;
-    await VinylPartTemplate.delete(id);
-    load();
+  const handleDelete = async (template) => {
+    if (!template?.id || isMutating || !confirm("Delete this saved part?")) return;
+    setIsMutating(true);
+    setMutationError("");
+    try {
+      await deleteVinylTemplateIfUnchanged({
+        entity: VinylPartTemplate,
+        template,
+        label: `Saved vinyl part ${template.name || template.id} deletion`,
+      });
+      await load();
+    } catch (error) {
+      console.error("Saved vinyl part deletion blocked:", error);
+      setMutationError(error?.message || "This saved vinyl part changed in another session. Reload before deleting it.");
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handlePick = (t) => {
@@ -92,12 +121,14 @@ export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
                 <Button size="icon" variant="ghost" onClick={() => handlePick(t)} className="h-7 w-7 text-blue-600">
                   <Plus className="w-3.5 h-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => handleDelete(t.id)} className="h-7 w-7 text-red-500">
+                <Button size="icon" variant="ghost" onClick={() => handleDelete(t)} className="h-7 w-7 text-red-500">
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
             ))}
           </div>
+
+          {mutationError && <div className="text-xs text-red-600">{mutationError}</div>}
 
           <div className="border-t border-slate-200 pt-3 space-y-2">
             <Label className="text-xs">Save a new part</Label>
@@ -105,7 +136,7 @@ export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. 12×12 cooler decal" className="h-8 text-sm" />
               <Input type="number" step="0.125" value={newW} onChange={(e) => setNewW(e.target.value)} className="h-8 text-sm tabular-nums" />
               <Input type="number" step="0.125" value={newH} onChange={(e) => setNewH(e.target.value)} className="h-8 text-sm tabular-nums" />
-              <Button size="sm" onClick={handleSaveNew} disabled={!newName.trim()} className="h-8">Save</Button>
+              <Button size="sm" onClick={handleSaveNew} disabled={!newName.trim() || isMutating} className="h-8">Save</Button>
             </div>
           </div>
         </div>
