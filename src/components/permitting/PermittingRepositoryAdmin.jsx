@@ -210,7 +210,6 @@ export default function PermittingRepositoryAdmin() {
     const total = jurisdictions.length;
     setDeleteProgress({ processed: 0, total, currentJurisdiction: '' });
     
-    let deleted = 0;
     try {
       for (let i = 0; i < jurisdictions.length; i++) {
         const jurisdiction = jurisdictions[i];
@@ -226,7 +225,6 @@ export default function PermittingRepositoryAdmin() {
             jurisdiction,
             label: `Admin delete ${jurisdiction.name || jurisdiction.id}`,
           });
-          deleted++;
         } catch (e) {
           console.error(`Failed to delete ${jurisdiction.id}:`, e);
         }
