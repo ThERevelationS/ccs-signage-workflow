@@ -173,6 +173,10 @@ Deno.serve(async (req) => {
     };
 
     if (action === 'create') {
+      const creationKey = String(body?.creation_key || '').trim();
+      if (!creationKey || creationKey.length < 12 || creationKey.length > 200 || /\s/.test(creationKey)) {
+        return Response.json({ error: 'Fleet request create identity is missing or invalid. Reopen the New Request dialog and try again.' }, { status: 409 });
+      }
       const requestedPatch = requestPatch(body?.request || body);
       if (!['part', 'fluid'].includes(String(requestedPatch.item_type || ''))) return Response.json({ error: 'Request type must be part or fluid.' }, { status: 400 });
       const linked = await applyLinkedInventoryIdentity(requestedPatch);
@@ -185,14 +189,59 @@ Deno.serve(async (req) => {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
       }
+
+      const matchesCreateIntent = (row: any) =>
+        String(row?.item_type || '') === String(patch.item_type || '')
+        && String(row?.inventory_item_id || '') === String(patch.inventory_item_id || '')
+        && normIdentity(row?.item_name) === normIdentity(patch.item_name)
+        && String(row?.equipment_id || '') === String(patch.equipment_id || '')
+        && sameNumber(row?.quantity_needed, patch.quantity_needed)
+        && normIdentity(row?.justification) === normIdentity(patch.justification)
+        && String(row?.requester_email || '').toLowerCase() === String(user.email || '').toLowerCase();
+
+      const existingRows = await Request.filter({ creation_key: creationKey });
+      if (existingRows?.length > 1) {
+        return Response.json({ error: 'Multiple Fleet requests share this create identity. No new request was created; review the duplicates before retrying.' }, { status: 409 });
+      }
+      if (existingRows?.[0]) {
+        const reused = existingRows[0];
+        if (!matchesCreateIntent(reused)) {
+          return Response.json({ error: 'This create identity already belongs to a different Fleet request. Reopen the New Request dialog before submitting another request.' }, { status: 409 });
+        }
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          event_type: 'request_created', target_id: reused.id, event_token: `request-created:${creationKey}`
+        }).catch(() => null);
+        return Response.json({ success: true, reused: true, request: reused });
+      }
+
       const created = await Request.create({
         ...patch,
         status: 'pending',
         requester_email: user.email,
         requested_by_person: patch.requested_by_person || user.full_name || user.name || user.email,
+        creation_key: creationKey,
       });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await Request.filter({ creation_key: creationKey });
+      if (contenders?.length > 1) {
+        const winner = canonical(contenders) || created;
+        if (winner.id !== created.id) {
+          await Request.delete(created.id).catch(() => null);
+          if (!matchesCreateIntent(winner)) {
+            return Response.json({ error: 'Another Fleet request won this create identity with different details. The losing duplicate was discarded; reopen the New Request dialog.' }, { status: 409 });
+          }
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'request_created', target_id: winner.id, event_token: `request-created:${creationKey}`
+          }).catch(() => null);
+          return Response.json({ success: true, reused: true, request: winner });
+        }
+        for (const duplicate of contenders) {
+          if (duplicate.id !== winner.id) await Request.delete(duplicate.id).catch(() => null);
+        }
+      }
+
       await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
-        event_type: 'request_created', target_id: created.id, event_token: `created:${created.id}`
+        event_type: 'request_created', target_id: created.id, event_token: `request-created:${creationKey}`
       }).catch(() => null);
       return Response.json({ success: true, request: created });
     }
