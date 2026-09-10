@@ -10,6 +10,7 @@ const num = (value: unknown, fallback = 0) => {
 };
 const sameNumber = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) < 1e-9;
 const normIdentity = (value: unknown) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const RECEIVE_STALE_MS = 60 * 1000;
 const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const at = Date.parse(a?.created_date || a?.started_at || '') || 0;
   const bt = Date.parse(b?.created_date || b?.started_at || '') || 0;
@@ -45,7 +46,7 @@ async function claimReceipt(Receipt: any, data: any) {
       status: 'started',
       started_at: stamp,
       error_message: '',
-      result_summary: { ...(data.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
+      result_summary: { ...(failed.result_summary || {}), ...(data.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
     });
     await new Promise((resolve) => setTimeout(resolve, 75));
     const refreshed = await Receipt.get(failed.id);
@@ -76,27 +77,60 @@ const requestPatch = (source: any) => {
 };
 
 async function finalizeReceive(Request: any, Receipt: any, request: any, receipt: any, itemId: string, body: any) {
+  const activeReceipt = await Receipt.get(receipt.id).catch(() => receipt);
+  const summary = activeReceipt?.result_summary || receipt?.result_summary || {};
+  const current = await Request.get(request.id).catch(() => null);
+  if (!current) throw new Error('Fleet request no longer exists during receive finalization.');
+
   const stamp = nowIso();
-  const qty = num(body?.quantity_received ?? receipt?.result_summary?.quantity_received);
+  if (current.status === 'received' && String(current.receipt_key || '') === String(activeReceipt.operation_key || '')) {
+    await Receipt.update(activeReceipt.id, {
+      status: 'applied',
+      applied_at: current.receipt_applied_at || stamp,
+      result_summary: { ...summary, inventory_item_id: itemId || current.inventory_item_id || '', request_finalized: true, reconciled_from_received_request: true },
+      error_message: '',
+    });
+    return current;
+  }
+  if (String(current.receipt_key || '') !== String(activeReceipt.operation_key || '')) {
+    const conflict: any = new Error('Fleet request no longer holds its receive lock. Inventory was not replayed and the request was not overwritten.');
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  const lockedVersion = String(summary.request_locked_updated_date || '').trim();
+  if (!lockedVersion || lockedVersion !== String(current.updated_date || '')) {
+    const conflict: any = new Error('Fleet request changed after its receive lock was acquired. Inventory was not replayed and finalization was stopped.');
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  const qty = num(body?.quantity_received ?? summary.quantity_received);
   const unit = request?.item_type === 'part'
     ? 'units'
-    : String(body?.unit || body?.received_unit || receipt?.result_summary?.unit || '').trim();
-  const location = String(body?.location || receipt?.result_summary?.location || '').trim();
+    : String(body?.unit || body?.received_unit || summary.unit || '').trim();
+  const location = String(body?.location || summary.location || '').trim();
   const noteLine = `Received ${qty}${unit ? ` ${unit}` : ''} on ${stamp.slice(0, 10)}. Added to Fleet inventory.${location ? ` Storage: ${location}.` : ''}`;
-  const updated = await Request.update(request.id, {
-    status: 'received',
-    quantity_received: qty,
-    received_unit: unit || null,
-    received_at: stamp,
-    received_by: body?.received_by || receipt?.actor_email || '',
-    inventory_item_id: itemId,
-    receipt_key: receipt.operation_key,
-    receipt_applied_at: stamp,
-    notes: [request.notes, noteLine].filter(Boolean).join('\n'),
+  const updated = await updateFleetRecordIfCurrent({
+    entity: Request,
+    id: request.id,
+    expectedUpdatedAt: lockedVersion,
+    patch: {
+      status: 'received',
+      quantity_received: qty,
+      received_unit: unit || null,
+      received_at: stamp,
+      received_by: body?.received_by || activeReceipt?.actor_email || '',
+      inventory_item_id: itemId,
+      receipt_key: activeReceipt.operation_key,
+      receipt_applied_at: stamp,
+      notes: [request.notes, noteLine].filter(Boolean).join('\n'),
+    },
+    label: 'Fleet request receiving',
   });
-  await Receipt.update(receipt.id, {
+  await Receipt.update(activeReceipt.id, {
     status: 'applied', applied_at: stamp,
-    result_summary: { ...(receipt.result_summary || {}), inventory_item_id: itemId, request_finalized: true },
+    result_summary: { ...summary, inventory_item_id: itemId, request_finalized: true },
     error_message: '',
   });
   return updated;
