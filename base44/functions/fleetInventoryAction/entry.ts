@@ -166,13 +166,14 @@ Deno.serve(async (req) => {
       const stockDeduction = itemType === 'part'
         ? enteredQuantity
         : enteredQuantity * fluidOuncesPerUnit[enteredUnit] / fluidOuncesPerUnit[stockUnit];
+      const operationKey = `fleetinventory:${itemType}:${id}:usage:${clientKey}`;
+      const logKey = `${operationKey}:log`;
+      const priorReceipt = canonical(await Receipt.filter({ operation_key: operationKey }));
       const beforeQuantity = itemType === 'part' ? num(existing.quantity_on_hand) : num(existing.quantity);
-      if (beforeQuantity + 1e-9 < stockDeduction) {
+      if (!priorReceipt && beforeQuantity + 1e-9 < stockDeduction) {
         return Response.json({ error: `Insufficient Fleet stock. Available ${beforeQuantity} ${stockUnit}; this usage requires ${stockDeduction} ${stockUnit}.` }, { status: 409 });
       }
       const afterQuantity = beforeQuantity - stockDeduction;
-      const operationKey = `fleetinventory:${itemType}:${id}:usage:${clientKey}`;
-      const logKey = `${operationKey}:log`;
       const usageNotes = String(body?.notes || '').trim();
       const resultSummary = {
         item_type: itemType,
