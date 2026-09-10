@@ -59,7 +59,7 @@ export default function FleetSettingsEditor({ open, settings, onClose, onSaved }
     setSaving(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetSettingsAction", { action: "update", settings: draft });
+      const { data } = await base44.functions.invoke("fleetSettingsAction", { action: "update", expected_updated_date: settings?.updated_date || "", settings: draft });
       if (data?.error) throw new Error(data.error);
       onSaved?.(data?.settings || null);
       onClose?.();
