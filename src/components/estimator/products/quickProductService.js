@@ -636,21 +636,69 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
     const filter = {};
     if (blueprint.sourceTaggedData?.estimate_number) filter.estimate_number = blueprint.sourceTaggedData.estimate_number;
     if (blueprint.sourceTaggedData?.project_name) filter.project_name = blueprint.sourceTaggedData.project_name;
-    const candidates = await entity.filter(filter);
-    if (!Array.isArray(candidates)) throw new Error("Quick Product source projects could not be verified during recovery.");
-    const tagged = candidates.filter((row) => String(row?.notes || "").includes(blueprint.sourceRecoveryToken));
-    if (tagged.length > 1) throw new Error("Multiple Quick Product source records carry the same recovery token. Recovery stopped without linking either record.");
-    if (tagged.length === 1) {
-      sourceProject = tagged[0];
-      if (sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
+    const readTagged = async () => {
+      const candidates = await entity.filter(filter);
+      if (!Array.isArray(candidates)) throw new Error("Quick Product source projects could not be verified during recovery.");
+      return candidates.filter((row) => String(row?.notes || "").includes(blueprint.sourceRecoveryToken));
+    };
+    const verifyTagged = (tagged) => {
+      if (tagged.length > 1) throw new Error("Multiple Quick Product source records carry the same recovery token. Recovery stopped without linking either record.");
+      if (tagged.length === 0) return null;
+      const recovered = tagged[0];
+      if (sourceCoreDiffers(recovered, blueprint.sourceExpectedData)) {
         throw new Error("The recovered Quick Product source record no longer matches the saved Quick Product snapshot.");
       }
-    }
+      return recovered;
+    };
+
+    sourceProject = verifyTagged(await readTagged());
     // Do not infer recovery from an untagged lookalike. A completed prior Quick
     // Product can legitimately have an identical source snapshot. The temporary
     // token is the only safe create-response-loss anchor before source_project_id
     // is linked onto the new BuilderProduct.
-    if (!sourceProject) sourceProject = await entity.create(blueprint.sourceTaggedData);
+    if (!sourceProject) {
+      let createdSource = null;
+      let createError = null;
+      try {
+        createdSource = await entity.create(blueprint.sourceTaggedData);
+      } catch (error) {
+        createError = error;
+      }
+
+      // One create attempt only. Settle and re-read the operation token before
+      // linking the Builder so simultaneous source creation is detected while no
+      // downstream Builder/Part record yet depends on either ambiguous source.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      let taggedAfterCreate;
+      try {
+        taggedAfterCreate = await readTagged();
+      } catch (verificationError) {
+        if (createdSource?.id) {
+          sourceProject = createdSource;
+        } else {
+          throw new Error(
+            `Quick Product source create response was unavailable and its recovery lookup also failed. ` +
+            `Do not retry blindly; reload the Estimate first. ${verificationError?.message || ""}`.trim()
+          );
+        }
+      }
+
+      if (!sourceProject) {
+        const recoveredSource = verifyTagged(taggedAfterCreate);
+        if (recoveredSource) {
+          if (createdSource?.id && recoveredSource.id !== createdSource.id) {
+            throw new Error("Quick Product source returned a create receipt, but a different source owns the recovery token. No source was deleted or linked; reload before continuing.");
+          }
+          sourceProject = recoveredSource;
+        } else if (createdSource?.id) {
+          sourceProject = createdSource;
+        } else if (createError) {
+          throw new Error(`${createError?.message || "Quick Product source could not be created."} No matching recovery-token source was visible after recovery. Reload the Estimate before retrying.`);
+        } else {
+          throw new Error("Quick Product source could not verify whether it was created. Reload the Estimate before retrying.");
+        }
+      }
+    }
     if (!sourceProject?.id) throw new Error("Quick Product source project could not be verified after creation.");
 
     const latestBuilder = await base44.entities.BuilderProduct.get(builder.id);
