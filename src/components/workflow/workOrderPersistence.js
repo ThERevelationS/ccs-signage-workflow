@@ -324,6 +324,9 @@ export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, la
       );
     } catch (error) {
       const afterError = await entity.get(id).catch(() => null);
+      if (afterError?.deleted === true) {
+        throw new Error(`${label} write response was unavailable and the Work Order is now in Trash. Reload before retrying; no active Work Order update was accepted.`);
+      }
       if (afterError && sameValue(afterError[fieldName] ?? [], nextArray)) return afterError;
       throw error;
     }
