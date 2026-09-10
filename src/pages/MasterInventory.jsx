@@ -16,6 +16,7 @@ import MasterExtrudedMetalsPolesTab from "@/components/masterInventory/MasterExt
 import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteStoneTab";
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
+import { deleteInventoryRecordIfUnchanged } from "@/components/masterInventory/inventoryPersistence";
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
@@ -94,13 +95,12 @@ export default function MasterInventory() {
       return;
     }
     try {
-      const live = await activeSource.entity.get(item.id);
-      if (item.updated_date && live?.updated_date && item.updated_date !== live.updated_date) {
-        alert("This inventory item changed in another session and was not deleted. The inventory will reload so you can review the latest record first.");
-        await loadActive();
-        return;
-      }
-      await activeSource.entity.delete(item.id);
+      await deleteInventoryRecordIfUnchanged({
+        entity: activeSource.entity,
+        record: item,
+        nameField: activeSource.nameField,
+        label: `${activeSource.label || "Inventory"} item “${label}”`,
+      });
       await loadActive();
     } catch (err) {
       console.error("Delete failed:", err);
