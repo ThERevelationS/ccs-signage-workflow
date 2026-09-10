@@ -198,6 +198,17 @@ async function buildInventoryPlans(base44: any, workOrder: any, patch: any, comp
 }
 
 async function applyInventoryPlan(base44: any, Receipt: any, plan: any, workOrder: any, actor: any) {
+  const initialSummary = {
+    work_order_id: workOrder.id,
+    item_type: plan.item_type,
+    item_id: plan.item_id,
+    quantity_used: plan.quantity,
+    unit: plan.unit,
+    before_quantity: plan.before_quantity,
+    after_quantity: plan.after_quantity,
+    log_key: plan.log_key,
+    safe_retry: false,
+  };
   const receiptClaim = await claimReceipt(Receipt, {
     operation_key: plan.operation_key,
     operation_type: 'inventory_usage',
@@ -205,66 +216,70 @@ async function applyInventoryPlan(base44: any, Receipt: any, plan: any, workOrde
     target_id: plan.item_id,
     actor_email: actor.email || '',
     actor_user_id: actor.id || '',
-    result_summary: {
-      work_order_id: workOrder.id,
-      item_type: plan.item_type,
-      item_id: plan.item_id,
-      quantity_used: plan.quantity,
-      unit: plan.unit,
-      before_quantity: plan.before_quantity,
-      after_quantity: plan.after_quantity,
-      log_key: plan.log_key,
-    },
+    result_summary: initialSummary,
   });
   if (receiptClaim.applied) return { reused: true, receipt: receiptClaim.receipt };
 
   const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
   const Log = base44.asServiceRole.entities.FleetEquipmentLog;
-  const item = await entity.get(plan.item_id);
-  const current = plan.item_type === 'part' ? num(item?.quantity_on_hand) : num(item?.quantity);
-  const logs = await Log.filter({ usage_receipt_key: plan.log_key });
-  const usageLog = canonical(logs);
+  const summary = receiptClaim.receipt?.result_summary || initialSummary;
+  const logKey = String(summary.log_key || plan.log_key);
+  const usageLog = canonical(await Log.filter({ usage_receipt_key: logKey }));
 
   if (!receiptClaim.owner) {
-    if (usageLog && sameNumber(current, plan.after_quantity)) {
-      await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-      return { reused: true, recovered: true, receipt: receiptClaim.receipt };
-    }
-    if (usageLog && sameNumber(current, plan.before_quantity)) {
-      await entity.update(plan.item_id, plan.item_type === 'part'
-        ? { quantity_on_hand: plan.after_quantity }
-        : { quantity: plan.after_quantity });
-      await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-      return { reused: true, recovered: true, receipt: receiptClaim.receipt };
-    }
-    if (!usageLog && sameNumber(current, plan.before_quantity)) {
-      await Log.create({
-        equipment_id: workOrder.equipment_id,
-        item_id: plan.item_id,
-        item_name: plan.item_name,
-        item_type: plan.item_type,
-        quantity_used: plan.quantity,
-        unit: plan.unit,
-        work_order_id: workOrder.id,
-        recorded_by: actor.email || 'system',
-        usage_receipt_key: plan.log_key,
+    if (summary.inventory_applied === true) {
+      if (!usageLog) {
+        await Log.create({
+          equipment_id: workOrder.equipment_id,
+          item_id: plan.item_id,
+          item_name: plan.item_name,
+          item_type: plan.item_type,
+          quantity_used: num(summary.quantity_used, plan.quantity),
+          unit: summary.unit || plan.unit,
+          work_order_id: workOrder.id,
+          recorded_by: actor.email || 'system',
+          usage_receipt_key: logKey,
+        });
+      }
+      await Receipt.update(receiptClaim.receipt.id, {
+        status: 'applied', applied_at: nowIso(), error_message: '',
+        result_summary: { ...summary, safe_retry: false, recovered: true },
       });
-      await entity.update(plan.item_id, plan.item_type === 'part'
-        ? { quantity_on_hand: plan.after_quantity }
-        : { quantity: plan.after_quantity });
-      await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
       return { reused: true, recovered: true, receipt: receiptClaim.receipt };
     }
-    throw new Error(`Inventory operation ${plan.operation_key} is already in progress and cannot be safely reconciled automatically.`);
+    throw new Error(`Inventory operation ${plan.operation_key} has no durable proof that its stock change was applied. It was not replayed automatically; review FleetOperationReceipt.`);
   }
 
-  if (!sameNumber(current, plan.before_quantity)) {
-    await Receipt.update(receiptClaim.receipt.id, {
-      status: 'failed', failed_at: nowIso(),
-      error_message: `Inventory changed after completion preflight. Expected ${plan.before_quantity}, found ${current}.`,
-    });
-    throw new Error(`Inventory changed while completing this work order for ${plan.item_name}. Reload and try again.`);
+  const expectedBefore = num(summary.before_quantity, NaN);
+  const expectedAfter = num(summary.after_quantity, NaN);
+  if (!Number.isFinite(expectedBefore) || !Number.isFinite(expectedAfter)) {
+    throw new Error(`Inventory operation ${plan.operation_key} is missing reconciliation quantities.`);
   }
+
+  let updatedItem: any = null;
+  try {
+    const quantityResult = await setFleetInventoryQuantityIfUnchanged({
+      entity,
+      itemId: plan.item_id,
+      field: plan.item_type === 'part' ? 'quantity_on_hand' : 'quantity',
+      expectedQuantity: expectedBefore,
+      nextQuantity: expectedAfter,
+      label: `${plan.item_name || 'Fleet inventory'} stock`,
+    });
+    updatedItem = quantityResult.item || await entity.get(plan.item_id);
+  } catch (error: any) {
+    const safeRetry = error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+    await Receipt.update(receiptClaim.receipt.id, {
+      status: 'failed', failed_at: nowIso(), error_message: error?.message || String(error),
+      result_summary: { ...summary, safe_retry: safeRetry, ...(safeRetry ? { inventory_applied: false } : { inventory_outcome_ambiguous: true }) },
+    }).catch(() => null);
+    throw error;
+  }
+
+  await Receipt.update(receiptClaim.receipt.id, {
+    result_summary: { ...summary, inventory_applied: true, safe_retry: false },
+    error_message: '',
+  });
 
   if (!usageLog) {
     await Log.create({
@@ -272,19 +287,19 @@ async function applyInventoryPlan(base44: any, Receipt: any, plan: any, workOrde
       item_id: plan.item_id,
       item_name: plan.item_name,
       item_type: plan.item_type,
-      quantity_used: plan.quantity,
-      unit: plan.unit,
+      quantity_used: num(summary.quantity_used, plan.quantity),
+      unit: summary.unit || plan.unit,
       work_order_id: workOrder.id,
       recorded_by: actor.email || 'system',
-      usage_receipt_key: plan.log_key,
+      usage_receipt_key: logKey,
     });
   }
 
-  await entity.update(plan.item_id, plan.item_type === 'part'
-    ? { quantity_on_hand: plan.after_quantity }
-    : { quantity: plan.after_quantity });
-  await Receipt.update(receiptClaim.receipt.id, { status: 'applied', applied_at: nowIso() });
-  return { reused: false, receipt: receiptClaim.receipt };
+  await Receipt.update(receiptClaim.receipt.id, {
+    status: 'applied', applied_at: nowIso(), error_message: '',
+    result_summary: { ...summary, inventory_applied: true, safe_retry: false },
+  });
+  return { reused: false, receipt: receiptClaim.receipt, item: updatedItem };
 }
 
 async function applySchedule(base44: any, Receipt: any, workOrder: any, completionKey: string, actor: any) {
