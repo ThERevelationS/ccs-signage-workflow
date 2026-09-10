@@ -5,6 +5,7 @@ import { ArrowLeft, BrickWall, Clock, PaintBucket, Save, Shovel } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const GROUPS = [
   {
@@ -68,7 +69,7 @@ export default function FoundationSettings() {
   useEffect(() => {
     const load = async () => {
       try {
-        const all = await SettingsEntity.list();
+        const all = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Foundation Settings catalog" });
         const relevant = (all || []).filter((row) => ACTIVE_KEYS.has(row.setting_name));
         const map = Object.fromEntries(relevant.map((row) => [row.setting_name, row.setting_value ?? ""]));
         setRows(relevant);
