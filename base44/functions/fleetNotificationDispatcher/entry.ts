@@ -16,6 +16,8 @@ const fluidIsLowStock = (item: any) => {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
     const eventType = String(body?.event_type || '').trim();
     const targetId = String(body?.target_id || '').trim();
