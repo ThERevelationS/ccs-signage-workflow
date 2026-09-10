@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 
 const nowIso = () => new Date().toISOString();
 const num = (value: unknown, fallback = 0) => {
@@ -34,7 +35,7 @@ async function claimReceipt(Receipt: any, data: any) {
   const failed = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'failed' }));
   if (failed) {
     const summary = failed.result_summary || {};
-    if (summary.inventory_item_id || summary.before_quantity != null || summary.after_quantity != null) {
+    if (summary.safe_retry !== true && (summary.inventory_item_id || summary.before_quantity != null || summary.after_quantity != null)) {
       return { receipt: failed, applied: false, owner: false, failedWithMutationEvidence: true };
     }
     const retryToken = crypto.randomUUID();
