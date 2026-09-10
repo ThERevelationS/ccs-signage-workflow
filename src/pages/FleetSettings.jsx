@@ -32,6 +32,8 @@ export default function FleetSettings() {
   const [connection, setConnection] = useState(null);
   const [audit, setAudit] = useState(null);
   const [serverStatus, setServerStatus] = useState(null);
+  const [integrity, setIntegrity] = useState(null);
+  const [integrityBusy, setIntegrityBusy] = useState(false);
   const [automationLogs, setAutomationLogs] = useState([]);
   const [queueRows, setQueueRows] = useState([]);
   const [receiptRows, setReceiptRows] = useState([]);
@@ -46,17 +48,19 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, connectionRows, auditRows, statusResult, health] = await Promise.all([
+          const [settingsRows, connectionRows, auditRows, statusResult, integrityResult, health] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
             base44.entities.BouncieConnection.list("-updated_date", 10),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
             base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
+            base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection((connectionRows || [])[0] || null);
           setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
           setServerStatus(statusResult?.data || null);
+          setIntegrity(integrityResult?.data || null);
           setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
           setQueueRows(health.notifications || []);
           setReceiptRows(health.receipts || []);
@@ -115,6 +119,16 @@ export default function FleetSettings() {
       setReceiptRows(health.receipts || []);
     } finally {
       setChecking(false);
+    }
+  };
+
+  const runIntegrityAudit = async () => {
+    setIntegrityBusy(true);
+    try {
+      const { data } = await base44.functions.invoke("fleetIntegrityAudit", {});
+      setIntegrity(data || null);
+    } finally {
+      setIntegrityBusy(false);
     }
   };
 
@@ -183,6 +197,8 @@ export default function FleetSettings() {
       <div className="mt-4 grid sm:grid-cols-2 gap-3"><HealthCount label="Notification queue unresolved" value={queueUnresolved.length} ok={queueUnresolved.length===0}/><HealthCount label="Operation receipts unresolved" value={receiptUnresolved.length} ok={receiptUnresolved.length===0}/></div>
       {(queueUnresolved.length>0 || receiptUnresolved.length>0) && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">Unresolved automation state is intentionally surfaced rather than silently replayed. Ambiguous notification delivery is not automatically resent.</div>}
     </div>
+
+    <IntegrityPanel data={integrity} busy={integrityBusy} onRefresh={runIntegrityAudit} />
 
     {connection?.needs_reconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page to restore full Fleet tracking.</p></div></div>}
 
