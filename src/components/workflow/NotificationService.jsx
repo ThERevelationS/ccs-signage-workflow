@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -132,7 +133,7 @@ const getRecipients = async (rule, workOrder) => {
       case "assigned_user":
         if (workOrder?.assigned_to) {
           // Try to find user email from assigned_to field
-          const users = await User.list();
+          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
           const user = users.find(u => 
             u.email === workOrder.assigned_to || 
             u.full_name === workOrder.assigned_to
@@ -144,7 +145,7 @@ const getRecipients = async (rule, workOrder) => {
         if (workOrder?.created_by) emails.add(workOrder.created_by);
         break;
       case "all_admins":
-        const admins = await User.filter({ role: "admin" });
+        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
         admins.forEach(admin => emails.add(admin.email));
         break;
       case "custom_list":
@@ -293,7 +294,7 @@ const getAutomationRecipients = async (actionConfig, workOrder) => {
         break;
       case "assigned_user":
         if (workOrder?.assigned_to) {
-          const users = await User.list();
+          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
           const user = users.find(u => 
             u.email === workOrder.assigned_to || 
             u.full_name === workOrder.assigned_to
@@ -305,7 +306,7 @@ const getAutomationRecipients = async (actionConfig, workOrder) => {
         if (workOrder?.created_by) emails.add(workOrder.created_by);
         break;
       case "all_admins":
-        const admins = await User.filter({ role: "admin" });
+        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
         admins.forEach(admin => emails.add(admin.email));
         break;
       case "custom_list":
@@ -319,7 +320,7 @@ const getAutomationRecipients = async (actionConfig, workOrder) => {
       case "email_group":
         if (recipient.value) {
           try {
-            const groups = await EmailGroup.list();
+            const groups = await loadAllEntityRows({ entity: EmailGroup, sort: null, label: "Notification email groups" });
             const group = groups.find(g => g.id === recipient.value);
             if (group?.emails) {
               group.emails.forEach(email => emails.add(email));
@@ -365,7 +366,7 @@ const replaceOrderVariables = (template, order) => {
 export const triggerNotification = async (triggerType, workOrder, extraData = {}) => {
   try {
     // Check old EmailNotificationSettings rules
-    const allRules = await EmailNotificationSettings.filter({ enabled: true });
+    const allRules = await loadAllEntityRows({ entity: EmailNotificationSettings, query: { enabled: true }, sort: null, label: "Enabled notification rules" });
     const matchingRules = allRules
       .filter(rule => rule.trigger_type === triggerType)
       .filter(rule => matchesConditions(rule, workOrder, extraData))
@@ -398,7 +399,7 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
     }
     
     // Check new AutomationRule rules
-    const allAutomations = await AutomationRule.filter({ enabled: true });
+    const allAutomations = await loadAllEntityRows({ entity: AutomationRule, query: { enabled: true }, sort: null, label: "Enabled notification automations" });
     const matchingAutomations = allAutomations
       .filter(automation => checkAutomationTriggers(automation, triggerType, workOrder, extraData))
       .sort((a, b) => (a.priority || 0) - (b.priority || 0));
