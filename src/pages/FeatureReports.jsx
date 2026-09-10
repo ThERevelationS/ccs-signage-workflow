@@ -37,6 +37,7 @@ import {
   deleteFeatureReportSafely,
   updateFeatureReportFields,
 } from "@/components/reports/featureReportPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   Plus,
   Bug,
@@ -98,7 +99,12 @@ export default function FeatureReports() {
 
   const loadReports = async () => {
     setIsLoading(true);
-    const allReports = await FeatureReport.filter({ status: { $ne: "completed" } }, "-created_date");
+    const allReports = await loadAllEntityRows({
+      entity: FeatureReport,
+      query: { status: { $ne: "completed" } },
+      sort: "-created_date",
+      label: "Open feature reports",
+    });
     setReports(allReports);
     setIsLoading(false);
   };
