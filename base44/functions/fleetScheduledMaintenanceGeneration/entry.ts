@@ -233,53 +233,79 @@ Deno.serve(async (req) => {
       if (!receipt.owner) {
         const found = canonical(await WorkOrder.filter({generation_key:key}));
         if (found) {
-          await Task.update(task.id,{status:'in_progress',generation_key:key,last_generated_for_date:task.start_date});
-          await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),result_summary:{...(receipt.receipt.result_summary||{}),work_order_id:found.id,recovered:true}});
-          results.push({task_id:task.id,status:'recovered',work_order_id:found.id});
+          try {
+            const activeReceipt = await Receipt.get(receipt.receipt.id).catch(()=>receipt.receipt);
+            const dueDate = String(activeReceipt?.result_summary?.due_date || task.start_date || '');
+            await advanceLockedTask(Task,Receipt,task.id,key,activeReceipt,dueDate);
+            await Receipt.update(activeReceipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(activeReceipt.result_summary||{}),work_order_id:found.id,work_order_number:found.work_order_number,recovered:true}});
+            results.push({task_id:task.id,status:'recovered',work_order_id:found.id});
+          } catch (error:any) {
+            const message = error?.message || String(error);
+            await Receipt.update(receipt.receipt.id,{status:'failed',failed_at:nowIso(),error_message:message}).catch(()=>null);
+            results.push({task_id:task.id,status:'error',reason:'generation_recovery_conflict',error:message,work_order_id:found.id});
+          }
         } else {
-          results.push({task_id:task.id,status:'in_progress_elsewhere'});
+          results.push({task_id:task.id,status:receipt.failed?'error':'in_progress_elsewhere',reason:receipt.failed?'failed_generation_receipt_needs_review':'claim_owned_elsewhere'});
         }
         continue;
       }
 
       try {
         const fresh = await Task.get(task.id);
-        if (!fresh || !DUE_TASK_STATUSES.has(fresh.status) || !fresh.start_date || fresh.start_date>today) {
-          await Receipt.update(receipt.receipt.id,{status:'failed',failed_at:nowIso(),error_message:'Task changed before generation.'});
+        if (!fresh || !DUE_TASK_STATUSES.has(fresh.status) || !fresh.start_date || fresh.start_date>today || String(fresh.start_date) !== String(task.start_date)) {
+          await Receipt.delete(receipt.receipt.id).catch(()=>null);
           results.push({task_id:task.id,status:'skipped',reason:'task_changed'});
           continue;
         }
+
+        const lock = await acquireTaskGenerationLock(Task,Receipt,task,key,receipt.receipt);
+        const lockedTask = lock.task;
+        receipt.receipt = lock.receipt;
+
         const activeNow = (await loadAllEntityRows({ entity:WorkOrder, query:{maintenance_task_id:task.id}, sort:'-created_date', label:`Fleet work orders for maintenance task ${task.id}` })).find((wo:any)=>ACTIVE.has(wo.status));
         if (activeNow) {
-          await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),result_summary:{existing_work_order_id:activeNow.id,skipped:true}});
+          const released = await releaseTaskGenerationLock(Task,lockedTask,receipt.receipt);
+          await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),existing_work_order_id:activeNow.id,skipped:true,task_lock_released:released}});
           results.push({task_id:task.id,status:'skipped',reason:'active_work_order_exists',work_order_id:activeNow.id});
           continue;
         }
 
-        const number = workOrderNumber(fresh);
+        const number = workOrderNumber(lockedTask);
         const byKey = canonical(await WorkOrder.filter({generation_key:key}));
         const byNumber = canonical(await WorkOrder.filter({work_order_number:number}));
         const created = byKey || byNumber || await WorkOrder.create({
           work_order_number:number,
-          equipment_id:fresh.equipment_id,
-          maintenance_task_id:fresh.id,
-          title:fresh.title,
-          description:fresh.description || `Scheduled maintenance: ${fresh.title}`,
+          equipment_id:lockedTask.equipment_id,
+          maintenance_task_id:lockedTask.id,
+          title:lockedTask.title,
+          description:lockedTask.description || `Scheduled maintenance: ${lockedTask.title}`,
           type:'scheduled',
-          priority:fresh.priority || 'medium',
+          priority:lockedTask.priority || 'medium',
           status:'open',
-          assigned_to:fresh.assigned_to || '',
+          assigned_to:lockedTask.assigned_to || '',
           generation_key:key,
         });
-        await Task.update(fresh.id,{status:'in_progress',generation_key:key,last_generated_for_date:fresh.start_date});
+        await advanceLockedTask(Task,Receipt,lockedTask.id,key,receipt.receipt,lockedTask.start_date);
         const stamp = nowIso();
-        await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:stamp,result_summary:{work_order_id:created.id,work_order_number:created.work_order_number}});
+        await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:stamp,error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),work_order_id:created.id,work_order_number:created.work_order_number}});
         await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);
-        results.push({task_id:fresh.id,status:byKey||byNumber?'recovered':'created',work_order_id:created.id,work_order_number:created.work_order_number});
-      } catch (error) {
+        results.push({task_id:lockedTask.id,status:byKey||byNumber?'recovered':'created',work_order_id:created.id,work_order_number:created.work_order_number});
+      } catch (error:any) {
         const message = error?.message || String(error);
-        await Receipt.update(receipt.receipt.id,{status:'failed',failed_at:nowIso(),error_message:message}).catch(()=>null);
-        results.push({task_id:task.id,status:'error',error:message});
+        const generated = canonical(await WorkOrder.filter({generation_key:key}).catch(()=>[]));
+        const activeReceipt = await Receipt.get(receipt.receipt.id).catch(()=>receipt.receipt);
+        const hasTaskLock = activeReceipt?.result_summary?.task_lock_acquired === true;
+        let released = false;
+        if (!generated && hasTaskLock) {
+          const currentTask = await Task.get(task.id).catch(()=>null);
+          try { released = await releaseTaskGenerationLock(Task,currentTask,activeReceipt); } catch {}
+        }
+        if (!generated && (!hasTaskLock || released)) {
+          await Receipt.delete(activeReceipt.id).catch(()=>null);
+        } else {
+          await Receipt.update(activeReceipt.id,{status:'failed',failed_at:nowIso(),error_message:message,result_summary:{...(activeReceipt.result_summary||{}),generated_work_order_id:generated?.id || '',task_lock_release_failed:!generated&&hasTaskLock&&!released}}).catch(()=>null);
+        }
+        results.push({task_id:task.id,status:'error',error:message,work_order_id:generated?.id || ''});
       }
     }
 
