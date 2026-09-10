@@ -79,6 +79,15 @@ Deno.serve(async (req) => {
   const WorkOrder = base44.asServiceRole.entities.WorkOrder;
   const CorebridgeLog = base44.asServiceRole.entities.CorebridgeLog;
   const PendingImport = base44.asServiceRole.entities.PendingImport;
+  const writeRunLogBestEffort = async (data: any) => {
+    try {
+      await CorebridgeLog.create(data);
+      return true;
+    } catch (logError) {
+      console.error('CoreBridge run log could not be persisted:', logError);
+      return false;
+    }
+  };
 
   // Detect trigger type from request body
   let triggerType = 'scheduled';
@@ -106,7 +115,7 @@ Deno.serve(async (req) => {
     if (cfg.enabled === false) {
       logData.status = 'no_emails';
       logData.debug_info = 'Importer is disabled in settings.';
-      await CorebridgeLog.create(logData);
+      await writeRunLogBestEffort(logData);
       return Response.json({ success: true, message: "CoreBridge AI importer is disabled", processed: 0 });
     }
 
@@ -145,7 +154,7 @@ Deno.serve(async (req) => {
       logData.debug_info += ` | Broad search (from corebridge) found: ${broadData.messages?.length ?? 0}`;
 
       logData.status = 'no_emails';
-      await CorebridgeLog.create(logData);
+      await writeRunLogBestEffort(logData);
       return Response.json({ success: true, message: "No new CoreBridge emails found", processed: 0, results: [], debug: logData.debug_info });
     }
 
@@ -565,7 +574,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
     logData.results = results;
     logData.status = processed === 0 && hasErrors ? 'error' : hasErrors ? 'partial' : 'success';
 
-    await CorebridgeLog.create(logData);
+    await writeRunLogBestEffort(logData);
 
     return Response.json({ success: true, processed, results });
 
@@ -573,7 +582,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
     console.error('processCorebridgeEmails error:', error);
     logData.status = 'error';
     logData.error_message = error.message;
-    await CorebridgeLog.create(logData);
+    await writeRunLogBestEffort(logData);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
