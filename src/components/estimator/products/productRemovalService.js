@@ -4,6 +4,7 @@ import { builderMutationHash, pendingBuilderMutation } from "@/components/estima
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const nowIso = () => new Date().toISOString();
 
@@ -126,7 +127,7 @@ async function preflightChildren(plan, builderProductId) {
 async function verifyRemovalPlan(plan) {
   if (plan.source) {
     const entity = base44.entities[plan.source.entity];
-    if (!entity?.get || !entity?.delete) throw new Error("The owned Builder source entity needed for Product removal is unavailable.");
+    if (!entity?.get || !entity?.deleteMany) throw new Error("The owned Builder source entity needed for Product removal is unavailable.");
     const source = await entity.get(plan.source.id);
     assertExpectedRecord(source, plan.source, "Owned Builder source");
   }
@@ -144,7 +145,12 @@ async function deleteVerified(entity, step, label, builderProductId = "") {
   const record = await entity.get(step.id);
   if (!record) return;
   assertExpectedRecord(record, step, label, builderProductId);
-  await entity.delete(step.id);
+  await deleteEntityIfUnchanged({
+    entity,
+    record,
+    guardFields: builderProductId ? { builder_product_id: builderProductId } : {},
+    label,
+  });
 }
 
 async function applyRemovalPlan(plan) {
