@@ -14,6 +14,63 @@ const canonicalRevision = (rows: any[] = []) => rows
 const sameMoney = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) <= 0.005;
 const ALLOWED_REASONS = new Set(['update_price', 'initial_freeze', 'manual_adjustment', 'reattach']);
 
+async function settleRevisionNumber(RevisionService: any, builderProductId: string, created: any) {
+  let current = created;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const rows = await RevisionService.filter({ builder_product_id: builderProductId });
+    if (!Array.isArray(rows)) throw new Error('Builder price revision history could not be verified after creation.');
+    const live = rows.find((row) => String(row?.id || '') === String(current?.id || ''));
+    if (!live) throw new Error('The newly created Builder price revision disappeared before its sequence number could be verified.');
+    current = { ...current, ...live };
+
+    const revisionNumber = num(current.revision_number);
+    const collisions = rows.filter((row) => row?.id !== current.id && num(row?.revision_number) === revisionNumber);
+    if (!collisions.length) return current;
+
+    const winner = [current, ...collisions].slice().sort((a, b) => {
+      const aTime = Date.parse(a?.created_date || '') || 0;
+      const bTime = Date.parse(b?.created_date || '') || 0;
+      if (aTime !== bTime) return aTime - bTime;
+      return String(a?.id || '').localeCompare(String(b?.id || ''));
+    })[0];
+    if (winner?.id === current.id && attempt < 4) continue;
+
+    const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
+    const version = String(current?.updated_date || '').trim();
+    if (!version) throw new Error('Builder price revision version metadata is incomplete; concurrent-safe renumbering was blocked.');
+
+    let result;
+    try {
+      result = await RevisionService.updateMany(
+        { id: current.id, builder_product_id: builderProductId, updated_date: version },
+        { $set: { revision_number: nextNumber } },
+      );
+    } catch (error) {
+      const afterError = await RevisionService.get(current.id).catch(() => null);
+      if (afterError?.id && num(afterError.revision_number) === nextNumber) {
+        current = afterError;
+        continue;
+      }
+      throw error;
+    }
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error('Builder price revision conditional renumber result could not be verified.');
+    }
+    if (result.updated !== 1) continue;
+    const updated = await RevisionService.get(current.id).catch(() => null);
+    if (!updated?.id) throw new Error('Builder price revision was renumbered but could not be re-read.');
+    current = updated;
+  }
+
+  const finalRows = await RevisionService.filter({ builder_product_id: builderProductId });
+  if (!Array.isArray(finalRows)) throw new Error('Builder price revision history could not be verified after renumbering.');
+  const finalCurrent = finalRows.find((row) => String(row?.id || '') === String(current?.id || '')) || current;
+  const collision = finalRows.some((row) => row?.id !== finalCurrent.id && num(row?.revision_number) === num(finalCurrent.revision_number));
+  if (collision) throw new Error('Concurrent Builder price revisions could not settle on unique revision numbers. No duplicate number was accepted silently.');
+  return finalCurrent;
+}
+
 function assertSameOperation(existing: any, revision: any) {
   if (!existing) return;
   if (
