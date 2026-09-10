@@ -58,7 +58,7 @@ export default function FleetTracking() {
     try {
       const notifs = await base44.entities.BouncieNotification.list("-timestamp", 200);
       setNotifications(notifs || []);
-    } catch (e) {
+    } catch {
       // entity may not be readable yet
     }
   }, []);
@@ -67,7 +67,7 @@ export default function FleetTracking() {
     try {
       await base44.functions.invoke("bouncieSyncNotifications", {});
       loadNotifications();
-    } catch (e) {
+    } catch {
       // silent
     }
   }, [loadNotifications]);
@@ -86,7 +86,7 @@ export default function FleetTracking() {
       const all = results.flatMap(r => r?.data?.data || []);
       all.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
       setTrips(all);
-    } catch (e) {
+    } catch {
       setTrips([]);
     } finally {
       setTripsLoading(false);
