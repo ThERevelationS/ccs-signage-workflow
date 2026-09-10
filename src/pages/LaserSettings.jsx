@@ -5,6 +5,7 @@ import { ArrowLeft, Calculator, Clock, DollarSign, Save, Scissors, Settings as S
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"];
@@ -57,7 +58,7 @@ export default function LaserSettings() {
   useEffect(() => {
     const load = async () => {
       try {
-        const all = await SettingsEntity.list();
+        const all = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Laser Settings catalog" });
         const relevant = (all || []).filter((row) => LASER_KEYS.has(row.setting_name));
         const map = Object.fromEntries(relevant.map((row) => [row.setting_name, row.setting_value ?? ""]));
         setRows(relevant);
