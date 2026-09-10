@@ -50,6 +50,7 @@ import {
   deletePTOPolicyIfUnused,
   updatePTOPolicyIfUnchanged,
 } from "@/components/timeclock/ptoPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const PTOPolicy = base44.entities.PTOPolicy;
 const UserPTOBalance = base44.entities.UserPTOBalance;
@@ -119,9 +120,9 @@ export default function PTOManagement() {
     setIsLoading(true);
     try {
       const [policiesData, balancesData, usersData] = await Promise.all([
-        PTOPolicy.list(),
-        UserPTOBalance.list(),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: PTOPolicy, sort: null, label: "PTO policies" }),
+        loadAllEntityRows({ entity: UserPTOBalance, sort: null, label: "PTO balances" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "PTO authorized users" })
       ]);
       setPolicies(policiesData);
       setUserBalances(balancesData);
