@@ -1,4 +1,3 @@
-import React from "react";
 import { formatDuration, formatMiles, computeStats } from "./fleetHelpers";
 import { Loader2 } from "lucide-react";
 
@@ -14,7 +13,7 @@ const AVG_OPTIONS = [
   { key: "week", label: "Week" },
 ];
 
-export default function StatsTab({ vehicle, trips, loading, daysBack, onDaysBackChange, avgBy, onAvgByChange }) {
+export default function StatsTab({ trips, loading, daysBack, onDaysBackChange, avgBy, onAvgByChange }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -94,7 +93,7 @@ function Section({ title, children }) {
   );
 }
 
-function Row({ label, total, avg, value, align }) {
+function Row({ label, total, avg, value }) {
   return (
     <div className="flex items-center px-3 py-2.5 border-t border-gray-100 dark:border-slate-800 text-sm">
       <div className="flex-1 text-gray-700 dark:text-slate-300">{label}</div>
