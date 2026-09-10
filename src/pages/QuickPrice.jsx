@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
+import { createQuickPriceProjectWithRecovery } from "@/components/estimator/quickPricePersistence";
 
 export default function QuickPrice() {
   const navigate = useNavigate();
@@ -15,19 +16,30 @@ export default function QuickPrice() {
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+  const createRef = useRef(false);
 
   const start = async () => {
     const mod = ESTIMATOR_MODULES.find((m) => m.key === moduleKey);
-    if (!mod || !projectName.trim() || !clientName.trim()) return;
+    if (!mod || !projectName.trim() || !clientName.trim() || createRef.current) return;
+    createRef.current = true;
     setCreating(true);
+    setError("");
     try {
-      const record = await base44.entities[mod.entity].create({
-        project_name: projectName.trim(),
-        client_name: clientName.trim(),
-        status: "draft",
+      const result = await createQuickPriceProjectWithRecovery({
+        entity: base44.entities[mod.entity],
+        data: {
+          project_name: projectName.trim(),
+          client_name: clientName.trim(),
+          status: "draft",
+        },
+        label: `${mod.label} Quick Price project`,
       });
-      navigate(`/${mod.page}?id=${record.id}`);
+      navigate(`/${mod.page}?id=${result.record.id}`);
+    } catch (e) {
+      setError(e?.message || "Quick Price could not safely create the project. Review existing drafts before retrying.");
     } finally {
+      createRef.current = false;
       setCreating(false);
     }
   };
@@ -54,6 +66,13 @@ export default function QuickPrice() {
               <Input value={clientName} onChange={(e) => setClientName(e.target.value)} />
             </label>
           </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <div className="font-semibold">Quick Price creation blocked</div>
+              <div className="mt-1">{error}</div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ESTIMATOR_MODULES.map((m) => (
