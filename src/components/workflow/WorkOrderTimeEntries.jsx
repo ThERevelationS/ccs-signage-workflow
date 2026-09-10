@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Clock, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 
@@ -17,7 +18,12 @@ export default function WorkOrderTimeEntries({ workOrderId, workOrderTitle }) {
     setIsLoading(true);
     try {
       // Get all completed time entries
-      const allEntries = await TimeEntry.filter({ status: "clocked_out" });
+      const allEntries = await loadAllEntityRows({
+        entity: TimeEntry,
+        query: { status: "clocked_out" },
+        sort: "-clock_in",
+        label: "Completed Time Entries",
+      });
       
       // Filter entries that have allocations for this work order
       const relevantEntries = allEntries.filter(entry => {
