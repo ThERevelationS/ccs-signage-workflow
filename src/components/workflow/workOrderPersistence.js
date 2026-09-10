@@ -38,6 +38,47 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
+export async function createWorkOrderWithRecovery({ data, label = "Work Order" } = {}) {
+  const entity = base44.entities.WorkOrder;
+  const payload = sanitizeWorkOrderFormPatch(data || {});
+  const title = String(payload.title || "").trim();
+  if (!title || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
+    throw new Error(`${label} could not initialize its retry-safe create.`);
+  }
+
+  const readMatches = async () => {
+    const rows = await entity.filter({ title }, "-created_date", 500);
+    if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a Work Order list.`);
+    if (rows.length >= 500) throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
+    return rows.filter((row) => workOrderPatchMatches(row, payload));
+  };
+
+  const before = await readMatches();
+  const beforeIds = new Set(before.map((row) => row.id));
+
+  let created = null;
+  let createError = null;
+  try {
+    created = await entity.create(payload);
+  } catch (error) {
+    createError = error;
+  }
+
+  if (created?.id) {
+    const saved = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : null;
+    return { record: saved?.id ? saved : created, status: "created" };
+  }
+
+  const after = await readMatches();
+  const newMatches = after.filter((row) => !beforeIds.has(row.id));
+  if (newMatches.length === 1) return { record: newMatches[0], status: "recovered" };
+  if (newMatches.length > 1) {
+    throw new Error(`${label} may have been created more than once while the create response was unavailable. No Work Orders were deleted; reload and review matching jobs before retrying.`);
+  }
+  if (createError) throw createError;
+  throw new Error(`${label} could not verify whether it was created. Reload before retrying.`);
+}
+
 export function createWorkOrderArrayItemLocator(item) {
   if (!item || typeof item !== "object") {
     throw new Error("Work Order array item could not be identified safely.");
