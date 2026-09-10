@@ -329,10 +329,25 @@ async function applySchedule(base44: any, Receipt: any, workOrder: any, completi
   const task = await Task.get(workOrder.maintenance_task_id);
   if (!task) throw new Error(`Maintenance task ${workOrder.maintenance_task_id} was not found.`);
 
-  const after = task.type === 'recurring'
+  const key = `${completionKey}:schedule:${task.id}`;
+  const priorReceipt = canonical(await Receipt.filter({ operation_key: key }));
+  const priorSummary = priorReceipt?.result_summary || null;
+  const initialAfter = task.type === 'recurring'
     ? { status: 'pending', start_date: calculateNextDueDate(task) }
     : { status: 'completed', start_date: task.start_date || null };
-  const key = `${completionKey}:schedule:${task.id}`;
+  const initialSummary = priorSummary || {
+    before_status: task.status,
+    before_start_date: task.start_date || null,
+    before_updated_date: task.updated_date || '',
+    after_status: initialAfter.status,
+    after_start_date: initialAfter.start_date,
+    work_order_id: workOrder.id,
+  };
+  const after = {
+    status: initialSummary.after_status,
+    start_date: initialSummary.after_start_date ?? null,
+  };
+
   const claim = await claimReceipt(Receipt, {
     operation_key: key,
     operation_type: 'maintenance_reschedule',
@@ -340,37 +355,75 @@ async function applySchedule(base44: any, Receipt: any, workOrder: any, completi
     target_id: task.id,
     actor_email: actor.email || '',
     actor_user_id: actor.id || '',
-    result_summary: {
-      before_status: task.status,
-      before_start_date: task.start_date || null,
-      after_status: after.status,
-      after_start_date: after.start_date,
-      work_order_id: workOrder.id,
-    },
+    result_summary: initialSummary,
   });
   if (claim.applied) return { operation_key: key, applied: true, reused: true, after };
 
+  const summary = claim.receipt?.result_summary || initialSummary;
   const current = await Task.get(task.id);
-  const isAfter = current?.status === after.status && String(current?.start_date || '') === String(after.start_date || '');
-  const summary = claim.receipt?.result_summary || {};
-  const isBefore = current?.status === summary.before_status && String(current?.start_date || '') === String(summary.before_start_date || '');
+  if (!current) throw new Error(`Maintenance task ${task.id} was not found during completion.`);
+  const isAfter = current.status === summary.after_status && String(current.start_date || '') === String(summary.after_start_date || '');
+  const isBefore = current.status === summary.before_status
+    && String(current.start_date || '') === String(summary.before_start_date || '')
+    && String(current.updated_date || '') === String(summary.before_updated_date || '');
 
-  if (!claim.owner) {
-    if (isAfter) {
-      await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-      return { operation_key: key, applied: true, reused: true, recovered: true, after };
-    }
-    if (isBefore) {
-      await Task.update(task.id, after);
-      await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-      return { operation_key: key, applied: true, reused: true, recovered: true, after };
-    }
-    throw new Error(`Maintenance schedule operation ${key} is ambiguous and needs review.`);
+  if (isAfter) {
+    await Receipt.update(claim.receipt.id, {
+      status: 'applied',
+      applied_at: nowIso(),
+      error_message: '',
+      result_summary: { ...summary, schedule_applied: true, recovered_from_after_state: !claim.owner },
+    });
+    return { operation_key: key, applied: true, reused: !claim.owner, recovered: !claim.owner, after };
   }
 
-  await Task.update(task.id, after);
-  await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso() });
-  return { operation_key: key, applied: true, reused: false, after };
+  if (!isBefore) {
+    await Receipt.update(claim.receipt.id, {
+      status: 'failed',
+      failed_at: nowIso(),
+      error_message: `Maintenance schedule changed after completion began; expected ${summary.before_status}/${summary.before_start_date || ''} at ${summary.before_updated_date || 'unknown version'}.`,
+      result_summary: { ...summary, safe_retry: false, schedule_outcome_ambiguous: false, schedule_conflict: true },
+    }).catch(() => null);
+    const conflict: any = new Error('The linked maintenance schedule changed while this work order was being completed. The newer schedule was not overwritten. Review the schedule, then reconcile the completion receipt before retrying.');
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  try {
+    const updated = await updateFleetRecordIfCurrent({
+      entity: Task,
+      id: task.id,
+      expectedUpdatedAt: String(summary.before_updated_date || ''),
+      patch: after,
+      label: 'Fleet maintenance schedule completion reschedule',
+    });
+    await Receipt.update(claim.receipt.id, {
+      status: 'applied',
+      applied_at: nowIso(),
+      error_message: '',
+      result_summary: { ...summary, schedule_applied: true, schedule_updated_date: updated.updated_date || '' },
+    });
+    return { operation_key: key, applied: true, reused: !claim.owner, recovered: !claim.owner, after };
+  } catch (error: any) {
+    const latest = await Task.get(task.id).catch(() => null);
+    const nowAfter = latest?.status === summary.after_status && String(latest?.start_date || '') === String(summary.after_start_date || '');
+    if (nowAfter) {
+      await Receipt.update(claim.receipt.id, {
+        status: 'applied',
+        applied_at: nowIso(),
+        error_message: '',
+        result_summary: { ...summary, schedule_applied: true, reconciled_after_update_error: true },
+      }).catch(() => null);
+      return { operation_key: key, applied: true, reused: true, recovered: true, after };
+    }
+    await Receipt.update(claim.receipt.id, {
+      status: 'failed',
+      failed_at: nowIso(),
+      error_message: error?.message || String(error),
+      result_summary: { ...summary, safe_retry: false, schedule_conflict: error?.code === 'FLEET_RECORD_CONFLICT' },
+    }).catch(() => null);
+    throw error;
+  }
 }
 
 async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt: any) {
