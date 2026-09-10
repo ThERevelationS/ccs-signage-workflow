@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { X, Plus, Trash2, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { X, Plus, Trash2, Loader2, WandSparkles } from "lucide-react";
 
 const EMPTY = {
   title: "",
@@ -20,9 +21,16 @@ const EMPTY = {
 
 export default function FleetMaintenanceDialog({ open, task, equipment, parts = [], fluids = [], onClose, onSave, saving }) {
   const [form, setForm] = useState(EMPTY);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiApplied, setAiApplied] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setAiPrompt("");
+    setAiError("");
+    setAiApplied(false);
     setForm(task ? {
       ...EMPTY,
       ...task,
@@ -47,6 +55,61 @@ export default function FleetMaintenanceDialog({ open, task, equipment, parts = 
     ...prev,
     fluids_needed: prev.fluids_needed.map((row, i) => i === index ? { ...row, [key]: value } : row),
   }));
+
+  const generateAiDraft = async () => {
+    const selected = equipment.find(item => item.id === form.equipment_id);
+    if (!selected) {
+      setAiError("Select the Fleet equipment first so AI cannot guess which asset this schedule belongs to.");
+      return;
+    }
+    if (!aiPrompt.trim()) {
+      setAiError("Describe the maintenance task you want help drafting.");
+      return;
+    }
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const compatiblePartNames = availableParts.slice(0, 100).map(item => ({ name: item.part_name, part_number: item.part_number || "", manufacturer: item.manufacturer || "" }));
+      const compatibleFluidNames = availableFluids.slice(0, 100).map(item => ({ name: item.fluid_name, brand: item.brand || "", viscosity: item.viscosity || "", unit: item.unit || "" }));
+      const schema = {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          priority: { type: "string", enum: ["low","medium","high","critical"] },
+          frequency: { type: "string", enum: ["daily","weekly","bi_weekly","monthly","bi_monthly","quarterly","every_6_months","annually","custom"] },
+          custom_frequency_value: { type: "number" },
+          custom_frequency_unit: { type: "string", enum: ["days","weeks","months","years"] },
+          estimated_duration: { type: "number" },
+          parts_needed: { type: "array", items: { type: "object", properties: { part_name: { type: "string" }, quantity: { type: "number" }, notes: { type: "string" } } } },
+          fluids_needed: { type: "array", items: { type: "object", properties: { fluid_type: { type: "string" }, quantity: { type: "number" }, unit: { type: "string", enum: ["quarts","gallons","pints","ounces"] }, notes: { type: "string" } } } },
+          verification_notes: { type: "string" },
+        },
+        required: ["title","description","priority","frequency","parts_needed","fluids_needed","verification_notes"],
+      };
+      const prompt = `Create a REVIEW-ONLY maintenance schedule draft for this exact CCS Fleet asset. Do not change or guess the asset identity.\n\nAsset: ${JSON.stringify({ name:selected.name, type:selected.type, year:selected.year, make:selected.make, model:selected.model, engine_details:selected.engine_details })}\nUser request: ${aiPrompt.trim()}\n\nCompatible Fleet parts currently in CCS: ${JSON.stringify(compatiblePartNames)}\nCompatible Fleet fluids currently in CCS: ${JSON.stringify(compatibleFluidNames)}\n\nResearch can assist, but do not present uncertain OEM intervals, capacities, part numbers, or specifications as verified facts. Prefer matching existing Fleet inventory names when appropriate. Put every uncertainty or item requiring OEM/manual confirmation in verification_notes. Never save or activate anything; return only a draft for an admin to review.`;
+      const result = await base44.integrations.Core.InvokeLLM({ prompt, add_context_from_internet: true, response_json_schema: schema });
+      if (!result || typeof result !== "object") throw new Error("AI returned no usable draft.");
+      setForm(prev => ({
+        ...prev,
+        title: String(result.title || prev.title || ""),
+        description: String(result.description || prev.description || ""),
+        priority: ["low","medium","high","critical"].includes(result.priority) ? result.priority : prev.priority,
+        frequency: ["daily","weekly","bi_weekly","monthly","bi_monthly","quarterly","every_6_months","annually","custom"].includes(result.frequency) ? result.frequency : prev.frequency,
+        custom_frequency_value: result.frequency === "custom" && Number(result.custom_frequency_value) > 0 ? Number(result.custom_frequency_value) : prev.custom_frequency_value,
+        custom_frequency_unit: ["days","weeks","months","years"].includes(result.custom_frequency_unit) ? result.custom_frequency_unit : prev.custom_frequency_unit,
+        estimated_duration: Number(result.estimated_duration) >= 0 ? Number(result.estimated_duration) : prev.estimated_duration,
+        parts_needed: Array.isArray(result.parts_needed) ? result.parts_needed.map(row => ({ part_name:String(row?.part_name || ""), quantity:Math.max(0, Number(row?.quantity || 0)), notes:String(row?.notes || "") })).filter(row => row.part_name && row.quantity > 0) : prev.parts_needed,
+        fluids_needed: Array.isArray(result.fluids_needed) ? result.fluids_needed.map(row => ({ fluid_type:String(row?.fluid_type || ""), quantity:Math.max(0, Number(row?.quantity || 0)), unit:["quarts","gallons","pints","ounces"].includes(row?.unit) ? row.unit : "quarts", notes:String(row?.notes || "") })).filter(row => row.fluid_type && row.quantity > 0) : prev.fluids_needed,
+      }));
+      setAiPrompt(String(result.verification_notes || "Review all AI-suggested maintenance details against the equipment/OEM documentation before saving."));
+      setAiApplied(true);
+    } catch (e) {
+      setAiError(e?.message || "AI maintenance drafting failed.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -85,6 +148,16 @@ export default function FleetMaintenanceDialog({ open, task, equipment, parts = 
         </div>
 
         <form onSubmit={submit} className="p-5 space-y-6">
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/20">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div><div className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-100"><WandSparkles className="w-4 h-4"/>AI Draft Assistant</div><p className="mt-1 text-xs text-indigo-700 dark:text-indigo-300">Optional review-only assistance. Select equipment first. AI can suggest wording, interval, parts and fluids, but nothing is saved until you review the normal form and click Save.</p></div>
+              <button type="button" onClick={generateAiDraft} disabled={aiLoading || saving} className="shrink-0 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{aiLoading?<Loader2 className="w-4 h-4 animate-spin"/>:<WandSparkles className="w-4 h-4"/>}{aiLoading?"Researching…":"Draft with AI"}</button>
+            </div>
+            <textarea rows="3" value={aiPrompt} onChange={e=>{setAiPrompt(e.target.value);setAiApplied(false);}} placeholder="Example: Draft the next oil and filter service for this asset. Include likely supplies and a conservative schedule for me to verify." className="field mt-3" />
+            {aiError && <div className="mt-2 text-xs text-red-700 dark:text-red-300">{aiError}</div>}
+            {aiApplied && <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"><b>AI draft applied to the form below.</b> Verification notes: {aiPrompt || "Verify interval, capacity, part numbers, and fluid specifications against OEM documentation before saving."}</div>}
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4">
             <Field label="Title *"><input required value={form.title} onChange={e => set("title", e.target.value)} className="field" /></Field>
             <Field label="Equipment *"><select required value={form.equipment_id} onChange={e => set("equipment_id", e.target.value)} className="field"><option value="">Select equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
