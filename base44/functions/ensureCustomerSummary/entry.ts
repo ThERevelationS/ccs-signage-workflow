@@ -95,6 +95,19 @@ async function getFresh(Summary: any, id: string) {
   }
 }
 
+function isNotFoundError(error: any) {
+  return Number(error?.response?.status || error?.status || error?.statusCode || 0) === 404;
+}
+
+async function getFreshForDeleteVerification(Summary: any, id: string) {
+  try {
+    return (await Summary.get(id)) || null;
+  } catch (error) {
+    if (isNotFoundError(error)) return null;
+    throw new Error(`Duplicate Customer Summary deletion could not verify whether the row still exists. ${error?.message || ''}`.trim());
+  }
+}
+
 async function casSet(Summary: any, row: any, patch: any) {
   if (!row?.id || !row?.updated_date) {
     throw new Error('Customer Summary version metadata is incomplete; concurrent-safe update was blocked.');
@@ -192,23 +205,23 @@ async function deleteVerified(Summary: any, row: any) {
       updated_date: version,
     });
   } catch (error) {
-    const stillThere = await getFresh(Summary, row.id);
+    const stillThere = await getFreshForDeleteVerification(Summary, row.id);
     if (stillThere) throw error;
     return;
   }
 
   if (!result || typeof result.deleted !== 'number') {
-    const stillThere = await getFresh(Summary, row.id);
+    const stillThere = await getFreshForDeleteVerification(Summary, row.id);
     if (!stillThere) return;
     throw new Error('Duplicate Customer Summary conditional-delete result could not be verified.');
   }
   if (result.deleted !== 1) {
-    const stillThere = await getFresh(Summary, row.id);
+    const stillThere = await getFreshForDeleteVerification(Summary, row.id);
     if (!stillThere) return;
     throw new Error('Duplicate Customer Summary changed before deletion. The newer row was preserved.');
   }
 
-  const stillThere = await getFresh(Summary, row.id);
+  const stillThere = await getFreshForDeleteVerification(Summary, row.id);
   if (stillThere) throw new Error('Duplicate Customer Summary delete returned successfully but the row still exists.');
 }
 
