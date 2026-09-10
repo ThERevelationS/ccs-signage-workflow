@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetInventoryDialog from "@/components/fleet/FleetInventoryDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
 import { Droplets, Search, Loader2, AlertTriangle, Plus, Pencil, PackageCheck, ShoppingCart } from "lucide-react";
 
@@ -21,7 +22,7 @@ export default function FleetFluids() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const [f,e,u] = await Promise.all([base44.entities.FleetFluid.list("fluid_name",500), base44.entities.FleetEquipment.list("name",500), base44.auth.me().catch(()=>null)]);
+      const [f,e,u] = await Promise.all([listAllFleetRows(base44.entities.FleetFluid,"fluid_name",{label:"Fleet fluids"}), listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment"}), base44.auth.me().catch(()=>null)]);
       setFluids(f||[]); setEquipment(e||[]); setUser(u||null);
     } catch(e) { setError(e?.message || "Unable to load Fleet fluids."); }
     finally { setLoading(false); }
