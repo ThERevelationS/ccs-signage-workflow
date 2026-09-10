@@ -92,6 +92,29 @@ async function requestFingerprint(req: Request) {
   return toHex(digest);
 }
 
+async function consumeThrottleRow(Throttle:any, row:any, now:Date) {
+  const stamp = now.toISOString();
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const current = attempt === 0 ? row : await Throttle.get(row.id).catch(()=>null);
+    if (!current?.id || !current.updated_date) return {limited:true,tracked:true,conflict:true};
+    const started = Date.parse(current.window_started_at || '') || 0;
+    const expired = !started || now.getTime() - started >= RATE_WINDOW_MS;
+    const count = Number(current.accepted_count || 0);
+    if (!expired && count >= RATE_MAX_ACCEPTED) return {limited:true,tracked:true};
+
+    const next = expired
+      ? {window_started_at:stamp,accepted_count:1,last_seen_at:stamp}
+      : {accepted_count:count+1,last_seen_at:stamp};
+    const result = await Throttle.updateMany(
+      {id:current.id,updated_date:String(current.updated_date)},
+      {$set:next},
+    ).catch(()=>null);
+    if (result?.updated === 1) return {limited:false,tracked:true};
+    if (result?.updated != null && result.updated > 1) return {limited:true,tracked:true,conflict:true};
+  }
+  return {limited:true,tracked:true,conflict:true};
+}
+
 async function consumeThrottle(base44:any, req:Request) {
   const fingerprint = await requestFingerprint(req);
   if (!fingerprint) return {limited:false,tracked:false};
@@ -108,45 +131,61 @@ async function consumeThrottle(base44:any, req:Request) {
     for (const duplicate of contenders || []) {
       if (duplicate.id !== row.id) await Throttle.delete(duplicate.id).catch(()=>null);
     }
-    if (row.id !== created.id) {
-      const started = Date.parse(row.window_started_at || '') || 0;
-      if (!started || now.getTime() - started >= RATE_WINDOW_MS) {
-        await Throttle.update(row.id,{window_started_at:now.toISOString(),accepted_count:1,last_seen_at:now.toISOString()});
-        return {limited:false,tracked:true};
-      }
-      const count = Number(row.accepted_count || 0);
-      if (count >= RATE_MAX_ACCEPTED) {
-        await Throttle.update(row.id,{last_seen_at:now.toISOString()});
-        return {limited:true,tracked:true};
-      }
-      await Throttle.update(row.id,{accepted_count:count+1,last_seen_at:now.toISOString()});
-    }
-    return {limited:false,tracked:true};
+    if (row.id === created.id) return {limited:false,tracked:true};
+    return consumeThrottleRow(Throttle,row,now);
   }
 
-  const started = Date.parse(row.window_started_at || '') || 0;
-  if (!started || now.getTime() - started >= RATE_WINDOW_MS) {
-    await Throttle.update(row.id,{window_started_at:now.toISOString(),accepted_count:1,last_seen_at:now.toISOString()});
-    return {limited:false,tracked:true};
+  for (const duplicate of rows || []) {
+    if (duplicate.id !== row.id) await Throttle.delete(duplicate.id).catch(()=>null);
   }
-  const count = Number(row.accepted_count || 0);
-  if (count >= RATE_MAX_ACCEPTED) {
-    await Throttle.update(row.id,{last_seen_at:now.toISOString()});
-    return {limited:true,tracked:true};
+  return consumeThrottleRow(Throttle,row,now);
+}
+
+async function readPublicJson(req:Request) {
+  const declaredLength = Number(req.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_PUBLIC_BODY_BYTES) {
+    return {payload:null,error:'Public Fleet issue report payload is too large.',status:413};
   }
-  await Throttle.update(row.id,{accepted_count:count+1,last_seen_at:now.toISOString()});
-  return {limited:false,tracked:true};
+  if (!req.body) return {payload:{},error:'',status:200};
+
+  const reader = req.body.getReader();
+  const chunks:Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const {done,value} = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > MAX_PUBLIC_BODY_BYTES) {
+        await reader.cancel().catch(()=>null);
+        return {payload:null,error:'Public Fleet issue report payload is too large.',status:413};
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk,offset); offset += chunk.byteLength; }
+  const text = new TextDecoder().decode(bytes);
+  if (!text.trim()) return {payload:{},error:'',status:200};
+  try {
+    return {payload:JSON.parse(text),error:'',status:200};
+  } catch {
+    return {payload:null,error:'Public Fleet issue report payload must be valid JSON.',status:400};
+  }
 }
 
 Deno.serve(async (req) => {
   try {
-    const contentLength = Number(req.headers.get('content-length') || 0);
-    if (Number.isFinite(contentLength) && contentLength > MAX_PUBLIC_BODY_BYTES) {
-      return Response.json({ error: 'Public Fleet issue report payload is too large.' }, { status: 413 });
-    }
+    const parsed = await readPublicJson(req);
+    if (parsed.error) return Response.json({error:parsed.error},{status:parsed.status});
 
     const base44 = createClientFromRequest(req);
-    const payload = await req.json().catch(() => ({}));
+    const payload = parsed.payload || {};
     const action = String(payload?.action || '').trim();
 
     const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({state_key:'primary'});
