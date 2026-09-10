@@ -249,6 +249,7 @@ Deno.serve(async (req) => {
       if (!claim.owner) {
         const summary = claim.receipt?.result_summary || {};
         let item: any = null;
+        let createdByReceiptEvidence = false;
         if (summary.inventory_item_id) {
           item = summary.item_type === 'part' ? await Part.get(summary.inventory_item_id) : await Fluid.get(summary.inventory_item_id);
         }
@@ -257,9 +258,15 @@ Deno.serve(async (req) => {
             ? await Part.filter({ receive_receipt_key: key })
             : await Fluid.filter({ receive_receipt_key: key });
           item = canonical(createdByReceipt);
+          createdByReceiptEvidence = !!item;
         }
-        if (item && summary.new_item === true) {
-          const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
+        if (item && (summary.new_item === true || createdByReceiptEvidence)) {
+          if (createdByReceiptEvidence && summary.new_item !== true) {
+            await Receipt.update(claim.receipt.id, {
+              result_summary: { ...summary, inventory_item_id: item.id, new_item: true, inventory_applied: true, safe_retry: false },
+            }).catch(() => null);
+          }
+          const finalized = await finalizeReceive(Request, Receipt, existing, await Receipt.get(claim.receipt.id), item.id, body);
           await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
             event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
           }).catch(() => null);
@@ -267,7 +274,7 @@ Deno.serve(async (req) => {
         }
         if (item && summary.new_item === false) {
           const currentQty = summary.item_type === 'part' ? num(item.quantity_on_hand) : num(item.quantity);
-          if (sameNumber(currentQty, summary.after_quantity)) {
+          if (summary.inventory_applied === true || sameNumber(currentQty, summary.after_quantity)) {
             const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
             await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
               event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
