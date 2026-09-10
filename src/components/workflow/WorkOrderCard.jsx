@@ -64,6 +64,7 @@ import {
   mutateWorkOrderArrayField,
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -187,7 +188,11 @@ export default function WorkOrderCard({
 
   const loadAllUsers = async () => {
     try {
-      const users = await base44.entities.AuthorizedEmail.list();
+      const users = await loadAllEntityRows({
+        entity: base44.entities.AuthorizedEmail,
+        sort: null,
+        label: "Work Order card authorized users",
+      });
       setAllUsers(users);
     } catch (error) {
       console.error("Error loading users:", error);
