@@ -10,13 +10,13 @@ import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
 const PermitLocality = base44.entities.PermitLocality;
-const GlobalSettings = base44.entities.GlobalSettings;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function Permitting() {
@@ -50,27 +50,34 @@ export default function Permitting() {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
-      const [items, locs, wos, usersData, settings] = await Promise.all([
-        PermitLineItem.list('-updated_date', 500),
-        PermitLocality.list(),
+      const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
+        loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
+        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
           sort: "created_date",
           label: "Permitting Work Orders",
         }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "permitOfficeTypes",
+          label: "Permitting office types",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "salesTaskDescriptions",
+          label: "Permitting sales task descriptions",
+        })
       ]);
       setLocalities(locs);
       setUsers(usersData);
 
-      const officeTypesSetting = settings.find(s => s.setting_key === 'permitOfficeTypes');
       const currentOfficeTypes = officeTypesSetting?.setting_value?.items || ["Zoning", "Building", "Electrical Inspectors"];
       setOfficeTypes(currentOfficeTypes);
 
       // Get task descriptions assigned to Permitting page
-      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const permittingTaskDescs = [];
       const allTaskDescs = [];
       if (taskDescSetting?.setting_value?.items) {
