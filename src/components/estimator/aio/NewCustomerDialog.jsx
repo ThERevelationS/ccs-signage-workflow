@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const FIELDS = [
   { key: "company_name", label: "Company name *" },
@@ -37,7 +38,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     createAttemptRef.current = { signature: "", key: "" };
     setTierLoading(true);
     setTierLoadError("");
-    base44.entities.MarkupTier.list("sort_order")
+    loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "New Customer markup tiers" })
       .then((rows) => {
         if (!active) return;
         const loaded = rows || [];
