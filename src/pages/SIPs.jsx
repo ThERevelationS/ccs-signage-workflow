@@ -12,11 +12,11 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -68,19 +68,22 @@ export default function SIPs() {
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const [orders, usersData, settings] = await Promise.all([
+      const [orders, usersData, taskDescSetting] = await Promise.all([
         loadAllEntityRows({
           entity: WorkOrder,
           query: { is_rider: false, completed: false, deleted: { $ne: true } },
           sort: "created_date",
           label: "SIPs Work Orders",
         }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIPs authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "salesTaskDescriptions",
+          label: "SIPs sales task descriptions",
+        })
       ]);
       
       // Get task descriptions that have SIPs page assigned OR have WIP flag
-      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const sipTaskDescriptions = [];
       const wipDescs = [];
       if (taskDescSetting?.setting_value?.items) {
