@@ -79,13 +79,59 @@ async function resolveSourceProject({ estimateId, lineId, pending }) {
     source = await entity.get(pending.source_project_id);
     if (!source) throw new Error("The anchored Builder source record disappeared while Product creation was pending.");
   } else {
-    const matches = await entity.filter({ notes: pending.source_recovery_tag });
-    if (!Array.isArray(matches)) throw new Error("The Builder source recovery token could not be verified.");
-    if (matches.length > 1) throw new Error("Multiple Builder source records share this Product recovery token. Recovery stopped before linking either record.");
-    source = matches[0] || null;
+    const readMatches = async () => {
+      const rows = await entity.filter({ notes: pending.source_recovery_tag });
+      if (!Array.isArray(rows)) throw new Error("The Builder source recovery token could not be verified.");
+      return rows;
+    };
+    const verifySingle = (rows) => {
+      if (rows.length > 1) throw new Error("Multiple Builder source records share this Product recovery token. Recovery stopped before linking either record.");
+      return rows[0] || null;
+    };
+
+    source = verifySingle(await readMatches());
     if (!source) {
-      source = await entity.create({ ...(pending.source_create_data || {}), notes: pending.source_recovery_tag });
-      if (!source?.id) throw new Error("The Builder source record could not be verified after creation.");
+      let createdSource = null;
+      let createError = null;
+      try {
+        createdSource = await entity.create({ ...(pending.source_create_data || {}), notes: pending.source_recovery_tag });
+      } catch (error) {
+        createError = error;
+      }
+
+      // One create attempt only. Re-read the deterministic source token before
+      // anchoring it into the Estimate so response loss and simultaneous creates
+      // cannot silently create or select a second source record.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      let after;
+      try {
+        after = await readMatches();
+      } catch (verificationError) {
+        if (createdSource?.id) {
+          source = createdSource;
+        } else {
+          throw new Error(
+            `Builder source create response was unavailable and its recovery lookup also failed. ` +
+            `Do not retry blindly; reload the Estimate first. ${verificationError?.message || ""}`.trim()
+          );
+        }
+      }
+
+      if (!source) {
+        const recovered = verifySingle(after);
+        if (recovered) {
+          if (createdSource?.id && recovered.id !== createdSource.id) {
+            throw new Error("Builder source returned a create receipt, but a different record owns the Product recovery token. No source was anchored; reload before continuing.");
+          }
+          source = recovered;
+        } else if (createdSource?.id) {
+          source = createdSource;
+        } else if (createError) {
+          throw new Error(`${createError?.message || "Builder source could not be created."} No matching recovery-token source was visible after recovery. Reload the Estimate before retrying.`);
+        } else {
+          throw new Error("The Builder source record could not be verified after creation. Reload the Estimate before retrying.");
+        }
+      }
     }
   }
 
