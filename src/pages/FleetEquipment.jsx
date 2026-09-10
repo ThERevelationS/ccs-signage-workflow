@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Search, Truck, Link2, Loader2, AlertTriangle, Plus, Pencil, ArrowRight, Wrench, CircleOff } from "lucide-react";
 
 export default function FleetEquipment() {
@@ -23,9 +24,9 @@ export default function FleetEquipment() {
     setError("");
     try {
       const [e, w, t, u] = await Promise.all([
-        base44.entities.FleetEquipment.list("name", 500),
-        base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-        base44.entities.FleetMaintenanceTask.list("start_date", 500),
+        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
+        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
         base44.auth.me().catch(() => null),
       ]);
       setEquipment(e || []);
