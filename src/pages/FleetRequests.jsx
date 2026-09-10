@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle, Clock3, CheckCircle2 } from "lucide-react";
 
 export default function FleetRequests() {
@@ -25,10 +26,10 @@ export default function FleetRequests() {
     try {
       const user = await base44.auth.me().catch(() => null);
       const [r, e, p, f] = await Promise.all([
-        base44.entities.FleetPartFluidRequest.list("-created_date", 500),
-        base44.entities.FleetEquipment.list("name", 500),
-        base44.entities.FleetPart.list("part_name", 500),
-        base44.entities.FleetFluid.list("fluid_name", 500),
+        listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
+        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
+        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
+        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
       ]);
       let admin = user?.role === "admin";
       if (!admin && user?.email) {
