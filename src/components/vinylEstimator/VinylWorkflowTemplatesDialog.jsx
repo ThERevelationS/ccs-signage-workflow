@@ -1,7 +1,7 @@
 // Save & apply workflow templates. Feature #16.
 // "3M IJ180 + 8508 on HP360+Graphtec" → one click to populate a new workflow.
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
