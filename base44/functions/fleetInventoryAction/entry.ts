@@ -265,8 +265,8 @@ Deno.serve(async (req) => {
 
       const reconcile = async () => {
         const summary = claim.receipt?.result_summary || resultSummary;
-        const currentItem = await Entity.get(id);
-        const currentQuantity = itemType === 'part' ? num(currentItem?.quantity_on_hand) : num(currentItem?.quantity);
+        let currentItem = await Entity.get(id);
+        let currentQuantity = itemType === 'part' ? num(currentItem?.quantity_on_hand) : num(currentItem?.quantity);
         const existingLog = canonical(await Log.filter({ usage_receipt_key: summary.log_key || logKey }));
         const expectedBefore = num(summary.before_quantity, NaN);
         const expectedAfter = num(summary.after_quantity, NaN);
@@ -274,7 +274,21 @@ Deno.serve(async (req) => {
           throw new Error('Existing Fleet usage receipt is missing reconciliation quantities. Review FleetOperationReceipt.');
         }
         if (!sameNumber(currentQuantity, expectedBefore) && !sameNumber(currentQuantity, expectedAfter)) {
-          throw new Error('Fleet inventory changed during this usage operation. It was not replayed; review FleetOperationReceipt.');
+          const conflict: any = new Error('Fleet inventory changed during this usage operation. It was not replayed; retry against the current stock value.');
+          conflict.code = 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+          throw conflict;
+        }
+        if (sameNumber(currentQuantity, expectedBefore)) {
+          const quantityResult = await setFleetInventoryQuantityIfUnchanged({
+            entity: Entity,
+            itemId: id,
+            field: itemType === 'part' ? 'quantity_on_hand' : 'quantity',
+            expectedQuantity: expectedBefore,
+            nextQuantity: expectedAfter,
+            label: `${existing.part_name || existing.fluid_name || 'Fleet inventory'} stock`,
+          });
+          currentItem = quantityResult.item || await Entity.get(id);
+          currentQuantity = itemType === 'part' ? num(currentItem?.quantity_on_hand) : num(currentItem?.quantity);
         }
         if (!existingLog) {
           await Log.create({
@@ -289,11 +303,8 @@ Deno.serve(async (req) => {
             usage_receipt_key: summary.log_key || logKey,
           });
         }
-        if (sameNumber(currentQuantity, expectedBefore)) {
-          await Entity.update(id, itemType === 'part' ? { quantity_on_hand: expectedAfter } : { quantity: expectedAfter });
-        }
-        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '', result_summary: { ...summary, reconciled: !claim.owner } });
-        return await Entity.get(id);
+        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '', result_summary: { ...summary, safe_retry: false, reconciled: !claim.owner } });
+        return currentItem?.id ? currentItem : await Entity.get(id);
       };
 
       let updatedItem: any = null;
@@ -305,7 +316,13 @@ Deno.serve(async (req) => {
         }
       } catch (error: any) {
         if (claim.receipt?.id && claim.receipt?.status !== 'applied') {
-          await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: error?.message || String(error) }).catch(() => null);
+          const safeRetry = error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+          await Receipt.update(claim.receipt.id, {
+            status: 'failed',
+            failed_at: nowIso(),
+            error_message: error?.message || String(error),
+            result_summary: { ...(claim.receipt?.result_summary || resultSummary), safe_retry: safeRetry },
+          }).catch(() => null);
         }
         throw error;
       }
