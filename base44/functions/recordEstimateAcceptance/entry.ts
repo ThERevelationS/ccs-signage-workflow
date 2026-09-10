@@ -118,7 +118,19 @@ Deno.serve(async (req) => {
     })) || created;
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
-      await Acceptance.delete(created.id).catch(() => null);
+      const createdVersion = String(created.updated_date || '').trim();
+      if (!createdVersion) {
+        throw new Error('A duplicate acceptance record was detected, but the losing row has no version metadata. No uncertain acceptance was deleted.');
+      }
+      const deleted = await Acceptance.deleteMany({
+        id: created.id,
+        estimate_id: estimateId,
+        quote_version: quoteVersion,
+        updated_date: createdVersion,
+      });
+      if (!deleted || deleted.deleted !== 1) {
+        throw new Error('A duplicate acceptance record changed before cleanup. No uncertain acceptance was deleted; reload the acceptance history before retrying.');
+      }
       return Response.json({ acceptance: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
