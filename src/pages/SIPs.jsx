@@ -12,7 +12,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -687,14 +687,17 @@ export default function SIPs() {
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
-            const rider = await WorkOrder.create({
-              title: `${wo.title} - Rider`,
-              client_name: wo.client_name,
-              description: wo.description,
-              is_rider: true,
-              parent_work_order_id: wo.id,
-              current_stage: wo.current_stage,
-              rider_stage: wo.current_stage
+            await createWorkOrderWithRecovery({
+              data: {
+                title: `${wo.title} - Rider`,
+                client_name: wo.client_name,
+                description: wo.description,
+                is_rider: true,
+                parent_work_order_id: wo.id,
+                current_stage: wo.current_stage,
+                rider_stage: wo.current_stage
+              },
+              label: "SIPs rider Work Order",
             });
             loadWorkOrders();
           }}
