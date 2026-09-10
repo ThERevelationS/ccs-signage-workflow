@@ -10,7 +10,7 @@ import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
 import { localDateStamp } from "./quoteLifecycle";
 import { convergeCreatedEstimateWorkOrder, loadAllCustomers, resolveCustomerForEstimate } from "./customerSync";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
-import { expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { createEstimateLinkedWorkOrderWithRecovery, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 import {
   buildConvertedWorkOrderFields,
@@ -117,12 +117,17 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
           label: "Approved estimate Work Order conversion",
         });
       } else {
-        const created = await base44.entities.WorkOrder.create(workOrderFields);
-        workOrder = await convergeCreatedEstimateWorkOrder({
+        workOrder = await createEstimateLinkedWorkOrderWithRecovery({
+          entity: base44.entities.WorkOrder,
           estimateId: estimate.id,
-          created,
-          fields: workOrderFields,
-          duplicateLabel: "Work Order during simultaneous conversion",
+          data: workOrderFields,
+          label: "Approved estimate Work Order conversion",
+          convergeCreated: (created) => convergeCreatedEstimateWorkOrder({
+            estimateId: estimate.id,
+            created,
+            fields: workOrderFields,
+            duplicateLabel: "Work Order during simultaneous conversion",
+          }),
         });
       }
 
