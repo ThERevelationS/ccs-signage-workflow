@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const ROAD_TRACKING_STATUSES = new Set(['unlinked', 'matched', 'ambiguous', 'manual']);
 const EQUIPMENT_TYPES = new Set(['car','truck','boom_lift','forklift','generator','excavator','bulldozer','crane','compressor','other']);
@@ -99,7 +100,13 @@ Deno.serve(async (req) => {
       const link = (nextVin !== oldVin || Object.prototype.hasOwnProperty.call(body, 'tracking_applicable'))
         ? await evaluateBouncieLink(base44, nextVin, trackingApplicable)
         : {};
-      const updated = await Equipment.update(id, { ...patch, ...link });
+      const updated = await updateFleetRecordIfCurrent({
+        entity: Equipment,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch: { ...patch, ...link },
+        label: 'Fleet equipment',
+      });
       return Response.json({ success: true, equipment: updated, bouncie_link: link });
     }
 
@@ -117,8 +124,9 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unsupported Fleet equipment action.' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetEquipmentAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet equipment operation failed.' }, { status: 500 });
   }
 });
