@@ -52,8 +52,10 @@ Deno.serve(async (req) => {
     ]);
 
     for (const key of SUPPORTED_RULES) {
-      const duplicates = (vehicleRows || []).filter((row: any) => row.rule_key === key);
-      if (duplicates.length > 1) return Response.json({ error: `Multiple vehicle-specific ${key} alert rows exist for ${vin}. Resolve the duplicate settings before editing.` }, { status: 409 });
+      const vehicleDuplicates = (vehicleRows || []).filter((row: any) => row.rule_key === key);
+      if (vehicleDuplicates.length > 1) return Response.json({ error: `Multiple vehicle-specific ${key} alert rows exist for ${vin}. Resolve the duplicate settings before editing.` }, { status: 409 });
+      const globalDuplicates = (globalRows || []).filter((row: any) => row.rule_key === key);
+      if (globalDuplicates.length > 1) return Response.json({ error: `Multiple global ${key} Fleet alert rows exist. Resolve the duplicate settings before editing vehicle overrides.` }, { status: 409 });
     }
 
     if (action === 'get') {
@@ -83,8 +85,9 @@ Deno.serve(async (req) => {
         enabled: rule.enabled,
         notes: 'Managed from CCS Fleet Tracking alert settings.',
       };
-      if (rule.threshold == null) patch.threshold = null;
-      else patch.threshold = rule.threshold;
+      // Disabled rules may omit a threshold. Do not write null into an optional numeric field;
+      // an existing threshold can remain dormant and becomes relevant only if the rule is enabled again.
+      if (rule.threshold != null) patch.threshold = rule.threshold;
       saved.push(existing ? await Settings.update(existing.id, patch) : await Settings.create(patch));
     }
 
