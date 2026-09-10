@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const nowIso = () => new Date().toISOString();
 const num = (value: unknown, fallback = 0) => {
@@ -186,7 +187,13 @@ Deno.serve(async (req) => {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
       }
-      const updated = await Request.update(id, patch);
+      const updated = await updateFleetRecordIfCurrent({
+        entity: Request,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch,
+        label: 'Fleet request',
+      });
       return Response.json({ success: true, request: updated });
     }
 
@@ -194,17 +201,29 @@ Deno.serve(async (req) => {
       if (!isAdmin && !ownsRequest) return Response.json({ error: 'You can only cancel your own Fleet requests.' }, { status: 403 });
       if (existing.status === 'received') return Response.json({ error: 'A received request cannot be cancelled because inventory has already been applied.' }, { status: 409 });
       if (!isAdmin && existing.status !== 'pending') return Response.json({ error: 'Only an admin can cancel a request after it has been ordered.' }, { status: 403 });
-      const updated = await Request.update(id, { status: 'cancelled' });
+      const updated = await updateFleetRecordIfCurrent({
+        entity: Request,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch: { status: 'cancelled' },
+        label: 'Fleet request',
+      });
       return Response.json({ success: true, request: updated });
     }
 
     if (action === 'order') {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can mark Fleet requests as ordered.' }, { status: 403 });
       if (!['pending', 'ordered'].includes(existing.status)) return Response.json({ error: 'Only pending or ordered requests can have order details updated.' }, { status: 409 });
-      const updated = await Request.update(id, {
-        status: 'ordered',
-        estimated_delivery_date: body?.estimated_delivery_date || existing.estimated_delivery_date || null,
-        unit_cost: body?.unit_cost == null || body?.unit_cost === '' ? existing.unit_cost : num(body.unit_cost),
+      const updated = await updateFleetRecordIfCurrent({
+        entity: Request,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch: {
+          status: 'ordered',
+          estimated_delivery_date: body?.estimated_delivery_date || existing.estimated_delivery_date || null,
+          unit_cost: body?.unit_cost == null || body?.unit_cost === '' ? existing.unit_cost : num(body.unit_cost),
+        },
+        label: 'Fleet request',
       });
       return Response.json({ success: true, request: updated });
     }
@@ -223,6 +242,10 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This request is marked received without an idempotency receipt. Inventory was not changed; review it manually.' }, { status: 409 });
       }
       if (existing.status !== 'ordered') return Response.json({ error: 'Mark the Fleet request as ordered before receiving it.' }, { status: 409 });
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+        return Response.json({ error: 'This Fleet request changed after the Receive dialog was opened. Reload it before applying inventory.' }, { status: 409 });
+      }
 
       const quantityReceived = num(body?.quantity_received);
       if (quantityReceived <= 0) return Response.json({ error: 'Quantity received must be greater than zero.' }, { status: 400 });
@@ -459,8 +482,9 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unsupported Fleet request action.' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetRequestAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet request operation failed.' }, { status: 500 });
   }
 });
