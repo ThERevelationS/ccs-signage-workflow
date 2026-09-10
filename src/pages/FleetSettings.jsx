@@ -4,13 +4,14 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity } from "lucide-react";
 
-const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker"];
+const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback"];
 
 async function loadAutomationHealthData() {
-  const [maintenance, reminders, worker, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
+  const [maintenance, reminders, worker, reminderFallback, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
     base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
     base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
     base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
+    base44.entities.FleetSystemLog.filter({ source: "fleetReminderFallback" }, "-created_date", 1),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
     filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
@@ -18,7 +19,7 @@ async function loadAutomationHealthData() {
     filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
   ]);
   return {
-    logs: [...(maintenance || []), ...(reminders || []), ...(worker || [])],
+    logs: [...(maintenance || []), ...(reminders || []), ...(worker || []), ...(reminderFallback || [])],
     notifications: [...queuePending, ...queueSending, ...queueFailed],
     receipts: [...receiptStarted, ...receiptFailed],
   };
@@ -141,7 +142,7 @@ export default function FleetSettings() {
   if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
 
   const oldUrl = settings?.email_body_template?.includes("ccsfleet-master") || settings?.email_body_template?.includes("68accb163a1b474cdb95ea70");
-  const latestAutomation = Object.fromEntries(["fleetScheduledMaintenanceGeneration","fleetScheduledReminders","fleetNotificationWorker"].map(source => [source, automationLogs.find(row => row.source === source) || null]));
+  const latestAutomation = Object.fromEntries(AUTOMATION_SOURCES.map(source => [source, automationLogs.find(row => row.source === source) || null]));
   const queueUnresolved = queueRows.filter(row => ["pending","sending","failed"].includes(row.status));
   const receiptUnresolved = receiptRows.filter(row => ["started","failed"].includes(row.status));
   const blocked = readiness.some((item) => !item.ok);
@@ -171,10 +172,11 @@ export default function FleetSettings() {
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Automation Health</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Durable Fleet-scoped heartbeats and delivery state. Scheduled jobs now leave a summary even when nothing is due.</p></div><Activity className="w-5 h-5 text-gray-400 shrink-0"/></div>
-      <div className="mt-4 grid md:grid-cols-3 gap-3">
+      <div className="mt-4 grid md:grid-cols-2 xl:grid-cols-4 gap-3">
         <AutomationStatus label="Maintenance generation" schedule="Daily · 6:45 AM ET" log={latestAutomation.fleetScheduledMaintenanceGeneration}/>
         <AutomationStatus label="Scheduled reminders" schedule="Daily · 7:00 AM ET" log={latestAutomation.fleetScheduledReminders}/>
         <AutomationStatus label="Notification worker" schedule="Every 10 min · idle heartbeat ≤ 6 hr" log={latestAutomation.fleetNotificationWorker}/>
+        <AutomationStatus label="Reminder safety net" schedule="Configured reminder days · after 7:10 AM ET" log={latestAutomation.fleetReminderFallback}/>
       </div>
       <div className="mt-4 grid sm:grid-cols-2 gap-3"><HealthCount label="Notification queue unresolved" value={queueUnresolved.length} ok={queueUnresolved.length===0}/><HealthCount label="Operation receipts unresolved" value={receiptUnresolved.length} ok={receiptUnresolved.length===0}/></div>
       {(queueUnresolved.length>0 || receiptUnresolved.length>0) && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">Unresolved automation state is intentionally surfaced rather than silently replayed. Ambiguous notification delivery is not automatically resent.</div>}
