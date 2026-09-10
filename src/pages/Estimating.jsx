@@ -97,7 +97,7 @@ export default function Estimating() {
         JSON.stringify(editingWorkOrder?.[field] ?? null) !== JSON.stringify(saved?.[field] ?? null)
       );
       for (const field of changedFields) {
-        await ActivityActions.fieldUpdated(editingWorkOrder, field, editingWorkOrder?.[field], saved?.[field]);
+        await ActivityActions.fieldUpdated(saved, field, editingWorkOrder?.[field], saved?.[field]);
       }
     } else if (riderConfig) {
       const riderData = {
