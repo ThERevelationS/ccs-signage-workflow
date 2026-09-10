@@ -66,6 +66,37 @@ function fluidMinimumInStockUnit(item: any) {
   return minimum * fluidOuncesPerUnit[minimumUnit] / fluidOuncesPerUnit[stockUnit];
 }
 
+function inventoryIsLow(itemType: string, item: any) {
+  if (!item || item.enable_low_stock_alerts === false) return false;
+  if (itemType === 'part') {
+    const quantity = num(item.quantity_on_hand, NaN);
+    const minimum = num(item.minimum_stock, NaN);
+    return Number.isFinite(quantity) && Number.isFinite(minimum) && quantity <= minimum;
+  }
+  const quantity = num(item.quantity, NaN);
+  const minimum = fluidMinimumInStockUnit(item);
+  return Number.isFinite(quantity) && Number.isFinite(minimum) && quantity <= minimum + 1e-9;
+}
+
+async function dispatchLowStock(base44: any, itemType: string, item: any, eventToken: string) {
+  if (!inventoryIsLow(itemType, item)) return;
+  try {
+    const result = await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+      event_type: itemType === 'part' ? 'low_stock_part' : 'low_stock_fluid',
+      target_id: item.id,
+      event_token: eventToken,
+    });
+    if (result?.data?.error) throw new Error(result.data.error);
+  } catch (error: any) {
+    await base44.asServiceRole.entities.FleetSystemLog.create({
+      source: 'fleetInventoryAction',
+      level: 'warning',
+      message: 'Fleet inventory changed to low stock, but notification dispatch failed.',
+      details: { item_type: itemType, item_id: item.id, error: error?.message || String(error) },
+    }).catch(() => null);
+  }
+}
+
 function normalizePart(source: any) {
   const out = pick(source, partFields);
   for (const key of ['quantity_on_hand','minimum_stock','unit_cost']) {
