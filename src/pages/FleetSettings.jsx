@@ -86,7 +86,7 @@ export default function FleetSettings() {
       source_freeze_confirmed: "FleetMaster source freeze confirmed",
       verification_audit_passed: "Migration verification audit passed",
       verification_audit_no_delta: "Final source delta is clean",
-      destination_counts_match_audit: "Destination counts match verified snapshot",
+      destination_counts_match_audit: "FleetMaster-migrated records retained",
       notification_queue_clean: "Notification queue has no unresolved work",
       operation_receipts_clean: "Operation ledger has no unresolved work",
       gmail_sender_connected: "Fleet Gmail sender connected",
