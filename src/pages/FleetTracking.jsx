@@ -112,9 +112,10 @@ export default function FleetTracking() {
   // Initial load + auth
   useEffect(() => {
     (async () => {
+      let authenticatedUser = null;
       try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
+        authenticatedUser = await base44.auth.me();
+        setCurrentUser(authenticatedUser);
       } catch {}
       const s = await loadStatus();
       setStatusLoading(false);
@@ -122,7 +123,7 @@ export default function FleetTracking() {
         loadNotifications();
         if (!s?.needsReconnect) {
           loadVehicles();
-          syncNotifications();
+          if (authenticatedUser?.role === "admin") syncNotifications();
         } else {
           setVehiclesLoading(false);
         }
@@ -359,7 +360,7 @@ export default function FleetTracking() {
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <button
-              onClick={() => { loadVehicles(); syncNotifications(); }}
+              onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === "admin") syncNotifications(); }}
               className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded"
               title="Refresh"
             >
