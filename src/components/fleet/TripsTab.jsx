@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { formatTime, formatMiles, groupTripsByDay, monthLabel, formatRelativeDay } from "./fleetHelpers";
 import { Loader2, ChevronDown, Car } from "lucide-react";
 
-export default function TripsTab({ vehicle, trips, loading, onRefresh, selectedTripId, onSelectTrip }) {
+export default function TripsTab({ vehicle, trips, loading, selectedTripId, onSelectTrip }) {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState({});
   const [collapsedMonths, setCollapsedMonths] = useState({});
