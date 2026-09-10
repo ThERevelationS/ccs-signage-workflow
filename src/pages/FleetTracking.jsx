@@ -312,16 +312,18 @@ export default function FleetTracking() {
     <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
       <FleetModuleNav />
       <div className="flex-1 min-h-0 flex relative overflow-hidden" style={{ background: "#1b2029" }}>
-      {/* Sidebar */}
-      <FleetSidebar
-        vehicles={vehicles}
-        selectedVin={selectedVin}
-        onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
-        onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
-        totalCount={vehicles.length}
-      />
+      {/* Desktop vehicle list. Mobile uses the compact selector in the Bouncie top bar. */}
+      <div className="hidden md:block h-full shrink-0">
+        <FleetSidebar
+          vehicles={vehicles}
+          selectedVin={selectedVin}
+          onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
+          onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
+          totalCount={vehicles.length}
+        />
+      </div>
 
-      {/* Map area */}
+      {/* Map area */
       <div className="flex-1 relative">
         {vehiclesLoading && vehicles.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -337,14 +339,23 @@ export default function FleetTracking() {
         )}
 
         {/* Top bar overlay */}
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-2" style={{ background: "#1b1c21" }}>
-          <div className="flex items-center gap-2">
-            <span className="text-white font-bold text-lg tracking-tight">Bouncie</span>
+        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-2 sm:px-4 py-2" style={{ background: "#1b1c21" }}>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="hidden sm:inline text-white font-bold text-lg tracking-tight">Bouncie</span>
+            <select
+              value={selectedVin || ""}
+              onChange={(e) => { setSelectedVin(e.target.value || null); setPanelOpen(!!e.target.value); }}
+              className="md:hidden min-w-0 max-w-[210px] flex-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-xs font-medium text-white"
+              aria-label="Select Bouncie vehicle"
+            >
+              <option value="">Select vehicle…</option>
+              {vehicles.map((vehicle) => <option key={vehicle.vin} value={vehicle.vin}>{vehicle.nickName || vehicle.model?.name || vehicle.vin}</option>)}
+            </select>
             {status?.connectedEmail && (
-              <span className="text-xs text-gray-400 ml-3 hidden sm:inline">Connected: {status.connectedEmail}</span>
+              <span className="text-xs text-gray-400 ml-3 hidden lg:inline truncate">Connected: {status.connectedEmail}</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <button
               onClick={() => { loadVehicles(); syncNotifications(); }}
               className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded"
@@ -382,6 +393,7 @@ export default function FleetTracking() {
             onClearNotifications={handleClearNotifications}
             onMarkNotificationRead={handleMarkRead}
             onOpenAlertSettings={() => setAlertSettingsOpen(true)}
+            canManageAlerts={currentUser?.role === "admin"}
             onClose={() => setPanelOpen(false)}
             daysBack={daysBack}
             onDaysBackChange={setDaysBack}
@@ -394,7 +406,7 @@ export default function FleetTracking() {
         {/* Select-vehicle prompt when none selected */}
         {!selectedVehicle && !vehiclesLoading && vehicles.length > 0 && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-white/95 rounded-lg shadow-lg px-6 py-4 text-center">
-            <p className="text-gray-600 text-sm">Select a vehicle from the sidebar to view details.</p>
+            <p className="text-gray-600 text-sm">Select a vehicle to view tracking and Fleet maintenance details.</p>
           </div>
         )}
 
@@ -405,11 +417,11 @@ export default function FleetTracking() {
         )}
       </div>
 
-        <AlertSettingsModal
+        {currentUser?.role === "admin" && <AlertSettingsModal
           open={alertSettingsOpen}
           onClose={() => setAlertSettingsOpen(false)}
           vehicle={selectedVehicle}
-        />
+        />}
       </div>
     </div>
   );
