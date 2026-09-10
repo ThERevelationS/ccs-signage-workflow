@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 async function requireAdmin(base44: any) {
   const user = await base44.auth.me().catch(() => null);
@@ -350,7 +351,7 @@ Deno.serve(async (req) => {
     if (action === 'delete') {
       const logs = await Log.filter({ item_id: id });
       const requests = await Request.filter({ inventory_item_id: id });
-      const workOrders = await WorkOrder.list();
+      const workOrders = await loadAllEntityRows({ entity: WorkOrder, sort: '-created_date', label: 'Fleet work orders for inventory delete protection' });
       const woRefs = (workOrders || []).filter((wo: any) => itemType === 'part'
         ? (wo.parts_used || []).some((row: any) => row.part_id === id)
         : (wo.fluids_used || []).some((row: any) => row.fluid_id === id));
