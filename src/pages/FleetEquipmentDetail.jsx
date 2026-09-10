@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
 import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Bell, Loader2, Pencil, Save, X, MapPin, Gauge, Activity, Plus } from "lucide-react";
 
@@ -47,9 +48,9 @@ export default function FleetEquipmentDetail() {
 
       const vin = String(eq.vin || "").trim().toUpperCase();
       const [woRows, taskRows, logRows, liveRows, notifRows, metaRows] = await Promise.all([
-        base44.entities.FleetMaintenanceWorkOrder.filter({ equipment_id: id }, "-created_date", 500),
-        base44.entities.FleetMaintenanceTask.filter({ equipment_id: id }, "start_date", 500),
-        base44.entities.FleetEquipmentLog.filter({ equipment_id: id }, "-created_date", 500),
+        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet work-order history` }),
+        filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: id }, "start_date", { label: `${eq.name} maintenance schedules` }),
+        filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: id }, "-created_date", { label: `${eq.name} equipment usage history` }),
         vin ? base44.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin }, "-last_seen_at", 20) : Promise.resolve([]),
         vin ? base44.entities.BouncieNotification.filter({ vehicle_vin: vin }, "-timestamp", 100) : Promise.resolve([]),
         vin ? base44.entities.FleetVehicleMetadata.filter({ vehicle_vin: vin }, "-updated_date", 10) : Promise.resolve([]),
@@ -144,7 +145,8 @@ export default function FleetEquipmentDetail() {
             </Card>
 
             <Card title="Recent Equipment History" icon={History}>
-              <div className="space-y-2">{logs.slice(0,10).map(log => <div key={log.id} className="flex items-start justify-between gap-3 py-2 border-b border-gray-100 dark:border-slate-800 last:border-0"><div><div className="text-sm text-gray-800 dark:text-slate-200">{log.item_name} · {log.quantity_used} {log.unit || ""}</div><div className="text-xs text-gray-400">{pretty(log.item_type)}{log.recorded_by ? ` · ${log.recorded_by}` : ""}</div></div><span className="text-xs text-gray-400 whitespace-nowrap">{log.created_date ? new Date(log.created_date).toLocaleDateString() : "—"}</span></div>)}{logs.length === 0 && <Empty>No usage history.</Empty>}</div>
+              <div className="space-y-2">{logs.slice(0,10).map(log => <div key={log.id} className="flex items-start justify-between gap-3 py-2 border-b border-gray-100 dark:border-slate-800 last:border-0"><div className="min-w-0"><div className="text-sm text-gray-800 dark:text-slate-200">{log.item_name} · {log.quantity_used} {log.unit || ""}</div><div className="text-xs text-gray-400">{pretty(log.item_type)}{log.recorded_by ? ` · ${log.recorded_by}` : ""}</div>{log.notes && <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{log.notes}</div>}{log.work_order_id && <Link to={`${createPageUrl("FleetWorkOrders")}?workOrder=${encodeURIComponent(log.work_order_id)}&equipment=${encodeURIComponent(equipment.id)}`} className="inline-flex mt-1 text-xs text-indigo-600 dark:text-indigo-300 hover:underline">Open linked work order</Link>}</div><span className="text-xs text-gray-400 whitespace-nowrap">{log.created_date ? new Date(log.created_date).toLocaleDateString() : "—"}</span></div>)}{logs.length === 0 && <Empty>No parts/fluid usage history.</Empty>}</div>
+              {logs.length > 10 && <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-800 text-xs text-gray-500 dark:text-slate-400">Showing the 10 most recent of {logs.length} usage records. Full history remains preserved and is included in this equipment record.</div>}
             </Card>
           </div>
 
