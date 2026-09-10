@@ -129,15 +129,16 @@ export default function FleetTracking() {
     })();
   }, []);
 
-  // Auto-refresh vehicles + notifications
+  // Refresh the visible map/notification feed every minute. CCS-local alert evaluation
+  // runs independently in the scheduled Fleet Bouncie Alert Sync workflow.
   useEffect(() => {
     if (!status?.connected || status?.needsReconnect) return;
     refreshTimer.current = setInterval(() => {
       loadVehicles();
-      syncNotifications();
+      loadNotifications();
     }, 60000);
     return () => clearInterval(refreshTimer.current);
-  }, [status?.connected, loadVehicles, syncNotifications]);
+  }, [status?.connected, status?.needsReconnect, loadVehicles, loadNotifications]);
 
   // Load trips when selection / range changes
   useEffect(() => {
