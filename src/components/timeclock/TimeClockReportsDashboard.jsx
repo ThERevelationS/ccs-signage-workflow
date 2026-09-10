@@ -54,7 +54,7 @@ export default function TimeClockReportsDashboard() {
       const [entries, orders, usersData] = await Promise.all([
         loadAllEntityRows({ entity: TimeEntry, sort: "-clock_in", label: "Time Clock entries" }),
         loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock reporting authorized users" })
       ]);
       setTimeEntries(entries);
       setWorkOrders(orders);
