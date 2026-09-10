@@ -69,7 +69,7 @@ export default function FleetOverview() {
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    const todayText = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
     horizon.setDate(horizon.getDate() + 14);
