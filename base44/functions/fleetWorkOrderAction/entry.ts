@@ -531,7 +531,6 @@ async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt:
   }
 
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
-  const Equipment = base44.asServiceRole.entities.FleetEquipment;
   const patch = plan.work_order_patch;
   const current = await WorkOrder.get(workOrderId);
   if (!current) throw new Error(`Fleet work order ${workOrderId} no longer exists.`);
@@ -564,14 +563,12 @@ async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt:
     });
   }
   if (plan.equipment_status && patch.equipment_id) {
-    const equipment = await Equipment.get(patch.equipment_id).catch(() => null);
-    if (equipment && equipment.status !== plan.equipment_status) {
-      await Equipment.update(patch.equipment_id, { status: plan.equipment_status });
-    }
+    await applyCompletionEquipmentStatus(base44, Receipt, mainReceipt, patch.equipment_id, plan.equipment_status);
   }
+  const refreshedReceipt = await Receipt.get(mainReceipt.id).catch(() => mainReceipt);
   await Receipt.update(mainReceipt.id, {
     status: 'applied', applied_at: stamp,
-    result_summary: { ...plan, finalized_from_retry: true, equipment_status_reconciled: !!(plan.equipment_status && patch.equipment_id) },
+    result_summary: { ...(refreshedReceipt?.result_summary || plan), finalized_from_retry: true },
     error_message: '',
   });
   return completed;
