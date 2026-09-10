@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -16,7 +17,11 @@ Deno.serve(async (req) => {
 
     // Scheduled/batch mode: refresh up to 5 oldest auto_refresh jurisdictions
     if (!id) {
-      const all = await base44.asServiceRole.entities.JurisdictionProfile.list('last_updated', 200);
+      const all = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.JurisdictionProfile,
+        sort: 'last_updated',
+        label: 'Scheduled jurisdiction refresh catalog',
+      });
       const toRefresh = all.filter(j => j.auto_refresh !== false).slice(0, 5);
       const results = [];
       for (const j of toRefresh) {
