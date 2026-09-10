@@ -3,6 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const PRIORITIES = new Set(['low','medium','high','critical']);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_MAX_ACCEPTED = 5;
+const MAX_PUBLIC_PHOTOS = 3;
+const MAX_PUBLIC_PHOTO_BYTES = 1_200_000;
+const MAX_PUBLIC_PHOTO_B64_CHARS = Math.ceil(MAX_PUBLIC_PHOTO_BYTES / 3) * 4 + 16;
+const MAX_PUBLIC_BODY_BYTES = 5_500_000;
 const clean = (value: unknown, max: number) => String(value || '').trim().slice(0, max);
 const canonical = (rows: any[] = []) => rows.slice().sort((a,b) => {
   const at = Date.parse(a?.created_date || '') || 0;
@@ -14,6 +18,60 @@ const canonical = (rows: any[] = []) => rows.slice().sort((a,b) => {
 function validToken(value: unknown) {
   const token = String(value || '').trim();
   return /^[A-Za-z0-9-]{8,80}$/.test(token) ? token : '';
+}
+
+function decodePublicPhotos(raw: unknown) {
+  if (raw == null) return { photos: [] as Uint8Array[], error: '' };
+  if (!Array.isArray(raw)) return { photos: [] as Uint8Array[], error: 'Photos must be provided as a list.' };
+  if (raw.length > MAX_PUBLIC_PHOTOS) return { photos: [] as Uint8Array[], error: `A maximum of ${MAX_PUBLIC_PHOTOS} photos may be attached.` };
+
+  const photos: Uint8Array[] = [];
+  for (const item of raw) {
+    const mime = String(item?.type || '').toLowerCase();
+    const data = String(item?.data || '').trim();
+    if (mime !== 'image/jpeg') return { photos: [] as Uint8Array[], error: 'Public Fleet photos must be JPEG images.' };
+    if (!data || data.length > MAX_PUBLIC_PHOTO_B64_CHARS || !/^[A-Za-z0-9+/]+={0,2}$/.test(data)) {
+      return { photos: [] as Uint8Array[], error: `Each photo must be a valid JPEG no larger than ${Math.round(MAX_PUBLIC_PHOTO_BYTES / 100_000) / 10} MB.` };
+    }
+    let bytes: Uint8Array;
+    try {
+      const binary = atob(data);
+      bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    } catch {
+      return { photos: [] as Uint8Array[], error: 'One of the attached photos could not be decoded.' };
+    }
+    if (!bytes.length || bytes.length > MAX_PUBLIC_PHOTO_BYTES || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
+      return { photos: [] as Uint8Array[], error: `Each photo must be a valid JPEG no larger than ${Math.round(MAX_PUBLIC_PHOTO_BYTES / 100_000) / 10} MB.` };
+    }
+    photos.push(bytes);
+  }
+  return { photos, error: '' };
+}
+
+async function uploadPublicPhotos(base44: any, photos: Uint8Array[]) {
+  const urls: string[] = [];
+  let failed = 0;
+  for (const bytes of photos) {
+    try {
+      const result = await base44.asServiceRole.integrations.Core.UploadFile({ file: new Blob([bytes], { type: 'image/jpeg' }) });
+      const url = String(result?.file_url || '').trim();
+      if (!/^https:\/\//i.test(url)) throw new Error('Base44 storage did not return a valid HTTPS URL.');
+      urls.push(url);
+    } catch (error) {
+      failed++;
+      console.error('fleetPublicIssueReport photo upload failed:', error);
+    }
+  }
+  return { urls, failed };
+}
+
+function samePublicSubmission(existing: any, input: any) {
+  return String(existing?.equipment_id || '') === input.equipmentId
+    && String(existing?.title || '') === input.title
+    && String(existing?.description || '') === input.description
+    && String(existing?.priority || '') === input.priority
+    && String(existing?.public_reporter_name || '') === input.reporterName
+    && String(existing?.public_reporter_contact || '') === input.reporterContact;
 }
 
 function workOrderNumber(token: string) {
@@ -81,6 +139,11 @@ async function consumeThrottle(base44:any, req:Request) {
 
 Deno.serve(async (req) => {
   try {
+    const contentLength = Number(req.headers.get('content-length') || 0);
+    if (Number.isFinite(contentLength) && contentLength > MAX_PUBLIC_BODY_BYTES) {
+      return Response.json({ error: 'Public Fleet issue report payload is too large.' }, { status: 413 });
+    }
+
     const base44 = createClientFromRequest(req);
     const payload = await req.json().catch(() => ({}));
     const action = String(payload?.action || '').trim();
@@ -126,13 +189,35 @@ Deno.serve(async (req) => {
     if (!equipment || equipment.status === 'retired') return Response.json({error:'Selected Fleet equipment is not available for public reporting.'},{status:404});
 
     const submissionKey = `fleetpublic:${token}`;
+    const retryIdentity = { equipmentId: equipment.id, title, description, priority, reporterName, reporterContact };
     const existing = canonical(await WorkOrder.filter({public_submission_key:submissionKey}));
-    if (existing) return Response.json({success:true,reused:true,id:existing.id,work_order_number:existing.work_order_number});
+    if (existing) {
+      if (!samePublicSubmission(existing, retryIdentity)) {
+        return Response.json({error:'This submission token is already associated with a different Fleet issue report.'},{status:409});
+      }
+      const photoValidation = decodePublicPhotos(payload?.photos);
+      if (photoValidation.error) return Response.json({error:photoValidation.error},{status:400});
+      let photoWarning = '';
+      if (photoValidation.photos.length && !(existing.problem_photos || []).length) {
+        const uploaded = await uploadPublicPhotos(base44, photoValidation.photos);
+        if (uploaded.urls.length) await WorkOrder.update(existing.id,{problem_photos:uploaded.urls});
+        if (uploaded.failed) photoWarning = `${uploaded.failed} photo${uploaded.failed === 1 ? '' : 's'} could not be attached. The Fleet issue report was still submitted.`;
+      }
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+        event_type:'work_order_created',
+        target_id:existing.id,
+        event_token:submissionKey,
+      }).catch(()=>null);
+      return Response.json({success:true,reused:true,id:existing.id,work_order_number:existing.work_order_number,photo_warning:photoWarning});
+    }
 
     const throttle = await consumeThrottle(base44, req);
     if (throttle.limited) {
       return Response.json({error:'Too many Fleet issue reports were submitted from this connection. Please try again later.'},{status:429,headers:{'Retry-After':'900'}});
     }
+
+    const photoValidation = decodePublicPhotos(payload?.photos);
+    if (photoValidation.error) return Response.json({error:photoValidation.error},{status:400});
 
     const created = await WorkOrder.create({
       work_order_number:workOrderNumber(token),
@@ -145,16 +230,7 @@ Deno.serve(async (req) => {
       notes:'Submitted through the CCS Fleet public issue form.',
       public_submission_key:submissionKey,
       public_reported_at:new Date().toISOString(),
-      public_reporter_name:reporterName,
-      public_reporter_contact:reporterContact,
-    });
-
-    // Collapse practical concurrent retries without requiring a unique database index.
-    await new Promise(resolve=>setTimeout(resolve,75));
-    const winner = canonical(await WorkOrder.filter({public_submission_key:submissionKey})) || created;
-    if (winner.id !== created.id) await WorkOrder.delete(created.id).catch(()=>null);
-
-    await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+    return Response.json({success:true,reused:false,id:winner.id,work_order_number:winner.work_order_number,photo_warning:photoWarning});
       event_type:'work_order_created',
       target_id:winner.id,
       event_token:submissionKey,
