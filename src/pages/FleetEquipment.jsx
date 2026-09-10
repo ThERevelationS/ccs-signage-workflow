@@ -42,6 +42,7 @@ export default function FleetEquipment() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const openCreateDialog = useCallback(() => setDialog({ equipment: null, createKey: crypto.randomUUID() }), []);
   const isAdmin = currentUser?.role === "admin";
   const metrics = useMemo(() => ({
     operational: equipment.filter(e => e.status === "operational").length,
@@ -65,7 +66,7 @@ export default function FleetEquipment() {
     try {
       const body = dialog?.equipment
         ? { action: "update", id: dialog.equipment.id, expected_updated_date: dialog.equipment.updated_date || "", equipment: payload, tracking_applicable }
-        : { action: "create", equipment: payload, tracking_applicable };
+        : { action: "create", creation_key: dialog?.createKey || "", equipment: payload, tracking_applicable };
       const { data } = await base44.functions.invoke("fleetEquipmentAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
@@ -83,7 +84,7 @@ export default function FleetEquipment() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Equipment</h1><p className="text-sm text-gray-500 dark:text-slate-400">Road vehicles and non-road assets. Bouncie linkage is evaluated only from exact existing VIN/IMEI evidence.</p></div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={e => setViewFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link conflicts</option></select>{isAdmin && <button onClick={() => setDialog({ equipment: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={e => setViewFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link conflicts</option></select>{isAdmin && <button onClick={openCreateDialog} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance>0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down>0}/><EquipmentMetric icon={Link2} label="Bouncie link conflicts" value={metrics.trackingIssues} attention={metrics.trackingIssues>0}/></div>
