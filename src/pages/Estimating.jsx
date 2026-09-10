@@ -6,7 +6,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -103,16 +103,29 @@ export default function Estimating() {
         current_stage: riderConfig.stage,
         priority: 0
       };
-      const newRider = await WorkOrder.create(riderData);
-      await ActivityActions.logRiderCreated(newRider, riderConfig.parentId);
+      const { record: newRider } = await createWorkOrderWithRecovery({ data: riderData, label: "Estimating rider Work Order" });
+      try {
+        await ActivityActions.logRiderCreated(newRider, riderConfig.parentId);
+      } catch (activityError) {
+        console.error("Estimating rider was saved but activity logging failed:", activityError);
+        alert("The rider was saved successfully, but its activity notification could not be completed. Do not create the rider again; reload to see the saved rider.");
+      }
       setRiderConfig(null);
     } else {
-      const newOrder = await WorkOrder.create({
-        ...workOrderData,
-        current_stage: "estimating",
-        priority: workOrders.length
+      const { record: newOrder } = await createWorkOrderWithRecovery({
+        data: {
+          ...workOrderData,
+          current_stage: "estimating",
+          priority: workOrders.length
+        },
+        label: "Estimating Work Order",
       });
-      await ActivityActions.logWorkOrderCreated(newOrder);
+      try {
+        await ActivityActions.logWorkOrderCreated(newOrder);
+      } catch (activityError) {
+        console.error("Estimating Work Order was saved but activity logging failed:", activityError);
+        alert("The Work Order was saved successfully, but its activity notification could not be completed. Do not create the Work Order again; reload to see the saved job.");
+      }
     }
     
     setShowForm(false);
