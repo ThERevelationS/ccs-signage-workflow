@@ -92,8 +92,13 @@ export default function Estimating() {
     if (!isRegistered) return;
 
     if (editingWorkOrder) {
-      await updateWorkOrderFromLoadedSnapshot({ workOrder: editingWorkOrder, formData: workOrderData, label: "Estimating Work Order" });
-      await ActivityActions.logWorkOrderUpdate(editingWorkOrder, workOrderData);
+      const saved = await updateWorkOrderFromLoadedSnapshot({ workOrder: editingWorkOrder, formData: workOrderData, label: "Estimating Work Order" });
+      const changedFields = Object.keys(workOrderData || {}).filter((field) =>
+        JSON.stringify(editingWorkOrder?.[field] ?? null) !== JSON.stringify(saved?.[field] ?? null)
+      );
+      for (const field of changedFields) {
+        await ActivityActions.fieldUpdated(editingWorkOrder, field, editingWorkOrder?.[field], saved?.[field]);
+      }
     } else if (riderConfig) {
       const riderData = {
         ...workOrderData,
@@ -105,7 +110,7 @@ export default function Estimating() {
       };
       const { record: newRider } = await createWorkOrderWithRecovery({ data: riderData, label: "Estimating rider Work Order" });
       try {
-        await ActivityActions.logRiderCreated(newRider, riderConfig.parentId);
+        await ActivityActions.riderCreated(newRider, riderConfig.parentTitle || riderConfig.parentId);
       } catch (activityError) {
         console.error("Estimating rider was saved but activity logging failed:", activityError);
         alert("The rider was saved successfully, but its activity notification could not be completed. Do not create the rider again; reload to see the saved rider.");
@@ -121,7 +126,7 @@ export default function Estimating() {
         label: "Estimating Work Order",
       });
       try {
-        await ActivityActions.logWorkOrderCreated(newOrder);
+        await ActivityActions.workOrderCreated(newOrder);
       } catch (activityError) {
         console.error("Estimating Work Order was saved but activity logging failed:", activityError);
         alert("The Work Order was saved successfully, but its activity notification could not be completed. Do not create the Work Order again; reload to see the saved job.");
@@ -142,7 +147,7 @@ export default function Estimating() {
         newStage: toStage,
         label: "Estimating stage transition",
       });
-      await ActivityActions.logStageChange(workOrder, fromStage, toStage);
+      await ActivityActions.stageChanged(workOrder, fromStage, toStage);
     } catch (error) {
       console.error("Error moving Estimating Work Order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
@@ -158,7 +163,7 @@ export default function Estimating() {
 
   const handleSplit = (workOrder, stage) => {
     if (!isRegistered) return;
-    setRiderConfig({ parentId: workOrder.id, stage });
+    setRiderConfig({ parentId: workOrder.id, parentTitle: workOrder.title || workOrder.client_name || workOrder.id, stage });
     setShowForm(true);
   };
 
@@ -171,7 +176,7 @@ export default function Estimating() {
         completed: true,
         label: "Estimating completion",
       });
-      await ActivityActions.logWorkOrderCompleted(workOrder);
+      await ActivityActions.workOrderCompleted(workOrder);
     } catch (error) {
       console.error("Error completing Estimating Work Order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
@@ -188,7 +193,7 @@ export default function Estimating() {
         label: "Estimating Work Order delete",
       });
       Object.assign(workOrder, deleted);
-      await ActivityActions.logWorkOrderDeleted(workOrder);
+      await ActivityActions.workOrderDeleted(workOrder);
     } catch (error) {
       console.error("Error deleting Estimating Work Order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");

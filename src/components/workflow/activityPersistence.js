@@ -68,7 +68,7 @@ export async function createActivityLogBestEffort({
     try {
       const before = await readMatches();
       beforeIds = new Set(before.map((row) => row.id));
-    } catch (error) {
+    } catch {
       // Logging is best-effort. A failed preflight must not block the business
       // action or its notification, but it means response-loss recovery is unsafe.
       recoveryAvailable = false;
