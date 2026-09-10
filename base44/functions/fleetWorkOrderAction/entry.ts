@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -19,6 +20,10 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 const sameNumber = (a: unknown, b: unknown) => Math.abs(num(a) - num(b)) < 1e-9;
+const manualCreateNumber = (clientKey: string) => {
+  const token = String(clientKey || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16).toUpperCase();
+  return token ? `FWO-${today().replaceAll('-', '')}-${token}` : '';
+};
 const FLUID_OUNCES_PER_UNIT: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
 const fluidMinimumInStockUnit = (item: any) => {
   const minimum = num(item?.minimum_stock, NaN);
