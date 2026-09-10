@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,24 @@ import {
 export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, disabledReason = "", persistedStatus = "draft" }) {
   const [busy, setBusy] = useState(false);
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
+
+  useEffect(() => {
+    let active = true;
+    const linkedId = String(estimate.work_order_id || "").trim();
+    if (!linkedId) {
+      setWorkOrderId("");
+      return () => { active = false; };
+    }
+    base44.entities.WorkOrder.get(linkedId)
+      .then((row) => {
+        if (!active) return;
+        setWorkOrderId(row?.id && row.deleted !== true ? row.id : "");
+      })
+      .catch(() => {
+        if (active) setWorkOrderId("");
+      });
+    return () => { active = false; };
+  }, [estimate.work_order_id]);
 
   const handleConvert = async () => {
     if (disabled) return;
@@ -88,7 +106,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         throw new Error("This estimate changed in another session. Reload before converting so newer approved pricing/details are not overwritten.");
       }
       const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-      const existing = selectExistingEstimateWorkOrder(matches, estimate.work_order_id);
+      const activeMatches = (matches || []).filter((row) => row?.deleted !== true);
+      const existing = selectExistingEstimateWorkOrder(activeMatches, estimate.work_order_id);
+      if (!existing && (matches || []).some((row) => row?.deleted === true)) {
+        throw new Error("This estimate's linked Work Order is in Trash. Restore that Work Order from Project Trash before converting the estimate again.");
+      }
       const customers = await loadAllCustomers();
       const resolvedCustomer = await resolveCustomerForEstimate(
         { ...estimateBefore, customer_id: existing?.customer_id || estimateBefore.customer_id || "" },
