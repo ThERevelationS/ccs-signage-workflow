@@ -323,7 +323,7 @@ export default function FleetTracking() {
         />
       </div>
 
-      {/* Map area */
+      {/* Map area */}
       <div className="flex-1 relative">
         {vehiclesLoading && vehicles.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
