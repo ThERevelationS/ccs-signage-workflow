@@ -77,14 +77,43 @@ Deno.serve(async (req) => {
     const Log = base44.asServiceRole.entities.FleetEquipmentLog;
 
     if (action === 'create') {
+      const creationKey = String(body?.creation_key || '').trim();
+      if (!creationKey || creationKey.length < 12 || creationKey.length > 200 || /\s/.test(creationKey)) {
+        return Response.json({ error: 'Fleet equipment create identity is missing or invalid. Reopen New Equipment and try again.' }, { status: 409 });
+      }
       const patch = equipmentPatch(body?.equipment || body);
       if (!String(patch.name || '').trim() || !EQUIPMENT_TYPES.has(String(patch.type || ''))) {
         return Response.json({ error: 'Equipment name and type are required.' }, { status: 400 });
       }
       if (patch.status && !EQUIPMENT_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
       const trackingApplicable = body?.tracking_applicable !== false;
+      const desired = { ...patch, status: patch.status || 'operational' };
+      const existingRows = await Equipment.filter({ creation_key: creationKey });
+      if (existingRows.length > 1) return Response.json({ error: 'Multiple Fleet equipment records share this create identity. Review the duplicates before retrying.' }, { status: 409 });
+      if (existingRows[0]) {
+        const reused = existingRows[0];
+        const sameTrackingIntent = trackingApplicable ? reused.bouncie_link_status !== 'not_applicable' : reused.bouncie_link_status === 'not_applicable';
+        if (!equipmentCreateMatches(reused, desired) || !sameTrackingIntent) {
+          return Response.json({ error: 'This create identity already belongs to different Fleet equipment details. Reopen New Equipment before creating another asset.' }, { status: 409 });
+        }
+        return Response.json({ success: true, reused: true, equipment: reused, bouncie_link: { bouncie_link_status: reused.bouncie_link_status, bouncie_imei: reused.bouncie_imei || null } });
+      }
       const link = await evaluateBouncieLink(base44, patch.vin || '', trackingApplicable);
-      const created = await Equipment.create({ ...patch, status: patch.status || 'operational', ...link });
+      const created = await Equipment.create({ ...desired, ...link, creation_key: creationKey });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await Equipment.filter({ creation_key: creationKey });
+      if (contenders.length > 1) {
+        const winner = canonical(contenders) || created;
+        if (winner.id !== created.id) {
+          await Equipment.delete(created.id).catch(() => null);
+          const sameTrackingIntent = trackingApplicable ? winner.bouncie_link_status !== 'not_applicable' : winner.bouncie_link_status === 'not_applicable';
+          if (!equipmentCreateMatches(winner, desired) || !sameTrackingIntent) {
+            return Response.json({ error: 'Another Fleet equipment create won this identity with different details. The losing duplicate was discarded; reopen New Equipment.' }, { status: 409 });
+          }
+          return Response.json({ success: true, reused: true, equipment: winner, bouncie_link: { bouncie_link_status: winner.bouncie_link_status, bouncie_imei: winner.bouncie_imei || null } });
+        }
+        for (const duplicate of contenders) if (duplicate.id !== winner.id) await Equipment.delete(duplicate.id).catch(() => null);
+      }
       return Response.json({ success: true, equipment: created, bouncie_link: link });
     }
 
