@@ -20,6 +20,8 @@ import LocalityOfficeEditor from "./LocalityOfficeEditor";
 import OfficeCatalogEditor from "./OfficeCatalogEditor";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
+import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -158,21 +160,26 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           return false;
         }
 
-        let created;
-        try {
-          created = await PermitLocality.create(payload);
-        } catch (createError) {
-          const matches = await PermitLocality.filter({ name: payload.name, state: payload.state || "" }).catch(() => null);
-          if (Array.isArray(matches) && matches.length === 1) {
-            created = matches[0];
-            setLocalitySaveError("The create request returned an error, but the locality was found on re-read and recovered safely.");
-          } else {
-            throw createError;
-          }
+        const createResult = await createPermitLocalityIfAbsent({
+          entity: PermitLocality,
+          data: payload,
+          readCurrentLocalities: () => loadAllEntityRows({
+            entity: PermitLocality,
+            sort: "name",
+            label: "Permit locality create identity",
+          }),
+          label: `Permit locality ${payload.name}`,
+        });
+        const created = createResult.record;
+        if (createResult.status === "existing") {
+          setLocalitySaveError("A locality with this name and state appeared in another session. The existing locality was opened instead of creating a duplicate.");
+        } else if (createResult.status === "recovered") {
+          setLocalitySaveError("The create response was unavailable, but the locality was found on re-read and recovered safely.");
         }
-        setLocalities(prev => prev.some(loc => loc.id === created.id) ? prev : [...prev, created]);
+        setLocalities(prev => prev.some(loc => loc.id === created.id) ? prev.map(loc => loc.id === created.id ? created : loc) : [...prev, created]);
         setSelectedLocality(created.id);
         setEditingLocality(created.id);
+        loadFormFromLocality(created);
       } else {
         const loaded = localities.find(loc => loc.id === editingLocality);
         if (!loaded?.id) throw new Error("The locality being edited is no longer loaded. Reopen it before saving.");
