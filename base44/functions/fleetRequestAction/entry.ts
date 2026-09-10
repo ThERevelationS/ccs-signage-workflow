@@ -230,10 +230,12 @@ Deno.serve(async (req) => {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
       }
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (!expectedUpdatedAt) return Response.json({ error: 'Fleet request version is missing. Reload before saving.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
         entity: Request,
         id,
-        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        expectedUpdatedAt,
         patch,
         label: 'Fleet request',
       });
@@ -245,10 +247,12 @@ Deno.serve(async (req) => {
       if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before cancelling it.' }, { status: 409 });
       if (existing.status === 'received') return Response.json({ error: 'A received request cannot be cancelled because inventory has already been applied.' }, { status: 409 });
       if (!isAdmin && existing.status !== 'pending') return Response.json({ error: 'Only an admin can cancel a request after it has been ordered.' }, { status: 403 });
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (!expectedUpdatedAt) return Response.json({ error: 'Fleet request version is missing. Reload before cancelling.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
         entity: Request,
         id,
-        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        expectedUpdatedAt,
         patch: { status: 'cancelled' },
         label: 'Fleet request',
       });
@@ -259,10 +263,12 @@ Deno.serve(async (req) => {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can mark Fleet requests as ordered.' }, { status: 403 });
       if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before changing order details.' }, { status: 409 });
       if (!['pending', 'ordered'].includes(existing.status)) return Response.json({ error: 'Only pending or ordered requests can have order details updated.' }, { status: 409 });
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (!expectedUpdatedAt) return Response.json({ error: 'Fleet request version is missing. Reload before changing order details.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
         entity: Request,
         id,
-        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        expectedUpdatedAt,
         patch: {
           status: 'ordered',
           estimated_delivery_date: body?.estimated_delivery_date || existing.estimated_delivery_date || null,
