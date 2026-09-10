@@ -55,6 +55,7 @@ import {
   deleteAuthorizedEmailIfUnchanged,
   updateAuthorizedEmailIfUnchanged,
 } from "@/components/admin/authorizedEmailPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
 
@@ -95,7 +96,11 @@ export default function UserManagement() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const allUsers = await base44.entities.AuthorizedEmail.list();
+      const allUsers = await loadAllEntityRows({
+        entity: base44.entities.AuthorizedEmail,
+        sort: null,
+        label: "User Management authorized users",
+      });
       setUsers(allUsers);
     } catch (error) {
       console.error("Error loading users:", error);
