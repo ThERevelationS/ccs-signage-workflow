@@ -161,77 +161,11 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, dry_run: true, due_count: due.length, would_create: report.filter((r) => r.action === 'create').length, report });
       }
 
-      const results: any[] = [];
-      for (const item of report) {
-        if (item.action !== 'create') {
-          results.push(item);
-          continue;
-        }
-        const task = await Task.get(item.task_id);
-        if (!task || !DUE_TASK_STATUSES.has(task.status) || !task.start_date || task.start_date > today()) {
-          results.push({ ...item, action: 'skip', reason: 'task_changed_after_dry_run' });
-          continue;
-        }
-        const activeNow = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
-        if (activeNow) {
-          results.push({ ...item, action: 'skip', reason: 'active_work_order_exists', work_order_id: activeNow.id });
-          continue;
-        }
-
-        const claim = await claimReceipt(Receipt, {
-          operation_key: item.generation_key,
-          operation_type: 'scheduled_generation',
-          target_entity: 'FleetMaintenanceTask',
-          target_id: task.id,
-          actor_email: user.email || '',
-          actor_user_id: user.id || '',
-          result_summary: { due_date: task.start_date, task_title: task.title },
-        });
-        if (claim.applied) {
-          const existing = canonical(await WorkOrder.filter({ generation_key: item.generation_key }));
-          results.push({ ...item, action: 'skip', reason: 'receipt_already_applied', work_order_id: existing?.id || '' });
-          continue;
-        }
-        if (!claim.owner) {
-          const existing = canonical(await WorkOrder.filter({ generation_key: item.generation_key }));
-          if (existing) {
-            await Task.update(task.id, { status: 'in_progress', generation_key: item.generation_key, last_generated_for_date: task.start_date });
-            await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), result_summary: { ...(claim.receipt.result_summary || {}), work_order_id: existing.id, recovered: true } });
-            results.push({ ...item, action: 'recovered', work_order_id: existing.id });
-          } else {
-            results.push({ ...item, action: 'skip', reason: 'generation_in_progress_not_replayed' });
-          }
-          continue;
-        }
-
-        try {
-          const workOrderNumber = generatedWorkOrderNumber(task);
-          const duplicates = await WorkOrder.filter({ work_order_number: workOrderNumber });
-          const created = duplicates?.[0] || await WorkOrder.create({
-            work_order_number: workOrderNumber,
-            equipment_id: task.equipment_id,
-            maintenance_task_id: task.id,
-            title: task.title,
-            description: task.description || `Scheduled maintenance: ${task.title}`,
-            type: 'scheduled',
-            priority: task.priority || 'medium',
-            status: 'open',
-            assigned_to: task.assigned_to || '',
-            generation_key: item.generation_key,
-          });
-          await Task.update(task.id, { status: 'in_progress', generation_key: item.generation_key, last_generated_for_date: task.start_date });
-          await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), result_summary: { ...(claim.receipt.result_summary || {}), work_order_id: created.id, work_order_number: created.work_order_number } });
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
-            event_type: 'work_order_created', target_id: created.id, event_token: item.generation_key,
-          }).catch(() => null);
-          results.push({ ...item, action: 'created', work_order_id: created.id, work_order_number: created.work_order_number });
-        } catch (error) {
-          await Receipt.update(claim.receipt.id, { error_message: error?.message || String(error) }).catch(() => null);
-          results.push({ ...item, action: 'error', error: error?.message || String(error) });
-        }
+      const delegated = await base44.asServiceRole.functions.invoke('fleetScheduledMaintenanceGeneration', {});
+      if (delegated?.data?.error) {
+        return Response.json({ error: delegated.data.error, delegated: true }, { status: 500 });
       }
-
-      return Response.json({ success: true, dry_run: false, due_count: due.length, created: results.filter((r) => r.action === 'created').length, recovered: results.filter((r) => r.action === 'recovered').length, results });
+      return Response.json({ ...(delegated?.data || {}), delegated: true, legacy_action: 'generate_due' });
     }
 
     const id = String(body?.id || body?.task_id || '').trim();
