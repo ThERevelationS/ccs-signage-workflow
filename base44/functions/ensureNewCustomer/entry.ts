@@ -98,32 +98,51 @@ Deno.serve(async (req) => {
 
     const CustomerUser = base44.entities.Customer;
     const CustomerService = base44.asServiceRole.entities.Customer;
-    const readKeyedRows = async () => CustomerService.filter({ creation_request_key: creationKey });
-    const validateRows = (rows: any[] = []) => {
-      const mismatches = (rows || []).filter((row: any) => !sameTarget(row, customer));
+    const readKeyedRows = async () => {
+      const rows = await CustomerService.filter({ creation_request_key: creationKey });
+      if (!Array.isArray(rows)) {
+        throw Object.assign(new Error('Customer creation receipt lookup did not return a verifiable record list.'), { statusCode: 409 });
+      }
+      return rows;
+    };
+    const validateRows = (rows: any[] = [], { allowMultiple = false } = {}) => {
+      const mismatches = rows.filter((row: any) => !sameTarget(row, customer));
       if (mismatches.length) {
         throw Object.assign(new Error('This Customer creation receipt is already associated with different Customer data. No Customer was changed.'), { statusCode: 409 });
       }
-      return canonicalRow(rows || []);
+      if (!allowMultiple && rows.length > 1) {
+        throw Object.assign(new Error('Multiple Customers already share this creation receipt. No uncertain Customer was deleted; review the duplicate Customers before retrying.'), { statusCode: 409 });
+      }
+      return canonicalRow(rows);
     };
 
     let rows = await readKeyedRows();
-    const existing = validateRows(rows || []);
+    const existing = validateRows(rows);
     if (existing?.id) return Response.json({ customer: existing, reused: true });
 
     let created;
     try {
       created = await CustomerUser.create(customer);
     } catch (createError) {
-      rows = await readKeyedRows().catch(() => []);
-      const recovered = validateRows(rows || []);
+      try {
+        rows = await readKeyedRows();
+      } catch (verificationError) {
+        throw Object.assign(new Error(
+          `Customer create response was unavailable and its recovery lookup also failed. Do not retry blindly; reload Customers first. ${verificationError?.message || ''}`.trim()
+        ), { statusCode: 409 });
+      }
+      const recovered = validateRows(rows);
       if (recovered?.id) return Response.json({ customer: recovered, reused: true, recovered_after_create_error: true });
       throw createError;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
     rows = await readKeyedRows();
-    const canonical = validateRows(rows || []) || created;
+    const canonical = validateRows(rows, { allowMultiple: true }) || created;
+
+    if (rows.length > 1 && canonical?.id === created?.id) {
+      return Response.json({ error: 'A concurrent Customer was created with the same creation receipt after this request became canonical. The canonical Customer was preserved and no uncertain concurrent row was deleted; review the duplicate Customers before continuing.' }, { status: 409 });
+    }
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
       const losingRows = await CustomerService.filter({ id: created.id });
