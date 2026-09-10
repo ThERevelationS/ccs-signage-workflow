@@ -10,6 +10,7 @@ import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import PendingImportsPanel, { fetchPendingImportCount } from "@/components/sales/PendingImportsPanel";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -65,7 +66,7 @@ export default function SalesPipeline() {
 
   const loadActiveFilters = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    const allFilters = await SalesFilter.list();
+    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" });
     const userEmail = currentUser?.email || "";
     const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
     setActiveFilters(selected);
