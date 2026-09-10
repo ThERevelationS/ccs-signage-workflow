@@ -26,6 +26,7 @@ export default function FleetMaintenanceDialog({ open, task, equipment, parts = 
     setForm(task ? {
       ...EMPTY,
       ...task,
+      status: task.status === "overdue" ? "pending" : (task.status || "pending"),
       custom_frequency_value: task.custom_frequency_value ?? "",
       estimated_duration: task.estimated_duration ?? "",
       parts_needed: Array.isArray(task.parts_needed) ? task.parts_needed : [],
@@ -94,7 +95,7 @@ export default function FleetMaintenanceDialog({ open, task, equipment, parts = 
             <Field label="Start / due date"><input type="date" value={form.start_date || ""} onChange={e => set("start_date", e.target.value)} className="field" /></Field>
             <Field label="Estimated duration (hours)"><input min="0" step="0.25" type="number" value={form.estimated_duration} onChange={e => set("estimated_duration", e.target.value)} className="field" /></Field>
             <Field label="Assigned to"><input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} className="field" /></Field>
-            <Field label="Status"><select value={form.status} onChange={e => set("status", e.target.value)} className="field"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select></Field>
+            <Field label="Workflow status"><select value={form.status} onChange={e => set("status", e.target.value)} className="field"><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select><div className="mt-1 text-[11px] text-gray-400">Overdue is calculated automatically from the due date while a schedule is pending.</div></Field>
           </div>
 
           <Field label="Description"><textarea rows="3" value={form.description} onChange={e => set("description", e.target.value)} className="field" /></Field>
