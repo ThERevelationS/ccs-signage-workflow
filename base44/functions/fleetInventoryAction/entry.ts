@@ -143,6 +143,37 @@ function normalizeFluid(source: any) {
   return out;
 }
 
+const optionalNumber = (value: any) => value == null || value === '' ? null : Number(value);
+const sortedIds = (value: any) => Array.isArray(value) ? [...new Set(value.map(String).filter(Boolean))].sort() : [];
+const inventoryCreateComparable = (itemType: string, source: any) => itemType === 'part' ? {
+  part_name: String(source?.part_name || '').trim(),
+  part_number: String(source?.part_number || '').trim(),
+  category: String(source?.category || '').trim(),
+  manufacturer: String(source?.manufacturer || '').trim(),
+  quantity_on_hand: Number(source?.quantity_on_hand ?? 0),
+  minimum_stock: Number(source?.minimum_stock ?? 1),
+  unit_cost: optionalNumber(source?.unit_cost),
+  location: String(source?.location || '').trim(),
+  notes: String(source?.notes || '').trim(),
+  enable_low_stock_alerts: source?.enable_low_stock_alerts !== false,
+  compatible_equipment_ids: sortedIds(source?.compatible_equipment_ids),
+} : {
+  fluid_name: String(source?.fluid_name || '').trim(),
+  fluid_type: String(source?.fluid_type || '').trim(),
+  viscosity: String(source?.viscosity || '').trim(),
+  brand: String(source?.brand || '').trim(),
+  quantity: optionalNumber(source?.quantity),
+  unit: String(source?.unit || '').trim(),
+  minimum_stock: optionalNumber(source?.minimum_stock),
+  minimum_stock_unit: String(source?.minimum_stock_unit || '').trim(),
+  cost_per_unit: optionalNumber(source?.cost_per_unit),
+  location: String(source?.location || '').trim(),
+  notes: String(source?.notes || '').trim(),
+  enable_low_stock_alerts: source?.enable_low_stock_alerts == null ? null : source.enable_low_stock_alerts === true,
+  compatible_equipment_ids: sortedIds(source?.compatible_equipment_ids),
+};
+const sameInventoryCreate = (itemType: string, row: any, desired: any) => JSON.stringify(inventoryCreateComparable(itemType, row)) === JSON.stringify(inventoryCreateComparable(itemType, desired));
+
 async function validateCompatibility(Equipment: any, ids: string[]) {
   for (const id of ids || []) {
     const row = await Equipment.get(id).catch(() => null);
