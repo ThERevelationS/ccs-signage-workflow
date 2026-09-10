@@ -59,7 +59,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
           sort: "created_date",
           label: "Financial spreadsheet Work Orders",
         }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financial spreadsheet authorized users" })
       ]);
       setWorkOrders(orders.map((order) => ({
         ...order,
