@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "./NotificationService";
+import { createActivityLogBestEffort } from "./activityPersistence";
 
 const ActivityLog = base44.entities.ActivityLog;
 
@@ -41,16 +42,24 @@ export async function logActivity({
   const user = await getCurrentUser();
   const displayName = getUserDisplayName(user);
   
-  await ActivityLog.create({
-    work_order_id: workOrderId,
-    work_order_title: workOrderTitle || "Unknown",
-    action_type: actionType,
-    action_details: actionDetails,
-    previous_value: previousValue,
-    new_value: newValue,
-    performed_by_email: user.email,
-    performed_by_name: displayName
+  const result = await createActivityLogBestEffort({
+    entity: ActivityLog,
+    data: {
+      work_order_id: workOrderId,
+      work_order_title: workOrderTitle || "Unknown",
+      action_type: actionType,
+      action_details: actionDetails,
+      previous_value: previousValue,
+      new_value: newValue,
+      performed_by_email: user.email,
+      performed_by_name: displayName
+    },
+    label: `Activity log for ${actionType || "Work Order action"}`,
   });
+  if (!result.logged) {
+    console.error(result.warning || "Work Order activity could not be recorded. The business action remains saved.");
+  }
+  return result;
 }
 
 // Helper functions for common actions - logs activity AND triggers email notifications
