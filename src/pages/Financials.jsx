@@ -267,7 +267,7 @@ export default function Financials() {
           sort: "created_date",
           label: "Financial Work Orders",
         }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financials authorized users" })
       ]);
       setWorkOrders(orders);
       setUsers(usersData);
@@ -281,7 +281,7 @@ export default function Financials() {
 
   const loadActiveFilters = async () => {
     const SalesFilter = base44.entities.SalesFilter;
-    const allFilters = await SalesFilter.list();
+    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Financials saved filters" });
     const userEmail = currentUser?.email || "";
     const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
     setActiveFilters(selected);
