@@ -35,8 +35,8 @@ export default function ResourceAllocationView({ compact = false }) {
     setIsLoading(true);
     try {
       const [usersData, capacitiesData, ordersData] = await Promise.all([
-        AuthorizedEmail.list(),
-        UserCapacity.list(),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Resource Allocation authorized users" }),
+        loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Allocation user capacities" }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
