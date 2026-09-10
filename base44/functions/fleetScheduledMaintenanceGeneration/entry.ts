@@ -47,6 +47,8 @@ async function claim(Receipt:any, key:string, task:any) {
     }
     return {applied:false,owner:true,receipt:refreshed,recoveredClaim:true};
   }
+  const failed = canonical(await Receipt.filter({operation_key:key,status:'failed'}));
+  if (failed) return {applied:false,owner:false,receipt:failed,failed:true};
   const created = await Receipt.create({operation_key:key,operation_type:'scheduled_generation',target_entity:'FleetMaintenanceTask',target_id:task.id,status:'started',started_at:nowIso(),result_summary:{due_date:task.start_date,title:task.title,task_expected_updated_date:task.updated_date || '',prior_generation_key:task.generation_key || '',prior_status:task.status || ''}});
   await new Promise(r=>setTimeout(r,75));
   const contenders = await Receipt.filter({operation_key:key,status:'started'});
@@ -89,18 +91,33 @@ async function acquireTaskGenerationLock(Task:any, Receipt:any, task:any, key:st
     patch: { generation_key: key },
     label: 'Fleet maintenance schedule generation lock',
   });
-  await Receipt.update(activeReceipt.id, {
-    result_summary: {
-      ...summary,
-      task_lock_acquired: true,
-      task_locked_updated_date: String(locked.updated_date || ''),
-      task_expected_updated_date: expectedUpdatedAt,
-      prior_generation_key: summary.prior_generation_key ?? task.generation_key ?? '',
-      prior_status: summary.prior_status || task.status || '',
-    },
-  });
-  activeReceipt = await Receipt.get(activeReceipt.id);
-  return { task: locked, receipt: activeReceipt };
+  try {
+    await Receipt.update(activeReceipt.id, {
+      result_summary: {
+        ...summary,
+        task_lock_acquired: true,
+        task_locked_updated_date: String(locked.updated_date || ''),
+        task_expected_updated_date: expectedUpdatedAt,
+        prior_generation_key: summary.prior_generation_key ?? task.generation_key ?? '',
+        prior_status: summary.prior_status || task.status || '',
+      },
+    });
+    activeReceipt = await Receipt.get(activeReceipt.id);
+    return { task: locked, receipt: activeReceipt };
+  } catch (error:any) {
+    try {
+      await updateFleetRecordIfCurrent({
+        entity: Task,
+        id: locked.id,
+        expectedUpdatedAt: String(locked.updated_date || ''),
+        patch: { generation_key: String(summary.prior_generation_key || task.generation_key || '') },
+        label: 'Fleet maintenance schedule generation lock rollback',
+      });
+    } catch (rollbackError:any) {
+      throw new Error(`Generation lock metadata failed and the task lock could not be rolled back safely: ${rollbackError?.message || String(rollbackError)}`);
+    }
+    throw error;
+  }
 }
 
 async function advanceLockedTask(Task:any, Receipt:any, taskId:string, key:string, receipt:any, dueDate:string) {
