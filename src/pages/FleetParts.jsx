@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetInventoryDialog from "@/components/fleet/FleetInventoryDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Package, Search, Loader2, AlertTriangle, Plus, Pencil, PackageCheck, ShoppingCart } from "lucide-react";
 
 export default function FleetParts() {
@@ -20,7 +21,7 @@ export default function FleetParts() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const [p,e,u] = await Promise.all([base44.entities.FleetPart.list("part_name",500), base44.entities.FleetEquipment.list("name",500), base44.auth.me().catch(()=>null)]);
+      const [p,e,u] = await Promise.all([listAllFleetRows(base44.entities.FleetPart,"part_name",{label:"Fleet parts"}), listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment"}), base44.auth.me().catch(()=>null)]);
       setParts(p||[]); setEquipment(e||[]); setUser(u||null);
     } catch(e) { setError(e?.message || "Unable to load Fleet parts."); }
     finally { setLoading(false); }
