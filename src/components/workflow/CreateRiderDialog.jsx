@@ -14,7 +14,6 @@ import { base44 } from "@/api/base44Client";
 import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const WorkOrder = base44.entities.WorkOrder;
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
