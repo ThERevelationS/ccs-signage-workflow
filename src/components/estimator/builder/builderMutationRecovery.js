@@ -3,6 +3,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { createBuilderPartGroupWithRecovery } from "./builderPartGroupPersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -144,21 +145,14 @@ async function applyPendingGroupCreatePlan(pending, builderProductId) {
     const groupKey = String(step?.group_key || step?.data?.group_key || "").trim();
     const data = step?.data && typeof step.data === "object" ? step.data : null;
     if (!groupKey || !data) throw new Error("A stored Part Group create step is invalid. Recovery was stopped before creating anything else.");
-    const existing = byKey.get(groupKey);
-    if (existing) {
-      if (String(existing.builder_product_id || "") !== String(builderProductId || "")) {
-        throw new Error("A planned Part Group key is now owned by a different Product. Reload before continuing.");
-      }
-      if (recoveryPatchDiffers(existing, data)) {
-        throw new Error(`Part Group “${existing.group_name || "Part Group"}” appeared while the Builder mutation was pending with different data. No unrelated group was overwritten.`);
-      }
-      resolvedIds.set(groupKey, existing.id);
-      continue;
-    }
-    const created = await base44.entities.BuilderPartGroup.create(data);
-    if (!created?.id) throw new Error("A Part Group could not be verified after creation while recovering the Builder mutation.");
-    byKey.set(groupKey, created);
-    resolvedIds.set(groupKey, created.id);
+    const { record: resolved } = await createBuilderPartGroupWithRecovery({
+      entity: base44.entities.BuilderPartGroup,
+      data,
+      label: `Builder Part Group “${data.group_name || groupKey}” recovery create`,
+    });
+    if (!resolved?.id) throw new Error("A Part Group could not be verified after creation while recovering the Builder mutation.");
+    byKey.set(groupKey, resolved);
+    resolvedIds.set(groupKey, resolved.id);
   }
   return resolvedIds;
 }
