@@ -22,8 +22,8 @@ function countFromAudit(audit:any, key:string) {
 }
 
 async function latestVerification(base44:any) {
-  const rows = await base44.asServiceRole.entities.FleetMigrationAudit.filter({ mode:'verification' });
-  return (rows || []).sort((a:any,b:any) => new Date(b.created_date || b.updated_date || 0).getTime() - new Date(a.created_date || a.updated_date || 0).getTime())[0] || null;
+  const rows = await base44.asServiceRole.entities.FleetMigrationAudit.filter({ mode:'verification' }, '-created_date', 1);
+  return rows?.[0] || null;
 }
 
 async function getCutoverState(base44:any, createIfMissing = false) {
