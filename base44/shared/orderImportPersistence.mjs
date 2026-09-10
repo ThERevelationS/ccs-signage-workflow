@@ -117,3 +117,90 @@ export async function replaceImportedOrderFieldsIfUnchanged({
 
   throw new OrderImportConflictError(`${label} changed repeatedly while the import was saving it. Reload and retry the import.`);
 }
+
+
+export async function createImportedOrderWithRecovery({
+  entity,
+  data,
+  readMatches,
+  label = "Order import create",
+  maxRateLimitRetries = 3,
+  settleMs = 50,
+} = {}) {
+  const payload = data && typeof data === "object" && !Array.isArray(data) ? data : null;
+  if (!payload || typeof entity?.create !== "function" || typeof readMatches !== "function") {
+    throw new Error(`${label} could not initialize its retry-safe create.`);
+  }
+
+  const readVerifiedMatches = async (phase) => {
+    const rows = await readMatches();
+    if (!Array.isArray(rows)) throw new Error(`${label} ${phase} lookup did not return an Order list.`);
+    const unique = [];
+    const seen = new Set();
+    for (const row of rows) {
+      const id = String(row?.id || "").trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      unique.push(row);
+    }
+    return unique;
+  };
+
+  const retries = Math.max(0, Math.min(5, Number(maxRateLimitRetries) || 0));
+  const pause = Math.max(0, Math.min(500, Number(settleMs) || 0));
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const before = await readVerifiedMatches("preflight");
+    if (before.length > 1) {
+      throw new OrderImportConflictError(`${label} found multiple existing Orders with the same import identity. No new Order was created.`);
+    }
+    if (before.length === 1) {
+      return { record: before[0], status: "reused" };
+    }
+
+    let created = null;
+    let createError = null;
+    try {
+      created = await entity.create(payload);
+    } catch (error) {
+      createError = error;
+    }
+
+    if (created?.id) return { record: created, status: "created" };
+
+    if (pause) await new Promise((resolve) => setTimeout(resolve, pause));
+    let after;
+    try {
+      after = await readVerifiedMatches("recovery");
+    } catch (verificationError) {
+      throw new Error(
+        `${label} create response was unavailable and its recovery lookup also failed. ` +
+        `Do not retry blindly; reload the import state first. ${verificationError?.message || ""}`.trim()
+      );
+    }
+
+    if (after.length === 1) return { record: after[0], status: "recovered" };
+    if (after.length > 1) {
+      throw new OrderImportConflictError(
+        `${label} may have been created more than once during concurrent processing or while the create response was unavailable. ` +
+        `No Orders were deleted; review the matching rows before retrying.`
+      );
+    }
+
+    if (createError?.status === 429 && attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 2000));
+      continue;
+    }
+    if (createError) {
+      const error = new Error(
+        `${createError?.message || `${label} could not be created.`} No matching Order was visible after recovery checks. ` +
+        `Reload the import state before retrying.`
+      );
+      if (createError?.status) error.status = createError.status;
+      throw error;
+    }
+    throw new Error(`${label} could not verify whether the Order was created. Reload the import state before retrying.`);
+  }
+
+  throw new Error(`${label} exhausted its retry-safe create attempts.`);
+}

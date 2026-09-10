@@ -97,6 +97,7 @@ import { useMultiImport } from "@/components/shared/MultiImportContext";
 import { importOrders as importOrdersFn } from "@/functions/importOrders";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
+  createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
   softDeleteOrderFromLoadedSnapshot,
 } from "@/components/orders/orderPersistence";
@@ -346,7 +347,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         ? Math.max(...orders.map(o => o.row_number || 0))
         : 0;
 
-      const newOrder = await Order.create({
+      const newOrderData = {
         customer_name: "",
         request_type: requestTypes[0] || "Other",
         description: "",
@@ -357,9 +358,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         status: "pending",
         row_number: maxRowNumber + 1,
         work_order_id: workOrderFilter || ""
+      };
+      const { record: newOrder } = await createOrderWithRecovery({
+        entity: Order,
+        data: newOrderData,
+        readCandidates: () => loadAllEntityRows({
+          entity: Order,
+          query: {
+            row_number: newOrderData.row_number,
+            work_order_id: newOrderData.work_order_id,
+            deleted: { $ne: true },
+          },
+          sort: "created_date",
+          label: "Order Spreadsheet create recovery",
+        }),
+        label: "Order Spreadsheet new row",
       });
 
-      setOrders((current) => [...current, newOrder]);
+      setOrders((current) => current.some((order) => order.id === newOrder.id) ? current : [...current, newOrder]);
       originalOrdersRef.current[newOrder.id] = { ...newOrder };
 
       try {

@@ -115,7 +115,15 @@ export async function deleteBuilderEntityIfUnchanged({
   try {
     result = await entity.deleteMany(query);
   } catch (error) {
-    const current = await entity.get(id).catch(() => null);
+    let current;
+    try {
+      current = await entity.get(id);
+    } catch (verificationError) {
+      throw new Error(
+        `${label} delete returned an error and its outcome could not be verified. ` +
+        `Do not retry blindly; reload before continuing. ${verificationError?.message || ""}`.trim()
+      );
+    }
     if (!current) return { deleted: true, convergedAfterResponseLoss: true };
     throw error;
   }
@@ -123,7 +131,18 @@ export async function deleteBuilderEntityIfUnchanged({
     throw new Error(`${label} conditional-delete result could not be verified.`);
   }
   if (result.deleted === 1) return { deleted: true };
-  const current = await entity.get(id).catch(() => null);
+  if (result.deleted > 1) {
+    throw new Error(`${label} returned an impossible multi-record delete count.`);
+  }
+  let current;
+  try {
+    current = await entity.get(id);
+  } catch (verificationError) {
+    throw new Error(
+      `${label} deletion matched no current version and the record could not be re-read. ` +
+      `Do not retry blindly; reload before continuing. ${verificationError?.message || ""}`.trim()
+    );
+  }
   if (!current) return { deleted: true, alreadyDeleted: true };
   throw new Error(`${label} changed in another session. It was not deleted.`);
 }

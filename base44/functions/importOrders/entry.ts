@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
-import { OrderImportConflictError, replaceImportedOrderFieldsIfUnchanged } from '../../shared/orderImportPersistence.mjs';
+import { createImportedOrderWithRecovery, OrderImportConflictError, replaceImportedOrderFieldsIfUnchanged } from '../../shared/orderImportPersistence.mjs';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -174,10 +174,31 @@ Deno.serve(async (req) => {
         if (dateOrdered) newOrder.date_ordered = dateOrdered;
         if (dateReceived) newOrder.date_received = dateReceived;
 
-        const created_ = await retryOnRateLimit(() => base44.asServiceRole.entities.Order.create(newOrder));
-        existingMap.set(uniqueKey, created_);
-        importedCount++;
-        created++;
+        const orderEntity = base44.asServiceRole.entities.Order;
+        const createResult = await createImportedOrderWithRecovery({
+          entity: orderEntity,
+          data: newOrder,
+          readMatches: () => loadAllEntityRows({
+            entity: orderEntity,
+            query: {
+              customer_name: customer,
+              description,
+              request_type: requestType || 'Other',
+              deleted: { $ne: true },
+              ...(workOrderFilter ? { work_order_id: workOrderFilter } : {}),
+            },
+            sort: 'row_number',
+            label: `Order import row ${i + 1} create identity`,
+          }),
+          label: `Order import row ${i + 1}`,
+        });
+        existingMap.set(uniqueKey, createResult.record);
+        if (createResult.status === 'reused') {
+          skipped++;
+        } else {
+          importedCount++;
+          created++;
+        }
       }
     } catch (err) {
       console.error(`Error processing row ${i + 1}: ${customer} - ${description}`, err.message);

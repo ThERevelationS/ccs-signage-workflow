@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
+  createOrderWithRecovery,
   replaceOrderFieldsIfUnchanged,
   softDeleteOrderFromLoadedSnapshot,
 } from "@/components/orders/orderPersistence";
@@ -142,7 +143,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
         ? Math.max(...orders.map(o => o.row_number || 0))
         : 0;
 
-      const newOrder = await Order.create({
+      const newOrderData = {
         customer_name: clientName || "",
         work_order_id: workOrderId,
         request_type: requestTypes[0] || "Other",
@@ -153,9 +154,24 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
         vendor: "",
         status: "pending",
         row_number: maxRowNumber + 1
+      };
+      const { record: newOrder } = await createOrderWithRecovery({
+        entity: Order,
+        data: newOrderData,
+        readCandidates: () => loadAllEntityRows({
+          entity: Order,
+          query: {
+            work_order_id: workOrderId,
+            row_number: newOrderData.row_number,
+            deleted: { $ne: true },
+          },
+          sort: "created_date",
+          label: "Work Order purchasing create recovery",
+        }),
+        label: "Work Order purchasing new row",
       });
 
-      setOrders((current) => [...current, newOrder]);
+      setOrders((current) => current.some((order) => order.id === newOrder.id) ? current : [...current, newOrder]);
       originalOrdersRef.current[newOrder.id] = { ...newOrder };
     } catch (error) {
       console.error("Error creating Work Order purchase Order:", error);

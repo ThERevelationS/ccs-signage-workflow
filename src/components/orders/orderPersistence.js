@@ -4,6 +4,109 @@ import {
   replaceEntityFieldsIfUnchanged,
 } from "../estimator/builder/builderEntityPersistence.js";
 
+
+const ORDER_CREATE_SYSTEM_FIELDS = new Set([
+  "id",
+  "created_date",
+  "updated_date",
+  "created_by",
+  "created_by_id",
+]);
+
+function normalizeOrderCreateValue(value) {
+  if (Array.isArray(value)) return value.map(normalizeOrderCreateValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = normalizeOrderCreateValue(value[key]);
+    return out;
+  }, {});
+}
+
+function sameOrderCreateValue(a, b) {
+  const leftEmpty = a === null || a === undefined || a === "";
+  const rightEmpty = b === null || b === undefined || b === "";
+  if (leftEmpty && rightEmpty) return true;
+  return JSON.stringify(normalizeOrderCreateValue(a)) === JSON.stringify(normalizeOrderCreateValue(b));
+}
+
+function sanitizeOrderCreateData(data = {}) {
+  return Object.fromEntries(
+    Object.entries(data || {}).filter(([field]) => !ORDER_CREATE_SYSTEM_FIELDS.has(field))
+  );
+}
+
+function orderCreatePayloadMatches(record, payload) {
+  return Boolean(record?.id) && Object.entries(payload).every(([field, value]) => sameOrderCreateValue(record?.[field], value));
+}
+
+export async function createOrderWithRecovery({
+  entity,
+  data,
+  readCandidates,
+  label = "Order create",
+  settleMs = 50,
+} = {}) {
+  const payload = sanitizeOrderCreateData(data || {});
+  if (
+    !payload.customer_name && payload.customer_name !== "" ||
+    typeof entity?.create !== "function" ||
+    typeof readCandidates !== "function"
+  ) {
+    throw new Error(`${label} could not initialize its retry-safe create.`);
+  }
+
+  const readMatches = async (phase) => {
+    const rows = await readCandidates();
+    if (!Array.isArray(rows)) throw new Error(`${label} ${phase} lookup did not return an Order list.`);
+    return rows.filter((row) => orderCreatePayloadMatches(row, payload));
+  };
+
+  const before = await readMatches("preflight");
+  const beforeIds = new Set(before.map((row) => row.id));
+
+  let created = null;
+  let createError = null;
+  try {
+    created = await entity.create(payload);
+  } catch (error) {
+    createError = error;
+  }
+
+  if (created?.id) {
+    const saved = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : null;
+    return { record: saved?.id ? saved : created, status: "created" };
+  }
+
+  const pause = Math.max(0, Math.min(500, Number(settleMs) || 0));
+  if (pause) await new Promise((resolve) => setTimeout(resolve, pause));
+
+  let after;
+  try {
+    after = await readMatches("recovery");
+  } catch (verificationError) {
+    throw new Error(
+      `${label} create response was unavailable and its recovery lookup also failed. ` +
+      `Do not retry blindly; reload Orders first. ${verificationError?.message || ""}`.trim()
+    );
+  }
+
+  const newMatches = after.filter((row) => !beforeIds.has(row.id));
+  if (newMatches.length === 1) return { record: newMatches[0], status: "recovered" };
+  if (newMatches.length > 1) {
+    throw new Error(
+      `${label} may have been created more than once while the create response was unavailable. ` +
+      `No Orders were deleted; reload and review the new rows before retrying.`
+    );
+  }
+  if (createError) {
+    throw new Error(
+      `${createError?.message || `${label} could not be created.`} No matching new Order was visible after recovery. ` +
+      `Reload Orders before retrying.`
+    );
+  }
+  throw new Error(`${label} could not verify whether it was created. Reload Orders before retrying.`);
+}
+
 function requireLoadedOrderVersion(order, label) {
   const id = String(order?.id || "").trim();
   const updatedDate = String(order?.updated_date || "").trim();
