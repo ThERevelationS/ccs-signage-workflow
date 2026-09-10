@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, Star } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
+import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
@@ -681,7 +682,13 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
       if (source === "channel_letter_equipment") {
         let savedTarget;
         if (isNew) {
-          savedTarget = await ChannelLetterInstallEquipmentEntity.create(payload);
+          const createResult = await createInventoryRecordWithRecovery({
+            entity: ChannelLetterInstallEquipmentEntity,
+            data: payload,
+            nameField: "equipment_name",
+            label: "Channel Letter equipment",
+          });
+          savedTarget = createResult.record;
           wroteAnything = true;
           savedId = savedTarget.id;
         } else {
@@ -710,9 +717,14 @@ function EquipmentForm({ normalized, ownership, allFoundationEquipment, allFound
         }
       } else {
         if (isNew) {
-          const saved = await FoundationInventoryEntity.create(payload);
+          const createResult = await createInventoryRecordWithRecovery({
+            entity: FoundationInventoryEntity,
+            data: payload,
+            nameField: "material_name",
+            label: "Foundation equipment",
+          });
           wroteAnything = true;
-          savedId = saved.id;
+          savedId = createResult.record.id;
         } else {
           await replaceEntityFieldsIfUnchanged({
             entity: FoundationInventoryEntity,
