@@ -11,6 +11,7 @@ import {
   List, Copy, GripVertical, Check
 } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   createChecklistSubItemIfAbsent,
   deleteChecklistSubItemIfUnchanged,
@@ -73,7 +74,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const usersData = await base44.entities.AuthorizedEmail.list();
+        const usersData = await loadAllEntityRows({
+          entity: base44.entities.AuthorizedEmail,
+          sort: null,
+          label: "SIP Template Builder authorized users",
+        });
         setUsers(usersData);
       } catch (error) {
         console.error("Error loading users:", error);
@@ -95,7 +100,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const loadData = async () => {
     try {
       const [subTemplatesData, productTypesSetting, ptTemplates, stItems, dropdownsSetting] = await Promise.all([
-        ChecklistSubItem.list(),
+        loadAllEntityRows({ entity: ChecklistSubItem, sort: null, label: "SIP checklist sub-templates" }),
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypes', label: 'SIP Product Types' }),
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypeTemplates', label: 'SIP Product Type Templates' }),
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'subTemplateItems', label: 'SIP Sub-Template Items' }),
