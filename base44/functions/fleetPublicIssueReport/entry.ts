@@ -86,7 +86,7 @@ async function requestFingerprint(req: Request) {
   const cfIp = String(req.headers.get('cf-connecting-ip') || '').trim();
   const realIp = String(req.headers.get('x-real-ip') || '').trim();
   const xff = String(req.headers.get('x-forwarded-for') || '').split(',').map(v=>v.trim()).filter(Boolean);
-  const networkOrigin = cfIp || realIp || xff.at(-1) || '';
+  const networkOrigin = cfIp || realIp || xff[0] || '';
   if (!networkOrigin) return '';
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(networkOrigin));
   return toHex(digest);
@@ -280,6 +280,9 @@ Deno.serve(async (req) => {
     let winner = canonical(await WorkOrder.filter({public_submission_key:submissionKey})) || created;
     if (winner.id !== created.id) {
       await WorkOrder.delete(created.id).catch(()=>null);
+      if (!samePublicSubmission(winner,retryIdentity)) {
+        return Response.json({error:'This submission token was used concurrently with different Fleet issue details. The losing duplicate was discarded; reload the form before submitting another report.'},{status:409});
+      }
       await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
         event_type:'work_order_created',
         target_id:winner.id,
