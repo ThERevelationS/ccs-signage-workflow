@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const PRIORITIES = new Set(['low','medium','high','critical']);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
@@ -159,7 +160,7 @@ Deno.serve(async (req) => {
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
 
     if (action === 'list') {
-      const equipment = await Equipment.list();
+      const equipment = await loadAllEntityRows({ entity: Equipment, sort: 'name', label: 'Public Fleet equipment options' });
       return Response.json({
         success:true,
         disabled:false,
