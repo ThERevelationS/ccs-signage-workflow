@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -32,6 +32,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import {
+  createFeatureReportWithRecovery,
+  deleteFeatureReportSafely,
+  updateFeatureReportFields,
+} from "@/components/reports/featureReportPersistence";
 import {
   Plus,
   Bug,
@@ -77,6 +82,8 @@ export default function FeatureReports() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterType, setFilterType] = useState("all");
+  const [mutationError, setMutationError] = useState("");
+  const actionRef = useRef(new Set());
 
   const [formData, setFormData] = useState({
     title: "",
@@ -120,65 +127,104 @@ export default function FeatureReports() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title.trim()) return;
-    
+    if (!formData.title.trim() || isSubmitting) return;
+
     setIsSubmitting(true);
-
-    if (editingReport) {
-      await FeatureReport.update(editingReport.id, formData);
-    } else {
-      const newReport = await FeatureReport.create({
-        ...formData,
-        submitted_by_name: currentUser?.full_name || "Unknown",
-        submitted_by_email: currentUser?.email || "unknown"
-      });
-
-      // Send email notification
-      try {
-        const typeLabel = TYPE_CONFIG[formData.type]?.label || formData.type;
-        await sendGmail({
-          to: "brett@Cincisigns.com",
-          subject: `New ${typeLabel}: ${formData.title}`,
-          body: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #7C3AED;">New ${typeLabel} Submitted</h2>
-              <div style="background: #f5f3ff; padding: 20px; border-radius: 12px; margin: 20px 0;">
-                <p><strong>Title:</strong> ${formData.title}</p>
-                <p><strong>Type:</strong> ${typeLabel}</p>
-                <p><strong>Priority:</strong> ${formData.priority}</p>
-                <p><strong>Submitted by:</strong> ${currentUser?.full_name || "Unknown"} (${currentUser?.email || "unknown"})</p>
-                ${formData.description ? `<p><strong>Description:</strong></p><p>${formData.description}</p>` : ''}
-              </div>
-              <p style="color: #666;">View and manage this report in the Sign Shop Workflow app.</p>
-            </div>
-          `
+    setMutationError("");
+    try {
+      if (editingReport) {
+        await updateFeatureReportFields({
+          entity: FeatureReport,
+          record: editingReport,
+          nextFields: formData,
+          label: `Feature report “${editingReport.title || formData.title}”`,
         });
-      } catch (e) {
-        console.error("Failed to send notification email:", e);
-      }
-    }
+      } else {
+        const payload = {
+          ...formData,
+          title: formData.title.trim(),
+          submitted_by_name: currentUser?.full_name || "Unknown",
+          submitted_by_email: currentUser?.email || "unknown"
+        };
+        await createFeatureReportWithRecovery({ entity: FeatureReport, data: payload, label: `Feature report “${payload.title}”` });
 
-    setIsDialogOpen(false);
-    setIsSubmitting(false);
-    loadReports();
+        // Send email only after the report create is confirmed or uniquely recovered.
+        try {
+          const typeLabel = TYPE_CONFIG[formData.type]?.label || formData.type;
+          await sendGmail({
+            to: "brett@Cincisigns.com",
+            subject: `New ${typeLabel}: ${formData.title}`,
+            body: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #7C3AED;">New ${typeLabel} Submitted</h2>
+                <div style="background: #f5f3ff; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                  <p><strong>Title:</strong> ${formData.title}</p>
+                  <p><strong>Type:</strong> ${typeLabel}</p>
+                  <p><strong>Priority:</strong> ${formData.priority}</p>
+                  <p><strong>Submitted by:</strong> ${currentUser?.full_name || "Unknown"} (${currentUser?.email || "unknown"})</p>
+                  ${formData.description ? `<p><strong>Description:</strong></p><p>${formData.description}</p>` : ''}
+                </div>
+                <p style="color: #666;">View and manage this report in the Sign Shop Workflow app.</p>
+              </div>
+            `
+          });
+        } catch (e) {
+          console.error("Failed to send notification email:", e);
+        }
+      }
+
+      setIsDialogOpen(false);
+      await loadReports();
+    } catch (error) {
+      console.error("Feature report save failed:", error);
+      setMutationError(error?.message || "The report could not be saved safely. Reload the latest report before retrying.");
+      if (editingReport?.id) await loadReports();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleStatusChange = async (report, newStatus) => {
-    const updateData = { status: newStatus };
-    if (newStatus === "completed") {
-      updateData.completed_date = new Date().toISOString();
+    const lockKey = `status:${report.id}`;
+    if (actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    setMutationError("");
+    try {
+      const updateData = { status: newStatus };
+      if (newStatus === "completed") updateData.completed_date = new Date().toISOString();
+      const saved = await updateFeatureReportFields({
+        entity: FeatureReport,
+        record: report,
+        nextFields: updateData,
+        label: `Feature report “${report.title || "Report"}” status`,
+      });
+      setReports(prev => prev.map(r => r.id === report.id ? saved : r).filter(r => newStatus !== "completed" || r.id !== report.id));
+    } catch (error) {
+      console.error("Feature report status update failed:", error);
+      setMutationError(error?.message || "The report status could not be updated safely.");
+      await loadReports();
+    } finally {
+      actionRef.current.delete(lockKey);
     }
-    await FeatureReport.update(report.id, updateData);
-    // Update local state instead of full reload to avoid page refresh
-    setReports(prev => prev.map(r => 
-      r.id === report.id ? { ...r, ...updateData } : r
-    ).filter(r => newStatus !== "completed" || r.id !== report.id));
   };
 
-  const handleDelete = async (id) => {
-    await FeatureReport.delete(id);
-    setDeleteConfirm(null);
-    loadReports();
+  const handleDelete = async (report) => {
+    if (!report?.id || actionRef.current.has(`delete:${report.id}`)) return;
+    const lockKey = `delete:${report.id}`;
+    actionRef.current.add(lockKey);
+    setMutationError("");
+    try {
+      await deleteFeatureReportSafely({ entity: FeatureReport, record: report, label: `Feature report “${report.title || "Report"}”` });
+      setDeleteConfirm(null);
+      await loadReports();
+    } catch (error) {
+      console.error("Feature report delete failed:", error);
+      setMutationError(error?.message || "The report could not be deleted safely.");
+      setDeleteConfirm(null);
+      await loadReports();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const filteredReports = filterType === "all" 
@@ -222,6 +268,14 @@ export default function FeatureReports() {
             )}
           </div>
         </div>
+
+        {mutationError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="font-semibold">Report update blocked</div>
+            <div className="mt-1 text-xs">{mutationError}</div>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => { setMutationError(""); loadReports(); }}>Reload latest</Button>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex gap-2 mb-6 flex-wrap">
@@ -470,7 +524,7 @@ export default function FeatureReports() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleDelete(deleteConfirm?.id)}
+                onClick={() => handleDelete(deleteConfirm)
                 className="bg-red-600 text-white"
               >
                 Delete
