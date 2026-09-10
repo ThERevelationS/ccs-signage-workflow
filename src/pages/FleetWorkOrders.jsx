@@ -52,6 +52,10 @@ export default function FleetWorkOrders() {
     }
   }, []);
 
+  const openCreateDialog = useCallback((workOrder = null) => {
+    setDialog({ mode: "create", workOrder, createKey: crypto.randomUUID() });
+  }, []);
+
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -65,9 +69,9 @@ export default function FleetWorkOrders() {
       setExpanded(workOrderId);
     }
     if (params.get("new") === "1") {
-      setDialog({ mode: "create", workOrder: equipmentId ? { equipment_id: equipmentId } : null });
+      openCreateDialog(equipmentId ? { equipment_id: equipmentId } : null);
     }
-  }, []);
+  }, [openCreateDialog]);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const summary = useMemo(() => {
@@ -104,8 +108,9 @@ export default function FleetWorkOrders() {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
     const selectedEquipment = action === "complete" ? equipment.find((row) => row.id === workOrderData.equipment_id) : null;
+    const selectedTask = action === "create" && workOrderData.maintenance_task_id ? tasks.find((row) => row.id === workOrderData.maintenance_task_id) : null;
     const payload = action === "create"
-      ? { action, work_order: workOrderData }
+      ? { action, operation_key: dialog.createKey || "", maintenance_task_expected_updated_date: selectedTask?.updated_date || "", work_order: workOrderData }
       : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus, equipment_expected_updated_date: selectedEquipment?.updated_date || "" } : {}) };
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
