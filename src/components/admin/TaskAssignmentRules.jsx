@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Copy, CheckCircle2, AlertTriangle, Loader2, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -249,7 +250,7 @@ export default function TaskAssignmentRules() {
     try {
       const [record, usersData] = await Promise.all([
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: "Task assignment rules" }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Task assignment authorized users" })
       ]);
       setSettingRecord(record);
       setRules(record?.setting_value?.rules || []);
