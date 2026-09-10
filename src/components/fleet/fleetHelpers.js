@@ -71,6 +71,30 @@ export function isFluidLowStock(fluid) {
   return Number(fluid.quantity) <= minimumInStockUnit + 1e-9;
 }
 
+export function easternTodayText() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export function workOrderAnchorDate(workOrder) {
+  return workOrder?.started_date || String(workOrder?.migration_source_created_date || workOrder?.created_date || "").slice(0, 10);
+}
+
+export function workOrderAgeDays(workOrder, todayText = easternTodayText()) {
+  const anchor = workOrderAnchorDate(workOrder);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor || "")) return null;
+  const diff = Math.floor((Date.parse(`${todayText}T00:00:00Z`) - Date.parse(`${anchor}T00:00:00Z`)) / 86400000);
+  return Number.isFinite(diff) ? Math.max(0, diff) : null;
+}
+
+export function isWorkOrderPastProjected(workOrder, todayText = easternTodayText()) {
+  return !["completed", "cancelled"].includes(workOrder?.status) && !!workOrder?.projected_completion_date && workOrder.projected_completion_date < todayText;
+}
+
 export function formatTime(iso, timeZone) {
   if (!iso) return "";
   try {
