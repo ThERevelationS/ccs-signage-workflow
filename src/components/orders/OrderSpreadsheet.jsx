@@ -245,7 +245,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           sort: "created_date",
           label: "Order Spreadsheet Work Orders",
         }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
       ]);
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
