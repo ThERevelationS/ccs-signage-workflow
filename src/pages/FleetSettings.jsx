@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail } from "lucide-react";
 
 const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
 
@@ -42,6 +43,10 @@ export default function FleetSettings() {
   const [actionBusy, setActionBusy] = useState("");
   const [actionError, setActionError] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
+  const [manualAction, setManualAction] = useState(null);
+  const [manualBusy, setManualBusy] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [manualResult, setManualResult] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -134,6 +139,30 @@ export default function FleetSettings() {
     }
   };
 
+  const runManualAutomation = async () => {
+    if (!manualAction) return;
+    const action = manualAction;
+    setManualBusy(action);
+    setManualError("");
+    setManualResult("");
+    try {
+      const functionName = action === "maintenance" ? "fleetScheduledMaintenanceGeneration" : "fleetScheduledReminders";
+      const { data } = await base44.functions.invoke(functionName, {});
+      if (data?.error) throw new Error(data.error);
+      if (action === "maintenance") {
+        setManualResult(`Maintenance generation finished: ${data?.due ?? 0} due schedule(s), ${data?.created ?? 0} new Fleet work order(s).`);
+      } else {
+        setManualResult(`Reminder check finished for ${data?.day || "today"}: ${data?.queued ?? 0} queued, ${data?.reused ?? 0} already handled.`);
+      }
+      setManualAction(null);
+      await runServerCheck();
+    } catch (error) {
+      setManualError(error?.message || "Manual Fleet automation run failed.");
+    } finally {
+      setManualBusy("");
+    }
+  };
+
   const runCutoverAction = async (action) => {
     setActionBusy(action);
     setActionError("");
@@ -198,6 +227,17 @@ export default function FleetSettings() {
       </div>
       <div className="mt-4 grid sm:grid-cols-2 gap-3"><HealthCount label="Notification queue unresolved" value={queueUnresolved.length} ok={queueUnresolved.length===0}/><HealthCount label="Operation receipts unresolved" value={receiptUnresolved.length} ok={receiptUnresolved.length===0}/></div>
       {(queueUnresolved.length>0 || receiptUnresolved.length>0) && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">Unresolved automation state is intentionally surfaced rather than silently replayed. Ambiguous notification delivery is not automatically resent.</div>}
+      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div><div className="text-sm font-semibold text-gray-900 dark:text-slate-100">Manual automation controls</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Runs the same production-gated server functions used by the schedules. Confirmation is required because these actions can create Fleet work orders or send reminder email.</div></div>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button onClick={()=>{setManualError("");setManualResult("");setManualAction("maintenance");}} disabled={!!manualBusy || !gates.maintenance_generation_enabled} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-indigo-300 text-sm font-medium text-indigo-700 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300"><Play className="w-4 h-4"/>Run generation now</button>
+            <button onClick={()=>{setManualError("");setManualResult("");setManualAction("reminders");}} disabled={!!manualBusy || !gates.scheduled_reminders_enabled || !gates.notifications_enabled} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-indigo-300 text-sm font-medium text-indigo-700 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300"><Mail className="w-4 h-4"/>Run reminders now</button>
+          </div>
+        </div>
+        {manualResult && <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">{manualResult}</div>}
+        {manualError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{manualError}</div>}
+      </div>
     </div>
 
     <IntegrityPanel data={integrity} busy={integrityBusy} onRefresh={runIntegrityAudit} />
@@ -216,6 +256,16 @@ export default function FleetSettings() {
       <div className="md:col-span-2"><Card title="Templates"><Row label="New WO subject" value={settings.email_subject_template}/><Row label="Completed WO subject" value={settings.email_completed_subject_template}/><Row label="Items reminder subject" value={settings.item_order_reminder_subject_template}/><Row label="Open WO reminder subject" value={settings.open_work_order_reminder_subject_template}/></Card></div>
     </div> : <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-8 text-center text-gray-500">No Fleet settings record found.</div>}
     <FleetSettingsEditor open={editorOpen} settings={settings} onClose={()=>setEditorOpen(false)} onSaved={(updated)=>{ if(updated) setSettings(updated); runServerCheck(); }}/>
+    <FleetConfirmDialog
+      open={!!manualAction}
+      title={manualAction==="maintenance"?"Run Fleet maintenance generation now?":"Run Fleet reminders now?"}
+      description={manualAction==="maintenance"?"This runs the same guarded production generator used at 6:45 AM ET. It may create FleetMaintenanceWorkOrder records for schedules due today or earlier. Existing generation keys, receipts, and active-work checks prevent duplicate maintenance work orders.":"This runs the same guarded reminder check used at 7:00 AM ET. If today is a configured reminder day, it may queue and send Fleet reminder emails. Existing per-day/per-recipient keys prevent duplicate digests."}
+      confirmLabel={manualAction==="maintenance"?"Run Generation":"Run Reminders"}
+      tone="warning"
+      busy={!!manualBusy}
+      onCancel={()=>!manualBusy&&setManualAction(null)}
+      onConfirm={runManualAutomation}
+    />
   </div></div>;
 }
 
