@@ -53,7 +53,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_migration_service_only__"
       }
     },
     "read": {
@@ -63,12 +63,12 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_migration_service_only__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_migration_service_only__"
       }
     }
   }
