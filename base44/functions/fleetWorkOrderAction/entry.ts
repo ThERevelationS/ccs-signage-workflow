@@ -606,25 +606,127 @@ Deno.serve(async (req) => {
       if (!String(patch.title || '').trim() || !String(patch.equipment_id || '').trim()) {
         return Response.json({ error: 'Equipment and title are required for a new Fleet work order.' }, { status: 400 });
       }
+
+      const createKey = String(body?.operation_key || '').trim();
+      const workOrderNumber = manualCreateNumber(createKey);
+      if (!createKey || !workOrderNumber) {
+        return Response.json({ error: 'Manual Fleet work-order create identity is missing or invalid. Reopen the New Work Order dialog and try again.' }, { status: 409 });
+      }
+
       const equipment = await Equipment.get(patch.equipment_id);
       if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+
+      let task: any = null;
+      const taskExpectedUpdatedAt = String(body?.maintenance_task_expected_updated_date || '').trim();
       if (patch.maintenance_task_id) {
-        const task = await Task.get(patch.maintenance_task_id);
+        task = await Task.get(patch.maintenance_task_id);
         if (!task) return Response.json({ error: 'Selected Fleet maintenance task was not found.' }, { status: 404 });
         if (task.equipment_id && task.equipment_id !== patch.equipment_id) {
           return Response.json({ error: 'Maintenance task belongs to different equipment.' }, { status: 409 });
         }
+
+        const generationKey = String(task.generation_key || '').trim();
+        if (generationKey) {
+          const generationRows = await Receipt.filter({ operation_key: generationKey, status: { $in: ['started', 'failed'] } });
+          const generationLock = canonical((generationRows || []).filter((row: any) =>
+            row.operation_type === 'scheduled_generation' && row?.result_summary?.task_lock_acquired === true
+          ));
+          if (generationLock) {
+            return Response.json({ error: 'This maintenance schedule is currently reserved by automatic Fleet work-order generation. Refresh after that operation finishes.' }, { status: 409 });
+          }
+        }
+        const rescheduleRows = await Receipt.filter({ operation_type: 'maintenance_reschedule', target_id: task.id, status: { $in: ['started', 'failed'] } });
+        if (canonical(rescheduleRows || [])) {
+          return Response.json({ error: 'This maintenance schedule is currently being advanced by another Fleet work-order completion. Refresh after that operation is reconciled.' }, { status: 409 });
+        }
       }
-      let workOrderNumber = String(body?.work_order_number || patch.work_order_number || '').trim();
-      if (!workOrderNumber) workOrderNumber = `FWO-${new Date().getUTCFullYear()}-${String(Date.now()).slice(-8)}`;
-      const duplicates = await WorkOrder.filter({ work_order_number: workOrderNumber });
-      if (duplicates?.length) return Response.json({ error: 'That Fleet work-order number already exists.' }, { status: 409 });
+
+      const existingByNumber = await WorkOrder.filter({ work_order_number: workOrderNumber });
+      if (existingByNumber?.length > 1) {
+        return Response.json({ error: 'Multiple Fleet work orders share this manual-create identity. No new work order was created; review the duplicates before retrying.' }, { status: 409 });
+      }
+      if (existingByNumber?.[0]) {
+        const reused = existingByNumber[0];
+        if (String(reused.equipment_id || '') !== String(patch.equipment_id || '')
+          || String(reused.maintenance_task_id || '') !== String(patch.maintenance_task_id || '')
+          || String(reused.title || '').trim() !== String(patch.title || '').trim()) {
+          return Response.json({ error: 'This create identity already belongs to a different Fleet work-order request. Reopen the New Work Order dialog before creating another work order.' }, { status: 409 });
+        }
+        if (task && ACTIVE_STATUSES.has(reused.status)) {
+          const activeOrders = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` });
+          const otherActive = activeOrders.find((row: any) => row.id !== reused.id && ACTIVE_STATUSES.has(row.status));
+          if (otherActive) {
+            return Response.json({ error: `This maintenance schedule already has active Fleet work order ${otherActive.work_order_number || otherActive.id}. The retried work order was preserved but the schedule was not changed.` }, { status: 409 });
+          }
+          if (task.status !== 'in_progress') {
+            if (!taskExpectedUpdatedAt || String(task.updated_date || '') !== taskExpectedUpdatedAt) {
+              return Response.json({ error: 'The linked maintenance schedule changed after this work order was first submitted. The work order was preserved, but the schedule was not overwritten; review both records before continuing.' }, { status: 409 });
+            }
+            await updateFleetRecordIfCurrent({
+              entity: Task,
+              id: task.id,
+              expectedUpdatedAt: taskExpectedUpdatedAt,
+              patch: { status: 'in_progress' },
+              label: 'Fleet maintenance schedule manual work-order link',
+            });
+          }
+        }
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          event_type: 'work_order_created', target_id: reused.id, event_token: `created:${workOrderNumber}`
+        }).catch(() => null);
+        return Response.json({ success: true, reused: true, work_order: reused });
+      }
+
+      if (task && ACTIVE_STATUSES.has(patch.status)) {
+        if (!taskExpectedUpdatedAt) {
+          return Response.json({ error: 'Maintenance schedule version is missing. Reload before creating a linked Fleet work order.' }, { status: 409 });
+        }
+        if (String(task.updated_date || '') !== taskExpectedUpdatedAt) {
+          return Response.json({ error: 'The maintenance schedule changed after the New Work Order dialog was opened. Reload before creating the linked work order.' }, { status: 409 });
+        }
+        const activeOrders = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` });
+        const active = activeOrders.find((row: any) => ACTIVE_STATUSES.has(row.status));
+        if (active) {
+          return Response.json({ error: `This maintenance schedule already has active Fleet work order ${active.work_order_number || active.id}.` }, { status: 409 });
+        }
+      }
+
       const created = await WorkOrder.create({ ...patch, work_order_number: workOrderNumber });
-      if (patch.maintenance_task_id && ACTIVE_STATUSES.has(created.status)) {
-        await Task.update(patch.maintenance_task_id, { status: 'in_progress' });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await WorkOrder.filter({ work_order_number: workOrderNumber });
+      if (contenders?.length > 1) {
+        const winner = canonical(contenders) || created;
+        if (winner.id !== created.id) {
+          await WorkOrder.delete(created.id).catch(() => null);
+          if (String(winner.equipment_id || '') !== String(patch.equipment_id || '')
+            || String(winner.maintenance_task_id || '') !== String(patch.maintenance_task_id || '')
+            || String(winner.title || '').trim() !== String(patch.title || '').trim()) {
+            return Response.json({ error: 'Another manual Fleet work-order create won this operation identity with different details. The losing duplicate was discarded; reload before continuing.' }, { status: 409 });
+          }
+          return Response.json({ success: true, reused: true, work_order: winner });
+        }
+        for (const duplicate of contenders) {
+          if (duplicate.id !== winner.id) await WorkOrder.delete(duplicate.id).catch(() => null);
+        }
       }
+
+      if (task && ACTIVE_STATUSES.has(created.status)) {
+        try {
+          await updateFleetRecordIfCurrent({
+            entity: Task,
+            id: task.id,
+            expectedUpdatedAt: taskExpectedUpdatedAt,
+            patch: { status: 'in_progress' },
+            label: 'Fleet maintenance schedule manual work-order link',
+          });
+        } catch (error) {
+          await WorkOrder.delete(created.id).catch(() => null);
+          throw error;
+        }
+      }
+
       await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
-        event_type: 'work_order_created', target_id: created.id, event_token: `created:${created.id}`
+        event_type: 'work_order_created', target_id: created.id, event_token: `created:${workOrderNumber}`
       }).catch(() => null);
       return Response.json({ success: true, work_order: created });
     }
