@@ -38,8 +38,7 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
-export async function createWorkOrderWithRecovery({ data, label = "Work Order" } = {}) {
-  const entity = base44.entities.WorkOrder;
+export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = base44.entities.WorkOrder } = {}) {
   const payload = sanitizeWorkOrderFormPatch(data || {});
   const title = String(payload.title || "").trim();
   if (!title || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
