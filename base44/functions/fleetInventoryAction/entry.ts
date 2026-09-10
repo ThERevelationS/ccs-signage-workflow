@@ -370,7 +370,17 @@ Deno.serve(async (req) => {
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
       const wasLow = inventoryIsLow(itemType, existing);
       const beforeQuantity = itemType === 'part' ? num(existing.quantity_on_hand, NaN) : num(existing.quantity, NaN);
-      const updated = await Entity.update(id, payload);
+      const expectedUpdatedAt = String(body?.expected_updated_date || existing.updated_date || '').trim();
+      if (!expectedUpdatedAt) return Response.json({ error: 'Fleet inventory record version is missing. Reload this item before saving.' }, { status: 409 });
+      const result = await Entity.updateMany(
+        { id, updated_date: expectedUpdatedAt },
+        { $set: payload },
+      );
+      if (!result || typeof result.updated !== 'number') return Response.json({ error: 'Fleet inventory update result could not be verified.' }, { status: 500 });
+      if (result.updated > 1) return Response.json({ error: 'Fleet inventory update returned an impossible multi-record result.' }, { status: 500 });
+      if (result.updated === 0) return Response.json({ error: 'This Fleet inventory item changed after you opened it. Reload the item and reapply your edit; newer stock was not overwritten.' }, { status: 409 });
+      const updated = await Entity.get(id);
+      if (!updated) return Response.json({ error: 'Fleet inventory was updated but could not be re-read.' }, { status: 500 });
       const afterQuantity = itemType === 'part' ? num(updated.quantity_on_hand, NaN) : num(updated.quantity, NaN);
       if (Number.isFinite(beforeQuantity) && Number.isFinite(afterQuantity) && !sameNumber(beforeQuantity, afterQuantity)) {
         await base44.asServiceRole.entities.FleetSystemLog.create({
