@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, ChevronRight, Save, ClipboardList, Loader2 } from "lucide-react";
 import { replaceWorkOrderArrayFieldIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function SipChecklistSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,10 +38,14 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [freshWO, usersData, settings] = await Promise.all([
+      const [freshWO, usersData, dropdownsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIP checklist authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "dropdownConditions",
+          label: "SIP checklist dropdown conditions",
+        })
       ]);
 
       setUsers(usersData);
@@ -86,7 +91,6 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
       setChecklist(reconstructedChecklist);
 
       // Load dropdown conditions
-      const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
     } catch (error) {
       console.error("Error loading data:", error);
