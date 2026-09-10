@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const nowIso = () => new Date().toISOString();
 const today = () => new Intl.DateTimeFormat('en-CA', {
@@ -197,7 +198,13 @@ Deno.serve(async (req) => {
         const active = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         if (active) return Response.json({ error: 'Equipment cannot be changed while this maintenance schedule has an active Fleet work order.' }, { status: 409 });
       }
-      const updated = await Task.update(id, patch);
+      const updated = await updateFleetRecordIfCurrent({
+        entity: Task,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch,
+        label: 'Fleet maintenance schedule',
+      });
       return Response.json({ success: true, task: updated });
     }
 
@@ -209,8 +216,9 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unsupported Fleet maintenance action.' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetMaintenanceAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet maintenance operation failed.' }, { status: 500 });
   }
 });
