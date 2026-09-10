@@ -55,6 +55,12 @@ export async function createSettingRowIfAbsent({
     createError = error;
   }
 
+  // First-time Installation overrides are rare, but two admins can save the
+  // same virtual setting concurrently. Give both create attempts a short settle
+  // window before choosing a canonical row so neither session can immediately
+  // return success while the other's row is still becoming visible.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
   let after;
   try {
     after = await readMatches();
