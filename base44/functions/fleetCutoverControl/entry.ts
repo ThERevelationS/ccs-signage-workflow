@@ -5,7 +5,23 @@ const SOURCE_APP_ID = '68accb163a1b474cdb95ea70';
 const DEST_APP_ID = '68dfcc5e57bbbc35387da97c';
 const CUTOVER_STATE_KEY = 'primary';
 const MAX_REST_SYNC_AGE_MS = 24 * 60 * 60 * 1000;
+const COUNT_PAGE_SIZE = 500;
+const MAX_COUNT_ROWS = 50000;
 const nowIso = () => new Date().toISOString();
+
+async function listAllRows(entity:any, label:string) {
+  const rows:any[] = [];
+  for (let skip = 0; skip < MAX_COUNT_ROWS; skip += COUNT_PAGE_SIZE) {
+    const page = await entity.list('-created_date', COUNT_PAGE_SIZE, skip);
+    rows.push(...(page || []));
+    if (!page || page.length < COUNT_PAGE_SIZE) return rows;
+  }
+  throw new Error(`${label} count exceeded the ${MAX_COUNT_ROWS}-row Fleet health safety limit.`);
+}
+
+const migratedFromFleetMaster = (rows:any[]) => (rows || []).filter((row:any) =>
+  row?.migration_source_app_id === SOURCE_APP_ID && !!row?.migration_source_id
+).length;
 
 function countFromAudit(audit:any, key:string) {
   const n = Number(audit?.destination_counts?.[key]);
