@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -488,11 +489,21 @@ Deno.serve(async (req) => {
           return Response.json({ error: 'Maintenance task belongs to different Fleet equipment.' }, { status: 409 });
         }
       }
-      const updated = await WorkOrder.update(id, patch);
+      const updated = await updateFleetRecordIfCurrent({
+        entity: WorkOrder,
+        id,
+        expectedUpdatedAt: String(body?.expected_updated_date || existing.updated_date || ''),
+        patch,
+        label: 'Fleet work order',
+      });
       return Response.json({ success: true, work_order: updated });
     }
 
     if (action === 'reopen') {
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+        return Response.json({ error: 'This Fleet work order changed after the reopen confirmation was opened. Reload it before reopening.' }, { status: 409 });
+      }
       const completedReceipts = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
       const key = `fleetwo:${id}:reopen:${completedReceipts.length}`;
       const claim = await claimReceipt(Receipt, {
@@ -568,6 +579,10 @@ Deno.serve(async (req) => {
       const appliedCompletions = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
       const completionKey = `fleetwo:${id}:complete:${appliedCompletions.length}`;
       const unresolvedMain = canonical(await Receipt.filter({ operation_key: completionKey, status: { $in: ['started','failed'] } }));
+      const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
+      if (!unresolvedMain && expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+        return Response.json({ error: 'This Fleet work order changed after the completion dialog was opened. Reload it before completing so newer work, notes, or usage are not overwritten.' }, { status: 409 });
+      }
       let equipmentStatus = String(body?.equipment_status || '').trim();
       if (unresolvedMain?.result_summary?.work_order_patch) {
         completionPatch = { ...unresolvedMain.result_summary.work_order_patch };
@@ -713,8 +728,9 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unsupported Fleet work-order action.' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetWorkOrderAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT' || error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet work-order operation failed.' }, { status: 500 });
   }
 });
