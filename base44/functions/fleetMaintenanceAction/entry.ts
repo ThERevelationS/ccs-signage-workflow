@@ -8,8 +8,21 @@ const today = () => new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 }).format(new Date());
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
-const TASK_STATUSES = new Set(['pending', 'in_progress', 'completed', 'overdue']);
+const DUE_TASK_STATUSES = new Set(['pending', 'overdue']);
+const TASK_STATUSES = new Set(['pending', 'in_progress', 'completed']);
 const TASK_TYPES = new Set(['recurring', 'one_off']);
+const PAGE_SIZE = 1000;
+const MAX_TASK_ROWS = 20000;
+
+async function listAllTasks(Task:any) {
+  const out:any[] = [];
+  for (let skip=0; skip<MAX_TASK_ROWS; skip+=PAGE_SIZE) {
+    const rows = await Task.list('-created_date', PAGE_SIZE, skip);
+    out.push(...(rows || []));
+    if (!rows || rows.length < PAGE_SIZE) return out;
+  }
+  throw new Error('Fleet maintenance task scan exceeded its safety row limit.');
+}
 
 const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const at = Date.parse(a?.created_date || a?.started_at || '') || 0;
@@ -87,8 +100,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'generate_due') {
-      const allTasks = await Task.list();
-      const due = allTasks.filter((task: any) => task.status === 'pending' && task.start_date && task.start_date <= today());
+      const allTasks = await listAllTasks(Task);
+      const due = allTasks.filter((task: any) => DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date <= today());
       const report: any[] = [];
 
       for (const task of due) {
@@ -114,7 +127,7 @@ Deno.serve(async (req) => {
           continue;
         }
         const task = await Task.get(item.task_id);
-        if (!task || task.status !== 'pending' || !task.start_date || task.start_date > today()) {
+        if (!task || !DUE_TASK_STATUSES.has(task.status) || !task.start_date || task.start_date > today()) {
           results.push({ ...item, action: 'skip', reason: 'task_changed_after_dry_run' });
           continue;
         }
