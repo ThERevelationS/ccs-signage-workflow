@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
 
     const badTaskEquipment = tasks.filter((task:any)=>!equipmentIds.has(task.equipment_id));
     add('error','maintenance_task_missing_equipment','Maintenance schedules point to missing equipment',badTaskEquipment.map((task:any)=>({id:task.id,title:task.title,equipment_id:task.equipment_id,status:task.status})),'Scheduled maintenance must always point to valid FleetEquipment.');
+    const explicitOverdue = tasks.filter((task:any)=>task.status === 'overdue');
+    add('info','legacy_explicit_overdue_status','Schedules using the legacy explicit overdue status',explicitOverdue.map((task:any)=>({id:task.id,title:task.title,equipment_id:task.equipment_id,start_date:task.start_date})),'Overdue is now derived from due date while pending. Legacy explicit overdue rows remain generation-safe and normalize to pending when edited.');
 
     const badWoTask = workOrders.filter((wo:any)=>wo.maintenance_task_id && !taskById.has(wo.maintenance_task_id));
     add('error','work_order_missing_task','Work orders point to missing maintenance schedules',badWoTask.map((wo:any)=>({id:wo.id,work_order_number:wo.work_order_number,maintenance_task_id:wo.maintenance_task_id})),'A linked maintenance schedule no longer exists.');
