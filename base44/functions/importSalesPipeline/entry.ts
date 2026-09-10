@@ -3,6 +3,7 @@ import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -136,13 +137,65 @@ Deno.serve(async (req) => {
     return titleMatch || null;
   }
 
+  const readImportIdentityMatches = async (clientName, estInvAt, title) => {
+    const entity = base44.asServiceRole.entities.WorkOrder;
+    if (estInvAt) {
+      const [estimateRows, invoiceRows] = await Promise.all([
+        loadAllEntityRows({
+          entity,
+          query: { est_inv_at: estInvAt, is_rider: false, deleted: { $ne: true } },
+          sort: 'created_date',
+          label: `Sales Pipeline ${estInvAt} estimate identity`,
+        }),
+        loadAllEntityRows({
+          entity,
+          query: { corbridge_invoice_number: estInvAt, is_rider: false, deleted: { $ne: true } },
+          sort: 'created_date',
+          label: `Sales Pipeline ${estInvAt} invoice identity`,
+        }),
+      ]);
+      return [...estimateRows, ...invoiceRows];
+    }
+
+    const clientRows = await loadAllEntityRows({
+      entity,
+      query: { client_name: clientName, is_rider: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: `Sales Pipeline ${clientName} identity`,
+    });
+    const key = (clientName || '').toLowerCase().trim();
+    const normTitle = (title || '').toLowerCase().trim();
+    return clientRows.filter((wo) => {
+      if ((wo.client_name || '').toLowerCase().trim() !== key) return false;
+      const woTitle = (wo.title || '').toLowerCase().trim();
+      if (!normTitle || normTitle === key) return !woTitle || woTitle === key;
+      return woTitle === normTitle;
+    });
+  };
+
+  const indexWorkOrder = (wo) => {
+    if (wo?.est_inv_at) byEstInv.set(wo.est_inv_at, wo);
+    if (wo?.corbridge_invoice_number) byEstInv.set(wo.corbridge_invoice_number, wo);
+    if (wo?.client_name) {
+      const key = wo.client_name.toLowerCase().trim();
+      if (!byClientName.has(key)) byClientName.set(key, []);
+      const rows = byClientName.get(key);
+      const existingIndex = rows.findIndex((row) => row.id === wo.id);
+      if (existingIndex >= 0) rows[existingIndex] = wo;
+      else rows.push(wo);
+    }
+  };
+
   let created = 0, updated = 0, failed = 0, conflicts = 0;
   const BATCH_SIZE = 5;
   const BATCH_DELAY_MS = 300;
 
+  // Process each five-row batch in source order instead of creating rows in parallel.
+  // This preserves the import's existing last-row-wins behavior while preventing two
+  // identical rows in the same spreadsheet batch from racing each other into duplicates.
   for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
     const batch = validRows.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(async (woData) => {
+    for (const woData of batch) {
       const { clientName, estInvAt, ...rest } = woData;
       try {
         const existing = findMatchingWorkOrder(clientName, estInvAt, rest.title);
@@ -156,23 +209,32 @@ Deno.serve(async (req) => {
             label: `Sales Pipeline import ${estInvAt || clientName}`,
           });
           Object.assign(existing, saved);
+          indexWorkOrder(existing);
           updated++;
         } else {
-          const newWo = await base44.asServiceRole.entities.WorkOrder.create(rest);
-          if (newWo.est_inv_at) byEstInv.set(newWo.est_inv_at, newWo);
-          if (newWo.client_name) {
-            const key = newWo.client_name.toLowerCase().trim();
-            if (!byClientName.has(key)) byClientName.set(key, []);
-            byClientName.get(key).push(newWo);
-          }
-          created++;
+          const createResult = await createWorkOrderWithRecovery({
+            entity: base44.asServiceRole.entities.WorkOrder,
+            data: rest,
+            readMatches: () => readImportIdentityMatches(clientName, estInvAt, rest.title),
+            label: `Sales Pipeline import ${estInvAt || `${clientName} - ${rest.title}`}`,
+          });
+          const saved = await replaceWorkOrderFieldsIfUnchanged({
+            entity: base44.asServiceRole.entities.WorkOrder,
+            workOrderId: createResult.record.id,
+            expectedFields: expectedWorkOrderFields(createResult.record, rest),
+            nextFields: rest,
+            label: `Sales Pipeline import ${estInvAt || clientName}`,
+          });
+          indexWorkOrder(saved);
+          if (createResult.status === 'reused') updated++;
+          else created++;
         }
       } catch (err) {
         console.error('Row import error:', err.message);
-        if (err?.code === 'WORK_ORDER_FIELD_CONFLICT') conflicts++;
+        if (err?.code === 'WORK_ORDER_FIELD_CONFLICT' || err?.code === 'WORK_ORDER_CREATE_AMBIGUOUS') conflicts++;
         failed++;
       }
-    }));
+    }
     if (i + BATCH_SIZE < validRows.length) {
       await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
     }

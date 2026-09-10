@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
+import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -368,8 +369,26 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
         // === FINAL DEDUP GUARD: direct DB queries before any create ===
         // This catches cases where the in-memory sets missed an already-created record
         // (e.g. due to WorkOrder.filter pagination limits)
+        const readCorebridgeDocMatches = async () => {
+          const [estimateRows, invoiceRows] = await Promise.all([
+            loadAllEntityRows({
+              entity: WorkOrder,
+              query: { est_inv_at: docNumber, deleted: { $ne: true } },
+              sort: 'created_date',
+              label: `CoreBridge ${docNumber} estimate identity`,
+            }),
+            loadAllEntityRows({
+              entity: WorkOrder,
+              query: { corbridge_invoice_number: docNumber, deleted: { $ne: true } },
+              sort: 'created_date',
+              label: `CoreBridge ${docNumber} invoice identity`,
+            }),
+          ]);
+          return [...estimateRows, ...invoiceRows];
+        };
+
         const [dbDocCheck, dbPendingCheck] = await Promise.all([
-          WorkOrder.filter({ est_inv_at: docNumber }),
+          readCorebridgeDocMatches(),
           PendingImport.filter({ doc_number: docNumber })
         ]);
         if ((dbDocCheck?.length ?? 0) > 0) {
@@ -468,11 +487,21 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
             Object.keys(proposedWorkOrder).forEach(k => {
               if (proposedWorkOrder[k] === null || proposedWorkOrder[k] === undefined) delete proposedWorkOrder[k];
             });
-            const created = await WorkOrder.create(proposedWorkOrder);
-            allExistingOrders.push({ ...proposedWorkOrder, id: created.id });
+            const createResult = await createWorkOrderWithRecovery({
+              entity: WorkOrder,
+              data: proposedWorkOrder,
+              readMatches: readCorebridgeDocMatches,
+              label: `CoreBridge ${docNumber} Work Order`,
+            });
+            const created = createResult.record;
+            if (!allExistingOrders.some((wo) => wo.id === created.id)) allExistingOrders.push(created);
             processedDocNumbers.add(docNumber);
             linkedDocNumbers.add(docNumber.toUpperCase());
-            results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage });
+            if (createResult.status === 'reused') {
+              results.push({ action: 'skipped', subject, docNumber, workOrderId: created.id, client: clientName, skipped_reason: 'Work Order was created concurrently during final convergence' });
+            } else {
+              results.push({ action: 'created', subject, docNumber, workOrderId: created.id, client: clientName, stage: proposedWorkOrder.current_stage, create_recovered: createResult.status === 'recovered' });
+            }
           } else {
             // Has potential matches → send to pending review
             const action = candidates[0].match_score >= 50 ? 'pending_merge' : 'pending_approve';
