@@ -151,10 +151,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const loadTaskAssignmentRules = async () => {
     try {
-      const settings = await GlobalSettings.filter({ setting_key: "taskAssignmentRules" });
-      if (settings.length > 0) {
-        setTaskAssignmentRules(settings[0].setting_value?.rules || []);
-      }
+      const setting = await loadSingleGlobalSetting({
+        entity: GlobalSettings,
+        settingKey: "taskAssignmentRules",
+        label: "Sales Pipeline task assignment rules",
+      });
+      setTaskAssignmentRules(setting?.setting_value?.rules || []);
     } catch {}
   };
 
@@ -271,7 +273,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           sort: "created_date",
           label: "Sales Pipeline Work Orders",
         }),
-        AuthorizedEmail.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" })
       ]);
       setWorkOrders(orders.map((order) => ({
         ...order,
