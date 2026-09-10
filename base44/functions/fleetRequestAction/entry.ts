@@ -272,15 +272,12 @@ Deno.serve(async (req) => {
           }).catch(() => null);
           return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
         }
-        if (item && summary.new_item === false) {
-          const currentQty = summary.item_type === 'part' ? num(item.quantity_on_hand) : num(item.quantity);
-          if (summary.inventory_applied === true || sameNumber(currentQty, summary.after_quantity)) {
-            const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
-            await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
-              event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
-            }).catch(() => null);
-            return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
-          }
+        if (item && summary.new_item === false && summary.inventory_applied === true) {
+          const finalized = await finalizeReceive(Request, Receipt, existing, claim.receipt, item.id, body);
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+            event_type: 'request_received', target_id: id, event_token: claim.receipt.operation_key
+          }).catch(() => null);
+          return Response.json({ success: true, reused: true, recovered: true, request: finalized, inventory_item: item });
         }
         return Response.json({ error: 'This receive operation is already in progress and cannot be safely replayed. Inventory was not incremented again; review FleetOperationReceipt.' }, { status: 409 });
       }
@@ -312,9 +309,29 @@ Deno.serve(async (req) => {
         if (inventoryItem) {
           beforeQuantity = num(inventoryItem.quantity_on_hand);
           afterQuantity = beforeQuantity + quantityReceived;
-          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: false, before_quantity: beforeQuantity, after_quantity: afterQuantity } });
-          await Part.update(inventoryItem.id, { quantity_on_hand: afterQuantity });
-          inventoryItem = await Part.get(inventoryItem.id);
+          const summary = { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: false, before_quantity: beforeQuantity, after_quantity: afterQuantity, safe_retry: false };
+          await Receipt.update(claim.receipt.id, { result_summary: summary });
+          try {
+            const quantityResult = await setFleetInventoryQuantityIfUnchanged({
+              entity: Part,
+              itemId: inventoryItem.id,
+              field: 'quantity_on_hand',
+              expectedQuantity: beforeQuantity,
+              nextQuantity: afterQuantity,
+              label: `${inventoryItem.part_name || 'Fleet part'} stock`,
+            });
+            inventoryItem = quantityResult.item || await Part.get(inventoryItem.id);
+            await Receipt.update(claim.receipt.id, { result_summary: { ...summary, inventory_applied: true, safe_retry: false } });
+          } catch (error: any) {
+            const safeRetry = error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+            await Receipt.update(claim.receipt.id, {
+              status: 'failed', failed_at: nowIso(), error_message: error?.message || String(error),
+              result_summary: { ...summary, safe_retry: safeRetry, ...(safeRetry ? { inventory_applied: false } : { inventory_outcome_ambiguous: true }) },
+            }).catch(() => null);
+            return Response.json({ error: safeRetry
+              ? 'Fleet part stock changed while this receipt was being applied. Reload the request and retry; no quantity was overwritten.'
+              : 'Fleet part stock update could not be proven safe. Inventory was not replayed; review FleetOperationReceipt before retrying.' }, { status: 409 });
+          }
         } else {
           const category = String(body?.category || '').trim();
           if (!category) {
@@ -338,7 +355,7 @@ Deno.serve(async (req) => {
           });
           beforeQuantity = 0;
           afterQuantity = quantityReceived;
-          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: true, before_quantity: 0, after_quantity: afterQuantity } });
+          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: true, before_quantity: 0, after_quantity: afterQuantity, inventory_applied: true, safe_retry: false } });
         }
       } else if (existing.item_type === 'fluid') {
         if (existing.inventory_item_id) {
@@ -367,9 +384,29 @@ Deno.serve(async (req) => {
           }
           beforeQuantity = num(inventoryItem.quantity);
           afterQuantity = beforeQuantity + quantityReceived;
-          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: false, before_quantity: beforeQuantity, after_quantity: afterQuantity, unit: inventoryItem.unit || requestedUnit } });
-          await Fluid.update(inventoryItem.id, { quantity: afterQuantity });
-          inventoryItem = await Fluid.get(inventoryItem.id);
+          const summary = { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: false, before_quantity: beforeQuantity, after_quantity: afterQuantity, unit: inventoryItem.unit || requestedUnit, safe_retry: false };
+          await Receipt.update(claim.receipt.id, { result_summary: summary });
+          try {
+            const quantityResult = await setFleetInventoryQuantityIfUnchanged({
+              entity: Fluid,
+              itemId: inventoryItem.id,
+              field: 'quantity',
+              expectedQuantity: beforeQuantity,
+              nextQuantity: afterQuantity,
+              label: `${inventoryItem.fluid_name || 'Fleet fluid'} stock`,
+            });
+            inventoryItem = quantityResult.item || await Fluid.get(inventoryItem.id);
+            await Receipt.update(claim.receipt.id, { result_summary: { ...summary, inventory_applied: true, safe_retry: false } });
+          } catch (error: any) {
+            const safeRetry = error?.code === 'FLEET_INVENTORY_QUANTITY_CONFLICT';
+            await Receipt.update(claim.receipt.id, {
+              status: 'failed', failed_at: nowIso(), error_message: error?.message || String(error),
+              result_summary: { ...summary, safe_retry: safeRetry, ...(safeRetry ? { inventory_applied: false } : { inventory_outcome_ambiguous: true }) },
+            }).catch(() => null);
+            return Response.json({ error: safeRetry
+              ? 'Fleet fluid stock changed while this receipt was being applied. Reload the request and retry; no quantity was overwritten.'
+              : 'Fleet fluid stock update could not be proven safe. Inventory was not replayed; review FleetOperationReceipt before retrying.' }, { status: 409 });
+          }
         } else {
           const fluidType = String(body?.fluid_type || '').trim();
           const unit = String(body?.unit || body?.received_unit || '').trim();
@@ -395,7 +432,7 @@ Deno.serve(async (req) => {
           });
           beforeQuantity = 0;
           afterQuantity = quantityReceived;
-          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: true, before_quantity: 0, after_quantity: afterQuantity, unit } });
+          await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: true, before_quantity: 0, after_quantity: afterQuantity, unit, inventory_applied: true, safe_retry: false } });
         }
       } else {
         await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: 'Unknown request item type.' });
