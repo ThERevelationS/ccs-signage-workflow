@@ -11,6 +11,7 @@ import RacewayTimesCard from "@/components/channelLetterInstall/RacewayTimesCard
 import { HEIGHT_BUCKETS, ENV_KEYS, qualifiedKey, qualifiedNotesKey } from "@/components/channelLetterInstall/installSizeRates";
 import { WALL_MATERIALS } from "@/components/channelLetterInstall/wallMaterials";
 import { createSettingRowIfAbsent, preflightSettingsRows, saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SIZE_DEFS = [
   { key: "extra_small", label: "XS", range: '2"–8"' },
@@ -92,7 +93,10 @@ export default function InstallationSettings() {
     const load = async () => {
       setLoading(true);
       try {
-        const [all, me] = await Promise.all([SettingsEntity.list(), User.me().catch(() => null)]);
+        const [all, me] = await Promise.all([
+          loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Installation Settings catalog" }),
+          User.me().catch(() => null),
+        ]);
         const relevant = (all || []).filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
         const effective = buildEffective(relevant);
         setRows(relevant);
@@ -133,7 +137,7 @@ export default function InstallationSettings() {
         originalValues: original,
         changedRows: existingDirtyRows,
       });
-      const liveBeforeWrite = await SettingsEntity.list();
+      const liveBeforeWrite = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Installation Settings preflight catalog" });
       const appearedNames = missingDirtyNames.filter((name) =>
         (liveBeforeWrite || []).some((row) => row.setting_name === name)
       );
@@ -172,7 +176,7 @@ export default function InstallationSettings() {
         }
         created += 1;
       }
-      const refreshed = await SettingsEntity.list();
+      const refreshed = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Installation Settings post-save catalog" });
       const relevant = (refreshed || []).filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
       const effective = buildEffective(relevant);
       setRows(relevant);
@@ -183,7 +187,7 @@ export default function InstallationSettings() {
     } catch (e) {
       // Always reload after a failed mixed save so a retry starts from the
       // authoritative Settings set even if an earlier write succeeded.
-      const refreshed = await SettingsEntity.list().catch(() => null);
+      const refreshed = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "Installation Settings recovery catalog" }).catch(() => null);
       if (refreshed) {
         const relevant = refreshed.filter((row) => String(row.setting_name || "").startsWith("install_") || String(row.setting_name || "").startsWith("letters_"));
         const effective = buildEffective(relevant);
