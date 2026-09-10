@@ -184,7 +184,7 @@ export default function WorkOrderDetailsDialog({
     try {
       const all = await loadAllEntityRows({
         entity: WorkOrder,
-        query: { completed: false },
+        query: { completed: false, deleted: { $ne: true } },
         sort: "created_date",
         label: "Work Order Details related Work Orders"
       });
@@ -746,7 +746,8 @@ export default function WorkOrderDetailsDialog({
         const attachedRiders = await WorkOrder.filter({
           parent_work_order_id: workOrder.id,
           is_rider: true,
-          completed: false
+          completed: false,
+          deleted: { $ne: true }
         });
         if (attachedRiders.length > 0) {
           alert("Cannot delete: This work order has active riders. Delete riders first.");
