@@ -194,16 +194,26 @@ export default function FleetTracking() {
 
   const handleMarkRead = async (id) => {
     setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x));
-    try { await base44.entities.BouncieNotification.update(id, { is_read: true }); } catch {}
+    try {
+      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_read", id });
+      if (data?.error) throw new Error(data.error);
+    } catch (e) {
+      setError(e?.message || "Unable to mark Bouncie notification read.");
+      loadNotifications();
+    }
   };
 
   const handleClearNotifications = async () => {
     const vin = vehicles.find(v => v.vin === selectedVin)?.vin;
-    const toClear = notifications.filter(n => !vin || n.vehicle_vin === vin);
+    if (!vin) return;
     try {
-      await Promise.all(toClear.map(n => base44.entities.BouncieNotification.update(n.id, { is_read: true })));
+      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin });
+      if (data?.error) throw new Error(data.error);
+      setNotifications(n => n.map(x => x.vehicle_vin === vin ? { ...x, is_read: true } : x));
       loadNotifications();
-    } catch {}
+    } catch (e) {
+      setError(e?.message || "Unable to mark this vehicle's Bouncie notifications read.");
+    }
   };
 
   const selectedVehicle = vehicles.find(v => v.vin === selectedVin);
