@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const WorkOrder = base44.entities.WorkOrder;
@@ -318,16 +319,21 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
         in_pipeline: true
       };
 
-      const rider = await WorkOrder.create(riderData);
-      
-      if (onCreated) {
-        onCreated(rider);
+      const { record: rider } = await createWorkOrderWithRecovery({ data: riderData, label: "Rider Work Order" });
+
+      try {
+        if (onCreated) await onCreated(rider);
+      } catch (callbackError) {
+        console.error("Rider was saved but its post-create callback failed:", callbackError);
+        alert("The rider was saved successfully, but the screen could not finish refreshing. Do not create the rider again; reload to see the saved rider.");
       }
       onClose();
     } catch (error) {
       console.error("Error creating rider:", error);
+      alert(error?.message || "The rider could not be created safely. Reload before retrying.");
+    } finally {
+      setIsCreating(false);
     }
-    setIsCreating(false);
   };
 
   const parseLocalDate = (dateString) => {
