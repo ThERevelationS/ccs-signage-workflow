@@ -233,7 +233,12 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
         }
         break;
       case 'all_admins':
-        const admins = await base44.asServiceRole.entities.AuthorizedEmail.filter({ role: 'admin' });
+        const admins = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.AuthorizedEmail,
+          query: { role: 'admin' },
+          sort: null,
+          label: 'Deadline reminder admin recipients',
+        });
         admins.forEach(a => a.email && recipients.push(a.email));
         break;
       case 'email_group':
