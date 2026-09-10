@@ -11,6 +11,7 @@ import {
   Package,
   Droplets,
   ShoppingCart,
+  History,
   Settings,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const items = [
   { title: "Parts", page: "FleetParts", icon: Package },
   { title: "Fluids", page: "FleetFluids", icon: Droplets },
   { title: "Requests", page: "FleetRequests", icon: ShoppingCart },
+  { title: "History", page: "FleetHistory", icon: History, adminOnly: true },
   { title: "Fleet Settings", page: "FleetSettings", icon: Settings, adminOnly: true },
 ];
 
