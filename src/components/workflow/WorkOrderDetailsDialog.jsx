@@ -78,6 +78,7 @@ import MultiUserSelect from "@/components/shared/MultiUserSelect";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   createWorkOrderArrayItemLocator,
+  createWorkOrderWithRecovery,
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
@@ -1988,10 +1989,15 @@ export default function WorkOrderDetailsDialog({
           isOpen={showDuplicateForm}
           onClose={() => { setShowDuplicateForm(false); setDuplicateData(null); }}
           onSave={async (data) => {
-            await WorkOrder.create(data);
+            await createWorkOrderWithRecovery({ data, label: "Duplicated Work Order" });
             setShowDuplicateForm(false);
             setDuplicateData(null);
-            if (onUpdate) onUpdate();
+            try {
+              if (onUpdate) await onUpdate();
+            } catch (refreshError) {
+              console.error("Duplicated Work Order was saved but refresh failed:", refreshError);
+              alert("The duplicated Work Order was saved successfully, but the screen could not finish refreshing. Do not duplicate it again; reload to see the saved job.");
+            }
           }}
           initialData={duplicateData}
           existingWorkOrders={allWorkOrders}
