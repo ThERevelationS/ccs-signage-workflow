@@ -32,6 +32,8 @@ import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2, Package } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -46,7 +48,6 @@ const TEAM_MEMBERS = [
 ];
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function WorkOrderForm({ 
   isOpen, 
@@ -284,7 +285,11 @@ export default function WorkOrderForm({
 
   const loadUsers = async () => {
     try {
-      const usersList = await base44.entities.User.list();
+      const usersList = await loadAllEntityRows({
+        entity: base44.entities.User,
+        sort: null,
+        label: "Work Order form app users",
+      });
       setUsers(usersList);
     } catch (e) {
       console.error("Error loading users:", e);
@@ -293,9 +298,13 @@ export default function WorkOrderForm({
 
   const loadProductTypes = async () => {
     try {
-      const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
-      if (settings.length > 0) {
-        setProductTypes(settings[0].setting_value?.items || []);
+      const setting = await loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: "productTypes",
+        label: "Work Order product types",
+      });
+      if (setting?.id) {
+        setProductTypes(setting.setting_value?.items || []);
       } else {
         setProductTypes(["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
       }
@@ -306,7 +315,11 @@ export default function WorkOrderForm({
 
   const loadAuthorizedUsers = async () => {
     try {
-      const authUsers = await AuthorizedEmail.list();
+      const authUsers = await loadAllEntityRows({
+        entity: AuthorizedEmail,
+        sort: null,
+        label: "Work Order form authorized users",
+      });
       setAuthorizedUsers(authUsers);
     } catch (e) {
       console.error("Error loading authorized users:", e);
