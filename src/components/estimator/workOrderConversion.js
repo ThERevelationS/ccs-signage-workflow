@@ -62,11 +62,12 @@ export function mergeWorkOrderProducts(existingProducts = [], estimateProducts =
 }
 
 export function selectExistingEstimateWorkOrder(rows = [], linkedWorkOrderId = "") {
+  const activeRows = (rows || []).filter((row) => row?.deleted !== true);
   if (linkedWorkOrderId) {
-    const linked = (rows || []).find((row) => row.id === linkedWorkOrderId);
+    const linked = activeRows.find((row) => row.id === linkedWorkOrderId);
     if (linked) return linked;
   }
-  return (rows || []).slice().sort((a, b) => {
+  return activeRows.slice().sort((a, b) => {
     const aTime = Date.parse(a?.created_date || a?.updated_date || "") || 0;
     const bTime = Date.parse(b?.created_date || b?.updated_date || "") || 0;
     if (aTime !== bTime) return aTime - bTime;
