@@ -294,13 +294,17 @@ Deno.serve(async (req) => {
       }
       if (existing.status !== 'ordered') return Response.json({ error: 'Mark the Fleet request as ordered before receiving it.' }, { status: 409 });
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
-      if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+      const key = `fleetrequest:${id}:receive`;
+      const existingReceiveLock = String(existing.receipt_key || '') === key;
+      if (!expectedUpdatedAt && !existingReceiveLock) {
+        return Response.json({ error: 'Fleet request version is missing. Reload before receiving inventory.' }, { status: 409 });
+      }
+      if (!existingReceiveLock && expectedUpdatedAt !== String(existing.updated_date || '')) {
         return Response.json({ error: 'This Fleet request changed after the Receive dialog was opened. Reload it before applying inventory.' }, { status: 409 });
       }
 
       const quantityReceived = num(body?.quantity_received);
       if (quantityReceived <= 0) return Response.json({ error: 'Quantity received must be greater than zero.' }, { status: 400 });
-      const key = `fleetrequest:${id}:receive`;
       const claim = await claimReceipt(Receipt, {
         operation_key: key,
         operation_type: 'request_receive',
@@ -313,6 +317,7 @@ Deno.serve(async (req) => {
           quantity_received: quantityReceived,
           unit: existing.item_type === 'part' ? 'units' : (body?.unit || body?.received_unit || ''),
           location: body?.location || '',
+          request_expected_updated_date: expectedUpdatedAt || String(existing.updated_date || ''),
         },
       });
       if (claim.applied) {
