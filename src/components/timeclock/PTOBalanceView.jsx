@@ -16,6 +16,7 @@ import {
   Loader2
 } from "lucide-react";
 import { format } from "date-fns";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const UserPTOBalance = base44.entities.UserPTOBalance;
 const PTOPolicy = base44.entities.PTOPolicy;
@@ -46,14 +47,28 @@ export default function PTOBalanceView({ currentUser }) {
     setIsLoading(true);
     try {
       const [balanceData, requests] = await Promise.all([
-        UserPTOBalance.filter({ user_email: currentUser.email }),
-        TimeOffRequest.filter({ 
-          user_email: currentUser.email, 
-          status: { $in: ["pending", "approved"] }
+        loadAllEntityRows({
+          entity: UserPTOBalance,
+          query: { user_email: currentUser.email },
+          sort: null,
+          label: `PTO balance for ${currentUser.email}`,
+        }),
+        loadAllEntityRows({
+          entity: TimeOffRequest,
+          query: {
+            user_email: currentUser.email,
+            status: { $in: ["pending", "approved"] }
+          },
+          sort: null,
+          label: `Upcoming time off for ${currentUser.email}`,
         })
       ]);
+
+      if (balanceData.length > 1) {
+        throw new Error(`Multiple PTO balance records were found for ${currentUser.email}. An administrator must review the duplicates before balances can be shown safely.`);
+      }
       
-      if (balanceData.length > 0) {
+      if (balanceData.length === 1) {
         const userBalance = balanceData[0];
         setBalance(userBalance);
         
