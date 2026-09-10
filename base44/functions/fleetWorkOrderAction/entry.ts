@@ -732,14 +732,14 @@ Deno.serve(async (req) => {
             const equipmentId = String(summary?.work_order_patch?.equipment_id || existing.equipment_id || '').trim();
             const equipmentStatus = String(summary?.equipment_status || '').trim();
             if (equipmentId && equipmentStatus && EQUIPMENT_STATUSES.has(equipmentStatus)) {
-              const equipment = await Equipment.get(equipmentId).catch(() => null);
-              if (equipment && equipment.status !== equipmentStatus) await Equipment.update(equipmentId, { status: equipmentStatus });
+              await applyCompletionEquipmentStatus(base44, Receipt, completionReceipt, equipmentId, equipmentStatus);
             }
+            const refreshedReceipt = await Receipt.get(completionReceipt.id).catch(() => completionReceipt);
             await Receipt.update(completionReceipt.id, {
               status: 'applied',
               applied_at: existing.inventory_applied_at || nowIso(),
               error_message: '',
-              result_summary: { ...summary, reconciled_from_completed_work_order: true, equipment_status_reconciled: !!(equipmentId && equipmentStatus) },
+              result_summary: { ...(refreshedReceipt?.result_summary || summary), reconciled_from_completed_work_order: true },
             });
           }
           await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
