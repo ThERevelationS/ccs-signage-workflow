@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const nowIso = () => new Date().toISOString();
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -9,8 +10,8 @@ async function logWorker(base44: any, level: 'info' | 'warning' | 'error', messa
 }
 
 async function maybeLogIdleHeartbeat(base44: any) {
-  const logs = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'fleetNotificationWorker' }).catch(() => []);
-  const latest = (logs || []).slice().sort((a: any,b: any) => Date.parse(b.created_date || '') - Date.parse(a.created_date || ''))[0];
+  const logs = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'fleetNotificationWorker' }, '-created_date', 1).catch(() => []);
+  const latest = logs?.[0] || null;
   const lastAt = Date.parse(latest?.created_date || '') || 0;
   if (!lastAt || (Date.now() - lastAt) >= 6 * 60 * 60 * 1000) {
     await logWorker(base44, 'info', 'Fleet notification worker heartbeat.', { processed: 0, queue_was_idle: true });
@@ -110,7 +111,12 @@ Deno.serve(async (req) => {
     const Queue = base44.asServiceRole.entities.FleetNotificationQueue;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
     const now = nowIso();
-    const pending = (await Queue.filter({ status: { $in: ['pending','sending'] } }))
+    const pending = (await loadAllEntityRows({
+      entity: Queue,
+      query: { status: { $in: ['pending','sending'] } },
+      sort: 'send_after',
+      label: 'Fleet notification queue pending/sending rows',
+    }))
       .filter((row: any) => !row.send_after || row.send_after <= now)
       .sort((a: any,b: any) => String(a.send_after || '').localeCompare(String(b.send_after || '')))
       .slice(0, 50);
