@@ -667,6 +667,7 @@ Deno.serve(async (req) => {
           inventory_operation_keys: inventoryPlans.map((p) => p.operation_key),
           schedule_operation_key: scheduleKey,
           schedule_preview: schedulePreview,
+          work_order_expected_updated_date: expectedUpdatedAt || String(existing.updated_date || ''),
         },
       });
 
@@ -677,8 +678,140 @@ Deno.serve(async (req) => {
         }).catch(() => null);
         return Response.json({ success: true, reused: true, work_order: current });
       }
+      let activeMainReceipt = mainClaim.receipt;
+      let lockedWorkOrderVersion = '';
+      let lockCurrent = await WorkOrder.get(id);
+      let lockHeld = String(lockCurrent?.completion_receipt_key || '') === completionKey;
+      let lockSummary = activeMainReceipt?.result_summary || {};
+
+      if (lockHeld) {
+        const storedLockedVersion = String(lockSummary.work_order_locked_updated_date || '').trim();
+        if (storedLockedVersion && storedLockedVersion !== String(lockCurrent?.updated_date || '')) {
+          return Response.json({
+            error: 'This Fleet work order changed after its completion lock was acquired. Completion was not replayed; review FleetOperationReceipt before proceeding.',
+            operation_key: completionKey,
+          }, { status: 409 });
+        }
+        lockedWorkOrderVersion = String(lockCurrent?.updated_date || '');
+        if (lockSummary.work_order_lock_acquired !== true || !storedLockedVersion) {
+          await Receipt.update(activeMainReceipt.id, {
+            result_summary: {
+              ...lockSummary,
+              work_order_lock_acquired: true,
+              work_order_locked_updated_date: lockedWorkOrderVersion,
+              work_order_expected_updated_date: lockSummary.work_order_expected_updated_date || expectedUpdatedAt || String(existing.updated_date || ''),
+            },
+          });
+          activeMainReceipt = await Receipt.get(activeMainReceipt.id);
+          lockSummary = activeMainReceipt?.result_summary || lockSummary;
+        }
+      } else if (mainClaim.owner) {
+        const expectedForLock = expectedUpdatedAt || String(existing.updated_date || '');
+        if (!expectedForLock) {
+          await Receipt.delete(activeMainReceipt.id).catch(() => null);
+          return Response.json({ error: 'Fleet work-order version is missing. Reload before completing.' }, { status: 409 });
+        }
+        try {
+          const locked = await updateFleetRecordIfCurrent({
+            entity: WorkOrder,
+            id,
+            expectedUpdatedAt: expectedForLock,
+            patch: { completion_receipt_key: completionKey },
+            label: 'Fleet work order',
+          });
+          lockedWorkOrderVersion = String(locked.updated_date || '');
+          lockHeld = true;
+          await Receipt.update(activeMainReceipt.id, {
+            result_summary: {
+              ...lockSummary,
+              work_order_lock_acquired: true,
+              work_order_locked_updated_date: lockedWorkOrderVersion,
+              work_order_expected_updated_date: expectedForLock,
+            },
+          });
+          activeMainReceipt = await Receipt.get(activeMainReceipt.id);
+          lockSummary = activeMainReceipt?.result_summary || lockSummary;
+        } catch (error: any) {
+          const after = await WorkOrder.get(id).catch(() => null);
+          if (String(after?.completion_receipt_key || '') === completionKey) {
+            lockedWorkOrderVersion = String(after?.updated_date || '');
+            lockHeld = true;
+            await Receipt.update(activeMainReceipt.id, {
+              result_summary: {
+                ...lockSummary,
+                work_order_lock_acquired: true,
+                work_order_locked_updated_date: lockedWorkOrderVersion,
+                work_order_expected_updated_date: expectedForLock,
+                lock_verified_after_error: true,
+              },
+            });
+            activeMainReceipt = await Receipt.get(activeMainReceipt.id);
+            lockSummary = activeMainReceipt?.result_summary || lockSummary;
+          } else {
+            await Receipt.delete(activeMainReceipt.id).catch(() => null);
+            throw error;
+          }
+        }
+      }
+
+      if (!mainClaim.owner && !lockHeld) {
+        const startedAt = Date.parse(activeMainReceipt?.started_at || activeMainReceipt?.created_date || '') || 0;
+        const stale = !!startedAt && (Date.now() - startedAt) >= STALE_CLAIM_MS;
+        if (!stale) {
+          return Response.json({
+            error: 'This completion claim is already in progress but has not acquired the work-order lock yet. It was not replayed.',
+            operation_key: completionKey,
+          }, { status: 409 });
+        }
+        const subKeys = [...(lockSummary.inventory_operation_keys || []), lockSummary.schedule_operation_key].filter(Boolean);
+        for (const key of subKeys) {
+          const rows = await Receipt.filter({ operation_key: key });
+          if (rows?.length) {
+            return Response.json({
+              error: 'This stale completion has side-effect receipts but no work-order lock evidence. It cannot be resumed automatically; review FleetOperationReceipt.',
+              operation_key: completionKey,
+            }, { status: 409 });
+          }
+        }
+        const expectedForLock = String(lockSummary.work_order_expected_updated_date || expectedUpdatedAt || '').trim();
+        lockCurrent = await WorkOrder.get(id);
+        if (!expectedForLock || String(lockCurrent?.updated_date || '') !== expectedForLock) {
+          await Receipt.delete(activeMainReceipt.id).catch(() => null);
+          return Response.json({
+            error: 'The stale completion claim expired before acquiring its lock and the work order has since changed. No side effects were replayed; reload and complete again.',
+          }, { status: 409 });
+        }
+        try {
+          const locked = await updateFleetRecordIfCurrent({
+            entity: WorkOrder,
+            id,
+            expectedUpdatedAt: expectedForLock,
+            patch: { completion_receipt_key: completionKey },
+            label: 'Fleet work order',
+          });
+          lockedWorkOrderVersion = String(locked.updated_date || '');
+          lockHeld = true;
+          await Receipt.update(activeMainReceipt.id, {
+            started_at: nowIso(),
+            error_message: '',
+            result_summary: {
+              ...lockSummary,
+              work_order_lock_acquired: true,
+              work_order_locked_updated_date: lockedWorkOrderVersion,
+              stale_resume: true,
+              stale_resumed_at: nowIso(),
+            },
+          });
+          activeMainReceipt = await Receipt.get(activeMainReceipt.id);
+          lockSummary = activeMainReceipt?.result_summary || lockSummary;
+        } catch (error: any) {
+          await Receipt.delete(activeMainReceipt.id).catch(() => null);
+          throw error;
+        }
+      }
+
       if (!mainClaim.owner) {
-        const finalized = await finalizeStartedCompletion(base44, Receipt, mainClaim.receipt);
+        const finalized = await finalizeStartedCompletion(base44, Receipt, activeMainReceipt);
         if (finalized) {
           await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
             event_type: 'work_order_completed', target_id: id, event_token: finalized?.completion_receipt_key || completionKey
