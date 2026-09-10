@@ -5,6 +5,7 @@ import { ArrowLeft, Calculator, Cpu, DollarSign, Gauge, Save, Wrench } from "luc
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const MATERIALS = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -32,7 +33,7 @@ export default function CNCSettings() {
   useEffect(() => {
     const load = async () => {
       try {
-        const all = await SettingsEntity.list();
+        const all = await loadAllEntityRows({ entity: SettingsEntity, sort: null, label: "CNC Settings catalog" });
         const relevant = (all || []).filter((row) => KEYS.has(row.setting_name));
         const map = Object.fromEntries(relevant.map((row) => [row.setting_name, row.setting_value ?? ""]));
         setRows(relevant);
