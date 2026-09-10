@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';
 
 const GlobalSettings = 'GlobalSettings';
 
@@ -8,24 +9,28 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // For scheduled backups, we won't have user auth, so use service role
+    // Scheduled workflow invocations have no user auth and currently call this
+    // function with an empty payload. Keep that path working, but never let an
+    // unauthenticated request reach interactive admin actions or manual-backup args.
     let isScheduledBackup = false;
     let user = null;
     
     try {
       user = await base44.auth.me();
     } catch (e) {
-      // This might be a scheduled call without user auth
       isScheduledBackup = true;
-    }
-
-    // If not scheduled and not admin, deny
-    if (!isScheduledBackup && (!user || user.role !== 'admin')) {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const body = await req.json().catch(() => ({}));
     const { dataTypes, folderId, action } = body;
+
+    if (isScheduledBackup) {
+      if (body && typeof body === 'object' && Object.keys(body).length > 0) {
+        return Response.json({ error: 'Forbidden: unauthenticated backup calls may only use the scheduled empty-payload path' }, { status: 403 });
+      }
+    } else if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
     
     // Get Google Drive access token
     let accessToken;
@@ -91,21 +96,36 @@ Deno.serve(async (req) => {
     // Action: Save backup settings
     if (action === 'saveSettings') {
       const { settings } = body;
-      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupSettings' });
+      const GlobalSettingsEntity = base44.asServiceRole.entities.GlobalSettings;
+      const saved = await saveGlobalSettingFromSnapshot({
+        entity: GlobalSettingsEntity,
+        settingKey: 'backupSettings',
+        settingValue: settings,
+        expectedId: String(body.expected_record_id || ''),
+        expectedUpdatedDate: String(body.expected_updated_date || ''),
+        label: 'Backup settings',
+      });
       
-      if (existing.length > 0) {
-        await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { setting_value: settings });
-      } else {
-        await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'backupSettings', setting_value: settings });
-      }
-      
-      return Response.json({ success: true, message: 'Backup settings saved' });
+      return Response.json({
+        success: true,
+        message: 'Backup settings saved',
+        record_id: saved.record?.id || '',
+        updated_date: saved.record?.updated_date || '',
+      });
     }
 
     // Action: Get backup settings
     if (action === 'getSettings') {
-      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupSettings' });
-      return Response.json({ settings: existing[0]?.setting_value || null });
+      const existing = await loadGlobalSettingSingleton({
+        entity: base44.asServiceRole.entities.GlobalSettings,
+        settingKey: 'backupSettings',
+        label: 'Backup settings',
+      });
+      return Response.json({
+        settings: existing?.setting_value || null,
+        record_id: existing?.id || '',
+        updated_date: existing?.updated_date || '',
+      });
     }
 
     // Action: Get backup history
@@ -131,9 +151,22 @@ Deno.serve(async (req) => {
     // Cache for folder IDs (key: folderName, value: folderId)
     const folderCache = {};
     
-    // Get saved folder cache from settings to reuse existing folders
-    const backupSettings = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupFolderCache' });
-    const savedFolderCache = backupSettings[0]?.setting_value || {};
+    // Get saved folder cache from settings to reuse existing folders. The cache
+    // is only an optimization: if its singleton is ambiguous, continue the backup
+    // without using or rewriting that ambiguous cache record.
+    let folderCacheSetting = null;
+    let folderCachePersistenceEnabled = true;
+    try {
+      folderCacheSetting = await loadGlobalSettingSingleton({
+        entity: base44.asServiceRole.entities.GlobalSettings,
+        settingKey: 'backupFolderCache',
+        label: 'Backup folder cache',
+      });
+    } catch (cacheLoadError) {
+      folderCachePersistenceEnabled = false;
+      console.warn('Backup folder cache could not be loaded safely; continuing without cached folder ids:', cacheLoadError?.message || cacheLoadError);
+    }
+    const savedFolderCache = folderCacheSetting?.setting_value || {};
     Object.assign(folderCache, savedFolderCache);
     
     // Helper to find existing folder by name (only searches app-created files)
@@ -542,12 +575,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Save the folder cache for future backups
-    const existingFolderCache = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'backupFolderCache' });
-    if (existingFolderCache.length > 0) {
-      await base44.asServiceRole.entities.GlobalSettings.update(existingFolderCache[0].id, { setting_value: folderCache });
-    } else {
-      await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'backupFolderCache', setting_value: folderCache });
+    // Save the folder cache for future backups. It is non-authoritative, so a
+    // concurrent cache change must never make the actual backup fail or overwrite
+    // the newer cache. In that case, keep the backup results and skip cache save.
+    if (folderCachePersistenceEnabled) {
+      try {
+        await saveGlobalSettingFromSnapshot({
+          entity: base44.asServiceRole.entities.GlobalSettings,
+          settingKey: 'backupFolderCache',
+          settingValue: folderCache,
+          expectedId: folderCacheSetting?.id || '',
+          expectedUpdatedDate: folderCacheSetting?.updated_date || '',
+          label: 'Backup folder cache',
+        });
+      } catch (cacheSaveError) {
+        console.warn('Backup folder cache changed concurrently and was not overwritten:', cacheSaveError?.message || cacheSaveError);
+      }
     }
 
     const successCount = results.filter(r => !r.error && !r.skipped).length;
