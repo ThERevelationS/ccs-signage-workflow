@@ -49,7 +49,7 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
   if (!estimateId || !created?.id) return created || null;
   await new Promise((resolve) => setTimeout(resolve, 50));
   const canonical = canonicalEstimateWorkOrder(
-    await base44.entities.WorkOrder.filter({ estimate_id: estimateId })
+    (await base44.entities.WorkOrder.filter({ estimate_id: estimateId })).filter((row) => row?.deleted !== true)
   ) || created;
 
   if (canonical?.id && canonical.id !== created.id) {
@@ -155,7 +155,11 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
  */
 export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "" } = {}) => {
   const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-  const existing = canonicalEstimateWorkOrder(existingRows || []);
+  const activeExistingRows = (existingRows || []).filter((row) => row?.deleted !== true);
+  const existing = canonicalEstimateWorkOrder(activeExistingRows);
+  if (!existing && (existingRows || []).some((row) => row?.deleted === true)) {
+    throw new Error("This estimate's linked Sales Pipeline Work Order is in Trash. Restore that Work Order before synchronizing the estimate again.");
+  }
   const lifecycleDates = resolvePipelineLifecycleDates({
     estimateStatus: estimate.status,
     previousEstimateStatus,
