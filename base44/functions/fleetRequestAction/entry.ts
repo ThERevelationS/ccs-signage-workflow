@@ -282,7 +282,13 @@ Deno.serve(async (req) => {
       const location = String(body?.location || '').trim();
 
       if (existing.item_type === 'part') {
-        if (existing.inventory_item_id) inventoryItem = await Part.get(existing.inventory_item_id).catch(() => null);
+        if (existing.inventory_item_id) {
+          inventoryItem = await Part.get(existing.inventory_item_id).catch(() => null);
+          if (!inventoryItem) {
+            await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: 'Linked Fleet part no longer exists.' });
+            return Response.json({ error: 'This request is linked to a Fleet part that no longer exists. Repair the exact inventory link before receiving; CCS will not silently rematch it.' }, { status: 409 });
+          }
+        }
         if (!inventoryItem && existing.part_number) {
           const matches = await Part.filter({ part_number: existing.part_number });
           if (matches.length > 1) {
@@ -323,7 +329,13 @@ Deno.serve(async (req) => {
           await Receipt.update(claim.receipt.id, { result_summary: { ...(claim.receipt.result_summary || {}), inventory_item_id: inventoryItem.id, new_item: true, before_quantity: 0, after_quantity: afterQuantity } });
         }
       } else if (existing.item_type === 'fluid') {
-        if (existing.inventory_item_id) inventoryItem = await Fluid.get(existing.inventory_item_id).catch(() => null);
+        if (existing.inventory_item_id) {
+          inventoryItem = await Fluid.get(existing.inventory_item_id).catch(() => null);
+          if (!inventoryItem) {
+            await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: 'Linked Fleet fluid no longer exists.' });
+            return Response.json({ error: 'This request is linked to a Fleet fluid that no longer exists. Repair the exact inventory link before receiving; CCS will not silently rematch it.' }, { status: 409 });
+          }
+        }
         if (!inventoryItem) {
           const matches = await Fluid.filter({ fluid_name: existing.item_name, brand: existing.manufacturer_brand || '' });
           if (matches.length > 1) {
