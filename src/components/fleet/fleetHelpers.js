@@ -1,6 +1,6 @@
 import {
-  Fuel, Battery, Wrench, Cpu, Car, Zap, AlertTriangle, Gauge,
-  MapPin, Clock, Activity, Power, Route as RouteIcon
+  Fuel, Battery, Wrench, Cpu, Car, AlertTriangle,
+  MapPin, Activity, Power, Route as RouteIcon
 } from "lucide-react";
 
 export const MAKE_COLORS = {
