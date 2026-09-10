@@ -156,7 +156,8 @@ Deno.serve(async (req) => {
       return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
-    return Response.json({ revision: canonical, reused: false });
+    const settled = await settleRevisionNumber(RevisionService, builderProductId, canonical || created);
+    return Response.json({ revision: settled, reused: false });
   } catch (error) {
     console.error('ensureBuilderPriceRevision error:', error);
     return Response.json({ error: error?.message || 'Builder price revision could not be recorded.' }, { status: 500 });
