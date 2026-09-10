@@ -6,18 +6,10 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
-const easternTodayText = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-const workOrderAnchorDate = (w) => w.started_date || String(w.migration_source_created_date || w.created_date || "").slice(0, 10);
-const workOrderAgeDays = (w, todayText = easternTodayText()) => {
-  const anchor = workOrderAnchorDate(w);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor || "")) return null;
-  const diff = Math.floor((Date.parse(`${todayText}T00:00:00Z`) - Date.parse(`${anchor}T00:00:00Z`)) / 86400000);
-  return Number.isFinite(diff) ? Math.max(0, diff) : null;
-};
-const isProjectedLate = (w, todayText = easternTodayText()) => !["completed", "cancelled"].includes(w.status) && !!w.projected_completion_date && w.projected_completion_date < todayText;
 
 export default function FleetWorkOrders() {
   const [orders, setOrders] = useState([]);
@@ -83,7 +75,7 @@ export default function FleetWorkOrders() {
       highCritical: activeRows.filter(w => ["high", "critical"].includes(w.priority)).length,
       unassigned: activeRows.filter(w => !String(w.assigned_to || "").trim()).length,
       stale30: activeRows.filter(w => (workOrderAgeDays(w, todayText) ?? -1) >= 30).length,
-      pastProjected: activeRows.filter(w => isProjectedLate(w, todayText)).length,
+      pastProjected: activeRows.filter(w => isWorkOrderPastProjected(w, todayText)).length,
       completed: orders.filter(w => w.status === "completed").length,
     };
   }, [orders]);
@@ -97,7 +89,7 @@ export default function FleetWorkOrders() {
       if (status === "cancelled" && w.status !== "cancelled") return false;
       if (priority !== "all" && w.priority !== priority) return false;
       if (attention === "stale30" && (!active || (workOrderAgeDays(w, todayText) ?? -1) < 30)) return false;
-      if (attention === "past_projected" && !isProjectedLate(w, todayText)) return false;
+      if (attention === "past_projected" && !isWorkOrderPastProjected(w, todayText)) return false;
       if (attention === "unassigned" && (!active || String(w.assigned_to || "").trim())) return false;
       if (equipmentFilter !== "all" && w.equipment_id !== equipmentFilter) return false;
       if (!q) return true;
@@ -169,7 +161,7 @@ export default function FleetWorkOrders() {
               const photos = [...(w.before_photos || []), ...(w.problem_photos || []), ...(w.after_photos || [])];
               const isOpen = expanded === w.id;
               const ageDays = !["completed", "cancelled"].includes(w.status) ? workOrderAgeDays(w) : null;
-              const projectedLate = isProjectedLate(w);
+              const projectedLate = isWorkOrderPastProjected(w);
               return <div key={w.id} className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
                 <button onClick={() => setExpanded(isOpen ? null : w.id)} className="w-full text-left p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-slate-800/40">
                   <ClipboardList className="w-5 h-5 mt-0.5 text-indigo-500 shrink-0" />
