@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const ROAD_TRACKING_STATUSES = new Set(['unlinked', 'matched', 'ambiguous', 'manual']);
 const EQUIPMENT_TYPES = new Set(['car','truck','boom_lift','forklift','generator','excavator','bulldozer','crane','compressor','other']);
@@ -104,9 +105,9 @@ Deno.serve(async (req) => {
 
     if (action === 'delete') {
       const [orders, tasks, logs] = await Promise.all([
-        WorkOrder.filter({ equipment_id: id }),
-        Task.filter({ equipment_id: id }),
-        Log.filter({ equipment_id: id }),
+        loadAllEntityRows({ entity: WorkOrder, query: { equipment_id: id }, sort: '-created_date', label: `Fleet work orders for equipment ${id}` }),
+        loadAllEntityRows({ entity: Task, query: { equipment_id: id }, sort: '-created_date', label: `Fleet maintenance schedules for equipment ${id}` }),
+        loadAllEntityRows({ entity: Log, query: { equipment_id: id }, sort: '-created_date', label: `Fleet usage logs for equipment ${id}` }),
       ]);
       if (orders.length || tasks.length || logs.length) {
         return Response.json({ error: 'This equipment has Fleet history/schedules and cannot be deleted. Mark it retired instead.' }, { status: 409 });
