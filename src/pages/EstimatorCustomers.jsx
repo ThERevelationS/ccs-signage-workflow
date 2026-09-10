@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -30,7 +31,7 @@ export default function EstimatorCustomers() {
     const load = async () => {
       const [res, tierRows, user] = await Promise.all([
         loadAllCustomers(),
-        base44.entities.MarkupTier.list("sort_order").catch(() => []),
+        loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
         base44.auth.me().catch(() => null),
       ]);
       setCustomers(res || []);
