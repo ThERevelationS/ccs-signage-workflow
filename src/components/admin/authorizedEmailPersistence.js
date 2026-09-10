@@ -3,6 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const cleanEmail = value => String(value || "").trim().toLowerCase();
 const cleanUsername = value => String(value || "").trim().toLowerCase();
@@ -22,7 +23,7 @@ function sameValue(a, b) {
 
 async function allUsers(entity) {
   if (typeof entity?.list !== "function") throw new Error("Authorized user records could not be read safely.");
-  return entity.list("email", 500);
+  return loadAllEntityRows({ entity, sort: "email", label: "Authorized user persistence catalog" });
 }
 
 export async function assertAuthorizedEmailIdentityAvailable({ entity, recordId = "", email, username } = {}) {
