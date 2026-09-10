@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 /**
  * AI-powered address lookup.
@@ -64,7 +65,11 @@ Deno.serve(async (req) => {
     }
 
     // 2) Pull existing localities so AI can match
-    const localities = await base44.asServiceRole.entities.PermitLocality.list();
+    const localities = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.PermitLocality,
+      sort: 'created_date',
+      label: 'Permit locality matching catalog',
+    });
     const localityOptions = localities.map(l => ({
       id: l.id,
       name: l.name,
