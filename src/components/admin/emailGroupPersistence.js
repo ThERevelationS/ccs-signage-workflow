@@ -3,6 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 function normalizedName(value) {
   return String(value || "").trim().toLowerCase();
@@ -23,7 +24,7 @@ function fieldsMatch(record, desired) {
 
 async function listGroups(entity) {
   if (typeof entity?.list !== "function") throw new Error("Email groups could not be loaded safely.");
-  const rows = await entity.list("-created_date", 500);
+  const rows = await loadAllEntityRows({ entity, sort: "-created_date", label: "Email group persistence catalog" });
   if (!Array.isArray(rows)) throw new Error("Email group lookup did not return a record list.");
   return rows;
 }
@@ -103,7 +104,7 @@ function ruleReferencesGroup(rule, groupId) {
 export async function deleteEmailGroupIfUnused({ entity, automationRuleEntity, group, label = "Email group deletion" } = {}) {
   if (!group?.id) throw new Error(`${label} is no longer loaded. Reload before deleting.`);
   if (typeof automationRuleEntity?.list === "function") {
-    const rules = await automationRuleEntity.list("-updated_date", 500);
+    const rules = await loadAllEntityRows({ entity: automationRuleEntity, sort: "-updated_date", label: "Email group automation-rule references" });
     const references = (rules || []).filter(rule => ruleReferencesGroup(rule, group.id));
     if (references.length > 0) {
       const names = references.slice(0, 3).map(rule => rule.name || rule.id).join(", ");
