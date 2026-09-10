@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { VinylPartTemplate } from "@/entities/all";
 import { BookmarkPlus, Plus, Trash2, Search } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
   const [templates, setTemplates] = useState([]);
@@ -23,7 +24,7 @@ export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
 
   const load = async () => {
     setLoading(true);
-    try { setTemplates(await VinylPartTemplate.list("sort_order")); }
+    try { setTemplates(await loadAllEntityRows({ entity: VinylPartTemplate, sort: "sort_order", label: "Vinyl saved part templates" })); }
     catch (e) { console.error(e); }
     setLoading(false);
   };
