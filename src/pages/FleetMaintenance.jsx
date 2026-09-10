@@ -45,6 +45,7 @@ export default function FleetMaintenance() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const openCreateDialog = useCallback(() => setDialog({ task: null, createKey: crypto.randomUUID() }), []);
   const isAdmin = currentUser?.role === "admin";
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const metrics = useMemo(() => {
@@ -81,7 +82,7 @@ export default function FleetMaintenance() {
     try {
       const body = dialog?.task
         ? { action: "update", id: dialog.task.id, expected_updated_date: dialog.task.updated_date || "", task: payload }
-        : { action: "create", task: payload };
+        : { action: "create", creation_key: dialog?.createKey || "", task: payload };
       const { data } = await base44.functions.invoke("fleetMaintenanceAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
@@ -105,7 +106,7 @@ export default function FleetMaintenance() {
           <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
             <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search maintenance..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
-            {isAdmin && <button onClick={() => setDialog({ task: null })} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Schedule</button>}
+            {isAdmin && <button onClick={openCreateDialog} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Schedule</button>}
           </div>
         </div>
 
