@@ -325,7 +325,158 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, reused: true, request: current });
       }
 
-      if (!claim.owner) {
+      let operationOwner = claim.owner;
+      let lockRequest = await Request.get(id);
+      let lockHeld = String(lockRequest?.receipt_key || '') === key;
+      let lockSummary = claim.receipt?.result_summary || {};
+
+      if (lockHeld) {
+        const storedLockedVersion = String(lockSummary.request_locked_updated_date || '').trim();
+        if (storedLockedVersion && storedLockedVersion !== String(lockRequest?.updated_date || '')) {
+          return Response.json({
+            error: 'This Fleet request changed after its receive lock was acquired. Inventory was not replayed; review FleetOperationReceipt before proceeding.',
+            operation_key: key,
+          }, { status: 409 });
+        }
+        if (lockSummary.request_lock_acquired !== true || !storedLockedVersion) {
+          await Receipt.update(claim.receipt.id, {
+            result_summary: {
+              ...lockSummary,
+              request_lock_acquired: true,
+              request_locked_updated_date: String(lockRequest?.updated_date || ''),
+              request_expected_updated_date: lockSummary.request_expected_updated_date || expectedUpdatedAt || String(existing.updated_date || ''),
+            },
+          });
+          claim.receipt = await Receipt.get(claim.receipt.id);
+          lockSummary = claim.receipt?.result_summary || lockSummary;
+        }
+        if (!operationOwner) {
+          const hasMutationEvidence = lockSummary.inventory_applied === true
+            || lockSummary.new_item === true
+            || !!lockSummary.inventory_item_id
+            || lockSummary.before_quantity != null
+            || lockSummary.after_quantity != null;
+          const startedAt = Date.parse(claim.receipt?.started_at || claim.receipt?.created_date || '') || 0;
+          const stale = !!startedAt && (Date.now() - startedAt) >= RECEIVE_STALE_MS;
+          if (!hasMutationEvidence && stale) {
+            try {
+              const reclaimed = await updateFleetRecordIfCurrent({
+                entity: Receipt,
+                id: claim.receipt.id,
+                expectedUpdatedAt: String(claim.receipt.updated_date || ''),
+                patch: {
+                  status: 'started',
+                  started_at: nowIso(),
+                  error_message: '',
+                  result_summary: { ...lockSummary, stale_resume: true, stale_resumed_at: nowIso() },
+                },
+                label: 'Fleet request receive receipt',
+              });
+              claim.receipt = reclaimed;
+              lockSummary = reclaimed.result_summary || lockSummary;
+              operationOwner = true;
+            } catch (error: any) {
+              if (error?.code !== 'FLEET_RECORD_CONFLICT') throw error;
+            }
+          }
+        }
+      } else if (operationOwner) {
+        const expectedForLock = expectedUpdatedAt || String(lockSummary.request_expected_updated_date || '').trim();
+        if (!expectedForLock) {
+          await Receipt.delete(claim.receipt.id).catch(() => null);
+          return Response.json({ error: 'Fleet request version is missing. Reload before receiving inventory.' }, { status: 409 });
+        }
+        try {
+          const locked = await updateFleetRecordIfCurrent({
+            entity: Request,
+            id,
+            expectedUpdatedAt: expectedForLock,
+            patch: { receipt_key: key },
+            label: 'Fleet request',
+          });
+          lockRequest = locked;
+          lockHeld = true;
+          await Receipt.update(claim.receipt.id, {
+            result_summary: {
+              ...lockSummary,
+              request_lock_acquired: true,
+              request_locked_updated_date: String(locked.updated_date || ''),
+              request_expected_updated_date: expectedForLock,
+            },
+          });
+          claim.receipt = await Receipt.get(claim.receipt.id);
+          lockSummary = claim.receipt?.result_summary || lockSummary;
+        } catch (error: any) {
+          const after = await Request.get(id).catch(() => null);
+          if (String(after?.receipt_key || '') === key) {
+            lockRequest = after;
+            lockHeld = true;
+            await Receipt.update(claim.receipt.id, {
+              result_summary: {
+                ...lockSummary,
+                request_lock_acquired: true,
+                request_locked_updated_date: String(after?.updated_date || ''),
+                request_expected_updated_date: expectedForLock,
+                lock_verified_after_error: true,
+              },
+            });
+            claim.receipt = await Receipt.get(claim.receipt.id);
+            lockSummary = claim.receipt?.result_summary || lockSummary;
+          } else {
+            await Receipt.delete(claim.receipt.id).catch(() => null);
+            throw error;
+          }
+        }
+      } else {
+        const hasMutationEvidence = lockSummary.inventory_applied === true
+          || lockSummary.new_item === true
+          || !!lockSummary.inventory_item_id
+          || lockSummary.before_quantity != null
+          || lockSummary.after_quantity != null;
+        const startedAt = Date.parse(claim.receipt?.started_at || claim.receipt?.created_date || '') || 0;
+        const stale = !!startedAt && (Date.now() - startedAt) >= RECEIVE_STALE_MS;
+        if (hasMutationEvidence) {
+          return Response.json({
+            error: 'This receive receipt has inventory-side evidence but no request lock. It cannot be replayed automatically; review FleetOperationReceipt.',
+            operation_key: key,
+          }, { status: 409 });
+        }
+        if (!stale) {
+          return Response.json({ error: 'This receive operation is already in progress and has not acquired its request lock yet. It was not replayed.' }, { status: 409 });
+        }
+        const expectedForLock = String(lockSummary.request_expected_updated_date || expectedUpdatedAt || '').trim();
+        lockRequest = await Request.get(id);
+        if (!expectedForLock || String(lockRequest?.updated_date || '') !== expectedForLock) {
+          await Receipt.delete(claim.receipt.id).catch(() => null);
+          return Response.json({ error: 'The stale receive claim expired before acquiring its lock and the request has since changed. No inventory was modified; reload and receive again.' }, { status: 409 });
+        }
+        const locked = await updateFleetRecordIfCurrent({
+          entity: Request,
+          id,
+          expectedUpdatedAt: expectedForLock,
+          patch: { receipt_key: key },
+          label: 'Fleet request',
+        });
+        lockRequest = locked;
+        lockHeld = true;
+        await Receipt.update(claim.receipt.id, {
+          started_at: nowIso(),
+          error_message: '',
+          result_summary: {
+            ...lockSummary,
+            request_lock_acquired: true,
+            request_locked_updated_date: String(locked.updated_date || ''),
+            request_expected_updated_date: expectedForLock,
+            stale_resume: true,
+            stale_resumed_at: nowIso(),
+          },
+        });
+        claim.receipt = await Receipt.get(claim.receipt.id);
+        lockSummary = claim.receipt?.result_summary || lockSummary;
+        operationOwner = true;
+      }
+
+      if (!operationOwner) {
         const summary = claim.receipt?.result_summary || {};
         let item: any = null;
         let createdByReceiptEvidence = false;
