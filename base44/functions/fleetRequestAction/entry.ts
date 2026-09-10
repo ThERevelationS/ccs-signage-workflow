@@ -292,7 +292,9 @@ Deno.serve(async (req) => {
           }
         }
         if (!inventoryItem && existing.part_number) {
-          const matches = await Part.filter({ part_number: existing.part_number });
+          const wantedPartNumber = normIdentity(existing.part_number);
+          const matches = (await loadAllEntityRows({ entity: Part, sort: 'part_number', label: 'Fleet parts for request receiving' }))
+            .filter((row: any) => normIdentity(row.part_number) === wantedPartNumber);
           if (matches.length > 1) {
             await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: 'Multiple Fleet parts share this exact part number.' });
             return Response.json({ error: 'Multiple Fleet parts share this exact part number. Choose/merge the inventory item before receiving.' }, { status: 409 });
@@ -339,7 +341,10 @@ Deno.serve(async (req) => {
           }
         }
         if (!inventoryItem) {
-          const matches = await Fluid.filter({ fluid_name: existing.item_name, brand: existing.manufacturer_brand || '' });
+          const wantedName = normIdentity(existing.item_name);
+          const wantedBrand = normIdentity(existing.manufacturer_brand || '');
+          const matches = (await loadAllEntityRows({ entity: Fluid, sort: 'fluid_name', label: 'Fleet fluids for request receiving' }))
+            .filter((row: any) => normIdentity(row.fluid_name) === wantedName && normIdentity(row.brand || '') === wantedBrand);
           if (matches.length > 1) {
             await Receipt.update(claim.receipt.id, { status: 'failed', failed_at: nowIso(), error_message: 'Multiple Fleet fluids share this exact name and brand.' });
             return Response.json({ error: 'Multiple Fleet fluids share this exact name and brand. Resolve the inventory duplicates before receiving.' }, { status: 409 });
