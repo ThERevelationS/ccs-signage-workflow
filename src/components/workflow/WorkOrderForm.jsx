@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { base44 } from "@/api/base44Client";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
-import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2, Package } from "lucide-react";
+import { Upload, X, Plus, Check, Trash2, Eye, EyeOff, Circle, CheckCircle2, FileSearch, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
