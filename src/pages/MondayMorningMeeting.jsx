@@ -11,11 +11,11 @@ import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import MmmChecklistDialog from "@/components/mmm/MmmChecklistDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -51,18 +51,21 @@ export default function MondayMorningMeeting() {
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const [orders, usersData, settings] = await Promise.all([
+      const [orders, usersData, taskDescSetting] = await Promise.all([
         loadAllEntityRows({
           entity: WorkOrder,
           query: { is_rider: false, completed: false, deleted: { $ne: true } },
           sort: "created_date",
           label: "Monday Morning Meeting Work Orders",
         }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Monday Morning Meeting authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "salesTaskDescriptions",
+          label: "Monday Morning Meeting sales task descriptions",
+        })
       ]);
 
-      const taskDescSetting = settings.find(s => s.setting_key === 'salesTaskDescriptions');
       const mmmTaskDescriptions = [];
       const wipDescs = [];
       if (taskDescSetting?.setting_value?.items) {
