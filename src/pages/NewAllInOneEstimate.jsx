@@ -8,6 +8,7 @@ import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } 
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -43,8 +44,8 @@ export default function NewAllInOneEstimate() {
 
   useEffect(() => {
     loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
-    base44.entities.TaxGroup.list().then((r) => setTaxGroups(r || []));
-    base44.entities.User.list().then((r) => setUsers(r || []));
+    loadAllEntityRows({ entity: base44.entities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || []));
+    loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || []));
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
 
