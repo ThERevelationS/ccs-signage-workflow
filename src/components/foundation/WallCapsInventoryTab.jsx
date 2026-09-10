@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, Edit, Square } from 'lucide-react';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
+import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
 
 const PROFILES = [
   { value: 'flat', label: 'Flat' },
@@ -143,7 +144,12 @@ export default function WallCapsInventoryTab({ allItems, FoundationInventoryEnti
           label: `Wall cap “${form.material_name || 'Item'}”`,
         });
       } else {
-        await FoundationInventoryEntity.create(form);
+        await createInventoryRecordWithRecovery({
+          entity: FoundationInventoryEntity,
+          data: form,
+          nameField: 'material_name',
+          label: `Wall cap “${form.material_name || 'Item'}”`,
+        });
       }
       setShowForm(false); setEditItem(null);
       await loadItems();
