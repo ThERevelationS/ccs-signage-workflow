@@ -187,12 +187,26 @@ Deno.serve(async (req) => {
 
     // A retry after a lost create response can find the estimator-created row by
     // receipt before attempting another create.
-    let keyedRows = await CustomerService.filter({ estimator_creation_key: creationKey });
-    const keyedMismatches = (keyedRows || []).filter((row: any) => norm(row?.company_name) !== normalizedName);
-    if (keyedMismatches.length) {
-      return Response.json({ error: 'A Customer creation receipt is already associated with a different company name. No Customer was changed.' }, { status: 409 });
-    }
-    const keyedExisting = canonicalRow(keyedRows || []);
+    const readKeyedRows = async () => {
+      const rows = await CustomerService.filter({ estimator_creation_key: creationKey });
+      if (!Array.isArray(rows)) {
+        throw Object.assign(new Error('Estimator Customer creation receipt lookup did not return a verifiable record list.'), { statusCode: 409 });
+      }
+      return rows;
+    };
+    const validateKeyedRows = (rows: any[] = [], { allowMultiple = false } = {}) => {
+      const mismatches = rows.filter((row: any) => norm(row?.company_name) !== normalizedName);
+      if (mismatches.length) {
+        throw Object.assign(new Error('A Customer creation receipt is already associated with a different company name. No Customer was changed.'), { statusCode: 409 });
+      }
+      if (!allowMultiple && rows.length > 1) {
+        throw Object.assign(new Error('Multiple Customers already share this estimator creation receipt. No uncertain Customer was deleted; review the duplicate Customers before retrying.'), { statusCode: 409 });
+      }
+      return canonicalRow(rows);
+    };
+
+    let keyedRows = await readKeyedRows();
+    const keyedExisting = validateKeyedRows(keyedRows);
     if (keyedExisting?.id) {
       const customer = updateExisting && Object.keys(fields).length
         ? await updateCustomerFieldsIfUnchanged(CustomerUser, keyedExisting, fields, 'Estimator Customer synchronization')
@@ -200,20 +214,45 @@ Deno.serve(async (req) => {
       return Response.json({ customer, reused: true });
     }
 
-    const created = await CustomerUser.create({
+    const createPayload = {
       company_name: companyName,
       customer_status: 'prospect',
       estimator_creation_key: creationKey,
       ...fields,
-    });
+    };
+    let created: any = null;
+    let createError: any = null;
+    try {
+      created = await CustomerUser.create(createPayload);
+    } catch (error) {
+      createError = error;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    keyedRows = await CustomerService.filter({ estimator_creation_key: creationKey });
-    const mismatchedAfterCreate = (keyedRows || []).filter((row: any) => norm(row?.company_name) !== normalizedName);
-    if (mismatchedAfterCreate.length) {
-      return Response.json({ error: 'Customer creation could not safely converge because the creation receipt matched a different company name.' }, { status: 409 });
+    try {
+      keyedRows = await readKeyedRows();
+    } catch (verificationError) {
+      if (!created?.id) {
+        throw Object.assign(new Error(
+          `Estimator Customer create response was unavailable and its recovery lookup also failed. Do not retry blindly; reload Customers first. ${verificationError?.message || ''}`.trim()
+        ), { statusCode: 409 });
+      }
+      throw verificationError;
     }
-    const canonical = canonicalRow(keyedRows || []) || created;
+
+    if (!created?.id) {
+      const recovered = validateKeyedRows(keyedRows);
+      if (recovered?.id) {
+        return Response.json({ customer: recovered, reused: true, recovered_after_create_error: true });
+      }
+      throw createError || new Error('Estimator Customer could not be created or verified.');
+    }
+
+    const canonical = validateKeyedRows(keyedRows, { allowMultiple: true }) || created;
+
+    if (keyedRows.length > 1 && canonical?.id === created.id) {
+      return Response.json({ error: 'A concurrent Customer was created with the same estimator creation receipt after this request became canonical. The canonical Customer was preserved and no uncertain concurrent row was deleted; review the duplicate Customers before continuing.' }, { status: 409 });
+    }
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
       // Delete only the row created by this request, only when it is still an
