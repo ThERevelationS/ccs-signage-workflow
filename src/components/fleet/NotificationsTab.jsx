@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { notificationIcon, notificationIconColor, formatDateTimeShort } from "./fleetHelpers";
 import { ExternalLink, Pin, Settings as SettingsIcon } from "lucide-react";
 
