@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundationFieldSchema";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
@@ -20,7 +21,7 @@ export default function FoundationCatalog() {
     setLoading(true);
     setLoadError("");
     try {
-      const res = await base44.entities.FoundationInventory.list("-created_date", 500);
+      const res = await loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "-created_date", label: "Foundation Catalog inventory" });
       setRows(res || []);
     } catch (error) {
       console.error("Foundation catalog load failed:", error);
