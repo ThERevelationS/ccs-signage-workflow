@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Save, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
-import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createQuoteDefaultsSingletonWithRecovery } from "@/components/estimator/quoteDefaultsPersistence";
 
 const DISPLAY_OPTIONS = [
   ["hide_section_prices", "Bundle Product pricing"],
@@ -74,36 +75,38 @@ export default function QuoteSettings() {
       }
 
       const payload = { config_name: "default", ...quoteDefaultsPayload(form) };
-      let saved = record?.id
-        ? await replaceEntityFieldsIfUnchanged({
-            entity: base44.entities.QuoteDefaults,
-            id: record.id,
-            expectedUpdatedAt: current?.updated_date || record.updated_date || "",
-            expectedFields: expectedEntityFields(current || record, payload),
-            nextFields: payload,
-            guardFields: { config_name: "default" },
-            label: "Quote Defaults",
-          })
-        : await base44.entities.QuoteDefaults.create(payload);
-
-      if (!record?.id && saved?.id) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        const canonical = await loadQuoteDefaults();
-        if (canonical?.id && canonical.id !== saved.id) {
-          await deleteEntityIfUnchanged({
-            entity: base44.entities.QuoteDefaults,
-            record: saved,
-            guardFields: { config_name: "default" },
-            label: "Duplicate Quote Defaults record",
-          });
-          saved = canonical;
-        }
+      let saved;
+      let createStatus = "";
+      if (record?.id) {
+        saved = await replaceEntityFieldsIfUnchanged({
+          entity: base44.entities.QuoteDefaults,
+          id: record.id,
+          expectedUpdatedAt: current?.updated_date || record.updated_date || "",
+          expectedFields: expectedEntityFields(current || record, payload),
+          nextFields: payload,
+          guardFields: { config_name: "default" },
+          label: "Quote Defaults",
+        });
+      } else {
+        const createResult = await createQuoteDefaultsSingletonWithRecovery({
+          entity: base44.entities.QuoteDefaults,
+          data: payload,
+          label: "Quote Defaults",
+        });
+        saved = createResult.record;
+        createStatus = createResult.status;
       }
 
       const refreshed = saved?.updated_date ? saved : await loadQuoteDefaults();
       setRecord(refreshed || saved || null);
       setForm(quoteDefaultsForm(refreshed || saved || payload));
-      setMessage("Quote Defaults saved. New estimates will copy these settings; existing estimates are unchanged.");
+      if (createStatus === "existing" || createStatus === "concurrent_existing_won") {
+        setMessage("Quote Defaults were created in another session while this page was open. The existing company defaults were loaded instead of overwriting them; review the values before saving again.");
+      } else if (createStatus === "recovered") {
+        setMessage("Quote Defaults saved and recovered after the create response was unavailable. New estimates will copy these settings; existing estimates are unchanged.");
+      } else {
+        setMessage("Quote Defaults saved. New estimates will copy these settings; existing estimates are unchanged.");
+      }
     } catch (err) {
       setError(err?.message || "Quote Defaults could not be saved.");
     } finally {
