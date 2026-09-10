@@ -17,6 +17,7 @@ import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteS
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
 import { deleteInventoryRecordIfUnchanged } from "@/components/masterInventory/inventoryPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
@@ -54,7 +55,11 @@ export default function MasterInventory() {
     setIsLoading(true);
     setInventoryLoadError("");
     try {
-      const items = await activeSource.entity.list();
+      const items = await loadAllEntityRows({
+        entity: activeSource.entity,
+        sort: null,
+        label: `${activeSource.label} Master Inventory`,
+      });
       setItemsBySource((prev) => ({ ...prev, [activeKey]: items }));
     } catch (err) {
       console.error("Failed to load inventory:", err);
