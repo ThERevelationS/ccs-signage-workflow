@@ -170,7 +170,11 @@ export default function WorkOrderDetailsDialog({
   }, [isOpen, workOrder]);
 
   const loadUsers = async () => {
-    const users = await AuthorizedEmail.list();
+    const users = await loadAllEntityRows({
+      entity: AuthorizedEmail,
+      sort: null,
+      label: "Work Order Details authorized users",
+    });
     setAllUsers(users);
   };
 
