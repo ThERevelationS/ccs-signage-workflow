@@ -39,6 +39,74 @@ const CUSTOMER_REFERENCE_ENTITIES = [
 
 const norm = (value: unknown) => String(value || '').trim().toLowerCase();
 
+const normalize = (value: any): any => {
+  if (Array.isArray(value)) return value.map(normalize);
+  if (value && typeof value === 'object') {
+    return Object.keys(value).sort().reduce((result: any, key) => {
+      if (value[key] !== undefined) result[key] = normalize(value[key]);
+      return result;
+    }, {});
+  }
+  return value;
+};
+
+const sameValue = (a: unknown, b: unknown) => {
+  if (a !== null && a !== undefined && a !== '' && b !== null && b !== undefined && b !== '') {
+    if (Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+      return Math.abs(Number(a) - Number(b)) <= 0.000001;
+    }
+  }
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
+};
+
+async function updateCustomerFieldsIfUnchanged(CustomerUser: any, loaded: any, fields: Record<string, unknown>, label: string) {
+  const fieldNames = Object.keys(fields || {});
+  if (!loaded?.id || !fieldNames.length) return loaded;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await CustomerUser.get(loaded.id).catch(() => null);
+    if (!current?.id) {
+      throw Object.assign(new Error(`${label} could not verify the Customer before saving.`), { statusCode: 409 });
+    }
+
+    if (fieldNames.every((field) => sameValue(current[field], fields[field]))) return current;
+
+    for (const field of fieldNames) {
+      if (!sameValue(current[field], loaded[field]) && !sameValue(current[field], fields[field])) {
+        throw Object.assign(new Error(`${label} changed in another session (${field}). Reload before saving. No Customer fields were overwritten.`), { statusCode: 409 });
+      }
+    }
+
+    const version = String(current.updated_date || '').trim();
+    if (!version) {
+      throw Object.assign(new Error(`${label} is missing Customer version metadata. Reload before saving.`), { statusCode: 409 });
+    }
+
+    let result;
+    try {
+      result = await CustomerUser.updateMany(
+        { id: loaded.id, updated_date: version },
+        { $set: fields },
+      );
+    } catch (error) {
+      const afterError = await CustomerUser.get(loaded.id).catch(() => null);
+      if (afterError && fieldNames.every((field) => sameValue(afterError[field], fields[field]))) return afterError;
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error(`${label} conditional update result could not be verified.`);
+    }
+    if (result.updated === 1) {
+      const saved = await CustomerUser.get(loaded.id).catch(() => null);
+      if (!saved?.id) throw new Error(`${label} was saved but could not be re-read.`);
+      return saved;
+    }
+  }
+
+  throw Object.assign(new Error(`${label} changed repeatedly while saving. Reload and try again.`), { statusCode: 409 });
+}
+
 const canonicalRow = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const aTime = Date.parse(a?.created_date || a?.updated_date || '') || 0;
   const bTime = Date.parse(b?.created_date || b?.updated_date || '') || 0;
@@ -111,8 +179,10 @@ Deno.serve(async (req) => {
     // apply the same estimator fields the old client path would have written.
     const historical = await findHistoricalMatch(CustomerService, normalizedName);
     if (historical?.id) {
-      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(historical.id, fields);
-      return Response.json({ customer: updateExisting ? { ...historical, ...fields } : historical, reused: true, historical_match: true });
+      const customer = updateExisting && Object.keys(fields).length
+        ? await updateCustomerFieldsIfUnchanged(CustomerUser, historical, fields, 'Historical Customer synchronization')
+        : historical;
+      return Response.json({ customer, reused: true, historical_match: true });
     }
 
     // A retry after a lost create response can find the estimator-created row by
@@ -124,8 +194,10 @@ Deno.serve(async (req) => {
     }
     const keyedExisting = canonicalRow(keyedRows || []);
     if (keyedExisting?.id) {
-      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(keyedExisting.id, fields);
-      return Response.json({ customer: updateExisting ? { ...keyedExisting, ...fields } : keyedExisting, reused: true });
+      const customer = updateExisting && Object.keys(fields).length
+        ? await updateCustomerFieldsIfUnchanged(CustomerUser, keyedExisting, fields, 'Estimator Customer synchronization')
+        : keyedExisting;
+      return Response.json({ customer, reused: true });
     }
 
     const created = await CustomerUser.create({
@@ -151,9 +223,11 @@ Deno.serve(async (req) => {
         return Response.json({ error: `A simultaneous Customer duplicate was detected, but the losing row is already referenced by ${referencedBy}. No Customer was deleted.` }, { status: 409 });
       }
       await CustomerService.delete(created.id);
-      if (updateExisting && Object.keys(fields).length) await CustomerUser.update(canonical.id, fields);
+      const customer = updateExisting && Object.keys(fields).length
+        ? await updateCustomerFieldsIfUnchanged(CustomerUser, canonical, fields, 'Canonical Customer synchronization')
+        : canonical;
       return Response.json({
-        customer: updateExisting ? { ...canonical, ...fields } : canonical,
+        customer,
         reused: true,
         concurrent_duplicate_discarded: true,
       });
@@ -162,6 +236,7 @@ Deno.serve(async (req) => {
     return Response.json({ customer: canonical, reused: false });
   } catch (error) {
     console.error('ensureEstimateCustomer error:', error);
-    return Response.json({ error: error?.message || 'Customer could not be created safely.' }, { status: 500 });
+    const status = Number(error?.statusCode || 500);
+    return Response.json({ error: error?.message || 'Customer could not be created safely.' }, { status });
   }
 });
