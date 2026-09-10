@@ -548,17 +548,59 @@ function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
 }
 
 async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
-  const matches = await base44.entities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
-  if (!Array.isArray(matches)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
-  if (matches.length > 1) throw new Error("More than one Builder Product is linked to the pending Quick Product line. Recovery stopped before creating anything else.");
-  if (matches.length === 1) {
-    const existing = matches[0];
+  const readMatches = async () => {
+    const rows = await base44.entities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+    if (!Array.isArray(rows)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
+    return rows;
+  };
+  const verifySingle = (rows) => {
+    if (rows.length > 1) throw new Error("More than one Builder Product is linked to the pending Quick Product line. Recovery stopped before creating anything else.");
+    if (rows.length === 0) return null;
+    const existing = rows[0];
     if (recoveryPatchDiffers(existing, quickBuilderOwnershipPatch(blueprint, estimateId, lineId))) {
       throw new Error("The pending Quick Product line is now linked to a different Builder Product state. No unrelated Product was overwritten.");
     }
     return existing;
+  };
+
+  const existing = verifySingle(await readMatches());
+  if (existing) return existing;
+
+  let created = null;
+  let createError = null;
+  try {
+    created = await base44.entities.BuilderProduct.create(blueprint.builderCreateData);
+  } catch (error) {
+    createError = error;
   }
-  return base44.entities.BuilderProduct.create(blueprint.builderCreateData);
+
+  // One create attempt only. Re-read the deterministic Estimate-line identity so
+  // a durable create with a lost response is recovered in this same operation and
+  // simultaneous duplicate Builders are detected before source/Part creation.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  let after;
+  try {
+    after = await readMatches();
+  } catch (verificationError) {
+    if (created?.id) return created;
+    throw new Error(
+      `Quick Product Builder create response was unavailable and its recovery lookup also failed. ` +
+      `Do not retry blindly; reload the Estimate first. ${verificationError?.message || ""}`.trim()
+    );
+  }
+
+  const recovered = verifySingle(after);
+  if (recovered) {
+    if (created?.id && recovered.id !== created.id) {
+      throw new Error("Quick Product Builder returned a create receipt, but a different Product owns the pending Estimate-line identity. No Product was deleted; reload before continuing.");
+    }
+    return recovered;
+  }
+  if (created?.id) return created;
+  if (createError) {
+    throw new Error(`${createError?.message || "Quick Product Builder could not be created."} No matching Builder Product was visible after recovery. Reload the Estimate before retrying.`);
+  }
+  throw new Error("Quick Product Builder could not verify whether it was created. Reload the Estimate before retrying.");
 }
 
 function sourceCoreDiffers(source, expected) {
