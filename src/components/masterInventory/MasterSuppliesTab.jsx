@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, Edit, Plus, Wrench } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
 
 const ChannelLetterInstallInventoryEntity = base44.entities.ChannelLetterInstallInventory;
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
@@ -328,7 +329,12 @@ function SupplyForm({ row, onCancel, onSaved }) {
     const entity = source === "channel_letter" ? ChannelLetterInstallInventoryEntity : FoundationInventoryEntity;
     try {
       if (isNew) {
-        await entity.create(form);
+        await createInventoryRecordWithRecovery({
+          entity,
+          data: form,
+          nameField,
+          label: "Supply item",
+        });
       } else {
         const live = await entity.get(row.id);
         if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
