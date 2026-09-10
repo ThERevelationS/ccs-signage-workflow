@@ -3339,14 +3339,32 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
   };
 }
 
+function assertUniqueBuilderPartKeys(parts, builderProductId, label = "Builder Parts") {
+  if (!Array.isArray(parts)) throw new Error(`${label} could not be verified while recovering a Builder mutation.`);
+  const seen = new Map();
+  for (const part of parts) {
+    if (String(part?.builder_product_id || "") !== String(builderProductId || "")) {
+      throw new Error(`${label} contains a Part owned by a different Builder Product. Recovery stopped before continuing.`);
+    }
+    const key = String(part?.part_key || "").trim();
+    if (!key) continue;
+    if (seen.has(key)) {
+      throw new Error(`${label} contains multiple Parts with key “${key}” for the same Builder Product. Recovery stopped without choosing between duplicate Parts.`);
+    }
+    seen.set(key, part.id || "");
+  }
+  return true;
+}
+
 export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan, { partsOverride = undefined } = {}) {
   const parts = partsOverride !== undefined
     ? partsOverride
     : await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
-  if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while recovering a Builder mutation.");
+  assertUniqueBuilderPartKeys(parts, builderProductId);
   const byId = new Map(parts.map((part) => [part.id, part]));
   const byKey = new Map(parts.map((part) => [part.part_key, part]));
   let writesPerformed = 0;
+  let createdAny = false;
 
   for (const step of plan?.part_updates || []) {
     if (step.operation === "create") {
@@ -3366,7 +3384,10 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
         data,
         label: `Builder Part “${data.part_name || data.part_key || "Part"}” recovery create`,
       });
-      if (status !== "existing") writesPerformed += 1;
+      if (status !== "existing") {
+        writesPerformed += 1;
+        createdAny = true;
+      }
       if (created?.id) byId.set(created.id, created);
       if (created?.part_key) byKey.set(created.part_key, created);
       continue;
@@ -3393,6 +3414,16 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
       label: `Builder Part “${part.part_name || "Part"}” recovery update`,
     });
     writesPerformed += 1;
+  }
+
+  if (createdAny) {
+    const verifiedParts = await loadAllEntityRows({
+      entity: base44.entities.BuilderPart,
+      query: { builder_product_id: builderProductId },
+      sort: "sort_order",
+      label: "Builder Parts post-create verification",
+    });
+    assertUniqueBuilderPartKeys(verifiedParts, builderProductId, "Builder Parts post-create verification");
   }
 
   return { writesPerformed };
