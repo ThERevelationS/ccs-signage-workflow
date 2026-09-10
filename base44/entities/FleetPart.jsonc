@@ -83,7 +83,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_server_only__"
       }
     },
     "read": {
@@ -102,12 +102,12 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_server_only__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__fleet_server_only__"
       }
     }
   }
