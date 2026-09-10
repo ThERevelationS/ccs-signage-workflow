@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const SUPPORTED_RULES = new Set(['speed', 'fuel_level']);
 const normalizeVin = (value: unknown) => String(value || '').trim().toUpperCase();
@@ -75,6 +76,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Save both supported CCS Fleet rules together.' }, { status: 400 });
     }
 
+    const expectedVersions = new Map((body.rules || []).map((rule: any) => [String(rule?.rule_key || ''), String(rule?.expected_updated_date || '').trim()]));
+    for (const rule of cleaned) {
+      const existing = (vehicleRows || []).find((row: any) => row.rule_key === rule.rule_key) || null;
+      const expected = expectedVersions.get(rule.rule_key) || '';
+      if (existing && (!expected || expected !== String(existing.updated_date || ''))) {
+        return Response.json({ error: `${rule.rule_key} alert settings changed after this editor was opened. Reload before saving.` }, { status: 409 });
+      }
+      if (!existing && expected) {
+        return Response.json({ error: `${rule.rule_key} alert settings no longer match the loaded record. Reload before saving.` }, { status: 409 });
+      }
+    }
+
     const saved: any[] = [];
     for (const rule of cleaned) {
       const existing = (vehicleRows || []).find((row: any) => row.rule_key === rule.rule_key) || null;
@@ -85,15 +98,39 @@ Deno.serve(async (req) => {
         enabled: rule.enabled,
         notes: 'Managed from CCS Fleet Tracking alert settings.',
       };
-      // Disabled rules may omit a threshold. Do not write null into an optional numeric field;
-      // an existing threshold can remain dormant and becomes relevant only if the rule is enabled again.
       if (rule.threshold != null) patch.threshold = rule.threshold;
-      saved.push(existing ? await Settings.update(existing.id, patch) : await Settings.create(patch));
+      if (existing) {
+        saved.push(await updateFleetRecordIfCurrent({
+          entity: Settings,
+          id: existing.id,
+          expectedUpdatedAt: expectedVersions.get(rule.rule_key) || '',
+          patch,
+          label: `Fleet ${rule.rule_key} alert setting`,
+        }));
+      } else {
+        const created = await Settings.create(patch);
+        await new Promise((resolve) => setTimeout(resolve, 75));
+        const contenders = (await Settings.filter({ scope: 'vehicle', vehicle_vin: vin, rule_key: rule.rule_key })) || [];
+        if (contenders.length > 1) {
+          const winner = contenders.slice().sort((a: any, b: any) => {
+            const at = Date.parse(a?.created_date || '') || 0;
+            const bt = Date.parse(b?.created_date || '') || 0;
+            if (at !== bt) return at - bt;
+            return String(a?.id || '').localeCompare(String(b?.id || ''));
+          })[0];
+          if (winner?.id !== created.id) {
+            await Settings.delete(created.id).catch(() => null);
+            return Response.json({ error: `${rule.rule_key} alert settings were created concurrently by another admin. The duplicate from this save was discarded; reload before editing.` }, { status: 409 });
+          }
+        }
+        saved.push(created);
+      }
     }
 
     return Response.json({ success: true, vehicle_vin: vin, rules: saved });
-  } catch (error) {
+  } catch (error: any) {
     console.error('fleetAlertSettingsAction error:', error);
+    if (error?.code === 'FLEET_RECORD_CONFLICT') return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: error?.message || 'Fleet alert settings could not be saved.' }, { status: 500 });
   }
 });
