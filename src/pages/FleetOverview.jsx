@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
+import { easternTodayText, isFluidLowStock, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   Truck,
@@ -93,16 +93,18 @@ export default function FleetOverview() {
       .sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9) || String(a.work_order_number || "").localeCompare(String(b.work_order_number || "")));
     const highPriorityOrders = activeOrders.filter(w => ["critical", "high"].includes(w.priority));
     const unassignedOrders = activeOrders.filter(w => !String(w.assigned_to || "").trim());
+    const todayText = easternTodayText();
+    const staleOrders = activeOrders.filter(w => (workOrderAgeDays(w, todayText) ?? -1) >= 30);
+    const pastProjectedOrders = activeOrders.filter(w => isWorkOrderPastProjected(w, todayText));
     const lowParts = data.parts.filter(p => p.enable_low_stock_alerts !== false && Number(p.quantity_on_hand ?? 0) <= Number(p.minimum_stock ?? 0));
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
     horizon.setDate(horizon.getDate() + 14);
-    const pendingTasks = data.tasks.filter(t => t.status === "pending" && t.start_date);
-    const overdueTasks = pendingTasks.filter(t => new Date(`${t.start_date}T12:00:00`) < today);
+    const pendingTasks = data.tasks.filter(t => ["pending", "overdue"].includes(t.status) && t.start_date);
+    const overdueTasks = pendingTasks.filter(t => t.status === "overdue" || new Date(`${t.start_date}T12:00:00`) < today);
     const upcomingTasks = pendingTasks.filter(t => {
       const due = new Date(`${t.start_date}T12:00:00`);
       return due >= today && due <= horizon;
@@ -111,6 +113,8 @@ export default function FleetOverview() {
       activeOrders,
       highPriorityOrders,
       unassignedOrders,
+      staleOrders,
+      pastProjectedOrders,
       lowParts,
       lowFluids,
       lowStock: lowParts.length + lowFluids.length,
@@ -202,7 +206,9 @@ export default function FleetOverview() {
                   <div className="flex items-center justify-between gap-2 mb-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Needs Attention</h2><AlertTriangle className="w-5 h-5 text-amber-500" /></div>
                   <div className="space-y-2">
                     <AttentionRow icon={AlertTriangle} label="High / critical work orders" value={metrics.highPriorityOrders.length} page="FleetWorkOrders" />
-                    <AttentionRow icon={UserRoundX} label="Unassigned active work" value={metrics.unassignedOrders.length} page="FleetWorkOrders" />
+                    <AttentionRow icon={UserRoundX} label="Unassigned active work" value={metrics.unassignedOrders.length} page="FleetWorkOrders" query="attention=unassigned" />
+                    <AttentionRow icon={Clock3} label="Stale active work (30+ days)" value={metrics.staleOrders.length} page="FleetWorkOrders" query="attention=stale30" />
+                    <AttentionRow icon={AlertTriangle} label="Past projected completion" value={metrics.pastProjectedOrders.length} page="FleetWorkOrders" query="attention=past_projected" />
                     <AttentionRow icon={Package} label="Low-stock items" value={metrics.lowStock} page="FleetParts" />
                     <AttentionRow icon={Clock3} label="Maintenance due in 14 days" value={metrics.upcomingTasks.length} page="FleetMaintenance" />
                   </div>
@@ -249,9 +255,10 @@ function QuickLink({ icon: Icon, title, text, page, rawPage = false }) {
   );
 }
 
-function AttentionRow({ icon: Icon, label, value, page }) {
+function AttentionRow({ icon: Icon, label, value, page, query = "" }) {
+  const to = query ? `${createPageUrl(page)}?${query}` : createPageUrl(page);
   return (
-    <Link to={createPageUrl(page)} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
+    <Link to={to} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
       <span className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300"><Icon className="w-4 h-4 text-gray-400" />{label}</span>
       <span className={`text-sm font-bold ${value > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}>{value}</span>
     </Link>
