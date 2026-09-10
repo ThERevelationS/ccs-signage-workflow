@@ -46,37 +46,40 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
     if (!collisions.length) return current;
 
     const winner = [current, ...collisions].slice().sort(revisionOrder)[0];
-    if (winner?.id !== current.id || attempt === 4) {
-      const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
-      const version = String(current?.updated_date || '').trim();
-      if (!version) {
-        throw new Error('Lifecycle revision version metadata is incomplete; concurrent-safe renumbering was blocked.');
-      }
-
-      let result;
-      try {
-        result = await RevisionService.updateMany(
-          { id: current.id, estimate_id: estimateId, updated_date: version },
-          { $set: { revision_number: nextNumber } },
-        );
-      } catch (error) {
-        const afterError = await RevisionService.get(current.id).catch(() => null);
-        if (afterError?.id && num(afterError.revision_number) === nextNumber) {
-          current = afterError;
-          continue;
-        }
-        throw error;
-      }
-
-      if (!result || typeof result.updated !== 'number') {
-        throw new Error('Lifecycle revision conditional renumber result could not be verified.');
-      }
-      if (result.updated !== 1) continue;
-
-      const updated = await RevisionService.get(current.id).catch(() => null);
-      if (!updated?.id) throw new Error('Lifecycle revision was renumbered but could not be re-read.');
-      current = updated;
+    if (winner?.id === current.id) {
+      if (attempt < 4) continue;
+      throw new Error('A later concurrent lifecycle revision still shares this revision number. The earlier canonical row was not renumbered; reload the Estimate revision history before retrying.');
     }
+
+    const nextNumber = Math.max(0, ...rows.map((row) => num(row?.revision_number))) + 1;
+    const version = String(current?.updated_date || '').trim();
+    if (!version) {
+      throw new Error('Lifecycle revision version metadata is incomplete; concurrent-safe renumbering was blocked.');
+    }
+
+    let result;
+    try {
+      result = await RevisionService.updateMany(
+        { id: current.id, estimate_id: estimateId, updated_date: version },
+        { $set: { revision_number: nextNumber } },
+      );
+    } catch (error) {
+      const afterError = await RevisionService.get(current.id).catch(() => null);
+      if (afterError?.id && num(afterError.revision_number) === nextNumber) {
+        current = afterError;
+        continue;
+      }
+      throw error;
+    }
+
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error('Lifecycle revision conditional renumber result could not be verified.');
+    }
+    if (result.updated !== 1) continue;
+
+    const updated = await RevisionService.get(current.id).catch(() => null);
+    if (!updated?.id) throw new Error('Lifecycle revision was renumbered but could not be re-read.');
+    current = updated;
   }
 
   const finalRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
