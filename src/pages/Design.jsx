@@ -6,7 +6,7 @@ import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 
 export default function Design() {
@@ -120,11 +120,19 @@ export default function Design() {
         const maxPriority = workOrders.length > 0 ?
         Math.max(...workOrders.map((wo) => wo.priority || 0)) :
         -1;
-        const created = await WorkOrder.create({ ...formData, priority: maxPriority + 1 });
-        if (riderConfig) {
-          await ActivityActions.riderCreated(created, riderConfig.parentWorkOrder.title);
-        } else {
-          await ActivityActions.workOrderCreated(created);
+        const { record: created } = await createWorkOrderWithRecovery({
+          data: { ...formData, priority: maxPriority + 1 },
+          label: riderConfig ? "Design rider Work Order" : "Design Work Order",
+        });
+        try {
+          if (riderConfig) {
+            await ActivityActions.riderCreated(created, riderConfig.parentWorkOrder.title);
+          } else {
+            await ActivityActions.workOrderCreated(created);
+          }
+        } catch (activityError) {
+          console.error("Work Order was saved but its activity notification failed:", activityError);
+          alert("The Work Order was saved successfully, but its activity notification could not be completed. Do not create the Work Order again; reload to see the saved job.");
         }
       }
       setEditingWorkOrder(null);
