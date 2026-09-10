@@ -56,7 +56,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
     setIsLoading(true);
     try {
       const [usersData, workOrdersData] = await Promise.all([
-        AuthorizedEmail.list(),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Add Task authorized users" }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
