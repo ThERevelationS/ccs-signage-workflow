@@ -351,7 +351,11 @@ Deno.serve(async (req) => {
     // Backup each selected data type - each gets its own folder
     if (typesToBackup.includes('users')) {
       try {
-        const users = await base44.asServiceRole.entities.AuthorizedEmail.list();
+        const users = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.AuthorizedEmail,
+          sort: 'created_date',
+          label: 'Authorized users backup archive',
+        });
         const sanitizedUsers = users.map(u => ({
           id: u.id,
           email: u.email,
@@ -371,7 +375,11 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('timeclock')) {
       try {
-        const timeEntries = await base44.asServiceRole.entities.TimeEntry.list();
+        const timeEntries = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.TimeEntry,
+          sort: 'created_date',
+          label: 'Time Clock backup archive',
+        });
         const formattedEntries = timeEntries.map(e => ({
           ...e,
           job_allocations: JSON.stringify(e.job_allocations || [])
@@ -447,7 +455,11 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('timeoff')) {
       try {
-        const timeOffRequests = await base44.asServiceRole.entities.TimeOffRequest.list();
+        const timeOffRequests = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.TimeOffRequest,
+          sort: 'created_date',
+          label: 'Time Off backup archive',
+        });
         const result = await uploadToGoogleDrive(timeOffRequests, 'TimeOffRequests_Backup', 'SignShop Time Off Backup');
         results.push({ type: 'timeoff', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
@@ -457,7 +469,11 @@ Deno.serve(async (req) => {
     
     if (typesToBackup.includes('pto')) {
       try {
-        const ptoBalances = await base44.asServiceRole.entities.UserPTOBalance.list();
+        const ptoBalances = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.UserPTOBalance,
+          sort: 'created_date',
+          label: 'PTO balances backup archive',
+        });
         const formattedPTO = ptoBalances.map(p => ({
           ...p,
           balances: JSON.stringify(p.balances || [])
