@@ -164,6 +164,9 @@ export async function replaceWorkOrderFieldsIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Work Order before saving.`);
+    if (current.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
 
     const alreadyDesired = fieldNames.every((fieldName) => sameValue(current[fieldName], desired[fieldName]));
     if (alreadyDesired) return current;
@@ -178,7 +181,7 @@ export async function replaceWorkOrderFieldsIfUnchanged({
     const expectedUpdatedAt = String(current.updated_date || "").trim();
     if (!expectedUpdatedAt) throw new Error(`${label} is missing its current Work Order version. Reload before saving.`);
     const result = await entity.updateMany(
-      { id, updated_date: expectedUpdatedAt },
+      { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
       { $set: desired },
     );
     if (!result || typeof result.updated !== "number") {
@@ -252,6 +255,9 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Work Order before saving.`);
+    if (current.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
     const currentArray = current[fieldName] == null ? [] : current[fieldName];
     if (!Array.isArray(currentArray)) {
       throw new Error(`${label} data is not an array. No change was made.`);
@@ -264,7 +270,7 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
     const expectedUpdatedAt = String(current.updated_date || "").trim();
     if (!expectedUpdatedAt) throw new Error(`${label} is missing its current Work Order version. Reload before saving.`);
     const result = await entity.updateMany(
-      { id, updated_date: expectedUpdatedAt },
+      { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
       { $set: { [fieldName]: desired } },
     );
     if (!result || typeof result.updated !== "number") {
@@ -294,6 +300,9 @@ export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, la
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not be verified before updating ${fieldName}.`);
+    if (current.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
     const expectedUpdatedAt = String(current.updated_date || "").trim();
     if (!expectedUpdatedAt) throw new Error(`${label} is missing its loaded version. Reload it before saving.`);
 
@@ -310,7 +319,7 @@ export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, la
     let result;
     try {
       result = await entity.updateMany(
-        { id, updated_date: expectedUpdatedAt },
+        { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
         { $set: { [fieldName]: nextArray } },
       );
     } catch (error) {
@@ -440,11 +449,14 @@ export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, l
   let result;
   try {
     result = await entity.updateMany(
-      { id, updated_date: expectedUpdatedAt },
+      { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
       { $set: patch },
     );
   } catch (error) {
     const current = await entity.get(id).catch(() => null);
+    if (current?.deleted === true) {
+      throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+    }
     if (current && workOrderPatchMatches(current, patch)) return current;
     throw error;
   }
@@ -460,6 +472,9 @@ export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, l
   }
 
   const current = await entity.get(id).catch(() => null);
+  if (current?.deleted === true) {
+    throw new Error(`${label} was blocked because this Work Order is in Trash. Restore it before making changes.`);
+  }
   if (current && workOrderPatchMatches(current, patch)) {
     return current;
   }
