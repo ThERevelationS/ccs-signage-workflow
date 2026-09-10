@@ -627,7 +627,7 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
         expectedUpdatedAt: latestBuilder.updated_date || "",
         expectedFields: expectedBuilderEntityFields(latestBuilder, sourceLinkPatch),
         nextFields: sourceLinkPatch,
-        guardFields: { estimate_id: estimate.id },
+        guardFields: { estimate_id: latestBuilder.estimate_id },
         label: "Quick Product Builder source link",
       });
     }

@@ -205,7 +205,7 @@ export default function MyWorkflow() {
         return updatedNotes;
       } catch (error) {
         console.error("General task update blocked:", error);
-        await loadWorkOrders();
+        await loadMyWorkOrders();
         alert(error?.message || "This general task changed in another session. The latest task was reloaded.");
         return null;
       }
