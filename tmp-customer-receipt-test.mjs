@@ -13,7 +13,6 @@ async function loadHandler(path) {
 
 const loadNew = await loadHandler('./base44/functions/ensureNewCustomer/entry.ts');
 const loadEstimate = await loadHandler('./base44/functions/ensureEstimateCustomer/entry.ts');
-
 const req = (body) => new Request('http://test.local', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body) });
 const clone = (x) => JSON.parse(JSON.stringify(x));
 let seq = 0;
@@ -22,7 +21,7 @@ function makeStore({ mode = 'normal', initial = [], listRows = null, reference =
   const rows = initial.map(clone); let filters = 0; let deletes = 0; let createCalls = 0;
   const filter = async (query) => {
     filters++;
-    if (mode === 'recovery_read_fails' && createCalls > 0 && filters > 1) throw new Error('receipt read down');
+    if ((mode === 'post_read_fail' || mode === 'lost_read_fail') && createCalls > 0) throw new Error('receipt read down');
     if (query?.id) return rows.filter(r => r.id === query.id);
     const key = query?.creation_request_key ?? query?.estimator_creation_key;
     if (key !== undefined) return rows.filter(r => (r.creation_request_key ?? r.estimator_creation_key) === key);
@@ -32,7 +31,7 @@ function makeStore({ mode = 'normal', initial = [], listRows = null, reference =
   const create = async (payload) => {
     createCalls++;
     if (mode === 'hard_fail') throw new Error('create failed');
-    if (mode === 'lost_one') { const r=row(payload); rows.push(r); throw new Error('lost response'); }
+    if (mode === 'lost_one' || mode === 'lost_read_fail') { const r=row(payload); rows.push(r); throw new Error('lost response'); }
     if (mode === 'lost_two') { rows.push(row(payload),row(payload)); throw new Error('lost response'); }
     if (mode === 'concurrent_current_wins') { const own=row(payload); rows.push(own,row(payload)); return clone(own); }
     if (mode === 'concurrent_current_loses') { const other=row(payload); rows.push(other); const own=row(payload); rows.push(own); return clone(own); }
@@ -63,7 +62,8 @@ for (const [name, loader, body, keyField] of [
   total++; pass+=await test(`${name} receipt retry reuses one`, async()=>{const key=name==='NewCustomer'?'k1':'estimate_customer:acme';const payload=name==='NewCustomer'?{company_name:'Acme',pricing_tier:1,customer_status:'prospect',is_active:true,[keyField]:key}:{company_name:'Acme',customer_status:'prospect',[keyField]:key,contact_email:'x@acme.test'};const s=makeStore({initial:[row(payload)]});const r=await invoke(loader,s,body);if(r.status!==200||!r.data.reused||s.stats().createCalls!==0)throw new Error(JSON.stringify({r,stats:s.stats()}));});
   total++; pass+=await test(`${name} lost response recovers one`, async()=>{const s=makeStore({mode:'lost_one'});const r=await invoke(loader,s,body);if(r.status!==200||!r.data.recovered_after_create_error||s.rows.length!==1)throw new Error(JSON.stringify({r,rows:s.rows}));});
   total++; pass+=await test(`${name} lost response with two rows fails closed`, async()=>{const s=makeStore({mode:'lost_two'});const r=await invoke(loader,s,body);if(r.status===200||s.stats().deletes!==0||s.rows.length!==2)throw new Error(JSON.stringify({r,stats:s.stats(),rows:s.rows.length}));});
-  total++; pass+=await test(`${name} recovery read failure says do not retry blindly`, async()=>{const s=makeStore({mode:'recovery_read_fails'});const r=await invoke(loader,s,body);if(r.status===200||!/Do not retry blindly/i.test(r.data.error||''))throw new Error(JSON.stringify(r));});
+  total++; pass+=await test(`${name} known create plus failed verification is explicit`, async()=>{const s=makeStore({mode:'post_read_fail'});const r=await invoke(loader,s,body);if(r.status===200||!/Do not retry blindly/i.test(r.data.error||'')||s.rows.length!==1)throw new Error(JSON.stringify(r));});
+  total++; pass+=await test(`${name} lost response plus failed recovery read is explicit`, async()=>{const s=makeStore({mode:'lost_read_fail'});const r=await invoke(loader,s,body);if(r.status===200||!/Do not retry blindly/i.test(r.data.error||'')||s.rows.length!==1)throw new Error(JSON.stringify(r));});
   total++; pass+=await test(`${name} current request canonical does not delete unknown concurrent row`, async()=>{const s=makeStore({mode:'concurrent_current_wins'});const r=await invoke(loader,s,body);if(r.status===200||s.stats().deletes!==0||s.rows.length!==2)throw new Error(JSON.stringify({r,stats:s.stats(),rows:s.rows.length}));});
   total++; pass+=await test(`${name} losing current request deletes only its own row`, async()=>{const s=makeStore({mode:'concurrent_current_loses'});const r=await invoke(loader,s,body);if(r.status!==200||!r.data.concurrent_duplicate_discarded||s.stats().deletes!==1||s.rows.length!==1)throw new Error(JSON.stringify({r,stats:s.stats(),rows:s.rows}));});
 }
