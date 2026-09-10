@@ -52,10 +52,10 @@ export default function FleetMaintenance() {
     const today = new Date(`${todayText}T12:00:00`);
     const horizon = new Date(today);
     horizon.setDate(horizon.getDate() + 14);
-    const pending = tasks.filter(t => t.status === "pending");
+    const pending = tasks.filter(t => ["pending", "overdue"].includes(t.status));
     const inProgress = tasks.filter(t => t.status === "in_progress");
     const completed = tasks.filter(t => t.status === "completed");
-    const overdue = pending.filter(t => t.start_date && t.start_date < todayText);
+    const overdue = pending.filter(t => t.status === "overdue" || (t.start_date && t.start_date < todayText));
     const dueSoon = pending.filter(t => {
       if (!t.start_date) return false;
       const due = new Date(`${t.start_date}T12:00:00`);
@@ -67,9 +67,10 @@ export default function FleetMaintenance() {
     const q = search.trim().toLowerCase();
     const todayText = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     return tasks.filter(t => {
-      const overdue = t.status === "pending" && !!t.start_date && t.start_date < todayText;
+      const overdue = t.status === "overdue" || (t.status === "pending" && !!t.start_date && t.start_date < todayText);
       if (statusFilter === "overdue" && !overdue) return false;
-      if (!["all", "overdue"].includes(statusFilter) && t.status !== statusFilter) return false;
+      if (statusFilter === "pending" && !["pending", "overdue"].includes(t.status)) return false;
+      if (!["all", "overdue", "pending"].includes(statusFilter) && t.status !== statusFilter) return false;
       return !q || [t.title, t.description, t.assigned_to, names[t.equipment_id], t.frequency, t.status].some(v => String(v || "").toLowerCase().includes(q));
     });
   }, [tasks, search, statusFilter, names]);
@@ -116,7 +117,7 @@ export default function FleetMaintenance() {
           <Metric icon={CheckCircle2} label="Completed schedules" value={metrics.completed.length} />
         </div>
 
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">Automatic generation is live and idempotent. A pending schedule is generated only when due and only when there is no active Fleet work order for that schedule.</div>
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">Automatic generation is live and idempotent. A pending schedule is generated when due and only when there is no active Fleet work order for that schedule. Overdue is derived from the due date; legacy explicit overdue rows are still safely processed.</div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
@@ -126,7 +127,7 @@ export default function FleetMaintenance() {
               <table className="w-full text-sm">
                 <thead><tr className="text-left bg-gray-50 dark:bg-slate-800/70"><th className="px-4 py-3">Task</th><th className="px-4 py-3">Equipment</th><th className="px-4 py-3">Frequency</th><th className="px-4 py-3">Start</th><th className="px-4 py-3">Priority</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Status</th>{isAdmin && <th className="px-4 py-3 text-right">Actions</th>}</tr></thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                  {rows.map(t => <tr key={t.id} className="align-top"><td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-slate-100 flex gap-2"><CalendarClock className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />{t.title}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-md">{t.description || "—"}</div>{(t.parts_needed?.length || t.fluids_needed?.length) ? <div className="text-xs text-gray-400 mt-1">{t.parts_needed?.length || 0} planned part item(s) · {t.fluids_needed?.length || 0} planned fluid item(s)</div> : null}</td><td className="px-4 py-3">{names[t.equipment_id] || "Unresolved"}</td><td className="px-4 py-3 capitalize">{t.type === "one_off" ? "One-time" : pretty(t.frequency)}{t.frequency === "custom" && t.custom_frequency_value ? ` (${t.custom_frequency_value} ${t.custom_frequency_unit || ""})` : ""}</td><td className="px-4 py-3 whitespace-nowrap">{t.start_date || "—"}</td><td className="px-4 py-3 capitalize">{pretty(t.priority)}</td><td className="px-4 py-3">{t.assigned_to || "—"}</td><td className="px-4 py-3 capitalize">{pretty(t.status)}</td>{isAdmin && <td className="px-4 py-3 text-right"><button onClick={() => setDialog({ task: t })} className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-300"><Pencil className="w-4 h-4" />Edit</button></td>}</tr>)}
+                  {rows.map(t => <tr key={t.id} className="align-top"><td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-slate-100 flex gap-2"><CalendarClock className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />{t.title}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-md">{t.description || "—"}</div>{(t.parts_needed?.length || t.fluids_needed?.length) ? <div className="text-xs text-gray-400 mt-1">{t.parts_needed?.length || 0} planned part item(s) · {t.fluids_needed?.length || 0} planned fluid item(s)</div> : null}</td><td className="px-4 py-3">{names[t.equipment_id] || "Unresolved"}</td><td className="px-4 py-3 capitalize">{t.type === "one_off" ? "One-time" : pretty(t.frequency)}{t.frequency === "custom" && t.custom_frequency_value ? ` (${t.custom_frequency_value} ${t.custom_frequency_unit || ""})` : ""}</td><td className="px-4 py-3 whitespace-nowrap">{t.start_date || "—"}</td><td className="px-4 py-3 capitalize">{pretty(t.priority)}</td><td className="px-4 py-3">{t.assigned_to || "—"}</td><td className="px-4 py-3 capitalize">{(t.status === "overdue" || (t.status === "pending" && t.start_date && t.start_date < new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()))) ? "Overdue" : pretty(t.status)}</td>{isAdmin && <td className="px-4 py-3 text-right"><button onClick={() => setDialog({ task: t })} className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-300"><Pencil className="w-4 h-4" />Edit</button></td>}</tr>)}
                   {rows.length === 0 && <tr><td colSpan={isAdmin ? 8 : 7} className="px-4 py-10 text-center text-gray-500">No maintenance schedules found.</td></tr>}
                 </tbody>
               </table>
