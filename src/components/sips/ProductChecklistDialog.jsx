@@ -15,10 +15,11 @@ import TemplateBuilder from "./TemplateBuilder";
 import RevisitDatePopup from "./RevisitDatePopup";
 import ChecklistCompletedSection from "./ChecklistCompletedSection";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function ProductChecklistDialog({ 
   isOpen, 
@@ -58,10 +59,19 @@ export default function ProductChecklistDialog({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [freshWO, usersData, settings] = await Promise.all([
+      const [freshWO, usersData, dropdownsSetting, productTypesSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        AuthorizedEmail.list(),
-        GlobalSettings.list()
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "dropdownConditions",
+          label: "Product checklist dropdown conditions",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "productTypes",
+          label: "Product checklist product types",
+        })
       ]);
 
       const currentWO = freshWO[0];
@@ -154,10 +164,8 @@ export default function ProductChecklistDialog({
       setChecklist(reconstructedChecklist);
 
       // Load dropdown conditions
-      const dropdownsSetting = settings.find(s => s.setting_key === 'dropdownConditions');
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
       
-      const productTypesSetting = settings.find(s => s.setting_key === 'productTypes');
       const loadedProductTypes = productTypesSetting?.setting_value?.items || 
         ["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"];
       setProductTypes(loadedProductTypes);
