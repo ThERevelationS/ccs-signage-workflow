@@ -14,6 +14,7 @@ import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
 import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';
+import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
 
@@ -289,7 +290,13 @@ function EquipmentForm({ item, equipment, attachments, subAttachments, onSave, o
                     label: `Foundation equipment item “${form.material_name || 'Item'}”`,
                 });
             } else {
-                savedItem = await FoundationInventoryEntity.create(form);
+                const createResult = await createInventoryRecordWithRecovery({
+                    entity: FoundationInventoryEntity,
+                    data: form,
+                    nameField: 'material_name',
+                    label: `Foundation equipment item “${form.material_name || 'Item'}”`,
+                });
+                savedItem = createResult.record;
             }
             wroteAnything = true;
 
