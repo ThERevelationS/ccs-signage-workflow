@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi } from '../../shared/bouncie.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Durable CCS-local alert evaluation against Bouncie vehicle stats.
 // Bouncie remains the owner of tracking/webhooks/native alert configuration.
@@ -184,7 +185,7 @@ export default async function(req) {
     const vehicles = Array.isArray(vehiclesRaw) ? vehiclesRaw : vehiclesRaw?.data || [];
 
     let settings = [];
-    try { settings = await base44.asServiceRole.entities.FleetAlertSetting.list(); } catch {}
+    try { settings = await loadAllEntityRows({ entity: base44.asServiceRole.entities.FleetAlertSetting, sort: '-created_date', label: 'Fleet Bouncie alert rules' }); } catch {}
     settings = settings || [];
 
     const Notification = base44.asServiceRole.entities.BouncieNotification;
