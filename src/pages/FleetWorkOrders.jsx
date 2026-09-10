@@ -53,7 +53,7 @@ export default function FleetWorkOrders() {
   }, []);
 
   const openCreateDialog = useCallback((workOrder = null) => {
-    setDialog({ mode: "create", workOrder, createKey: crypto.randomUUID() });
+    setDialog({ mode: "create", workOrder, createKey: `${easternTodayText()}-${crypto.randomUUID()}` });
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
