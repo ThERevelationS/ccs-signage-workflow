@@ -1,4 +1,3 @@
-import React from "react";
 import { Car, ExternalLink, Menu } from "lucide-react";
 import { makeColor } from "./fleetHelpers";
 
