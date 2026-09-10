@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Clock, User, Calendar } from "lucide-react";
+import { Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
