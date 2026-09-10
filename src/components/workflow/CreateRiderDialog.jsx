@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -281,7 +282,11 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
   };
 
   const loadUsers = async () => {
-    const usersData = await AuthorizedEmail.list();
+    const usersData = await loadAllEntityRows({
+      entity: AuthorizedEmail,
+      sort: null,
+      label: "Rider creation authorized users",
+    });
     setUsers(usersData);
   };
 
