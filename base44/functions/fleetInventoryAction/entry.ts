@@ -201,20 +201,57 @@ Deno.serve(async (req) => {
     const Entity = itemType === 'part' ? Part : Fluid;
 
     if (action === 'create') {
+      const creationKey = String(body?.creation_key || '').trim();
+      if (!creationKey || creationKey.length < 12 || creationKey.length > 200 || /\s/.test(creationKey)) {
+        return Response.json({ error: `Fleet ${itemType} create identity is missing or invalid. Reopen the New ${itemType === 'part' ? 'Part' : 'Fluid'} dialog and try again.` }, { status: 409 });
+      }
       const payload = itemType === 'part' ? normalizePart(body?.item || body) : normalizeFluid(body?.item || body);
       if (itemType === 'part') {
+        payload.quantity_on_hand = payload.quantity_on_hand ?? 0;
+        payload.minimum_stock = payload.minimum_stock ?? 1;
+        payload.enable_low_stock_alerts = payload.enable_low_stock_alerts !== false;
         if (!payload.part_name || !payload.category) return Response.json({ error: 'Part name and category are required.' }, { status: 400 });
         if ([payload.quantity_on_hand,payload.minimum_stock,payload.unit_cost].some((v: any) => Number.isNaN(v) || (v != null && v < 0))) return Response.json({ error: 'Part quantities/costs must be valid non-negative numbers.' }, { status: 400 });
       } else {
-        if (!payload.fluid_name) return Response.json({ error: 'Fluid name is required.' }, { status: 400 });
+        if (!payload.fluid_name || !payload.fluid_type) return Response.json({ error: 'Fluid name and type are required.' }, { status: 400 });
         if (payload.unit && !units.has(payload.unit)) return Response.json({ error: 'Invalid fluid stock unit.' }, { status: 400 });
         if (payload.minimum_stock_unit && !units.has(payload.minimum_stock_unit)) return Response.json({ error: 'Invalid fluid minimum-stock unit.' }, { status: 400 });
         if ([payload.quantity,payload.minimum_stock,payload.cost_per_unit].some((v: any) => Number.isNaN(v) || (v != null && v < 0))) return Response.json({ error: 'Fluid quantities/costs must be valid non-negative numbers.' }, { status: 400 });
       }
       await validateCompatibility(Equipment, payload.compatible_equipment_ids || []);
-      const created = await Entity.create(payload);
+
+      const existingRows = await Entity.filter({ creation_key: creationKey });
+      if (existingRows.length > 1) return Response.json({ error: `Multiple Fleet ${itemType} records share this create identity. Review the duplicates before retrying.` }, { status: 409 });
+      if (existingRows[0]) {
+        const reused = existingRows[0];
+        if (!sameInventoryCreate(itemType, reused, payload)) {
+          return Response.json({ error: `This create identity already belongs to different Fleet ${itemType} details. Reopen the New ${itemType === 'part' ? 'Part' : 'Fluid'} dialog before creating another item.` }, { status: 409 });
+        }
+        if (inventoryIsLow(itemType, reused)) {
+          await dispatchLowStock(base44, itemType, reused, `inventory-created-low:${itemType}:${creationKey}`);
+        }
+        return Response.json({ success: true, reused: true, item: reused });
+      }
+
+      const created = await Entity.create({ ...payload, creation_key: creationKey });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await Entity.filter({ creation_key: creationKey });
+      if (contenders.length > 1) {
+        const winner = canonical(contenders) || created;
+        if (winner.id !== created.id) {
+          await Entity.delete(created.id).catch(() => null);
+          if (!sameInventoryCreate(itemType, winner, payload)) {
+            return Response.json({ error: `Another Fleet ${itemType} create won this identity with different details. The losing duplicate was discarded; reopen the dialog.` }, { status: 409 });
+          }
+          if (inventoryIsLow(itemType, winner)) {
+            await dispatchLowStock(base44, itemType, winner, `inventory-created-low:${itemType}:${creationKey}`);
+          }
+          return Response.json({ success: true, reused: true, item: winner });
+        }
+        for (const duplicate of contenders) if (duplicate.id !== winner.id) await Entity.delete(duplicate.id).catch(() => null);
+      }
       if (inventoryIsLow(itemType, created)) {
-        await dispatchLowStock(base44, itemType, created, `inventory-created-low:${created.id}`);
+        await dispatchLowStock(base44, itemType, created, `inventory-created-low:${itemType}:${creationKey}`);
       }
       return Response.json({ success: true, item: created });
     }
