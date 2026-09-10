@@ -283,6 +283,21 @@ Deno.serve(async (req) => {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can receive Fleet inventory.' }, { status: 403 });
       if (existing.status === 'received' && existing.receipt_applied_at) {
         if (!existing.migration_source_id && existing.receipt_key) {
+          const receiptRows = await Receipt.filter({ operation_key: existing.receipt_key });
+          const receiveReceipt = canonical(receiptRows);
+          if (receiveReceipt && receiveReceipt.status !== 'applied') {
+            await Receipt.update(receiveReceipt.id, {
+              status: 'applied',
+              applied_at: existing.receipt_applied_at,
+              error_message: '',
+              result_summary: {
+                ...(receiveReceipt.result_summary || {}),
+                inventory_item_id: existing.inventory_item_id || receiveReceipt?.result_summary?.inventory_item_id || '',
+                request_finalized: true,
+                reconciled_from_received_request: true,
+              },
+            });
+          }
           await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
             event_type: 'request_received', target_id: id, event_token: existing.receipt_key
           }).catch(() => null);
