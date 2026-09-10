@@ -81,7 +81,12 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
   try {
     result = await entity.deleteMany(query);
   } catch (error) {
-    const afterError = await entity.get(id).catch(() => null);
+    let afterError;
+    try {
+      afterError = await entity.get(id);
+    } catch (verificationError) {
+      throw new Error(`${label} delete response failed and the record's absence could not be verified. Reload before retrying duplicate cleanup. ${verificationError?.message || ""}`.trim());
+    }
     if (!afterError) return { status: "already_absent" };
     throw error;
   }
@@ -94,7 +99,12 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
     throw new Error(`${label} deletion matched more than one Work Order unexpectedly.`);
   }
 
-  const after = await entity.get(id).catch(() => null);
+  let after;
+  try {
+    after = await entity.get(id);
+  } catch (verificationError) {
+    throw new Error(`${label} deletion returned no confirmed delete and the record's current state could not be verified. Reload before retrying duplicate cleanup. ${verificationError?.message || ""}`.trim());
+  }
   if (!after) return { status: "already_absent" };
 
   throw new Error(`${label} changed after it was created, so the losing duplicate was left intact for review instead of being deleted.`);
