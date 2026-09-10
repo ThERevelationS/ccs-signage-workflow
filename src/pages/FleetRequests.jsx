@@ -83,8 +83,8 @@ export default function FleetRequests() {
     const payload = action === "create"
       ? { action: "create", request: form }
       : action === "edit"
-        ? { action: "update", id: dialog.request.id, request: form }
-        : { action, id: dialog.request.id, ...form };
+        ? { action: "update", id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", request: form }
+        : { action, id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", ...form };
     const response = await base44.functions.invoke("fleetRequestAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
@@ -97,7 +97,7 @@ export default function FleetRequests() {
     setBusyId(request.id);
     setActionError("");
     try {
-      const response = await base44.functions.invoke("fleetRequestAction", { action: "cancel", id: request.id });
+      const response = await base44.functions.invoke("fleetRequestAction", { action: "cancel", id: request.id, expected_updated_date: request.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
     } catch (error) {
