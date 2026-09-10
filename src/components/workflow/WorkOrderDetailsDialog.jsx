@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,14 +28,11 @@ import {
   X,
   Plus,
   Trash2,
-  Edit,
   CheckCircle,
   Calendar,
-  User,
   FileText,
   ArrowRight,
   Link as LinkIcon,
-  Zap,
   Eye,
   EyeOff,
   Upload,
@@ -59,7 +56,6 @@ import { UploadFile } from "@/integrations/Core";
 import { ActivityActions } from "./ActivityLogger";
 import WorkOrderOrders from "../orders/WorkOrderOrders";
 import GoogleDriveFileBrowser from "./GoogleDriveFileBrowser";
-import EmbeddedDriveFiles from "./EmbeddedDriveFiles";
 
 import { base44 } from "@/api/base44Client";
 import { List } from "lucide-react";
@@ -71,7 +67,7 @@ import CreateRiderDialog from "./CreateRiderDialog";
 import WorkOrderForm from "./WorkOrderForm";
 import WorkOrderFiles from "./WorkOrderFiles";
 import { useAuth } from "@/components/auth/EmailGate";
-import ProjectHealthBadge, { calculateProjectHealth } from "./ProjectHealthBadge";
+import ProjectHealthBadge from "./ProjectHealthBadge";
 import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
