@@ -83,7 +83,19 @@ Deno.serve(async (req) => {
     assertSameOperation(canonical, revision);
 
     if (canonical?.id && created?.id && canonical.id !== created.id) {
-      await RevisionService.delete(created.id).catch(() => null);
+      const createdVersion = String(created.updated_date || '').trim();
+      if (!createdVersion) {
+        throw new Error('A duplicate Builder price revision was detected, but the losing row has no version metadata. No uncertain revision was deleted.');
+      }
+      const deleted = await RevisionService.deleteMany({
+        id: created.id,
+        builder_product_id: builderProductId,
+        idempotency_key: idempotencyKey,
+        updated_date: createdVersion,
+      });
+      if (!deleted || deleted.deleted !== 1) {
+        throw new Error('A duplicate Builder price revision changed before cleanup. No uncertain revision was deleted; reload the Builder pricing history before retrying.');
+      }
       return Response.json({ revision: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
