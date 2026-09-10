@@ -151,19 +151,23 @@ Deno.serve(async (req) => {
           updated_date: losingVersion,
         });
       } catch (deleteError) {
-        let readFailed = false;
-        const afterError = await EstimateService.get(losing.id).catch(() => {
-          readFailed = true;
+        let verifyFailed = false;
+        const afterError = await EstimateService.filter({ id: losing.id }).catch(() => {
+          verifyFailed = true;
           return null;
         });
-        if (!readFailed && !afterError) {
+        if (!verifyFailed && Array.isArray(afterError) && afterError.length === 0) {
           return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true, recovered_after_delete_error: true });
         }
         throw deleteError;
       }
       if (!deleted || deleted.deleted !== 1) {
-        const afterDelete = await EstimateService.get(losing.id).catch(() => undefined);
-        if (afterDelete === null) {
+        let verifyFailed = false;
+        const afterDelete = await EstimateService.filter({ id: losing.id }).catch(() => {
+          verifyFailed = true;
+          return null;
+        });
+        if (!verifyFailed && Array.isArray(afterDelete) && afterDelete.length === 0) {
           return Response.json({ estimate: canonical, reused: true, concurrent_duplicate_discarded: true });
         }
         return Response.json({ error: 'The losing duplicate Estimate changed before cleanup. No uncertain Estimate was deleted; reload before retrying.' }, { status: 409 });
