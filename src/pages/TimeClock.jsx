@@ -588,7 +588,11 @@ export default function TimeClock() {
                 <UserSettingsTab 
                   currentUser={loggedInUser} 
                   onUserUpdated={async () => {
-                    const users = await AuthorizedEmail.list();
+                    const users = await loadAllEntityRows({
+                      entity: AuthorizedEmail,
+                      sort: null,
+                      label: "Time Clock authorized users refresh",
+                    });
                     setAllUsers(users);
                     const updated = users.find(u => u.id === loggedInUser.id);
                     if (updated) setLoggedInUser(updated);
