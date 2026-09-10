@@ -34,6 +34,7 @@ export async function setFleetInventoryQuantityIfUnchanged({
   nextQuantity,
   label = 'Fleet inventory quantity',
   maxAttempts = 3,
+  allowAlreadyDesired = false,
 }: {
   entity: any;
   itemId: string;
@@ -42,6 +43,7 @@ export async function setFleetInventoryQuantityIfUnchanged({
   nextQuantity: number;
   label?: string;
   maxAttempts?: number;
+  allowAlreadyDesired?: boolean;
 }) {
   const id = String(itemId || '').trim();
   const fieldName = String(field || '').trim();
@@ -57,10 +59,12 @@ export async function setFleetInventoryQuantityIfUnchanged({
     if (!current?.id) throw new FleetInventoryQuantityConflictError(`${label} no longer exists.`);
     const currentQuantity = toNumber(current[fieldName]);
     if (!Number.isFinite(currentQuantity)) throw new FleetInventoryQuantityConflictError(`${label} has an invalid current quantity.`);
-    if (sameNumber(currentQuantity, desired)) {
-      return { item: current, changed: false, already_desired: true };
-    }
-    if (!sameNumber(currentQuantity, expected)) {
+    if (sameNumber(currentQuantity, expected)) {
+      if (sameNumber(expected, desired)) return { item: current, changed: false, already_desired: true };
+    } else if (sameNumber(currentQuantity, desired)) {
+      if (allowAlreadyDesired) return { item: current, changed: false, already_desired: true };
+      throw new FleetInventoryQuantityConflictError(`${label} already equals the planned result, but this fresh operation cannot prove it made that change.`);
+    } else {
       throw new FleetInventoryQuantityConflictError(`${label} changed from ${expected} to ${currentQuantity} while this operation was in progress.`);
     }
 
@@ -81,7 +85,8 @@ export async function setFleetInventoryQuantityIfUnchanged({
         throw new FleetInventoryQuantityAmbiguousError(`${label} returned an error and its outcome could not be verified. ${verificationError?.message || ''}`.trim());
       }
       if (sameNumber(after?.[fieldName], desired)) {
-        return { item: after, changed: true, verified_after_error: true };
+        if (allowAlreadyDesired) return { item: after, changed: false, already_desired: true, verified_after_error: true };
+        throw new FleetInventoryQuantityAmbiguousError(`${label} may have reached the planned quantity, but this operation cannot prove ownership of that change after an update error.`);
       }
       if (sameNumber(after?.[fieldName], expected)) continue;
       throw new FleetInventoryQuantityAmbiguousError(`${label} changed while an update error was being verified. It was not replayed automatically.`);
