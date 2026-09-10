@@ -221,3 +221,45 @@ function Row({label,value}){return <div><div className="text-xs text-gray-400">{
 function Recipient({label,values}){return <Row label={label} value={(values||[]).map(v=>`${v.email}${v.delay_minutes!=null?` (${v.delay_minutes}m)`:""}`).join(", ")||"None"}/>} 
 function AutomationStatus({label,schedule,log}){const tone=log?.level==="error"?"border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20":log?.level==="warning"?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-950/40";const details=log?.details||{};const summary=log?.source==="fleetScheduledMaintenanceGeneration"?`due ${details.due??"—"} · created ${details.created??"—"} · errors ${details.errors??0}`:log?.source==="fleetScheduledReminders"?`queued ${details.queued??"—"} · reused ${details.reused??"—"}`:log?.source==="fleetNotificationWorker"?`processed ${details.processed??0} · sent ${details.sent??0} · failed ${details.failed??0}`:log?.source==="bouncieSyncNotifications"?`vehicles ${details.vehicles??"—"} · rules ${details.configured_rules??0} · alerts ${details.created??0}`:"";return <div className={`rounded-lg border p-3 ${tone}`}><div className="font-medium text-sm text-gray-900 dark:text-slate-100">{label}</div><div className="text-xs text-gray-400 mt-0.5">{schedule}</div>{log?<><div className="text-xs text-gray-600 dark:text-slate-300 mt-2">Last: {new Date(log.created_date).toLocaleString()} · {log.level}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{summary||log.message}</div></>:<div className="text-xs text-gray-500 dark:text-slate-400 mt-2">Awaiting first production heartbeat.</div>}</div>}
 function HealthCount({label,value,ok}){return <div className={`rounded-lg border px-3 py-2 ${ok?"border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20":"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20"}`}><div className="text-xs text-gray-500 dark:text-slate-400">{label}</div><div className={`text-lg font-bold mt-0.5 ${ok?"text-emerald-700 dark:text-emerald-300":"text-amber-700 dark:text-amber-300"}`}>{value}</div></div>}
+
+function IntegrityPanel({data,busy,onRefresh}) {
+  const summary=data?.summary||{};
+  const findings=data?.findings||[];
+  const health=summary.health||"unknown";
+  const tone=health==="error"?"border-red-200 dark:border-red-900":health==="warning"?"border-amber-200 dark:border-amber-900":"border-emerald-200 dark:border-emerald-900";
+  return <div className={`rounded-xl border bg-white dark:bg-slate-900 p-4 shadow-sm ${tone}`}>
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet Data Integrity</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Read-only relationship and inventory audit. Preserved historical findings are surfaced, never auto-repaired.</p></div>
+      <button onClick={onRefresh} disabled={busy} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{busy?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Run integrity audit</button>
+    </div>
+    {data ? <>
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <IntegrityMetric label="Errors" value={summary.error_count||0} tone="error"/>
+        <IntegrityMetric label="Warnings" value={summary.warning_count||0} tone="warning"/>
+        <IntegrityMetric label="Informational" value={summary.info_count||0} tone="info"/>
+        <IntegrityMetric label="Finding groups" value={summary.finding_groups||0} tone="neutral"/>
+      </div>
+      {findings.length ? <div className="mt-4 space-y-3">{findings.map((finding)=><IntegrityFinding key={finding.code} finding={finding}/>)}</div> : <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 px-3 py-3 text-sm text-emerald-800 dark:text-emerald-200">No integrity findings were detected.</div>}
+      <div className="mt-3 text-[11px] text-gray-400">Last generated: {data.generated_at?new Date(data.generated_at).toLocaleString():"—"}</div>
+    </> : <div className="mt-4 text-sm text-gray-500 dark:text-slate-400">Integrity audit has not completed yet.</div>}
+  </div>;
+}
+
+function IntegrityMetric({label,value,tone}) {
+  const cls=tone==="error"?"text-red-700 dark:text-red-300":tone==="warning"?"text-amber-700 dark:text-amber-300":tone==="info"?"text-blue-700 dark:text-blue-300":"text-gray-800 dark:text-slate-200";
+  return <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-950/40 px-3 py-2"><div className="text-xs text-gray-500 dark:text-slate-400">{label}</div><div className={`text-lg font-bold mt-0.5 ${cls}`}>{value}</div></div>;
+}
+
+function IntegrityFinding({finding}) {
+  const cls=finding.severity==="error"?"border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20":finding.severity==="warning"?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20";
+  return <details className={`rounded-lg border px-3 py-2 ${cls}`}>
+    <summary className="cursor-pointer text-sm font-medium text-gray-900 dark:text-slate-100">{finding.title} <span className="text-xs font-normal text-gray-500 dark:text-slate-400">({finding.count})</span></summary>
+    <p className="mt-2 text-xs text-gray-600 dark:text-slate-300">{finding.description}</p>
+    {!!finding.items?.length && <div className="mt-2 space-y-1">{finding.items.map((item,index)=><div key={`${finding.code}-${index}`} className="rounded bg-white/70 dark:bg-slate-950/50 px-2 py-1 text-[11px] text-gray-600 dark:text-slate-300 break-all">{integrityItemText(item)}</div>)}</div>}
+  </details>;
+}
+
+function integrityItemText(item) {
+  if (!item || typeof item!=="object") return String(item||"");
+  return Object.entries(item).map(([key,value])=>`${key}: ${Array.isArray(value)?JSON.stringify(value):String(value??"")}`).join(" · ");
+}
