@@ -57,6 +57,30 @@ const taskPatch = (source: any) => {
   return out;
 };
 
+const normText = (value: unknown) => String(value ?? '').trim();
+const normNumber = (value: unknown) => value == null || value === '' ? null : Number(value);
+const maintenanceCreateComparable = (source: any) => ({
+  title: normText(source?.title),
+  description: normText(source?.description),
+  equipment_id: normText(source?.equipment_id),
+  type: normText(source?.type),
+  priority: normText(source?.priority || 'medium'),
+  frequency: normText(source?.frequency),
+  custom_frequency_value: normNumber(source?.custom_frequency_value),
+  custom_frequency_unit: normText(source?.custom_frequency_unit),
+  estimated_duration: normNumber(source?.estimated_duration),
+  start_date: normText(source?.start_date),
+  assigned_to: normText(source?.assigned_to),
+  status: normText(source?.status || 'pending'),
+  parts_needed: Array.isArray(source?.parts_needed) ? source.parts_needed.map((item: any) => ({
+    part_name: normText(item?.part_name), quantity: normNumber(item?.quantity), notes: normText(item?.notes),
+  })) : [],
+  fluids_needed: Array.isArray(source?.fluids_needed) ? source.fluids_needed.map((item: any) => ({
+    fluid_type: normText(item?.fluid_type), quantity: normNumber(item?.quantity), unit: normText(item?.unit || 'quarts'), notes: normText(item?.notes),
+  })) : [],
+});
+const sameMaintenanceCreate = (row: any, desired: any) => JSON.stringify(maintenanceCreateComparable(row)) === JSON.stringify(maintenanceCreateComparable(desired));
+
 function generatedWorkOrderNumber(task: any) {
   const date = String(task.start_date || today()).replaceAll('-', '');
   const suffix = String(task.id || '').slice(-6).toUpperCase();
@@ -78,6 +102,10 @@ Deno.serve(async (req) => {
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
 
     if (action === 'create') {
+      const creationKey = String(body?.creation_key || '').trim();
+      if (!creationKey || creationKey.length < 12 || creationKey.length > 200 || /\s/.test(creationKey)) {
+        return Response.json({ error: 'Maintenance schedule create identity is missing or invalid. Reopen New Schedule and try again.' }, { status: 409 });
+      }
       const patch = taskPatch(body?.task || body);
       if (!String(patch.title || '').trim() || !String(patch.equipment_id || '').trim() || !TASK_TYPES.has(String(patch.type || ''))) {
         return Response.json({ error: 'Title, equipment, and maintenance type are required.' }, { status: 400 });
@@ -85,7 +113,30 @@ Deno.serve(async (req) => {
       if (patch.status && !TASK_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid maintenance status.' }, { status: 400 });
       const equipment = await Equipment.get(patch.equipment_id);
       if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
-      const created = await Task.create({ ...patch, status: patch.status || 'pending' });
+      const desired = { ...patch, status: patch.status || 'pending', priority: patch.priority || 'medium' };
+      const existingRows = await Task.filter({ creation_key: creationKey });
+      if (existingRows.length > 1) return Response.json({ error: 'Multiple Fleet maintenance schedules share this create identity. Review the duplicates before retrying.' }, { status: 409 });
+      if (existingRows[0]) {
+        const reused = existingRows[0];
+        if (!sameMaintenanceCreate(reused, desired)) {
+          return Response.json({ error: 'This create identity already belongs to different maintenance schedule details. Reopen New Schedule before creating another schedule.' }, { status: 409 });
+        }
+        return Response.json({ success: true, reused: true, task: reused });
+      }
+      const created = await Task.create({ ...desired, creation_key: creationKey });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await Task.filter({ creation_key: creationKey });
+      if (contenders.length > 1) {
+        const winner = canonical(contenders) || created;
+        if (winner.id !== created.id) {
+          await Task.delete(created.id).catch(() => null);
+          if (!sameMaintenanceCreate(winner, desired)) {
+            return Response.json({ error: 'Another maintenance schedule create won this identity with different details. The losing duplicate was discarded; reopen New Schedule.' }, { status: 409 });
+          }
+          return Response.json({ success: true, reused: true, task: winner });
+        }
+        for (const duplicate of contenders) if (duplicate.id !== winner.id) await Task.delete(duplicate.id).catch(() => null);
+      }
       return Response.json({ success: true, task: created });
     }
 
