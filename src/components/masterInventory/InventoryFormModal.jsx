@@ -14,6 +14,7 @@ import {
   LABOR_SERVICE_CATEGORY_FIELD_NAMES,
 } from "./laborServiceCategorySchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 
 /**
  * Generic inventory add/edit modal driven by a `source` config object.
@@ -123,7 +124,12 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
           label: `${source.label || "Inventory"} item`,
         });
       } else {
-        await source.entity.create(payload);
+        await createInventoryRecordWithRecovery({
+          entity: source.entity,
+          data: payload,
+          nameField: source.nameField,
+          label: `${source.label || "Inventory"} item`,
+        });
       }
       onSaved?.();
     } catch (err) {
