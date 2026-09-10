@@ -2,7 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
-const nowIso = () => new Date().toISOString();
 const today = () => new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -28,22 +27,6 @@ async function requireAdmin(base44: any) {
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
   if (rows?.[0]?.role !== 'admin') return { error: Response.json({ error: 'Fleet maintenance administration requires a CCS admin.' }, { status: 403 }) };
   return { user };
-}
-
-async function claimReceipt(Receipt: any, data: any) {
-  const applied = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'applied' }));
-  if (applied) return { receipt: applied, applied: true, owner: false };
-  const started = canonical(await Receipt.filter({ operation_key: data.operation_key, status: 'started' }));
-  if (started) return { receipt: started, applied: false, owner: false, existingStarted: true };
-  const created = await Receipt.create({ ...data, status: 'started', started_at: nowIso() });
-  await new Promise((resolve) => setTimeout(resolve, 75));
-  const contenders = await Receipt.filter({ operation_key: data.operation_key, status: 'started' });
-  const winner = canonical(contenders) || created;
-  if (winner.id !== created.id) {
-    await Receipt.delete(created.id).catch(() => null);
-    return { receipt: winner, applied: false, owner: false, concurrent: true };
-  }
-  return { receipt: created, applied: false, owner: true };
 }
 
 const taskPatch = (source: any) => {
@@ -81,18 +64,11 @@ const maintenanceCreateComparable = (source: any) => ({
 });
 const sameMaintenanceCreate = (row: any, desired: any) => JSON.stringify(maintenanceCreateComparable(row)) === JSON.stringify(maintenanceCreateComparable(desired));
 
-function generatedWorkOrderNumber(task: any) {
-  const date = String(task.start_date || today()).replaceAll('-', '');
-  const suffix = String(task.id || '').slice(-6).toUpperCase();
-  return `FWO-${date}-${suffix}`;
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const auth = await requireAdmin(base44);
     if (auth.error) return auth.error;
-    const user = auth.user;
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
 
