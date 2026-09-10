@@ -68,7 +68,7 @@ export default function NotificationsTab({ notifications, vehicle, onClearAll, o
 
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950">
-        <button onClick={onClearAll} className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">Mark Visible Read</button>
+        <button onClick={onClearAll} className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">Mark Vehicle Read</button>
         <div className="flex items-center gap-3">
           {canManageAlerts && <button onClick={onOpenSettings} className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-300"><SettingsIcon className="w-4 h-4" />CCS Alerts</button>}
           <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-300">Bouncie <ExternalLink className="w-3.5 h-3.5" /></a>
