@@ -233,7 +233,7 @@ export default function CompletedReports() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleDelete(deleteConfirm)
+                onClick={() => handleDelete(deleteConfirm)}
                 className="bg-red-600 text-white"
               >
                 Delete
