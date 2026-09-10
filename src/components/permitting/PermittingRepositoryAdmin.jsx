@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
+import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function PermittingRepositoryAdmin() {
@@ -38,6 +38,7 @@ export default function PermittingRepositoryAdmin() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ processed: 0, total: 0, currentJurisdiction: '' });
+  const [deleteError, setDeleteError] = useState('');
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
 
   useEffect(() => {
@@ -206,40 +207,67 @@ export default function PermittingRepositoryAdmin() {
   };
 
   const handleDeleteAll = async () => {
+    if (isDeleting || jurisdictions.length === 0) return;
     setIsDeleting(true);
-    const total = jurisdictions.length;
+    setDeleteError('');
+    const loadedSnapshot = [...jurisdictions];
+    const total = loadedSnapshot.length;
+    let deletedNow = 0;
     setDeleteProgress({ processed: 0, total, currentJurisdiction: '' });
-    
+
     try {
-      for (let i = 0; i < jurisdictions.length; i++) {
-        const jurisdiction = jurisdictions[i];
+      // “Delete All” is irreversible. Verify the complete catalog has not gained,
+      // lost, or changed any Jurisdiction since this page loaded before deleting
+      // the first row. Individual deletes are still version-guarded afterward.
+      const verifiedCatalog = await loadAllEntityRows({
+        entity: base44.entities.JurisdictionProfile,
+        sort: "-created_date",
+        label: "Permitting Repository delete-all preflight",
+      });
+      assertJurisdictionCatalogStable({
+        loaded: loadedSnapshot,
+        verified: verifiedCatalog,
+        label: "Permitting Repository delete-all preflight",
+      });
+
+      for (let i = 0; i < loadedSnapshot.length; i++) {
+        const jurisdiction = loadedSnapshot[i];
         setDeleteProgress({
-          processed: i,
+          processed: deletedNow,
           total,
-          currentJurisdiction: `${jurisdiction.name}, ${jurisdiction.state}`
+          currentJurisdiction: `${jurisdiction.name}, ${jurisdiction.state}`,
         });
-        
+
         try {
           await deleteJurisdictionFromLoadedSnapshot({
             entity: base44.entities.JurisdictionProfile,
             jurisdiction,
             label: `Admin delete ${jurisdiction.name || jurisdiction.id}`,
           });
-        } catch (e) {
-          console.error(`Failed to delete ${jurisdiction.id}:`, e);
+        } catch (error) {
+          throw new Error(
+            `Delete All stopped after ${deletedNow} of ${total} Jurisdictions were permanently deleted. ` +
+            `The current Jurisdiction changed or its deletion could not be verified, so no later rows were touched. ` +
+            `${error?.message || "Reload the repository before deciding whether to continue."}`
+          );
         }
-        
-        // Small delay to avoid rate limiting
-        if (i < jurisdictions.length - 1) {
+        deletedNow += 1;
+        setDeleteProgress({ processed: deletedNow, total, currentJurisdiction: '' });
+
+        // Small delay to avoid rate limiting.
+        if (i < loadedSnapshot.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-      
+
       await loadJurisdictions();
       setShowDeleteConfirm(false);
       setDeleteProgress({ processed: 0, total: 0, currentJurisdiction: '' });
     } catch (e) {
       console.error("Delete all error:", e);
+      setDeleteError(e?.message || "Delete All was blocked because the Jurisdiction catalog could not be verified safely.");
+      setDeleteProgress((prev) => ({ ...prev, processed: deletedNow, currentJurisdiction: '' }));
+      await loadJurisdictions();
     } finally {
       setIsDeleting(false);
     }
