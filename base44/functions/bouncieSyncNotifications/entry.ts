@@ -6,6 +6,25 @@ import { callBouncieApi } from '../../shared/bouncie.ts';
 // Notifications created here are snapshots/CCS-local threshold alerts only.
 
 const nowIso = () => new Date().toISOString();
+const SUCCESS_HEARTBEAT_MS = 6 * 60 * 60 * 1000;
+const ERROR_HEARTBEAT_MS = 30 * 60 * 1000;
+
+async function maybeLogSync(base44, level, message, details = {}) {
+  const rows = await base44.asServiceRole.entities.FleetSystemLog.filter({ source: 'bouncieSyncNotifications' }, '-created_date', 1).catch(() => []);
+  const last = rows?.[0] || null;
+  const lastAt = Date.parse(last?.created_date || '') || 0;
+  const minInterval = level === 'error' ? ERROR_HEARTBEAT_MS : SUCCESS_HEARTBEAT_MS;
+  const changedLevel = last?.level !== level;
+  if (!lastAt || changedLevel || Date.now() - lastAt >= minInterval) {
+    await base44.asServiceRole.entities.FleetSystemLog.create({
+      source: 'bouncieSyncNotifications',
+      level,
+      message,
+      details,
+    }).catch(() => null);
+  }
+}
+
 const canonical = (rows = []) => rows.slice().sort((a, b) => {
   const at = Date.parse(a?.created_date || '') || 0;
   const bt = Date.parse(b?.created_date || '') || 0;
@@ -156,9 +175,10 @@ async function evaluateThreshold({ Runtime, Notification, vehicle, stats, ruleKe
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    // Preserve normal authenticated Tracking-page use while also allowing Base44's
-    // internal scheduled workflow invocation, which has no end-user session.
-    await base44.auth.me().catch(() => null);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const vehiclesRaw = await callBouncieApi(base44, 'GET', '/v1/vehicles');
     const vehicles = Array.isArray(vehiclesRaw) ? vehiclesRaw : vehiclesRaw?.data || [];
@@ -247,8 +267,17 @@ export default async function(req) {
       if (result.created) created++;
     }
 
+    await maybeLogSync(base44, 'info', 'Fleet Bouncie alert sync heartbeat.', {
+      vehicles: vehicles.length,
+      created,
+      configured_rules: settings.filter((row) => row?.enabled === true).length,
+    });
     return Response.json({ synced: true, vehicles: vehicles.length, created });
   } catch (error) {
+    const base44 = createClientFromRequest(req);
+    await maybeLogSync(base44, 'error', 'Fleet Bouncie alert sync failed.', {
+      error: error?.message || String(error),
+    }).catch(() => null);
     if (error.message === 'BOUNCIE_NOT_CONNECTED') {
       return Response.json({ error: 'Bouncie is not connected.' }, { status: 400 });
     }
