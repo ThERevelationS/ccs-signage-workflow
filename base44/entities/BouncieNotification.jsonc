@@ -100,18 +100,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__bouncie_notification_service_only__"
+      }
     },
     "delete": {
       "user_condition": {
