@@ -135,7 +135,7 @@ function calculateNextDueDate(task: any) {
   return result.toISOString().slice(0, 10);
 }
 
-async function buildInventoryPlans(base44: any, workOrder: any, patch: any, completionKey: string) {
+async function buildInventoryPlans(base44: any, Receipt: any, workOrder: any, patch: any, completionKey: string) {
   const parts = Array.isArray(patch.parts_used) ? patch.parts_used : (workOrder.parts_used || []);
   const fluids = Array.isArray(patch.fluids_used) ? patch.fluids_used : (workOrder.fluids_used || []);
   const grouped = new Map<string, any>();
@@ -168,9 +168,29 @@ async function buildInventoryPlans(base44: any, workOrder: any, patch: any, comp
   const plans: any[] = [];
   let index = 0;
   for (const plan of grouped.values()) {
+    const operationKey = `${completionKey}:inventory:${index}:${plan.item_type}:${plan.item_id}`;
+    const logKey = `${completionKey}:usage:${index}:${plan.item_type}:${plan.item_id}`;
     const entity = plan.item_type === 'part' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
     const item = await entity.get(plan.item_id);
     if (!item) throw new Error(`${plan.item_type === 'part' ? 'Part' : 'Fluid'} inventory item not found: ${plan.item_id}`);
+    const existingReceipt = canonical(await Receipt.filter({ operation_key: operationKey }));
+    const stored = existingReceipt?.result_summary || {};
+    const hasMutationEvidence = existingReceipt?.status === 'applied' || stored.inventory_applied === true || (existingReceipt && stored.safe_retry !== true);
+
+    if (hasMutationEvidence && Number.isFinite(Number(stored.before_quantity)) && Number.isFinite(Number(stored.after_quantity))) {
+      plans.push({
+        ...plan,
+        item_name: item.part_name || item.fluid_name || plan.item_name,
+        unit: stored.unit || (plan.item_type === 'part' ? 'units' : (item.unit || plan.unit || 'quarts')),
+        before_quantity: Number(stored.before_quantity),
+        after_quantity: Number(stored.after_quantity),
+        operation_key: operationKey,
+        log_key: stored.log_key || logKey,
+      });
+      index += 1;
+      continue;
+    }
+
     if (Array.isArray(item.compatible_equipment_ids) && item.compatible_equipment_ids.length && !item.compatible_equipment_ids.includes(equipmentId)) {
       throw new Error(`${item.part_name || item.fluid_name || plan.item_id} is not marked compatible with the selected Fleet equipment.`);
     }
@@ -189,8 +209,8 @@ async function buildInventoryPlans(base44: any, workOrder: any, patch: any, comp
       unit,
       before_quantity: before,
       after_quantity: after,
-      operation_key: `${completionKey}:inventory:${index}:${plan.item_type}:${plan.item_id}`,
-      log_key: `${completionKey}:usage:${index}:${plan.item_type}:${plan.item_id}`,
+      operation_key: operationKey,
+      log_key: logKey,
     });
     index += 1;
   }
@@ -573,7 +593,7 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
       }
 
-      const inventoryPlans = await buildInventoryPlans(base44, existing, completionPatch, completionKey);
+      const inventoryPlans = await buildInventoryPlans(base44, Receipt, existing, completionPatch, completionKey);
       let schedulePreview: any = null;
       if (completionPatch.maintenance_task_id) {
         const task = await Task.get(completionPatch.maintenance_task_id);
