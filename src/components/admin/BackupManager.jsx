@@ -72,6 +72,8 @@ export default function BackupManager() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [settingsRecordId, setSettingsRecordId] = useState("");
+  const [settingsUpdatedDate, setSettingsUpdatedDate] = useState("");
   
   // Backup history
   const [backupHistory, setBackupHistory] = useState([]);
@@ -86,6 +88,8 @@ export default function BackupManager() {
     setIsLoadingSettings(true);
     try {
       const response = await backupToGoogleDrive({ action: 'getSettings' });
+      setSettingsRecordId(response.data.record_id || "");
+      setSettingsUpdatedDate(response.data.updated_date || "");
       if (response.data.settings) {
         setSettings(prev => ({ ...prev, ...response.data.settings }));
         setSelectedTypes(response.data.settings.dataTypes || []);
@@ -116,8 +120,15 @@ export default function BackupManager() {
         ...settings,
         dataTypes: selectedTypes
       };
-      await backupToGoogleDrive({ action: 'saveSettings', settings: newSettings });
+      const response = await backupToGoogleDrive({
+        action: 'saveSettings',
+        settings: newSettings,
+        expected_record_id: settingsRecordId,
+        expected_updated_date: settingsUpdatedDate,
+      });
       setSettings(newSettings);
+      setSettingsRecordId(response.data.record_id || settingsRecordId);
+      setSettingsUpdatedDate(response.data.updated_date || settingsUpdatedDate);
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 3000);
     } catch (err) {
