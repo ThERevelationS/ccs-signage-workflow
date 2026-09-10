@@ -97,11 +97,13 @@ export default function FleetTracking() {
     let mounted = true;
     Promise.all([
       base44.entities.FleetEquipment.list("name", 500),
-      base44.entities.FleetMaintenanceWorkOrder.list("-created_date", 500),
-    ]).then(([equipmentRows, workOrderRows]) => {
+      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "open" }, "-created_date", 500),
+      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "assigned" }, "-created_date", 500),
+      base44.entities.FleetMaintenanceWorkOrder.filter({ status: "in_progress" }, "-created_date", 500),
+    ]).then(([equipmentRows, openRows, assignedRows, inProgressRows]) => {
       if (!mounted) return;
       setFleetEquipment(equipmentRows || []);
-      setFleetWorkOrders(workOrderRows || []);
+      setFleetWorkOrders([...(openRows || []), ...(assignedRows || []), ...(inProgressRows || [])]);
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
