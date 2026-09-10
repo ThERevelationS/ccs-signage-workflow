@@ -3,7 +3,7 @@ import { ensureBuilderProductForLine } from "@/components/estimator/builder/buil
 import { builderMutationHash, pendingBuilderMutation, recoveryPatchDiffers } from "@/components/estimator/builder/builderMutationRecovery";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
-import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const nowIso = () => new Date().toISOString();
 
@@ -93,7 +93,15 @@ async function resolveSourceProject({ estimateId, lineId, pending }) {
   const currentSource = await entity.get(source.id);
   if (!currentSource) throw new Error("The Builder source record disappeared while Product creation was pending.");
   if (String(currentSource.notes || "") === pending.source_recovery_tag) {
-    source = await entity.update(source.id, { notes: pending.source_original_notes || "" });
+    const notesPatch = { notes: pending.source_original_notes || "" };
+    source = await replaceEntityFieldsIfUnchanged({
+      entity,
+      id: source.id,
+      expectedUpdatedAt: currentSource.updated_date || "",
+      expectedFields: expectedEntityFields(currentSource, notesPatch),
+      nextFields: notesPatch,
+      label: "Blank Product source recovery token cleanup",
+    });
   } else if (String(currentSource.notes || "") === String(pending.source_original_notes || "")) {
     source = currentSource;
   } else {
