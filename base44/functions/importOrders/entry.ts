@@ -193,12 +193,13 @@ Deno.serve(async (req) => {
           label: `Order import row ${i + 1}`,
         });
         existingMap.set(uniqueKey, createResult.record);
-        if (createResult.status === 'reused') {
-          skipped++;
-        } else {
-          importedCount++;
-          created++;
-        }
+        // A row that appeared concurrently after the initial catalog load still
+        // occupies the row-number slot this import was about to use. Advance the
+        // local row cursor even when that row is reused so the next new row does
+        // not receive the same display position.
+        importedCount++;
+        if (createResult.status === 'reused') skipped++;
+        else created++;
       }
     } catch (err) {
       console.error(`Error processing row ${i + 1}: ${customer} - ${description}`, err.message);
