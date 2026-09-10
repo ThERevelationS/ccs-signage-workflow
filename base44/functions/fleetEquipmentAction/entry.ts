@@ -79,8 +79,37 @@ Deno.serve(async (req) => {
       for (const key of allowed) if (Object.prototype.hasOwnProperty.call(body?.metadata || {}, key)) patch[key] = body.metadata[key];
       const rows = await Metadata.filter({ vehicle_vin: vin });
       if (rows.length > 1) return Response.json({ error: 'Multiple FleetVehicleMetadata rows exist for this VIN. Resolve before editing.' }, { status: 409 });
-      const saved = rows[0] ? await Metadata.update(rows[0].id, patch) : await Metadata.create({ vehicle_vin: vin, ...patch });
-      return Response.json({ success: true, metadata: saved });
+      const expectedMetadataId = String(body?.metadata_id || '').trim();
+      const expectedMetadataUpdatedAt = String(body?.expected_metadata_updated_date || '').trim();
+      if (rows[0]) {
+        if (expectedMetadataId && expectedMetadataId !== rows[0].id) return Response.json({ error: 'Vehicle metadata changed after it was opened. Reload before saving.' }, { status: 409 });
+        if (!expectedMetadataUpdatedAt) return Response.json({ error: 'Vehicle metadata version is missing. Reload before saving.' }, { status: 409 });
+        const saved = await updateFleetRecordIfCurrent({
+          entity: Metadata,
+          id: rows[0].id,
+          expectedUpdatedAt: expectedMetadataUpdatedAt,
+          patch,
+          label: 'Fleet vehicle metadata',
+        });
+        return Response.json({ success: true, metadata: saved });
+      }
+      if (expectedMetadataId || expectedMetadataUpdatedAt) return Response.json({ error: 'Vehicle metadata no longer matches the record that was opened. Reload before saving.' }, { status: 409 });
+      const created = await Metadata.create({ vehicle_vin: vin, ...patch });
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const contenders = await Metadata.filter({ vehicle_vin: vin });
+      if (contenders.length > 1) {
+        const winner = contenders.slice().sort((a: any, b: any) => {
+          const at = Date.parse(a?.created_date || '') || 0;
+          const bt = Date.parse(b?.created_date || '') || 0;
+          if (at !== bt) return at - bt;
+          return String(a?.id || '').localeCompare(String(b?.id || ''));
+        })[0];
+        if (winner?.id !== created.id) {
+          await Metadata.delete(created.id).catch(() => null);
+          return Response.json({ error: 'Vehicle metadata was created concurrently by another admin. The duplicate created by this save was discarded; reload before editing.' }, { status: 409 });
+        }
+      }
+      return Response.json({ success: true, metadata: created });
     }
 
     const id = String(body?.id || body?.equipment_id || '').trim();
