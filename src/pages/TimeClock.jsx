@@ -40,6 +40,7 @@ import {
   createActiveTimeEntryIfAbsent,
   saveTimeEntryNotesIfUnchanged,
 } from "@/components/timeclock/timeEntryPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
@@ -83,7 +84,11 @@ export default function TimeClock() {
   const loadAllUsers = async () => {
     setIsLoading(true);
     try {
-      const users = await AuthorizedEmail.list();
+      const users = await loadAllEntityRows({
+        entity: AuthorizedEmail,
+        sort: null,
+        label: "Time Clock authorized users",
+      });
       setAllUsers(users);
     } catch (err) {
       console.error("Error loading users:", err);
@@ -97,8 +102,18 @@ export default function TimeClock() {
     setIsLoading(true);
     try {
       const [entries, requests] = await Promise.all([
-        TimeEntry.filter({ user_email: loggedInUser.email }),
-        TimeOffRequest.filter({ user_email: loggedInUser.email })
+        loadAllEntityRows({
+          entity: TimeEntry,
+          query: { user_email: loggedInUser.email },
+          sort: null,
+          label: `Time entries for ${loggedInUser.email}`,
+        }),
+        loadAllEntityRows({
+          entity: TimeOffRequest,
+          query: { user_email: loggedInUser.email },
+          sort: null,
+          label: `Time off requests for ${loggedInUser.email}`,
+        })
       ]);
       
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
