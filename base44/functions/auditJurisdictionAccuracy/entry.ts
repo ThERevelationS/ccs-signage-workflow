@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -25,7 +26,11 @@ Deno.serve(async (req) => {
       const j = await base44.asServiceRole.entities.JurisdictionProfile.get(jurisdictionId);
       jurisdictions = j ? [j] : [];
     } else {
-      const all = await base44.asServiceRole.entities.JurisdictionProfile.list();
+      const all = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.JurisdictionProfile,
+        sort: 'created_date',
+        label: 'Jurisdiction accuracy audit catalog',
+      });
       jurisdictions = Array.isArray(all) ? all.slice(0, batchSize) : [];
     }
 
