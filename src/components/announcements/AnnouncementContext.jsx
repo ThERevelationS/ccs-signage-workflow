@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AnnouncementContext = createContext(null);
 
@@ -70,25 +71,29 @@ export function AnnouncementProvider({ children, currentPageName }) {
   useEffect(() => {
     const checkForAnnouncements = async () => {
       try {
-        const all = await base44.entities.Announcement.filter({ is_active: true });
-        if (!all || all.length === 0) {
+        const all = await loadAllEntityRows({
+          entity: base44.entities.Announcement,
+          query: { is_active: true },
+          sort: null,
+          label: "Active announcements",
+        });
+        const applicable = (all || []).filter((ann) => {
+          if (ann.target_users && ann.target_users.length > 0) {
+            if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return false;
+          }
+          if (ann.display_pages && ann.display_pages.length > 0) {
+            if (!currentPageName || !ann.display_pages.includes(currentPageName)) return false;
+          }
+          return true;
+        });
+        if (applicable.length === 0) {
           setActiveAnnouncement(null);
           return;
         }
 
-        // Sort by sent_at descending, pick the most recent active one
-        const sorted = all.sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0));
+        // Pick the most recent announcement that actually applies to this user/page.
+        const sorted = applicable.sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0));
         const ann = sorted[0];
-
-        // Check if targeted to this user
-        if (ann.target_users && ann.target_users.length > 0) {
-          if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return;
-        }
-
-        // Check if targeted to this page
-        if (ann.display_pages && ann.display_pages.length > 0) {
-          if (!currentPageName || !ann.display_pages.includes(currentPageName)) return;
-        }
 
         // If it's a new announcement, show it and play sound
         if (ann.id !== lastSeenIdRef.current) {
