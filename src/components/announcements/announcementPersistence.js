@@ -3,6 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -35,7 +36,7 @@ function comparePublication(a, b) {
 
 async function listAll(entity) {
   if (typeof entity?.list !== "function") throw new Error("Announcement persistence could not read announcements.");
-  return entity.list("-updated_date", 500);
+  return loadAllEntityRows({ entity, sort: "-updated_date", label: "Announcement persistence history" });
 }
 
 export async function createAnnouncementWithRecovery({ entity, data, label = "Announcement" } = {}) {
