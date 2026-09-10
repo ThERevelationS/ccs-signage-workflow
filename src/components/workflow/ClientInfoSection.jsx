@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2, Loader2 } from "lucide-react";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
 ];
 
 const WorkOrder = base44.entities.WorkOrder;
-const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,9 +77,13 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
 
   const loadProductTypes = async () => {
     try {
-      const settings = await GlobalSettings.filter({ setting_key: 'productTypes' });
-      if (settings.length > 0) {
-        setProductTypes(settings[0].setting_value?.items || []);
+      const setting = await loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: "productTypes",
+        label: "Client info product types",
+      });
+      if (setting?.id) {
+        setProductTypes(setting.setting_value?.items || []);
       } else {
         setProductTypes(["Channel Letters", "Cabinet Sign", "Monument", "Pylon", "Wall Sign", "Window Graphics", "Vehicle Wrap"]);
       }
