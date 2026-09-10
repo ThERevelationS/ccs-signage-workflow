@@ -205,14 +205,16 @@ export default function WorkOrderCard({
         const attachedRiders = await WorkOrder.filter({
           parent_work_order_id: workOrder.id,
           is_rider: true,
-          completed: false
+          completed: false,
+          deleted: { $ne: true }
         });
         setRiders(attachedRiders);
       }
       if (workOrder.is_rider && workOrder.parent_work_order_id) {
         const parentMatches = await WorkOrder.filter({
           id: workOrder.parent_work_order_id,
-          completed: false
+          completed: false,
+          deleted: { $ne: true }
         });
         setParentWorkOrder(parentMatches[0] || null);
       }
@@ -747,7 +749,8 @@ export default function WorkOrderCard({
         const attachedRiders = await WorkOrder.filter({
           parent_work_order_id: workOrder.id,
           is_rider: true,
-          completed: false
+          completed: false,
+          deleted: { $ne: true }
         });
 
         if (attachedRiders.length > 0) {
