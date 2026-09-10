@@ -202,9 +202,18 @@ Deno.serve(async (req) => {
     const existing = await Request.get(id);
     if (!existing) return Response.json({ error: 'Fleet request not found.' }, { status: 404 });
     const ownsRequest = String(existing.requester_email || '').toLowerCase() === String(user.email || '').toLowerCase();
+    const activeReceiveLock = async () => {
+      const receiptKey = String(existing.receipt_key || '').trim();
+      if (!receiptKey || existing.status === 'received') return null;
+      const rows = await Receipt.filter({ operation_key: receiptKey, status: { $in: ['started', 'failed'] } });
+      return canonical((rows || []).filter((row: any) =>
+        row.operation_type === 'request_receive' && (row?.result_summary?.request_lock_acquired === true || receiptKey === `fleetrequest:${id}:receive`)
+      ));
+    };
 
     if (action === 'update') {
       if (!isAdmin && !ownsRequest) return Response.json({ error: 'You can only edit your own Fleet requests.' }, { status: 403 });
+      if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before editing it.' }, { status: 409 });
       if (existing.status !== 'pending') return Response.json({ error: 'Only pending Fleet requests can be edited.' }, { status: 409 });
       const requestedPatch = requestPatch(body?.request || body);
       if (existing.inventory_item_id && requestedPatch.inventory_item_id && requestedPatch.inventory_item_id !== existing.inventory_item_id) {
@@ -233,6 +242,7 @@ Deno.serve(async (req) => {
 
     if (action === 'cancel') {
       if (!isAdmin && !ownsRequest) return Response.json({ error: 'You can only cancel your own Fleet requests.' }, { status: 403 });
+      if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before cancelling it.' }, { status: 409 });
       if (existing.status === 'received') return Response.json({ error: 'A received request cannot be cancelled because inventory has already been applied.' }, { status: 409 });
       if (!isAdmin && existing.status !== 'pending') return Response.json({ error: 'Only an admin can cancel a request after it has been ordered.' }, { status: 403 });
       const updated = await updateFleetRecordIfCurrent({
@@ -247,6 +257,7 @@ Deno.serve(async (req) => {
 
     if (action === 'order') {
       if (!isAdmin) return Response.json({ error: 'Only a CCS admin can mark Fleet requests as ordered.' }, { status: 403 });
+      if (await activeReceiveLock()) return Response.json({ error: 'This Fleet request has a receive operation in progress or awaiting reconciliation. Finish/review receiving before changing order details.' }, { status: 409 });
       if (!['pending', 'ordered'].includes(existing.status)) return Response.json({ error: 'Only pending or ordered requests can have order details updated.' }, { status: 409 });
       const updated = await updateFleetRecordIfCurrent({
         entity: Request,
