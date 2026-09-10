@@ -75,7 +75,7 @@ async function claimReceipt(Receipt: any, data: any) {
       status: 'started',
       started_at: stamp,
       error_message: '',
-      result_summary: { ...(data.result_summary || failed.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
+      result_summary: { ...(failed.result_summary || {}), ...(data.result_summary || {}), retry_claim_token: retryToken, retry_claimed_at: stamp },
       payload_fingerprint: data.payload_fingerprint || failed.payload_fingerprint || '',
     });
     await new Promise((resolve) => setTimeout(resolve, 75));
