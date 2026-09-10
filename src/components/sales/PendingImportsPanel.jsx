@@ -561,11 +561,23 @@ export default function PendingImportsPanel({ onCountChange }) {
     try {
       created = await WorkOrder.create(wo);
     } catch (createError) {
-      const afterCreateMatches = await findWorkOrdersForDocNumber(item.doc_number).catch(() => null);
-      if (afterCreateMatches?.length) {
-        throw new Error(`The create request returned an error, but a Work Order with document number ${item.doc_number} now exists. Refresh Pending Imports before retrying so a duplicate is not created.`);
+      const docNumber = String(item.doc_number || "").trim();
+      if (!docNumber) {
+        throw new Error(`${createError?.message || "The Work Order create response was unavailable."} This Pending Import has no document number that can safely verify whether creation succeeded. Refresh Pending Imports before retrying so an already-created Work Order is not duplicated.`);
       }
-      throw createError;
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      let afterCreateMatches;
+      try {
+        afterCreateMatches = await findWorkOrdersForDocNumber(docNumber);
+      } catch (recoveryError) {
+        throw new Error(`${createError?.message || "The Work Order create response was unavailable."} The recovery lookup also failed, so creation could not be verified safely. Refresh Pending Imports before retrying so an already-created Work Order is not duplicated. ${recoveryError?.message || ""}`.trim());
+      }
+
+      if (afterCreateMatches.length > 0) {
+        throw new Error(`The create request returned an error, but a Work Order with document number ${docNumber} now exists. Refresh Pending Imports before retrying so a duplicate is not created.`);
+      }
+      throw new Error(`${createError?.message || "The Work Order could not be created."} No matching Work Order was visible on the recovery read. Refresh Pending Imports before retrying.`);
     }
 
     try {
