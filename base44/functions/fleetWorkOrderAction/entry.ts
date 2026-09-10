@@ -426,6 +426,96 @@ async function applySchedule(base44: any, Receipt: any, workOrder: any, completi
   }
 }
 
+async function applyCompletionEquipmentStatus(base44: any, Receipt: any, mainReceipt: any, equipmentId: string, desiredStatus: string) {
+  if (!equipmentId || !desiredStatus) return { applied: false, skipped: true };
+  const Equipment = base44.asServiceRole.entities.FleetEquipment;
+  let receipt = await Receipt.get(mainReceipt.id).catch(() => mainReceipt);
+  const summary = receipt?.result_summary || {};
+  if (summary.equipment_status_applied === true) {
+    return { applied: true, reused: true, equipment: await Equipment.get(equipmentId).catch(() => null) };
+  }
+
+  const current = await Equipment.get(equipmentId).catch(() => null);
+  if (!current) throw new Error(`Fleet equipment ${equipmentId} was not found during completion status update.`);
+
+  if (String(current.status || '') === desiredStatus) {
+    await Receipt.update(receipt.id, {
+      result_summary: {
+        ...summary,
+        equipment_status_applied: true,
+        equipment_status_reconciled_without_write: true,
+        equipment_status_updated_date: current.updated_date || '',
+      },
+      error_message: '',
+    });
+    return { applied: true, reused: true, no_write: true, equipment: current };
+  }
+
+  const expectedUpdatedAt = String(summary.equipment_expected_updated_date || '').trim();
+  if (!expectedUpdatedAt || String(current.updated_date || '') !== expectedUpdatedAt) {
+    const message = 'Fleet equipment changed after the work-order completion dialog was opened. The newer equipment record was not overwritten; reconcile the completion receipt before retrying.';
+    await Receipt.update(receipt.id, {
+      status: 'failed',
+      failed_at: nowIso(),
+      error_message: message,
+      result_summary: {
+        ...summary,
+        equipment_status_conflict: true,
+        equipment_status_applied: false,
+        equipment_current_updated_date: current.updated_date || '',
+        equipment_current_status: current.status || '',
+      },
+    }).catch(() => null);
+    const conflict: any = new Error(message);
+    conflict.code = 'FLEET_RECORD_CONFLICT';
+    throw conflict;
+  }
+
+  try {
+    const updated = await updateFleetRecordIfCurrent({
+      entity: Equipment,
+      id: equipmentId,
+      expectedUpdatedAt,
+      patch: { status: desiredStatus },
+      label: 'Fleet equipment completion status',
+    });
+    await Receipt.update(receipt.id, {
+      result_summary: {
+        ...summary,
+        equipment_status_applied: true,
+        equipment_status_updated_date: updated.updated_date || '',
+      },
+      error_message: '',
+    });
+    return { applied: true, reused: false, equipment: updated };
+  } catch (error: any) {
+    const latest = await Equipment.get(equipmentId).catch(() => null);
+    if (latest && String(latest.status || '') === desiredStatus) {
+      await Receipt.update(receipt.id, {
+        result_summary: {
+          ...summary,
+          equipment_status_applied: true,
+          equipment_status_reconciled_after_update_error: true,
+          equipment_status_updated_date: latest.updated_date || '',
+        },
+        error_message: '',
+      }).catch(() => null);
+      return { applied: true, reused: true, recovered: true, equipment: latest };
+    }
+    await Receipt.update(receipt.id, {
+      status: 'failed',
+      failed_at: nowIso(),
+      error_message: error?.message || String(error),
+      result_summary: {
+        ...summary,
+        equipment_status_applied: false,
+        equipment_status_conflict: error?.code === 'FLEET_RECORD_CONFLICT',
+      },
+    }).catch(() => null);
+    throw error;
+  }
+}
+
 async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt: any) {
   const plan = mainReceipt?.result_summary || {};
   const workOrderId = String(mainReceipt?.target_id || '');
