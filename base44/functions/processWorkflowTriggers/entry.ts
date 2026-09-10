@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Process workflow automation triggers
 Deno.serve(async (req) => {
@@ -14,7 +15,12 @@ Deno.serve(async (req) => {
     }
 
     // Get all enabled automation rules
-    const automations = await base44.asServiceRole.entities.AutomationRule.filter({ enabled: true });
+    const automations = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.AutomationRule,
+      query: { enabled: true },
+      sort: null,
+      label: 'Enabled workflow automation rules',
+    });
     
     const triggeredActions = [];
     // Trigger conditions and notification templates keep using the original event
@@ -292,7 +298,12 @@ async function sendEmailAction(base44, config, work_order, changed_by) {
         if (work_order.created_by) recipients.push(work_order.created_by);
         break;
       case 'all_admins':
-        const admins = await base44.asServiceRole.entities.AuthorizedEmail.filter({ role: 'admin' });
+        const admins = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.AuthorizedEmail,
+          query: { role: 'admin' },
+          sort: null,
+          label: 'Workflow automation admin recipients',
+        });
         admins.forEach(a => a.email && recipients.push(a.email));
         break;
       case 'email_group':
