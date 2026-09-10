@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { deleteFeatureReportSafely, updateFeatureReportFields } from "@/components/reports/featureReportPersistence";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,8 @@ export default function CompletedReports() {
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [mutationError, setMutationError] = useState("");
+  const actionRef = useRef(new Set());
 
   useEffect(() => {
     loadReports();
@@ -67,14 +70,44 @@ export default function CompletedReports() {
   };
 
   const handleReopen = async (report) => {
-    await FeatureReport.update(report.id, { status: "open", completed_date: null });
-    loadReports();
+    const lockKey = `reopen:${report?.id}`;
+    if (!report?.id || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    setMutationError("");
+    try {
+      await updateFeatureReportFields({
+        entity: FeatureReport,
+        record: report,
+        nextFields: { status: "open", completed_date: null },
+        label: `Completed report “${report.title || "Report"}”`,
+      });
+      await loadReports();
+    } catch (error) {
+      console.error("Completed report reopen failed:", error);
+      setMutationError(error?.message || "The completed report could not be reopened safely.");
+      await loadReports();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
-  const handleDelete = async (id) => {
-    await FeatureReport.delete(id);
-    setDeleteConfirm(null);
-    loadReports();
+  const handleDelete = async (report) => {
+    const lockKey = `delete:${report?.id}`;
+    if (!report?.id || actionRef.current.has(lockKey)) return;
+    actionRef.current.add(lockKey);
+    setMutationError("");
+    try {
+      await deleteFeatureReportSafely({ entity: FeatureReport, record: report, label: `Completed report “${report.title || "Report"}”` });
+      setDeleteConfirm(null);
+      await loadReports();
+    } catch (error) {
+      console.error("Completed report delete failed:", error);
+      setMutationError(error?.message || "The completed report could not be deleted safely.");
+      setDeleteConfirm(null);
+      await loadReports();
+    } finally {
+      actionRef.current.delete(lockKey);
+    }
   };
 
   const isAdmin = currentUser?.role === "admin";
@@ -99,6 +132,14 @@ export default function CompletedReports() {
             </div>
           </div>
         </div>
+
+        {mutationError && (
+          <div className="clay-card mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="font-semibold">Completed report update blocked</div>
+            <div className="mt-1 text-xs">{mutationError}</div>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => { setMutationError(""); loadReports(); }}>Reload latest</Button>
+          </div>
+        )}
 
         {/* Reports List */}
         {isLoading ? (
@@ -192,7 +233,7 @@ export default function CompletedReports() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => handleDelete(deleteConfirm?.id)}
+                onClick={() => handleDelete(deleteConfirm)
                 className="bg-red-600 text-white"
               >
                 Delete
