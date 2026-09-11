@@ -4,11 +4,55 @@
   "properties": {
     "google_drive_token": {
       "type": "string",
-      "description": "Google Drive access token"
+      "description": "Legacy Google Drive access token. Server-side only.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__google_oauth_service_only__"
+          }
+        }
+      }
+    },
+    "google_drive_access_token": {
+      "type": "string",
+      "description": "Google Drive access token. Server-side only.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__google_oauth_service_only__"
+          }
+        }
+      }
     },
     "google_drive_refresh_token": {
       "type": "string",
-      "description": "Google Drive refresh token"
+      "description": "Google Drive refresh token. Server-side only.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__google_oauth_service_only__"
+          }
+        }
+      }
+    },
+    "google_drive_token_expiry": {
+      "type": "number",
+      "description": "Google Drive access-token expiry timestamp used by legacy server-side OAuth flows."
+    },
+    "gmail_refresh_token": {
+      "type": "string",
+      "description": "Gmail refresh token. Server-side only.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__google_oauth_service_only__"
+          }
+        }
+      }
+    },
+    "gmail_connected": {
+      "type": "boolean",
+      "description": "Whether the legacy per-user Gmail OAuth flow completed successfully."
     }
   },
   "required": [
