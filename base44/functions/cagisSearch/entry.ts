@@ -9,10 +9,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchTerm } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const searchTerm = String(body?.searchTerm || '').trim();
     
-    if (!searchTerm || !searchTerm.trim()) {
+    if (!searchTerm) {
       return Response.json({ error: 'Search term required' }, { status: 400 });
+    }
+    if (searchTerm.length > 500) {
+      return Response.json({ error: 'Search term is too long' }, { status: 400 });
     }
 
     // Ohio CAGIS API search
@@ -58,16 +62,17 @@ Deno.serve(async (req) => {
       return Response.json({ results });
     } catch (cagisError) {
       // If CAGIS fails, try to help with basic info
+      console.error('cagisSearch upstream error:', cagisError?.message || cagisError);
       return Response.json({
         results: [{
           type: 'cagis',
           found: false,
-          message: 'Unable to reach Ohio CAGIS at this time',
-          error: cagisError.message
+          message: 'Unable to reach Ohio CAGIS at this time'
         }]
       }, { status: 503 });
     }
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('cagisSearch error:', error?.message || error);
+    return Response.json({ error: 'CAGIS search could not be completed safely' }, { status: 500 });
   }
 });
