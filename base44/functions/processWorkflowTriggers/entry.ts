@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { constantTimeEqual } from '../../shared/constantTime.ts';
 
 const PUBLIC_PERMIT_EVENTS = new Set(['permit_submitted', 'permit_received']);
 
@@ -38,7 +39,7 @@ async function authenticateSignShopSession(base44: any, token: unknown) {
 
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) throw Object.assign(new Error('Authentication required'), { status: 401 });
+  if (!constantTimeEqual(expectedSig, providedSig)) throw Object.assign(new Error('Authentication required'), { status: 401 });
 
   let sessionPayload: any;
   try {
