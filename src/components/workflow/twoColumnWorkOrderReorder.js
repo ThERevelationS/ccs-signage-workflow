@@ -59,5 +59,6 @@ export function reorderTwoColumnWorkOrders(items = [], result = {}) {
   if (reordered.length !== items.length || new Set(reordered.map((item) => item?.id)).size !== items.length) {
     throw new Error("The Work Order reorder changed list membership unexpectedly.");
   }
+  if (reordered.every((item, index) => item?.id === items[index]?.id)) return items;
   return reordered;
 }
