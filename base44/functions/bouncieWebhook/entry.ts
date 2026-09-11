@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
-import { normalizeWebhookEvent, applyLiveState, patchConnection } from '../../shared/bouncie.ts';
+import { normalizeWebhookEvent, applyLiveState, patchConnection, milSemanticState } from '../../shared/bouncie.ts';
 
 const SEMANTIC_TRIP_EVENTS = new Set(['tripStart', 'tripEnd', 'tripMetrics']);
 
@@ -13,7 +13,32 @@ const canonical = (rows = []) => rows.slice().sort((a,b) => {
 
 async function findNotificationContenders(Notification, normalized, vin, event) {
   const exact = await Notification.filter({ event_key: normalized.eventKey });
-  if (exact?.length || !SEMANTIC_TRIP_EVENTS.has(normalized.eventType)) return exact || [];
+  if (exact?.length) return exact || [];
+
+  if (normalized.eventType === 'mil') {
+    const recent = await Notification.filter({ vehicle_vin: vin, event_type: 'mil' }, '-timestamp', 25);
+    const latest = (recent || []).slice().sort((a,b) => {
+      const at = Date.parse(a?.timestamp || a?.created_date || '') || 0;
+      const bt = Date.parse(b?.timestamp || b?.created_date || '') || 0;
+      if (at !== bt) return bt - at;
+      return String(b?.id || '').localeCompare(String(a?.id || ''));
+    })[0] || null;
+    if (!latest) return [];
+    const incomingState = milSemanticState(normalized?.payload || {});
+    const priorState = milSemanticState(latest);
+    if (!incomingState.known || !priorState.known || incomingState.on !== priorState.on) return [];
+    // While the MIL remains ON, a generic stats snapshot never supersedes richer
+    // webhook DTC detail. A genuinely different non-empty DTC set is still a new event.
+    if (incomingState.on) {
+      if (!incomingState.codes.length) return [latest];
+      if (!priorState.codes.length) return [];
+      return incomingState.signature === priorState.signature ? [latest] : [];
+    }
+    // Repeated OFF/cleared events are the same state transition until MIL turns on again.
+    return [latest];
+  }
+
+  if (!SEMANTIC_TRIP_EVENTS.has(normalized.eventType)) return [];
   // Some Bouncie retry/normalization paths can report the same trip boundary with a
   // corrected measurement. Treat transactionId + VIN + type + timestamp as the stable
   // event identity; payload measurements such as odometer are event data, not identity.
