@@ -20,7 +20,7 @@ const localDateTimeInput = (value = new Date()) => {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 };
 
-export default function EstimateAcceptancePanel({ estimate, persistedEstimate, onRecordAcceptance, refreshKey = 0 }) {
+export default function EstimateAcceptancePanel({ estimate, persistedEstimate, onRecordAcceptance, refreshKey = 0, isRegistered = false }) {
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
   const [deliveryRows, setDeliveryRows] = useState([]);
@@ -89,7 +89,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   );
   const canRecord = persistedStatus === "sent" && quoteVersion > 0;
   const repairingApprovedAcceptance = persistedStatus === "approved" && !!currentAcceptance && !approvalRevisionRecorded;
-  const canAct = !auditLoading && !auditReadError && (canRecord || repairingApprovedAcceptance);
+  const canAct = isRegistered && !auditLoading && !auditReadError && (canRecord || repairingApprovedAcceptance);
   const recoveringRecordedAcceptance = !!currentAcceptance;
 
   const openDialog = () => {
