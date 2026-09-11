@@ -96,7 +96,7 @@ function sanitizeEquipment(row: any) {
     name:row.name || '', type:row.type || '', make:row.make || '', model:row.model || '', year:row.year ?? null,
     serial_number:row.serial_number || '', vin:row.vin || '', engine_details:row.engine_details || '', status:row.status || '',
     location:row.location || '', mileage_hours:row.mileage_hours ?? null, last_service_date:row.last_service_date || '',
-    next_service_due:row.next_service_due || '', photo_url:row.photo_url || '', notes:row.notes || '',
+    next_service_due:row.next_service_due || '', photo_url:row.photo_url || '',
   };
 }
 
@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
         const token = base64Url(rawBytes);
         const grant = {
           id:crypto.randomUUID(), name, token_hash:await sha256(token), enabled:true,
-          created_at:nowIso(), created_by:auth.user.email || '', expires_at:'', last_used_at:'', notes,
+          created_at:nowIso(), created_by:auth.user.email || '', notes,
         };
         await updateFleetRecordIfCurrent({entity:Settings,id:settings.id,expectedUpdatedAt:String(settings.updated_date || ''),patch:{mechanic_access_links:[...grants,grant]},label:'Fleet mechanic access links'});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:grant.id,name:grant.name,created_by:grant.created_by}}).catch(()=>null);
