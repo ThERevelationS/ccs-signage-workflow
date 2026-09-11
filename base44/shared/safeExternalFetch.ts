@@ -21,11 +21,17 @@ function isBlockedIpv4(ip: string) {
 
 function isBlockedIpv6(ip: string) {
   const value = ip.toLowerCase().replace(/^\[|\]$/g, '');
-  if (value === '::' || value === '::1') return true;
+  if (value === '::' || value === '::1' || value.startsWith('::')) return true;
   if (value.startsWith('fc') || value.startsWith('fd')) return true;
-  if (/^fe[89ab]/.test(value)) return true;
+  // fe00::/9 contains reserved, link-local, and deprecated site-local space.
+  if (value.startsWith('fe')) return true;
   if (value.startsWith('ff')) return true;
   if (value.startsWith('2001:db8:') || value === '2001:db8::') return true;
+  // Block transition/translation ranges that can encapsulate IPv4 destinations
+  // and otherwise bypass the direct IPv4 private/reserved checks.
+  if (value.startsWith('2002:')) return true; // 6to4
+  if (value.startsWith('2001:0:') || value === '2001::') return true; // Teredo
+  if (value.startsWith('64:ff9b:')) return true; // NAT64 well-known/local-use prefixes
   const mapped = /(?:^|:)ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(value);
   return mapped ? isBlockedIpv4(mapped[1]) : false;
 }
@@ -48,6 +54,9 @@ export async function assertSafeExternalUrl(input: unknown) {
 
   if (!['http:', 'https:'].includes(url.protocol)) {
     throw Object.assign(new Error('Only http and https URLs are allowed.'), { status: 400 });
+  }
+  if (url.port && !((url.protocol === 'http:' && url.port === '80') || (url.protocol === 'https:' && url.port === '443'))) {
+    throw Object.assign(new Error('Only standard web ports are allowed for external URLs.'), { status: 400 });
   }
   if (url.username || url.password) {
     throw Object.assign(new Error('URLs containing embedded credentials are not allowed.'), { status: 400 });
@@ -94,6 +103,11 @@ export async function safeExternalFetch(input: unknown, init: RequestInit = {}, 
   let url = await assertSafeExternalUrl(input);
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     const response = await fetch(url, { ...init, redirect: 'manual' });
+    // Re-resolve after the connection as defense in depth against DNS answers
+    // changing between preflight and fetch. This is not socket pinning, but it
+    // prevents a response from being consumed if the hostname has moved into a
+    // private/reserved range by the time headers are received.
+    await assertSafeExternalUrl(url.toString());
     if (!REDIRECT_STATUSES.has(response.status)) return response;
     if (redirectCount === maxRedirects) {
       throw Object.assign(new Error('Too many redirects while fetching the external document.'), { status: 400 });
