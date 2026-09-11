@@ -93,11 +93,17 @@ export default function PermittingRepositoryAdmin() {
       for (const line of lines) {
         const parts = line.trim().split(',').map(p => p.trim());
         if (parts.length >= 2) {
-          const [name, state, type = 'county'] = parts;
+          const [name, state, type = 'county', parentCounty = ''] = parts;
           try {
             const result = await createJurisdictionIfAbsent({
               entity: base44.entities.JurisdictionProfile,
-              data: { name, state, type, auto_refresh: true },
+              data: {
+                name,
+                state,
+                type,
+                auto_refresh: true,
+                ...(parentCounty && type !== 'county' ? { parent_county: { name: parentCounty } } : {}),
+              },
               label: `Bulk jurisdiction ${name}, ${state}`,
             });
             if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") existing++;
@@ -334,15 +340,15 @@ export default function PermittingRepositoryAdmin() {
         {showBulkAdd && (
           <div className="space-y-3 bg-gray-50 p-3 rounded-lg border">
             <p className="text-xs text-gray-600">
-              Enter one jurisdiction per line in format: <strong>Name, State, Type</strong> (Type is optional, defaults to "county")
+              Enter one jurisdiction per line in format: <strong>Name, State, Type, Parent County</strong> (Type and Parent County are optional; Type defaults to "county")
               <br />
-              Example: <code className="bg-gray-200 px-1 rounded">Hamilton County, OH, county</code>
+              Examples: <code className="bg-gray-200 px-1 rounded">Hamilton County, OH, county</code> · <code className="bg-gray-200 px-1 rounded">Miami Township, OH, township, Clermont County</code>
             </p>
             <textarea
               value={bulkAddText}
               onChange={(e) => setBulkAddText(e.target.value)}
               className="w-full h-32 p-2 border rounded text-sm"
-              placeholder="Hamilton County, OH, county&#10;Cincinnati, OH, city&#10;Northern Kentucky, KY, county"
+              placeholder="Hamilton County, OH, county&#10;Cincinnati, OH, city, Hamilton County&#10;Miami Township, OH, township, Clermont County"
               disabled={isBulkAdding}
             />
             {bulkAddError && (
@@ -476,7 +482,12 @@ export default function PermittingRepositoryAdmin() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-gray-800">{j.name}, {j.state}</h4>
+                      <h4 className="font-medium text-gray-800">
+                        {j.name}, {j.state}
+                        {j.type !== 'county' && j.parent_county?.name && (
+                          <span className="ml-2 text-[11px] font-normal text-gray-500">· {j.parent_county.name}</span>
+                        )}
+                      </h4>
                       {protection.locked && (
                         <Lock className="w-3.5 h-3.5 text-amber-500" title={`${protection.count} field(s) manually protected`} />
                       )}
