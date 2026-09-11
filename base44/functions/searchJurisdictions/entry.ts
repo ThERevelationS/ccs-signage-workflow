@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ results: combined });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('searchJurisdictions error:', error?.message || error);
+    return Response.json({ error: 'Jurisdiction search could not be completed safely' }, { status: 500 });
   }
 });
