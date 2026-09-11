@@ -26,6 +26,11 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) {
+      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const address = (body.address || "").trim();
 
