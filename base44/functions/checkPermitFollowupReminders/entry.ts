@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       trigger_errors: triggerErrors
     });
   } catch (error) {
-    console.error('checkPermitFollowupReminders error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('checkPermitFollowupReminders error:', error?.message || error);
+    return Response.json({ error: 'Permit follow-up reminders could not be checked safely' }, { status: 500 });
   }
 });
