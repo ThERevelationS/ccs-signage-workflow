@@ -2,6 +2,42 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+
+const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
+
+async function readResearchDocumentBytes(response: Response) {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESEARCH_DOCUMENT_BYTES) {
+    throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_RESEARCH_DOCUMENT_BYTES) throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+    return bytes;
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_RESEARCH_DOCUMENT_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -132,7 +168,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           continue;
         }
         try {
-          const downloadResult = await fetch(doc.url, {
+          const downloadResult = await safeExternalFetch(doc.url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
           });
           if (!downloadResult.ok) {
@@ -140,8 +176,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
             continue;
           }
 
-          const buffer = await downloadResult.arrayBuffer();
-          if (!buffer || buffer.byteLength === 0) {
+          const fileBytes = await readResearchDocumentBytes(downloadResult);
+          if (fileBytes.byteLength === 0) {
             processedDocs.push(doc);
             continue;
           }
@@ -151,7 +187,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
           const mimeType = mimeMap[ext] || contentType.split(';')[0].trim() || 'application/octet-stream';
 
-          const fileBlob = new Blob([buffer], { type: mimeType });
+          const fileBlob = new Blob([fileBytes], { type: mimeType });
           const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob });
 
           if (!uploadResult?.file_url) {
