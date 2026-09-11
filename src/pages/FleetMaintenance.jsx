@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarClock,
-  CheckCircle2,
   Clock3,
   LayoutGrid,
   List,
